@@ -2,20 +2,20 @@
   "runInBackground": true,
   "sites": [
     {
-      "name": "#####",
-      "url": "https://www.#####.com/",
-      "width": 600,
-      "height": 400,
-      "x": 100,
-      "y": 100
+      "name": "Google",
+      "url": "https://www.google.com/",
+      "width": 1200,
+      "height": 800,
+      "x": 156,
+      "y": 91
     },
     {
-      "name": "#####",
-      "url": "https://.#####..com/",
-      "width": 800,
-      "height": 600,
-      "x": 200,
-      "y": 100
+      "name": "GitHub",
+      "url": "https://github.com/",
+      "width": 500,
+      "height": 800,
+      "x": 506,
+      "y": 91
     }
   ]
 }
