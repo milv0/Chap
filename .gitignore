@@ -1,0 +1,11 @@
+# Compiled binary
+QuickAccess.app/Contents/MacOS/QuickAccess
+
+# Distribution zip
+*.zip
+
+# macOS system files
+.DS_Store
+
+# Old project files
+Tiny-URL/
