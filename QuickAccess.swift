@@ -15,6 +15,7 @@ enum Defaults {
     static let defaultX = 100
     static let defaultY = 100
     static let resizeDelay = 0.2
+    static let coldStartDelay = 3.0
     static let resizeRetries = 20
     static let retryInterval = 0.2
 }
@@ -903,8 +904,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             end repeat
             delay \(retryInterval)
           end repeat
+          -- Fallback: resize the front window if URL match failed
+          if (count of windows) > 0 then
+            set bounds of front window to {\(bounds)}
+          end if
         end tell
         """
+
+        // Detect if Chrome is already running for delay calculation
+        let chromeRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.google.Chrome" }
+        let delay = chromeRunning ? Defaults.resizeDelay : Defaults.coldStartDelay
 
         // Open Chrome in app mode using modern Process API
         let openTask = Process()
@@ -913,7 +922,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         try? openTask.run()
 
         // Reposition the window via osascript after a short delay
-        DispatchQueue.global().asyncAfter(deadline: .now() + Defaults.resizeDelay) {
+        DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
             let scriptTask = Process()
             scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
             scriptTask.arguments = ["-e", script]
