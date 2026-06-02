@@ -883,7 +883,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             config = Config(sites: [
                 Site(name: "Google", url: "https://www.google.com/", width: 600, height: 400, x: Defaults.defaultX, y: Defaults.defaultY),
-                Site(name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: 200, y: Defaults.defaultY)
+                Site(name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY)
             ])
         }
     }
@@ -995,10 +995,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let scriptTask = Process()
             scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
             scriptTask.arguments = ["-e", script]
-            try? scriptTask.run()
-            scriptTask.waitUntilExit()
-            if scriptTask.terminationStatus != 0 {
-                NSLog("[QuickAccess] osascript exited with status %d", scriptTask.terminationStatus)
+            do {
+                try scriptTask.run()
+                scriptTask.waitUntilExit()
+                if scriptTask.terminationStatus != 0 {
+                    NSLog("[QuickAccess] osascript exited with status %d", scriptTask.terminationStatus)
+                }
+            } catch {
+                NSLog("[QuickAccess] Failed to launch osascript: %@", error.localizedDescription)
             }
         }
     }
