@@ -689,6 +689,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         sites.remove(at: row)
         tableView.reloadData()
         clearFields()
+        previousSelectedRow = -1
     }
 
     @objc func moveSiteUp() {
@@ -696,6 +697,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard row > 0 else { return }
         sites.swapAt(row, row - 1)
         tableView.reloadData()
+        previousSelectedRow = row - 1
         tableView.selectRowIndexes(IndexSet(integer: row - 1), byExtendingSelection: false)
     }
 
@@ -704,6 +706,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard row >= 0, row < sites.count - 1 else { return }
         sites.swapAt(row, row + 1)
         tableView.reloadData()
+        previousSelectedRow = row + 1
         tableView.selectRowIndexes(IndexSet(integer: row + 1), byExtendingSelection: false)
     }
 
@@ -821,10 +824,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: Config handling — copies default config on first launch
     func copyDefaultConfigIfNeeded() {
         if !FileManager.default.fileExists(atPath: configPath) {
-            let defaultPath = Bundle.main.bundlePath + "/../../../quickaccess-default.json"
-            let resolved = (defaultPath as NSString).standardizingPath
-            if FileManager.default.fileExists(atPath: resolved) {
-                try? FileManager.default.copyItem(atPath: resolved, toPath: configPath)
+            if let bundledPath = Bundle.main.path(forResource: "quickaccess-default", ofType: "json") {
+                do {
+                    try FileManager.default.copyItem(atPath: bundledPath, toPath: configPath)
+                } catch {
+                    NSLog("[QuickAccess] Failed to copy default config: %@", error.localizedDescription)
+                }
             } else {
                 let defaultJSON = """
                 {
@@ -834,13 +839,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                   ]
                 }
                 """
-                try? defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
+                do {
+                    try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
+                } catch {
+                    NSLog("[QuickAccess] Failed to write default config: %@", error.localizedDescription)
+                }
             }
         }
     }
 
     func loadConfig() {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else { return }
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else {
+            NSLog("[QuickAccess] Failed to read config file at %@", configPath)
+            return
+        }
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
         } catch {
@@ -905,10 +917,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Fix #1: Escape all AppleScript-special characters to prevent injection
-        let rawDomain = URL(string: site.url)?.host ?? site.url
+        let rawDomain = URL(string: site.url)?.host ?? ""
+        // Strict validation: only allow safe hostname characters
+        let domainRegex = try! NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
+        guard !rawDomain.isEmpty,
+              domainRegex.firstMatch(in: rawDomain, range: NSRange(rawDomain.startIndex..., in: rawDomain)) != nil else {
+            return
+        }
         let domain = rawDomain
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
 
         // Validate bounds are numeric
         let bx = site.x
@@ -931,10 +947,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             end repeat
             delay \(retryInterval)
           end repeat
-          -- Fallback: resize the front window if URL match failed
-          if (count of windows) > 0 then
-            set bounds of front window to {\(bounds)}
-          end if
         end tell
         """
 
@@ -965,10 +977,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
             scriptTask.arguments = ["-e", script]
             try? scriptTask.run()
+            scriptTask.waitUntilExit()
+            if scriptTask.terminationStatus != 0 {
+                NSLog("[QuickAccess] osascript exited with status %d", scriptTask.terminationStatus)
+            }
         }
     }
 
     @objc func openSettings() {
+        settingsController.onReload = { [weak self] in
+            self?.reloadConfig()
+            if let sites = self?.config.sites {
+                self?.settingsController.sites = sites
+                self?.settingsController.tableView.reloadData()
+                self?.settingsController.clearFields()
+            }
+        }
         settingsController.showWindow(sites: config.sites, runInBackground: config.runInBackground) { [weak self] newSites, runInBackground in
             guard let self = self else { return }
             self.config = Config(runInBackground: runInBackground, sites: newSites)
@@ -986,14 +1010,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.buildMenu()
             NSApp.setActivationPolicy(runInBackground ? .accessory : .regular)
-        }
-        settingsController.onReload = { [weak self] in
-            self?.reloadConfig()
-            if let sites = self?.config.sites {
-                self?.settingsController.sites = sites
-                self?.settingsController.tableView.reloadData()
-                self?.settingsController.clearFields()
-            }
         }
     }
 
