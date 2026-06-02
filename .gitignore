@@ -7,3 +7,5 @@ QuickAccess.app/Contents/MacOS/QuickAccess
 # macOS system files
 .DS_Store
 
+QuickAccess.dmg
+QuickAccess.zip
