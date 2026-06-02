@@ -124,10 +124,10 @@ class MinimapView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         let b = bounds.insetBy(dx: 2, dy: 2)
-        // Gray screen outline
-        NSColor(calibratedWhite: 0.85, alpha: 1).setFill()
+        // Screen outline — adapts to system appearance
+        NSColor.windowBackgroundColor.setFill()
         NSBezierPath(rect: b).fill()
-        NSColor.gray.setStroke()
+        NSColor.separatorColor.setStroke()
         let outline = NSBezierPath(rect: b)
         outline.lineWidth = 1
         outline.stroke()
