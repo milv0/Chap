@@ -8,6 +8,7 @@
 //
 
 import Cocoa
+import ServiceManagement
 
 enum Defaults {
     static let appVersion = "1.1.0"
@@ -941,6 +942,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
+        let loginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
+        loginItem.target = self
+        loginItem.state = isLaunchAtLoginEnabled() ? .on : .off
+        menu.addItem(loginItem)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
@@ -1077,6 +1082,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func reloadConfig() {
         loadConfig()
         buildMenu()
+    }
+
+    @objc func toggleLaunchAtLogin(_ sender: NSMenuItem) {
+        if #available(macOS 13.0, *) {
+            do {
+                if SMAppService.mainApp.status == .enabled {
+                    try SMAppService.mainApp.unregister()
+                } else {
+                    try SMAppService.mainApp.register()
+                }
+            } catch {
+                NSLog("[QuickAccess] Launch at login toggle failed: %@", error.localizedDescription)
+            }
+        }
+        buildMenu()
+    }
+
+    func isLaunchAtLoginEnabled() -> Bool {
+        if #available(macOS 13.0, *) {
+            return SMAppService.mainApp.status == .enabled
+        }
+        return false
     }
 
     @objc func quitApp() {
