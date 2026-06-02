@@ -950,6 +950,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
+        let uninstall = NSMenuItem(title: "Uninstall...", action: #selector(uninstallApp), keyEquivalent: "")
+        uninstall.target = self
+        menu.addItem(uninstall)
         statusItem.menu = menu
     }
 
@@ -1104,6 +1107,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return SMAppService.mainApp.status == .enabled
         }
         return false
+    }
+
+    @objc func uninstallApp() {
+        let alert = NSAlert()
+        alert.messageText = "Uninstall QuickAccess?"
+        alert.informativeText = "This will remove the app, settings, and login item."
+        alert.addButton(withTitle: "Uninstall")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .critical
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        // Remove Launch at Login
+        if #available(macOS 13.0, *) {
+            try? SMAppService.mainApp.unregister()
+        }
+        // Remove config file
+        try? FileManager.default.removeItem(atPath: configPath)
+        // Move app to trash
+        let appPath = Bundle.main.bundlePath
+        NSWorkspace.shared.recycle([URL(fileURLWithPath: appPath)]) { _, _ in
+            NSApp.terminate(nil)
+        }
     }
 
     @objc func quitApp() {
