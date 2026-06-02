@@ -10,7 +10,7 @@
 import Cocoa
 
 enum Defaults {
-    static let appVersion = "1.0.0"
+    static let appVersion = "1.1.0"
     static let repoOwner = "milv0"
     static let repoName = "QuickAccess"
     static let defaultWidth = 800
@@ -440,7 +440,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         y -= 30
 
         // Info text
-        let centerInfo = NSTextField(labelWithString: "※ Layout 선택 시 Width/Height/X/Y가 자동 계산됩니다.")
+        let centerInfo = NSTextField(labelWithString: "※ Layout selection auto-calculates Width/Height/X/Y.")
         centerInfo.frame = NSRect(x: fieldX, y: y, width: 380, height: 16)
         centerInfo.font = NSFont.systemFont(ofSize: 10)
         centerInfo.textColor = .tertiaryLabelColor
@@ -665,9 +665,9 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
                xField.stringValue != "\(prev.x)" ||
                yField.stringValue != "\(prev.y)" {
                 let alert = NSAlert()
-                alert.messageText = "저장하지 않은 변경사항이 있습니다. 무시하시겠습니까?"
-                alert.addButton(withTitle: "무시")
-                alert.addButton(withTitle: "취소")
+                alert.messageText = "You have unsaved changes. Discard?"
+                alert.addButton(withTitle: "Discard")
+                alert.addButton(withTitle: "Cancel")
                 if alert.runModal() != .alertFirstButtonReturn {
                     tableView.selectRowIndexes(IndexSet(integer: previousSelectedRow), byExtendingSelection: false)
                     return
@@ -701,10 +701,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         let row = tableView.selectedRow
         guard row >= 0 else { return }
         let alert = NSAlert()
-        alert.messageText = "정말 삭제하시겠습니까?"
-        alert.informativeText = "\"\(sites[row].name)\" 사이트를 삭제합니다."
-        alert.addButton(withTitle: "삭제")
-        alert.addButton(withTitle: "취소")
+        alert.messageText = "Are you sure you want to delete?"
+        alert.informativeText = "This will remove \"\(sites[row].name)\"."
+        alert.addButton(withTitle: "Delete")
+        alert.addButton(withTitle: "Cancel")
         alert.alertStyle = .warning
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         sites.remove(at: row)
@@ -747,7 +747,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
             // Empty name validation
             if nameField.stringValue.trimmingCharacters(in: .whitespaces).isEmpty {
                 let alert = NSAlert()
-                alert.messageText = "이름을 입력해주세요."
+                alert.messageText = "Please enter a name."
                 alert.alertStyle = .warning
                 alert.runModal()
                 return
@@ -789,10 +789,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         if hasUnsavedChanges() {
             let alert = NSAlert()
-            alert.messageText = "저장하지 않은 변경사항이 있습니다."
-            alert.informativeText = "창을 닫으면 변경사항이 사라집니다."
-            alert.addButton(withTitle: "닫기")
-            alert.addButton(withTitle: "취소")
+            alert.messageText = "You have unsaved changes."
+            alert.informativeText = "Changes will be lost if you close."
+            alert.addButton(withTitle: "Close")
+            alert.addButton(withTitle: "Cancel")
             return alert.runModal() == .alertFirstButtonReturn
         }
         return true
@@ -880,7 +880,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             DispatchQueue.main.async {
                 let alert = NSAlert()
-                alert.messageText = "설정 파일을 읽을 수 없습니다. 기본 설정을 사용합니다."
+                alert.messageText = "Cannot read config file. Using defaults."
                 alert.alertStyle = .warning
                 alert.runModal()
             }
@@ -935,7 +935,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Fix #6: Check if Chrome is installed
         if !FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") {
             let alert = NSAlert()
-            alert.messageText = "Google Chrome이 설치되어 있지 않습니다."
+            alert.messageText = "Google Chrome is not installed."
             alert.alertStyle = .warning
             alert.runModal()
             return
@@ -988,7 +988,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             DispatchQueue.main.async {
                 let alert = NSAlert()
-                alert.messageText = "Chrome을 실행할 수 없습니다."
+                alert.messageText = "Failed to launch Chrome."
                 alert.informativeText = error.localizedDescription
                 alert.alertStyle = .critical
                 alert.runModal()
@@ -1028,7 +1028,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
                 } catch {
                     let alert = NSAlert()
-                    alert.messageText = "설정 저장에 실패했습니다."
+                    alert.messageText = "Failed to save settings."
                     alert.alertStyle = .warning
                     alert.runModal()
                 }
@@ -1053,7 +1053,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async {
                 if let error = error {
                     let alert = NSAlert()
-                    alert.messageText = "업데이트 확인 실패"
+                    alert.messageText = "Update check failed"
                     alert.informativeText = error.localizedDescription
                     alert.alertStyle = .warning
                     alert.runModal()
@@ -1067,8 +1067,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                       let tagName = json["tag_name"] as? String else {
                     // No release found or API error — treat as up to date
                     let alert = NSAlert()
-                    alert.messageText = "최신 버전입니다"
-                    alert.informativeText = "현재 v\(Defaults.appVersion) 사용 중"
+                    alert.messageText = "You're up to date"
+                    alert.informativeText = "Current version: v\(Defaults.appVersion)"
                     alert.alertStyle = .informational
                     alert.runModal()
                     return
@@ -1077,18 +1077,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 let latestVersion = tagName.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
                 if latestVersion.compare(Defaults.appVersion, options: .numeric) == .orderedDescending {
                     let alert = NSAlert()
-                    alert.messageText = "새 버전이 있습니다!"
-                    alert.informativeText = "현재: v\(Defaults.appVersion)\n최신: v\(latestVersion)"
-                    alert.addButton(withTitle: "다운로드 페이지 열기")
-                    alert.addButton(withTitle: "나중에")
+                    alert.messageText = "New version available!"
+                    alert.informativeText = "Current: v\(Defaults.appVersion)\nLatest: v\(latestVersion)"
+                    alert.addButton(withTitle: "Open Download Page")
+                    alert.addButton(withTitle: "Later")
                     if alert.runModal() == .alertFirstButtonReturn {
                         let releaseURL = "https://github.com/\(Defaults.repoOwner)/\(Defaults.repoName)/releases/latest"
                         NSWorkspace.shared.open(URL(string: releaseURL)!)
                     }
                 } else {
                     let alert = NSAlert()
-                    alert.messageText = "최신 버전입니다"
-                    alert.informativeText = "현재 v\(Defaults.appVersion) 사용 중"
+                    alert.messageText = "You're up to date"
+                    alert.informativeText = "Current version: v\(Defaults.appVersion)"
                     alert.alertStyle = .informational
                     alert.runModal()
                 }
@@ -1112,10 +1112,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if latestVersion.compare(Defaults.appVersion, options: .numeric) == .orderedDescending {
                 DispatchQueue.main.async {
                     let alert = NSAlert()
-                    alert.messageText = "QuickAccess 업데이트 가능"
-                    alert.informativeText = "v\(latestVersion) 버전을 사용할 수 있습니다. (현재 v\(Defaults.appVersion))"
-                    alert.addButton(withTitle: "다운로드")
-                    alert.addButton(withTitle: "무시")
+                    alert.messageText = "QuickAccess Update Available"
+                    alert.informativeText = "v\(latestVersion) is available. (Current: v\(Defaults.appVersion))"
+                    alert.addButton(withTitle: "Download")
+                    alert.addButton(withTitle: "Dismiss")
                     if alert.runModal() == .alertFirstButtonReturn {
                         let releaseURL = "https://github.com/\(Defaults.repoOwner)/\(Defaults.repoName)/releases/latest"
                         NSWorkspace.shared.open(URL(string: releaseURL)!)
