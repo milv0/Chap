@@ -488,6 +488,14 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         importBtn.target = self
         importBtn.action = #selector(importConfig)
         content.addSubview(importBtn)
+
+        let uninstallBtn = NSButton(frame: NSRect(x: margin + 78 + 78, y: margin, width: 80, height: 28))
+        uninstallBtn.title = "Uninstall"
+        uninstallBtn.bezelStyle = .rounded
+        uninstallBtn.contentTintColor = .systemRed
+        uninstallBtn.target = self
+        uninstallBtn.action = #selector(uninstallApp)
+        content.addSubview(uninstallBtn)
     }
 
     func clearFields() {
@@ -834,6 +842,26 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
     }
 
+    @objc func uninstallApp() {
+        let alert = NSAlert()
+        alert.messageText = "Uninstall QuickAccess?"
+        alert.informativeText = "This will remove the app, settings, and login item."
+        alert.addButton(withTitle: "Uninstall")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .critical
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        if #available(macOS 13.0, *) {
+            try? SMAppService.mainApp.unregister()
+        }
+        let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
+        try? FileManager.default.removeItem(atPath: configPath)
+        let appPath = Bundle.main.bundlePath
+        NSWorkspace.shared.recycle([URL(fileURLWithPath: appPath)]) { _, _ in
+            NSApp.terminate(nil)
+        }
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         if hasUnsavedChanges() {
             let alert = NSAlert()
@@ -936,7 +964,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let settings = NSMenuItem(title: "Preferences", action: #selector(openSettings), keyEquivalent: "")
+        let settings = NSMenuItem(title: "Configure", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
         let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
@@ -950,9 +978,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
-        let uninstall = NSMenuItem(title: "Uninstall...", action: #selector(uninstallApp), keyEquivalent: "")
-        uninstall.target = self
-        menu.addItem(uninstall)
         statusItem.menu = menu
     }
 
@@ -1107,28 +1132,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return SMAppService.mainApp.status == .enabled
         }
         return false
-    }
-
-    @objc func uninstallApp() {
-        let alert = NSAlert()
-        alert.messageText = "Uninstall QuickAccess?"
-        alert.informativeText = "This will remove the app, settings, and login item."
-        alert.addButton(withTitle: "Uninstall")
-        alert.addButton(withTitle: "Cancel")
-        alert.alertStyle = .critical
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-
-        // Remove Launch at Login
-        if #available(macOS 13.0, *) {
-            try? SMAppService.mainApp.unregister()
-        }
-        // Remove config file
-        try? FileManager.default.removeItem(atPath: configPath)
-        // Move app to trash
-        let appPath = Bundle.main.bundlePath
-        NSWorkspace.shared.recycle([URL(fileURLWithPath: appPath)]) { _, _ in
-            NSApp.terminate(nil)
-        }
     }
 
     @objc func quitApp() {
