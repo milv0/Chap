@@ -20,6 +20,7 @@ enum Defaults {
     static let coldStartDelay = 3.0
     static let resizeRetries = 20
     static let retryInterval = 0.2
+    static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
 
 // MARK: - Data Models for config persistence
@@ -205,7 +206,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     // MARK: Window setup — builds the settings UI layout
     func setupWindow() {
-        guard let screen = NSScreen.main else { return }
+        guard let screen = NSScreen.main else {
+            NSLog("[QuickAccess] No screen available, cannot create settings window")
+            return
+        }
 
         let winWidth: CGFloat = 780
         let winHeight: CGFloat = 580
@@ -942,6 +946,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var config: Config = Config(sites: [])
     let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
     let settingsController = SettingsWindowController()
+    let resizeQueue = DispatchQueue(label: "com.mingyupark.QuickAccess.resize")
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -1053,8 +1058,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Fix #1: Escape all AppleScript-special characters to prevent injection
         let rawDomain = URL(string: site.url)?.host ?? ""
         // Strict validation: only allow safe hostname characters
-        let domainRegex = try! NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
-        guard !rawDomain.isEmpty,
+        guard let domainRegex = Defaults.domainRegex,
+              !rawDomain.isEmpty,
               domainRegex.firstMatch(in: rawDomain, range: NSRange(rawDomain.startIndex..., in: rawDomain)) != nil else {
             return
         }
@@ -1106,7 +1111,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Reposition the window via osascript after a short delay
-        DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+        resizeQueue.asyncAfter(deadline: .now() + delay) {
             let scriptTask = Process()
             scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
             scriptTask.arguments = ["-e", script]
@@ -1123,12 +1128,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func openSettings() {
-        settingsController.onReload = { [weak self] in
-            self?.reloadConfig()
-            if let sites = self?.config.sites {
-                self?.settingsController.sites = sites
-                self?.settingsController.tableView.reloadData()
-                self?.settingsController.clearFields()
+        if settingsController.onReload == nil {
+            settingsController.onReload = { [weak self] in
+                self?.reloadConfig()
+                if let sites = self?.config.sites {
+                    self?.settingsController.sites = sites
+                    self?.settingsController.tableView.reloadData()
+                    self?.settingsController.clearFields()
+                }
             }
         }
         settingsController.showWindow(sites: config.sites, runInBackground: config.runInBackground) { [weak self] newSites, runInBackground in
