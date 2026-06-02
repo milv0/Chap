@@ -206,8 +206,8 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
     func setupWindow() {
         guard let screen = NSScreen.main else { return }
 
-        let winWidth: CGFloat = 820
-        let winHeight: CGFloat = 750
+        let winWidth: CGFloat = 780
+        let winHeight: CGFloat = 580
 
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: winWidth, height: winHeight),
                           styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
@@ -302,12 +302,12 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         screenLabel.font = NSFont.systemFont(ofSize: 11)
         screenLabel.textColor = .secondaryLabelColor
         boxContent.addSubview(screenLabel)
-        y -= 35
+        y -= 28
 
         // Visual layout preview buttons (9 buttons)
-        let lbtnWidth: CGFloat = 44
+        let lbtnWidth: CGFloat = 38
         let lbtnHeight: CGFloat = round(lbtnWidth * CGFloat(screenH) / CGFloat(screenW))
-        let lbtnSpacing: CGFloat = 4
+        let lbtnSpacing: CGFloat = 3
         let totalBtnWidth = 9 * lbtnWidth + 8 * lbtnSpacing
         let btnStartX = (boxWidth - 20 - totalBtnWidth) / 2
         layoutButtons = []
@@ -318,7 +318,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
             boxContent.addSubview(btn)
             layoutButtons.append(btn)
         }
-        y -= 40
+        y -= 32
 
         // Layout dropdown
         let layoutLabel = NSTextField(labelWithString: "Layout:")
@@ -331,7 +331,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         layoutPopup.target = self
         layoutPopup.action = #selector(layoutChanged(_:))
         boxContent.addSubview(layoutPopup)
-        y -= 30
+        y -= 26
 
         // Size dropdown
         let sizeLabel = NSTextField(labelWithString: "Size:")
@@ -344,7 +344,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         sizePopup.target = self
         sizePopup.action = #selector(sizeChanged(_:))
         boxContent.addSubview(sizePopup)
-        y -= 30
+        y -= 26
 
         // Name field
         let nameLbl = NSTextField(labelWithString: "Name:")
@@ -354,7 +354,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         boxContent.addSubview(nameLbl)
         nameField = NSTextField(frame: NSRect(x: fieldX, y: y, width: fieldWidth, height: fieldHeight))
         boxContent.addSubview(nameField)
-        y -= 30
+        y -= 26
 
         // URL field
         let urlLbl = NSTextField(labelWithString: "URL:")
@@ -364,7 +364,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         boxContent.addSubview(urlLbl)
         urlField = NSTextField(frame: NSRect(x: fieldX, y: y, width: fieldWidth, height: fieldHeight))
         boxContent.addSubview(urlField)
-        y -= 30
+        y -= 26
 
         // Width field
         let widthLbl = NSTextField(labelWithString: "Width:")
@@ -376,7 +376,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         widthField.placeholderString = "max: \(screenW)"
         widthField.delegate = self
         boxContent.addSubview(widthField)
-        y -= 30
+        y -= 26
 
         // Height field
         let heightLbl = NSTextField(labelWithString: "Height:")
@@ -388,7 +388,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         heightField.placeholderString = "max: \(screenH)"
         heightField.delegate = self
         boxContent.addSubview(heightField)
-        y -= 30
+        y -= 26
 
         // X field + xMaxLabel
         let xLbl = NSTextField(labelWithString: "X:")
@@ -407,7 +407,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         xMaxLabel.isBordered = false
         xMaxLabel.isEditable = false
         boxContent.addSubview(xMaxLabel)
-        y -= 30
+        y -= 26
 
         // Y field + yMaxLabel
         let yLbl = NSTextField(labelWithString: "Y:")
@@ -426,7 +426,7 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         yMaxLabel.isBordered = false
         yMaxLabel.isEditable = false
         boxContent.addSubview(yMaxLabel)
-        y -= 30
+        y -= 26
 
         // Center button — auto-calculates X/Y to center the window
         let centerBtn = NSButton(frame: NSRect(x: fieldX, y: y, width: 80, height: 24))
@@ -436,18 +436,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         centerBtn.target = self
         centerBtn.action = #selector(centerButtonClicked)
         boxContent.addSubview(centerBtn)
-        y -= 30
+        y -= 24
 
-        // Info text
-        let centerInfo = NSTextField(labelWithString: "※ Layout selection auto-calculates Width/Height/X/Y.")
-        centerInfo.frame = NSRect(x: fieldX, y: y, width: 380, height: 16)
-        centerInfo.font = NSFont.systemFont(ofSize: 10)
-        centerInfo.textColor = .tertiaryLabelColor
-        boxContent.addSubview(centerInfo)
-        y -= 30
-
-        // Minimap preview — centered below info text
-        let minimapWidth: CGFloat = 150
+        // Minimap preview
+        let minimapWidth: CGFloat = 120
         let minimapHeight: CGFloat = minimapWidth * (screen.frame.height / screen.frame.width)
         let minimapX = (boxWidth - 20 - minimapWidth) / 2
         minimapView = MinimapView(frame: NSRect(x: minimapX, y: y - minimapHeight, width: minimapWidth, height: minimapHeight))
