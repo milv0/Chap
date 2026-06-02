@@ -832,10 +832,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
         if let button = statusItem.button {
-            let attr = NSAttributedString(string: "QA", attributes: [
-                .font: NSFont.boldSystemFont(ofSize: 11)
-            ])
-            button.attributedTitle = attr
+            button.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: "QuickAccess")
         }
         buildMenu()
     }
