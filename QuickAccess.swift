@@ -964,7 +964,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let settings = NSMenuItem(title: "Configure", action: #selector(openSettings), keyEquivalent: "")
+        let settings = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
         let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
