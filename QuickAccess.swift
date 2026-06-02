@@ -837,29 +837,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         buildMenu()
     }
 
-    // MARK: Config handling — copies default config on first launch
+    // MARK: Config handling — writes default config on first launch
     func copyDefaultConfigIfNeeded() {
         if !FileManager.default.fileExists(atPath: configPath) {
-            if let bundledPath = Bundle.main.path(forResource: "quickaccess-default", ofType: "json") {
-                do {
-                    try FileManager.default.copyItem(atPath: bundledPath, toPath: configPath)
-                } catch {
-                    NSLog("[QuickAccess] Failed to copy default config: %@", error.localizedDescription)
-                }
-            } else {
-                let defaultJSON = """
-                {
-                  "sites": [
-                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100},
-                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 200, "y": 100}
-                  ]
-                }
-                """
-                do {
-                    try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
-                } catch {
-                    NSLog("[QuickAccess] Failed to write default config: %@", error.localizedDescription)
-                }
+            let defaultJSON = """
+            {
+              "sites": [
+                {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100},
+                {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100}
+              ]
+            }
+            """
+            do {
+                try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
+            } catch {
+                NSLog("[QuickAccess] Failed to write default config: %@", error.localizedDescription)
             }
         }
     }
