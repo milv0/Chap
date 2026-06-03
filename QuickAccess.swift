@@ -416,6 +416,12 @@ struct WelcomeView: View {
             }
             .padding(.horizontal, 24)
 
+            Text("⚠️ First launch may not resize the window.\nJust re-open the site and it will work from then on.")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
             Spacer()
 
             Toggle("Don't show this again", isOn: $dontShowAgain)
