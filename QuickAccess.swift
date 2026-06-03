@@ -824,10 +824,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
 
             // Basic URL validation: must not be empty and must start with "http"
             let url = urlField.stringValue.trimmingCharacters(in: .whitespaces)
-            if url.isEmpty || !url.hasPrefix("http") {
+            if url.isEmpty || URL(string: url)?.scheme?.hasPrefix("http") != true || URL(string: url)?.host == nil {
                 let alert = NSAlert()
                 alert.messageText = "Invalid URL"
-                alert.informativeText = "URL must start with \"http\" or \"https\"."
+                alert.informativeText = "Please enter a valid URL starting with \"http://\" or \"https://\"."
                 alert.alertStyle = .warning
                 alert.runModal()
                 return
@@ -838,8 +838,8 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
             let screenH = Int(screen.frame.height)
             var w = Int(widthField.stringValue) ?? Defaults.defaultWidth
             var h = Int(heightField.stringValue) ?? Defaults.defaultHeight
-            w = min(w, screenW)
-            h = min(h, screenH)
+            w = max(100, min(w, screenW))
+            h = max(100, min(h, screenH))
             var x = Int(xField.stringValue) ?? Defaults.defaultX
             var y = Int(yField.stringValue) ?? Defaults.defaultY
             x = max(0, min(x, screenW - w))
@@ -849,6 +849,10 @@ class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         onSave?(sites, backgroundCheckbox.state == .on)
         saveBtn.isEnabled = false
+        saveBtn.title = "Saved ✓"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.saveBtn.title = "Save"
+        }
     }
 
     @objc func reload() {
@@ -1033,13 +1037,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showAbout() {
         let alert = NSAlert()
         alert.messageText = "QuickAccess"
-        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Mingyu"
+        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Mingyu\nuqwe00@gmail.com"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
-        NSApp.setActivationPolicy(config.runInBackground ? .accessory : .regular)
     }
 
     // MARK: Site opening logic — launches Chrome in app mode, then repositions via AppleScript
@@ -1061,6 +1062,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let domainRegex = Defaults.domainRegex,
               !rawDomain.isEmpty,
               domainRegex.firstMatch(in: rawDomain, range: NSRange(rawDomain.startIndex..., in: rawDomain)) != nil else {
+            NSLog("[QuickAccess] Invalid domain: %@", rawDomain)
             return
         }
         let domain = rawDomain
