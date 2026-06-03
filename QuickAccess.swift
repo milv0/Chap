@@ -84,6 +84,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try? task.run()
             task.waitUntilExit()
         }
+
+        // First launch: show welcome guide + open settings
+        let hasLaunched = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
+        if !hasLaunched {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let alert = NSAlert()
+                alert.messageText = "Welcome to QuickAccess! ⚡"
+                alert.informativeText = "1. Add your favorite sites in Settings\n2. Set window size & position\n3. Click a site from the menubar to launch\n\nTip: Allow Chrome automation when prompted for window resizing to work."
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "Open Settings")
+                alert.runModal()
+                self.openSettings()
+            }
+        }
     }
 
     // MARK: Config handling — writes default config on first launch
