@@ -469,86 +469,63 @@ struct SiteConfigView: View {
     private let sizes: [(Int, Int)] = [(400,200), (600,300), (800,500), (1000,700), (1200,800), (1000,400), (500,800), (1400,900)]
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Name & URL
-                Group {
-                    LabeledField("Name") {
-                        TextField("Site name", text: $site.name)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                    LabeledField("URL") {
-                        TextField("https://", text: $site.url)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                }
-                
-                Divider()
-                
-                // Layout & Size
-                Group {
-                    LabeledField("Layout") {
-                        Picker("", selection: $layoutSelection) {
-                            ForEach(0..<layoutOptions.count, id: \.self) { i in
-                                Text(layoutOptions[i]).tag(i)
-                            }
-                        }
-                        .labelsHidden()
-                        .onChange(of: layoutSelection) { _, _ in if !suppressOnChange { applyLayout() } }
-                    }
-                    
-                    LabeledField("Size") {
-                        Picker("", selection: $sizeSelection) {
-                            ForEach(0..<sizeOptions.count, id: \.self) { i in
-                                Text(sizeOptions[i]).tag(i)
-                            }
-                        }
-                        .labelsHidden()
-                        .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { applySize() } }
+        Form {
+            Section("Site Info") {
+                TextField("Name", text: $site.name)
+                TextField("URL", text: $site.url)
+            }
+            
+            Section("Layout & Size") {
+                Picker("Layout", selection: $layoutSelection) {
+                    ForEach(0..<layoutOptions.count, id: \.self) { i in
+                        Text(layoutOptions[i]).tag(i)
                     }
                 }
+                .onChange(of: layoutSelection) { _, _ in if !suppressOnChange { applyLayout() } }
                 
-                Divider()
-                
-                // Dimensions
-                HStack(spacing: 12) {
-                    LabeledField("Width") {
-                        TextField("", text: Binding(get: { "\(site.width)" }, set: { site.width = max(100, Int($0) ?? site.width) }))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-                    LabeledField("Height") {
-                        TextField("", text: Binding(get: { "\(site.height)" }, set: { site.height = max(100, Int($0) ?? site.height) }))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
+                Picker("Size", selection: $sizeSelection) {
+                    ForEach(0..<sizeOptions.count, id: \.self) { i in
+                        Text(sizeOptions[i]).tag(i)
                     }
                 }
-                
-                HStack(spacing: 12) {
-                    LabeledField("X") {
-                        TextField("", text: Binding(get: { "\(site.x)" }, set: { site.x = max(0, Int($0) ?? site.x) }))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-                    LabeledField("Y") {
-                        TextField("", text: Binding(get: { "\(site.y)" }, set: { site.y = max(0, Int($0) ?? site.y) }))
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 80)
-                    }
-                    
+                .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { applySize() } }
+            }
+            
+            Section("Position & Dimensions") {
+                HStack {
+                    Text("Width")
+                        .frame(width: 45, alignment: .leading)
+                    TextField("", text: Binding(get: { "\(site.width)" }, set: { site.width = max(100, Int($0) ?? site.width) }))
+                        .frame(width: 70)
+                    Text("Height")
+                        .frame(width: 50, alignment: .leading)
+                    TextField("", text: Binding(get: { "\(site.height)" }, set: { site.height = max(100, Int($0) ?? site.height) }))
+                        .frame(width: 70)
+                }
+                HStack {
+                    Text("X")
+                        .frame(width: 45, alignment: .leading)
+                    TextField("", text: Binding(get: { "\(site.x)" }, set: { site.x = max(0, Int($0) ?? site.x) }))
+                        .frame(width: 70)
+                    Text("Y")
+                        .frame(width: 50, alignment: .leading)
+                    TextField("", text: Binding(get: { "\(site.y)" }, set: { site.y = max(0, Int($0) ?? site.y) }))
+                        .frame(width: 70)
+                    Spacer()
                     Button("⊹ Center") { centerXY() }
                         .buttonStyle(.bordered)
+                        .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
                 }
-                
-                // Minimap
+            }
+            
+            Section("Preview") {
                 MinimapSwiftUI(width: site.width, height: site.height, x: site.x, y: site.y)
                     .frame(height: 80)
                     .frame(maxWidth: .infinity)
                     .id("\(site.width)-\(site.height)-\(site.x)-\(site.y)")
-                
-                Spacer()
-                
-                // Uninstall
+            }
+            
+            Section {
                 HStack {
                     Spacer()
                     Button("Uninstall App") { uninstall() }
@@ -556,8 +533,8 @@ struct SiteConfigView: View {
                         .font(.system(size: 11))
                 }
             }
-            .padding(16)
         }
+        .formStyle(.grouped)
         .onAppear { detectPresets() }
         .onChange(of: site.url) { _, _ in detectPresets() }
     }
@@ -657,25 +634,6 @@ struct SiteConfigView: View {
 
 // MARK: - Helper Views
 
-struct LabeledField<Content: View>: View {
-    let label: String
-    let content: Content
-    
-    init(_ label: String, @ViewBuilder content: () -> Content) {
-        self.label = label
-        self.content = content()
-    }
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .frame(width: 50, alignment: .trailing)
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-            content
-        }
-    }
-}
 
 struct MinimapSwiftUI: View {
     let width: Int
