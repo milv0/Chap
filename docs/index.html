@@ -13,7 +13,8 @@
     .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
 
     /* Hero */
-    .hero { min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+    .hero { min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+    .hero::before { content: '#ea580c'; position: absolute; font-size: 8rem; font-weight: 900; color: rgba(234,88,12,0.04); font-family: monospace; white-space: nowrap; transform: rotate(-12deg); pointer-events: none; }
     .hero h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 12px; }
     .hero p { font-size: 1.1rem; color: #555; max-width: 500px; margin: 0 auto 24px; }
     .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; background: #fff3e0; color: #ea580c; margin-bottom: 16px; }
