@@ -18,15 +18,15 @@ enum Defaults {
     static let defaultX = 100
     static let defaultY = 100
     static let resizeDelay = 0.2
-    static let coldStartDelay = 3.0
-    static let resizeRetries = 20
-    static let retryInterval = 0.2
+    static let coldStartDelay = 1.0
+    static let resizeRetries = 40
+    static let retryInterval = 0.3
     static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
 
 // MARK: - Data Models for config persistence
 
-struct Site: Codable {
+struct Site: Codable, Equatable {
     var name: String
     var url: String
     var width: Int
@@ -245,12 +245,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
         
-        var sites = config.sites
-        var runInBackground = config.runInBackground
-        
-        var settingsView = SettingsView(sites: .init(get: { sites }, set: { sites = $0 }),
-                                         runInBackground: .init(get: { runInBackground }, set: { runInBackground = $0 }))
-        settingsView.onSave = { [weak self] newSites, bg in
+        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground)
+        vm.onSave = { [weak self] newSites, bg in
             guard let self = self else { return }
             self.config = Config(runInBackground: bg, sites: newSites)
             let encoder = JSONEncoder()
@@ -258,13 +254,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if let data = try? encoder.encode(self.config) {
                 try? data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             }
-            self.buildMenu()
-            NSApp.setActivationPolicy(bg ? .accessory : .regular)
+            DispatchQueue.main.async { self.buildMenu() }
         }
-        settingsView.onReload = { [weak self] in
+        vm.onReload = { [weak self] in
             self?.reloadConfig()
         }
         
+        let settingsView = SettingsView(vm: vm)
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "QuickAccess Settings"
@@ -315,27 +311,43 @@ import SwiftUI
 
 // MARK: - SwiftUI Settings View
 
+class SettingsViewModel: ObservableObject {
+    @Published var sites: [Site]
+    @Published var runInBackground: Bool
+    let originalSites: [Site]
+    let originalBg: Bool
+    var onSave: (([Site], Bool) -> Void)?
+    var onReload: (() -> Void)?
+    
+    var hasChanges: Bool {
+        sites != originalSites || runInBackground != originalBg
+    }
+    
+    init(sites: [Site], runInBackground: Bool) {
+        self.sites = sites
+        self.runInBackground = runInBackground
+        self.originalSites = sites
+        self.originalBg = runInBackground
+    }
+}
+
 struct SettingsView: View {
-    @Binding var sites: [Site]
-    @Binding var runInBackground: Bool
+    @ObservedObject var vm: SettingsViewModel
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showSavedFeedback = false
-    
-    var onSave: (([Site], Bool) -> Void)?
-    var onReload: (() -> Void)?
     
     var body: some View {
         HSplitView {
             // Left: Site list
             VStack(spacing: 8) {
                 List(selection: $selectedIndex) {
-                    ForEach(sites.indices, id: \.self) { i in
-                        Text(sites[i].name)
+                    ForEach(vm.sites.indices, id: \.self) { i in
+                        Text(vm.sites[i].name)
                             .tag(i)
                     }
                     .onMove { from, to in
-                        sites.move(fromOffsets: from, toOffset: to)
+                        vm.sites.move(fromOffsets: from, toOffset: to)
                     }
                 }
                 .listStyle(.bordered)
@@ -352,8 +364,8 @@ struct SettingsView: View {
             
             // Right: Site config
             VStack(alignment: .leading, spacing: 0) {
-                if let idx = selectedIndex, idx < sites.count {
-                    SiteConfigView(site: $sites[idx])
+                if let idx = selectedIndex, idx < vm.sites.count {
+                    SiteConfigView(site: $vm.sites[idx])
                 } else {
                     Spacer()
                     Text("Select a site to configure")
@@ -366,7 +378,7 @@ struct SettingsView: View {
                 
                 // Bottom bar
                 HStack {
-                    Toggle("Run in Background", isOn: $runInBackground)
+                    Toggle("Run in Background", isOn: $vm.runInBackground)
                         .toggleStyle(.checkbox)
                         .font(.system(size: 11))
                     
@@ -374,11 +386,12 @@ struct SettingsView: View {
                     
                     Button("Import") { importConfig() }
                     Button("Export") { exportConfig() }
-                    Button("Reload") { onReload?() }
+                    Button("Reload") { vm.onReload?() }
                     
                     Button(showSavedFeedback ? "Saved ✓" : "Save") { save() }
                         .buttonStyle(.borderedProminent)
                         .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                        .disabled(!vm.hasChanges && !showSavedFeedback)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
@@ -389,25 +402,25 @@ struct SettingsView: View {
             Button("Delete", role: .destructive) { removeSite() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            if let idx = selectedIndex, idx < sites.count {
-                Text("This will remove \"\(sites[idx].name)\".")
+            if let idx = selectedIndex, idx < vm.sites.count {
+                Text("This will remove \"\(vm.sites[idx].name)\".")
             }
         }
     }
     
     private func addSite() {
-        sites.append(Site(name: "New Site", url: "https://", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
-        selectedIndex = sites.count - 1
+        vm.sites.append(Site(name: "New Site", url: "https://", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
+        selectedIndex = vm.sites.count - 1
     }
     
     private func removeSite() {
-        guard let idx = selectedIndex, idx < sites.count else { return }
-        sites.remove(at: idx)
-        selectedIndex = sites.isEmpty ? nil : min(idx, sites.count - 1)
+        guard let idx = selectedIndex, idx < vm.sites.count else { return }
+        vm.sites.remove(at: idx)
+        selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
     }
     
     private func save() {
-        onSave?(sites, runInBackground)
+        vm.onSave?(vm.sites, vm.runInBackground)
         showSavedFeedback = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { showSavedFeedback = false }
     }
@@ -431,9 +444,9 @@ struct SettingsView: View {
             let config = try JSONDecoder().decode(Config.self, from: data)
             let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
             try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
-            sites = config.sites
-            runInBackground = config.runInBackground
-            onReload?()
+            vm.sites = config.sites
+            vm.runInBackground = config.runInBackground
+            vm.onReload?()
         } catch {
             // silent
         }
@@ -446,6 +459,7 @@ struct SiteConfigView: View {
     @Binding var site: Site
     @State private var layoutSelection = 0
     @State private var sizeSelection = 0
+    @State private var suppressOnChange = false
     
     private let layoutOptions = ["Custom", "Center", "Left Half", "Right Half", "Top Half", "Bottom Half", "Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]
     private let sizeOptions = ["Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)", "XL (1200×800)", "Wide (1000×400)", "Tall (500×800)", "Full (1400×900)"]
@@ -477,7 +491,7 @@ struct SiteConfigView: View {
                             }
                         }
                         .labelsHidden()
-                        .onChange(of: layoutSelection) { applyLayout() }
+                        .onChange(of: layoutSelection) { _, _ in if !suppressOnChange { applyLayout() } }
                     }
                     
                     LabeledField("Size") {
@@ -487,7 +501,7 @@ struct SiteConfigView: View {
                             }
                         }
                         .labelsHidden()
-                        .onChange(of: sizeSelection) { applySize() }
+                        .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { applySize() } }
                     }
                 }
                 
@@ -496,12 +510,12 @@ struct SiteConfigView: View {
                 // Dimensions
                 HStack(spacing: 12) {
                     LabeledField("Width") {
-                        TextField("", value: $site.width, format: .number)
+                        TextField("", text: Binding(get: { "\(site.width)" }, set: { site.width = max(100, Int($0) ?? site.width) }))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                     }
                     LabeledField("Height") {
-                        TextField("", value: $site.height, format: .number)
+                        TextField("", text: Binding(get: { "\(site.height)" }, set: { site.height = max(100, Int($0) ?? site.height) }))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                     }
@@ -509,12 +523,12 @@ struct SiteConfigView: View {
                 
                 HStack(spacing: 12) {
                     LabeledField("X") {
-                        TextField("", value: $site.x, format: .number)
+                        TextField("", text: Binding(get: { "\(site.x)" }, set: { site.x = max(0, Int($0) ?? site.x) }))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                     }
                     LabeledField("Y") {
-                        TextField("", value: $site.y, format: .number)
+                        TextField("", text: Binding(get: { "\(site.y)" }, set: { site.y = max(0, Int($0) ?? site.y) }))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 80)
                     }
@@ -524,9 +538,10 @@ struct SiteConfigView: View {
                 }
                 
                 // Minimap
-                MinimapSwiftUI(site: site)
+                MinimapSwiftUI(width: site.width, height: site.height, x: site.x, y: site.y)
                     .frame(height: 80)
                     .frame(maxWidth: .infinity)
+                    .id("\(site.width)-\(site.height)-\(site.x)-\(site.y)")
                 
                 Spacer()
                 
@@ -540,40 +555,84 @@ struct SiteConfigView: View {
             }
             .padding(16)
         }
+        .onAppear { detectPresets() }
+        .onChange(of: site.url) { _, _ in detectPresets() }
+    }
+    
+    private func detectPresets() {
+        suppressOnChange = true
+        guard let screen = NSScreen.main else { suppressOnChange = false; return }
+        let screenW = Int(screen.frame.width)
+        let screenH = Int(screen.frame.height)
+        
+        // Detect layout
+        let layoutPresets: [(Int, Int, Int, Int)] = [
+            (site.width, site.height, (screenW - site.width) / 2, (screenH - site.height) / 2), // Center
+            (screenW/2, screenH, 0, 0),
+            (screenW/2, screenH, screenW/2, 0),
+            (screenW, screenH/2, 0, 0),
+            (screenW, screenH/2, 0, screenH/2),
+            (screenW/2, screenH/2, 0, 0),
+            (screenW/2, screenH/2, screenW/2, 0),
+            (screenW/2, screenH/2, 0, screenH/2),
+            (screenW/2, screenH/2, screenW/2, screenH/2),
+        ]
+        var detected = 0
+        for (i, p) in layoutPresets.enumerated() where i > 0 {
+            if site.width == p.0 && site.height == p.1 && site.x == p.2 && site.y == p.3 { detected = i + 1; break }
+        }
+        if detected == 0 && site.x == (screenW - site.width) / 2 && site.y == (screenH - site.height) / 2 { detected = 1 }
+        layoutSelection = detected
+        
+        // Detect size
+        var detectedSize = 0
+        for (i, sz) in sizes.enumerated() {
+            if site.width == sz.0 && site.height == sz.1 { detectedSize = i + 1; break }
+        }
+        sizeSelection = detectedSize
+        suppressOnChange = false
     }
     
     private func centerXY() {
         guard let screen = NSScreen.main else { return }
-        let screenW = Int(screen.frame.width)
-        let screenH = Int(screen.frame.height)
-        site.x = (screenW - site.width) / 2
-        site.y = (screenH - site.height) / 2
+        var s = site
+        s.x = (Int(screen.frame.width) - s.width) / 2
+        s.y = (Int(screen.frame.height) - s.height) / 2
+        site = s
     }
     
     private func applyLayout() {
         guard let screen = NSScreen.main else { return }
         let screenW = Int(screen.frame.width)
         let screenH = Int(screen.frame.height)
+        var s = site
         switch layoutSelection {
-        case 1: centerXY()
-        case 2: site.width = screenW/2; site.height = screenH; site.x = 0; site.y = 0
-        case 3: site.width = screenW/2; site.height = screenH; site.x = screenW/2; site.y = 0
-        case 4: site.width = screenW; site.height = screenH/2; site.x = 0; site.y = 0
-        case 5: site.width = screenW; site.height = screenH/2; site.x = 0; site.y = screenH/2
-        case 6: site.width = screenW/2; site.height = screenH/2; site.x = 0; site.y = 0
-        case 7: site.width = screenW/2; site.height = screenH/2; site.x = screenW/2; site.y = 0
-        case 8: site.width = screenW/2; site.height = screenH/2; site.x = 0; site.y = screenH/2
-        case 9: site.width = screenW/2; site.height = screenH/2; site.x = screenW/2; site.y = screenH/2
-        default: break
+        case 1: s.x = (screenW - s.width) / 2; s.y = (screenH - s.height) / 2
+        case 2: s.width = screenW/2; s.height = screenH; s.x = 0; s.y = 0
+        case 3: s.width = screenW/2; s.height = screenH; s.x = screenW/2; s.y = 0
+        case 4: s.width = screenW; s.height = screenH/2; s.x = 0; s.y = 0
+        case 5: s.width = screenW; s.height = screenH/2; s.x = 0; s.y = screenH/2
+        case 6: s.width = screenW/2; s.height = screenH/2; s.x = 0; s.y = 0
+        case 7: s.width = screenW/2; s.height = screenH/2; s.x = screenW/2; s.y = 0
+        case 8: s.width = screenW/2; s.height = screenH/2; s.x = 0; s.y = screenH/2
+        case 9: s.width = screenW/2; s.height = screenH/2; s.x = screenW/2; s.y = screenH/2
+        default: return
         }
+        site = s
     }
     
     private func applySize() {
         guard sizeSelection > 0 else { return }
         let (w, h) = sizes[sizeSelection - 1]
-        site.width = w
-        site.height = h
-        if layoutSelection == 1 { centerXY() }
+        var s = site
+        s.width = w
+        s.height = h
+        if layoutSelection == 1 {
+            guard let screen = NSScreen.main else { site = s; return }
+            s.x = (Int(screen.frame.width) - w) / 2
+            s.y = (Int(screen.frame.height) - h) / 2
+        }
+        site = s
     }
     
     private func uninstall() {
@@ -616,7 +675,10 @@ struct LabeledField<Content: View>: View {
 }
 
 struct MinimapSwiftUI: View {
-    let site: Site
+    let width: Int
+    let height: Int
+    let x: Int
+    let y: Int
     
     var body: some View {
         GeometryReader { geo in
@@ -640,8 +702,8 @@ struct MinimapSwiftUI: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Color.orange.opacity(0.3))
                     .overlay(RoundedRectangle(cornerRadius: 2).stroke(Color.orange))
-                    .frame(width: CGFloat(site.width) * scale, height: CGFloat(site.height) * scale)
-                    .offset(x: offsetX + CGFloat(site.x) * scale, y: CGFloat(site.y) * scale)
+                    .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
+                    .offset(x: offsetX + CGFloat(x) * scale, y: CGFloat(y) * scale)
             }
         }
     }

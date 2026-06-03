@@ -12,7 +12,7 @@ A macOS menubar app that launches websites in clean, standalone Chrome windows.
 - 🎯 **Layout Presets** — Center, half, quarter placement
 - 📏 **Size Presets** — Tiny to Full, quick selection
 - 🎯 **Center Button** — Auto-center with one click
-- ⚙️ **Settings GUI** — Add/edit/remove sites without touching code
+- ⚙️ **Settings GUI** — Modern SwiftUI interface to add/edit/remove sites
 - 📦 **Import/Export** — Share settings via JSON
 - 🚀 **Launch at Login** — Auto-start toggle
 - 🗑️ **Uninstall** — Remove app + config + login item from Settings
