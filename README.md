@@ -2,6 +2,8 @@
 
 A macOS menubar app that launches websites in clean, standalone Chrome windows.
 
+> 🎵 *Vibe-coded from scratch — no Xcode, just vibes and a single Swift file.*
+
 ![Version](https://img.shields.io/badge/version-2.1.1-orange)
 
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue) ![Swift](https://img.shields.io/badge/Swift-5.9+-orange) ![License](https://img.shields.io/badge/license-MIT-green)
