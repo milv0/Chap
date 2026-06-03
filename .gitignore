@@ -3,6 +3,7 @@ QuickAccess.app/Contents/MacOS/QuickAccess
 
 # Distribution zip
 *.zip
+!docs/QuickAccess.zip
 
 # macOS system files
 .DS_Store
