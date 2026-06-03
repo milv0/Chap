@@ -187,7 +187,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showAbout() {
         let alert = NSAlert()
         alert.messageText = "QuickAccess"
-        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Mingyu\nuqwe00@gmail.com"
+        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Mingyu"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
