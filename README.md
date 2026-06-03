@@ -4,7 +4,7 @@ A macOS menubar app that launches websites in clean, standalone Chrome windows.
 
 > 🎵 *Vibe-coded with Kiro*
 
-![Version](https://img.shields.io/badge/version-2.2.3-orange)
+![Version](https://img.shields.io/badge/version-2.2.4-orange)
 
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue) ![Swift](https://img.shields.io/badge/Swift-5.9+-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -35,7 +35,7 @@ curl -sL https://milv0.github.io/QuickAccess/install.sh | bash
 ```
 
 **Or manually:**
-1. Download [QuickAccess-v2.2.3.zip](https://milv0.github.io/QuickAccess/QuickAccess-v2.2.3.zip)
+1. Download [QuickAccess-v2.2.4.zip](https://milv0.github.io/QuickAccess/QuickAccess-v2.2.4.zip)
 2. Unzip → folder contains `QuickAccess.app` + `install.sh`
 3. Double-click `install.sh` (or right-click → Open) to install
 
