@@ -75,6 +75,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: "QuickAccess")
         }
         buildMenu()
+
+        // Pre-trigger automation permission for Chrome on first launch
+        DispatchQueue.global().async {
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+            task.arguments = ["-e", "tell application \"Google Chrome\" to get name"]
+            try? task.run()
+            task.waitUntilExit()
+        }
     }
 
     // MARK: Config handling — writes default config on first launch
