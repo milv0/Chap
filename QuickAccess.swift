@@ -487,6 +487,8 @@ struct SiteConfigView: View {
     @State private var layoutSelection = 0
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
+    @State private var pulseScale: CGFloat = 1.0
+    private var isFirstLaunch: Bool { !UserDefaults.standard.bool(forKey: "hasUsedCenter") }
     
     private let layoutOptions = ["Custom", "Center", "Left Half", "Right Half", "Top Half", "Bottom Half", "Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]
     private let sizeOptions = ["Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)", "XL (1200×800)", "Wide (1000×400)", "Tall (500×800)", "Full (1400×900)"]
@@ -562,6 +564,10 @@ struct SiteConfigView: View {
                     
                     Button("⊹ Center") { centerXY() }
                         .buttonStyle(.bordered)
+                        .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                        .scaleEffect(isFirstLaunch ? pulseScale : 1.0)
+                        .animation(isFirstLaunch ? .easeInOut(duration: 0.8).repeatCount(5, autoreverses: true) : .default, value: pulseScale)
+                        .onAppear { if isFirstLaunch { pulseScale = 1.1 } }
                 }
                 
                 // Minimap
@@ -626,6 +632,8 @@ struct SiteConfigView: View {
         s.x = (Int(screen.frame.width) - s.width) / 2
         s.y = (Int(screen.frame.height) - s.height) / 2
         site = s
+        UserDefaults.standard.set(true, forKey: "hasUsedCenter")
+        pulseScale = 1.0
     }
     
     private func applyLayout() {
