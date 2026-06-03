@@ -340,7 +340,6 @@ struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
-    @State private var showSavedFeedback = false
     
     var body: some View {
         HSplitView {
@@ -393,10 +392,10 @@ struct SettingsView: View {
                     Button("Export") { exportConfig() }
                     Button("Reload") { vm.onReload?() }
                     
-                    Button(showSavedFeedback ? "Saved ✓" : "Save") { save() }
+                    Button("Save") { save() }
                         .buttonStyle(.borderedProminent)
                         .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
-                        .disabled(!vm.hasChanges && !showSavedFeedback)
+                        .disabled(!vm.hasChanges)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
@@ -427,8 +426,6 @@ struct SettingsView: View {
     private func save() {
         vm.onSave?(vm.sites, vm.runInBackground)
         vm.markSaved()
-        showSavedFeedback = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { showSavedFeedback = false }
     }
     
     private func exportConfig() {
