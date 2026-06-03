@@ -95,15 +95,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !hasLaunched {
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let alert = NSAlert()
-                alert.messageText = "Welcome to QuickAccess! ⚡"
-                alert.informativeText = "1. Add sites in Settings (Name + URL)\n2. Set window size, then click ⊹ Center to auto-position\n3. Use Layout/Size presets for quick setup\n4. Click a site from the menubar ⚡ to launch\n\nTip: Allow Chrome automation when prompted."
-                alert.alertStyle = .informational
-                alert.addButton(withTitle: "Open Settings")
-                alert.runModal()
-                self.openSettings()
+                self.showWelcomeWindow()
             }
         }
+    }
+
+    func showWelcomeWindow() {
+        let welcomeView = WelcomeView {
+            self.openSettings()
+        }
+        let controller = NSHostingController(rootView: welcomeView)
+        let window = NSWindow(contentViewController: controller)
+        window.title = ""
+        window.titlebarAppearsTransparent = true
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 500, height: 380))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // MARK: Config handling — writes default config on first launch
@@ -378,6 +388,65 @@ class SettingsViewModel: ObservableObject {
         self.runInBackground = runInBackground
         self.originalSites = sites
         self.originalBg = runInBackground
+    }
+}
+
+// MARK: - Welcome View
+
+struct WelcomeView: View {
+    var onOpenSettings: () -> Void
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Text("⚡")
+                .font(.system(size: 50))
+
+            Text("Welcome to QuickAccess")
+                .font(.system(size: 24, weight: .bold))
+
+            VStack(alignment: .leading, spacing: 12) {
+                GuideRow(icon: "plus.circle", text: "Add sites in Settings (Name + URL)")
+                GuideRow(icon: "arrow.up.left.and.arrow.down.right", text: "Set window size, then click ⊹ Center")
+                GuideRow(icon: "rectangle.grid.2x2", text: "Use Layout/Size presets for quick setup")
+                GuideRow(icon: "cursorarrow.click.2", text: "Click a site from the menubar to launch")
+                GuideRow(icon: "checkmark.shield", text: "Allow Chrome automation when prompted")
+            }
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            Button(action: {
+                dismiss()
+                onOpenSettings()
+            }) {
+                Text("Open Settings")
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+            .padding(.horizontal, 40)
+            .padding(.bottom, 24)
+        }
+        .frame(width: 500, height: 380)
+    }
+}
+
+struct GuideRow: View {
+    let icon: String
+    let text: String
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .frame(width: 20)
+                .foregroundColor(Color(red: 234/255, green: 88/255, blue: 12/255))
+            Text(text)
+                .font(.system(size: 13))
+        }
     }
 }
 
