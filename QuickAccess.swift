@@ -24,60 +24,6 @@ enum Defaults {
     static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
 
-// MARK: - Localization
-
-class L10n: ObservableObject {
-    static let shared = L10n()
-    @Published var lang: String = UserDefaults.standard.string(forKey: "appLang") ?? "en"
-    
-    func set(_ lang: String) {
-        self.lang = lang
-        UserDefaults.standard.set(lang, forKey: "appLang")
-    }
-    
-    func t(_ key: String) -> String { L10n.strings[key]?[lang] ?? key }
-    
-    static let strings: [String: [String: String]] = [
-        // Menu
-        "settings": ["en": "Settings...", "ko": "설정..."],
-        "about": ["en": "About QuickAccess", "ko": "QuickAccess 정보"],
-        "launchAtLogin": ["en": "Launch at Login", "ko": "로그인 시 시작"],
-        "quit": ["en": "Quit", "ko": "종료"],
-        "language": ["en": "한국어", "ko": "English"],
-        // Settings
-        "add": ["en": "Add", "ko": "추가"],
-        "remove": ["en": "Remove", "ko": "삭제"],
-        "save": ["en": "Save", "ko": "저장"],
-        "import": ["en": "Import", "ko": "가져오기"],
-        "export": ["en": "Export", "ko": "내보내기"],
-        "reload": ["en": "Reload", "ko": "새로고침"],
-        "runInBackground": ["en": "Run in Background", "ko": "백그라운드 실행"],
-        "selectSite": ["en": "Select a site to configure", "ko": "설정할 사이트를 선택하세요"],
-        "deleteSite": ["en": "Delete site?", "ko": "사이트를 삭제할까요?"],
-        "deleteConfirm": ["en": "This will remove", "ko": "삭제됩니다:"],
-        "delete": ["en": "Delete", "ko": "삭제"],
-        "cancel": ["en": "Cancel", "ko": "취소"],
-        "center": ["en": "⊹ Center", "ko": "⊹ 중앙"],
-        "unsavedTitle": ["en": "You have unsaved changes.", "ko": "저장하지 않은 변경사항이 있습니다."],
-        "unsavedMsg": ["en": "Changes will be lost if you close.", "ko": "닫으면 변경사항이 사라집니다."],
-        "close": ["en": "Close", "ko": "닫기"],
-        // Welcome
-        "welcomeTitle": ["en": "Welcome to QuickAccess", "ko": "QuickAccess에 오신 걸 환영합니다"],
-        "openSettings": ["en": "Open Settings", "ko": "설정 열기"],
-        "dontShow": ["en": "Don't show this again", "ko": "다시 표시 안 함"],
-        "guide1": ["en": "Click ⚡ in menubar → select a site", "ko": "메뉴바 ⚡ 클릭 → 사이트 선택"],
-        "guide2": ["en": "Settings → add sites (Name + URL)", "ko": "설정 → 사이트 추가 (이름 + URL)"],
-        "guide3": ["en": "Set Width/Height, click ⊹ Center", "ko": "너비/높이 설정 후 ⊹ 중앙 클릭"],
-        "guide4": ["en": "Use Layout/Size presets", "ko": "레이아웃/사이즈 프리셋 활용"],
-        "guide5": ["en": "Import/Export to share settings", "ko": "Import/Export로 설정 공유"],
-        "guide6": ["en": "Launch at Login for auto-start", "ko": "로그인 시 자동 시작 설정"],
-        "guide7": ["en": "Positions are built-in display only", "ko": "좌표는 내장 디스플레이 기준"],
-        "guide8": ["en": "Allow Chrome automation when prompted", "ko": "Chrome 자동화 권한 허용 필요"],
-        "guideNote": ["en": "⚠️ First launch may not resize the window.\nJust re-open the site and it will work from then on.", "ko": "⚠️ 첫 실행 시 창 리사이징이 안 될 수 있습니다.\n다시 열면 정상 작동합니다."],
-        // Guide
-        "userGuide": ["en": "User Guide ⚡", "ko": "사용자 가이드 ⚡"],
-    ]
-}
 
 // Built-in display helper — always use MacBook screen regardless of external monitors
 var builtInScreen: NSScreen {
@@ -220,21 +166,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let settings = NSMenuItem(title: L10n.shared.t("settings"), action: #selector(openSettings), keyEquivalent: "")
+        let settings = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
-        let about = NSMenuItem(title: L10n.shared.t("about"), action: #selector(showAbout), keyEquivalent: "")
+        let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
-        let loginItem = NSMenuItem(title: L10n.shared.t("launchAtLogin"), action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
+        let loginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
         loginItem.target = self
         loginItem.state = isLaunchAtLoginEnabled() ? .on : .off
         menu.addItem(loginItem)
-        let langItem = NSMenuItem(title: L10n.shared.t("language"), action: #selector(toggleLanguage), keyEquivalent: "")
-        langItem.target = self
-        menu.addItem(langItem)
         menu.addItem(.separator())
-        let quit = NSMenuItem(title: L10n.shared.t("quit"), action: #selector(quitApp), keyEquivalent: "")
+        let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
         statusItem.menu = menu
@@ -420,11 +363,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return true
     }
 
-    @objc func toggleLanguage() {
-        let newLang = L10n.shared.lang == "en" ? "ko" : "en"
-        L10n.shared.set(newLang)
-        buildMenu()
-    }
 
     @objc func quitApp() {
         NSApp.terminate(nil)
