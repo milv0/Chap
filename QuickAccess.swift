@@ -59,11 +59,12 @@ struct Config: Codable {
 
 // MARK: - App Delegate — menu bar app lifecycle
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
     var settingsWindow: NSWindow?
+    var settingsVM: SettingsViewModel?
     let resizeQueue = DispatchQueue(label: "com.mingyupark.QuickAccess.resize")
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -314,10 +315,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.styleMask = [.titled, .closable, .resizable]
         window.minSize = NSSize(width: 600, height: 400)
         window.center()
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window
+        settingsVM = vm
     }
 
     @objc func reloadConfig() {
@@ -345,6 +348,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return SMAppService.mainApp.status == .enabled
         }
         return false
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if let vm = settingsVM, vm.hasChanges {
+            let alert = NSAlert()
+            alert.messageText = "You have unsaved changes."
+            alert.informativeText = "Changes will be lost if you close."
+            alert.addButton(withTitle: "Close")
+            alert.addButton(withTitle: "Cancel")
+            return alert.runModal() == .alertFirstButtonReturn
+        }
+        return true
     }
 
     @objc func quitApp() {
@@ -482,6 +497,10 @@ struct SettingsView: View {
                     Button("Add") { addSite() }
                     Button("Remove") { showDeleteAlert = true }
                         .disabled(selectedIndex == nil)
+                    Button("↑") { moveSiteUp() }
+                        .disabled(selectedIndex == nil || selectedIndex == 0)
+                    Button("↓") { moveSiteDown() }
+                        .disabled(selectedIndex == nil || selectedIndex == vm.sites.count - 1)
                     Button("?") { showGuide = true }
                         .font(.system(size: 11, weight: .bold))
                         .help("User Guide")
@@ -520,6 +539,7 @@ struct SettingsView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
                         .disabled(!vm.hasChanges)
+                        .keyboardShortcut("s", modifiers: .command)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
@@ -569,6 +589,18 @@ struct SettingsView: View {
         guard let idx = selectedIndex, idx < vm.sites.count else { return }
         vm.sites.remove(at: idx)
         selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
+    }
+    
+    private func moveSiteUp() {
+        guard let idx = selectedIndex, idx > 0 else { return }
+        vm.sites.swapAt(idx, idx - 1)
+        selectedIndex = idx - 1
+    }
+    
+    private func moveSiteDown() {
+        guard let idx = selectedIndex, idx < vm.sites.count - 1 else { return }
+        vm.sites.swapAt(idx, idx + 1)
+        selectedIndex = idx + 1
     }
     
     private func save() {
