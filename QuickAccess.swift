@@ -12,7 +12,7 @@ import ServiceManagement
 import SwiftUI
 
 enum Defaults {
-    static let appVersion = "2.2.5"
+    static let appVersion = "2.2.6"
     static let defaultWidth = 800
     static let defaultHeight = 600
     static let defaultX = 100
@@ -254,9 +254,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         end tell
         """
 
-        // Detect if Chrome is already running for delay calculation
+        // Detect if Chrome is already running
         let chromeRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.google.Chrome" }
-        let delay = chromeRunning ? Defaults.resizeDelay : Defaults.coldStartDelay
 
         // Open Chrome in app mode using modern Process API
         let openTask = Process()
@@ -275,20 +274,25 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        // Reposition the window via osascript after a short delay
-        resizeQueue.asyncAfter(deadline: .now() + delay) {
-            let scriptTask = Process()
-            scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-            scriptTask.arguments = ["-e", script]
-            do {
-                try scriptTask.run()
-                scriptTask.waitUntilExit()
-                if scriptTask.terminationStatus != 0 {
-                    NSLog("[QuickAccess] osascript exited with status %d", scriptTask.terminationStatus)
+        // Reposition with escalating retries: 0.2s, 0.6s, 1.2s, 2.0s
+        let delays: [Double] = chromeRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
+        resizeQueue.async {
+            for d in delays {
+                Thread.sleep(forTimeInterval: d)
+                let scriptTask = Process()
+                let pipe = Pipe()
+                scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+                scriptTask.arguments = ["-e", script]
+                scriptTask.standardError = pipe
+                do {
+                    try scriptTask.run()
+                    scriptTask.waitUntilExit()
+                    if scriptTask.terminationStatus == 0 { return }
+                } catch {
+                    continue
                 }
-            } catch {
-                NSLog("[QuickAccess] Failed to launch osascript: %@", error.localizedDescription)
             }
+            NSLog("[QuickAccess] All resize attempts failed")
         }
     }
 
