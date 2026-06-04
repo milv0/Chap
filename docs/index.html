@@ -158,26 +158,18 @@ function toggleLang() {
   </div>
 </section>
 
-<section class="install" style="padding: 50px 0;">
-  <div class="container" style="text-align: center;">
-    <p style="font-size: 2rem; margin-bottom: 8px;">☕</p>
-    <p style="color: #888; font-size: 0.85rem; margin-bottom: 16px;">Like QuickAccess? Pour me an espresso!</p>
-    <div id="cup" onclick="pour()" style="display:inline-block;cursor:pointer;user-select:none;">
-      <div style="font-family:monospace;font-size:11px;line-height:1.2;color:#333;white-space:pre;" id="pixel-cup">
-  ╔════╗
-  ║    ║▐
-  ║    ║▐
-  ║    ║▐
-  ╚════╝
-      </div>
-    </div>
-    <p id="pour-msg" style="margin-top:8px;font-size:0.75rem;color:#bbb;">tap the cup ☝️</p>
-  </div>
-</section>
+<!-- Floating coffee widget -->
+<div id="coffee-float" onclick="pour()" style="position:fixed;bottom:20px;left:20px;z-index:99;cursor:pointer;background:#fff;border:1px solid #eee;border-radius:12px;padding:10px 14px;box-shadow:0 4px 20px rgba(0,0,0,0.08);user-select:none;transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+  <div style="font-family:monospace;font-size:9px;line-height:1.1;color:#333;white-space:pre;" id="pixel-cup">╔══╗
+║  ║▌
+║  ║▌
+╚══╝</div>
+  <p id="pour-msg" style="margin-top:4px;font-size:0.6rem;color:#bbb;text-align:center;">tap ☝️</p>
+</div>
 <script>
 let lvl=0;
-const fills=['  ╔════╗\n  ║    ║▐\n  ║    ║▐\n  ║░░░░║▐\n  ╚════╝','  ╔════╗\n  ║    ║▐\n  ║▓▓▓▓║▐\n  ║▓▓▓▓║▐\n  ╚════╝','  ╔════╗\n  ║▓▓▓▓║▐\n  ║▓▓▓▓║▐\n  ║▓▓▓▓║▐\n  ╚════╝','  ╔════╗☁\n  ║▓▓▓▓║▐\n  ║▓▓▓▓║▐\n  ║▓▓▓▓║▐\n  ╚════╝'];
-const msgs=['pouring...','almost...','nice...','☕ perfect! thanks!'];
+const fills=['╔══╗\n║  ║▌\n║░░║▌\n╚══╝','╔══╗\n║▓▓║▌\n║▓▓║▌\n╚══╝','╔══╗\n║▓▓║▌\n║▓▓║▌\n╚══╝','╔══╗☁\n║▓▓║▌\n║▓▓║▌\n╚══╝'];
+const msgs=['pouring..','almost..','nice!','☕ thx!'];
 function pour(){if(lvl<4){document.getElementById('pixel-cup').textContent=fills[lvl];document.getElementById('pour-msg').textContent=msgs[lvl];lvl++;}}
 </script>
 
