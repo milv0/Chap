@@ -482,12 +482,8 @@ struct SettingsView: View {
                     Button("Add") { addSite() }
                     Button("Remove") { showDeleteAlert = true }
                         .disabled(selectedIndex == nil)
-                }
-                HStack {
-                    Spacer()
                     Button("?") { showGuide = true }
                         .font(.system(size: 11, weight: .bold))
-                        .buttonStyle(.borderless)
                         .help("User Guide")
                 }
                 .padding(.bottom, 8)
