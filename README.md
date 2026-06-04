@@ -79,7 +79,6 @@ Stored at `~/.quickaccess.json`:
 ## Author
 
 **Mingyu**
-- uqwe00@gmail.com
 
 ## License
 
