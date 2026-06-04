@@ -503,10 +503,6 @@ struct SettingsView: View {
                         .disabled(selectedIndex == nil || selectedIndex == 0)
                     Button("↓") { moveSiteDown() }
                         .disabled(selectedIndex == nil || selectedIndex == vm.sites.count - 1)
-                    Spacer()
-                    Button("?") { showGuide = true }
-                        .font(.system(size: 11, weight: .bold))
-                        .help("User Guide")
                 }
                 .padding(.bottom, 8)
             }
@@ -534,6 +530,9 @@ struct SettingsView: View {
                     
                     Spacer()
                     
+                    Button("?") { showGuide = true }
+                        .font(.system(size: 11, weight: .bold))
+                        .help("User Guide")
                     Button("Import") { importConfig() }
                     Button("Export") { exportConfig() }
                     Button("Reload") { vm.onReload?() }
