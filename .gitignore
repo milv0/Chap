@@ -5,6 +5,9 @@ QuickAccess.app/Contents/MacOS/QuickAccess
 *.zip
 !docs/*.zip
 
+# SPM build output
+.build/
+
 # macOS system files
 .DS_Store
 
