@@ -19,7 +19,7 @@ allowed-tools: Bash, Read
 
 2. **빌드 검증** — 커밋 전 컴파일 확인:
    ```bash
-   swiftc QuickAccess.swift -o /dev/null -framework Cocoa -framework SwiftUI 2>&1
+   swiftc QuickAccess.swift -o /dev/null -target arm64-apple-macosx14.0 -framework Cocoa -framework SwiftUI 2>&1
    ```
    - 실패하면 커밋 진행하지 않고 에러 보고 후 종료.
    - 통과하면 다음 단계.
