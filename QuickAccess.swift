@@ -247,6 +247,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // Detect if Chrome is already running
         let chromeRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.google.Chrome" }
 
+        // Check for existing window with same domain — focus instead of opening duplicate
+        if chromeRunning {
+            let checkScript = """
+            tell application "Google Chrome"
+              repeat with w in windows
+                if URL of active tab of w contains "\(domain)" then
+                  set index of w to 1
+                  set bounds of w to {\(bounds)}
+                  activate
+                  return "found"
+                end if
+              end repeat
+              return "notfound"
+            end tell
+            """
+            let checkTask = Process()
+            let checkPipe = Pipe()
+            checkTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+            checkTask.arguments = ["-e", checkScript]
+            checkTask.standardOutput = checkPipe
+            try? checkTask.run()
+            checkTask.waitUntilExit()
+            let output = String(data: checkPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if output == "found" { return }
+        }
+
         // Open Chrome in app mode using modern Process API
         let openTask = Process()
         openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
@@ -363,6 +389,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         return true
     }
 
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let vm = settingsVM, vm.hasChanges,
+              let window = settingsWindow, window.isVisible else {
+            return .terminateNow
+        }
+        let alert = NSAlert()
+        alert.messageText = "You have unsaved settings."
+        alert.informativeText = "Quit without saving?"
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            return .terminateNow
+        }
+        return .terminateCancel
+    }
 
     @objc func quitApp() {
         NSApp.terminate(nil)
