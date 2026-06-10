@@ -25,9 +25,19 @@ enum Defaults {
 }
 
 
-// Built-in display helper — always use MacBook screen regardless of external monitors
+// Display helper — returns the screen where the mouse cursor is
 var builtInScreen: NSScreen {
-    NSScreen.screens.first { $0.localizedName.contains("Built") } ?? NSScreen.main ?? NSScreen.screens[0]
+    let mouseLocation = NSEvent.mouseLocation
+    return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) }
+        ?? NSScreen.main ?? NSScreen.screens[0]
+}
+
+// Target screen for a site — uses displayName if set, otherwise falls back to builtInScreen
+func targetScreen(for site: Site) -> NSScreen {
+    if let name = site.displayName {
+        return NSScreen.screens.first { $0.localizedName == name } ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+    return builtInScreen
 }
 
 // MARK: - Data Models for config persistence
@@ -39,20 +49,24 @@ struct Site: Codable, Equatable {
     var height: Int
     var x: Int
     var y: Int
+    var displayName: String?  // nil = cursor screen (기존 동작)
 }
 
 struct Config: Codable {
     var runInBackground: Bool
+    var alwaysCenter: Bool
     var sites: [Site]
 
-    init(runInBackground: Bool = true, sites: [Site]) {
+    init(runInBackground: Bool = true, alwaysCenter: Bool = false, sites: [Site]) {
         self.runInBackground = runInBackground
+        self.alwaysCenter = alwaysCenter
         self.sites = sites
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         runInBackground = try container.decodeIfPresent(Bool.self, forKey: .runInBackground) ?? true
+        alwaysCenter = try container.decodeIfPresent(Bool.self, forKey: .alwaysCenter) ?? false
         sites = try container.decode([Site].self, forKey: .sites)
     }
 }
@@ -172,10 +186,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
-        let loginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)), keyEquivalent: "")
-        loginItem.target = self
-        loginItem.state = isLaunchAtLoginEnabled() ? .on : .off
-        menu.addItem(loginItem)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
@@ -217,10 +227,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let domain = rawDomain
 
         // Validate bounds are numeric
-        let bx = site.x
-        let by = site.y
+        let screen = targetScreen(for: site)
+        let primaryH = NSScreen.screens[0].frame.height
+        let origin = screen.frame.origin
+        // Convert NSScreen coords (bottom-left origin) to AppleScript coords (top-left origin)
+        let screenOffsetX = Int(origin.x)
+        let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
         let bw = site.width
         let bh = site.height
+        let bx: Int
+        let by: Int
+        if config.alwaysCenter {
+            bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
+            by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
+        } else {
+            bx = site.x + screenOffsetX
+            by = site.y + screenOffsetY
+        }
         let bounds = "\(bx), \(by), \(bx + bw), \(by + bh)"
 
         let retries = Defaults.resizeRetries
@@ -293,10 +316,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
         
-        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground)
-        vm.onSave = { [weak self] newSites, bg in
+        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground, alwaysCenter: config.alwaysCenter)
+        vm.onSave = { [weak self] newSites, bg, alwaysCenter in
             guard let self = self else { return }
-            self.config = Config(runInBackground: bg, sites: newSites)
+            self.config = Config(runInBackground: bg, alwaysCenter: alwaysCenter, sites: newSites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             if let data = try? encoder.encode(self.config) {
@@ -364,6 +387,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
 
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let vm = settingsVM, vm.hasChanges,
+              let window = settingsWindow, window.isVisible else {
+            return .terminateNow
+        }
+        let alert = NSAlert()
+        alert.messageText = "You have unsaved settings."
+        alert.informativeText = "Quit without saving?"
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            return .terminateNow
+        }
+        return .terminateCancel
+    }
+
     @objc func quitApp() {
         NSApp.terminate(nil)
     }
@@ -377,25 +416,30 @@ import SwiftUI
 class SettingsViewModel: ObservableObject {
     @Published var sites: [Site]
     @Published var runInBackground: Bool
+    @Published var alwaysCenter: Bool
     @Published var originalSites: [Site]
     @Published var originalBg: Bool
-    var onSave: (([Site], Bool) -> Void)?
+    @Published var originalAlwaysCenter: Bool
+    var onSave: (([Site], Bool, Bool) -> Void)?
     var onReload: (() -> Void)?
     
     var hasChanges: Bool {
-        sites != originalSites || runInBackground != originalBg
+        sites != originalSites || runInBackground != originalBg || alwaysCenter != originalAlwaysCenter
     }
     
     func markSaved() {
         originalSites = sites
         originalBg = runInBackground
+        originalAlwaysCenter = alwaysCenter
     }
     
-    init(sites: [Site], runInBackground: Bool) {
+    init(sites: [Site], runInBackground: Bool, alwaysCenter: Bool) {
         self.sites = sites
         self.runInBackground = runInBackground
+        self.alwaysCenter = alwaysCenter
         self.originalSites = sites
         self.originalBg = runInBackground
+        self.originalAlwaysCenter = alwaysCenter
     }
 }
 
@@ -485,8 +529,13 @@ struct SettingsView: View {
             VStack(spacing: 8) {
                 List(selection: $selectedIndex) {
                     ForEach(vm.sites.indices, id: \.self) { i in
-                        Text(vm.sites[i].name)
-                            .tag(i)
+                        HStack(spacing: 4) {
+                            Image(systemName: vm.sites[i].displayName == nil ? "display.2" : "display")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                            Text(vm.sites[i].name)
+                        }
+                        .tag(i)
                     }
                     .onMove { from, to in
                         vm.sites.move(fromOffsets: from, toOffset: to)
@@ -513,7 +562,7 @@ struct SettingsView: View {
             // Right: Site config
             VStack(alignment: .leading, spacing: 0) {
                 if let idx = selectedIndex, idx < vm.sites.count {
-                    SiteConfigView(site: $vm.sites[idx])
+                    SiteConfigView(site: $vm.sites[idx], alwaysCenter: vm.alwaysCenter)
                 } else {
                     Spacer()
                     Text("Select a site to configure")
@@ -527,6 +576,10 @@ struct SettingsView: View {
                 // Bottom bar
                 HStack {
                     Toggle("Run in Background", isOn: $vm.runInBackground)
+                        .toggleStyle(.checkbox)
+                        .font(.system(size: 11))
+                    
+                    Toggle("Always Center", isOn: $vm.alwaysCenter)
                         .toggleStyle(.checkbox)
                         .font(.system(size: 11))
                     
@@ -570,7 +623,7 @@ struct SettingsView: View {
                     GuideRow(icon: "rectangle.grid.2x2", text: "Use Layout/Size presets")
                     GuideRow(icon: "square.and.arrow.up", text: "Import/Export to share settings")
                     GuideRow(icon: "power", text: "Launch at Login for auto-start")
-                    GuideRow(icon: "display", text: "Positions are built-in display only")
+                    GuideRow(icon: "display", text: "Always Center keeps windows centered")
                     GuideRow(icon: "checkmark.shield", text: "Allow Chrome automation when prompted")
                 }
                 .padding(.horizontal, 24)
@@ -608,7 +661,7 @@ struct SettingsView: View {
     }
     
     private func save() {
-        vm.onSave?(vm.sites, vm.runInBackground)
+        vm.onSave?(vm.sites, vm.runInBackground, vm.alwaysCenter)
         vm.markSaved()
     }
     
@@ -633,6 +686,7 @@ struct SettingsView: View {
             try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
             vm.sites = config.sites
             vm.runInBackground = config.runInBackground
+            vm.alwaysCenter = config.alwaysCenter
             vm.onReload?()
         } catch {
             // silent
@@ -644,6 +698,7 @@ struct SettingsView: View {
 
 struct SiteConfigView: View {
     @Binding var site: Site
+    var alwaysCenter: Bool
     @State private var layoutSelection = 0
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
@@ -653,6 +708,18 @@ struct SiteConfigView: View {
     private let layoutOptions = ["Custom", "Center", "Left Half", "Right Half", "Top Half", "Bottom Half", "Top-Left", "Top-Right", "Bottom-Left", "Bottom-Right"]
     private let sizeOptions = ["Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)", "XL (1200×800)", "Wide (1000×400)", "Tall (500×800)", "Full (1400×900)"]
     private let sizes: [(Int, Int)] = [(400,200), (600,300), (800,500), (1000,700), (1200,800), (1000,400), (500,800), (1400,900)]
+    
+    private var selectedScreen: NSScreen {
+        if let name = site.displayName {
+            return NSScreen.screens.first { $0.localizedName == name } ?? builtInScreen
+        }
+        return builtInScreen
+    }
+    
+    private var displayPickerValue: String {
+        get { site.displayName ?? "Auto" }
+        nonmutating set { /* handled via binding */ }
+    }
     
     var body: some View {
         ScrollView {
@@ -667,6 +734,22 @@ struct SiteConfigView: View {
                         TextField("https://", text: $site.url)
                             .textFieldStyle(.roundedBorder)
                     }
+                }
+                
+                Divider()
+                
+                // Display
+                LabeledField("Display") {
+                    Picker("", selection: Binding(
+                        get: { site.displayName ?? "Auto" },
+                        set: { site.displayName = $0 == "Auto" ? nil : $0 }
+                    )) {
+                        Text("Auto (cursor screen)").tag("Auto")
+                        ForEach(NSScreen.screens, id: \.localizedName) { screen in
+                            Text(screen.localizedName).tag(screen.localizedName)
+                        }
+                    }
+                    .labelsHidden()
                 }
                 
                 Divider()
@@ -710,6 +793,7 @@ struct SiteConfigView: View {
                     }
                 }
                 
+                if !alwaysCenter {
                 HStack(spacing: 12) {
                     LabeledField("X") {
                         TextField("", text: Binding(get: { "\(site.x)" }, set: { site.x = max(0, Int($0) ?? site.x) }))
@@ -729,9 +813,10 @@ struct SiteConfigView: View {
                         .animation(isFirstLaunch ? .easeInOut(duration: 0.8).repeatCount(5, autoreverses: true) : .default, value: pulseScale)
                         .onAppear { if isFirstLaunch { pulseScale = 1.1 } }
                 }
+                }
                 
                 // Minimap
-                MinimapSwiftUI(width: site.width, height: site.height, x: site.x, y: site.y)
+                MinimapSwiftUI(width: site.width, height: site.height, x: site.x, y: site.y, displayName: site.displayName, alwaysCenter: alwaysCenter)
                     .frame(height: 80)
                     .frame(maxWidth: .infinity)
                     .id("\(site.width)-\(site.height)-\(site.x)-\(site.y)")
@@ -754,7 +839,7 @@ struct SiteConfigView: View {
     
     private func detectPresets() {
         suppressOnChange = true
-        let screen = builtInScreen
+        let screen = selectedScreen
         let screenW = Int(screen.frame.width)
         let screenH = Int(screen.frame.height)
         
@@ -787,7 +872,7 @@ struct SiteConfigView: View {
     }
     
     private func centerXY() {
-        let screen = builtInScreen
+        let screen = selectedScreen
         var s = site
         s.x = (Int(screen.frame.width) - s.width) / 2
         s.y = (Int(screen.frame.height) - s.height) / 2
@@ -797,7 +882,7 @@ struct SiteConfigView: View {
     }
     
     private func applyLayout() {
-        let screen = builtInScreen
+        let screen = selectedScreen
         let screenW = Int(screen.frame.width)
         let screenH = Int(screen.frame.height)
         var s = site
@@ -823,7 +908,7 @@ struct SiteConfigView: View {
         s.width = w
         s.height = h
         if layoutSelection == 1 {
-            let screen = builtInScreen
+            let screen = selectedScreen
             s.x = (Int(screen.frame.width) - w) / 2
             s.y = (Int(screen.frame.height) - h) / 2
         }
@@ -874,31 +959,66 @@ struct MinimapSwiftUI: View {
     let height: Int
     let x: Int
     let y: Int
+    var displayName: String? = nil
+    var alwaysCenter: Bool = false
     
     var body: some View {
         GeometryReader { geo in
-            let screen = builtInScreen
-            let screenW = screen.frame.width
-            let screenH = screen.frame.height
-            let scale = min(geo.size.width / screenW, geo.size.height / screenH)
-            let mapW = screenW * scale
-            let mapH = screenH * scale
+            let screens = NSScreen.screens
+            let allFrames = screens.map { $0.frame }
+            let minX = allFrames.map { $0.minX }.min() ?? 0
+            let minY = allFrames.map { $0.minY }.min() ?? 0
+            let maxX = allFrames.map { $0.maxX }.max() ?? 1512
+            let maxY = allFrames.map { $0.maxY }.max() ?? 982
+            let totalW = maxX - minX
+            let totalH = maxY - minY
+            
+            let scale = min(geo.size.width / totalW, geo.size.height / totalH)
+            let mapW = totalW * scale
+            let mapH = totalH * scale
             let offsetX = (geo.size.width - mapW) / 2
+            let offsetY = (geo.size.height - mapH) / 2
             
             ZStack(alignment: .topLeading) {
-                // Screen
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(.windowBackgroundColor))
-                    .frame(width: mapW, height: mapH)
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.3)))
-                    .offset(x: offsetX)
+                ForEach(0..<screens.count, id: \.self) { i in
+                    let frame = screens[i].frame
+                    let sx = (frame.origin.x - minX) * scale
+                    let sy = (maxY - frame.origin.y - frame.height) * scale
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.windowBackgroundColor))
+                        .frame(width: frame.width * scale, height: frame.height * scale)
+                        .overlay(
+                            VStack {
+                                Text(screens[i].localizedName)
+                                    .font(.system(size: 8))
+                                    .foregroundColor(.secondary)
+                            }
+                        )
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(
+                            displayName == nil || screens[i].localizedName == displayName ? Color.orange : Color.gray.opacity(0.3)
+                        ))
+                        .offset(x: offsetX + sx, y: offsetY + sy)
+                }
                 
-                // Site window
+                let targetScreen = displayName.flatMap { name in screens.first { $0.localizedName == name } }
+                    ?? NSScreen.main ?? screens[0]
+                let tFrame = targetScreen.frame
+                let screenLocalX = (tFrame.origin.x - minX) * scale
+                let screenLocalY = (maxY - tFrame.origin.y - tFrame.height) * scale
+                
+                let winX = alwaysCenter
+                    ? screenLocalX + (tFrame.width * scale - CGFloat(width) * scale) / 2
+                    : screenLocalX + CGFloat(x) * scale
+                let winY = alwaysCenter
+                    ? screenLocalY + (tFrame.height * scale - CGFloat(height) * scale) / 2
+                    : screenLocalY + CGFloat(y) * scale
+                
                 RoundedRectangle(cornerRadius: 2)
                     .fill(Color.orange.opacity(0.3))
                     .overlay(RoundedRectangle(cornerRadius: 2).stroke(Color.orange))
                     .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
-                    .offset(x: offsetX + CGFloat(x) * scale, y: CGFloat(y) * scale)
+                    .offset(x: offsetX + winX, y: offsetY + winY)
             }
         }
     }
