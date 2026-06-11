@@ -12,13 +12,14 @@ A macOS menubar app that launches websites in clean, standalone Chrome windows.
 
 - ⚡ **Menubar Resident** — One click to launch any site
 - 🪟 **Standalone Windows** — Chrome --app mode, no address bar
-- 📐 **Custom Window Sizing** — Set width, height, x, y per site (built-in display)
+- 🖥️ **Multi-Monitor Support** — Choose which display each site opens on
+- 📐 **Custom Window Sizing** — Set width, height per site
+- 🎯 **Always Center** — Auto-center windows on any display
 - 🎯 **Layout Presets** — Center, half, quarter placement
 - 📏 **Size Presets** — Tiny to Full, quick selection
-- 🎯 **Center Button** — Auto-center with one click
+- 🗺️ **Multi-Monitor Minimap** — See all displays and window position at a glance
 - ⚙️ **Settings GUI** — Modern SwiftUI interface to add/edit/remove sites
 - 📦 **Import/Export** — Share settings via JSON
-- 🚀 **Launch at Login** — Auto-start toggle
 - 🗑️ **Uninstall** — Remove app + config + login item from Settings
 - 🔒 **Chrome Session** — Uses your existing Chrome login
 
@@ -48,8 +49,15 @@ curl -sL https://milv0.github.io/quickaccess-app/uninstall.sh | bash
 
 1. Click ⚡ in the menubar
 2. Click a site → opens in Chrome app window
-3. **Settings...** → add/edit/remove sites
-4. **Launch at Login** → toggle auto-start
+3. **Settings...** → add/edit/remove sites, choose display, set window size
+
+### Display Selection
+
+Each site can target a specific monitor or use **Auto** (opens on whichever screen your cursor is on). The minimap shows all connected displays with the window position preview.
+
+### Always Center
+
+Enable **Always Center** in Settings to automatically center all site windows on their target display. Only set the window size — positioning is handled automatically.
 
 ### Share Settings
 
@@ -63,6 +71,7 @@ Stored at `~/.quickaccess.json`:
 ```json
 {
   "runInBackground": true,
+  "alwaysCenter": true,
   "sites": [
     {
       "name": "Google",
@@ -70,7 +79,8 @@ Stored at `~/.quickaccess.json`:
       "width": 600,
       "height": 300,
       "x": 456,
-      "y": 341
+      "y": 341,
+      "displayName": "V28UE-Mv2"
     }
   ]
 }

@@ -22,7 +22,6 @@ QuickAccess/
 │   ├── ValidationTests.swift
 │   └── SettingsViewModelTests.swift
 ├── Resources/AppIcon.icns            ← 앱 아이콘
-├── QuickAccess_legacy.swift          ← 백업 (원본 단일 파일, 수정하지 않음)
 ├── build.sh                          ← 배포용 빌드 스크립트
 └── docs/                             ← GitHub Pages 배포 자산
 ```
@@ -33,7 +32,7 @@ QuickAccess/
 # Xcode 에서 (권장)
 open QuickAccess.xcodeproj            # 프로젝트 열기
 # Cmd+R → 앱 실행 (.app 번들, 메뉴바 정상 동작)
-# Cmd+U → 17개 테스트 실행
+# Cmd+U → 21개 테스트 실행
 
 # CLI 에서
 xcodebuild -scheme QuickAccess -configuration Debug -destination "platform=macOS" build
