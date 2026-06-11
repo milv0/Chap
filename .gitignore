@@ -7,6 +7,15 @@ QuickAccess.app/Contents/MacOS/QuickAccess
 
 # SPM build output
 .build/
+.swiftpm/
+
+# Xcode
+xcuserdata/
+DerivedData/
+
+# IDE
+.vscode/
+.idea/
 
 # macOS system files
 .DS_Store

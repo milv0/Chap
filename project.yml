@@ -1,0 +1,55 @@
+name: QuickAccess
+options:
+  bundleIdPrefix: com.mingyupark
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: false
+
+targets:
+  QuickAccess:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/QuickAccess
+      - path: Sources/QuickAccessCore
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.QuickAccess
+        MARKETING_VERSION: "2.2.8"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_LSUIElement: true
+        INFOPLIST_KEY_CFBundleDisplayName: QuickAccess
+        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Mingyu"
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+  QuickAccessTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/QuickAccessCoreTests
+    dependencies:
+      - target: QuickAccess
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.QuickAccessTests
+        GENERATE_INFOPLIST_FILE: true
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+schemes:
+  QuickAccess:
+    build:
+      targets:
+        QuickAccess: all
+        QuickAccessTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - QuickAccessTests
