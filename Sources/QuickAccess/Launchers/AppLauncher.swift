@@ -84,7 +84,7 @@ enum AppLauncher {
             let appRunning = NSWorkspace.shared.runningApplications.contains {
                 $0.bundleIdentifier == bundleId
             }
-            let delays: [Double] = appRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
+            let delays: [Double] = appRunning ? [0.2, 0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
             resizeQueue.async {
                 for d in delays {
                     Thread.sleep(forTimeInterval: d)
