@@ -44,26 +44,11 @@ struct ConfigModelTests {
         #expect(config.runInBackground == true)
     }
 
-    @Test("defaults alwaysCenter to false when key is missing")
-    func defaultsAlwaysCenter() throws {
-        let json = #"{"sites":[]}"#
-        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
-
-        #expect(config.alwaysCenter == false)
-    }
-
     @Test func respectsExplicitRunInBackground() throws {
         let json = #"{"runInBackground":false,"sites":[]}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
         #expect(config.runInBackground == false)
-    }
-
-    @Test func respectsExplicitAlwaysCenter() throws {
-        let json = #"{"alwaysCenter":true,"sites":[]}"#
-        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
-
-        #expect(config.alwaysCenter == true)
     }
 
     @Test func decodesMultipleSites() throws {
@@ -78,7 +63,6 @@ struct ConfigModelTests {
     @Test func roundTripsWithAllFields() throws {
         let original = Config(
             runInBackground: false,
-            alwaysCenter: true,
             sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300, x: 20, y: 30)]
         )
 
@@ -86,7 +70,54 @@ struct ConfigModelTests {
         let decoded = try JSONDecoder().decode(Config.self, from: data)
 
         #expect(decoded.runInBackground == original.runInBackground)
-        #expect(decoded.alwaysCenter == original.alwaysCenter)
         #expect(decoded.sites == original.sites)
+    }
+}
+
+@Suite("LaunchType")
+struct LaunchTypeTests {
+    @Test func defaultsToURLWhenMissing() throws {
+        let json = #"{"name":"Old","url":"https://old.com","width":800,"height":600,"x":0,"y":0}"#
+        let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
+
+        #expect(site.launchType == .url)
+        #expect(site.appPath == nil)
+        #expect(site.script == nil)
+    }
+
+    @Test func decodesAppType() throws {
+        let json = #"{"name":"Slack","url":"","width":800,"height":600,"x":0,"y":0,"launchType":"app","appPath":"/Applications/Slack.app"}"#
+        let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
+
+        #expect(site.launchType == .app)
+        #expect(site.appPath == "/Applications/Slack.app")
+    }
+
+    @Test func decodesShellType() throws {
+        let json = #"{"name":"Deploy","url":"","width":800,"height":600,"x":0,"y":0,"launchType":"shell","script":"echo hello"}"#
+        let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
+
+        #expect(site.launchType == .shell)
+        #expect(site.script == "echo hello")
+    }
+
+    @Test func roundTripsAppType() throws {
+        let original = Site(name: "App", url: "", width: 800, height: 600, x: 0, y: 0,
+                            launchType: .app, appPath: "/Applications/Safari.app")
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Site.self, from: data)
+
+        #expect(decoded == original)
+    }
+
+    @Test func roundTripsShellType() throws {
+        let original = Site(name: "Script", url: "", width: 800, height: 600, x: 0, y: 0,
+                            launchType: .shell, script: "ls -la\necho done")
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Site.self, from: data)
+
+        #expect(decoded == original)
     }
 }

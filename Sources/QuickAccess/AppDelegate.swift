@@ -145,6 +145,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if !keyEquiv.isEmpty {
                 item.keyEquivalentModifierMask = .option
             }
+            let iconName: String
+            switch site.launchType {
+            case .url: iconName = "bolt.fill"
+            case .app: iconName = "app.fill"
+            case .shell: iconName = "terminal.fill"
+            }
+            item.image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
             item.representedObject = site
             item.target = self
             menu.addItem(item)
@@ -180,11 +187,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func launchSite(_ site: Site) {
+        switch site.launchType {
+        case .url: launchURL(site)
+        case .app: launchApp(site)
+        case .shell: launchShell(site)
+        }
+    }
+
+    private func launchURL(_ site: Site) {
         if !FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") {
-            let alert = NSAlert()
-            alert.messageText = "Google Chrome is not installed."
-            alert.alertStyle = .warning
-            alert.runModal()
+            showAlert(message: "Google Chrome is not installed.")
             return
         }
 
@@ -202,20 +214,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
         let bw = site.width
         let bh = site.height
-        let bx: Int
-        let by: Int
-        if config.alwaysCenter {
-            bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
-            by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
-        } else {
-            bx = site.x + screenOffsetX
-            by = site.y + screenOffsetY
-        }
+        let bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
+        let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
         let bounds = "\(bx), \(by), \(bx + bw), \(by + bh)"
 
         let retries = Defaults.resizeRetries
         let retryInterval = Defaults.retryInterval
-        let script = """
+        let appleScript = """
         tell application "Google Chrome"
           repeat \(retries) times
             repeat with w in windows
@@ -241,13 +246,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         do {
             try openTask.run()
         } catch {
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = "Failed to launch Chrome."
-                alert.informativeText = error.localizedDescription
-                alert.alertStyle = .critical
-                alert.runModal()
-            }
+            showAlert(message: "Failed to launch Chrome.", info: error.localizedDescription)
             return
         }
 
@@ -258,7 +257,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 let scriptTask = Process()
                 let pipe = Pipe()
                 scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                scriptTask.arguments = ["-e", script]
+                scriptTask.arguments = ["-e", appleScript]
                 scriptTask.standardError = pipe
                 do {
                     try scriptTask.run()
@@ -272,6 +271,116 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    private func launchApp(_ site: Site) {
+        guard let path = site.appPath, !path.isEmpty else {
+            showAlert(message: "No app path configured for \"\(site.name)\".")
+            return
+        }
+        guard FileManager.default.fileExists(atPath: path) else {
+            showAlert(message: "App not found at: \(path)")
+            return
+        }
+        NSWorkspace.shared.open(URL(fileURLWithPath: path))
+
+        let appName = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
+        let screen = targetScreen(for: site)
+        let primaryH = NSScreen.screens.first?.frame.height ?? NSScreen.main?.frame.height ?? 1080
+        let origin = screen.frame.origin
+        let screenOffsetX = Int(origin.x)
+        let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
+        let bw = site.width
+        let bh = site.height
+        let bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
+        let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
+
+        let appleScript = """
+        tell application "System Events"
+            tell process "\(appName)"
+                repeat 30 times
+                    if (count of windows) > 0 then
+                        set size of front window to {\(bw), \(bh)}
+                        set position of front window to {\(bx), \(by)}
+                        delay 0.1
+                        set position of front window to {\(bx), \(by)}
+                        return
+                    end if
+                    delay 0.3
+                end repeat
+            end tell
+        end tell
+        """
+
+        guard checkAccessibility() else { return }
+
+        let delays: [Double] = [0.5, 1.5, 3.0]
+        resizeQueue.async {
+            for d in delays {
+                Thread.sleep(forTimeInterval: d)
+                let scriptTask = Process()
+                scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+                scriptTask.arguments = ["-e", appleScript]
+                try? scriptTask.run()
+                scriptTask.waitUntilExit()
+                if scriptTask.terminationStatus == 0 { return }
+            }
+        }
+    }
+
+    private var accessibilityPromptShown = false
+
+    private func checkAccessibility() -> Bool {
+        let trusted = AXIsProcessTrusted()
+        if trusted { return true }
+        if !accessibilityPromptShown {
+            accessibilityPromptShown = true
+            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
+        }
+        return false
+    }
+
+    private func launchShell(_ site: Site) {
+        guard let script = site.script, !script.isEmpty else {
+            showAlert(message: "No script configured for \"\(site.name)\".")
+            return
+        }
+        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: shell)
+        process.arguments = ["-c", script]
+        let pipe = Pipe()
+        process.standardError = pipe
+        process.standardOutput = pipe
+
+        DispatchQueue.global().async {
+            do {
+                try process.run()
+                process.waitUntilExit()
+                if process.terminationStatus != 0 {
+                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
+                    let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+                    DispatchQueue.main.async {
+                        self.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func showAlert(message: String, info: String? = nil) {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = message
+            if let info = info { alert.informativeText = info }
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
     // MARK: - Settings
 
     @objc func openSettings() {
@@ -281,10 +390,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
 
-        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground, alwaysCenter: config.alwaysCenter)
-        vm.onSave = { [weak self] newSites, bg, alwaysCenter in
+        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground)
+        vm.onSave = { [weak self] newSites, bg in
             guard let self = self else { return }
-            self.config = Config(runInBackground: bg, alwaysCenter: alwaysCenter, sites: newSites)
+            self.config = Config(runInBackground: bg, sites: newSites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             if let data = try? encoder.encode(self.config) {
