@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Swift Format on Edit",
+  "description": "Run swift-format and lint on edited Swift source files. Shares the same shell script with Claude Code at .harness/shared/hooks/swift-format.sh.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "Sources/**/*.swift",
+      "Tests/**/*.swift"
+    ]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "bash .harness/shared/hooks/swift-format.sh",
+    "timeout": 30
+  }
+}
