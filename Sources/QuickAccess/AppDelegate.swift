@@ -204,229 +204,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func launchSite(_ site: Site) {
         switch site.launchType {
-        case .url: launchURL(site)
-        case .app: launchApp(site)
-        case .finder: launchFinder(site)
-        case .shell: launchShell(site)
-        }
-    }
-
-    private func launchURL(_ site: Site) {
-        if !FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") {
-            showAlert(message: "Google Chrome is not installed.")
-            return
-        }
-
-        let rawDomain = URL(string: site.url)?.host ?? ""
-        guard isValidDomain(rawDomain) else {
-            NSLog("[QuickAccess] Invalid domain: %@", rawDomain)
-            return
-        }
-        let domain = rawDomain
-
-        let screen = targetScreen(for: site)
-        let primaryH = NSScreen.screens.first?.frame.height ?? NSScreen.main?.frame.height ?? 1080
-        let origin = screen.frame.origin
-        let screenOffsetX = Int(origin.x)
-        let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
-        let bw = site.width
-        let bh = site.height
-        let bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
-        let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
-        let bounds = "\(bx), \(by), \(bx + bw), \(by + bh)"
-
-        let retries = Defaults.resizeRetries
-        let retryInterval = Defaults.retryInterval
-        let appleScript = """
-            tell application "Google Chrome"
-              repeat \(retries) times
-                repeat with w in windows
-                  set tabUrl to URL of active tab of w
-                  if tabUrl contains "\(domain)" then
-                    set bounds of w to {\(bounds)}
-                    return
-                  end if
-                end repeat
-                delay \(retryInterval)
-              end repeat
-              if (count of windows) > 0 then
-                set bounds of front window to {\(bounds)}
-              end if
-            end tell
-            """
-
-        let chromeRunning = NSWorkspace.shared.runningApplications.contains {
-            $0.bundleIdentifier == "com.google.Chrome"
-        }
-
-        let openTask = Process()
-        openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        openTask.arguments = ["-na", "Google Chrome", "--args", "--app=\(site.url)"]
-        do {
-            try openTask.run()
-        } catch {
-            showAlert(message: "Failed to launch Chrome.", info: error.localizedDescription)
-            return
-        }
-
-        let delays: [Double] = chromeRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
-        resizeQueue.async {
-            for d in delays {
-                Thread.sleep(forTimeInterval: d)
-                let scriptTask = Process()
-                let pipe = Pipe()
-                scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                scriptTask.arguments = ["-e", appleScript]
-                scriptTask.standardError = pipe
-                do {
-                    try scriptTask.run()
-                    scriptTask.waitUntilExit()
-                    if scriptTask.terminationStatus == 0 { return }
-                } catch {
-                    continue
-                }
+        case .url: ChromeLauncher.launch(site, resizeQueue: resizeQueue)
+        case .app: AppLauncher.launch(site, resizeQueue: resizeQueue)
+        case .finder:
+            guard let path = site.folderPath, !path.isEmpty else {
+                showAlert(message: "No folder path configured for \"\(site.name)\".")
+                return
             }
-            NSLog("[QuickAccess] All resize attempts failed")
-        }
-    }
-
-    private func launchApp(_ site: Site) {
-        guard let path = site.appPath, !path.isEmpty else {
-            showAlert(message: "No app path configured for \"\(site.name)\".")
-            return
-        }
-        guard FileManager.default.fileExists(atPath: path) else {
-            showAlert(message: "App not found at: \(path)")
-            return
-        }
-        NSWorkspace.shared.open(URL(fileURLWithPath: path))
-
-        let appName = URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
-        let screen = targetScreen(for: site)
-        let primaryH = NSScreen.screens.first?.frame.height ?? NSScreen.main?.frame.height ?? 1080
-        let origin = screen.frame.origin
-        let screenOffsetX = Int(origin.x)
-        let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
-        let bw = site.width
-        let bh = site.height
-        let bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
-        let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
-
-        let appleScript = """
-            tell application "System Events"
-                tell process "\(appName)"
-                    repeat 30 times
-                        if (count of windows) > 0 then
-                            set size of front window to {\(bw), \(bh)}
-                            set position of front window to {\(bx), \(by)}
-                            delay 0.1
-                            set position of front window to {\(bx), \(by)}
-                            return
-                        end if
-                        delay 0.3
-                    end repeat
-                end tell
-            end tell
-            """
-
-        guard checkAccessibility() else { return }
-
-        let delays: [Double] = [0.5, 1.5, 3.0]
-        resizeQueue.async {
-            for d in delays {
-                Thread.sleep(forTimeInterval: d)
-                let scriptTask = Process()
-                scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                scriptTask.arguments = ["-e", appleScript]
-                try? scriptTask.run()
-                scriptTask.waitUntilExit()
-                if scriptTask.terminationStatus == 0 { return }
+            let expandedPath = NSString(string: path).expandingTildeInPath
+            guard FileManager.default.fileExists(atPath: expandedPath) else {
+                showAlert(message: "Folder not found: \(path)")
+                return
             }
+            let screen = targetScreen(for: site)
+            let bounds = centeredBounds(for: site, on: screen)
+            FinderLauncher.openAndResize(path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
+        case .shell: ShellLauncher.launch(site)
         }
     }
 
-    private var accessibilityPromptShown = false
-
-    private func checkAccessibility() -> Bool {
-        let trusted = AXIsProcessTrusted()
-        if trusted { return true }
-        if !accessibilityPromptShown {
-            accessibilityPromptShown = true
-            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue(): true] as CFDictionary
-            AXIsProcessTrustedWithOptions(options)
-        }
-        return false
-    }
-
-    private func launchFinder(_ site: Site) {
-        guard let path = site.folderPath, !path.isEmpty else {
-            showAlert(message: "No folder path configured for \"\(site.name)\".")
-            return
-        }
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        guard FileManager.default.fileExists(atPath: expandedPath) else {
-            showAlert(message: "Folder not found: \(path)")
-            return
-        }
-
-        let screen = targetScreen(for: site)
-        let bounds = centeredBounds(for: site, on: screen)
-
-        FinderLauncher.openAndResize(path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
-
-        // MARK: Legacy resize approach (kept for reference)
-        // NSWorkspace.shared.open(URL(fileURLWithPath: expandedPath))
-        // let resizeScript = """
-        // tell application "Finder"
-        //     if (count of windows) > 0 then
-        //         set bounds of front window to {\(bx), \(by), \(bx + bw), \(by + bh)}
-        //     end if
-        // end tell
-        // """
-        // resizeQueue.async {
-        //     Thread.sleep(forTimeInterval: 0.1)
-        //     let scriptTask = Process()
-        //     scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        //     scriptTask.arguments = ["-e", resizeScript]
-        //     try? scriptTask.run()
-        //     scriptTask.waitUntilExit()
-        // }
-    }
-
-    private func launchShell(_ site: Site) {
-        guard let script = site.script, !script.isEmpty else {
-            showAlert(message: "No script configured for \"\(site.name)\".")
-            return
-        }
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: shell)
-        process.arguments = ["-c", script]
-        let pipe = Pipe()
-        process.standardError = pipe
-        process.standardOutput = pipe
-
-        DispatchQueue.global().async {
-            do {
-                try process.run()
-                process.waitUntilExit()
-                if process.terminationStatus != 0 {
-                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                    DispatchQueue.main.async {
-                        self.showAlert(
-                            message: "Script failed (exit \(process.terminationStatus))",
-                            info: errorStr)
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.showAlert(
-                        message: "Failed to execute script.", info: error.localizedDescription)
-                }
-            }
-        }
-    }
 
     private func showAlert(message: String, info: String? = nil) {
         DispatchQueue.main.async {

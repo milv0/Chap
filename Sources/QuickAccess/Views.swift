@@ -496,7 +496,7 @@ struct SiteConfigView: View {
                     }
                 }
                 .labelsHidden()
-                .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { applySize() } }
+                .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { DispatchQueue.main.async { applySize() } } }
             }
 
             HStack(spacing: 12) {
