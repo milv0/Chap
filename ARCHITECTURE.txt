@@ -1,0 +1,75 @@
+QuickAccess Project Structure
+=============================
+
+Sources/
+├── QuickAccess/                    ← 앱 타겟 (UI + 실행 로직)
+│   ├── main.swift                  ← 앱 진입점 (NSApplication 설정)
+│   ├── AppDelegate.swift           ← 라이프사이클, 메뉴바, 핫키, 런처 라우팅
+│   ├── Views.swift                 ← SwiftUI 뷰 (Settings, Welcome, SiteConfig, Minimap)
+│   └── Launchers/                  ← 런처 타입별 실행 로직
+│       ├── ChromeLauncher.swift    ← URL 타입: Chrome --app 모드 + 리사이즈
+│       ├── AppLauncher.swift       ← App 타입: 앱 실행 + System Events 리사이즈
+│       ├── FinderLauncher.swift    ← Finder 타입: 폴더 열기 + 리사이즈 (단일 AppleScript)
+│       └── ShellLauncher.swift     ← Shell 타입: 스크립트 실행 (리사이즈 없음)
+│
+└── QuickAccessCore/                ← 코어 로직 (UI 무의존, 테스트 대상)
+    ├── Models.swift                ← 데이터 모델 (Site, Config, LaunchType, Defaults)
+    ├── SettingsViewModel.swift     ← 설정 상태 관리 (hasChanges, onSave)
+    └── Validation.swift            ← 도메인 검증, 좌표 계산 (centeredBounds, targetScreen)
+
+Tests/
+└── QuickAccessCoreTests/           ← 단위 테스트 (23개)
+    ├── ModelTests.swift            ← Site/Config Codable 테스트
+    ├── SettingsViewModelTests.swift ← ViewModel 상태 전이 테스트
+    └── ValidationTests.swift       ← 도메인 검증, bounds 계산 테스트
+
+Resources/
+└── AppIcon.icns                    ← 앱 아이콘
+
+Config Files:
+├── project.yml                     ← XcodeGen 프로젝트 정의
+├── QuickAccess.xcodeproj/          ← 생성된 Xcode 프로젝트 (xcodegen generate)
+└── .harness/                       ← AI 어시스턴트 규칙 (공유 심링크 구조)
+    ├── shared/rules/               ← 코딩 컨벤션 (SSOT)
+    ├── claude/                     ← Claude Code 설정
+    └── kiro/                       ← Kiro 설정
+
+Runtime:
+└── ~/.quickaccess.json             ← 사용자 설정 파일 (sites, alwaysCenter 등)
+
+
+Recent Changes (2026-06-12, by mingyupk)
+=========================================
+
+PR #7 - Global Hotkeys
+- ⌥Q: 메뉴바 메뉴 열기 (어디서든)
+- ⌥1~9: 사이트 직접 실행 (메뉴 안 열어도 됨)
+- ⌥,: 설정 창 열기
+- NSEvent.addGlobalMonitorForEvents 사용 (접근성 권한 필요)
+- openSite → launchSite 리팩토링 (핫키/메뉴 공유)
+
+PR #8 - Import UX 개선
+- "Paste JSON" 버튼: 모달에서 JSON 텍스트 붙여넣기 → 적용
+- 드래그앤드랍: .json 파일을 설정 창에 끌어다 놓으면 적용
+- Import/Paste JSON/Export를 "File" 드롭다운 메뉴로 통합
+- 성공/실패 시 alert 표시
+
+PR #11 - Finder Launcher + 구조 개선
+- LaunchType에 .finder 추가 (기존 .shell에서 분리)
+- Finder: folderPath 입력 → open + 리사이즈 (단일 AppleScript, 딜레이 없음)
+- Shell: 순수 스크립트 실행만 (리사이즈 없음)
+- centeredBounds(for:on:) 헬퍼 추가 (좌표 계산 재사용)
+- FinderLauncher에 에러 로깅 추가
+- "Publishing changes from within view updates" 경고 수정 (DispatchQueue.main.async)
+
+PR #12 - Launchers/ 디렉토리 분리
+- AppDelegate에서 런처 로직 추출 → Launchers/ 폴더
+- ChromeLauncher, AppLauncher, FinderLauncher, ShellLauncher 각각 독립 파일
+- AppDelegate는 라우팅만 담당 (225줄 → ~120줄)
+- xcodegen generate로 프로젝트 재생성 필요 (새 파일 추가 시)
+
+참고사항:
+- xcodegen 설치됨 (brew install xcodegen)
+- 새 파일 추가 후 반드시 `xcodegen generate` 실행
+- 글로벌 핫키는 접근성 권한 필요 (시스템 설정 > 개인정보 > 접근성)
+- 개발 중 리빌드 후 접근성 토글 껐다 켜야 할 수 있음 (배포 빌드에선 불필요)

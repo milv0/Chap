@@ -7,13 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		200F233D236337111EB57CBD /* FinderLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55D94B10B9B156B1907FA773 /* FinderLauncher.swift */; };
+		34E95723C055A63DD2DBD2B3 /* ChromeLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B01751E1B7228C22B325C490 /* ChromeLauncher.swift */; };
 		3EDE8A2FA44A402EBD080D2D /* SettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B4A25EE7438C9BC89C1D358 /* SettingsViewModelTests.swift */; };
+		41070BEA912B339666664DF9 /* ShellLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FEEFD69F2C295A152D2F89E /* ShellLauncher.swift */; };
 		5499E72B98262B2F6C25A914 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2CCB07981520E032CB21E6 /* Models.swift */; };
 		6094E389ED389CFDF453108E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDC2CD5BAEDED9261E93A58 /* AppDelegate.swift */; };
 		7D950DF733045C15F2EE3CEA /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4B03DE509617D82A99871D /* ModelTests.swift */; };
+		B8F3B819B41C1EF85FF51087 /* AppLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093897E14F864A4574AD00D7 /* AppLauncher.swift */; };
 		D894146607F1C57F9EDEF4DF /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E61A480F8567CAC66E80CF1 /* SettingsViewModel.swift */; };
 		EBF5CEF9DBA653563AC7735B /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44909266AA5BB099983447A6 /* Views.swift */; };
-		F1890350E00C6F1091DBC910 /* FinderLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6600CA28F2008A31E390DAAA /* FinderLauncher.swift */; };
 		F5E19228D4D862A9099E6EDF /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AD1F6F7A2EC9553076F414 /* Validation.swift */; };
 		F942AD822157CF969C3C5E14 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AAA99E519C98526895E97C6 /* main.swift */; };
 		FF56B113E1A8DC54604DEC33 /* ValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CF21CE991E80D717DA0CA40 /* ValidationTests.swift */; };
@@ -30,17 +33,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		093897E14F864A4574AD00D7 /* AppLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLauncher.swift; sourceTree = "<group>"; };
 		0AAA99E519C98526895E97C6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		0E61A480F8567CAC66E80CF1 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		1EB73152A410264213D5E3E0 /* QuickAccessTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuickAccessTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1FEEFD69F2C295A152D2F89E /* ShellLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellLauncher.swift; sourceTree = "<group>"; };
 		2BDC2CD5BAEDED9261E93A58 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2D4B03DE509617D82A99871D /* ModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelTests.swift; sourceTree = "<group>"; };
 		44909266AA5BB099983447A6 /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
 		4A2CCB07981520E032CB21E6 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		55D94B10B9B156B1907FA773 /* FinderLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderLauncher.swift; sourceTree = "<group>"; };
 		5CF21CE991E80D717DA0CA40 /* ValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationTests.swift; sourceTree = "<group>"; };
-		6600CA28F2008A31E390DAAA /* FinderLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderLauncher.swift; sourceTree = "<group>"; };
 		7B4A25EE7438C9BC89C1D358 /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
 		89AD1F6F7A2EC9553076F414 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		B01751E1B7228C22B325C490 /* ChromeLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeLauncher.swift; sourceTree = "<group>"; };
 		B8E0CC94FD4B775541E3F1AD /* QuickAccess.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuickAccess.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE5BD231CEFBB0FFE08ACD2F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,6 +71,17 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		535A1DB405BA7F0C05481DC5 /* Launchers */ = {
+			isa = PBXGroup;
+			children = (
+				093897E14F864A4574AD00D7 /* AppLauncher.swift */,
+				B01751E1B7228C22B325C490 /* ChromeLauncher.swift */,
+				55D94B10B9B156B1907FA773 /* FinderLauncher.swift */,
+				1FEEFD69F2C295A152D2F89E /* ShellLauncher.swift */,
+			);
+			path = Launchers;
+			sourceTree = "<group>";
+		};
 		9C71686D0EA98ADAA0031415 /* QuickAccessCore */ = {
 			isa = PBXGroup;
 			children = (
@@ -80,10 +97,10 @@
 			isa = PBXGroup;
 			children = (
 				2BDC2CD5BAEDED9261E93A58 /* AppDelegate.swift */,
-				6600CA28F2008A31E390DAAA /* FinderLauncher.swift */,
 				DE5BD231CEFBB0FFE08ACD2F /* Info.plist */,
 				0AAA99E519C98526895E97C6 /* main.swift */,
 				44909266AA5BB099983447A6 /* Views.swift */,
+				535A1DB405BA7F0C05481DC5 /* Launchers */,
 			);
 			name = QuickAccess;
 			path = Sources/QuickAccess;
@@ -185,9 +202,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				6094E389ED389CFDF453108E /* AppDelegate.swift in Sources */,
-				F1890350E00C6F1091DBC910 /* FinderLauncher.swift in Sources */,
+				B8F3B819B41C1EF85FF51087 /* AppLauncher.swift in Sources */,
+				34E95723C055A63DD2DBD2B3 /* ChromeLauncher.swift in Sources */,
+				200F233D236337111EB57CBD /* FinderLauncher.swift in Sources */,
 				5499E72B98262B2F6C25A914 /* Models.swift in Sources */,
 				D894146607F1C57F9EDEF4DF /* SettingsViewModel.swift in Sources */,
+				41070BEA912B339666664DF9 /* ShellLauncher.swift in Sources */,
 				F5E19228D4D862A9099E6EDF /* Validation.swift in Sources */,
 				EBF5CEF9DBA653563AC7735B /* Views.swift in Sources */,
 				F942AD822157CF969C3C5E14 /* main.swift in Sources */,
