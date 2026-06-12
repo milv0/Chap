@@ -80,8 +80,11 @@ enum AppLauncher {
 
             guard canResize else { return }
 
-            // Delays start at 1.0s to outlast frameAutosaveName window restoration.
-            let delays: [Double] = [1.0, 2.0, 3.5, 5.0]
+            // Delays: shorter if app is already running, longer for cold start
+            let appRunning = NSWorkspace.shared.runningApplications.contains {
+                $0.bundleIdentifier == bundleId
+            }
+            let delays: [Double] = appRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
             resizeQueue.async {
                 for d in delays {
                     Thread.sleep(forTimeInterval: d)
