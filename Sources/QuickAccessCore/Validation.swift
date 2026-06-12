@@ -1,10 +1,10 @@
-import Foundation
 import AppKit
+import Foundation
 
 public func isValidDomain(_ domain: String) -> Bool {
     guard !domain.isEmpty,
-          let regex = Defaults.domainRegex,
-          regex.firstMatch(in: domain, range: NSRange(domain.startIndex..., in: domain)) != nil
+        let regex = Defaults.domainRegex,
+        regex.firstMatch(in: domain, range: NSRange(domain.startIndex..., in: domain)) != nil
     else { return false }
     return true
 }

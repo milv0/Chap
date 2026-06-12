@@ -21,7 +21,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: "QuickAccess")
+            button.image = NSImage(
+                systemSymbolName: "bolt.fill", accessibilityDescription: "QuickAccess")
         }
         buildMenu()
         registerGlobalHotkeys()
@@ -74,7 +75,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             22: 5, 26: 6, 28: 7, 25: 8,
         ]
         if let index = numberKeyCodes[event.keyCode],
-           index < config.sites.count {
+            index < config.sites.count
+        {
             DispatchQueue.main.async {
                 self.launchSite(self.config.sites[index])
             }
@@ -113,17 +115,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func copyDefaultConfigIfNeeded() {
         if !FileManager.default.fileExists(atPath: configPath) {
             let defaultJSON = """
-            {
-              "sites": [
-                {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100},
-                {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100}
-              ]
-            }
-            """
+                {
+                  "sites": [
+                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100},
+                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100}
+                  ]
+                }
+                """
             do {
                 try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
             } catch {
-                NSLog("[QuickAccess] Failed to write default config: %@", error.localizedDescription)
+                NSLog(
+                    "[QuickAccess] Failed to write default config: %@", error.localizedDescription)
             }
         }
     }
@@ -150,7 +153,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let menu = NSMenu()
         for (i, site) in config.sites.enumerated() {
             let keyEquiv = i < 9 ? "\(i + 1)" : ""
-            let item = NSMenuItem(title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
+            let item = NSMenuItem(
+                title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
             if !keyEquiv.isEmpty {
                 item.keyEquivalentModifierMask = .option
             }
@@ -166,10 +170,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let settings = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: "")
+        let settings = NSMenuItem(
+            title: "Settings...", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
-        let about = NSMenuItem(title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
+        let about = NSMenuItem(
+            title: "About QuickAccess", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
         menu.addItem(.separator())
@@ -230,24 +236,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let retries = Defaults.resizeRetries
         let retryInterval = Defaults.retryInterval
         let appleScript = """
-        tell application "Google Chrome"
-          repeat \(retries) times
-            repeat with w in windows
-              set tabUrl to URL of active tab of w
-              if tabUrl contains "\(domain)" then
-                set bounds of w to {\(bounds)}
-                return
+            tell application "Google Chrome"
+              repeat \(retries) times
+                repeat with w in windows
+                  set tabUrl to URL of active tab of w
+                  if tabUrl contains "\(domain)" then
+                    set bounds of w to {\(bounds)}
+                    return
+                  end if
+                end repeat
+                delay \(retryInterval)
+              end repeat
+              if (count of windows) > 0 then
+                set bounds of front window to {\(bounds)}
               end if
-            end repeat
-            delay \(retryInterval)
-          end repeat
-          if (count of windows) > 0 then
-            set bounds of front window to {\(bounds)}
-          end if
-        end tell
-        """
+            end tell
+            """
 
-        let chromeRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleIdentifier == "com.google.Chrome" }
+        let chromeRunning = NSWorkspace.shared.runningApplications.contains {
+            $0.bundleIdentifier == "com.google.Chrome"
+        }
 
         let openTask = Process()
         openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
@@ -303,21 +311,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
 
         let appleScript = """
-        tell application "System Events"
-            tell process "\(appName)"
-                repeat 30 times
-                    if (count of windows) > 0 then
-                        set size of front window to {\(bw), \(bh)}
-                        set position of front window to {\(bx), \(by)}
-                        delay 0.1
-                        set position of front window to {\(bx), \(by)}
-                        return
-                    end if
-                    delay 0.3
-                end repeat
+            tell application "System Events"
+                tell process "\(appName)"
+                    repeat 30 times
+                        if (count of windows) > 0 then
+                            set size of front window to {\(bw), \(bh)}
+                            set position of front window to {\(bx), \(by)}
+                            delay 0.1
+                            set position of front window to {\(bx), \(by)}
+                            return
+                        end if
+                        delay 0.3
+                    end repeat
+                end tell
             end tell
-        end tell
-        """
+            """
 
         guard checkAccessibility() else { return }
 
@@ -369,12 +377,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
                     let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
                     DispatchQueue.main.async {
-                        self.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                        self.showAlert(
+                            message: "Script failed (exit \(process.terminationStatus))",
+                            info: errorStr)
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
-                    self.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
+                    self.showAlert(
+                        message: "Failed to execute script.", info: error.localizedDescription)
                 }
             }
         }
@@ -449,7 +460,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard let vm = settingsVM, vm.hasChanges,
-              let window = settingsWindow, window.isVisible else {
+            let window = settingsWindow, window.isVisible
+        else {
             return .terminateNow
         }
         let alert = NSAlert()

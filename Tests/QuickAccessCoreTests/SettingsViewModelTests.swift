@@ -1,10 +1,11 @@
 import Testing
+
 @testable import QuickAccess
 
 @Suite("SettingsViewModel")
 struct SettingsViewModelTests {
     private let baseSites = [
-        Site(name: "Google", url: "https://google.com", width: 800, height: 600, x: 0, y: 0),
+        Site(name: "Google", url: "https://google.com", width: 800, height: 600, x: 0, y: 0)
     ]
 
     @Test func hasChangesIsFalseInitially() {
@@ -26,7 +27,8 @@ struct SettingsViewModelTests {
 
     @Test func hasChangesDetectsSiteAddition() {
         let vm = SettingsViewModel(sites: baseSites, runInBackground: true)
-        vm.sites.append(Site(name: "New", url: "https://new.com", width: 400, height: 300, x: 0, y: 0))
+        vm.sites.append(
+            Site(name: "New", url: "https://new.com", width: 400, height: 300, x: 0, y: 0))
         #expect(vm.hasChanges == true)
     }
 
@@ -54,7 +56,8 @@ struct SettingsViewModelTests {
             savedBg = bg
         }
 
-        vm.sites.append(Site(name: "Added", url: "https://added.com", width: 300, height: 200, x: 10, y: 10))
+        vm.sites.append(
+            Site(name: "Added", url: "https://added.com", width: 300, height: 200, x: 10, y: 10))
         vm.runInBackground = false
         vm.onSave?(vm.sites, vm.runInBackground)
 

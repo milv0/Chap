@@ -22,19 +22,26 @@ struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 GuideRow(icon: "plus.circle", text: "Add sites in Settings (Name + URL)")
-                GuideRow(icon: "arrow.up.left.and.arrow.down.right", text: "Set window size, then click ⊹ Center")
-                GuideRow(icon: "rectangle.grid.2x2", text: "Use Layout/Size presets for quick setup")
-                GuideRow(icon: "cursorarrow.click.2", text: "Click a site from the menubar to launch")
+                GuideRow(
+                    icon: "arrow.up.left.and.arrow.down.right",
+                    text: "Set window size, then click ⊹ Center")
+                GuideRow(
+                    icon: "rectangle.grid.2x2", text: "Use Layout/Size presets for quick setup")
+                GuideRow(
+                    icon: "cursorarrow.click.2", text: "Click a site from the menubar to launch")
                 GuideRow(icon: "keyboard", text: "⌥Q opens menu, ⌥1~9 launches sites directly")
-                GuideRow(icon: "checkmark.shield", text: "Allow Accessibility for keyboard shortcuts")
+                GuideRow(
+                    icon: "checkmark.shield", text: "Allow Accessibility for keyboard shortcuts")
             }
             .padding(.horizontal, 24)
 
-            Text("⚠️ First launch may not resize the window.\nJust re-open the site and it will work from then on.")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+            Text(
+                "⚠️ First launch may not resize the window.\nJust re-open the site and it will work from then on."
+            )
+            .font(.system(size: 11))
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 24)
 
             Spacer()
 
@@ -56,7 +63,7 @@ struct WelcomeView: View {
                     .padding(.vertical, 10)
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+            .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
@@ -71,7 +78,7 @@ struct GuideRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 20)
-                .foregroundColor(Color(red: 234/255, green: 88/255, blue: 12/255))
+                .foregroundColor(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
             Text(text)
                 .font(.system(size: 13))
         }
@@ -149,7 +156,10 @@ struct SettingsView: View {
                         .help("User Guide")
                     Menu("File") {
                         Button("Import from File...") { importConfig() }
-                        Button("Paste JSON...") { pasteJSONText = ""; showPasteJSON = true }
+                        Button("Paste JSON...") {
+                            pasteJSONText = ""
+                            showPasteJSON = true
+                        }
                         Divider()
                         Button("Export...") { exportConfig() }
                     }
@@ -157,7 +167,7 @@ struct SettingsView: View {
 
                     Button("Save") { save() }
                         .buttonStyle(.borderedProminent)
-                        .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                        .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
                         .disabled(!vm.hasChanges)
                         .keyboardShortcut("s", modifiers: .command)
                 }
@@ -180,9 +190,12 @@ struct SettingsView: View {
                     .font(.system(size: 18, weight: .bold))
                     .padding(.top, 20)
                 VStack(alignment: .leading, spacing: 10) {
-                    GuideRow(icon: "cursorarrow.click.2", text: "Click ⚡ in menubar → select a site")
+                    GuideRow(
+                        icon: "cursorarrow.click.2", text: "Click ⚡ in menubar → select a site")
                     GuideRow(icon: "plus.circle", text: "Settings → add sites (Name + URL)")
-                    GuideRow(icon: "arrow.up.left.and.arrow.down.right", text: "Set Width/Height, click ⊹ Center")
+                    GuideRow(
+                        icon: "arrow.up.left.and.arrow.down.right",
+                        text: "Set Width/Height, click ⊹ Center")
                     GuideRow(icon: "rectangle.grid.2x2", text: "Use Layout/Size presets")
                     GuideRow(icon: "square.and.arrow.up", text: "Import/Export to share settings")
                     GuideRow(icon: "power", text: "Launch at Login for auto-start")
@@ -194,7 +207,7 @@ struct SettingsView: View {
                 Spacer()
                 Button("Close") { showGuide = false }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                    .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
                     .padding(.bottom, 20)
             }
             .frame(width: 360, height: 340)
@@ -217,7 +230,7 @@ struct SettingsView: View {
                         showPasteJSON = false
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                    .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
                     .disabled(pasteJSONText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(.horizontal, 16)
@@ -245,7 +258,10 @@ struct SettingsView: View {
     }
 
     private func addSite() {
-        vm.sites.append(Site(name: "New Site", url: "https://", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
+        vm.sites.append(
+            Site(
+                name: "New Site", url: "https://", width: Defaults.defaultWidth,
+                height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
         selectedIndex = vm.sites.count - 1
     }
 
@@ -368,8 +384,14 @@ struct SiteConfigView: View {
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
 
-    private let sizeOptions = ["Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)", "XL (1200×800)", "Wide (1000×400)", "Tall (500×800)", "Full (1400×900)"]
-    private let sizes: [(Int, Int)] = [(400,200), (600,300), (800,500), (1000,700), (1200,800), (1000,400), (500,800), (1400,900)]
+    private let sizeOptions = [
+        "Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)",
+        "XL (1200×800)", "Wide (1000×400)", "Tall (500×800)", "Full (1400×900)",
+    ]
+    private let sizes: [(Int, Int)] = [
+        (400, 200), (600, 300), (800, 500), (1000, 700), (1200, 800), (1000, 400), (500, 800),
+        (1400, 900),
+    ]
 
     var body: some View {
         ScrollView {
@@ -424,10 +446,13 @@ struct SiteConfigView: View {
         Group {
             LabeledField("App") {
                 HStack {
-                    TextField("/Applications/...", text: Binding(
-                        get: { site.appPath ?? "" },
-                        set: { site.appPath = $0 }
-                    ))
+                    TextField(
+                        "/Applications/...",
+                        text: Binding(
+                            get: { site.appPath ?? "" },
+                            set: { site.appPath = $0 }
+                        )
+                    )
                     .textFieldStyle(.roundedBorder)
                     Button("Browse") { browseForApp() }
                 }
@@ -442,10 +467,13 @@ struct SiteConfigView: View {
     private var windowConfigSection: some View {
         Group {
             LabeledField("Display") {
-                Picker("", selection: Binding(
-                    get: { site.displayName ?? "Auto" },
-                    set: { site.displayName = $0 == "Auto" ? nil : $0 }
-                )) {
+                Picker(
+                    "",
+                    selection: Binding(
+                        get: { site.displayName ?? "Auto" },
+                        set: { site.displayName = $0 == "Auto" ? nil : $0 }
+                    )
+                ) {
                     Text("Auto (cursor screen)").tag("Auto")
                     ForEach(NSScreen.screens, id: \.localizedName) { screen in
                         Text(screen.localizedName).tag(screen.localizedName)
@@ -468,14 +496,24 @@ struct SiteConfigView: View {
 
             HStack(spacing: 12) {
                 LabeledField("Width") {
-                    TextField("", text: Binding(get: { "\(site.width)" }, set: { site.width = max(100, Int($0) ?? site.width) }))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
+                    TextField(
+                        "",
+                        text: Binding(
+                            get: { "\(site.width)" },
+                            set: { site.width = max(100, Int($0) ?? site.width) })
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
                 }
                 LabeledField("Height") {
-                    TextField("", text: Binding(get: { "\(site.height)" }, set: { site.height = max(100, Int($0) ?? site.height) }))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
+                    TextField(
+                        "",
+                        text: Binding(
+                            get: { "\(site.height)" },
+                            set: { site.height = max(100, Int($0) ?? site.height) })
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 80)
                 }
             }
 
@@ -492,10 +530,12 @@ struct SiteConfigView: View {
                 Text("Script")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
-                TextEditor(text: Binding(
-                    get: { site.script ?? "" },
-                    set: { site.script = $0 }
-                ))
+                TextEditor(
+                    text: Binding(
+                        get: { site.script ?? "" },
+                        set: { site.script = $0 }
+                    )
+                )
                 .font(.system(.body, design: .monospaced))
                 .frame(minHeight: 120)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.3)))
@@ -519,7 +559,10 @@ struct SiteConfigView: View {
         suppressOnChange = true
         var detectedSize = 0
         for (i, sz) in sizes.enumerated() {
-            if site.width == sz.0 && site.height == sz.1 { detectedSize = i + 1; break }
+            if site.width == sz.0 && site.height == sz.1 {
+                detectedSize = i + 1
+                break
+            }
         }
         sizeSelection = detectedSize
         suppressOnChange = false
@@ -593,13 +636,17 @@ struct MinimapSwiftUI: View {
                                     .foregroundColor(.secondary)
                             }
                         )
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(
-                            displayName == nil || screens[i].localizedName == displayName ? Color.orange : Color.gray.opacity(0.3)
-                        ))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4).stroke(
+                                displayName == nil || screens[i].localizedName == displayName
+                                    ? Color.orange : Color.gray.opacity(0.3)
+                            )
+                        )
                         .offset(x: offsetX + sx, y: offsetY + sy)
                 }
 
-                let targetScreen = displayName.flatMap { name in screens.first { $0.localizedName == name } }
+                let targetScreen =
+                    displayName.flatMap { name in screens.first { $0.localizedName == name } }
                     ?? NSScreen.main ?? screens.first!
                 let tFrame = targetScreen.frame
                 let screenLocalX = (tFrame.origin.x - minX) * scale

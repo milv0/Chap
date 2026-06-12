@@ -31,9 +31,11 @@ public struct Site: Codable, Equatable {
     public var appPath: String?
     public var script: String?
 
-    public init(name: String, url: String, width: Int, height: Int, x: Int, y: Int,
-                displayName: String? = nil, launchType: LaunchType = .url,
-                appPath: String? = nil, script: String? = nil) {
+    public init(
+        name: String, url: String, width: Int, height: Int, x: Int, y: Int,
+        displayName: String? = nil, launchType: LaunchType = .url,
+        appPath: String? = nil, script: String? = nil
+    ) {
         self.name = name
         self.url = url
         self.width = width
@@ -77,7 +79,11 @@ public struct Config: Codable {
     }
 
     public static let `default` = Config(sites: [
-        Site(name: "Google", url: "https://www.google.com/", width: 600, height: 400, x: Defaults.defaultX, y: Defaults.defaultY),
-        Site(name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth, height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY),
+        Site(
+            name: "Google", url: "https://www.google.com/", width: 600, height: 400,
+            x: Defaults.defaultX, y: Defaults.defaultY),
+        Site(
+            name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth,
+            height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY),
     ])
 }
