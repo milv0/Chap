@@ -70,6 +70,7 @@ Launch sites without touching the mouse:
 | ⌥2 | Launch 2nd site |
 | ... | ... |
 | ⌥9 | Launch 9th site |
+| ⌥, | Open Settings |
 
 **Setup:** System Settings → Privacy & Security → Accessibility → add QuickAccess and enable.
 

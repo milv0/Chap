@@ -80,6 +80,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             return true
         }
+
+        // ⌥, — open settings
+        if event.keyCode == 43 {
+            DispatchQueue.main.async {
+                self.openSettings()
+            }
+            return true
+        }
+
         return false
     }
 
