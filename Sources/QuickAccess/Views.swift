@@ -84,6 +84,9 @@ struct SettingsView: View {
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
+    @State private var showPasteJSON = false
+    @State private var pasteJSONText = ""
+    @State private var dropTargeted = false
 
     var body: some View {
         HSplitView {
@@ -147,8 +150,12 @@ struct SettingsView: View {
                     Button("?") { showGuide = true }
                         .font(.system(size: 11, weight: .bold))
                         .help("User Guide")
-                    Button("Import") { importConfig() }
-                    Button("Export") { exportConfig() }
+                    Menu("File") {
+                        Button("Import from File...") { importConfig() }
+                        Button("Paste JSON...") { pasteJSONText = ""; showPasteJSON = true }
+                        Divider()
+                        Button("Export...") { exportConfig() }
+                    }
                     Button("Reload") { vm.onReload?() }
 
                     Button("Save") { save() }
@@ -195,6 +202,49 @@ struct SettingsView: View {
             }
             .frame(width: 360, height: 340)
         }
+        .sheet(isPresented: $showPasteJSON) {
+            VStack(spacing: 12) {
+                Text("Paste JSON")
+                    .font(.system(size: 16, weight: .bold))
+                    .padding(.top, 16)
+                TextEditor(text: $pasteJSONText)
+                    .font(.system(size: 11, design: .monospaced))
+                    .frame(minHeight: 200)
+                    .border(Color.gray.opacity(0.3))
+                    .padding(.horizontal, 16)
+                HStack {
+                    Button("Cancel") { showPasteJSON = false }
+                    Spacer()
+                    Button("Apply") {
+                        applyJSONString(pasteJSONText)
+                        showPasteJSON = false
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(red: 234/255, green: 88/255, blue: 12/255))
+                    .disabled(pasteJSONText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+            }
+            .frame(width: 500, height: 350)
+        }
+        .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url = url, url.pathExtension == "json" else { return }
+                DispatchQueue.main.async {
+                    self.importFromURL(url)
+                }
+            }
+            return true
+        }
+        .overlay(
+            dropTargeted
+                ? RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.orange, lineWidth: 3)
+                    .padding(4)
+                : nil
+        )
     }
 
     private func addSite() {
@@ -239,6 +289,44 @@ struct SettingsView: View {
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let config = try JSONDecoder().decode(Config.self, from: data)
+            let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
+            try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
+            vm.sites = config.sites
+            vm.runInBackground = config.runInBackground
+            vm.alwaysCenter = config.alwaysCenter
+            vm.onReload?()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Failed to import config."
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
+    private func applyJSONString(_ jsonString: String) {
+        guard let data = jsonString.data(using: .utf8) else { return }
+        do {
+            let config = try JSONDecoder().decode(Config.self, from: data)
+            let configPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
+            try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
+            vm.sites = config.sites
+            vm.runInBackground = config.runInBackground
+            vm.alwaysCenter = config.alwaysCenter
+            vm.onReload?()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Invalid JSON."
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
+    private func importFromURL(_ url: URL) {
         do {
             let data = try Data(contentsOf: url)
             let config = try JSONDecoder().decode(Config.self, from: data)
