@@ -7,6 +7,10 @@ on:
         description: 'Release version (e.g. 2.3.0)'
         required: true
         type: string
+      changelog:
+        description: 'Changelog summary (e.g. Multi-monitor support, always center)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -79,10 +83,24 @@ jobs:
           rm -f $DEPLOY_DIR/QuickAccess-v*.zip
           cp "${{ env.ZIP_NAME }}" $DEPLOY_DIR/
 
+          # Update zip filename references
           sed -i '' "s/QuickAccess-v[0-9.]*.zip/QuickAccess-v${{ inputs.version }}.zip/g" \
             $DEPLOY_DIR/install.sh $DEPLOY_DIR/index.html
           sed -i '' "s/VERSION=\".*\"/VERSION=\"${{ inputs.version }}\"/" \
             $DEPLOY_DIR/install.sh
+
+          # Update version badge in index.html (EN and KO)
+          sed -i '' "s/v[0-9]\.[0-9]\.[0-9]/v${{ inputs.version }}/g" $DEPLOY_DIR/index.html
+
+          # Add changelog entry to index.html (insert after changelog h2 timeline div)
+          MONTH=$(date +"%b %Y")
+          CHANGELOG_ENTRY="      <div style=\"margin-bottom: 20px; position: relative;\">\n        <div style=\"position:absolute;left:-27px;top:4px;width:10px;height:10px;background:#ea580c;border-radius:50;\"><\/div>\n        <p style=\"font-size:0.8rem;color:#999;\">$MONTH<\/p>\n        <p style=\"font-weight:600;font-size:0.9rem;\">v${{ inputs.version }}<\/p>\n        <p style=\"font-size:0.8rem;color:#666;\">${{ inputs.changelog }}<\/p>\n      <\/div>"
+
+          # Demote previous latest entry (orange dot → gray dot)
+          sed -i '' '0,/background:#ea580c;border-radius:50;/{s/background:#ea580c;border-radius:50;/background:#ddd;border-radius:50;/;}' $DEPLOY_DIR/index.html
+
+          # Insert new entry at top of timeline
+          sed -i '' "s|<div style=\"border-left: 2px solid #eee; margin-left: 8px; padding-left: 20px; margin-top: 24px;\">|<div style=\"border-left: 2px solid #eee; margin-left: 8px; padding-left: 20px; margin-top: 24px;\">\n${CHANGELOG_ENTRY}|" $DEPLOY_DIR/index.html
 
           cd $DEPLOY_DIR
           git config user.name "github-actions[bot]"
