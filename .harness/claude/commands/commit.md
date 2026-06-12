@@ -1,5 +1,5 @@
 ---
-description: .claude/rules/commit-convention.md 규약에 맞춘 Conventional Commit 을 생성한다. AI/에이전트 attribution 금지, Co-authored-by 금지, 영문 ≤72자.
+description: .claude/rules/commit-convention.md 규약에 맞춘 Conventional Commit 을 생성한다. 변경이 여러 의미 단위면 쪼개서 커밋한다. AI/에이전트 attribution 금지, Co-authored-by 금지, 영문 ≤72자.
 allowed-tools: Bash, Read
 ---
 
@@ -15,25 +15,45 @@ allowed-tools: Bash, Read
 
 1. **변경 파일 안전 검토** — SSOT §1 의 sensitive 파일 목록을 적용. `git status` / `git diff --stat HEAD` 로 확인.
    - 시크릿 파일 감지 시 즉시 중단, 사용자에게 보고.
-   - `.DS_Store`, `*.log`, `*.zip` (docs/ 제외) 는 staging 에서 제외.
+   - `.DS_Store`, `*.log`, `*.zip` 는 staging 에서 제외.
 
-2. **빌드 검증** — 커밋 전 컴파일 확인:
+2. **커밋 단위 분석** — 변경 파일 목록과 diff 를 분석해 의미적으로 구분되는 단위를 식별한다.
+
+   분리 기준:
+   - **type 이 다르면** 반드시 분리 (feat + fix → 2 커밋)
+   - **scope 이 다르면** 분리 권장 (app + docs → 2 커밋)
+   - **같은 type/scope 이라도** 독립적 변경이면 분리 (버그 A 수정 + 버그 B 수정 → 2 커밋)
+
+   분리하지 않는 경우:
+   - 하나의 기능을 구성하는 여러 파일 변경 (모델 + 뷰 + 테스트 = 1 커밋)
+   - 리팩토링의 일부로 여러 파일에 걸친 rename
+
+   분석 결과를 사용자에게 보고:
+   ```
+   변경 분석:
+   1. feat(app): ... — AppDelegate.swift, Models.swift
+   2. docs(docs): ... — README.md
+   3. chore(repo): ... — .gitignore
+   ```
+   사용자 확인 후 순서대로 커밋 진행. 단일 커밋이 적절하면 바로 진행.
+
+3. **빌드 검증** — Swift 소스 변경이 포함된 경우에만:
    ```bash
-   swiftc QuickAccess.swift -o /dev/null -target arm64-apple-macosx14.0 -framework Cocoa -framework SwiftUI 2>&1
+   xcodebuild -project QuickAccess.xcodeproj -scheme QuickAccess -configuration Debug -destination "platform=macOS" build 2>&1 | tail -3
    ```
    - 실패하면 커밋 진행하지 않고 에러 보고 후 종료.
-   - 통과하면 다음 단계.
+   - Swift 소스 변경이 없으면 (문서, 설정만 변경) 생략.
 
-3. **type / scope 결정** — SSOT §2.1, §2.2 의 매핑 표를 따른다.
+4. **type / scope 결정** — SSOT §2.1, §2.2 의 매핑 표를 따른다.
 
-4. **메시지 작성** — SSOT §2.3 (subject) + §2.4 (body) + §2.5 (footer) + §3 (금지 표현) + §4 (언어 검증).
+5. **메시지 작성** — SSOT §2.3 (subject) + §2.4 (body) + §2.5 (footer) + §3 (금지 표현) + §4 (언어 검증).
    - subject ≤ 72 chars 확인.
    - body 영문 + bullets 3~5.
    - footer 는 BREAKING CHANGE 가 있을 때만.
 
-5. **커밋 실행** — SSOT §5 의 heredoc 형식:
+6. **커밋 실행** — 각 단위별로 해당 파일만 staging 후 커밋:
    ```bash
-   git add <relevant files>
+   git add <해당 단위의 파일들>
    git commit -m "$(cat <<'EOF'
    <type>(<scope>): <subject>
 
@@ -43,11 +63,15 @@ allowed-tools: Bash, Read
    EOF
    )"
    ```
-   - `git add -A` 대신 관련 파일만 명시적으로 staging.
+   여러 단위면 위 과정을 반복.
 
-6. **결과 보고** — `git log -1 --stat` 출력에서 커밋 해시, subject, 변경 파일 수만 한국어로 한 줄.
+7. **결과 보고** — 각 커밋에 대해 해시, subject, 변경 파일 수를 한국어로 보고.
+   ```
+   커밋 1: abc1234 feat(app): add multi-monitor support — 3개 파일
+   커밋 2: def5678 docs(docs): update README — 1개 파일
+   ```
 
-7. **push 하지 않는다** — SSOT §7. 사용자가 명시적으로 요청한 경우에만 push.
+8. **push 하지 않는다** — SSOT §7. 사용자가 명시적으로 요청한 경우에만 push.
 
 ## 변경이 없는 경우
 
@@ -55,7 +79,7 @@ allowed-tools: Bash, Read
 
 ## 사후 검증
 
-커밋 직후 attribution 패턴 누출 검사:
+모든 커밋 완료 후 마지막 커밋에 대해 attribution 패턴 누출 검사:
 
 ```bash
 git log -1 --format=%B | grep -iE "co-authored-by:|generated with|built with|authored by|powered by" && \
