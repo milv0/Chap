@@ -496,7 +496,9 @@ struct SiteConfigView: View {
                     }
                 }
                 .labelsHidden()
-                .onChange(of: sizeSelection) { _, _ in if !suppressOnChange { DispatchQueue.main.async { applySize() } } }
+                .onChange(of: sizeSelection) { _, _ in
+                    if !suppressOnChange { DispatchQueue.main.async { applySize() } }
+                }
             }
 
             HStack(spacing: 12) {
@@ -532,10 +534,13 @@ struct SiteConfigView: View {
     private var finderConfigSection: some View {
         Group {
             LabeledField("Folder") {
-                TextField("~/Documents", text: Binding(
-                    get: { site.folderPath ?? "" },
-                    set: { site.folderPath = $0 }
-                ))
+                TextField(
+                    "~/Documents",
+                    text: Binding(
+                        get: { site.folderPath ?? "" },
+                        set: { site.folderPath = $0 }
+                    )
+                )
                 .textFieldStyle(.roundedBorder)
             }
 
@@ -581,7 +586,10 @@ struct SiteConfigView: View {
             suppressOnChange = true
             var detectedSize = 0
             for (i, sz) in sizes.enumerated() {
-                if site.width == sz.0 && site.height == sz.1 { detectedSize = i + 1; break }
+                if site.width == sz.0 && site.height == sz.1 {
+                    detectedSize = i + 1
+                    break
+                }
             }
             sizeSelection = detectedSize
             suppressOnChange = false
