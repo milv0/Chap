@@ -9,11 +9,11 @@ enum AppLauncher {
     static func launch(_ site: Site, resizeQueue: DispatchQueue) {
         // 앱 경로 유효성 검증
         guard let path = site.appPath, !path.isEmpty else {
-            showAlert(message: "No app path configured for \"\(site.name)\".")
+            LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
             return
         }
         guard FileManager.default.fileExists(atPath: path) else {
-            showAlert(message: "App not found at: \(path)")
+            LauncherUtils.showAlert(message: "App not found at: \(path)")
             return
         }
 
@@ -75,6 +75,12 @@ enum AppLauncher {
             """
 
         // NSWorkspace로 앱 실행 (활성화 모드)
+        // 앱이 이미 실행 중인지 여기서 확인 (콜백 안에서는 항상 true가 됨)
+        let appRunning = NSWorkspace.shared.runningApplications.contains {
+            $0.bundleIdentifier == bundleId
+        }
+        let delays: [Double] = appRunning ? [0.2, 0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
+
         let appURL = URL(fileURLWithPath: path)
         let openConfig = NSWorkspace.OpenConfiguration()
         openConfig.activates = true
@@ -91,41 +97,8 @@ enum AppLauncher {
             // 접근성 없으면 리사이즈 스킵
             guard canResize else { return }
 
-            // 앱이 이미 실행 중이면 짧은 딜레이, 콜드 스타트면 긴 딜레이
-            let appRunning = NSWorkspace.shared.runningApplications.contains {
-                $0.bundleIdentifier == bundleId
-            }
-            let delays: [Double] = appRunning ? [0.2, 0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
-
-            // 점진적 딜레이로 리사이즈 시도 — 성공하면 즉시 종료
-            resizeQueue.async {
-                for d in delays {
-                    Thread.sleep(forTimeInterval: d)
-                    let scriptTask = Process()
-                    let pipe = Pipe()
-                    scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                    scriptTask.arguments = ["-e", appleScript]
-                    scriptTask.standardError = pipe
-                    scriptTask.standardOutput = pipe
-                    do {
-                        try scriptTask.run()
-                        scriptTask.waitUntilExit()
-                        let output =
-                            String(
-                                data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                                encoding: .utf8) ?? ""
-                        NSLog(
-                            "[AppLauncher] attempt delay=%.1fs status=%d output=%@",
-                            d, scriptTask.terminationStatus, output)
-                        if scriptTask.terminationStatus == 0 { return }
-                    } catch {
-                        NSLog(
-                            "[AppLauncher] failed to run osascript: %@",
-                            error.localizedDescription)
-                    }
-                }
-                NSLog("[AppLauncher] All resize attempts failed for %@", site.name)
-            }
+            // 점진적 딜레이로 리사이즈 시도
+            LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name)
         }
     }
 
@@ -143,16 +116,5 @@ enum AppLauncher {
             AXIsProcessTrustedWithOptions(options)
         }
         return false
-    }
-
-    /// 에러 알림 표시 (메인 스레드에서 실행)
-    private static func showAlert(message: String, info: String? = nil) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = message
-            if let info = info { alert.informativeText = info }
-            alert.alertStyle = .warning
-            alert.runModal()
-        }
     }
 }

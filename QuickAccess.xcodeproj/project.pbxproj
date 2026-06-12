@@ -14,6 +14,7 @@
 		5499E72B98262B2F6C25A914 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2CCB07981520E032CB21E6 /* Models.swift */; };
 		6094E389ED389CFDF453108E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BDC2CD5BAEDED9261E93A58 /* AppDelegate.swift */; };
 		7D950DF733045C15F2EE3CEA /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4B03DE509617D82A99871D /* ModelTests.swift */; };
+		B53845C6C9B2AF641DB9D801 /* LauncherUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = A18A55395C90D069804405CB /* LauncherUtils.swift */; };
 		B8F3B819B41C1EF85FF51087 /* AppLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 093897E14F864A4574AD00D7 /* AppLauncher.swift */; };
 		D894146607F1C57F9EDEF4DF /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E61A480F8567CAC66E80CF1 /* SettingsViewModel.swift */; };
 		EBF5CEF9DBA653563AC7735B /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44909266AA5BB099983447A6 /* Views.swift */; };
@@ -46,6 +47,7 @@
 		5CF21CE991E80D717DA0CA40 /* ValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationTests.swift; sourceTree = "<group>"; };
 		7B4A25EE7438C9BC89C1D358 /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
 		89AD1F6F7A2EC9553076F414 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		A18A55395C90D069804405CB /* LauncherUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherUtils.swift; sourceTree = "<group>"; };
 		B01751E1B7228C22B325C490 /* ChromeLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeLauncher.swift; sourceTree = "<group>"; };
 		B8E0CC94FD4B775541E3F1AD /* QuickAccess.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuickAccess.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DE5BD231CEFBB0FFE08ACD2F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 				093897E14F864A4574AD00D7 /* AppLauncher.swift */,
 				B01751E1B7228C22B325C490 /* ChromeLauncher.swift */,
 				55D94B10B9B156B1907FA773 /* FinderLauncher.swift */,
+				A18A55395C90D069804405CB /* LauncherUtils.swift */,
 				1FEEFD69F2C295A152D2F89E /* ShellLauncher.swift */,
 			);
 			path = Launchers;
@@ -205,6 +208,7 @@
 				B8F3B819B41C1EF85FF51087 /* AppLauncher.swift in Sources */,
 				34E95723C055A63DD2DBD2B3 /* ChromeLauncher.swift in Sources */,
 				200F233D236337111EB57CBD /* FinderLauncher.swift in Sources */,
+				B53845C6C9B2AF641DB9D801 /* LauncherUtils.swift in Sources */,
 				5499E72B98262B2F6C25A914 /* Models.swift in Sources */,
 				D894146607F1C57F9EDEF4DF /* SettingsViewModel.swift in Sources */,
 				41070BEA912B339666664DF9 /* ShellLauncher.swift in Sources */,

@@ -9,7 +9,7 @@ enum ChromeLauncher {
     static func launch(_ site: Site, resizeQueue: DispatchQueue) {
         // Chrome 설치 여부 확인
         guard FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") else {
-            showAlert(message: "Google Chrome is not installed.")
+            LauncherUtils.showAlert(message: "Google Chrome is not installed.")
             return
         }
 
@@ -59,42 +59,13 @@ enum ChromeLauncher {
         do {
             try openTask.run()
         } catch {
-            showAlert(message: "Failed to launch Chrome.", info: error.localizedDescription)
+            LauncherUtils.showAlert(message: "Failed to launch Chrome.", info: error.localizedDescription)
             return
         }
 
         // 윈도우가 뜰 때까지 점진적 딜레이 후 리사이즈 시도
         // 이미 실행 중이면 짧은 딜레이, 콜드 스타트면 긴 딜레이
         let delays: [Double] = chromeRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
-        resizeQueue.async {
-            for d in delays {
-                Thread.sleep(forTimeInterval: d)
-                let scriptTask = Process()
-                let pipe = Pipe()
-                scriptTask.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                scriptTask.arguments = ["-e", appleScript]
-                scriptTask.standardError = pipe
-                do {
-                    try scriptTask.run()
-                    scriptTask.waitUntilExit()
-                    // 성공하면 즉시 종료
-                    if scriptTask.terminationStatus == 0 { return }
-                } catch {
-                    continue
-                }
-            }
-            NSLog("[QuickAccess] All resize attempts failed")
-        }
-    }
-
-    /// 에러 알림 표시 (메인 스레드에서 실행)
-    private static func showAlert(message: String, info: String? = nil) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = message
-            if let info = info { alert.informativeText = info }
-            alert.alertStyle = .warning
-            alert.runModal()
-        }
+        LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name)
     }
 }

@@ -15,10 +15,10 @@ enum FinderLauncher {
         // AppleScript: Finder 활성화 → 폴더 열기 → 윈도우 크기 설정 (한 번에 실행)
         let script = """
         tell application "Finder"
-            activate
             set targetFolder to (POSIX file "\(posixPath)") as alias
             open targetFolder
             set bounds of front window to {\(bounds.0), \(bounds.1), \(bounds.2), \(bounds.3)}
+            activate
         end tell
         """
 

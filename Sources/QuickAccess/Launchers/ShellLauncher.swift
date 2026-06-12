@@ -8,7 +8,7 @@ enum ShellLauncher {
     static func launch(_ site: Site) {
         // 스크립트 유효성 확인
         guard let script = site.script, !script.isEmpty else {
-            showAlert(message: "No script configured for \"\(site.name)\".")
+            LauncherUtils.showAlert(message: "No script configured for \"\(site.name)\".")
             return
         }
 
@@ -30,22 +30,11 @@ enum ShellLauncher {
                 if process.terminationStatus != 0 {
                     let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
                     let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                    showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                    LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
                 }
             } catch {
-                showAlert(message: "Failed to execute script.", info: error.localizedDescription)
+                LauncherUtils.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
             }
-        }
-    }
-
-    /// 에러 알림 표시 (메인 스레드에서 실행)
-    private static func showAlert(message: String, info: String? = nil) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = message
-            if let info = info { alert.informativeText = info }
-            alert.alertStyle = .warning
-            alert.runModal()
         }
     }
 }
