@@ -9,6 +9,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var settingsWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let resizeQueue = DispatchQueue(label: "com.mingyupark.QuickAccess.resize")
+    private var menuIsOpen = false
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -49,53 +50,67 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func registerGlobalHotkeys() {
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
-        guard let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
-            place: .headInsertEventTap,
-            options: .defaultTap,
-            eventsOfInterest: mask,
-            callback: { _, _, event, refcon -> Unmanaged<CGEvent>? in
-                guard let refcon = refcon else { return Unmanaged.passRetained(event) }
-                let appDelegate = Unmanaged<AppDelegate>.fromOpaque(refcon).takeUnretainedValue()
-                let flags = event.flags.intersection([.maskAlternate, .maskShift, .maskCommand, .maskControl])
-                guard flags == .maskAlternate else { return Unmanaged.passRetained(event) }
+        guard
+            let tap = CGEvent.tapCreate(
+                tap: .cgSessionEventTap,
+                place: .headInsertEventTap,
+                options: .defaultTap,
+                eventsOfInterest: mask,
+                callback: { _, _, event, refcon -> Unmanaged<CGEvent>? in
+                    guard let refcon = refcon else { return Unmanaged.passRetained(event) }
+                    let appDelegate = Unmanaged<AppDelegate>.fromOpaque(refcon)
+                        .takeUnretainedValue()
+                    let flags = event.flags.intersection([
+                        .maskAlternate, .maskShift, .maskCommand, .maskControl,
+                    ])
+                    guard flags == .maskAlternate else { return Unmanaged.passRetained(event) }
 
-                let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
+                    let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
-                // ⌥Q — open menu
-                if keyCode == 12 {
-                    DispatchQueue.main.async {
-                        guard let button = appDelegate.statusItem.button else { return }
-                        appDelegate.statusItem.menu?.popUp(positioning: nil, at: .zero, in: button)
+                    // ⌥Q — open menu (block while menu is open)
+                    if keyCode == 12 {
+                        guard !appDelegate.menuIsOpen else { return nil }
+                        appDelegate.menuIsOpen = true
+                        DispatchQueue.main.async {
+                            guard let button = appDelegate.statusItem.button else {
+                                appDelegate.menuIsOpen = false
+                                return
+                            }
+                            appDelegate.statusItem.menu?.popUp(
+                                positioning: nil, at: .zero, in: button)
+                            // popUp은 메뉴가 닫힐 때까지 동기적으로 블록함
+                            appDelegate.menuIsOpen = false
+                        }
+                        return nil  // 이벤트 소비
                     }
-                    return nil // 이벤트 소비
-                }
 
-                // ⌥1~9 — launch site
-                let numberKeyCodes: [UInt16: Int] = [
-                    18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
-                    22: 5, 26: 6, 28: 7, 25: 8,
-                ]
-                if let index = numberKeyCodes[keyCode],
-                   index < appDelegate.config.sites.count {
-                    DispatchQueue.main.async {
-                        appDelegate.launchSite(appDelegate.config.sites[index])
+                    // ⌥1~9 — launch site
+                    let numberKeyCodes: [UInt16: Int] = [
+                        18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
+                        22: 5, 26: 6, 28: 7, 25: 8,
+                    ]
+                    if let index = numberKeyCodes[keyCode],
+                        index < appDelegate.config.sites.count
+                    {
+                        DispatchQueue.main.async {
+                            appDelegate.launchSite(appDelegate.config.sites[index])
+                        }
+                        return nil  // 이벤트 소비
                     }
-                    return nil // 이벤트 소비
-                }
 
-                // ⌥, — open settings
-                if keyCode == 43 {
-                    DispatchQueue.main.async {
-                        appDelegate.openSettings()
+                    // ⌥, — open settings
+                    if keyCode == 43 {
+                        DispatchQueue.main.async {
+                            appDelegate.openSettings()
+                        }
+                        return nil  // 이벤트 소비
                     }
-                    return nil // 이벤트 소비
-                }
 
-                return Unmanaged.passRetained(event) // 다른 키는 통과
-            },
-            userInfo: Unmanaged.passUnretained(self).toOpaque()
-        ) else {
+                    return Unmanaged.passRetained(event)  // 다른 키는 통과
+                },
+                userInfo: Unmanaged.passUnretained(self).toOpaque()
+            )
+        else {
             NSLog("[QuickAccess] Failed to create CGEvent tap — check Accessibility permission")
             return
         }
@@ -230,11 +245,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
             let screen = targetScreen(for: site)
             let bounds = centeredBounds(for: site, on: screen)
-            FinderLauncher.openAndResize(path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
+            FinderLauncher.openAndResize(
+                path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
         case .shell: ShellLauncher.launch(site)
         }
     }
-
 
     private func showAlert(message: String, info: String? = nil) {
         DispatchQueue.main.async {
