@@ -45,53 +45,65 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     // MARK: - Global Hotkeys
 
+    private var eventTap: CFMachPort?
+
     private func registerGlobalHotkeys() {
-        NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleHotkey(event)
-        }
-        NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.handleHotkey(event) == true { return nil }
-            return event
-        }
-    }
+        let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
+        guard let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .defaultTap,
+            eventsOfInterest: mask,
+            callback: { _, _, event, refcon -> Unmanaged<CGEvent>? in
+                guard let refcon = refcon else { return Unmanaged.passRetained(event) }
+                let appDelegate = Unmanaged<AppDelegate>.fromOpaque(refcon).takeUnretainedValue()
+                let flags = event.flags.intersection([.maskAlternate, .maskShift, .maskCommand, .maskControl])
+                guard flags == .maskAlternate else { return Unmanaged.passRetained(event) }
 
-    @discardableResult
-    private func handleHotkey(_ event: NSEvent) -> Bool {
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard flags == .option else { return false }
+                let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
-        // ⌥Q — open menu
-        if event.keyCode == 12 {
-            DispatchQueue.main.async {
-                guard let button = self.statusItem.button else { return }
-                self.statusItem.menu?.popUp(positioning: nil, at: .zero, in: button)
-            }
-            return true
+                // ⌥Q — open menu
+                if keyCode == 12 {
+                    DispatchQueue.main.async {
+                        guard let button = appDelegate.statusItem.button else { return }
+                        appDelegate.statusItem.menu?.popUp(positioning: nil, at: .zero, in: button)
+                    }
+                    return nil // 이벤트 소비
+                }
+
+                // ⌥1~9 — launch site
+                let numberKeyCodes: [UInt16: Int] = [
+                    18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
+                    22: 5, 26: 6, 28: 7, 25: 8,
+                ]
+                if let index = numberKeyCodes[keyCode],
+                   index < appDelegate.config.sites.count {
+                    DispatchQueue.main.async {
+                        appDelegate.launchSite(appDelegate.config.sites[index])
+                    }
+                    return nil // 이벤트 소비
+                }
+
+                // ⌥, — open settings
+                if keyCode == 43 {
+                    DispatchQueue.main.async {
+                        appDelegate.openSettings()
+                    }
+                    return nil // 이벤트 소비
+                }
+
+                return Unmanaged.passRetained(event) // 다른 키는 통과
+            },
+            userInfo: Unmanaged.passUnretained(self).toOpaque()
+        ) else {
+            NSLog("[QuickAccess] Failed to create CGEvent tap — check Accessibility permission")
+            return
         }
 
-        // ⌥1~9 — launch site directly
-        let numberKeyCodes: [UInt16: Int] = [
-            18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
-            22: 5, 26: 6, 28: 7, 25: 8,
-        ]
-        if let index = numberKeyCodes[event.keyCode],
-            index < config.sites.count
-        {
-            DispatchQueue.main.async {
-                self.launchSite(self.config.sites[index])
-            }
-            return true
-        }
-
-        // ⌥, — open settings
-        if event.keyCode == 43 {
-            DispatchQueue.main.async {
-                self.openSettings()
-            }
-            return true
-        }
-
-        return false
+        eventTap = tap
+        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
     }
 
     func showWelcomeWindow() {
