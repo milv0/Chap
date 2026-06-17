@@ -169,6 +169,7 @@ struct SettingsView: View {
                     Button("?") { showGuide = true }
                         .font(.system(size: 11, weight: .bold))
                         .help("User Guide")
+                        .keyboardShortcut("/", modifiers: .command)
                     Menu("File") {
                         Button("Import from File...") { importConfig() }
                         Button("Paste JSON...") {
