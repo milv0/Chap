@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 // MARK: - Brand Color
 
-private let accentColor = accentColor
+private let brandColor = Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255)
 
 // MARK: - Welcome View
 
@@ -64,7 +64,7 @@ struct WelcomeView: View {
                     .padding(.vertical, 10)
             }
             .buttonStyle(.borderedProminent)
-            .tint(accentColor)
+            .tint(brandColor)
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
@@ -97,7 +97,7 @@ struct GuideRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 20)
-                .foregroundColor(accentColor)
+                .foregroundColor(brandColor)
             Text(text)
                 .font(.system(size: 13))
         }
@@ -251,7 +251,7 @@ struct SettingsView: View {
                 Spacer()
                 Button("Close") { showGuide = false }
                     .buttonStyle(.borderedProminent)
-                    .tint(accentColor)
+                    .tint(brandColor)
                     .padding(.bottom, 20)
             }
             .frame(width: 400, height: 460)
@@ -274,7 +274,7 @@ struct SettingsView: View {
                         showPasteJSON = false
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(accentColor)
+                    .tint(brandColor)
                     .disabled(pasteJSONText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding(.horizontal, 16)
@@ -467,7 +467,7 @@ struct SiteConfigView: View {
                         onSave?()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(accentColor)
+                    .tint(brandColor)
                     .keyboardShortcut(.return, modifiers: [])
                 } else {
                     Button("Edit") {
