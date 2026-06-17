@@ -25,25 +25,21 @@ enum ChromeLauncher {
         let bounds = centeredBounds(for: site, on: screen)
         let boundsStr = "\(bounds.left), \(bounds.top), \(bounds.right), \(bounds.bottom)"
 
-        // AppleScript: Chrome 윈도우 중 해당 도메인을 포함하는 탭을 찾아 리사이즈
-        // 못 찾으면 최대 retries회 반복 대기 후, 최종적으로 front window를 리사이즈
-        let retries = Defaults.resizeRetries
-        let retryInterval = Defaults.retryInterval
+        // AppleScript: 도메인 매칭 윈도우를 한번 찾아 리사이즈. 못 찾으면 front window fallback.
+        // 내부 retry 없음 — 외부 retryResize가 재시도 관리.
         let appleScript = """
         tell application "Google Chrome"
-          repeat \(retries) times
-            repeat with w in windows
-              set tabUrl to URL of active tab of w
-              if tabUrl contains "\(rawDomain)" then
-                set bounds of w to {\(boundsStr)}
-                return
-              end if
-            end repeat
-            delay \(retryInterval)
+          repeat with w in windows
+            if URL of active tab of w contains "\(rawDomain)" then
+              set bounds of w to {\(boundsStr)}
+              return "matched"
+            end if
           end repeat
           if (count of windows) > 0 then
             set bounds of front window to {\(boundsStr)}
+            return "fallback"
           end if
+          return "no windows"
         end tell
         """
 
