@@ -133,7 +133,7 @@ struct SettingsView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 if let idx = selectedIndex, idx < vm.sites.count {
-                    SiteConfigView(site: $vm.sites[idx])
+                    SiteConfigView(site: $vm.sites[idx], onSave: { save() })
                 } else {
                     Spacer()
                     Text("Select a site to configure")
@@ -165,11 +165,11 @@ struct SettingsView: View {
                     }
                     Button("Reload") { vm.onReload?() }
 
-                    Button("Save") { save() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
-                        .disabled(!vm.hasChanges)
+                    // Cmd+S shortcut (hidden, triggers save)
+                    Button("") { save() }
                         .keyboardShortcut("s", modifiers: .command)
+                        .frame(width: 0, height: 0)
+                        .opacity(0)
                 }
                 .padding(.horizontal, 12)
                 .padding(.bottom, 8)
@@ -385,6 +385,8 @@ struct SiteConfigView: View {
     @Binding var site: Site
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
+    @State private var isEditing = false
+    var onSave: (() -> Void)?
 
     private let sizeOptions = [
         "Custom", "Tiny (400×200)", "Mini (600×300)", "Medium (800×500)", "Large (1000×700)",
@@ -396,12 +398,30 @@ struct SiteConfigView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                LabeledField("Name") {
-                    TextField("Site name", text: $site.name)
-                        .textFieldStyle(.roundedBorder)
+        VStack(alignment: .trailing, spacing: 0) {
+            HStack {
+                Spacer()
+                Button(isEditing ? "Save" : "Edit") {
+                    if isEditing {
+                        // Save 동작: SettingsView의 save()를 트리거하기 위해 onSave 콜백 사용
+                        isEditing = false
+                        onSave?()
+                    } else {
+                        isEditing = true
+                    }
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(isEditing ? Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255) : .gray)
+                .padding(.trailing, 16)
+                .padding(.top, 8)
+            }
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    LabeledField("Name") {
+                        TextField("Site name", text: $site.name)
+                            .textFieldStyle(.roundedBorder)
+                    }
 
                 LabeledField("Type") {
                     Picker("", selection: $site.launchType) {
@@ -430,6 +450,8 @@ struct SiteConfigView: View {
                 Spacer()
             }
             .padding(16)
+        }
+        .disabled(!isEditing)
         }
         .onAppear { detectSizePreset() }
     }
