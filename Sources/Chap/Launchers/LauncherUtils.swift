@@ -23,27 +23,20 @@ enum LauncherUtils {
         queue.async {
             let startTime = CFAbsoluteTimeGetCurrent()
             NSLog("[Chap] resize start for %@ (type=%@, state=%@)", label, type, appState)
+            let appleScript = NSAppleScript(source: script)
             for (attempt, d) in delays.enumerated() {
                 Thread.sleep(forTimeInterval: d)
-                let task = Process()
-                let pipe = Pipe()
-                task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                task.arguments = ["-e", script]
-                task.standardError = pipe
-                task.standardOutput = pipe
-                do {
-                    try task.run()
-                    task.waitUntilExit()
-                    let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-                    if task.terminationStatus == 0 {
-                        NSLog("[Chap] resize success for %@ — attempt %d, delay %.1fs, total %.2fs", label, attempt + 1, d, elapsed)
-                        ResizeLogger.log(site: label, type: type, appState: appState, attempt: attempt + 1, delay: d, totalTime: elapsed, result: "success", windowCount: windowCount, display: display, size: size)
-                        return
-                    }
-                    NSLog("[Chap] resize attempt %d failed for %@ (status %d, total %.2fs)", attempt + 1, label, task.terminationStatus, elapsed)
-                } catch {
-                    continue
+                var errorInfo: NSDictionary?
+                let result = appleScript?.executeAndReturnError(&errorInfo)
+                let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                if errorInfo == nil {
+                    let output = result?.stringValue ?? ""
+                    NSLog("[Chap] resize success for %@ — attempt %d, delay %.1fs, total %.2fs, output=%@", label, attempt + 1, d, elapsed, output)
+                    ResizeLogger.log(site: label, type: type, appState: appState, attempt: attempt + 1, delay: d, totalTime: elapsed, result: "success", windowCount: windowCount, display: display, size: size)
+                    return
                 }
+                let errMsg = errorInfo?[NSAppleScript.errorMessage] as? String ?? "unknown"
+                NSLog("[Chap] resize attempt %d failed for %@ (error=%@, total %.2fs)", attempt + 1, label, errMsg, elapsed)
             }
             let totalTime = CFAbsoluteTimeGetCurrent() - startTime
             NSLog("[Chap] All resize attempts failed for %@ — total %.2fs", label, totalTime)
