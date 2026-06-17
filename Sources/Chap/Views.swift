@@ -230,7 +230,7 @@ struct SettingsView: View {
                     .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
                     .padding(.bottom, 20)
             }
-            .frame(width: 360, height: 340)
+            .frame(width: 400, height: 420)
         }
         .sheet(isPresented: $showPasteJSON) {
             VStack(spacing: 12) {
