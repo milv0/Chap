@@ -98,7 +98,7 @@ enum AppLauncher {
             guard canResize else { return }
 
             // 점진적 딜레이로 리사이즈 시도
-            LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name)
+            LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name, type: "app", appState: appRunning ? "running" : "cold", windowCount: 0, display: screen.localizedName, size: "\(site.width)x\(site.height)")
         }
     }
 
