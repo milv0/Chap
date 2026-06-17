@@ -114,7 +114,8 @@ struct SettingsView: View {
 
     var body: some View {
         HSplitView {
-            VStack(spacing: 8) {
+            // Sidebar
+            VStack(spacing: 0) {
                 List(selection: $selectedIndex) {
                     ForEach(vm.sites.indices, id: \.self) { i in
                         SidebarRow(index: i, site: vm.sites[i], icon: sidebarIcon(for: vm.sites[i]))
@@ -126,23 +127,35 @@ struct SettingsView: View {
                     }
                 }
                 .listStyle(.bordered)
-                .frame(minWidth: 160)
 
-                HStack(spacing: 4) {
-                    Button("Add") { addSite() }
-                    Button("Remove") { showDeleteAlert = true }
-                        .disabled(selectedIndex == nil)
+                Divider()
+
+                HStack(spacing: 8) {
+                    Button(action: addSite) {
+                        Image(systemName: "plus")
+                    }
+                    Button(action: { showDeleteAlert = true }) {
+                        Image(systemName: "minus")
+                    }
+                    .disabled(selectedIndex == nil)
+                    Spacer()
+                    Button(action: moveSiteUp) {
+                        Image(systemName: "chevron.up")
+                    }
+                    .disabled(selectedIndex == nil || selectedIndex == 0)
+                    Button(action: moveSiteDown) {
+                        Image(systemName: "chevron.down")
+                    }
+                    .disabled(selectedIndex == nil || selectedIndex == vm.sites.count - 1)
                 }
-                HStack(spacing: 4) {
-                    Button("↑") { moveSiteUp() }
-                        .disabled(selectedIndex == nil || selectedIndex == 0)
-                    Button("↓") { moveSiteDown() }
-                        .disabled(selectedIndex == nil || selectedIndex == vm.sites.count - 1)
-                }
-                .padding(.bottom, 8)
+                .buttonStyle(.borderless)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(height: 36)
             }
             .frame(width: 180)
 
+            // Right panel
             VStack(alignment: .leading, spacing: 0) {
                 if let idx = selectedIndex, idx < vm.sites.count {
                     SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, onSave: { save() })
@@ -154,20 +167,22 @@ struct SettingsView: View {
                     Spacer()
                 }
 
-                Divider().padding(.vertical, 8)
+                Divider()
 
-                HStack {
-                    Toggle("Run in Background", isOn: $vm.runInBackground)
+                HStack(spacing: 8) {
+                    Toggle("Background", isOn: $vm.runInBackground)
                         .toggleStyle(.checkbox)
                         .font(.system(size: 11))
 
                     Spacer()
 
-                    Button("?") { showGuide = true }
-                        .font(.system(size: 11, weight: .bold))
-                        .help("User Guide")
-                        .keyboardShortcut("/", modifiers: .command)
-                    Menu("File") {
+                    Button(action: { showGuide = true }) {
+                        Image(systemName: "questionmark.circle")
+                    }
+                    .help("User Guide")
+                    .keyboardShortcut("/", modifiers: .command)
+
+                    Menu {
                         Button("Import from File...") { importConfig() }
                         Button("Paste JSON...") {
                             pasteJSONText = ""
@@ -175,10 +190,10 @@ struct SettingsView: View {
                         }
                         Divider()
                         Button("Export...") { exportConfig() }
+                    } label: {
+                        Image(systemName: "folder")
                     }
-                    Button("Reload") { vm.onReload?() }
 
-                    // Cmd+S: save + 편집 종료
                     Button("") {
                         save()
                         isEditing = false
@@ -187,11 +202,13 @@ struct SettingsView: View {
                     .frame(width: 0, height: 0)
                     .opacity(0)
                 }
+                .buttonStyle(.borderless)
                 .padding(.horizontal, 12)
-                .padding(.bottom, 8)
+                .frame(height: 36)
             }
         }
         .frame(minWidth: 700, minHeight: 500)
+        .onChange(of: selectedIndex) { _, _ in isEditing = false }
         .background(siteSelectionShortcuts)
         .alert("Delete site?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
@@ -304,6 +321,8 @@ struct SettingsView: View {
         guard let idx = selectedIndex, idx < vm.sites.count else { return }
         vm.sites.remove(at: idx)
         selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
+        isEditing = false
+        save()
     }
 
     private func moveSiteUp() {
