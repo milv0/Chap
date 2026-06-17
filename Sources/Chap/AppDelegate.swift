@@ -228,7 +228,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc func showAbout() {
         let alert = NSAlert()
         alert.messageText = "Chap"
-        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Mingyu"
+        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Team Chap"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()

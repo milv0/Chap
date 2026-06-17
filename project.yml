@@ -24,7 +24,7 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         INFOPLIST_KEY_LSUIElement: true
         INFOPLIST_KEY_CFBundleDisplayName: Chap
-        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Mingyu"
+        INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Team Chap"
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
 
