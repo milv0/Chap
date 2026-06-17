@@ -205,9 +205,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showGuide) {
             VStack(spacing: 16) {
+                Spacer()
                 Text("User Guide ⚡")
                     .font(.system(size: 18, weight: .bold))
-                    .padding(.top, 20)
                 VStack(alignment: .leading, spacing: 10) {
                     GuideRow(
                         icon: "cursorarrow.click.2", text: "Click ⚡ in menubar → select a site")
