@@ -74,10 +74,10 @@ struct SidebarRow: View {
     let icon: String
     var body: some View {
         HStack(spacing: 4) {
-            Text("\(index + 1)")
+            Text("⌥\(index + 1)")
                 .font(.system(size: 9, design: .monospaced))
                 .foregroundColor(.secondary.opacity(0.6))
-                .frame(width: 12)
+                .frame(width: 20)
             Image(systemName: icon)
                 .font(.system(size: 9))
                 .foregroundColor(.secondary)
