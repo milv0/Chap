@@ -22,15 +22,11 @@ struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 GuideRow(icon: "plus.circle", text: "Add sites in Settings (Name + URL)")
-                GuideRow(
-                    icon: "arrow.up.left.and.arrow.down.right",
-                    text: "Set window size, then click ⊹ Center")
-                GuideRow(
-                    icon: "rectangle.grid.2x2", text: "Use Layout/Size presets for quick setup")
+                GuideRow(icon: "display", text: "Choose display, set size — always centered")
                 GuideRow(
                     icon: "cursorarrow.click.2", text: "Click a site from the menubar to launch")
-                GuideRow(icon: "keyboard", text: "⌥Q opens menu, ⌥1~9 launches sites directly")
-                GuideRow(icon: "keyboard", text: "⌘E edit, ⌘S/Enter save")
+                GuideRow(icon: "keyboard", text: "⌥Q menu, ⌥1~9 launch, ⌥, settings")
+                GuideRow(icon: "keyboard", text: "⌘E edit, ⌘S/Enter save, ⌘? guide")
                 GuideRow(
                     icon: "checkmark.shield", text: "Allow Accessibility for keyboard shortcuts")
             }
@@ -210,20 +206,25 @@ struct SettingsView: View {
                 Spacer()
                 Text("User Guide ⚡")
                     .font(.system(size: 18, weight: .bold))
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("App Usage  ⌥")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
                     GuideRow(
                         icon: "cursorarrow.click.2", text: "Click ⚡ in menubar → select a site")
-                    GuideRow(icon: "plus.circle", text: "Settings → add sites (Name + URL)")
-                    GuideRow(
-                        icon: "arrow.up.left.and.arrow.down.right",
-                        text: "Set Width/Height, click ⊹ Center")
-                    GuideRow(icon: "rectangle.grid.2x2", text: "Use Layout/Size presets")
-                    GuideRow(icon: "square.and.arrow.up", text: "Import/Export to share settings")
-                    GuideRow(icon: "power", text: "Launch at Login for auto-start")
-                    GuideRow(icon: "display", text: "Windows are always centered on target display")
-                    GuideRow(icon: "keyboard", text: "⌥Q opens menu, ⌥1~9 launches sites")
-                    GuideRow(icon: "keyboard", text: "⌘E edit, ⌘S/Enter save")
+                    GuideRow(icon: "keyboard", text: "⌥Q menu, ⌥1~9 launch, ⌥, settings")
                     GuideRow(icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
+
+                    Divider().padding(.vertical, 4)
+
+                    Text("Settings  ⌘")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.secondary)
+                    GuideRow(icon: "plus.circle", text: "Add sites (Name + URL)")
+                    GuideRow(icon: "display", text: "Choose display, set size — always centered")
+                    GuideRow(icon: "square.and.arrow.down", text: "Drag & drop .json to import")
+                    GuideRow(icon: "keyboard", text: "⌘E edit, ⌘S/Enter save, ⌘? guide")
+                    GuideRow(icon: "keyboard", text: "⌘1~9 select site")
                 }
                 .padding(.horizontal, 24)
                 Spacer()
@@ -232,7 +233,7 @@ struct SettingsView: View {
                     .tint(Color(red: 234 / 255, green: 88 / 255, blue: 12 / 255))
                     .padding(.bottom, 20)
             }
-            .frame(width: 400, height: 420)
+            .frame(width: 400, height: 460)
         }
         .sheet(isPresented: $showPasteJSON) {
             VStack(spacing: 12) {
