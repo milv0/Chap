@@ -17,6 +17,7 @@
 		9503CAD11D024327ECEACD92 /* ChromeLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 767C872683D69FD138F7FD8E /* ChromeLauncher.swift */; };
 		A790FEF784870CFD51D28F5B /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9E98605E5EC73A70B567A3 /* Validation.swift */; };
 		B4FFF02FF93C9786ED215836 /* LauncherUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD790A6D13A0E7403EFAE8B /* LauncherUtils.swift */; };
+		B73F8DB5E78A7CE500310E3C /* ResizeLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B265694CAC6BD06CFD93D40 /* ResizeLogger.swift */; };
 		C0D9C046AF7B694410E7352F /* ModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4103DFE140D595EE3A5DBD6 /* ModelTests.swift */; };
 		C3567E5BBF266C2C79AB02BE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D1143F7F396BAD41C8D093 /* AppDelegate.swift */; };
 		E47230323DAB68F8CF8D74CC /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94B59440821396FF3BC2B6BB /* SettingsViewModel.swift */; };
@@ -35,6 +36,7 @@
 
 /* Begin PBXFileReference section */
 		0FD790A6D13A0E7403EFAE8B /* LauncherUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LauncherUtils.swift; sourceTree = "<group>"; };
+		2B265694CAC6BD06CFD93D40 /* ResizeLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResizeLogger.swift; sourceTree = "<group>"; };
 		4DEBCAB6FE5B908D006F12F7 /* ChapTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChapTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		56D6BFB5C103431ACA91184B /* FinderLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinderLauncher.swift; sourceTree = "<group>"; };
 		68B1546E9E0B7D3899FC5058 /* ValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationTests.swift; sourceTree = "<group>"; };
@@ -72,6 +74,7 @@
 				767C872683D69FD138F7FD8E /* ChromeLauncher.swift */,
 				56D6BFB5C103431ACA91184B /* FinderLauncher.swift */,
 				0FD790A6D13A0E7403EFAE8B /* LauncherUtils.swift */,
+				2B265694CAC6BD06CFD93D40 /* ResizeLogger.swift */,
 				9BCD6DC487A819DB2F787846 /* ShellLauncher.swift */,
 			);
 			path = Launchers;
@@ -210,6 +213,7 @@
 				06792520715CB89C2AE58759 /* FinderLauncher.swift in Sources */,
 				B4FFF02FF93C9786ED215836 /* LauncherUtils.swift in Sources */,
 				48A547E3BFB191B6D8FB5E91 /* Models.swift in Sources */,
+				B73F8DB5E78A7CE500310E3C /* ResizeLogger.swift in Sources */,
 				E47230323DAB68F8CF8D74CC /* SettingsViewModel.swift in Sources */,
 				FB894175A60835F9F6FE7603 /* ShellLauncher.swift in Sources */,
 				A790FEF784870CFD51D28F5B /* Validation.swift in Sources */,

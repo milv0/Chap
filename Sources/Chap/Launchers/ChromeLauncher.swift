@@ -51,6 +51,7 @@ enum ChromeLauncher {
         let chromeRunning = NSWorkspace.shared.runningApplications.contains {
             $0.bundleIdentifier == "com.google.Chrome"
         }
+        NSLog("[Chap] Chrome launch for %@ — chromeRunning=%d", site.name, chromeRunning ? 1 : 0)
 
         // Chrome을 --app 모드로 실행 (주소바 없는 독립 윈도우)
         let openTask = Process()
@@ -66,6 +67,9 @@ enum ChromeLauncher {
         // 윈도우가 뜰 때까지 점진적 딜레이 후 리사이즈 시도
         // 이미 실행 중이면 짧은 딜레이, 콜드 스타트면 긴 딜레이
         let delays: [Double] = chromeRunning ? [0.5, 0.8, 1.2, 2.0] : [1.0, 2.0, 3.5, 5.0]
-        LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name)
+        let windowCount = NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == "com.google.Chrome" }.count
+        let displayName = screen.localizedName
+        let sizeStr = "\(site.width)x\(site.height)"
+        LauncherUtils.retryResize(script: appleScript, delays: delays, queue: resizeQueue, label: site.name, type: "url", appState: chromeRunning ? "running" : "cold", windowCount: windowCount, display: displayName, size: sizeStr)
     }
 }

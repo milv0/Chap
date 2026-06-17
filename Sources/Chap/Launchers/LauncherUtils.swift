@@ -19,9 +19,11 @@ enum LauncherUtils {
     ///   - delays: 시도 간 대기 시간 배열
     ///   - queue: 실행할 백그라운드 큐
     ///   - label: 실패 시 로그에 표시할 식별자
-    static func retryResize(script: String, delays: [Double], queue: DispatchQueue, label: String) {
+    static func retryResize(script: String, delays: [Double], queue: DispatchQueue, label: String, type: String = "url", appState: String = "unknown", windowCount: Int = 0, display: String = "", size: String = "") {
         queue.async {
-            for d in delays {
+            let startTime = CFAbsoluteTimeGetCurrent()
+            NSLog("[Chap] resize start for %@ (type=%@, state=%@)", label, type, appState)
+            for (attempt, d) in delays.enumerated() {
                 Thread.sleep(forTimeInterval: d)
                 let task = Process()
                 let pipe = Pipe()
@@ -32,12 +34,20 @@ enum LauncherUtils {
                 do {
                     try task.run()
                     task.waitUntilExit()
-                    if task.terminationStatus == 0 { return }
+                    let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+                    if task.terminationStatus == 0 {
+                        NSLog("[Chap] resize success for %@ — attempt %d, delay %.1fs, total %.2fs", label, attempt + 1, d, elapsed)
+                        ResizeLogger.log(site: label, type: type, appState: appState, attempt: attempt + 1, delay: d, totalTime: elapsed, result: "success", windowCount: windowCount, display: display, size: size)
+                        return
+                    }
+                    NSLog("[Chap] resize attempt %d failed for %@ (status %d, total %.2fs)", attempt + 1, label, task.terminationStatus, elapsed)
                 } catch {
                     continue
                 }
             }
-            NSLog("[Chap] All resize attempts failed for %@", label)
+            let totalTime = CFAbsoluteTimeGetCurrent() - startTime
+            NSLog("[Chap] All resize attempts failed for %@ — total %.2fs", label, totalTime)
+            ResizeLogger.log(site: label, type: type, appState: appState, attempt: delays.count, delay: delays.last ?? 0, totalTime: totalTime, result: "failed", windowCount: windowCount, display: display, size: size)
         }
     }
 }
