@@ -1,5 +1,4 @@
 import Cocoa
-import ServiceManagement
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -29,12 +28,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         buildMenu()
         registerGlobalHotkeys()
 
-        DispatchQueue.global().async {
-            let task = Process()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-            task.arguments = ["-e", "tell application \"Google Chrome\" to get name"]
-            try? task.run()
-            task.waitUntilExit()
+        if config.sites.contains(where: { $0.launchType == .url }),
+            FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app")
+        {
+            DispatchQueue.global().async {
+                let task = Process()
+                task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+                task.arguments = ["-e", "tell application \"Google Chrome\" to get name"]
+                try? task.run()
+                task.waitUntilExit()
+            }
         }
 
         let guideDisabled = UserDefaults.standard.bool(forKey: "guideDisabled")
@@ -260,7 +263,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             case .shell: iconName = "terminal.fill"
             }
             item.image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
-            item.representedObject = site
+            item.tag = i
             item.target = self
             menu.addItem(item)
         }
@@ -296,8 +299,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Site opening
 
     @objc func openSite(_ sender: NSMenuItem) {
-        guard let site = sender.representedObject as? Site else { return }
-        launchSite(site)
+        let index = sender.tag
+        guard index >= 0, index < config.sites.count else { return }
+        launchSite(config.sites[index])
     }
 
     func launchSite(_ site: Site) {
@@ -388,8 +392,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             alert.informativeText = "Changes will be lost if you close."
             alert.addButton(withTitle: "Close")
             alert.addButton(withTitle: "Cancel")
-            return alert.runModal() == .alertFirstButtonReturn
+            if alert.runModal() != .alertFirstButtonReturn {
+                return false
+            }
         }
+        settingsVM = nil
         return true
     }
 
