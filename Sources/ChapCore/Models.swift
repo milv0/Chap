@@ -70,16 +70,19 @@ public struct Site: Codable, Equatable {
 
 public struct Config: Codable {
     public var runInBackground: Bool
+    public var showGhostWindow: Bool
     public var sites: [Site]
 
-    public init(runInBackground: Bool = true, sites: [Site]) {
+    public init(runInBackground: Bool = true, showGhostWindow: Bool = true, sites: [Site]) {
         self.runInBackground = runInBackground
+        self.showGhostWindow = showGhostWindow
         self.sites = sites
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         runInBackground = try container.decodeIfPresent(Bool.self, forKey: .runInBackground) ?? true
+        showGhostWindow = try container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
         sites = try container.decode([Site].self, forKey: .sites)
     }
 

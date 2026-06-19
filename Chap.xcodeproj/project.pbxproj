@@ -16,6 +16,7 @@
 		57C27648BC5358DB8E70993B /* ValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68B1546E9E0B7D3899FC5058 /* ValidationTests.swift */; };
 		5FFA086112D0DD86D756CCEA /* SiteConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E9F02DCAD0D93C15B2DFE26 /* SiteConfigView.swift */; };
 		6E3A10967827FB17E5EDDD46 /* AppLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCCC84E120158D619C54EAF6 /* AppLauncher.swift */; };
+		8A85D22C55A0F8FD007D2486 /* GhostWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A08E1D02771E30E30B2085 /* GhostWindow.swift */; };
 		9503CAD11D024327ECEACD92 /* ChromeLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 767C872683D69FD138F7FD8E /* ChromeLauncher.swift */; };
 		A790FEF784870CFD51D28F5B /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9E98605E5EC73A70B567A3 /* Validation.swift */; };
 		B4FFF02FF93C9786ED215836 /* LauncherUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FD790A6D13A0E7403EFAE8B /* LauncherUtils.swift */; };
@@ -53,6 +54,7 @@
 		767C872683D69FD138F7FD8E /* ChromeLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeLauncher.swift; sourceTree = "<group>"; };
 		7A3F7AC0708B5AF342DD1FE0 /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
 		7E9E98605E5EC73A70B567A3 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		94A08E1D02771E30E30B2085 /* GhostWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostWindow.swift; sourceTree = "<group>"; };
 		94B59440821396FF3BC2B6BB /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		9BCD6DC487A819DB2F787846 /* ShellLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellLauncher.swift; sourceTree = "<group>"; };
 		A5CD2B058B38711BA354038B /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
@@ -93,6 +95,7 @@
 				FCCC84E120158D619C54EAF6 /* AppLauncher.swift */,
 				767C872683D69FD138F7FD8E /* ChromeLauncher.swift */,
 				56D6BFB5C103431ACA91184B /* FinderLauncher.swift */,
+				94A08E1D02771E30E30B2085 /* GhostWindow.swift */,
 				0FD790A6D13A0E7403EFAE8B /* LauncherUtils.swift */,
 				2B265694CAC6BD06CFD93D40 /* ResizeLogger.swift */,
 				9BCD6DC487A819DB2F787846 /* ShellLauncher.swift */,
@@ -233,6 +236,7 @@
 				3C5C8FBCE5ED77688A268333 /* Components.swift in Sources */,
 				E1C06FBC3AD584461E139C09 /* DesignSystem.swift in Sources */,
 				06792520715CB89C2AE58759 /* FinderLauncher.swift in Sources */,
+				8A85D22C55A0F8FD007D2486 /* GhostWindow.swift in Sources */,
 				B4FFF02FF93C9786ED215836 /* LauncherUtils.swift in Sources */,
 				48A547E3BFB191B6D8FB5E91 /* Models.swift in Sources */,
 				B73F8DB5E78A7CE500310E3C /* ResizeLogger.swift in Sources */,

@@ -19,7 +19,11 @@ enum LauncherUtils {
     ///   - delays: 시도 간 대기 시간 배열
     ///   - queue: 실행할 백그라운드 큐
     ///   - label: 실패 시 로그에 표시할 식별자
-    static func retryResize(script: String, delays: [Double], queue: DispatchQueue, label: String, type: String = "url", appState: String = "unknown", windowCount: Int = 0, display: String = "", size: String = "") {
+    static func retryResize(
+        script: String, delays: [Double], queue: DispatchQueue, label: String,
+        type: String = "url", appState: String = "unknown", windowCount: Int = 0,
+        display: String = "", size: String = "", onComplete: (() -> Void)? = nil
+    ) {
         queue.async {
             let startTime = CFAbsoluteTimeGetCurrent()
             NSLog("[Chap] resize start for %@ (type=%@, state=%@)", label, type, appState)
@@ -36,21 +40,43 @@ enum LauncherUtils {
                     task.waitUntilExit()
                     let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                     if task.terminationStatus == 0 {
-                        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                        NSLog("[Chap] resize success for %@ — attempt %d, delay %.1fs, total %.2fs, output=%@", label, attempt + 1, d, elapsed, output)
-                        ResizeLogger.log(site: label, type: type, appState: appState, attempt: attempt + 1, delay: d, totalTime: elapsed, result: "success", windowCount: windowCount, display: display, size: size)
+                        let output =
+                            String(
+                                data: pipe.fileHandleForReading.readDataToEndOfFile(),
+                                encoding: .utf8
+                            )?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        NSLog(
+                            "[Chap] resize success for %@ — attempt %d, delay %.1fs, total %.2fs, output=%@",
+                            label, attempt + 1, d, elapsed, output)
+                        ResizeLogger.log(
+                            site: label, type: type, appState: appState,
+                            attempt: attempt + 1, delay: d, totalTime: elapsed,
+                            result: "success", windowCount: windowCount,
+                            display: display, size: size)
+                        onComplete?()
                         return
                     }
-                    let errMsg = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                    NSLog("[Chap] resize attempt %d failed for %@ (status=%d, error=%@, total %.2fs)", attempt + 1, label, task.terminationStatus, errMsg, elapsed)
+                    let errMsg =
+                        String(
+                            data: pipe.fileHandleForReading.readDataToEndOfFile(),
+                            encoding: .utf8) ?? ""
+                    NSLog(
+                        "[Chap] resize attempt %d failed for %@ (status=%d, error=%@, total %.2fs)",
+                        attempt + 1, label, task.terminationStatus, errMsg, elapsed)
                 } catch {
-                    NSLog("[Chap] resize attempt %d error for %@: %@", attempt + 1, label, error.localizedDescription)
+                    NSLog(
+                        "[Chap] resize attempt %d error for %@: %@",
+                        attempt + 1, label, error.localizedDescription)
                     continue
                 }
             }
             let totalTime = CFAbsoluteTimeGetCurrent() - startTime
             NSLog("[Chap] All resize attempts failed for %@ — total %.2fs", label, totalTime)
-            ResizeLogger.log(site: label, type: type, appState: appState, attempt: delays.count, delay: delays.last ?? 0, totalTime: totalTime, result: "failed", windowCount: windowCount, display: display, size: size)
+            ResizeLogger.log(
+                site: label, type: type, appState: appState, attempt: delays.count,
+                delay: delays.last ?? 0, totalTime: totalTime, result: "failed",
+                windowCount: windowCount, display: display, size: size)
+            onComplete?()
         }
     }
 }

@@ -305,16 +305,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func launchSite(_ site: Site) {
+        if config.showGhostWindow && site.launchType != .shell {
+            let screen = targetScreen(for: site)
+            let bounds = centeredBounds(for: site, on: screen)
+            GhostWindow.show(bounds: bounds)
+        }
+
         switch site.launchType {
-        case .url: ChromeLauncher.launch(site, resizeQueue: resizeQueue)
-        case .app: AppLauncher.launch(site, resizeQueue: resizeQueue)
+        case .url:
+            ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
+                GhostWindow.dismiss()
+            }
+        case .app:
+            AppLauncher.launch(site, resizeQueue: resizeQueue) {
+                GhostWindow.dismiss()
+            }
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
+                GhostWindow.dismiss()
                 showAlert(message: "No folder path configured for \"\(site.name)\".")
                 return
             }
             let expandedPath = NSString(string: path).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expandedPath) else {
+                GhostWindow.dismiss()
                 showAlert(message: "Folder not found: \(path)")
                 return
             }
@@ -322,6 +336,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
                 path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
+            GhostWindow.dismiss()
         case .shell: ShellLauncher.launch(site)
         }
     }
@@ -345,10 +360,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return
         }
 
-        let vm = SettingsViewModel(sites: config.sites, runInBackground: config.runInBackground)
-        vm.onSave = { [weak self] newSites, bg in
+        let vm = SettingsViewModel(
+            sites: config.sites, runInBackground: config.runInBackground,
+            showGhostWindow: config.showGhostWindow)
+        vm.onSave = { [weak self] newSites, bg, ghost in
             guard let self = self else { return }
-            self.config = Config(runInBackground: bg, sites: newSites)
+            self.config = Config(runInBackground: bg, showGhostWindow: ghost, sites: newSites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             if let data = try? encoder.encode(self.config) {

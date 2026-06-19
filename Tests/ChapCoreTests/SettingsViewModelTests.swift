@@ -47,21 +47,31 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == false)
     }
 
+    @Test func hasChangesDetectsGhostToggle() {
+        let vm = SettingsViewModel(sites: baseSites, runInBackground: true, showGhostWindow: true)
+        vm.showGhostWindow = false
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites, runInBackground: true)
         var savedSites: [Site]?
         var savedBg: Bool?
-        vm.onSave = { sites, bg in
+        var savedGhost: Bool?
+        vm.onSave = { sites, bg, ghost in
             savedSites = sites
             savedBg = bg
+            savedGhost = ghost
         }
 
         vm.sites.append(
             Site(name: "Added", url: "https://added.com", width: 300, height: 200, x: 10, y: 10))
         vm.runInBackground = false
-        vm.onSave?(vm.sites, vm.runInBackground)
+        vm.showGhostWindow = false
+        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow)
 
         #expect(savedSites?.count == 2)
         #expect(savedBg == false)
+        #expect(savedGhost == false)
     }
 }

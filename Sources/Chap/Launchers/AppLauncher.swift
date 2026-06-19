@@ -6,7 +6,7 @@ enum AppLauncher {
     /// - Parameters:
     ///   - site: 실행할 사이트 정보 (앱 경로, 크기 등)
     ///   - resizeQueue: 리사이즈 작업을 실행할 백그라운드 큐
-    static func launch(_ site: Site, resizeQueue: DispatchQueue) {
+    static func launch(_ site: Site, resizeQueue: DispatchQueue, onComplete: (() -> Void)? = nil) {
         // 앱 경로 유효성 검증
         guard let path = site.appPath, !path.isEmpty else {
             LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
@@ -88,20 +88,23 @@ enum AppLauncher {
         NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { app, error in
             if let error = error {
                 NSLog("[AppLauncher] openApplication failed: %@", error.localizedDescription)
+                onComplete?()
                 return
             }
             NSLog(
                 "[AppLauncher] app opened pid=%d localizedName=%@",
                 app?.processIdentifier ?? -1, app?.localizedName ?? "?")
 
-            // 접근성 없으면 리사이즈 스킵
-            guard canResize else { return }
+            guard canResize else {
+                onComplete?()
+                return
+            }
 
-            // 점진적 딜레이로 리사이즈 시도
             LauncherUtils.retryResize(
                 script: appleScript, delays: delays, queue: resizeQueue, label: site.name,
                 type: "app", appState: appRunning ? "running" : "cold", windowCount: 0,
-                display: screen.localizedName, size: "\(site.width)x\(site.height)")
+                display: screen.localizedName, size: "\(site.width)x\(site.height)",
+                onComplete: onComplete)
         }
     }
 
