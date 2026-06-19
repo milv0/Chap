@@ -427,12 +427,9 @@ struct SettingsView: View {
     }
 
     private func restartApp() {
-        let url = URL(fileURLWithPath: Bundle.main.bundlePath)
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-n", url.path]
-        try? task.run()
-        NSApp.terminate(nil)
+        if let delegate = NSApp.delegate as? AppDelegate {
+            delegate.restartApp()
+        }
     }
 
     private func uninstallApp() {

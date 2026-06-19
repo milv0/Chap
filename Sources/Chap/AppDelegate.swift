@@ -376,10 +376,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     @objc func restartApp() {
-        let url = URL(fileURLWithPath: Bundle.main.bundlePath)
+        let appPath = Bundle.main.bundlePath
+        // 1초 후 재실행하는 백그라운드 프로세스를 띄운 후 종료
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-n", url.path]
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", "sleep 1; open \"\(appPath)\""]
         try? task.run()
         NSApp.terminate(nil)
     }
