@@ -180,14 +180,18 @@ struct SiteConfigView: View {
 
     private var finderFields: some View {
         Group {
-            InputField(
-                label: "Folder",
-                text: Binding(
-                    get: { site.folderPath ?? "" },
-                    set: { site.folderPath = $0 }
-                ),
-                placeholder: "~/Documents"
-            )
+            HStack {
+                InputField(
+                    label: "Folder",
+                    text: Binding(
+                        get: { site.folderPath ?? "" },
+                        set: { site.folderPath = $0 }
+                    ),
+                    placeholder: "~/Documents"
+                )
+                Button("Browse") { browseFolder() }
+                    .controlSize(.small)
+            }
             windowFields
         }
     }
@@ -228,6 +232,19 @@ struct SiteConfigView: View {
         site.appPath = url.path
         if site.name == "New Launchable" || site.name.isEmpty {
             site.name = url.deletingPathExtension().lastPathComponent
+        }
+    }
+
+    private func browseFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory())
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        site.folderPath = url.path
+        if site.name == "New Launchable" || site.name.isEmpty {
+            site.name = url.lastPathComponent
         }
     }
 
