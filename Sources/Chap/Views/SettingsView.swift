@@ -174,6 +174,8 @@ struct SettingsView: View {
                 }
                 Divider()
                 Button("Export...") { exportConfig() }
+                Divider()
+                Button("Restart App") { restartApp() }
             } label: {
                 Image(systemName: "folder")
                     .font(.system(size: 13))
@@ -411,12 +413,25 @@ struct SettingsView: View {
     }
 
     private func exportConfig() {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = "chap.json"
-        panel.allowedContentTypes = [.json]
-        guard panel.runModal() == .OK, let url = panel.url else { return }
         let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
-        try? FileManager.default.copyItem(at: URL(fileURLWithPath: configPath), to: url)
+        let downloadsPath = NSString(string: "~/Downloads/chap.json").expandingTildeInPath
+        try? FileManager.default.removeItem(atPath: downloadsPath)
+        try? FileManager.default.copyItem(atPath: configPath, toPath: downloadsPath)
+        NSLog("[Chap] Config exported to %@", downloadsPath)
+        let alert = NSAlert()
+        alert.messageText = "Export successful"
+        alert.informativeText = "Saved to ~/Downloads/chap.json"
+        alert.alertStyle = .informational
+        alert.runModal()
+    }
+
+    private func restartApp() {
+        let url = URL(fileURLWithPath: Bundle.main.bundlePath)
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", url.path]
+        try? task.run()
+        NSApp.terminate(nil)
     }
 
     private func importConfig() {

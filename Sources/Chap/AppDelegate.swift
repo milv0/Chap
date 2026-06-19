@@ -113,6 +113,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             )
         else {
             NSLog("[Chap] Failed to create CGEvent tap — check Accessibility permission")
+            // 권한 획득 후 자동 재시도 (2초 간격)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                if self?.eventTap == nil {
+                    self?.registerGlobalHotkeys()
+                }
+            }
             return
         }
 
@@ -156,8 +162,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let defaultJSON = """
                 {
                   "sites": [
-                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100},
-                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100}
+                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100, "launchType": "url"},
+                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100, "launchType": "url"},
+                    {"name": "Downloads", "url": "", "width": 1000, "height": 400, "x": 100, "y": 100, "launchType": "finder", "folderPath": "~/Downloads"}
                   ]
                 }
                 """
@@ -218,6 +225,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
         menu.addItem(about)
+        menu.addItem(.separator())
+        let restart = NSMenuItem(title: "Restart", action: #selector(restartApp), keyEquivalent: "")
+        restart.target = self
+        menu.addItem(restart)
+        let uninstall = NSMenuItem(title: "Uninstall...", action: #selector(uninstallApp), keyEquivalent: "")
+        uninstall.target = self
+        menu.addItem(uninstall)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
@@ -349,6 +363,40 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             return .terminateNow
         }
         return .terminateCancel
+    }
+
+    @objc func restartApp() {
+        let url = URL(fileURLWithPath: Bundle.main.bundlePath)
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", url.path]
+        try? task.run()
+        NSApp.terminate(nil)
+    }
+
+    @objc func uninstallApp() {
+        let alert = NSAlert()
+        alert.messageText = "Uninstall Chap?"
+        alert.informativeText = "This will remove the app and settings.\n\nNote: Please manually remove Chap from\nSystem Settings → Privacy → Accessibility."
+        alert.addButton(withTitle: "Uninstall")
+        alert.addButton(withTitle: "Cancel")
+        alert.alertStyle = .critical
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        // 권한 리셋
+        let resetTask = Process()
+        resetTask.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        resetTask.arguments = ["reset", "AppleEvents", "com.mingyupark.Chap"]
+        try? resetTask.run()
+        resetTask.waitUntilExit()
+        // 설정 파일 삭제
+        try? FileManager.default.removeItem(atPath: configPath)
+        try? FileManager.default.removeItem(atPath: configPath + ".bak")
+
+        // 앱을 Trash로 이동
+        NSWorkspace.shared.recycle([URL(fileURLWithPath: Bundle.main.bundlePath)]) { _, _ in
+            NSApp.terminate(nil)
+        }
     }
 
     @objc func quitApp() {

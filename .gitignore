@@ -19,4 +19,5 @@ DerivedData/
 Chap.zip
 Chap.json
 *.app
-logs/
+logs/**/.DS_Store
+*.DS_Store
