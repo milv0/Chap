@@ -64,10 +64,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 place: .headInsertEventTap,
                 options: .defaultTap,
                 eventsOfInterest: mask,
-                callback: { _, _, event, refcon -> Unmanaged<CGEvent>? in
+                callback: { proxy, type, event, refcon -> Unmanaged<CGEvent>? in
                     guard let refcon = refcon else { return Unmanaged.passRetained(event) }
                     let appDelegate = Unmanaged<AppDelegate>.fromOpaque(refcon)
                         .takeUnretainedValue()
+
+                    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                        if let tap = appDelegate.eventTap {
+                            CGEvent.tapEnable(tap: tap, enable: true)
+                            NSLog("[Chap] CGEvent tap re-enabled after system disable")
+                        }
+                        return Unmanaged.passRetained(event)
+                    }
+
                     let flags = event.flags.intersection([
                         .maskAlternate, .maskShift, .maskCommand, .maskControl,
                     ])
@@ -307,7 +316,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func launchSite(_ site: Site) {
-        if config.showGhostWindow && site.launchType != .shell {
+        let useGhost = config.showGhostWindow && site.launchType == .url
+        if useGhost {
             let screen = targetScreen(for: site)
             let bounds = centeredBounds(for: site, on: screen)
             GhostWindow.show(bounds: bounds)
@@ -316,21 +326,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         switch site.launchType {
         case .url:
             ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
-                GhostWindow.dismiss()
+                if useGhost { GhostWindow.dismiss() }
             }
         case .app:
-            AppLauncher.launch(site, resizeQueue: resizeQueue) {
-                GhostWindow.dismiss()
-            }
+            AppLauncher.launch(site, resizeQueue: resizeQueue)
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
-                GhostWindow.dismiss()
                 showAlert(message: "No folder path configured for \"\(site.name)\".")
                 return
             }
             let expandedPath = NSString(string: path).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expandedPath) else {
-                GhostWindow.dismiss()
                 showAlert(message: "Folder not found: \(path)")
                 return
             }
@@ -338,7 +344,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
                 path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
-            GhostWindow.dismiss()
         case .shell: ShellLauncher.launch(site)
         }
     }
@@ -457,6 +462,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         alert.addButton(withTitle: "Cancel")
         alert.alertStyle = .critical
         guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        // Login Item 해제
+        applyLoginItem(enabled: false)
 
         // 권한 리셋
         let resetTask = Process()

@@ -10,6 +10,7 @@ enum ChromeLauncher {
         // Chrome 설치 여부 확인
         guard FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") else {
             LauncherUtils.showAlert(message: "Google Chrome is not installed.")
+            onComplete?()
             return
         }
 
@@ -17,6 +18,7 @@ enum ChromeLauncher {
         let rawDomain = URL(string: site.url)?.host ?? ""
         guard isValidDomain(rawDomain) else {
             NSLog("[Chap] Invalid domain: %@", rawDomain)
+            onComplete?()
             return
         }
 
@@ -58,6 +60,7 @@ enum ChromeLauncher {
         } catch {
             LauncherUtils.showAlert(
                 message: "Failed to launch Chrome.", info: error.localizedDescription)
+            onComplete?()
             return
         }
 
