@@ -27,24 +27,6 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - Google Chrome (for URL launch type)
 - Accessibility permission (for global hotkeys and app window resizing)
 
-## Install
-
-**One command:**
-```bash
-curl -sL https://milv0.github.io/chap-app/install.sh | bash
-```
-
-**Or manually:**
-1. Download from [Releases](https://github.com/milv0/Chap/releases)
-2. Move `Chap.app` to `/Applications`
-3. Launch and grant Accessibility permission when prompted
-
-**Uninstall:**
-```bash
-curl -sL https://milv0.github.io/chap-app/uninstall.sh | bash
-```
-Or use Settings → File menu → Uninstall.
-
 ## Usage
 
 ### Launch Types
