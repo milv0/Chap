@@ -229,9 +229,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let restart = NSMenuItem(title: "Restart", action: #selector(restartApp), keyEquivalent: "")
         restart.target = self
         menu.addItem(restart)
-        let uninstall = NSMenuItem(title: "Uninstall...", action: #selector(uninstallApp), keyEquivalent: "")
-        uninstall.target = self
-        menu.addItem(uninstall)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self

@@ -176,6 +176,7 @@ struct SettingsView: View {
                 Button("Export...") { exportConfig() }
                 Divider()
                 Button("Restart App") { restartApp() }
+                Button("Uninstall...") { uninstallApp() }
             } label: {
                 Image(systemName: "folder")
                     .font(.system(size: 13))
@@ -432,6 +433,12 @@ struct SettingsView: View {
         task.arguments = ["-n", url.path]
         try? task.run()
         NSApp.terminate(nil)
+    }
+
+    private func uninstallApp() {
+        if let delegate = NSApp.delegate as? AppDelegate {
+            delegate.uninstallApp()
+        }
     }
 
     private func importConfig() {
