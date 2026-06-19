@@ -163,6 +163,13 @@ struct SettingsView: View {
                 .help("Show window position preview while launching")
                 .onChange(of: vm.showGhostWindow) { _, _ in save() }
 
+            Toggle("Login", isOn: $vm.launchAtLogin)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .font(DS.captionFont)
+                .help("Open automatically when you log in")
+                .onChange(of: vm.launchAtLogin) { _, _ in save() }
+
             Spacer()
 
             Button(action: { showGuide = true }) {
@@ -417,7 +424,7 @@ struct SettingsView: View {
     }
 
     private func save() {
-        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow)
+        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow, vm.launchAtLogin)
         vm.markSaved()
     }
 
@@ -480,6 +487,7 @@ struct SettingsView: View {
             vm.sites = config.sites
             vm.runInBackground = config.runInBackground
             vm.showGhostWindow = config.showGhostWindow
+            vm.launchAtLogin = config.launchAtLogin
             vm.onReload?()
             let alert = NSAlert()
             alert.messageText = "Import successful"

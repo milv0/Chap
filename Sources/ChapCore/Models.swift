@@ -71,11 +71,16 @@ public struct Site: Codable, Equatable {
 public struct Config: Codable {
     public var runInBackground: Bool
     public var showGhostWindow: Bool
+    public var launchAtLogin: Bool
     public var sites: [Site]
 
-    public init(runInBackground: Bool = true, showGhostWindow: Bool = true, sites: [Site]) {
+    public init(
+        runInBackground: Bool = true, showGhostWindow: Bool = true,
+        launchAtLogin: Bool = false, sites: [Site]
+    ) {
         self.runInBackground = runInBackground
         self.showGhostWindow = showGhostWindow
+        self.launchAtLogin = launchAtLogin
         self.sites = sites
     }
 
@@ -83,6 +88,7 @@ public struct Config: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         runInBackground = try container.decodeIfPresent(Bool.self, forKey: .runInBackground) ?? true
         showGhostWindow = try container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
+        launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         sites = try container.decode([Site].self, forKey: .sites)
     }
 

@@ -53,25 +53,36 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsLoginToggle() {
+        let vm = SettingsViewModel(
+            sites: baseSites, runInBackground: true, showGhostWindow: true, launchAtLogin: false)
+        vm.launchAtLogin = true
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites, runInBackground: true)
         var savedSites: [Site]?
         var savedBg: Bool?
         var savedGhost: Bool?
-        vm.onSave = { sites, bg, ghost in
+        var savedLogin: Bool?
+        vm.onSave = { sites, bg, ghost, login in
             savedSites = sites
             savedBg = bg
             savedGhost = ghost
+            savedLogin = login
         }
 
         vm.sites.append(
             Site(name: "Added", url: "https://added.com", width: 300, height: 200, x: 10, y: 10))
         vm.runInBackground = false
         vm.showGhostWindow = false
-        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow)
+        vm.launchAtLogin = true
+        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow, vm.launchAtLogin)
 
         #expect(savedSites?.count == 2)
         #expect(savedBg == false)
         #expect(savedGhost == false)
+        #expect(savedLogin == true)
     }
 }

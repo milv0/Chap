@@ -1,4 +1,5 @@
 import Cocoa
+import ServiceManagement
 import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -18,6 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         migrateConfigIfNeeded()
         copyDefaultConfigIfNeeded()
         loadConfig()
+        applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(config.runInBackground ? .accessory : .regular)
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
@@ -362,19 +364,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let vm = SettingsViewModel(
             sites: config.sites, runInBackground: config.runInBackground,
-            showGhostWindow: config.showGhostWindow)
-        vm.onSave = { [weak self] newSites, bg, ghost in
+            showGhostWindow: config.showGhostWindow, launchAtLogin: config.launchAtLogin)
+        vm.onSave = { [weak self] newSites, bg, ghost, login in
             guard let self = self else { return }
-            self.config = Config(runInBackground: bg, showGhostWindow: ghost, sites: newSites)
+            self.config = Config(
+                runInBackground: bg, showGhostWindow: ghost,
+                launchAtLogin: login, sites: newSites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             if let data = try? encoder.encode(self.config) {
-                // 저장 전 백업
                 let bakPath = self.configPath + ".bak"
                 try? FileManager.default.removeItem(atPath: bakPath)
                 try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
                 try? data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             }
+            self.applyLoginItem(enabled: login)
             DispatchQueue.main.async { self.buildMenu() }
         }
         vm.onReload = { [weak self] in
@@ -472,5 +476,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func quitApp() {
         NSApp.terminate(nil)
+    }
+
+    // MARK: - Login Item
+
+    private func applyLoginItem(enabled: Bool) {
+        let service = SMAppService.mainApp
+        do {
+            if enabled {
+                try service.register()
+            } else {
+                try service.unregister()
+            }
+        } catch {
+            NSLog(
+                "[Chap] Login item %@: %@", enabled ? "register" : "unregister",
+                error.localizedDescription)
+        }
     }
 }
