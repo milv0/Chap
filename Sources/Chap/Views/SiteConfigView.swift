@@ -180,7 +180,7 @@ struct SiteConfigView: View {
 
     private var finderFields: some View {
         Group {
-            HStack {
+            HStack(alignment: .center) {
                 InputField(
                     label: "Folder",
                     text: Binding(
@@ -191,8 +191,10 @@ struct SiteConfigView: View {
                 )
                 Button(action: browseFolder) {
                     Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
+                        .frame(height: 22)
                 }
+                .buttonStyle(.bordered)
             }
             windowFields
         }
