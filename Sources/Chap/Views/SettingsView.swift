@@ -150,12 +150,6 @@ struct SettingsView: View {
 
     private var bottomBar: some View {
         HStack(spacing: DS.spacingSmall) {
-            Toggle("Background", isOn: $vm.runInBackground)
-                .toggleStyle(.switch)
-                .controlSize(.small)
-                .font(DS.captionFont)
-                .onChange(of: vm.runInBackground) { _, _ in save() }
-
             Toggle("Ghost", isOn: $vm.showGhostWindow)
                 .toggleStyle(.switch)
                 .controlSize(.small)

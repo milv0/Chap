@@ -20,7 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         copyDefaultConfigIfNeeded()
         loadConfig()
         applyLoginItem(enabled: config.launchAtLogin)
-        NSApp.setActivationPolicy(config.runInBackground ? .accessory : .regular)
+        NSApp.setActivationPolicy(.accessory)
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
         if let button = statusItem.button {
