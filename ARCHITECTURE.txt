@@ -103,13 +103,6 @@ Runtime:
    - 서명 없는 앱: xattr -cr 후 수동 설정 필요
 
 
-## 개발 명령어
-
-  xcodegen generate                           # 새 파일 추가 후 프로젝트 재생성
-  xcodebuild -project Chap.xcodeproj -scheme Chap -destination "platform=macOS" build
-  xcodebuild -project Chap.xcodeproj -scheme Chap -destination "platform=macOS" test
-
-
 ## 배포 현황
 
 - 코드 서명: 미등록 (Apple Developer $99 필요)
