@@ -96,6 +96,7 @@ Runtime:
 ## 사용 API / 프레임워크
 
 ### ApplicationServices (Accessibility API)
+  문서: https://developer.apple.com/documentation/accessibility/accessibility-api
   용도: 앱 윈도우 리사이즈 (AppLauncher), 글로벌 핫키 권한 확인
   - AXUIElementCreateApplication(pid)         앱의 AX 요소 참조 생성
   - AXUIElementCopyAttributeValue             포커스 윈도우(kAXFocusedWindowAttribute) 획득
