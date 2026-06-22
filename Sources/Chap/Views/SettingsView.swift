@@ -418,7 +418,7 @@ struct SettingsView: View {
     }
 
     private func save() {
-        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow, vm.launchAtLogin)
+        vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGhostWindow: vm.showGhostWindow, launchAtLogin: vm.launchAtLogin))
         vm.markSaved()
     }
 

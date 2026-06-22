@@ -66,11 +66,11 @@ struct SettingsViewModelTests {
         var savedBg: Bool?
         var savedGhost: Bool?
         var savedLogin: Bool?
-        vm.onSave = { sites, bg, ghost, login in
-            savedSites = sites
-            savedBg = bg
-            savedGhost = ghost
-            savedLogin = login
+        vm.onSave = { payload in
+            savedSites = payload.sites
+            savedBg = payload.runInBackground
+            savedGhost = payload.showGhostWindow
+            savedLogin = payload.launchAtLogin
         }
 
         vm.sites.append(
@@ -78,7 +78,7 @@ struct SettingsViewModelTests {
         vm.runInBackground = false
         vm.showGhostWindow = false
         vm.launchAtLogin = true
-        vm.onSave?(vm.sites, vm.runInBackground, vm.showGhostWindow, vm.launchAtLogin)
+        vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGhostWindow: vm.showGhostWindow, launchAtLogin: vm.launchAtLogin))
 
         #expect(savedSites?.count == 2)
         #expect(savedBg == false)

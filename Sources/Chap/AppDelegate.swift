@@ -370,11 +370,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let vm = SettingsViewModel(
             sites: config.sites, runInBackground: config.runInBackground,
             showGhostWindow: config.showGhostWindow, launchAtLogin: config.launchAtLogin)
-        vm.onSave = { [weak self] newSites, bg, ghost, login in
+        vm.onSave = { [weak self] payload in
             guard let self = self else { return }
             self.config = Config(
-                runInBackground: bg, showGhostWindow: ghost,
-                launchAtLogin: login, sites: newSites)
+                runInBackground: payload.runInBackground, showGhostWindow: payload.showGhostWindow,
+                launchAtLogin: payload.launchAtLogin, sites: payload.sites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             if let data = try? encoder.encode(self.config) {
@@ -383,7 +383,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
                 try? data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             }
-            self.applyLoginItem(enabled: login)
+            self.applyLoginItem(enabled: payload.launchAtLogin)
             DispatchQueue.main.async { self.buildMenu() }
         }
         vm.onReload = { [weak self] in

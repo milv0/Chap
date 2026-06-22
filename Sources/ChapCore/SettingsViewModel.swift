@@ -1,5 +1,12 @@
 import Foundation
 
+public struct SettingsPayload {
+    public let sites: [Site]
+    public let runInBackground: Bool
+    public let showGhostWindow: Bool
+    public let launchAtLogin: Bool
+}
+
 public final class SettingsViewModel: ObservableObject {
     @Published public var sites: [Site]
     @Published public var runInBackground: Bool
@@ -9,7 +16,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalBg: Bool
     @Published public var originalGhost: Bool
     @Published public var originalLogin: Bool
-    public var onSave: (([Site], Bool, Bool, Bool) -> Void)?
+    public var onSave: ((SettingsPayload) -> Void)?
     public var onReload: (() -> Void)?
 
     public var hasChanges: Bool {
