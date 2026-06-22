@@ -13,11 +13,11 @@ Sources/
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 핫키 (CGEvent tap)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Launchers/                 ← 런처별 실행 로직
-│   │   ├── ChromeLauncher.swift   ← URL (Chrome --app 모드)
+│   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
 │   │   ├── AppLauncher.swift      ← App (AX API 직접 리사이즈)
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
-│   │   ├── LauncherUtils.swift    ← 공용 retryResize, showAlert
+│   │   ├── LauncherUtils.swift    ← 공용 AX API, retryResize, showAlert
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그
 │   │   └── GhostWindow.swift      ← 리사이즈 미리보기 윈도우
 │   └── Views/                     ← UI
@@ -80,15 +80,15 @@ Runtime:
 
 ## 런처 타입별 동작
 
-  URL:     Chrome --app 모드 실행 → osascript로 도메인 매칭 → bounds 설정
-  App:     NSWorkspace.openApplication → AX API로 position/size 직접 설정
+  URL:     Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
+  App:     NSWorkspace.openApplication → AX API로 포커스 윈도우 → position/size 설정
   Finder:  단일 AppleScript로 열기+리사이즈 동시 (딜레이 없음)
   Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
 리사이즈 전략:
-  URL (Chrome 실행 중):  osascript 점진적 재시도 (0.5, 0.8, 1.2, 2.0초)
-  URL (콜드 스타트):     osascript 점진적 재시도 (1.0, 2.0, 3.5, 5.0초)
-  App (실행 중):         AX API 폴링 50ms 간격 (최대 1초)
+  URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (윈도우 수 증가 감지, 최대 2초)
+  URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 6초)
+  App (실행 중):         AX API 폴링 50ms 간격 (포커스 윈도우 감지, 최대 1.5초)
   App (콜드 스타트):     AX API 폴링 100ms 간격 (최대 5초)
   Finder:               딜레이 없음 (열기+리사이즈 단일 스크립트)
 
@@ -116,16 +116,50 @@ Runtime:
   - CFMachPortCreateRunLoopSource()   런루프에 이벤트 소스 등록
 
 ### AppleScript (osascript via Process)
-  용도: Chrome 윈도우 제어, Finder 윈도우 제어
-  - Chrome: "tell application Google Chrome" → bounds 설정
+  용도: Finder 윈도우 제어
   - Finder: "tell application Finder" → open + bounds 설정
-  ※ AppLauncher는 AppleScript 대신 AX API 직접 사용 (성능 최적화)
+  ※ AppLauncher, ChromeLauncher는 AX API 직접 사용 (성능 최적화)
 
 ### NSScreen
   용도: 멀티 모니터 좌표 계산, 대상 화면 결정
   - NSScreen.screens                  전체 디스플레이 목록
   - NSScreen.localizedName            디스플레이 이름 매칭
   - visibleFrame / frame              좌표 변환 (NSScreen ↔ AppleScript 좌표계)
+
+
+## 리사이즈 성능 개선 이력 (2026-06-22)
+
+### 변경 전 (AppleScript 방식)
+  구조: 앱 실행 → 고정 딜레이 → Process fork(/usr/bin/osascript) → AppleScript → System Events/Chrome
+  
+  | 타입 | 상태 | 소요 시간 |
+  |------|------|-----------|
+  | App (KakaoTalk) | running | 0.71~0.75s |
+  | App (PowerPoint) | cold | 4.2s |
+  | URL (Translate) | running | 0.75~0.89s |
+  | URL (Case) | running | 0.74~0.87s |
+
+### 변경 후 (AX API 방식)
+  구조: 앱 실행 → AX API 폴링(50ms) → 윈도우 감지 즉시 리사이즈
+
+  | 타입 | 상태 | 소요 시간 | 개선폭 |
+  |------|------|-----------|--------|
+  | App (KakaoTalk) | running | 0.03~0.28s | **3~10배** |
+  | App (PowerPoint) | running | 0.03~0.07s | **10배+** |
+  | URL (Translate) | running | 0.34~0.44s | **약 2배** |
+  | URL (Case) | running | 0.34~0.52s | **약 40%** |
+
+### 수정한 것
+  1. AppLauncher: Process+osascript+SystemEvents → AXUIElementSetAttributeValue 직접 호출
+  2. ChromeLauncher: Process+osascript+Chrome AppleScript → AX API 윈도우 수 비교로 새 윈도우 감지
+  3. LauncherUtils: setPosition/setSize/axApplyBounds 공용 함수로 통합
+  4. 폴링 간격: 고정 딜레이 배열(0.5~2.0초) → 50ms 간격 폴링
+  5. Accessibility 체크: ChromeLauncher에도 추가
+  6. pid 캐싱: Chrome running 시 매 폴링마다 runningApplications 조회 제거
+
+### 남은 병목 (제어 불가)
+  - App running: 150ms activate 대기 (macOS 포커스 전환 시간)
+  - URL: Chrome 윈도우 생성 시간 (0.3~0.5s, Chrome 내부 처리)
 
 
 ## 권한 요구사항

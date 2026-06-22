@@ -29,9 +29,15 @@ enum AppLauncher {
             "[AppLauncher] target screen=%@ bounds={left:%d, top:%d, w:%d, h:%d}",
             screen.localizedName, bounds.left, bounds.top, bw, bh)
 
-        let canResize = checkAccessibility()
-        if !canResize {
+        guard LauncherUtils.checkAccessibility() else {
             NSLog("[AppLauncher] Accessibility not granted — launching without resize")
+            let appURL = URL(fileURLWithPath: path)
+            let openConfig = NSWorkspace.OpenConfiguration()
+            openConfig.activates = true
+            NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { _, _ in
+                onComplete?()
+            }
+            return
         }
 
         let appRunning = NSWorkspace.shared.runningApplications.contains {
@@ -56,11 +62,6 @@ enum AppLauncher {
             NSLog(
                 "[AppLauncher] app opened pid=%d localizedName=%@",
                 app.processIdentifier, app.localizedName ?? "?")
-
-            guard canResize else {
-                onComplete?()
-                return
-            }
 
             let position = CGPoint(x: bounds.left, y: bounds.top)
             let size = CGSize(width: bw, height: bh)
@@ -92,17 +93,15 @@ enum AppLauncher {
 
     // MARK: - AX API Resize
 
-    /// AX API를 사용하여 윈도우 리사이즈. 윈도우가 뜰 때까지 폴링.
     private static func axResize(
         pid: pid_t, position: CGPoint, size: CGSize, isRunning: Bool
     ) -> Bool {
         let app = AXUIElementCreateApplication(pid)
         let maxAttempts = isRunning ? 30 : 50
-        let interval: useconds_t = isRunning ? 50_000 : 100_000  // 50ms / 100ms
+        let interval: useconds_t = isRunning ? 50_000 : 100_000
 
-        // running 앱은 activate 후 포커스 전환 대기
         if isRunning {
-            usleep(150_000)  // 150ms
+            usleep(150_000)
         }
 
         for _ in 0..<maxAttempts {
@@ -110,43 +109,10 @@ enum AppLauncher {
             let err = AXUIElementCopyAttributeValue(
                 app, kAXFocusedWindowAttribute as CFString, &windowValue)
             if err == .success, let window = windowValue {
-                let win = window as! AXUIElement
-                setPosition(win, position)
-                setSize(win, size)
-                // size 적용 확인 후 position 재설정
-                usleep(50_000)
-                setSize(win, size)
-                setPosition(win, position)
+                LauncherUtils.axApplyBounds(window as! AXUIElement, position: position, size: size)
                 return true
             }
             usleep(interval)
-        }
-        return false
-    }
-
-    private static func setPosition(_ window: AXUIElement, _ point: CGPoint) {
-        var p = point
-        guard let value = AXValueCreate(.cgPoint, &p) else { return }
-        AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, value)
-    }
-
-    private static func setSize(_ window: AXUIElement, _ size: CGSize) {
-        var s = size
-        guard let value = AXValueCreate(.cgSize, &s) else { return }
-        AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, value)
-    }
-
-    // MARK: - Accessibility 권한
-
-    private static var accessibilityPromptShown = false
-
-    private static func checkAccessibility() -> Bool {
-        let trusted = AXIsProcessTrusted()
-        if trusted { return true }
-        if !accessibilityPromptShown {
-            accessibilityPromptShown = true
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
-            AXIsProcessTrustedWithOptions(options)
         }
         return false
     }
