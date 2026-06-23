@@ -26,7 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if let button = statusItem.button {
             if let icon = NSImage(named: "StatusBarIcon") {
                 icon.isTemplate = true
-                icon.size = NSSize(width: 18, height: 18)
+                icon.size = NSSize(width: 22, height: 22)
                 button.image = icon
             } else {
                 button.image = NSImage(
@@ -190,7 +190,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             guard let button = self.statusItem.button else { return }
             if accessible, let icon = NSImage(named: "StatusBarIcon") {
                 icon.isTemplate = true
-                icon.size = NSSize(width: 18, height: 18)
+                icon.size = NSSize(width: 22, height: 22)
                 button.image = icon
             } else {
                 let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
