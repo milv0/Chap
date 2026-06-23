@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		06792520715CB89C2AE58759 /* FinderLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56D6BFB5C103431ACA91184B /* FinderLauncher.swift */; };
 		14C24D4F95C1558BA9009466 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E92212F0745DC68C94FE678 /* WelcomeView.swift */; };
+		16B73BD118676B5A26E3D267 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9EA7134C9EE8AEA604B5C3EC /* AppIcon.icns */; };
+		209B6C6CC3703AF9768A9F99 /* StatusBarIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = 75C6A85E676DC693AB930753 /* StatusBarIcon.png */; };
 		21C67320AAF9861F7E1E4D88 /* SettingsViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3F7AC0708B5AF342DD1FE0 /* SettingsViewModelTests.swift */; };
 		29AAC183347473942D1FB390 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5CD2B058B38711BA354038B /* main.swift */; };
 		3C5C8FBCE5ED77688A268333 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 630F26DC7EE297B4B8DAAB8A /* Components.swift */; };
@@ -50,6 +52,7 @@
 		630F26DC7EE297B4B8DAAB8A /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		68B1546E9E0B7D3899FC5058 /* ValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidationTests.swift; sourceTree = "<group>"; };
 		6E9F02DCAD0D93C15B2DFE26 /* SiteConfigView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiteConfigView.swift; sourceTree = "<group>"; };
+		75C6A85E676DC693AB930753 /* StatusBarIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = StatusBarIcon.png; sourceTree = "<group>"; };
 		76022CFD1A67B9799C04E4F3 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		767C872683D69FD138F7FD8E /* ChromeLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeLauncher.swift; sourceTree = "<group>"; };
 		7A3F7AC0708B5AF342DD1FE0 /* SettingsViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModelTests.swift; sourceTree = "<group>"; };
@@ -57,6 +60,7 @@
 		94A08E1D02771E30E30B2085 /* GhostWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostWindow.swift; sourceTree = "<group>"; };
 		94B59440821396FF3BC2B6BB /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
 		9BCD6DC487A819DB2F787846 /* ShellLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellLauncher.swift; sourceTree = "<group>"; };
+		9EA7134C9EE8AEA604B5C3EC /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 		A5CD2B058B38711BA354038B /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B4B9D01FB4784FF4072DA2BD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B9D1143F7F396BAD41C8D093 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -114,6 +118,15 @@
 			path = Sources/ChapCore;
 			sourceTree = "<group>";
 		};
+		A67A803020EB5E5A1B36943E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9EA7134C9EE8AEA604B5C3EC /* AppIcon.icns */,
+				75C6A85E676DC693AB930753 /* StatusBarIcon.png */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		A86DA0845EEAE1EFA7A804DC /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -142,6 +155,7 @@
 				CAF10F41A4E5635E7C96B9BA /* Chap */,
 				8B6B79E3D3EE4BD77D28E02F /* ChapCore */,
 				561E893B3BF424CBD002748D /* ChapCoreTests */,
+				A67A803020EB5E5A1B36943E /* Resources */,
 				A86DA0845EEAE1EFA7A804DC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -172,6 +186,7 @@
 			buildConfigurationList = 50BC609D0AADC7EE18A58500 /* Build configuration list for PBXNativeTarget "Chap" */;
 			buildPhases = (
 				BADF3E04FDCA6D0DF6DFEFBE /* Sources */,
+				4571BD2A74B0D835E74F4313 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -214,6 +229,18 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4571BD2A74B0D835E74F4313 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				16B73BD118676B5A26E3D267 /* AppIcon.icns in Resources */,
+				209B6C6CC3703AF9768A9F99 /* StatusBarIcon.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		733B30C11B436B4A9E884685 /* Sources */ = {
@@ -360,7 +387,7 @@
 		AD4D4765A722C748CB517638 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -447,7 +474,7 @@
 		CDE1EEEC8FB4110454E8C88A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;

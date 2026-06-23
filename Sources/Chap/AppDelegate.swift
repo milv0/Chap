@@ -24,8 +24,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
         if let button = statusItem.button {
-            button.image = NSImage(
-                systemSymbolName: "bolt.fill", accessibilityDescription: "Chap")
+            if let icon = NSImage(named: "StatusBarIcon") {
+                icon.isTemplate = true
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                button.image = NSImage(
+                    systemSymbolName: "bolt.fill", accessibilityDescription: "Chap")
+            }
         }
         buildMenu()
         registerGlobalHotkeys()
@@ -182,9 +188,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func updateStatusIcon(accessible: Bool) {
         DispatchQueue.main.async {
             guard let button = self.statusItem.button else { return }
-            let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
-            button.image = NSImage(
-                systemSymbolName: iconName, accessibilityDescription: "Chap")
+            if accessible, let icon = NSImage(named: "StatusBarIcon") {
+                icon.isTemplate = true
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
+                button.image = NSImage(
+                    systemSymbolName: iconName, accessibilityDescription: "Chap")
+            }
         }
     }
 
