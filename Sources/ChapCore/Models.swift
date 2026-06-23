@@ -1,7 +1,7 @@
 import Foundation
 
 public enum Defaults {
-    public static let appVersion = "2.2.9"
+    public static let appVersion = "1.0.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     public static let defaultWidth = 800
     public static let defaultHeight = 600
