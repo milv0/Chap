@@ -6,6 +6,7 @@
 .swiftpm/
 
 # Xcode
+Chap.xcodeproj/
 xcuserdata/
 DerivedData/
 
