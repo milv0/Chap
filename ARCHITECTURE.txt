@@ -48,34 +48,35 @@ Runtime:
 
 ## 핵심 기능
 
-- 글로벌 단축키 (⌥Q, ⌥1~9, ⌥,) — CGEvent tap
-- URL → Chrome --app 모드 + 리사이즈
-- App → 실행 + System Events 리사이즈
+- 글로벌 단축키 (⌥Q, ⌥커스텀키, ⌥,) — CGEvent tap
+- URL → Chrome --app 모드 + AX API 리사이즈
+- App → 실행 + AX API 리사이즈
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + 미니맵
-- Edit/Save 모드 (실수 방지)
+- 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
+- 사이트별 커스텀 단축키 (optional, 중복 체크)
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
 - Config 자동 백업 (.bak)
 - 순서 변경/삭제 시 자동 저장
 - Restart / Uninstall (메뉴바/설정 File 메뉴)
 - 리사이즈 성능 로그 (CSV)
-- 접근성 권한 자동 재시도 (30초 제한 + alert)
+- 접근성 권한 자동 재시도 + 권한 제거 감지
 - User Guide (⌘?)
 
 
 ## 단축키
 
 글로벌 (앱 외부, ⌥ Option):
-  ⌥Q     메뉴 열기
-  ⌥1~9   사이트 직접 실행
-  ⌥,     설정 열기
+  ⌥Q         메뉴 열기
+  ⌥(커스텀키)  사이트 실행 (사이트별 설정, optional)
+  ⌥,         설정 열기
 
 설정 창 내 (⌘ Command):
   ⌘1~9   사이트 선택
-  ⌘E     편집 모드
   ⌘S     저장
   ⌘?     가이드
+  Enter  저장 + 편집 모드 해제
 
 
 ## 런처 타입별 동작
