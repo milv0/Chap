@@ -176,10 +176,10 @@ struct SiteConfigView: View {
                     .font(DS.captionFont)
                     .foregroundColor(DS.textSecondary)
                 MinimapSwiftUI(
-                    width: site.width, height: site.height, displayName: site.displayName
+                    width: site.width, height: site.height, displayName: $site.displayName
                 )
                 .frame(maxWidth: .infinity, minHeight: 100)
-                .id("\(site.width)-\(site.height)")
+                .id("\(site.width)-\(site.height)-\(site.displayName ?? "auto")")
             }
             .frame(maxWidth: .infinity)
         }
