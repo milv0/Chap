@@ -169,7 +169,7 @@ struct SettingsView: View {
 
     private var bottomBar: some View {
         HStack(spacing: DS.spacingSmall) {
-            Toggle("Guide", isOn: $vm.showGuideWindow)
+            Toggle("Guide Window", isOn: $vm.showGuideWindow)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .font(DS.captionFont)
