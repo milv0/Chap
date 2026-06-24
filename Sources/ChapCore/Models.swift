@@ -33,11 +33,13 @@ public struct Site: Codable, Equatable {
     public var appPath: String?
     public var script: String?
     public var folderPath: String?
+    public var hotkey: String?  // 예: "T", "G" → ⌥T, ⌥G로 실행. nil이면 단축키 없음.
 
     public init(
         name: String, url: String, width: Int, height: Int, x: Int, y: Int,
         displayName: String? = nil, launchType: LaunchType = .url,
-        appPath: String? = nil, script: String? = nil, folderPath: String? = nil
+        appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
+        hotkey: String? = nil
     ) {
         self.name = name
         self.url = url
@@ -50,6 +52,7 @@ public struct Site: Codable, Equatable {
         self.appPath = appPath
         self.script = script
         self.folderPath = folderPath
+        self.hotkey = hotkey
     }
 
     public init(from decoder: Decoder) throws {
@@ -65,6 +68,7 @@ public struct Site: Codable, Equatable {
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
         script = try container.decodeIfPresent(String.self, forKey: .script)
         folderPath = try container.decodeIfPresent(String.self, forKey: .folderPath)
+        hotkey = try container.decodeIfPresent(String.self, forKey: .hotkey)
     }
 }
 

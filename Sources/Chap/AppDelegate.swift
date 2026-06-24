@@ -78,6 +78,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                         if let tap = appDelegate.eventTap {
                             CGEvent.tapEnable(tap: tap, enable: true)
+                        }
+                        // re-enable 후에도 권한이 없으면 사용자에게 알림
+                        if !AXIsProcessTrusted() {
+                            NSLog("[Chap] Accessibility permission revoked")
+                            DispatchQueue.main.async {
+                                appDelegate.updateStatusIcon(accessible: false)
+                                appDelegate.showAlert(
+                                    message: "Accessibility Permission Lost",
+                                    info: "Chap의 접근성 권한이 제거되었습니다.\nSystem Settings → Privacy & Security → Accessibility에서 다시 허용해주세요.")
+                            }
+                        } else {
                             NSLog("[Chap] CGEvent tap re-enabled after system disable")
                         }
                         return Unmanaged.passRetained(event)
@@ -106,18 +117,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         return nil
                     }
 
-                    // ⌥1~9 — launch site
-                    let numberKeyCodes: [UInt16: Int] = [
-                        18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
-                        22: 5, 26: 6, 28: 7, 25: 8,
-                    ]
-                    if let index = numberKeyCodes[keyCode],
-                        index < appDelegate.config.sites.count
-                    {
-                        DispatchQueue.main.async {
-                            appDelegate.launchSite(appDelegate.config.sites[index])
+                    // ⌥ + 커스텀 키 — launch site by hotkey
+                    if let char = keyCodeToChar(keyCode) {
+                        let upper = char.uppercased()
+                        if let site = appDelegate.config.sites.first(where: {
+                            $0.hotkey?.uppercased() == upper
+                        }) {
+                            DispatchQueue.main.async {
+                                appDelegate.launchSite(site)
+                            }
+                            return nil
                         }
-                        return nil
                     }
 
                     // ⌥, — open settings
@@ -271,8 +281,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func buildMenu() {
         let menu = NSMenu()
-        for (i, site) in config.sites.enumerated() {
-            let keyEquiv = i < 9 ? "\(i + 1)" : ""
+        let sortedSites = config.sites.enumerated().sorted {
+            LaunchType.allCases.firstIndex(of: $0.element.launchType)!
+                < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
+        }
+        for (i, site) in sortedSites {
+            let keyEquiv = site.hotkey?.lowercased() ?? ""
             let item = NSMenuItem(
                 title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
             if !keyEquiv.isEmpty {
@@ -292,7 +306,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         menu.addItem(.separator())
         let settings = NSMenuItem(
-            title: "Settings...", action: #selector(openSettings), keyEquivalent: "")
+            title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        settings.keyEquivalentModifierMask = .option
         settings.target = self
         menu.addItem(settings)
         let about = NSMenuItem(
@@ -514,4 +529,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 error.localizedDescription)
         }
     }
+}
+
+// MARK: - Key Code → Character mapping
+
+private func keyCodeToChar(_ keyCode: UInt16) -> String? {
+    let map: [UInt16: String] = [
+        0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
+        8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
+        16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
+        23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0",
+        30: "]", 31: "O", 32: "U", 33: "[", 34: "I", 35: "P", 37: "L",
+        38: "J", 40: "K", 41: ";", 43: ",", 44: "/", 45: "N", 46: "M",
+        47: ".", 50: "`",
+    ]
+    return map[keyCode]
 }

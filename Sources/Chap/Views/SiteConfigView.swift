@@ -24,6 +24,15 @@ struct SiteConfigView: View {
                 VStack(alignment: .leading, spacing: DS.spacing) {
                     InputField(label: "Name", text: $site.name, placeholder: "Site name")
 
+                    InputField(
+                        label: "Hotkey (⌥ +)",
+                        text: Binding(
+                            get: { site.hotkey ?? "" },
+                            set: { site.hotkey = $0.isEmpty ? nil : String($0.prefix(1)).uppercased() }
+                        ),
+                        placeholder: "예: T → ⌥T"
+                    )
+
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Type")
                             .font(DS.captionFont)

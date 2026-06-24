@@ -22,11 +22,10 @@ struct SettingsView: View {
         .frame(minWidth: 700, minHeight: 500)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { _, _ in
-            if isAddingNew {
-                isAddingNew = false
-            } else {
-                isEditing = false
-            }
+            isAddingNew = false
+            isEditing = false
+            // 선택 변경 시 자동 저장
+            save()
         }
         .background(siteSelectionShortcuts)
         .alert("Delete site?", isPresented: $showDeleteAlert) {
@@ -38,6 +37,11 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showGuide) { guideSheet }
+        .alert("Hotkey Conflict", isPresented: $duplicateHotkeyAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("⌥\(duplicateHotkeyChar) is already assigned to another site.")
+        }
         .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             guard let provider = providers.first else { return false }
@@ -64,30 +68,41 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 LazyVStack(spacing: 4) {
-                    ForEach(vm.sites.indices, id: \.self) { i in
-                        SidebarItem(
-                            icon: sidebarIcon(for: vm.sites[i]),
-                            name: vm.sites[i].name,
-                            subtitle: sidebarSubtitle(for: vm.sites[i]),
-                            badge: i < 9 ? "⌥\(i + 1)" : nil,
-                            isSelected: selectedIndex == i
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture { selectedIndex = i }
-                        .draggable(String(i)) {
-                            Text(vm.sites[i].name)
-                                .padding(8)
-                                .background(DS.cardBg)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                    ForEach(LaunchType.allCases, id: \.self) { type in
+                        let indices = vm.sites.indices.filter { vm.sites[$0].launchType == type }
+                        if !indices.isEmpty {
+                            Text(typeSectionTitle(type))
+                                .font(DS.captionFont)
+                                .foregroundColor(DS.textSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 8)
+                                .padding(.top, 8)
+                            ForEach(indices, id: \.self) { i in
+                                SidebarItem(
+                                    icon: sidebarIcon(for: vm.sites[i]),
+                                    name: vm.sites[i].name,
+                                    subtitle: sidebarSubtitle(for: vm.sites[i]),
+                                    badge: vm.sites[i].hotkey.map { "⌥\($0)" },
+                                    isSelected: selectedIndex == i
+                                )
+                                .contentShape(Rectangle())
+                                .onTapGesture { selectedIndex = i }
+                                .draggable(String(i)) {
+                                    Text(vm.sites[i].name)
+                                        .padding(8)
+                                        .background(DS.cardBg)
+                                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                                }
+                                .onDrop(
+                                    of: [.plainText],
+                                    delegate: SidebarDropDelegate(
+                                        currentIndex: i,
+                                        sites: $vm.sites,
+                                        selectedIndex: $selectedIndex,
+                                        onDrop: { save() }
+                                    ))
+                            }
                         }
-                        .onDrop(
-                            of: [.plainText],
-                            delegate: SidebarDropDelegate(
-                                currentIndex: i,
-                                sites: $vm.sites,
-                                selectedIndex: $selectedIndex,
-                                onDrop: { save() }
-                            ))
                     }
                 }
                 .padding(DS.spacingSmall)
@@ -126,6 +141,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let idx = selectedIndex, idx < vm.sites.count {
                 SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, onSave: { save() })
+                    .onTapGesture { isEditing = true }
+                    .onChange(of: vm.sites) { _, _ in
+                        if isEditing { save() }
+                    }
             } else {
                 Spacer()
                 VStack(spacing: 8) {
@@ -195,36 +214,23 @@ struct SettingsView: View {
             .frame(width: 24)
 
             if isEditing {
-                Button(action: {
-                    save()
-                    isEditing = false
-                }) {
-                    Text("Save")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(DS.accent)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            } else if selectedIndex != nil {
-                Button(action: { isEditing = true }) {
-                    Text("Edit")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(DS.textSecondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(DS.border.opacity(0.3))
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut("e", modifiers: .command)
+                Text("Editing")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(DS.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
             }
 
             Button("") {
                 save()
                 isEditing = false
+            }
+            .keyboardShortcut(.return, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+
+            Button("") {
+                save()
             }
             .keyboardShortcut("s", modifiers: .command)
             .frame(width: 0, height: 0)
@@ -251,7 +257,7 @@ struct SettingsView: View {
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
                         guideRow(icon: "cursorarrow.click.2", text: "Click menubar icon to select")
-                        guideRow(icon: "keyboard", text: "⌥Q menu, ⌥1~9 launch, ⌥, settings")
+                        guideRow(icon: "keyboard", text: "⌥Q menu, ⌥(custom key) launch, ⌥, settings")
                         guideRow(
                             icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
                     }
@@ -263,10 +269,10 @@ struct SettingsView: View {
                         Text("Settings  ⌘")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL)")
+                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Hotkey)")
                         guideRow(icon: "display", text: "Choose display + size — always centered")
+                        guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save")
                         guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
-                        guideRow(icon: "keyboard", text: "⌘E edit, ⌘S save, ⌘1~9 select")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -384,6 +390,15 @@ struct SettingsView: View {
         save()
     }
 
+    private func typeSectionTitle(_ type: LaunchType) -> String {
+        switch type {
+        case .url: return "URL"
+        case .app: return "App"
+        case .finder: return "Finder"
+        case .shell: return "Shell"
+        }
+    }
+
     private func sidebarIcon(for site: Site) -> String {
         switch site.launchType {
         case .url:
@@ -417,7 +432,25 @@ struct SettingsView: View {
         }
     }
 
+    @State private var duplicateHotkeyAlert = false
+    @State private var duplicateHotkeyChar = ""
+
     private func save() {
+        // 단축키 중복 체크
+        if let idx = selectedIndex, idx < vm.sites.count,
+           let key = vm.sites[idx].hotkey?.uppercased(),
+           !key.isEmpty {
+            let conflict = vm.sites.enumerated().first(where: {
+                $0.offset != idx && $0.element.hotkey?.uppercased() == key
+            })
+            if let conflict = conflict {
+                duplicateHotkeyChar = key
+                duplicateHotkeyAlert = true
+                // 현재 사이트의 hotkey 제거
+                vm.sites[idx].hotkey = nil
+                return
+            }
+        }
         vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGhostWindow: vm.showGhostWindow, launchAtLogin: vm.launchAtLogin))
         vm.markSaved()
     }
