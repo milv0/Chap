@@ -117,11 +117,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         return nil
                     }
 
-                    // ⌥ + 커스텀 키 — launch site by hotkey
+                    // ⌥ + 커스텀 키 — launch site by shortcut
                     if let char = keyCodeToChar(keyCode) {
                         let upper = char.uppercased()
                         if let site = appDelegate.config.sites.first(where: {
-                            $0.hotkey?.uppercased() == upper
+                            $0.shortcut?.uppercased() == upper
                         }) {
                             DispatchQueue.main.async {
                                 appDelegate.launchSite(site)
@@ -286,7 +286,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
         }
         for (i, site) in sortedSites {
-            let keyEquiv = site.hotkey?.lowercased() ?? ""
+            let keyEquiv = site.shortcut?.lowercased() ?? ""
             let item = NSMenuItem(
                 title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
             if !keyEquiv.isEmpty {
@@ -421,7 +421,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Chap Settings"
-        window.setContentSize(NSSize(width: 700, height: 500))
+        window.setContentSize(NSSize(width: 700, height: 580))
         window.styleMask = [.titled, .closable, .resizable]
         window.minSize = NSSize(width: 600, height: 400)
         window.center()

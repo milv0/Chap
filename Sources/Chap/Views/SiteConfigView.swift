@@ -25,10 +25,10 @@ struct SiteConfigView: View {
                     InputField(label: "Name", text: $site.name, placeholder: "Site name")
 
                     InputField(
-                        label: "Hotkey (⌥ +)",
+                        label: "Shortcut (⌥ +)",
                         text: Binding(
-                            get: { site.hotkey ?? "" },
-                            set: { site.hotkey = $0.isEmpty ? nil : String($0.prefix(1)).uppercased() }
+                            get: { site.shortcut ?? "" },
+                            set: { site.shortcut = $0.isEmpty ? nil : String($0.prefix(1)).uppercased() }
                         ),
                         placeholder: "예: T → ⌥T"
                     )

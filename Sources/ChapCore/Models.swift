@@ -33,13 +33,13 @@ public struct Site: Codable, Equatable {
     public var appPath: String?
     public var script: String?
     public var folderPath: String?
-    public var hotkey: String?  // 예: "T", "G" → ⌥T, ⌥G로 실행. nil이면 단축키 없음.
+    public var shortcut: String?  // 예: "T", "G" → ⌥T, ⌥G로 실행. nil이면 단축키 없음.
 
     public init(
         name: String, url: String, width: Int, height: Int, x: Int, y: Int,
         displayName: String? = nil, launchType: LaunchType = .url,
         appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
-        hotkey: String? = nil
+        shortcut: String? = nil
     ) {
         self.name = name
         self.url = url
@@ -52,7 +52,12 @@ public struct Site: Codable, Equatable {
         self.appPath = appPath
         self.script = script
         self.folderPath = folderPath
-        self.hotkey = hotkey
+        self.shortcut = shortcut
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, url, width, height, x, y, displayName, launchType
+        case appPath, script, folderPath, shortcut, hotkey
     }
 
     public init(from decoder: Decoder) throws {
@@ -68,7 +73,26 @@ public struct Site: Codable, Equatable {
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
         script = try container.decodeIfPresent(String.self, forKey: .script)
         folderPath = try container.decodeIfPresent(String.self, forKey: .folderPath)
-        hotkey = try container.decodeIfPresent(String.self, forKey: .hotkey)
+        // "shortcut" 우선, 없으면 "hotkey"에서 마이그레이션
+        shortcut = try container.decodeIfPresent(String.self, forKey: .shortcut)
+            ?? container.decodeIfPresent(String.self, forKey: .hotkey)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(url, forKey: .url)
+        try container.encode(width, forKey: .width)
+        try container.encode(height, forKey: .height)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
+        try container.encodeIfPresent(displayName, forKey: .displayName)
+        try container.encode(launchType, forKey: .launchType)
+        try container.encodeIfPresent(appPath, forKey: .appPath)
+        try container.encodeIfPresent(script, forKey: .script)
+        try container.encodeIfPresent(folderPath, forKey: .folderPath)
+        try container.encodeIfPresent(shortcut, forKey: .shortcut)
+        // hotkey는 encode하지 않음 (마이그레이션 완료)
     }
 }
 

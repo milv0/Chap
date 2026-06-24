@@ -19,7 +19,7 @@ struct SettingsView: View {
             Divider()
             mainPanel
         }
-        .frame(minWidth: 700, minHeight: 500)
+        .frame(minWidth: 700, minHeight: 580)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { _, _ in
             isAddingNew = false
@@ -37,10 +37,10 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showGuide) { guideSheet }
-        .alert("Hotkey Conflict", isPresented: $duplicateHotkeyAlert) {
+        .alert("Shortcut Conflict", isPresented: $duplicateShortcutAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("⌥\(duplicateHotkeyChar) is already assigned to another site.")
+            Text("⌥\(duplicateShortcutChar) is already assigned to another site.")
         }
         .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
@@ -82,7 +82,7 @@ struct SettingsView: View {
                                     icon: sidebarIcon(for: vm.sites[i]),
                                     name: vm.sites[i].name,
                                     subtitle: sidebarSubtitle(for: vm.sites[i]),
-                                    badge: vm.sites[i].hotkey.map { "⌥\($0)" },
+                                    badge: vm.sites[i].shortcut.map { "⌥\($0)" },
                                     isSelected: selectedIndex == i
                                 )
                                 .contentShape(Rectangle())
@@ -269,7 +269,7 @@ struct SettingsView: View {
                         Text("Settings  ⌘")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Hotkey)")
+                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Shortcut)")
                         guideRow(icon: "display", text: "Choose display + size — always centered")
                         guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save")
                         guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
@@ -432,22 +432,22 @@ struct SettingsView: View {
         }
     }
 
-    @State private var duplicateHotkeyAlert = false
-    @State private var duplicateHotkeyChar = ""
+    @State private var duplicateShortcutAlert = false
+    @State private var duplicateShortcutChar = ""
 
     private func save() {
         // 단축키 중복 체크
         if let idx = selectedIndex, idx < vm.sites.count,
-           let key = vm.sites[idx].hotkey?.uppercased(),
+           let key = vm.sites[idx].shortcut?.uppercased(),
            !key.isEmpty {
             let conflict = vm.sites.enumerated().first(where: {
-                $0.offset != idx && $0.element.hotkey?.uppercased() == key
+                $0.offset != idx && $0.element.shortcut?.uppercased() == key
             })
             if let conflict = conflict {
-                duplicateHotkeyChar = key
-                duplicateHotkeyAlert = true
-                // 현재 사이트의 hotkey 제거
-                vm.sites[idx].hotkey = nil
+                duplicateShortcutChar = key
+                duplicateShortcutAlert = true
+                // 현재 사이트의 shortcut 제거
+                vm.sites[idx].shortcut = nil
                 return
             }
         }
