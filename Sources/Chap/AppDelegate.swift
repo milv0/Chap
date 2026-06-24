@@ -7,6 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
     var settingsWindow: NSWindow?
+    var qaWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let resizeQueue = DispatchQueue(label: "com.mingyupark.Chap.resize")
     private var menuIsOpen = false
@@ -310,6 +311,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings.keyEquivalentModifierMask = .option
         settings.target = self
         menu.addItem(settings)
+        let qa = NSMenuItem(
+            title: "Q&A", action: #selector(openQA), keyEquivalent: "")
+        qa.target = self
+        menu.addItem(qa)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
@@ -323,6 +328,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         quit.target = self
         menu.addItem(quit)
         statusItem.menu = menu
+    }
+
+    @objc func openQA() {
+        if let w = qaWindow, w.isVisible {
+            w.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let hostingController = NSHostingController(rootView: QAView())
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Chap Q&A"
+        window.setContentSize(NSSize(width: 1120, height: 900))
+        window.styleMask = [.titled, .closable, .resizable]
+        window.minSize = NSSize(width: 400, height: 400)
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        qaWindow = window
     }
 
     @objc func showAbout() {
