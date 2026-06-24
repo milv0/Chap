@@ -169,11 +169,11 @@ struct SettingsView: View {
 
     private var bottomBar: some View {
         HStack(spacing: DS.spacingSmall) {
-            Toggle("Ghost", isOn: $vm.showGhostWindow)
+            Toggle("Guide", isOn: $vm.showGhostWindow)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .font(DS.captionFont)
-                .help("Show window position preview while launching")
+                .help("Show window position guide while launching")
                 .onChange(of: vm.showGhostWindow) { _, _ in save() }
 
             Toggle("Login", isOn: $vm.launchAtLogin)

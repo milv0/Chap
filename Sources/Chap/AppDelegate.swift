@@ -347,13 +347,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if useGhost {
             let screen = targetScreen(for: site)
             let bounds = centeredBounds(for: site, on: screen)
-            GhostWindow.show(bounds: bounds)
+            GuideWindow.show(bounds: bounds)
         }
 
         switch site.launchType {
         case .url:
             ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
-                if useGhost { GhostWindow.dismiss() }
+                if useGhost { GuideWindow.dismiss() }
             }
         case .app:
             AppLauncher.launch(site, resizeQueue: resizeQueue)

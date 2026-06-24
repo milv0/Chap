@@ -19,7 +19,7 @@ Sources/
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, retryResize, showAlert
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그
-│   │   └── GhostWindow.swift      ← 리사이즈 미리보기 윈도우
+│   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (CardSection, InputField 등)
