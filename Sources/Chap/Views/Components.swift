@@ -192,7 +192,7 @@ struct PillPicker: View {
 struct MinimapSwiftUI: View {
     let width: Int
     let height: Int
-    var displayName: String? = nil
+    @Binding var displayName: String?
 
     var body: some View {
         GeometryReader { geo in
@@ -216,24 +216,32 @@ struct MinimapSwiftUI: View {
                     let frame = screens[i].frame
                     let sx = (frame.origin.x - minX) * scale
                     let sy = (maxY - frame.origin.y - frame.height) * scale
+                    let isSelected = displayName == nil || screens[i].localizedName == displayName
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(DS.cardBg)
+                        .fill(isSelected ? DS.accent.opacity(0.08) : DS.cardBg)
                         .frame(width: frame.width * scale, height: frame.height * scale)
                         .overlay(
-                            VStack {
+                            VStack(spacing: 2) {
                                 Text(screens[i].localizedName)
                                     .font(.system(size: 8))
-                                    .foregroundColor(DS.textTertiary)
+                                    .foregroundColor(isSelected ? DS.accent : DS.textTertiary)
                             }
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 4).stroke(
-                                displayName == nil || screens[i].localizedName == displayName
-                                    ? DS.accent : DS.border
+                                isSelected ? DS.accent : DS.border
                             )
                         )
                         .offset(x: offsetX + sx, y: offsetY + sy)
+                        .onTapGesture {
+                            if displayName == screens[i].localizedName {
+                                // 이미 선택된 모니터 다시 클릭 → Auto
+                                displayName = nil
+                            } else {
+                                displayName = screens[i].localizedName
+                            }
+                        }
                 }
 
                 let targetScreen =
@@ -251,6 +259,7 @@ struct MinimapSwiftUI: View {
                     .overlay(RoundedRectangle(cornerRadius: 2).stroke(DS.accent))
                     .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
                     .offset(x: offsetX + winX, y: offsetY + winY)
+                    .allowsHitTesting(false)
             }
         }
     }

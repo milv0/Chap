@@ -42,6 +42,11 @@ struct SettingsView: View {
         } message: {
             Text("⌥\(duplicateShortcutChar) is already assigned to another site.")
         }
+        .alert("Duplicate Site", isPresented: $duplicateSiteAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(duplicateSiteMessage)
+        }
         .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             guard let provider = providers.first else { return false }
@@ -434,25 +439,52 @@ struct SettingsView: View {
 
     @State private var duplicateShortcutAlert = false
     @State private var duplicateShortcutChar = ""
+    @State private var duplicateSiteAlert = false
+    @State private var duplicateSiteMessage = ""
 
     private func save() {
-        // 단축키 중복 체크
-        if let idx = selectedIndex, idx < vm.sites.count,
-           let key = vm.sites[idx].shortcut?.uppercased(),
-           !key.isEmpty {
-            let conflict = vm.sites.enumerated().first(where: {
-                $0.offset != idx && $0.element.shortcut?.uppercased() == key
-            })
-            if let conflict = conflict {
-                duplicateShortcutChar = key
-                duplicateShortcutAlert = true
-                // 현재 사이트의 shortcut 제거
-                vm.sites[idx].shortcut = nil
+        if let idx = selectedIndex, idx < vm.sites.count {
+            let site = vm.sites[idx]
+
+            // 단축키 중복 체크
+            if let key = site.shortcut?.uppercased(), !key.isEmpty {
+                if vm.sites.enumerated().contains(where: {
+                    $0.offset != idx && $0.element.shortcut?.uppercased() == key
+                }) {
+                    duplicateShortcutChar = key
+                    duplicateShortcutAlert = true
+                    vm.sites[idx].shortcut = nil
+                    return
+                }
+            }
+
+            // 사이트 중복 체크 (동일 URL, 앱, 폴더)
+            let duplicateName = checkDuplicateSite(index: idx, site: site)
+            if let name = duplicateName {
+                duplicateSiteMessage = "\"\(site.name)\" is duplicated with \"\(name)\"."
+                duplicateSiteAlert = true
                 return
             }
         }
         vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin))
         vm.markSaved()
+    }
+
+    private func checkDuplicateSite(index: Int, site: Site) -> String? {
+        for (i, other) in vm.sites.enumerated() where i != index {
+            guard other.launchType == site.launchType else { continue }
+            switch site.launchType {
+            case .url:
+                if !site.url.isEmpty && site.url == other.url { return other.name }
+            case .app:
+                if let path = site.appPath, !path.isEmpty, path == other.appPath { return other.name }
+            case .finder:
+                if let path = site.folderPath, !path.isEmpty, path == other.folderPath { return other.name }
+            case .shell:
+                break
+            }
+        }
+        return nil
     }
 
     private func exportConfig() {

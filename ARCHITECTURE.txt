@@ -53,9 +53,10 @@ Runtime:
 - App → 실행 + AX API 리사이즈
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
-- 멀티 모니터 지원 + 미니맵
+- 멀티 모니터 지원 + 미니맵 클릭으로 디스플레이 선택 (재클릭 시 Auto)
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 중복 체크)
+- 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
 - Config 자동 백업 (.bak)
 - 순서 변경/삭제 시 자동 저장
