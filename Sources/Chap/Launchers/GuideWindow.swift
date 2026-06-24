@@ -1,6 +1,6 @@
 import Cocoa
 
-enum GhostWindow {
+enum GuideWindow {
     private static var window: NSWindow?
 
     static func show(bounds: (left: Int, top: Int, right: Int, bottom: Int)) {
