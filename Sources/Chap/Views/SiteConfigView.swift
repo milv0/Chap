@@ -7,6 +7,8 @@ struct SiteConfigView: View {
     @Binding var isEditing: Bool
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
+    @State private var reservedKeyAlert = false
+    @State private var reservedKeyChar = ""
     var onSave: (() -> Void)?
 
     private let sizeOptions = [
@@ -28,10 +30,23 @@ struct SiteConfigView: View {
                         label: "Shortcut (⌥ +)",
                         text: Binding(
                             get: { site.shortcut ?? "" },
-                            set: { site.shortcut = $0.isEmpty ? nil : String($0.prefix(1)).uppercased() }
+                            set: { newValue in
+                                let key = newValue.isEmpty ? nil : String(newValue.prefix(1)).uppercased()
+                                if let k = key, ["Q", ","].contains(k) {
+                                    reservedKeyAlert = true
+                                    reservedKeyChar = k
+                                    return
+                                }
+                                site.shortcut = key
+                            }
                         ),
                         placeholder: "예: T → ⌥T"
                     )
+                    .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
+                        Button("OK", role: .cancel) {}
+                    } message: {
+                        Text("⌥\(reservedKeyChar) is reserved for system use.")
+                    }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Type")
