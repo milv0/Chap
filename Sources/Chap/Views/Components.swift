@@ -43,7 +43,7 @@ struct SidebarItem: View {
             Spacer()
             if let badge {
                 Text(badge)
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
                     .foregroundColor(DS.accent)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 3)
