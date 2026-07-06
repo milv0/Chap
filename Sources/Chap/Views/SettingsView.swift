@@ -86,7 +86,6 @@ struct SettingsView: View {
                                 SidebarItem(
                                     icon: sidebarIcon(for: vm.sites[i]),
                                     name: vm.sites[i].name,
-                                    subtitle: sidebarSubtitle(for: vm.sites[i]),
                                     badge: vm.sites[i].shortcut.map { "⌥ \($0)" },
                                     isSelected: selectedIndex == i
                                 )
