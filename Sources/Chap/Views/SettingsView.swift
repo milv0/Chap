@@ -346,27 +346,32 @@ struct SettingsView: View {
                 .frame(width: 0, height: 0)
                 .opacity(0)
         }
-        Button("") {
-            if let idx = selectedIndex, idx > 0 {
-                selectedIndex = idx - 1
-            } else if selectedIndex == nil, !vm.sites.isEmpty {
-                selectedIndex = 0
-            }
-        }
-        .keyboardShortcut(.upArrow, modifiers: [])
-        .frame(width: 0, height: 0)
-        .opacity(0)
+        Button("") { moveSelection(by: -1) }
+            .keyboardShortcut(.upArrow, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
 
-        Button("") {
-            if let idx = selectedIndex, idx < vm.sites.count - 1 {
-                selectedIndex = idx + 1
-            } else if selectedIndex == nil, !vm.sites.isEmpty {
-                selectedIndex = 0
-            }
+        Button("") { moveSelection(by: 1) }
+            .keyboardShortcut(.downArrow, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+    }
+
+    /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
+    private func moveSelection(by offset: Int) {
+        let displayOrder = LaunchType.allCases.flatMap { type in
+            vm.sites.indices.filter { vm.sites[$0].launchType == type }
         }
-        .keyboardShortcut(.downArrow, modifiers: [])
-        .frame(width: 0, height: 0)
-        .opacity(0)
+        guard !displayOrder.isEmpty else { return }
+        guard let current = selectedIndex,
+              let pos = displayOrder.firstIndex(of: current) else {
+            selectedIndex = displayOrder.first
+            return
+        }
+        let newPos = pos + offset
+        if newPos >= 0 && newPos < displayOrder.count {
+            selectedIndex = displayOrder[newPos]
+        }
     }
 
     // MARK: - Helpers
