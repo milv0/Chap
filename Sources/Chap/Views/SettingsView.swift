@@ -346,6 +346,27 @@ struct SettingsView: View {
                 .frame(width: 0, height: 0)
                 .opacity(0)
         }
+        Button("") {
+            if let idx = selectedIndex, idx > 0 {
+                selectedIndex = idx - 1
+            } else if selectedIndex == nil, !vm.sites.isEmpty {
+                selectedIndex = 0
+            }
+        }
+        .keyboardShortcut(.upArrow, modifiers: [])
+        .frame(width: 0, height: 0)
+        .opacity(0)
+
+        Button("") {
+            if let idx = selectedIndex, idx < vm.sites.count - 1 {
+                selectedIndex = idx + 1
+            } else if selectedIndex == nil, !vm.sites.isEmpty {
+                selectedIndex = 0
+            }
+        }
+        .keyboardShortcut(.downArrow, modifiers: [])
+        .frame(width: 0, height: 0)
+        .opacity(0)
     }
 
     // MARK: - Helpers
