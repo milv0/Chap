@@ -43,12 +43,12 @@ struct SidebarItem: View {
             Spacer()
             if let badge {
                 Text(badge)
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
-                    .foregroundColor(DS.textTertiary)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(DS.border.opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(DS.accent)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3)
+                    .background(DS.accent.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
             }
         }
         .padding(.horizontal, DS.paddingSmall)
