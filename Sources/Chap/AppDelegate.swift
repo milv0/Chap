@@ -285,9 +285,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func buildMenu() {
         let menu = NSMenu()
-        let sortedSites = config.sites.enumerated().sorted {
-            LaunchType.allCases.firstIndex(of: $0.element.launchType)!
-                < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
+        let sortedSites = config.sites.enumerated().sorted { a, b in
+            let typeA = LaunchType.allCases.firstIndex(of: a.element.launchType)!
+            let typeB = LaunchType.allCases.firstIndex(of: b.element.launchType)!
+            if typeA != typeB { return typeA < typeB }
+            // 같은 타입 내에서 숫자 shortcut 오름차순
+            let sa = a.element.shortcut ?? ""
+            let sb = b.element.shortcut ?? ""
+            if let na = Int(sa), let nb = Int(sb) { return na < nb }
+            if Int(sa) != nil { return true }
+            if Int(sb) != nil { return false }
+            return a.offset < b.offset
         }
         var lastType: LaunchType? = nil
         for (i, site) in sortedSites {
