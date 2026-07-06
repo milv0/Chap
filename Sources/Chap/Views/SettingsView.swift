@@ -12,7 +12,6 @@ struct SettingsView: View {
     @State private var dropTargeted = false
     @State private var isEditing = false
     @State private var isAddingNew = false
-    @State private var dropIndicatorIndex: Int? = nil
 
     var body: some View {
         HStack(spacing: 0) {
@@ -84,21 +83,13 @@ struct SettingsView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
                             ForEach(indices, id: \.self) { i in
-                                VStack(spacing: 0) {
-                                    if dropIndicatorIndex == i {
-                                        RoundedRectangle(cornerRadius: 1)
-                                            .fill(DS.accent)
-                                            .frame(height: 2)
-                                            .padding(.horizontal, 8)
-                                    }
-                                    SidebarItem(
-                                        icon: sidebarIcon(for: vm.sites[i]),
-                                        name: vm.sites[i].name,
-                                        subtitle: sidebarSubtitle(for: vm.sites[i]),
-                                        badge: vm.sites[i].shortcut.map { "⌥\($0)" },
-                                        isSelected: selectedIndex == i
-                                    )
-                                }
+                                SidebarItem(
+                                    icon: sidebarIcon(for: vm.sites[i]),
+                                    name: vm.sites[i].name,
+                                    subtitle: sidebarSubtitle(for: vm.sites[i]),
+                                    badge: vm.sites[i].shortcut.map { "⌥\($0)" },
+                                    isSelected: selectedIndex == i
+                                )
                                 .contentShape(Rectangle())
                                 .onTapGesture { selectedIndex = i }
                                 .draggable(String(i)) {
@@ -113,7 +104,6 @@ struct SettingsView: View {
                                         currentIndex: i,
                                         sites: $vm.sites,
                                         selectedIndex: $selectedIndex,
-                                        dropIndicatorIndex: $dropIndicatorIndex,
                                         onDrop: { save() }
                                     ))
                             }

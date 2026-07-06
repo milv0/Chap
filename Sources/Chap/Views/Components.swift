@@ -101,26 +101,13 @@ struct SidebarDropDelegate: DropDelegate {
     let currentIndex: Int
     @Binding var sites: [Site]
     @Binding var selectedIndex: Int?
-    @Binding var dropIndicatorIndex: Int?
     let onDrop: () -> Void
 
-    func dropEntered(info: DropInfo) {
-        dropIndicatorIndex = currentIndex
-    }
-
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        dropIndicatorIndex = currentIndex
-        return DropProposal(operation: .move)
-    }
-
-    func dropExited(info: DropInfo) {
-        if dropIndicatorIndex == currentIndex {
-            dropIndicatorIndex = nil
-        }
+        DropProposal(operation: .move)
     }
 
     func performDrop(info: DropInfo) -> Bool {
-        dropIndicatorIndex = nil
         guard let item = info.itemProviders(for: [.plainText]).first else { return false }
         item.loadObject(ofClass: String.self) { str, _ in
             guard let str = str, let from = Int(str) else { return }
