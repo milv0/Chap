@@ -105,18 +105,19 @@ struct SidebarDropDelegate: DropDelegate {
     let onDrop: () -> Void
 
     func performDrop(info: DropInfo) -> Bool {
-        dropIndicatorIndex = nil
+        DispatchQueue.main.async { dropIndicatorIndex = nil }
         guard let item = info.itemProviders(for: [.plainText]).first else { return false }
         item.loadObject(ofClass: String.self) { str, _ in
             guard let str = str, let from = Int(str) else { return }
             DispatchQueue.main.async {
-                guard from != currentIndex,
-                      from < sites.count, currentIndex < sites.count,
-                      sites[from].launchType == sites[currentIndex].launchType else { return }
-                let site = sites.remove(at: from)
-                sites.insert(site, at: currentIndex)
-                selectedIndex = currentIndex
-                onDrop()
+                self.dropIndicatorIndex = nil
+                guard from != self.currentIndex,
+                      from < self.sites.count, self.currentIndex < self.sites.count,
+                      self.sites[from].launchType == self.sites[self.currentIndex].launchType else { return }
+                let site = self.sites.remove(at: from)
+                self.sites.insert(site, at: self.currentIndex)
+                self.selectedIndex = self.currentIndex
+                self.onDrop()
             }
         }
         return true
