@@ -109,7 +109,7 @@ struct SidebarDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         guard let item = info.itemProviders(for: [.plainText]).first else { return false }
-        item.loadObject(ofClass: String.self) { str, _ in
+        _ = item.loadObject(ofClass: String.self) { str, _ in
             guard let str = str, let from = Int(str) else { return }
             DispatchQueue.main.async {
                 guard from != self.currentIndex,
