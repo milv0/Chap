@@ -74,17 +74,7 @@ struct SettingsView: View {
             ScrollView {
                 LazyVStack(spacing: 4) {
                     ForEach(LaunchType.allCases, id: \.self) { type in
-                        let indices = vm.sites.indices
-                            .filter { vm.sites[$0].launchType == type }
-                            .sorted { a, b in
-                                let sa = vm.sites[a].shortcut ?? ""
-                                let sb = vm.sites[b].shortcut ?? ""
-                                // 숫자끼리는 숫자 오름차순, 그 외는 원래 순서 유지
-                                if let na = Int(sa), let nb = Int(sb) { return na < nb }
-                                if Int(sa) != nil { return true }
-                                if Int(sb) != nil { return false }
-                                return a < b
-                            }
+                        let indices = vm.sites.indices.filter { vm.sites[$0].launchType == type }
                         if !indices.isEmpty {
                             Text(typeSectionTitle(type))
                                 .font(DS.captionFont)
