@@ -442,26 +442,6 @@ struct SettingsView: View {
         }
     }
 
-    private func sidebarSubtitle(for site: Site) -> String? {
-        switch site.launchType {
-        case .url:
-            let urlStr = site.url
-            if let host = URL(string: urlStr)?.host {
-                return host
-            }
-            return nil
-        case .app:
-            if let path = site.appPath {
-                return URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
-            }
-            return nil
-        case .finder:
-            return site.folderPath
-        case .shell:
-            return "script"
-        }
-    }
-
     @State private var duplicateShortcutAlert = false
     @State private var duplicateShortcutChar = ""
     @State private var duplicateSiteAlert = false

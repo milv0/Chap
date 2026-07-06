@@ -2,7 +2,7 @@ import SwiftUI
 
 struct WelcomeView: View {
     var onOpenSettings: () -> Void
-    @Environment(\.dismiss) var dismiss
+    var onClose: () -> Void
     @State private var dontShowAgain = false
 
     var body: some View {
@@ -56,7 +56,7 @@ struct WelcomeView: View {
                 if dontShowAgain {
                     UserDefaults.standard.set(true, forKey: "guideDisabled")
                 }
-                dismiss()
+                onClose()
                 onOpenSettings()
             }
             .padding(.horizontal, 40)

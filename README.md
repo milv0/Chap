@@ -15,7 +15,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Tiny to Full, or set custom width/height
 - **Display Minimap** — Visual preview of window placement across all monitors
-- **Global Hotkeys** — `⌥1`~`⌥9` to launch, `⌥Q` for menu, `⌥,` for settings
+- **Global Hotkeys** — `⌥Q` for menu, `⌥(custom key)` to launch, `⌥,` for settings
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
 - **Import/Export** — Share config via JSON file or paste
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
@@ -43,12 +43,13 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | Shortcut | Action |
 |----------|--------|
 | `⌥Q` | Open menubar menu |
-| `⌥1`~`⌥9` | Launch site by number |
+| `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
-| `⌘E` | Edit selected site |
 | `⌘S` | Save changes |
 | `⌘/` | User guide |
+| `↑` `↓` | Navigate sidebar |
+| `Enter` | Save + exit edit mode |
 
 **Setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
 The menubar icon shows a warning badge until permission is granted.

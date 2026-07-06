@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
         buildMenu()
-        registerGlobalHotkeys()
+        registerGlobalShortcuts()
 
         if config.sites.contains(where: { $0.launchType == .url }),
             FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app")
@@ -57,13 +57,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    // MARK: - Global Hotkeys
+    // MARK: - Global Shortcuts
 
     private var eventTap: CFMachPort?
     private var activationObserver: NSObjectProtocol?
     private var tapRetryCount = 0
 
-    private func registerGlobalHotkeys() {
+    private func registerGlobalShortcuts() {
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         guard
             let tap = CGEvent.tapCreate(
@@ -150,7 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if tapRetryCount <= 5 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
                     if self?.eventTap == nil {
-                        self?.registerGlobalHotkeys()
+                        self?.registerGlobalShortcuts()
                     }
                 }
             } else {
@@ -182,9 +182,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 app.bundleIdentifier == Bundle.main.bundleIdentifier
             else { return }
             if AXIsProcessTrusted() {
-                NSLog("[Chap] Accessibility granted — attempting hotkey registration")
+                NSLog("[Chap] Accessibility granted — attempting shortcut registration")
                 self.tapRetryCount = 0
-                self.registerGlobalHotkeys()
+                self.registerGlobalShortcuts()
             }
         }
     }
@@ -212,15 +212,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func showWelcomeWindow() {
-        let welcomeView = WelcomeView {
+        let window = NSWindow(contentViewController: NSHostingController(rootView: Text("")))
+        let welcomeView = WelcomeView(onOpenSettings: {
             self.openSettings()
-        }
-        let controller = NSHostingController(rootView: welcomeView)
-        let window = NSWindow(contentViewController: controller)
+        }, onClose: {
+            window.close()
+        })
+        window.contentViewController = NSHostingController(rootView: welcomeView)
         window.title = ""
         window.titlebarAppearsTransparent = true
         window.styleMask = [.titled, .closable]
-        window.setContentSize(NSSize(width: 500, height: 380))
+        window.setContentSize(NSSize(width: 420, height: 480))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
