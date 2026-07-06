@@ -247,7 +247,7 @@ struct MinimapSwiftUI: View {
 
                 let targetScreen =
                     displayName.flatMap { name in screens.first { $0.localizedName == name } }
-                    ?? NSScreen.main ?? screens.first!
+                    ?? NSScreen.main ?? screens.first ?? NSScreen.main!
                 let tFrame = targetScreen.frame
                 let screenLocalX = (tFrame.origin.x - minX) * scale
                 let screenLocalY = (maxY - tFrame.origin.y - tFrame.height) * scale
