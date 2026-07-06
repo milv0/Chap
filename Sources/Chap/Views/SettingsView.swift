@@ -12,6 +12,7 @@ struct SettingsView: View {
     @State private var dropTargeted = false
     @State private var isEditing = false
     @State private var isAddingNew = false
+    @State private var searchText = ""
 
     var body: some View {
         HStack(spacing: 0) {
@@ -47,6 +48,11 @@ struct SettingsView: View {
         } message: {
             Text(duplicateSiteMessage)
         }
+        .alert("Required Field", isPresented: $emptyFieldAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(emptyFieldMessage)
+        }
         .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             guard let provider = providers.first else { return false }
@@ -71,10 +77,28 @@ struct SettingsView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 11))
+                    .foregroundColor(DS.textTertiary)
+                TextField("Search", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(DS.captionFont)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(DS.surfaceBg)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+
             ScrollView {
                 LazyVStack(spacing: 4) {
                     ForEach(LaunchType.allCases, id: \.self) { type in
-                        let indices = vm.sites.indices.filter { vm.sites[$0].launchType == type }
+                        let indices = vm.sites.indices.filter {
+                            vm.sites[$0].launchType == type
+                            && (searchText.isEmpty || vm.sites[$0].name.localizedCaseInsensitiveContains(searchText))
+                        }
                         if !indices.isEmpty {
                             Text(typeSectionTitle(type))
                                 .font(DS.captionFont)
@@ -144,7 +168,7 @@ struct SettingsView: View {
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let idx = selectedIndex, idx < vm.sites.count {
-                SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, onSave: { save() })
+                SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew, onSave: { save() })
                     .onTapGesture { isEditing = true }
                     .onChange(of: vm.sites) { _, _ in
                         if isEditing { save() }
@@ -446,10 +470,20 @@ struct SettingsView: View {
     @State private var duplicateShortcutChar = ""
     @State private var duplicateSiteAlert = false
     @State private var duplicateSiteMessage = ""
+    @State private var emptyFieldAlert = false
+    @State private var emptyFieldMessage = ""
 
     private func save() {
         if let idx = selectedIndex, idx < vm.sites.count {
             let site = vm.sites[idx]
+
+            // 필수 필드 체크
+            let missingField = checkRequiredFields(site: site)
+            if let field = missingField {
+                emptyFieldMessage = "\(field) is required for \(site.launchType.rawValue) type."
+                emptyFieldAlert = true
+                return
+            }
 
             // 단축키 중복 체크
             if let key = site.shortcut?.uppercased(), !key.isEmpty {
@@ -488,6 +522,21 @@ struct SettingsView: View {
             case .shell:
                 break
             }
+        }
+        return nil
+    }
+
+    private func checkRequiredFields(site: Site) -> String? {
+        if site.name.isEmpty || site.name == "New Launchable" { return "Name" }
+        switch site.launchType {
+        case .url:
+            if site.url.isEmpty || site.url == "https://" { return "URL" }
+        case .app:
+            if site.appPath == nil || site.appPath!.isEmpty { return "App path" }
+        case .finder:
+            if site.folderPath == nil || site.folderPath!.isEmpty { return "Folder path" }
+        case .shell:
+            if site.script == nil || site.script!.isEmpty { return "Script" }
         }
         return nil
     }

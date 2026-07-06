@@ -5,10 +5,12 @@ import UniformTypeIdentifiers
 struct SiteConfigView: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
+    var isNew: Bool = false
     @State private var sizeSelection = 0
     @State private var suppressOnChange = false
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
+    @FocusState private var nameFieldFocused: Bool
     var onSave: (() -> Void)?
 
     private let sizeOptions = [
@@ -24,7 +26,29 @@ struct SiteConfigView: View {
         ScrollView {
             CardSection {
                 VStack(alignment: .leading, spacing: DS.spacing) {
-                    InputField(label: "Name", text: $site.name, placeholder: "Site name")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Name")
+                            .font(DS.captionFont)
+                            .foregroundColor(DS.textSecondary)
+                        TextField("Site name", text: $site.name)
+                            .textFieldStyle(.plain)
+                            .font(DS.bodyFont)
+                            .padding(DS.paddingSmall)
+                            .background(DS.surfaceBg)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(DS.border, lineWidth: 1)
+                            )
+                            .focused($nameFieldFocused)
+                    }
+                    .onAppear {
+                        if isNew {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                nameFieldFocused = true
+                            }
+                        }
+                    }
 
                     InputField(
                         label: "Shortcut (⌥ +)",
