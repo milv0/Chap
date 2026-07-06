@@ -104,13 +104,27 @@ struct SidebarDropDelegate: DropDelegate {
     @Binding var dropIndicatorIndex: Int?
     let onDrop: () -> Void
 
+    func dropEntered(info: DropInfo) {
+        dropIndicatorIndex = currentIndex
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        dropIndicatorIndex = currentIndex
+        return DropProposal(operation: .move)
+    }
+
+    func dropExited(info: DropInfo) {
+        if dropIndicatorIndex == currentIndex {
+            dropIndicatorIndex = nil
+        }
+    }
+
     func performDrop(info: DropInfo) -> Bool {
-        DispatchQueue.main.async { dropIndicatorIndex = nil }
+        dropIndicatorIndex = nil
         guard let item = info.itemProviders(for: [.plainText]).first else { return false }
         item.loadObject(ofClass: String.self) { str, _ in
             guard let str = str, let from = Int(str) else { return }
             DispatchQueue.main.async {
-                self.dropIndicatorIndex = nil
                 guard from != self.currentIndex,
                       from < self.sites.count, self.currentIndex < self.sites.count,
                       self.sites[from].launchType == self.sites[self.currentIndex].launchType else { return }
@@ -121,21 +135,6 @@ struct SidebarDropDelegate: DropDelegate {
             }
         }
         return true
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? {
-        DispatchQueue.main.async {
-            dropIndicatorIndex = currentIndex
-        }
-        return DropProposal(operation: .move)
-    }
-
-    func dropExited(info: DropInfo) {
-        DispatchQueue.main.async {
-            if dropIndicatorIndex == currentIndex {
-                dropIndicatorIndex = nil
-            }
-        }
     }
 
     func validateDrop(info: DropInfo) -> Bool {
