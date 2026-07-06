@@ -30,10 +30,10 @@ enum ChromeLauncher {
         }
         let chromeRunning = chromeApp != nil
         let chromePid = chromeApp?.processIdentifier ?? -1
-        let windowCountBefore = chromeRunning ? axWindowCount(pid: chromePid) : 0
+        let windowsBefore = chromeRunning ? axWindowList(pid: chromePid) : []
 
         NSLog("[Chap] Chrome launch for %@ — chromeRunning=%d, windowsBefore=%d",
-              site.name, chromeRunning ? 1 : 0, windowCountBefore)
+              site.name, chromeRunning ? 1 : 0, windowsBefore.count)
 
         // Chrome --app 모드로 실행
         let openTask = Process()
@@ -61,7 +61,7 @@ enum ChromeLauncher {
         resizeQueue.async {
             let success = axResizeNewWindow(
                 cachedPid: chromePid,
-                windowCountBefore: windowCountBefore,
+                windowsBefore: windowsBefore,
                 position: position,
                 size: size,
                 chromeRunning: chromeRunning
@@ -74,7 +74,7 @@ enum ChromeLauncher {
                 appState: chromeRunning ? "running" : "cold",
                 attempt: 1, delay: 0,
                 totalTime: elapsed, result: result,
-                windowCount: windowCountBefore,
+                windowCount: windowsBefore.count,
                 display: screen.localizedName,
                 size: "\(site.width)x\(site.height)")
             onComplete?()
@@ -84,14 +84,13 @@ enum ChromeLauncher {
     // MARK: - AX API Resize
 
     private static func axResizeNewWindow(
-        cachedPid: pid_t, windowCountBefore: Int, position: CGPoint, size: CGSize,
+        cachedPid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
         chromeRunning: Bool
     ) -> Bool {
         let maxAttempts = chromeRunning ? 80 : 60
         let interval: useconds_t = chromeRunning ? 50_000 : 100_000  // 50ms / 100ms
 
         for _ in 0..<maxAttempts {
-            // running이면 캐싱된 pid 사용, cold면 재조회
             let pid: pid_t
             if chromeRunning {
                 pid = cachedPid
@@ -111,9 +110,14 @@ enum ChromeLauncher {
                 app, kAXWindowsAttribute as CFString, &windowsValue)
 
             if err == .success, let windows = windowsValue as? [AXUIElement],
-               windows.count > windowCountBefore {
-                let win = windows[0]
-                LauncherUtils.axApplyBounds(win, position: position, size: size)
+               windows.count > windowsBefore.count {
+                // 이전 목록에 없는 새 윈도우 찾기
+                let newWindow = windows.first { win in
+                    !windowsBefore.contains { CFEqual($0, win) }
+                }
+                // 새 윈도우를 못 찾으면 windows[0] fallback
+                let target = newWindow ?? windows[0]
+                LauncherUtils.axApplyBounds(target, position: position, size: size)
                 return true
             }
             usleep(interval)
@@ -121,14 +125,14 @@ enum ChromeLauncher {
         return false
     }
 
-    private static func axWindowCount(pid: pid_t) -> Int {
+    private static func axWindowList(pid: pid_t) -> [AXUIElement] {
         let app = AXUIElementCreateApplication(pid)
         var windowsValue: AnyObject?
         let err = AXUIElementCopyAttributeValue(
             app, kAXWindowsAttribute as CFString, &windowsValue)
         if err == .success, let windows = windowsValue as? [AXUIElement] {
-            return windows.count
+            return windows
         }
-        return 0
+        return []
     }
 }
