@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var isEditing = false
     @State private var isAddingNew = false
     @State private var searchText = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         HStack(spacing: 0) {
@@ -25,6 +26,7 @@ struct SettingsView: View {
         .onChange(of: selectedIndex) { _, _ in
             isAddingNew = false
             isEditing = false
+            searchFocused = false
             // 선택 변경 시 자동 저장
             save()
         }
@@ -84,6 +86,7 @@ struct SettingsView: View {
                 TextField("Search", text: $searchText)
                     .textFieldStyle(.plain)
                     .font(DS.captionFont)
+                    .focused($searchFocused)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
@@ -91,6 +94,7 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .padding(.horizontal, 8)
             .padding(.top, 8)
+            .onTapGesture { searchFocused = true }
 
             ScrollView {
                 LazyVStack(spacing: 4) {
