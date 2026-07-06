@@ -120,7 +120,9 @@ enum AppLauncher {
             let err = AXUIElementCopyAttributeValue(
                 app, kAXFocusedWindowAttribute as CFString, &windowValue)
             if err == .success, let window = windowValue {
-                LauncherUtils.axApplyBounds(window as! AXUIElement, position: position, size: size)
+                // AXUIElementCopyAttributeValue 성공 시 항상 AXUIElement 타입
+                let win = window as! AXUIElement
+                LauncherUtils.axApplyBounds(win, position: position, size: size)
                 return true
             }
             usleep(interval)
