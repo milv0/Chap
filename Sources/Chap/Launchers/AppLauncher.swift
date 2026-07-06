@@ -67,12 +67,23 @@ enum AppLauncher {
             let size = CGSize(width: bw, height: bh)
 
             resizeQueue.async {
-                let success = axResize(
+                var success = axResize(
                     pid: app.processIdentifier,
                     position: position,
                     size: size,
                     isRunning: appRunning
                 )
+                // 실패 시 1초 대기 후 한 번 더 시도 (느린 앱 대응)
+                if !success {
+                    NSLog("[AppLauncher] first attempt failed for %@, retrying...", site.name)
+                    usleep(1_000_000)
+                    success = axResize(
+                        pid: app.processIdentifier,
+                        position: position,
+                        size: size,
+                        isRunning: true
+                    )
+                }
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let result = success ? "success" : "failed"
                 NSLog(

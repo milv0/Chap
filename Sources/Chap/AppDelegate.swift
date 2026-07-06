@@ -265,14 +265,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     func loadConfig() {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else {
             NSLog("[Chap] Failed to read config file at %@", configPath)
+            config = .default
             return
         }
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
         } catch {
+            NSLog("[Chap] Config decode error: %@", error.localizedDescription)
             DispatchQueue.main.async {
                 let alert = NSAlert()
-                alert.messageText = "Cannot read config file. Using defaults."
+                alert.messageText = "Config file is corrupted"
+                alert.informativeText = "~/.chap.json을 읽을 수 없어 기본 설정을 사용합니다.\n백업 파일: ~/.chap.json.bak\n\nError: \(error.localizedDescription)"
                 alert.alertStyle = .warning
                 alert.runModal()
             }
@@ -286,7 +289,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             LaunchType.allCases.firstIndex(of: $0.element.launchType)!
                 < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
         }
+        var lastType: LaunchType? = nil
         for (i, site) in sortedSites {
+            // 타입이 바뀌면 구분선 추가
+            if let last = lastType, last != site.launchType {
+                menu.addItem(.separator())
+            }
+            lastType = site.launchType
             let keyEquiv = site.shortcut?.lowercased() ?? ""
             let item = NSMenuItem(
                 title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
@@ -447,7 +456,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.setContentSize(NSSize(width: 700, height: 580))
         window.styleMask = [.titled, .closable, .resizable]
         window.minSize = NSSize(width: 600, height: 400)
-        window.center()
+        window.setFrameAutosaveName("ChapSettingsWindow")
+        if !window.setFrameUsingName("ChapSettingsWindow") {
+            window.center()
+        }
         window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)

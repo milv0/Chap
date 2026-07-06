@@ -20,14 +20,19 @@ struct WelcomeView: View {
                     description: "Register sites with name, URL, and window size"
                 )
                 OnboardingCard(
+                    icon: "keyboard",
+                    title: "Set Shortcuts",
+                    description: "Assign custom key per site (e.g. T → ⌥T to launch)"
+                )
+                OnboardingCard(
                     icon: "display",
                     title: "Choose Display",
                     description: "Pick a screen and size — always centered"
                 )
                 OnboardingCard(
-                    icon: "keyboard",
+                    icon: "bolt.fill",
                     title: "Quick Launch",
-                    description: "⌥Q menu, ⌥1~9 launch, ⌥, settings"
+                    description: "⌥Q menu, ⌥(your key) launch, ⌥, settings"
                 )
             }
             .padding(.horizontal, 24)

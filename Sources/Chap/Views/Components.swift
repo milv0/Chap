@@ -108,12 +108,13 @@ struct SidebarDropDelegate: DropDelegate {
         item.loadObject(ofClass: String.self) { str, _ in
             guard let str = str, let from = Int(str) else { return }
             DispatchQueue.main.async {
-                if from != currentIndex {
-                    let site = sites.remove(at: from)
-                    sites.insert(site, at: currentIndex)
-                    selectedIndex = currentIndex
-                    onDrop()
-                }
+                guard from != currentIndex,
+                      from < sites.count, currentIndex < sites.count,
+                      sites[from].launchType == sites[currentIndex].launchType else { return }
+                let site = sites.remove(at: from)
+                sites.insert(site, at: currentIndex)
+                selectedIndex = currentIndex
+                onDrop()
             }
         }
         return true
