@@ -103,7 +103,21 @@ struct SiteConfigView: View {
 
     private var urlFields: some View {
         Group {
-            InputField(label: "URL", text: $site.url, placeholder: "https://")
+            InputField(
+                label: "URL",
+                text: Binding(
+                    get: { site.url },
+                    set: { newURL in
+                        site.url = newURL
+                        if (site.name == "New Launchable" || site.name.isEmpty),
+                           let host = URL(string: newURL)?.host {
+                            site.name = host.replacingOccurrences(of: "www.", with: "")
+                                .components(separatedBy: ".").first?.capitalized ?? host
+                        }
+                    }
+                ),
+                placeholder: "https://"
+            )
             windowFields
         }
     }
@@ -233,7 +247,12 @@ struct SiteConfigView: View {
                     label: "Folder",
                     text: Binding(
                         get: { site.folderPath ?? "" },
-                        set: { site.folderPath = $0 }
+                        set: { newPath in
+                            site.folderPath = newPath
+                            if (site.name == "New Launchable" || site.name.isEmpty), !newPath.isEmpty {
+                                site.name = URL(fileURLWithPath: newPath).lastPathComponent
+                            }
+                        }
                     ),
                     placeholder: "~/Documents"
                 )
