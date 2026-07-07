@@ -254,7 +254,7 @@ struct SettingsView: View {
             }
 
             Button("") {
-                save()
+                save(showAlerts: true)
                 isEditing = false
             }
             .keyboardShortcut(.return, modifiers: [])
@@ -262,7 +262,7 @@ struct SettingsView: View {
             .opacity(0)
 
             Button("") {
-                save()
+                save(showAlerts: true)
             }
             .keyboardShortcut("s", modifiers: .command)
             .frame(width: 0, height: 0)
@@ -477,15 +477,17 @@ struct SettingsView: View {
     @State private var emptyFieldAlert = false
     @State private var emptyFieldMessage = ""
 
-    private func save() {
+    private func save(showAlerts: Bool = false) {
         if let idx = selectedIndex, idx < vm.sites.count {
             let site = vm.sites[idx]
 
-            // 필수 필드 체크
+            // 필수 필드 체크 — alert는 수동 저장 시에만
             let missingField = checkRequiredFields(site: site)
             if let field = missingField {
-                emptyFieldMessage = "\(field) is required for \(site.launchType.rawValue) type."
-                emptyFieldAlert = true
+                if showAlerts {
+                    emptyFieldMessage = "\(field) is required for \(site.launchType.rawValue) type."
+                    emptyFieldAlert = true
+                }
                 return
             }
 
