@@ -289,7 +289,7 @@ struct SettingsView: View {
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
                         guideRow(icon: "cursorarrow.click.2", text: "Click menubar icon to select")
-                        guideRow(icon: "keyboard", text: "⌥Q menu, ⌥(custom key) launch, ⌥, settings")
+                        guideRow(icon: "keyboard", text: "⌥Q/⌥. menu, ⌥(custom key) launch, ⌥, settings")
                         guideRow(
                             icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
                     }

@@ -15,7 +15,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Tiny to Full, or set custom width/height
 - **Display Minimap** — Visual preview of window placement across all monitors
-- **Global Hotkeys** — `⌥Q` for menu, `⌥(custom key)` to launch, `⌥,` for settings
+- **Global Hotkeys** — `⌥Q` / `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
 - **Import/Export** — Share config via JSON file or paste
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
@@ -42,7 +42,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 | Shortcut | Action |
 |----------|--------|
-| `⌥Q` | Open menubar menu |
+| `⌥Q` / `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |

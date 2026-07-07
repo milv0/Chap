@@ -32,7 +32,7 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "bolt.fill",
                     title: "Quick Launch",
-                    description: "⌥Q menu, ⌥(your key) launch, ⌥, settings"
+                    description: "⌥Q/⌥. menu, ⌥(your key) launch, ⌥, settings"
                 )
             }
             .padding(.horizontal, 24)
