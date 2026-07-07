@@ -87,8 +87,8 @@ enum ChromeLauncher {
         cachedPid: pid_t, windowCountBefore: Int, position: CGPoint, size: CGSize,
         chromeRunning: Bool
     ) -> Bool {
-        let maxAttempts = chromeRunning ? 80 : 60
-        let interval: useconds_t = chromeRunning ? 50_000 : 100_000  // 50ms / 100ms
+        let maxAttempts = chromeRunning ? 80 : 100
+        let interval: useconds_t = chromeRunning ? 50_000 : 100_000  // 50ms / 100ms (running 4s / cold 10s)
 
         for _ in 0..<maxAttempts {
             let pid: pid_t

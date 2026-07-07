@@ -1,12 +1,11 @@
 import Foundation
 
 /// 리사이즈 결과를 CSV 파일로 자동 수집하는 로거
-/// 저장 위치: <project>/logs/resize_YYYY-MM-DD.csv
+/// 저장 위치: ~/Library/Logs/Chap/resize_YYYY-MM-DD.csv
 enum ResizeLogger {
     private static let logDir: String = {
-        let sourceFile = #file
-        let components = sourceFile.components(separatedBy: "/Sources/")
-        return (components.first ?? ".") + "/logs"
+        let home = NSHomeDirectory()
+        return (home as NSString).appendingPathComponent("Library/Logs/Chap")
     }()
 
     /// 리사이즈 결과 기록

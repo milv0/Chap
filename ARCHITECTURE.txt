@@ -44,7 +44,7 @@ Config Files:
 Runtime:
 ├── ~/.chap.json                   ← 사용자 설정 파일
 ├── ~/.chap.json.bak               ← 자동 백업
-└── 프로젝트폴더/logs/              ← 리사이즈 성능 로그 (CSV)
+└── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV)
 
 
 ## 핵심 기능
@@ -82,6 +82,7 @@ Runtime:
 
 설정 창 내:
   ⌘1~9   사이트 선택
+  ⌘N     사이트 추가
   ⌘S     저장
   ⌘?     가이드
   ↑↓     목록 이동 (타입 그룹 순서 기준)
@@ -97,7 +98,7 @@ Runtime:
 
 리사이즈 전략:
   URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 4초)
-  URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 6초)
+  URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
   App (실행 중):         AX API 폴링 50ms 간격 (포커스 윈도우 감지, 최대 1.5초 + 1초 재시도)
   App (콜드 스타트):     AX API 폴링 100ms 간격 (최대 5초 + 1초 재시도)
   Finder:               딜레이 없음 (열기+리사이즈 단일 스크립트)
@@ -178,7 +179,7 @@ Chrome 윈도우 감지 방식:
   5. Accessibility 체크: ChromeLauncher에도 추가
   6. pid 캐싱: Chrome running 시 매 폴링마다 runningApplications 조회 제거
   7. App resize 실패 시 1초 후 자동 재시도
-  8. Chrome 타임아웃: running 시 2초 → 4초 (윈도우 많을 때 대응)
+  8. Chrome 타임아웃: running 시 2초 → 4초 (윈도우 많을 때 대응), cold 시 6초 → 10초
 
 ### 남은 병목 (제어 불가)
   - App running: 150ms activate 대기 (macOS 포커스 전환 시간)

@@ -303,7 +303,7 @@ struct SettingsView: View {
                             .foregroundColor(DS.textPrimary)
                         guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Shortcut)")
                         guideRow(icon: "display", text: "Choose display + size — always centered")
-                        guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save")
+                        guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save, ⌘N to add")
                         guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -381,6 +381,11 @@ struct SettingsView: View {
 
         Button("") { moveSelection(by: 1) }
             .keyboardShortcut(.downArrow, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+
+        Button("") { addSite() }
+            .keyboardShortcut("n", modifiers: .command)
             .frame(width: 0, height: 0)
             .opacity(0)
     }

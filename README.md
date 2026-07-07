@@ -46,6 +46,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
+| `⌘N` | Add new site |
 | `⌘S` | Save changes |
 | `⌘/` | User guide |
 | `↑` `↓` | Navigate sidebar |
@@ -61,6 +62,7 @@ Stored at `~/.chap.json`:
 ```json
 {
   "runInBackground": true,
+  "showGuideWindow": true,
   "sites": [
     {
       "name": "GitHub",
@@ -70,7 +72,8 @@ Stored at `~/.chap.json`:
       "x": 100,
       "y": 100,
       "launchType": "url",
-      "displayName": "Built-in Retina Display"
+      "displayName": "Built-in Retina Display",
+      "shortcut": "G"
     },
     {
       "name": "Downloads",
