@@ -97,7 +97,7 @@ struct SettingsView: View {
             .onTapGesture { searchFocused = true }
 
             ScrollView {
-                LazyVStack(spacing: 4) {
+                VStack(spacing: 4) {
                     ForEach(LaunchType.allCases, id: \.self) { type in
                         let indices = vm.sites.indices.filter {
                             vm.sites[$0].launchType == type
