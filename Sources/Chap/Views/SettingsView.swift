@@ -317,7 +317,7 @@ struct SettingsView: View {
                 .padding(.horizontal, 40)
                 .padding(.bottom, 24)
         }
-        .frame(width: 400, height: 460)
+        .frame(width: 440, height: 540)
         .background(DS.surfaceBg)
     }
 
