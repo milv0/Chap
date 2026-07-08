@@ -102,8 +102,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                     let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
-                    // ⌥Q or ⌥. — open menu (block while menu is open)
-                    if keyCode == 12 || keyCode == 47 {
+                    // ⌥. — open menu (block while menu is open)
+                    if keyCode == 47 {
                         guard !appDelegate.menuIsOpen else { return nil }
                         appDelegate.menuIsOpen = true
                         DispatchQueue.main.async {

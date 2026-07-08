@@ -56,7 +56,7 @@ struct SiteConfigView: View {
                             get: { site.shortcut ?? "" },
                             set: { newValue in
                                 let key = newValue.isEmpty ? nil : String(newValue.prefix(1)).uppercased()
-                                if let k = key, ["Q", ".", ","].contains(k) {
+                                if let k = key, [".", ","].contains(k) {
                                     reservedKeyAlert = true
                                     reservedKeyChar = k
                                     return
