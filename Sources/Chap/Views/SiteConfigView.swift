@@ -135,7 +135,16 @@ struct SiteConfigView: View {
                         "/Applications/...",
                         text: Binding(
                             get: { site.appPath ?? "" },
-                            set: { site.appPath = $0 }
+                            set: { newPath in
+                                site.appPath = newPath
+                                if !newPath.isEmpty {
+                                    let appName = URL(fileURLWithPath: newPath)
+                                        .deletingPathExtension().lastPathComponent
+                                    if site.name == "New Launchable" || site.name.isEmpty {
+                                        site.name = appName
+                                    }
+                                }
+                            }
                         )
                     )
                     .textFieldStyle(.plain)
@@ -300,10 +309,13 @@ struct SiteConfigView: View {
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         panel.allowsMultipleSelection = false
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        site.appPath = url.path
-        if site.name == "New Launchable" || site.name.isEmpty {
-            site.name = url.deletingPathExtension().lastPathComponent
+        let newAppName = url.deletingPathExtension().lastPathComponent
+        // 이전 앱 이름과 같거나 기본값이면 새 앱 이름으로 변경
+        let oldAppName = site.appPath.map { URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent }
+        if site.name == "New Launchable" || site.name.isEmpty || site.name == oldAppName {
+            site.name = newAppName
         }
+        site.appPath = url.path
     }
 
     private func browseFolder() {
