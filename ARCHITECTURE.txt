@@ -97,7 +97,7 @@ Runtime:
   Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
 리사이즈 전략:
-  URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 4초)
+  URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 6초)
   URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
   App (실행 중):         AX API 폴링 50ms 간격 (포커스 윈도우 감지, 최대 1.5초 + 1초 재시도)
   App (콜드 스타트):     AX API 폴링 100ms 간격 (최대 5초 + 1초 재시도)
