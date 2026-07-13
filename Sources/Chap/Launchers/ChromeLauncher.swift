@@ -1,5 +1,6 @@
 import ApplicationServices
 import Cocoa
+import os
 
 /// Chrome --app 모드로 URL을 열고 AX API로 윈도우 크기를 조정하는 런처
 enum ChromeLauncher {
@@ -25,7 +26,7 @@ enum ChromeLauncher {
 
         let rawDomain = URL(string: site.url)?.host ?? ""
         guard isValidDomain(rawDomain) else {
-            NSLog("[Chap] Invalid domain: %@", rawDomain)
+            Log.launcher.error("Invalid domain: \(rawDomain, privacy: .private)")
             LauncherUtils.showAlert(
                 message: "Invalid URL for \"\(site.name)\".",
                 info: "URL을 확인해주세요: \(site.url)")
@@ -34,7 +35,7 @@ enum ChromeLauncher {
         }
 
         guard let screen = targetScreen(for: site) else {
-            NSLog("[Chap] No display available — launching Chrome without resize")
+            Log.launcher.info("No display available — launching Chrome without resize")
             try? runChromeApp(url: site.url)
             onComplete?()
             return
@@ -52,13 +53,14 @@ enum ChromeLauncher {
         let chromePid = chromeApp?.processIdentifier ?? -1
         let windowsBefore: [AXUIElement] = chromeRunning ? axWindows(pid: chromePid) : []
 
-        NSLog("[Chap] Chrome launch for %@ — chromeRunning=%d, windowsBefore=%d",
-              site.name, chromeRunning ? 1 : 0, windowsBefore.count)
+        Log.launcher.debug(
+            "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)")
 
         // Chrome --app 모드로 실행
         do {
             try runChromeApp(url: site.url)
         } catch {
+            Log.launcher.error("Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
             LauncherUtils.showAlert(
                 message: "Failed to launch Chrome.", info: error.localizedDescription)
             onComplete?()
@@ -66,7 +68,7 @@ enum ChromeLauncher {
         }
 
         guard canResize else {
-            NSLog("[Chap] Accessibility not granted — launching without resize")
+            Log.launcher.info("Accessibility not granted — launching without resize")
             onComplete?()
             return
         }
@@ -85,7 +87,13 @@ enum ChromeLauncher {
             )
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime
             let result = success ? "success" : "failed"
-            NSLog("[Chap] Chrome AX resize %@ for %@ — total %.2fs", result, site.name, elapsed)
+            if success {
+                Log.launcher.debug(
+                    "Chrome AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+            } else {
+                Log.launcher.error(
+                    "Chrome AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+            }
             ResizeLogger.log(
                 site: site.name, type: "url",
                 appState: chromeRunning ? "running" : "cold",

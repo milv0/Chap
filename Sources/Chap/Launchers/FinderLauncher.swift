@@ -1,4 +1,5 @@
 import Cocoa
+import os
 
 /// Finder 폴더를 열고 윈도우 크기를 설정하는 런처
 /// 단일 AppleScript로 열기 + 리사이즈를 동시에 처리하므로 딜레이가 필요 없음
@@ -37,10 +38,10 @@ enum FinderLauncher {
                 // 실패 시 에러 로깅 (사용자에게 alert 안 띄움 — Finder는 거의 실패 안 함)
                 if task.terminationStatus != 0 {
                     let err = String(data: errData, encoding: .utf8) ?? ""
-                    NSLog("[Chap] Finder resize failed: %@", err)
+                    Log.launcher.error("Finder resize failed: \(err, privacy: .private)")
                 }
             } catch {
-                NSLog("[Chap] Failed to run Finder script: %@", error.localizedDescription)
+                Log.launcher.error("Failed to run Finder script: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

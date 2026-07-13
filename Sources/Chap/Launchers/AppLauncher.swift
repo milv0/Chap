@@ -1,5 +1,6 @@
 import ApplicationServices
 import Cocoa
+import os
 
 /// macOS 앱을 실행하고 Accessibility API로 윈도우를 리사이즈하는 런처
 enum AppLauncher {
@@ -18,7 +19,7 @@ enum AppLauncher {
         let bundleId = bundle?.bundleIdentifier
 
         guard let screen = targetScreen(for: site) else {
-            NSLog("[AppLauncher] No display available — launching without resize")
+            Log.launcher.info("No display available — launching \(site.name, privacy: .private) without resize")
             let appURL = URL(fileURLWithPath: path)
             let openConfig = NSWorkspace.OpenConfiguration()
             openConfig.activates = true
@@ -31,15 +32,13 @@ enum AppLauncher {
         let bw = site.width
         let bh = site.height
 
-        NSLog(
-            "[AppLauncher] launch site=%@ path=%@ bundleId=%@",
-            site.name, path, bundleId ?? "nil")
-        NSLog(
-            "[AppLauncher] target screen=%@ bounds={left:%d, top:%d, w:%d, h:%d}",
-            screen.localizedName, bounds.left, bounds.top, bw, bh)
+        Log.launcher.debug(
+            "AppLauncher launch site=\(site.name, privacy: .private) path=\(path, privacy: .private) bundleId=\(bundleId ?? "nil", privacy: .private)")
+        Log.launcher.debug(
+            "AppLauncher target screen=\(screen.localizedName, privacy: .public) bounds={left:\(bounds.left), top:\(bounds.top), w:\(bw), h:\(bh)}")
 
         guard LauncherUtils.checkAccessibility() else {
-            NSLog("[AppLauncher] Accessibility not granted — launching without resize")
+            Log.launcher.info("Accessibility not granted — launching without resize")
             let appURL = URL(fileURLWithPath: path)
             let openConfig = NSWorkspace.OpenConfiguration()
             openConfig.activates = true
@@ -60,7 +59,7 @@ enum AppLauncher {
 
         NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { app, error in
             if let error = error {
-                NSLog("[AppLauncher] openApplication failed: %@", error.localizedDescription)
+                Log.launcher.error("openApplication failed: \(error.localizedDescription, privacy: .public)")
                 onComplete?()
                 return
             }
@@ -68,9 +67,8 @@ enum AppLauncher {
                 onComplete?()
                 return
             }
-            NSLog(
-                "[AppLauncher] app opened pid=%d localizedName=%@",
-                app.processIdentifier, app.localizedName ?? "?")
+            Log.launcher.debug(
+                "app opened pid=\(app.processIdentifier) localizedName=\(app.localizedName ?? "?", privacy: .private)")
 
             let position = CGPoint(x: bounds.left, y: bounds.top)
             let size = CGSize(width: bw, height: bh)
@@ -84,7 +82,7 @@ enum AppLauncher {
                 )
                 // 실패 시 1초 대기 후 한 번 더 시도 (느린 앱 대응)
                 if !success {
-                    NSLog("[AppLauncher] first attempt failed for %@, retrying...", site.name)
+                    Log.launcher.debug("first attempt failed for \(site.name, privacy: .private), retrying...")
                     usleep(1_000_000)
                     success = axResize(
                         pid: app.processIdentifier,
@@ -95,9 +93,13 @@ enum AppLauncher {
                 }
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let result = success ? "success" : "failed"
-                NSLog(
-                    "[AppLauncher] AX resize %@ for %@ — total %.2fs",
-                    result, site.name, elapsed)
+                if success {
+                    Log.launcher.debug(
+                        "AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                } else {
+                    Log.launcher.error(
+                        "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                }
                 ResizeLogger.log(
                     site: site.name, type: "app",
                     appState: appRunning ? "running" : "cold",

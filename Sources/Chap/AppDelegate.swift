@@ -73,13 +73,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         }
                         // re-enable 후에도 권한이 없으면 사용자에게 알림
                         if !AXIsProcessTrusted() {
-                            NSLog("[Chap] Accessibility permission revoked")
+                            Log.app.error("Accessibility permission revoked")
                             DispatchQueue.main.async {
                                 appDelegate.updateStatusIcon(accessible: false)
                                 appDelegate.showAccessibilityAlert()
                             }
                         } else {
-                            NSLog("[Chap] CGEvent tap re-enabled after system disable")
+                            Log.app.info("CGEvent tap re-enabled after system disable")
                         }
                         return Unmanaged.passRetained(event)
                     }
@@ -138,7 +138,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 userInfo: Unmanaged.passUnretained(self).toOpaque()
             )
         else {
-            NSLog("[Chap] Failed to create CGEvent tap — check Accessibility permission")
+            Log.app.error("Failed to create CGEvent tap — check Accessibility permission")
             updateStatusIcon(accessible: false)
             tapRetryCount += 1
             if tapRetryCount <= 5 {
@@ -160,7 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        NSLog("[Chap] CGEvent tap registered successfully")
+        Log.app.info("CGEvent tap registered successfully")
     }
 
     private func observeActivationForAccessibility() {
@@ -176,7 +176,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 app.bundleIdentifier == Bundle.main.bundleIdentifier
             else { return }
             if AXIsProcessTrusted() {
-                NSLog("[Chap] Accessibility granted — attempting shortcut registration")
+                Log.app.info("Accessibility granted — attempting shortcut registration")
                 self.tapRetryCount = 0
                 self.registerGlobalShortcuts()
             }
@@ -262,7 +262,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             && !FileManager.default.fileExists(atPath: configPath)
         {
             try? FileManager.default.moveItem(atPath: oldPath, toPath: configPath)
-            NSLog("[Chap] Migrated config from ~/.quickaccess.json to ~/.chap.json")
+            Log.config.info("Migrated config from ~/.quickaccess.json to ~/.chap.json")
         }
     }
 
@@ -280,22 +280,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             do {
                 try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
             } catch {
-                NSLog(
-                    "[Chap] Failed to write default config: %@", error.localizedDescription)
+                Log.config.error(
+                    "Failed to write default config: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
 
     func loadConfig() {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else {
-            NSLog("[Chap] Failed to read config file at %@", configPath)
+            Log.config.error("Failed to read config file at \(self.configPath, privacy: .public)")
             config = .default
             return
         }
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
         } catch {
-            NSLog("[Chap] Config decode error: %@", error.localizedDescription)
+            Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
             DispatchQueue.main.async {
                 let alert = NSAlert()
                 alert.messageText = "Config file is corrupted"
@@ -415,11 +415,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AppLauncher.launch(site, resizeQueue: resizeQueue)
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
+                Log.launcher.error("No folder path configured for \(site.name, privacy: .private)")
                 LauncherUtils.showAlert(message: "No folder path configured for \"\(site.name)\".")
                 return
             }
             let expandedPath = NSString(string: path).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expandedPath) else {
+                Log.launcher.error("Folder not found: \(expandedPath, privacy: .private)")
                 LauncherUtils.showAlert(message: "Folder not found: \(path)")
                 return
             }
@@ -463,7 +465,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
                 try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             } catch {
-                NSLog("[Chap] Failed to save config: %@", error.localizedDescription)
+                Log.config.error("Failed to save config: \(error.localizedDescription, privacy: .public)")
                 LauncherUtils.showAlert(
                     message: "Failed to save settings",
                     info: "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)")
@@ -600,9 +602,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try service.unregister()
             }
         } catch {
-            NSLog(
-                "[Chap] Login item %@: %@", enabled ? "register" : "unregister",
-                error.localizedDescription)
+            Log.app.error(
+                "Login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

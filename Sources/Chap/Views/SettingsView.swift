@@ -1,6 +1,7 @@
 import Cocoa
 import SwiftUI
 import UniformTypeIdentifiers
+import os
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
@@ -627,7 +628,7 @@ struct SettingsView: View {
         encoder.outputFormatting = .prettyPrinted
         do {
             try encoder.encode(config).write(to: url, options: .atomic)
-            NSLog("[Chap] Config exported to %@", url.path)
+            Log.config.info("Config exported to \(url.path, privacy: .private)")
             let alert = NSAlert()
             alert.messageText = "Export successful"
             alert.informativeText = "Saved to \(url.path)"

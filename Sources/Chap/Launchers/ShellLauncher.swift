@@ -1,4 +1,5 @@
 import Cocoa
+import os
 
 /// 쉘 스크립트를 실행하는 런처
 /// 윈도우 리사이즈 없음 — 스크립트가 반드시 윈도우를 생성하지 않으므로
@@ -32,9 +33,15 @@ enum ShellLauncher {
                 // 0이 아닌 종료 코드 = 실패 → 에러 내용을 alert로 표시
                 if process.terminationStatus != 0 {
                     let errorStr = String(data: outputData, encoding: .utf8) ?? "Unknown error"
+                    Log.launcher.error(
+                        "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)")
                     LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                } else {
+                    Log.launcher.debug("Shell script succeeded for \(site.name, privacy: .private)")
                 }
             } catch {
+                Log.launcher.error(
+                    "Failed to execute script for \(site.name, privacy: .private): \(error.localizedDescription, privacy: .public)")
                 LauncherUtils.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
             }
         }
