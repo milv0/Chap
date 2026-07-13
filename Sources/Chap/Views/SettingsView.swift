@@ -206,14 +206,14 @@ struct SettingsView: View {
                 .controlSize(.small)
                 .font(DS.captionFont)
                 .help("Show window position guide while launching")
-                .onChange(of: vm.showGuideWindow) { _, _ in save() }
+                .onChange(of: vm.showGuideWindow) { _, _ in saveGlobals() }
 
             Toggle("Login", isOn: $vm.launchAtLogin)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .font(DS.captionFont)
                 .help("Open automatically when you log in")
-                .onChange(of: vm.launchAtLogin) { _, _ in save() }
+                .onChange(of: vm.launchAtLogin) { _, _ in saveGlobals() }
 
             Spacer()
 
@@ -516,8 +516,21 @@ struct SettingsView: View {
                 return
             }
         }
-        vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin))
-        vm.markSaved()
+        let saved = vm.onSave?(SettingsPayload(sites: vm.sites, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin)) ?? true
+        if saved {
+            vm.markSaved()
+        }
+    }
+
+    /// 전역 토글(Guide Window, Login)만 저장.
+    /// 편집 중인 사이트의 검증 상태와 무관하게 항상 저장되도록
+    /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
+    private func saveGlobals() {
+        let saved = vm.onSave?(SettingsPayload(sites: vm.originalSites, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin)) ?? true
+        if saved {
+            vm.originalGuide = vm.showGuideWindow
+            vm.originalLogin = vm.launchAtLogin
+        }
     }
 
     private func checkDuplicateSite(index: Int, site: Site) -> String? {
@@ -553,15 +566,32 @@ struct SettingsView: View {
     }
 
     private func exportConfig() {
-        let downloadsPath = NSString(string: "~/Downloads/chap.json").expandingTildeInPath
-        try? FileManager.default.removeItem(atPath: downloadsPath)
-        try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: downloadsPath)
-        NSLog("[Chap] Config exported to %@", downloadsPath)
-        let alert = NSAlert()
-        alert.messageText = "Export successful"
-        alert.informativeText = "Saved to ~/Downloads/chap.json"
-        alert.alertStyle = .informational
-        alert.runModal()
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "chap.json"
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        // 디스크 파일이 아닌 현재 편집 상태를 내보냄 (저장 안 된 변경분 포함)
+        let config = Config(
+            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        do {
+            try encoder.encode(config).write(to: url, options: .atomic)
+            NSLog("[Chap] Config exported to %@", url.path)
+            let alert = NSAlert()
+            alert.messageText = "Export successful"
+            alert.informativeText = "Saved to \(url.path)"
+            alert.alertStyle = .informational
+            alert.runModal()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Export failed"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 
     private func restartApp() {
@@ -609,7 +639,6 @@ struct SettingsView: View {
             try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
             try data.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
             vm.sites = config.sites
-            vm.runInBackground = config.runInBackground
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
             vm.onReload?()
