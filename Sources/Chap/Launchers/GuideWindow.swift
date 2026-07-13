@@ -5,6 +5,11 @@ enum GuideWindow {
 
     static func show(bounds: (left: Int, top: Int, right: Int, bottom: Int)) {
         DispatchQueue.main.async {
+            // 이전 가이드 윈도우가 남아 있으면 먼저 정리 (연속 실행 시 유령 윈도우 방지)
+            if let old = window {
+                old.orderOut(nil)
+                window = nil
+            }
             let width = CGFloat(bounds.right - bounds.left)
             let height = CGFloat(bounds.bottom - bounds.top)
             let primaryH = NSScreen.screens.first?.frame.height ?? 900
