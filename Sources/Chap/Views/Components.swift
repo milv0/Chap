@@ -6,18 +6,16 @@ import SwiftUI
 struct SidebarItem: View {
     let icon: String
     let name: String
-    let subtitle: String?
     let badge: String?
     let isSelected: Bool
     @State private var isHovered = false
 
     init(
-        icon: String, name: String, subtitle: String? = nil, badge: String? = nil,
+        icon: String, name: String, badge: String? = nil,
         isSelected: Bool = false
     ) {
         self.icon = icon
         self.name = name
-        self.subtitle = subtitle
         self.badge = badge
         self.isSelected = isSelected
     }
@@ -28,18 +26,10 @@ struct SidebarItem: View {
                 .font(.system(size: 12))
                 .foregroundColor(isSelected ? DS.accent : DS.textSecondary)
                 .frame(width: 20)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(DS.bodyFont)
-                    .foregroundColor(DS.textPrimary)
-                    .lineLimit(1)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textTertiary)
-                        .lineLimit(1)
-                }
-            }
+            Text(name)
+                .font(DS.bodyFont)
+                .foregroundColor(DS.textPrimary)
+                .lineLimit(1)
             Spacer()
             if let badge {
                 Text(badge)

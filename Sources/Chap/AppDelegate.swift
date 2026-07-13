@@ -2,6 +2,7 @@ import Carbon.HIToolbox
 import Cocoa
 import ServiceManagement
 import SwiftUI
+import os
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var statusItem: NSStatusItem!
@@ -11,7 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var qaWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let resizeQueue = DispatchQueue(label: "com.mingyupark.Chap.resize")
-    private var menuIsOpen = false
+    // tap 콜백 스레드와 메인 스레드가 함께 접근하므로 락으로 보호
+    private let menuOpenLock = OSAllocatedUnfairLock(initialState: false)
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -91,16 +93,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                     // ⌥. — open menu (block while menu is open)
                     if keyCode == 47 {
-                        guard !appDelegate.menuIsOpen else { return nil }
-                        appDelegate.menuIsOpen = true
+                        // 원자적 체크-앤-셋: 이미 열려 있으면 차단, 아니면 열림 표시
+                        let alreadyOpen = appDelegate.menuOpenLock.withLock { isOpen -> Bool in
+                            if isOpen { return true }
+                            isOpen = true
+                            return false
+                        }
+                        guard !alreadyOpen else { return nil }
                         DispatchQueue.main.async {
                             guard let button = appDelegate.statusItem.button else {
-                                appDelegate.menuIsOpen = false
+                                appDelegate.menuOpenLock.withLock { $0 = false }
                                 return
                             }
                             appDelegate.statusItem.menu?.popUp(
                                 positioning: nil, at: .zero, in: button)
-                            appDelegate.menuIsOpen = false
+                            appDelegate.menuOpenLock.withLock { $0 = false }
                         }
                         return nil
                     }
