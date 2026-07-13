@@ -23,10 +23,23 @@ struct SettingsView: View {
         }
         .frame(minWidth: 700, minHeight: 580)
         .background(DS.surfaceBg)
-        .onChange(of: selectedIndex) { _, _ in
+        .onChange(of: selectedIndex) { oldValue, newValue in
             isAddingNew = false
             isEditing = false
             searchFocused = false
+            // 이름을 정하지 않은 채(기본 "New Launchable") 벗어난 새 사이트는 폐기 —
+            // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지
+            if let old = oldValue, old != newValue, old < vm.sites.count,
+                vm.sites[old].name == "New Launchable"
+            {
+                let target = newValue.flatMap { idx in
+                    idx < vm.sites.count ? vm.sites[idx] : nil
+                }
+                vm.sites.remove(at: old)
+                // 클릭한 사이트가 제거로 인덱스가 밀렸을 수 있으므로 다시 찾음
+                selectedIndex = target.flatMap { vm.sites.firstIndex(of: $0) }
+                return
+            }
             // 선택 변경 시 자동 저장
             save()
         }
@@ -155,11 +168,11 @@ struct SettingsView: View {
                 ToolbarIconButton(
                     icon: "chevron.up", color: DS.textSecondary,
                     action: moveSiteUp,
-                    disabled: selectedIndex == nil || selectedIndex == 0)
+                    disabled: !canMoveUp)
                 ToolbarIconButton(
                     icon: "chevron.down", color: DS.textSecondary,
                     action: moveSiteDown,
-                    disabled: selectedIndex == nil || selectedIndex == vm.sites.count - 1)
+                    disabled: !canMoveDown)
             }
             .padding(.horizontal, 8)
             .frame(height: 40)
@@ -440,17 +453,44 @@ struct SettingsView: View {
     }
 
     private func moveSiteUp() {
-        guard let idx = selectedIndex, idx > 0 else { return }
-        vm.sites.swapAt(idx, idx - 1)
-        selectedIndex = idx - 1
+        guard let idx = selectedIndex else { return }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx), pos > 0 else { return }
+        let prev = siblings[pos - 1]
+        vm.sites.swapAt(idx, prev)
+        selectedIndex = prev
         save()
     }
 
     private func moveSiteDown() {
-        guard let idx = selectedIndex, idx < vm.sites.count - 1 else { return }
-        vm.sites.swapAt(idx, idx + 1)
-        selectedIndex = idx + 1
+        guard let idx = selectedIndex else { return }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx), pos < siblings.count - 1 else { return }
+        let next = siblings[pos + 1]
+        vm.sites.swapAt(idx, next)
+        selectedIndex = next
         save()
+    }
+
+    /// 선택된 사이트와 같은 타입인 사이트들의 배열 인덱스 (사이드바 그룹 표시 순서와 일치)
+    private func sameTypeIndices() -> [Int] {
+        guard let idx = selectedIndex, idx < vm.sites.count else { return [] }
+        let type = vm.sites[idx].launchType
+        return vm.sites.indices.filter { vm.sites[$0].launchType == type }
+    }
+
+    private var canMoveUp: Bool {
+        guard let idx = selectedIndex else { return false }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx) else { return false }
+        return pos > 0
+    }
+
+    private var canMoveDown: Bool {
+        guard let idx = selectedIndex else { return false }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx) else { return false }
+        return pos < siblings.count - 1
     }
 
     private func typeSectionTitle(_ type: LaunchType) -> String {
@@ -641,6 +681,7 @@ struct SettingsView: View {
             vm.sites = config.sites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
+            vm.markSaved()  // 방금 디스크에 반영했으므로 기준값 갱신 (닫을 때 오경보 방지)
             vm.onReload?()
             let alert = NSAlert()
             alert.messageText = "Import successful"
