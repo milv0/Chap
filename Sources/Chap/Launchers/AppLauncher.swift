@@ -178,13 +178,17 @@ enum AppLauncher {
         let source = AXObserverGetRunLoopSource(observer)
         CFRunLoopAddSource(runLoop, source, .defaultMode)
 
-        // 관찰 등록 전에 이미 떠 있는 윈도우(즉시 뜬 문서 창 등)도 정렬
-        for win in axWindows(app) {
-            centerIfStandard(win, ctx: ctx)
+        // 이미 떠 있는 윈도우 즉시 정렬 + 관찰 중 주기적으로 윈도우 목록 재스캔.
+        // AXObserver의 창 생성 알림은 갓 실행된 앱(콜드 스타트)에서 AX 연결이 준비되기
+        // 전에 첫 윈도우가 생성되면 누락될 수 있다. 주기적 재스캔으로 이를 보완한다.
+        // centerIfStandard가 CFEqual로 중복을 걸러주므로 같은 창을 두 번 정렬하지 않는다.
+        let end = CFAbsoluteTimeGetCurrent() + timeout
+        while CFAbsoluteTimeGetCurrent() < end {
+            for win in axWindows(app) {
+                centerIfStandard(win, ctx: ctx)
+            }
+            CFRunLoopRunInMode(.defaultMode, 0.3, false)
         }
-
-        // timeout 동안 run loop 실행 — 새 윈도우가 생길 때마다 콜백이 정렬함
-        CFRunLoopRunInMode(.defaultMode, timeout, false)
 
         CFRunLoopRemoveSource(runLoop, source, .defaultMode)
         AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
