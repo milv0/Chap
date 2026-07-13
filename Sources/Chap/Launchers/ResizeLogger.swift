@@ -1,14 +1,19 @@
 import Foundation
 
-/// 리사이즈 결과를 CSV 파일로 자동 수집하는 로거
+/// 리사이즈 결과를 CSV 파일로 자동 수집하는 로거 (DEBUG 빌드 전용)
 /// 저장 위치: ~/Library/Logs/Chap/resize_YYYY-MM-DD.csv
+///
+/// 리사이즈 튜닝용 계측 데이터이므로 릴리스 빌드에서는 아무것도 기록하지 않는다.
+/// 최종 사용자 기기에 사용 이력(무엇을 언제 열었는지)이 쌓이는 것을 막기 위함.
 enum ResizeLogger {
+    #if DEBUG
     private static let logDir: String = {
         let home = NSHomeDirectory()
         return (home as NSString).appendingPathComponent("Library/Logs/Chap")
     }()
+    #endif
 
-    /// 리사이즈 결과 기록
+    /// 리사이즈 결과 기록 (DEBUG 빌드에서만 동작, 릴리스에서는 no-op)
     /// - Parameters:
     ///   - site: 사이트 이름
     ///   - type: 런처 타입 (url, app, finder, shell)
@@ -25,6 +30,7 @@ enum ResizeLogger {
         totalTime: Double, result: String, windowCount: Int = 0, display: String = "",
         size: String = ""
     ) {
+        #if DEBUG
         // 로그 디렉토리 생성
         try? FileManager.default.createDirectory(atPath: logDir, withIntermediateDirectories: true)
 
@@ -51,5 +57,6 @@ enum ResizeLogger {
             handle.write(row.data(using: .utf8) ?? Data())
             handle.closeFile()
         }
+        #endif
     }
 }
