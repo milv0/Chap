@@ -78,26 +78,26 @@ enum AppLauncher {
             // 공유 resizeQueue 대신 전용 백그라운드 큐 사용 — 관찰(run loop)이
             // 길게 유지될 수 있어(최대 20s) 다른 런처(Chrome 등)의 리사이즈를 막지 않도록 함.
             DispatchQueue.global(qos: .userInitiated).async {
-                let success = observeAndCenter(
+                let latency = observeAndCenter(
                     pid: app.processIdentifier,
                     position: position,
                     size: size,
+                    startTime: startTime,
                     timeout: appRunning ? 8.0 : 20.0
                 )
-                let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-                let result = success ? "success" : "failed"
-                if success {
+                if let latency {
                     Log.launcher.notice(
-                        "AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                        "AX resize success for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s")
                 } else {
                     Log.launcher.error(
-                        "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                        "AX resize failed for \(site.name, privacy: .private) — \(CFAbsoluteTimeGetCurrent() - startTime, format: .fixed(precision: 2))s")
                 }
                 ResizeLogger.log(
                     site: site.name, type: "app",
                     appState: appRunning ? "running" : "cold",
                     attempt: 1, delay: 0,
-                    totalTime: elapsed, result: result,
+                    totalTime: latency ?? (CFAbsoluteTimeGetCurrent() - startTime),
+                    result: latency != nil ? "success" : "failed",
                     windowCount: 0,
                     display: screen.localizedName,
                     size: "\(site.width)x\(site.height)")
@@ -113,11 +113,15 @@ enum AppLauncher {
     private final class ResizeContext {
         let position: CGPoint
         let size: CGSize
-        var didResize = false
+        let startTime: CFAbsoluteTime
         var resized: [AXUIElement] = []
-        init(position: CGPoint, size: CGSize) {
+        var firstResizeLatency: TimeInterval?
+        var lastResizeTime: CFAbsoluteTime?
+        var didResize: Bool { !resized.isEmpty }
+        init(position: CGPoint, size: CGSize, startTime: CFAbsoluteTime) {
             self.position = position
             self.size = size
+            self.startTime = startTime
         }
     }
 
@@ -134,7 +138,9 @@ enum AppLauncher {
         if ctx.resized.contains(where: { CFEqual($0, window) }) { return }
         LauncherUtils.axApplyBounds(window, position: ctx.position, size: ctx.size)
         ctx.resized.append(window)
-        ctx.didResize = true
+        let now = CFAbsoluteTimeGetCurrent()
+        ctx.lastResizeTime = now
+        if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
     }
 
     private static func axWindows(_ app: AXUIElement) -> [AXUIElement] {
@@ -151,10 +157,11 @@ enum AppLauncher {
     /// 뜨는 경우에도, 폴링 예산 추측 없이 각 창이 뜨는 순간 정렬한다.
     /// timeout 동안 관찰하며, 옵저버 생성 실패 시 폴링 방식으로 폴백한다.
     private static func observeAndCenter(
-        pid: pid_t, position: CGPoint, size: CGSize, timeout: TimeInterval
-    ) -> Bool {
+        pid: pid_t, position: CGPoint, size: CGSize, startTime: CFAbsoluteTime,
+        timeout: TimeInterval
+    ) -> TimeInterval? {
         let app = AXUIElementCreateApplication(pid)
-        let ctx = ResizeContext(position: position, size: size)
+        let ctx = ResizeContext(position: position, size: size, startTime: startTime)
 
         var observer: AXObserver?
         let createErr = AXObserverCreate(
@@ -167,7 +174,8 @@ enum AppLauncher {
 
         guard createErr == .success, let observer else {
             Log.launcher.error("AXObserverCreate failed — falling back to polling")
-            return axResizePolling(app: app, position: position, size: size, timeout: timeout)
+            return axResizePolling(
+                app: app, position: position, size: size, startTime: startTime, timeout: timeout)
         }
 
         let refcon = Unmanaged.passUnretained(ctx).toOpaque()
@@ -178,30 +186,36 @@ enum AppLauncher {
         let source = AXObserverGetRunLoopSource(observer)
         CFRunLoopAddSource(runLoop, source, .defaultMode)
 
-        // 이미 떠 있는 윈도우 즉시 정렬 + 관찰 중 주기적으로 윈도우 목록 재스캔.
-        // AXObserver의 창 생성 알림은 갓 실행된 앱(콜드 스타트)에서 AX 연결이 준비되기
-        // 전에 첫 윈도우가 생성되면 누락될 수 있다. 주기적 재스캔으로 이를 보완한다.
-        // centerIfStandard가 CFEqual로 중복을 걸러주므로 같은 창을 두 번 정렬하지 않는다.
-        let end = CFAbsoluteTimeGetCurrent() + timeout
-        while CFAbsoluteTimeGetCurrent() < end {
+        // 이미 떠 있는 윈도우 즉시 정렬 + 주기적 재스캔(창 생성 알림 누락 보완).
+        // 첫 정렬 이후에는 grace(3s) 동안 새 창이 없으면 종료한다 — 단일 창 앱(Notes 등)은
+        // 곧 끝나고, Excel처럼 창이 더 뜨면 새 정렬마다 grace가 갱신되어 계속 잡는다.
+        let hardDeadline = CFAbsoluteTimeGetCurrent() + timeout
+        let grace: TimeInterval = 3.0
+        while CFAbsoluteTimeGetCurrent() < hardDeadline {
             for win in axWindows(app) {
                 centerIfStandard(win, ctx: ctx)
             }
             CFRunLoopRunInMode(.defaultMode, 0.3, false)
+            if let last = ctx.lastResizeTime, CFAbsoluteTimeGetCurrent() - last >= grace {
+                break
+            }
         }
 
         CFRunLoopRemoveSource(runLoop, source, .defaultMode)
         AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
-        return ctx.didResize
+        return ctx.firstResizeLatency
     }
 
     /// AXObserver를 못 쓸 때의 폴백: 포커스된 표준 윈도우를 폴링하며 정렬.
+    /// 첫 정렬까지의 지연시간(초)을 반환하고, 못 잡으면 nil.
     private static func axResizePolling(
-        app: AXUIElement, position: CGPoint, size: CGSize, timeout: TimeInterval
-    ) -> Bool {
+        app: AXUIElement, position: CGPoint, size: CGSize, startTime: CFAbsoluteTime,
+        timeout: TimeInterval
+    ) -> TimeInterval? {
         let interval: useconds_t = 120_000
         let deadline = CFAbsoluteTimeGetCurrent() + timeout
         var lastResized: AXUIElement?
+        var latency: TimeInterval?
         while CFAbsoluteTimeGetCurrent() < deadline {
             var windowValue: AnyObject?
             if AXUIElementCopyAttributeValue(
@@ -218,10 +232,11 @@ enum AppLauncher {
                 if isStandard, lastResized == nil || !CFEqual(lastResized!, win) {
                     LauncherUtils.axApplyBounds(win, position: position, size: size)
                     lastResized = win
+                    if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
                 }
             }
             usleep(interval)
         }
-        return lastResized != nil
+        return latency
     }
 }
