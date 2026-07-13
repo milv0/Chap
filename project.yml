@@ -21,6 +21,9 @@ targets:
       path: Sources/Chap/Info.plist
       properties:
         CFBundleIconFile: AppIcon
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSAppleEventsUsageDescription: "Chap controls Finder and Google Chrome to position their windows at the size and location you set."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap
