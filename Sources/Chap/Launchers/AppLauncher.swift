@@ -75,14 +75,14 @@ enum AppLauncher {
             let position = CGPoint(x: bounds.left, y: bounds.top)
             let size = CGSize(width: bw, height: bh)
 
-            // 공유 resizeQueue 대신 전용 백그라운드 큐 사용 — 콜드 스타트는 폴링이
-            // 길어질 수 있어(최대 15s) 다른 런처(Chrome 등)의 리사이즈를 막지 않도록 함.
+            // 공유 resizeQueue 대신 전용 백그라운드 큐 사용 — 관찰(run loop)이
+            // 길게 유지될 수 있어(최대 20s) 다른 런처(Chrome 등)의 리사이즈를 막지 않도록 함.
             DispatchQueue.global(qos: .userInitiated).async {
-                let success = axResize(
+                let success = observeAndCenter(
                     pid: app.processIdentifier,
                     position: position,
                     size: size,
-                    isRunning: appRunning
+                    timeout: appRunning ? 8.0 : 20.0
                 )
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let result = success ? "success" : "failed"
@@ -108,47 +108,110 @@ enum AppLauncher {
 
     // MARK: - AX API Resize
 
-    /// 앱의 현재 포커스 윈도우 중 "표준 윈도우"(문서 창)만 반환.
-    /// 팔레트/다이얼로그/시트 등은 제외해 엉뚱한 보조 창을 리사이즈하지 않는다.
-    private static func focusedStandardWindow(_ app: AXUIElement) -> AXUIElement? {
-        var windowValue: AnyObject?
-        guard
-            AXUIElementCopyAttributeValue(
-                app, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
-            let windowValue
-        else { return nil }
-        let win = windowValue as! AXUIElement
+    /// 윈도우 리사이즈 대상/상태를 AXObserver 콜백과 공유하기 위한 컨텍스트.
+    /// 콜백과 초기 정렬이 모두 같은 (run loop) 스레드에서 실행되므로 별도 동기화는 불필요.
+    private final class ResizeContext {
+        let position: CGPoint
+        let size: CGSize
+        var didResize = false
+        var resized: [AXUIElement] = []
+        init(position: CGPoint, size: CGSize) {
+            self.position = position
+            self.size = size
+        }
+    }
+
+    /// 표준 윈도우(문서 창)면 아직 정렬 안 한 경우에 한해 중앙정렬한다.
+    /// 팔레트/다이얼로그/시트(비표준 subrole)는 건드리지 않는다.
+    private static func centerIfStandard(_ window: AXUIElement, ctx: ResizeContext) {
         var subroleValue: AnyObject?
-        if AXUIElementCopyAttributeValue(win, kAXSubroleAttribute as CFString, &subroleValue)
+        if AXUIElementCopyAttributeValue(window, kAXSubroleAttribute as CFString, &subroleValue)
             == .success, let subrole = subroleValue as? String,
             subrole != (kAXStandardWindowSubrole as String)
         {
-            return nil  // 팔레트/다이얼로그 등 → 대상 아님
+            return
         }
-        return win
+        if ctx.resized.contains(where: { CFEqual($0, window) }) { return }
+        LauncherUtils.axApplyBounds(window, position: ctx.position, size: ctx.size)
+        ctx.resized.append(window)
+        ctx.didResize = true
     }
 
-    private static func axResize(
-        pid: pid_t, position: CGPoint, size: CGSize, isRunning: Bool
+    private static func axWindows(_ app: AXUIElement) -> [AXUIElement] {
+        var value: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,
+            let windows = value as? [AXUIElement]
+        else { return [] }
+        return windows
+    }
+
+    /// AXObserver로 윈도우 생성(kAXWindowCreatedNotification)을 구독해, 생성되는 모든
+    /// 표준 윈도우를 즉시 중앙정렬한다. Excel처럼 시작 화면 창과 문서 창이 시차를 두고
+    /// 뜨는 경우에도, 폴링 예산 추측 없이 각 창이 뜨는 순간 정렬한다.
+    /// timeout 동안 관찰하며, 옵저버 생성 실패 시 폴링 방식으로 폴백한다.
+    private static func observeAndCenter(
+        pid: pid_t, position: CGPoint, size: CGSize, timeout: TimeInterval
     ) -> Bool {
         let app = AXUIElementCreateApplication(pid)
-        let interval: useconds_t = 120_000  // 120ms
+        let ctx = ResizeContext(position: position, size: size)
 
-        if isRunning {
-            usleep(150_000)
+        var observer: AXObserver?
+        let createErr = AXObserverCreate(
+            pid,
+            { _, element, _, refcon in
+                guard let refcon else { return }
+                let ctx = Unmanaged<ResizeContext>.fromOpaque(refcon).takeUnretainedValue()
+                AppLauncher.centerIfStandard(element, ctx: ctx)
+            }, &observer)
+
+        guard createErr == .success, let observer else {
+            Log.launcher.error("AXObserverCreate failed — falling back to polling")
+            return axResizePolling(app: app, position: position, size: size, timeout: timeout)
         }
 
-        // 콜드 스타트는 앱 실행 + 실제 문서 윈도우 표시까지 지연이 크므로 넉넉히 폴링한다.
-        // 조기 종료하지 않는다 — 시작 화면(스플래시)이 잠시 포커스를 잡고 있다가
-        // 실제 문서 윈도우가 뒤늦게 뜨는 Excel 같은 앱을 놓치지 않기 위함.
-        // 포커스가 "다른" 표준 윈도우로 바뀌면 다시 중앙정렬한다. 같은 윈도우는
-        // 재적용하지 않으므로 사용자가 창을 옮겨도 방해하지 않는다.
-        let deadline = CFAbsoluteTimeGetCurrent() + (isRunning ? 5.0 : 15.0)
-        var lastResized: AXUIElement?
+        let refcon = Unmanaged.passUnretained(ctx).toOpaque()
+        AXObserverAddNotification(
+            observer, app, kAXWindowCreatedNotification as CFString, refcon)
 
+        let runLoop = CFRunLoopGetCurrent()
+        let source = AXObserverGetRunLoopSource(observer)
+        CFRunLoopAddSource(runLoop, source, .defaultMode)
+
+        // 관찰 등록 전에 이미 떠 있는 윈도우(즉시 뜬 문서 창 등)도 정렬
+        for win in axWindows(app) {
+            centerIfStandard(win, ctx: ctx)
+        }
+
+        // timeout 동안 run loop 실행 — 새 윈도우가 생길 때마다 콜백이 정렬함
+        CFRunLoopRunInMode(.defaultMode, timeout, false)
+
+        CFRunLoopRemoveSource(runLoop, source, .defaultMode)
+        AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
+        return ctx.didResize
+    }
+
+    /// AXObserver를 못 쓸 때의 폴백: 포커스된 표준 윈도우를 폴링하며 정렬.
+    private static func axResizePolling(
+        app: AXUIElement, position: CGPoint, size: CGSize, timeout: TimeInterval
+    ) -> Bool {
+        let interval: useconds_t = 120_000
+        let deadline = CFAbsoluteTimeGetCurrent() + timeout
+        var lastResized: AXUIElement?
         while CFAbsoluteTimeGetCurrent() < deadline {
-            if let win = focusedStandardWindow(app) {
-                if lastResized == nil || !CFEqual(lastResized!, win) {
+            var windowValue: AnyObject?
+            if AXUIElementCopyAttributeValue(
+                app, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
+                let windowValue
+            {
+                let win = windowValue as! AXUIElement
+                var subroleValue: AnyObject?
+                let isStandard =
+                    !(AXUIElementCopyAttributeValue(
+                        win, kAXSubroleAttribute as CFString, &subroleValue) == .success
+                        && (subroleValue as? String) != nil
+                        && (subroleValue as? String) != (kAXStandardWindowSubrole as String))
+                if isStandard, lastResized == nil || !CFEqual(lastResized!, win) {
                     LauncherUtils.axApplyBounds(win, position: position, size: size)
                     lastResized = win
                 }
