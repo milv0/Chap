@@ -610,10 +610,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
 // MARK: - Key Code → Character mapping
 
-/// 현재 키보드 레이아웃 기준으로 keyCode를 문자로 변환 (US 하드코딩 대신 UCKeyTranslate 사용)
-/// AZERTY/Dvorak 등 비-US 배열에서도 표기된 키와 실제 키가 일치함
+/// 현재 키보드 레이아웃 기준으로 keyCode를 문자로 변환.
+/// TISCopyCurrentASCIICapableKeyboardLayoutInputSource를 사용해, 한글/일본어/중국어 등
+/// CJK 입력기가 활성화된 상태에서도(그 입력 소스엔 uchr 데이터가 없음) 항상 ASCII 호환
+/// 레이아웃을 얻는다. AZERTY/Dvorak 등 비-US 물리 배열도 올바르게 반영됨.
 private func keyCodeToChar(_ keyCode: UInt16) -> String? {
-    guard let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+    guard let source = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
         let layoutDataPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData)
     else { return nil }
     let layoutData = Unmanaged<CFData>.fromOpaque(layoutDataPtr).takeUnretainedValue() as Data
