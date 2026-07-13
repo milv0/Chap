@@ -10,15 +10,7 @@ enum GuideWindow {
                 old.orderOut(nil)
                 window = nil
             }
-            let width = CGFloat(bounds.right - bounds.left)
-            let height = CGFloat(bounds.bottom - bounds.top)
-            let primaryH = NSScreen.screens.first?.frame.height ?? 900
-            let frame = NSRect(
-                x: CGFloat(bounds.left),
-                y: primaryH - CGFloat(bounds.top) - height,
-                width: width,
-                height: height
-            )
+            let frame = appKitFrame(fromTopLeft: bounds)
 
             let w = NSWindow(
                 contentRect: frame,

@@ -74,7 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                             NSLog("[Chap] Accessibility permission revoked")
                             DispatchQueue.main.async {
                                 appDelegate.updateStatusIcon(accessible: false)
-                                appDelegate.showAlert(
+                                LauncherUtils.showAlert(
                                     message: "Accessibility Permission Lost",
                                     info: "Chap의 접근성 권한이 제거되었습니다.\nSystem Settings → Privacy & Security → Accessibility에서 다시 허용해주세요.")
                             }
@@ -370,8 +370,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func launchSite(_ site: Site) {
         let useGuide = config.showGuideWindow && site.launchType == .url
-        if useGuide {
-            let screen = targetScreen(for: site)
+        if useGuide, let screen = targetScreen(for: site) {
             let bounds = centeredBounds(for: site, on: screen)
             GuideWindow.show(bounds: bounds)
         }
@@ -385,29 +384,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             AppLauncher.launch(site, resizeQueue: resizeQueue)
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
-                showAlert(message: "No folder path configured for \"\(site.name)\".")
+                LauncherUtils.showAlert(message: "No folder path configured for \"\(site.name)\".")
                 return
             }
             let expandedPath = NSString(string: path).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expandedPath) else {
-                showAlert(message: "Folder not found: \(path)")
+                LauncherUtils.showAlert(message: "Folder not found: \(path)")
                 return
             }
-            let screen = targetScreen(for: site)
+            guard let screen = targetScreen(for: site) else {
+                // 사용 가능한 화면이 없으면 리사이즈 없이 폴더만 연다
+                NSWorkspace.shared.open(URL(fileURLWithPath: expandedPath))
+                return
+            }
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
                 path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
         case .shell: ShellLauncher.launch(site)
-        }
-    }
-
-    private func showAlert(message: String, info: String? = nil) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = message
-            if let info = info { alert.informativeText = info }
-            alert.alertStyle = .warning
-            alert.runModal()
         }
     }
 
@@ -440,7 +433,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             } catch {
                 NSLog("[Chap] Failed to save config: %@", error.localizedDescription)
-                self.showAlert(
+                LauncherUtils.showAlert(
                     message: "Failed to save settings",
                     info: "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)")
                 return false
@@ -474,7 +467,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     /// 윈도우를 커서가 있는 화면의 중앙으로 이동
     private func moveToCursorScreenCenter(_ window: NSWindow) {
-        let screen = cursorScreen
+        guard let screen = cursorScreen else { return }
         let frameSize = window.frame.size
         window.setFrameOrigin(
             NSPoint(
