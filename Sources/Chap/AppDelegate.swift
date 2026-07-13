@@ -74,9 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                             NSLog("[Chap] Accessibility permission revoked")
                             DispatchQueue.main.async {
                                 appDelegate.updateStatusIcon(accessible: false)
-                                LauncherUtils.showAlert(
-                                    message: "Accessibility Permission Lost",
-                                    info: "Chap의 접근성 권한이 제거되었습니다.\nSystem Settings → Privacy & Security → Accessibility에서 다시 허용해주세요.")
+                                appDelegate.showAccessibilityAlert()
                             }
                         } else {
                             NSLog("[Chap] CGEvent tap re-enabled after system disable")
@@ -196,6 +194,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
                 button.image = NSImage(
                     systemSymbolName: iconName, accessibilityDescription: "Chap")
+            }
+        }
+    }
+
+    /// 시스템 설정의 접근성 창을 직접 연다
+    func openAccessibilitySettings() {
+        if let url = URL(
+            string:
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// 접근성 권한이 없을 때, 시스템 설정으로 바로 이동하는 버튼이 포함된 알림
+    func showAccessibilityAlert() {
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = "Accessibility Permission Lost"
+            alert.informativeText =
+                "Chap의 접근성 권한이 제거되었습니다.\n단축키를 다시 사용하려면 접근성에서 Chap을 허용해주세요."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                self.openAccessibilitySettings()
             }
         }
     }

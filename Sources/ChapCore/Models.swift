@@ -1,7 +1,10 @@
 import Foundation
 
 public enum Defaults {
-    public static let appVersion = "1.0.0"
+    /// 앱 번들의 CFBundleShortVersionString에서 읽음 (About 창 표시용).
+    /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
+    public static let appVersion: String =
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "1.0.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     public static let defaultWidth = 800
     public static let defaultHeight = 600
