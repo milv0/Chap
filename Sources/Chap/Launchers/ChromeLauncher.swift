@@ -21,7 +21,15 @@ enum ChromeLauncher {
             return
         }
 
-        let screen = targetScreen(for: site)
+        guard let screen = targetScreen(for: site) else {
+            NSLog("[Chap] No display available — launching Chrome without resize")
+            let openTask = Process()
+            openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            openTask.arguments = ["-na", "Google Chrome", "--args", "--app=\(site.url)"]
+            try? openTask.run()
+            onComplete?()
+            return
+        }
         let bounds = centeredBounds(for: site, on: screen)
 
         // Accessibility 권한 확인

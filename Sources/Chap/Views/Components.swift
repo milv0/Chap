@@ -247,20 +247,22 @@ struct MinimapSwiftUI: View {
 
                 let targetScreen =
                     displayName.flatMap { name in screens.first { $0.localizedName == name } }
-                    ?? NSScreen.main ?? screens.first ?? NSScreen.main!
-                let tFrame = targetScreen.frame
-                let screenLocalX = (tFrame.origin.x - minX) * scale
-                let screenLocalY = (maxY - tFrame.origin.y - tFrame.height) * scale
+                    ?? NSScreen.main ?? screens.first
+                if let targetScreen {
+                    let tFrame = targetScreen.frame
+                    let screenLocalX = (tFrame.origin.x - minX) * scale
+                    let screenLocalY = (maxY - tFrame.origin.y - tFrame.height) * scale
 
-                let winX = screenLocalX + (tFrame.width * scale - CGFloat(width) * scale) / 2
-                let winY = screenLocalY + (tFrame.height * scale - CGFloat(height) * scale) / 2
+                    let winX = screenLocalX + (tFrame.width * scale - CGFloat(width) * scale) / 2
+                    let winY = screenLocalY + (tFrame.height * scale - CGFloat(height) * scale) / 2
 
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(DS.accent.opacity(0.25))
-                    .overlay(RoundedRectangle(cornerRadius: 2).stroke(DS.accent))
-                    .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
-                    .offset(x: offsetX + winX, y: offsetY + winY)
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(DS.accent.opacity(0.25))
+                        .overlay(RoundedRectangle(cornerRadius: 2).stroke(DS.accent))
+                        .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
+                        .offset(x: offsetX + winX, y: offsetY + winY)
+                        .allowsHitTesting(false)
+                }
             }
         }
     }

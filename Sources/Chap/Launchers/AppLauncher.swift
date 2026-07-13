@@ -17,7 +17,16 @@ enum AppLauncher {
         let bundle = Bundle(path: path)
         let bundleId = bundle?.bundleIdentifier
 
-        let screen = targetScreen(for: site)
+        guard let screen = targetScreen(for: site) else {
+            NSLog("[AppLauncher] No display available — launching without resize")
+            let appURL = URL(fileURLWithPath: path)
+            let openConfig = NSWorkspace.OpenConfiguration()
+            openConfig.activates = true
+            NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { _, _ in
+                onComplete?()
+            }
+            return
+        }
         let bounds = centeredBounds(for: site, on: screen)
         let bw = site.width
         let bh = site.height
