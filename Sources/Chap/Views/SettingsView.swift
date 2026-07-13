@@ -435,10 +435,18 @@ struct SettingsView: View {
     }
 
     private func addSite() {
+        // 현재 선택된 사이트의 타입을 물려받아, 선택된 섹션(URL/App/Finder/Shell)에 추가
+        let type: LaunchType = {
+            if let idx = selectedIndex, idx < vm.sites.count {
+                return vm.sites[idx].launchType
+            }
+            return .url
+        }()
         vm.sites.append(
             Site(
-                name: "New Launchable", url: "https://", width: Defaults.defaultWidth,
-                height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
+                name: "New Launchable", url: type == .url ? "https://" : "",
+                width: Defaults.defaultWidth, height: Defaults.defaultHeight,
+                x: Defaults.defaultX, y: Defaults.defaultY, launchType: type))
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
