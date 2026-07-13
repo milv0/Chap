@@ -51,8 +51,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Global Shortcuts
 
     private var eventTap: CFMachPort?
-    private var activationObserver: NSObjectProtocol?
-    private var tapRetryCount = 0
+    // 접근성 권한이 없을 때 권한이 켜질 때까지 주기적으로 확인하는 타이머.
+    // 사용자가 (아무리 늦게라도) 권한을 허용하면 자동으로 단축키를 등록한다 —
+    // 수동 재시작 불필요.
+    private var accessibilityPollTimer: Timer?
 
     private func registerGlobalShortcuts() {
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
@@ -140,22 +142,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         else {
             Log.app.error("Failed to create CGEvent tap — check Accessibility permission")
             updateStatusIcon(accessible: false)
-            tapRetryCount += 1
-            if tapRetryCount <= 5 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                    if self?.eventTap == nil {
-                        self?.registerGlobalShortcuts()
-                    }
-                }
-            } else {
-                observeActivationForAccessibility()
-            }
+            startAccessibilityPolling()
             return
         }
 
         eventTap = tap
-        tapRetryCount = 0
-        removeActivationObserver()
+        stopAccessibilityPolling()
         updateStatusIcon(accessible: true)
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
@@ -163,31 +155,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         Log.app.info("CGEvent tap registered successfully")
     }
 
-    private func observeActivationForAccessibility() {
-        guard activationObserver == nil else { return }
-        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil, queue: .main
-        ) { [weak self] notification in
-            guard let self = self, self.eventTap == nil else { return }
-            guard
-                let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
-                    as? NSRunningApplication,
-                app.bundleIdentifier == Bundle.main.bundleIdentifier
-            else { return }
+    /// 접근성 권한이 부여될 때까지 2초 간격으로 확인. 권한이 생기면 단축키를 등록하고
+    /// 타이머를 멈춘다. 사용자가 System Settings에서 아무리 늦게 허용해도 자동 반영됨.
+    private func startAccessibilityPolling() {
+        guard accessibilityPollTimer == nil else { return }
+        accessibilityPollTimer = Timer.scheduledTimer(
+            withTimeInterval: 2.0, repeats: true
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            if self.eventTap != nil {
+                self.stopAccessibilityPolling()
+                return
+            }
             if AXIsProcessTrusted() {
-                Log.app.info("Accessibility granted — attempting shortcut registration")
-                self.tapRetryCount = 0
+                Log.app.info("Accessibility granted — registering shortcuts")
                 self.registerGlobalShortcuts()
             }
         }
     }
 
-    private func removeActivationObserver() {
-        if let observer = activationObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-            activationObserver = nil
-        }
+    private func stopAccessibilityPolling() {
+        accessibilityPollTimer?.invalidate()
+        accessibilityPollTimer = nil
     }
 
     private func updateStatusIcon(accessible: Bool) {
