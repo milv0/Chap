@@ -570,7 +570,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 권한 리셋
         let resetTask = Process()
         resetTask.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
-        resetTask.arguments = ["reset", "AppleEvents", "com.mingyupark.Chap"]
+        resetTask.arguments = [
+            "reset", "AppleEvents", Bundle.main.bundleIdentifier ?? "com.mingyupark.Chap",
+        ]
         try? resetTask.run()
         resetTask.waitUntilExit()
         // 설정 파일 삭제
