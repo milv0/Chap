@@ -1,3 +1,4 @@
+import Carbon.HIToolbox
 import Cocoa
 import ServiceManagement
 import SwiftUI
@@ -36,18 +37,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         buildMenu()
         registerGlobalShortcuts()
-
-        if config.sites.contains(where: { $0.launchType == .url }),
-            FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app")
-        {
-            DispatchQueue.global().async {
-                let task = Process()
-                task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                task.arguments = ["-e", "tell application \"Google Chrome\" to get name"]
-                try? task.run()
-                task.waitUntilExit()
-            }
-        }
 
         let guideDisabled = UserDefaults.standard.bool(forKey: "guideDisabled")
         if !guideDisabled {
@@ -213,15 +202,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func showWelcomeWindow() {
         let window = NSWindow(contentViewController: NSHostingController(rootView: Text("")))
-        let welcomeView = WelcomeView(onOpenSettings: {
-            self.openSettings()
-        }, onClose: {
-            window.close()
+        // [weak window] 캡처로 window → view → closure → window 순환 참조 방지
+        let welcomeView = WelcomeView(onOpenSettings: { [weak self] in
+            self?.openSettings()
+        }, onClose: { [weak window] in
+            window?.close()
         })
         window.contentViewController = NSHostingController(rootView: welcomeView)
         window.title = ""
         window.titlebarAppearsTransparent = true
         window.styleMask = [.titled, .closable]
+        window.isReleasedWhenClosed = false
         window.setContentSize(NSSize(width: 420, height: 480))
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -352,6 +343,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.title = "Chap Q&A"
         window.setContentSize(NSSize(width: 1120, height: 900))
         window.styleMask = [.titled, .closable, .resizable]
+        window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 400, height: 400)
         window.center()
         window.makeKeyAndOrderFront(nil)
@@ -423,29 +415,40 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     @objc func openSettings() {
         if let w = settingsWindow, w.isVisible {
+            // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동
+            moveToCursorScreenCenter(w)
             w.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
 
         let vm = SettingsViewModel(
-            sites: config.sites, runInBackground: config.runInBackground,
+            sites: config.sites,
             showGuideWindow: config.showGuideWindow, launchAtLogin: config.launchAtLogin)
         vm.onSave = { [weak self] payload in
-            guard let self = self else { return }
-            self.config = Config(
-                runInBackground: payload.runInBackground, showGuideWindow: payload.showGuideWindow,
+            guard let self = self else { return false }
+            let newConfig = Config(
+                showGuideWindow: payload.showGuideWindow,
                 launchAtLogin: payload.launchAtLogin, sites: payload.sites)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
-            if let data = try? encoder.encode(self.config) {
+            do {
+                let data = try encoder.encode(newConfig)
                 let bakPath = self.configPath + ".bak"
                 try? FileManager.default.removeItem(atPath: bakPath)
                 try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
-                try? data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
+                try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
+            } catch {
+                NSLog("[Chap] Failed to save config: %@", error.localizedDescription)
+                self.showAlert(
+                    message: "Failed to save settings",
+                    info: "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)")
+                return false
             }
+            self.config = newConfig
             self.applyLoginItem(enabled: payload.launchAtLogin)
             DispatchQueue.main.async { self.buildMenu() }
+            return true
         }
         vm.onReload = { [weak self] in
             self?.reloadConfig()
@@ -457,17 +460,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         window.title = "Chap Settings"
         window.setContentSize(NSSize(width: 700, height: 580))
         window.styleMask = [.titled, .closable, .resizable]
+        window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 400)
-        window.setFrameAutosaveName("ChapSettingsWindow")
-        if !window.setFrameUsingName("ChapSettingsWindow") {
-            window.center()
-        }
         window.delegate = self
+        // 커서가 있는 화면 중앙에 표시
+        moveToCursorScreenCenter(window)
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window
         settingsVM = vm
+    }
+
+    /// 윈도우를 커서가 있는 화면의 중앙으로 이동
+    private func moveToCursorScreenCenter(_ window: NSWindow) {
+        let screen = cursorScreen
+        let frameSize = window.frame.size
+        window.setFrameOrigin(
+            NSPoint(
+                x: screen.visibleFrame.midX - frameSize.width / 2,
+                y: screen.visibleFrame.midY - frameSize.height / 2))
     }
 
     @objc func reloadConfig() {
@@ -487,6 +499,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
         settingsVM = nil
+        settingsWindow = nil
         return true
     }
 
@@ -570,15 +583,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
 // MARK: - Key Code → Character mapping
 
+/// 현재 키보드 레이아웃 기준으로 keyCode를 문자로 변환 (US 하드코딩 대신 UCKeyTranslate 사용)
+/// AZERTY/Dvorak 등 비-US 배열에서도 표기된 키와 실제 키가 일치함
 private func keyCodeToChar(_ keyCode: UInt16) -> String? {
-    let map: [UInt16: String] = [
-        0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
-        8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
-        16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
-        23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0",
-        30: "]", 31: "O", 32: "U", 33: "[", 34: "I", 35: "P", 37: "L",
-        38: "J", 40: "K", 41: ";", 43: ",", 44: "/", 45: "N", 46: "M",
-        47: ".", 50: "`",
-    ]
-    return map[keyCode]
+    guard let source = TISCopyCurrentKeyboardLayoutInputSource()?.takeRetainedValue(),
+        let layoutDataPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData)
+    else { return nil }
+    let layoutData = Unmanaged<CFData>.fromOpaque(layoutDataPtr).takeUnretainedValue() as Data
+    return layoutData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
+        guard
+            let keyboardLayout = buffer.baseAddress?.assumingMemoryBound(
+                to: UCKeyboardLayout.self)
+        else { return nil }
+        var deadKeyState: UInt32 = 0
+        var chars = [UniChar](repeating: 0, count: 4)
+        var length = 0
+        // modifierKeyState=0: ⌥ 조합이 아닌 기본 문자를 얻기 위함 (⌥T → "t")
+        let error = UCKeyTranslate(
+            keyboardLayout, keyCode, UInt16(kUCKeyActionDisplay), 0,
+            UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState, chars.count, &length, &chars)
+        guard error == noErr, length > 0 else { return nil }
+        return String(utf16CodeUnits: chars, count: length)
+    }
 }
