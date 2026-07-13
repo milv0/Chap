@@ -189,13 +189,15 @@ enum AppLauncher {
         // 이미 떠 있는 윈도우 즉시 정렬 + 주기적 재스캔(창 생성 알림 누락 보완).
         // 첫 정렬 이후에는 grace(3s) 동안 새 창이 없으면 종료한다 — 단일 창 앱(Notes 등)은
         // 곧 끝나고, Excel처럼 창이 더 뜨면 새 정렬마다 grace가 갱신되어 계속 잡는다.
+        // 스캔 간격 0.1s: 옵저버 콜백이 누락된 경우에도 창 등장 후 최대 0.1초 내에 정렬해
+        // "창이 잠깐 기본 위치에 보였다가 이동"하는 깜빡임을 최소화한다.
         let hardDeadline = CFAbsoluteTimeGetCurrent() + timeout
         let grace: TimeInterval = 3.0
         while CFAbsoluteTimeGetCurrent() < hardDeadline {
             for win in axWindows(app) {
                 centerIfStandard(win, ctx: ctx)
             }
-            CFRunLoopRunInMode(.defaultMode, 0.3, false)
+            CFRunLoopRunInMode(.defaultMode, 0.1, false)
             if let last = ctx.lastResizeTime, CFAbsoluteTimeGetCurrent() - last >= grace {
                 break
             }
