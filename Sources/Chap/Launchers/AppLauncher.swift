@@ -126,6 +126,14 @@ enum AppLauncher {
             usleep(150_000)
         }
 
+        // 첫 포커스 윈도우에 적용한 뒤에도 계속 폴링하다가, 포커스 윈도우가 "다른"
+        // 윈도우로 바뀌면 다시 중앙정렬한다. Excel 등은 시작 화면(스플래시)이 먼저
+        // 포커스를 잡고, 그 뒤에 실제 문서 윈도우가 뜨기 때문에, 한 번만 적용하면
+        // 엉뚱한 윈도우(시작 화면)를 리사이즈하고 끝나 "됐다 안 됐다" 하게 된다.
+        var lastResized: AXUIElement?
+        var quietPolls = 0
+        let quietLimit = isRunning ? 8 : 12  // 동일 윈도우가 이만큼 유지되면 종료
+
         for _ in 0..<maxAttempts {
             var windowValue: AnyObject?
             let err = AXUIElementCopyAttributeValue(
@@ -133,11 +141,19 @@ enum AppLauncher {
             if err == .success, let window = windowValue {
                 // AXUIElementCopyAttributeValue 성공 시 항상 AXUIElement 타입
                 let win = window as! AXUIElement
-                LauncherUtils.axApplyBounds(win, position: position, size: size)
-                return true
+                if lastResized == nil || !CFEqual(lastResized!, win) {
+                    // 새로운(또는 첫) 포커스 윈도우 → 적용
+                    LauncherUtils.axApplyBounds(win, position: position, size: size)
+                    lastResized = win
+                    quietPolls = 0
+                } else {
+                    // 같은 윈도우가 계속 포커스 → 안정화된 것으로 보고 종료
+                    quietPolls += 1
+                    if quietPolls >= quietLimit { return true }
+                }
             }
             usleep(interval)
         }
-        return false
+        return lastResized != nil
     }
 }
