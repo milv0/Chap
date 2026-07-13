@@ -14,6 +14,9 @@ enum ChromeLauncher {
         let rawDomain = URL(string: site.url)?.host ?? ""
         guard isValidDomain(rawDomain) else {
             NSLog("[Chap] Invalid domain: %@", rawDomain)
+            LauncherUtils.showAlert(
+                message: "Invalid URL for \"\(site.name)\".",
+                info: "URL을 확인해주세요: \(site.url)")
             onComplete?()
             return
         }
@@ -24,16 +27,16 @@ enum ChromeLauncher {
         // Accessibility 권한 확인
         let canResize = LauncherUtils.checkAccessibility()
 
-        // Chrome pid 캐싱 + 윈도우 수 기록
+        // Chrome pid 캐싱 + 실행 전 윈도우 집합 기록
         let chromeApp = NSWorkspace.shared.runningApplications.first {
             $0.bundleIdentifier == "com.google.Chrome"
         }
         let chromeRunning = chromeApp != nil
         let chromePid = chromeApp?.processIdentifier ?? -1
-        let windowCountBefore = chromeRunning ? axWindowCount(pid: chromePid) : 0
+        let windowsBefore: [AXUIElement] = chromeRunning ? axWindows(pid: chromePid) : []
 
         NSLog("[Chap] Chrome launch for %@ — chromeRunning=%d, windowsBefore=%d",
-              site.name, chromeRunning ? 1 : 0, windowCountBefore)
+              site.name, chromeRunning ? 1 : 0, windowsBefore.count)
 
         // Chrome --app 모드로 실행
         let openTask = Process()
@@ -61,7 +64,7 @@ enum ChromeLauncher {
         resizeQueue.async {
             let success = axResizeNewWindow(
                 cachedPid: chromePid,
-                windowCountBefore: windowCountBefore,
+                windowsBefore: windowsBefore,
                 position: position,
                 size: size,
                 chromeRunning: chromeRunning
@@ -74,7 +77,7 @@ enum ChromeLauncher {
                 appState: chromeRunning ? "running" : "cold",
                 attempt: 1, delay: 0,
                 totalTime: elapsed, result: result,
-                windowCount: windowCountBefore,
+                windowCount: windowsBefore.count,
                 display: screen.localizedName,
                 size: "\(site.width)x\(site.height)")
             onComplete?()
@@ -84,7 +87,7 @@ enum ChromeLauncher {
     // MARK: - AX API Resize
 
     private static func axResizeNewWindow(
-        cachedPid: pid_t, windowCountBefore: Int, position: CGPoint, size: CGSize,
+        cachedPid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
         chromeRunning: Bool
     ) -> Bool {
         let maxAttempts = chromeRunning ? 120 : 100
@@ -104,15 +107,13 @@ enum ChromeLauncher {
                 pid = app.processIdentifier
             }
 
-            let app = AXUIElementCreateApplication(pid)
-            var windowsValue: AnyObject?
-            let err = AXUIElementCopyAttributeValue(
-                app, kAXWindowsAttribute as CFString, &windowsValue)
-
-            if err == .success, let windows = windowsValue as? [AXUIElement],
-               windows.count > windowCountBefore {
-                let win = windows[0]
-                LauncherUtils.axApplyBounds(win, position: position, size: size)
+            // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
+            // (카운트 비교는 폴링 중 사용자가 다른 윈도우를 열거나 닫으면 깨짐)
+            let windows = axWindows(pid: pid)
+            if let newWindow = windows.first(where: { win in
+                !windowsBefore.contains { CFEqual($0, win) }
+            }) {
+                LauncherUtils.axApplyBounds(newWindow, position: position, size: size)
                 return true
             }
             usleep(interval)
@@ -120,14 +121,14 @@ enum ChromeLauncher {
         return false
     }
 
-    private static func axWindowCount(pid: pid_t) -> Int {
+    private static func axWindows(pid: pid_t) -> [AXUIElement] {
         let app = AXUIElementCreateApplication(pid)
         var windowsValue: AnyObject?
         let err = AXUIElementCopyAttributeValue(
             app, kAXWindowsAttribute as CFString, &windowsValue)
         if err == .success, let windows = windowsValue as? [AXUIElement] {
-            return windows.count
+            return windows
         }
-        return 0
+        return []
     }
 }
