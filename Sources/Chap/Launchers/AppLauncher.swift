@@ -7,10 +7,12 @@ enum AppLauncher {
     /// 앱을 실행하고 윈도우 크기/위치를 조정
     static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
         guard let path = site.appPath, !path.isEmpty else {
+            Log.launcher.error("No app path configured for \(site.name, privacy: .private)")
             LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
             return
         }
         guard FileManager.default.fileExists(atPath: path) else {
+            Log.launcher.error("App not found at: \(path, privacy: .private)")
             LauncherUtils.showAlert(message: "App not found at: \(path)")
             return
         }

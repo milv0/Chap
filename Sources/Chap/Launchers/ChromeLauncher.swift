@@ -19,6 +19,7 @@ enum ChromeLauncher {
     /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈
     static func launch(_ site: Site, resizeQueue: DispatchQueue, onComplete: (() -> Void)? = nil) {
         guard FileManager.default.fileExists(atPath: appPath) else {
+            Log.launcher.error("Google Chrome is not installed at \(appPath, privacy: .public)")
             LauncherUtils.showAlert(message: "Google Chrome is not installed.")
             onComplete?()
             return

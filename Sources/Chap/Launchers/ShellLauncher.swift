@@ -9,6 +9,7 @@ enum ShellLauncher {
     static func launch(_ site: Site) {
         // 스크립트 유효성 확인
         guard let script = site.script, !script.isEmpty else {
+            Log.launcher.error("No script configured for \(site.name, privacy: .private)")
             LauncherUtils.showAlert(message: "No script configured for \"\(site.name)\".")
             return
         }
