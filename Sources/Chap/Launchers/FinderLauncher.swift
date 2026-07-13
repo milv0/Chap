@@ -31,10 +31,12 @@ enum FinderLauncher {
             task.standardError = pipe
             do {
                 try task.run()
+                // 파이프 버퍼 데드락 방지: waitUntilExit 전에 출력을 먼저 읽음
+                let errData = pipe.fileHandleForReading.readDataToEndOfFile()
                 task.waitUntilExit()
                 // 실패 시 에러 로깅 (사용자에게 alert 안 띄움 — Finder는 거의 실패 안 함)
                 if task.terminationStatus != 0 {
-                    let err = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+                    let err = String(data: errData, encoding: .utf8) ?? ""
                     NSLog("[Chap] Finder resize failed: %@", err)
                 }
             } catch {

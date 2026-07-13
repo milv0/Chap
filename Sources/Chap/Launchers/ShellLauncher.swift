@@ -25,11 +25,13 @@ enum ShellLauncher {
         DispatchQueue.global().async {
             do {
                 try process.run()
+                // 파이프 버퍼가 가득 차면 자식 프로세스가 블록되므로
+                // waitUntilExit 전에 출력을 모두 읽어야 데드락이 없음
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
                 process.waitUntilExit()
                 // 0이 아닌 종료 코드 = 실패 → 에러 내용을 alert로 표시
                 if process.terminationStatus != 0 {
-                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+                    let errorStr = String(data: outputData, encoding: .utf8) ?? "Unknown error"
                     LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
                 }
             } catch {
