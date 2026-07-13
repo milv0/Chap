@@ -4,7 +4,7 @@ import ServiceManagement
 import SwiftUI
 import os
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
@@ -55,6 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // 사용자가 (아무리 늦게라도) 권한을 허용하면 자동으로 단축키를 등록한다 —
     // 수동 재시작 불필요.
     private var accessibilityPollTimer: Timer?
+    private var accessibilityPollDeadline: Date?
 
     private func registerGlobalShortcuts() {
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
@@ -155,10 +156,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         Log.app.info("CGEvent tap registered successfully")
     }
 
-    /// 접근성 권한이 부여될 때까지 2초 간격으로 확인. 권한이 생기면 단축키를 등록하고
-    /// 타이머를 멈춘다. 사용자가 System Settings에서 아무리 늦게 허용해도 자동 반영됨.
+    /// 접근성 권한을 2초 간격으로 최대 30초 동안 확인한다. 권한이 생기면 단축키를
+    /// 등록하고, 30초가 지나면 폴링을 멈춘다(무한 폴링 방지). 그 이후 늦게 허용한 경우는
+    /// 사용자가 메뉴바 아이콘을 눌러 메뉴가 열릴 때(menuWillOpen) 다시 확인·재폴링한다.
     private func startAccessibilityPolling() {
         guard accessibilityPollTimer == nil else { return }
+        accessibilityPollDeadline = Date().addingTimeInterval(30)
         accessibilityPollTimer = Timer.scheduledTimer(
             withTimeInterval: 2.0, repeats: true
         ) { [weak self] _ in
@@ -170,6 +173,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             if AXIsProcessTrusted() {
                 Log.app.info("Accessibility granted — registering shortcuts")
                 self.registerGlobalShortcuts()
+                return
+            }
+            if let deadline = self.accessibilityPollDeadline, Date() >= deadline {
+                Log.app.info("Accessibility poll timed out (30s) — will recheck on menu open")
+                self.stopAccessibilityPolling()
             }
         }
     }
@@ -177,6 +185,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func stopAccessibilityPolling() {
         accessibilityPollTimer?.invalidate()
         accessibilityPollTimer = nil
+        accessibilityPollDeadline = nil
+    }
+
+    /// 단축키가 아직 등록 안 됐다면, 지금 권한이 생겼는지 확인해 등록한다.
+    /// 아직 없으면 30초 폴링을 (재)시작한다. 메뉴바 아이콘 클릭·설정 열기 시 호출.
+    private func recheckAccessibilityIfNeeded() {
+        guard eventTap == nil else { return }
+        if AXIsProcessTrusted() {
+            Log.app.info("Accessibility granted — registering shortcuts")
+            registerGlobalShortcuts()
+        } else {
+            startAccessibilityPolling()
+        }
+    }
+
+    // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
+    func menuWillOpen(_ menu: NSMenu) {
+        recheckAccessibilityIfNeeded()
     }
 
     private func updateStatusIcon(accessible: Bool) {
@@ -349,6 +375,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
+        menu.delegate = self
         statusItem.menu = menu
     }
 
@@ -429,6 +456,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // MARK: - Settings
 
     @objc func openSettings() {
+        recheckAccessibilityIfNeeded()
         if let w = settingsWindow, w.isVisible {
             // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동
             moveToCursorScreenCenter(w)
