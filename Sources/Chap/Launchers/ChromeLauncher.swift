@@ -54,7 +54,7 @@ enum ChromeLauncher {
         let chromePid = chromeApp?.processIdentifier ?? -1
         let windowsBefore: [AXUIElement] = chromeRunning ? axWindows(pid: chromePid) : []
 
-        Log.launcher.debug(
+        Log.launcher.info(
             "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)")
 
         // Chrome --app 모드로 실행
@@ -89,7 +89,7 @@ enum ChromeLauncher {
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime
             let result = success ? "success" : "failed"
             if success {
-                Log.launcher.debug(
+                Log.launcher.notice(
                     "Chrome AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
             } else {
                 Log.launcher.error(

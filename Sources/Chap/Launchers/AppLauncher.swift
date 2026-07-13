@@ -34,9 +34,9 @@ enum AppLauncher {
         let bw = site.width
         let bh = site.height
 
-        Log.launcher.debug(
+        Log.launcher.info(
             "AppLauncher launch site=\(site.name, privacy: .private) path=\(path, privacy: .private) bundleId=\(bundleId ?? "nil", privacy: .private)")
-        Log.launcher.debug(
+        Log.launcher.info(
             "AppLauncher target screen=\(screen.localizedName, privacy: .public) bounds={left:\(bounds.left), top:\(bounds.top), w:\(bw), h:\(bh)}")
 
         guard LauncherUtils.checkAccessibility() else {
@@ -69,7 +69,7 @@ enum AppLauncher {
                 onComplete?()
                 return
             }
-            Log.launcher.debug(
+            Log.launcher.info(
                 "app opened pid=\(app.processIdentifier) localizedName=\(app.localizedName ?? "?", privacy: .private)")
 
             let position = CGPoint(x: bounds.left, y: bounds.top)
@@ -87,7 +87,7 @@ enum AppLauncher {
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let result = success ? "success" : "failed"
                 if success {
-                    Log.launcher.debug(
+                    Log.launcher.notice(
                         "AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
                 } else {
                     Log.launcher.error(

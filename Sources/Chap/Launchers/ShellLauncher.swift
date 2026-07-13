@@ -38,7 +38,7 @@ enum ShellLauncher {
                         "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)")
                     LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
                 } else {
-                    Log.launcher.debug("Shell script succeeded for \(site.name, privacy: .private)")
+                    Log.launcher.notice("Shell script succeeded for \(site.name, privacy: .private)")
                 }
             } catch {
                 Log.launcher.error(
