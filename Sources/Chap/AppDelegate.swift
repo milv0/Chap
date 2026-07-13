@@ -412,7 +412,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 if useGuide { GuideWindow.dismiss() }
             }
         case .app:
-            AppLauncher.launch(site, resizeQueue: resizeQueue)
+            AppLauncher.launch(site)
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
                 Log.launcher.error("No folder path configured for \(site.name, privacy: .private)")

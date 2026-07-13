@@ -5,7 +5,7 @@ import os
 /// macOS 앱을 실행하고 Accessibility API로 윈도우를 리사이즈하는 런처
 enum AppLauncher {
     /// 앱을 실행하고 윈도우 크기/위치를 조정
-    static func launch(_ site: Site, resizeQueue: DispatchQueue, onComplete: (() -> Void)? = nil) {
+    static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
         guard let path = site.appPath, !path.isEmpty else {
             LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
             return
@@ -73,24 +73,15 @@ enum AppLauncher {
             let position = CGPoint(x: bounds.left, y: bounds.top)
             let size = CGSize(width: bw, height: bh)
 
-            resizeQueue.async {
-                var success = axResize(
+            // 공유 resizeQueue 대신 전용 백그라운드 큐 사용 — 콜드 스타트는 폴링이
+            // 길어질 수 있어(최대 15s) 다른 런처(Chrome 등)의 리사이즈를 막지 않도록 함.
+            DispatchQueue.global(qos: .userInitiated).async {
+                let success = axResize(
                     pid: app.processIdentifier,
                     position: position,
                     size: size,
                     isRunning: appRunning
                 )
-                // 실패 시 1초 대기 후 한 번 더 시도 (느린 앱 대응)
-                if !success {
-                    Log.launcher.debug("first attempt failed for \(site.name, privacy: .private), retrying...")
-                    usleep(1_000_000)
-                    success = axResize(
-                        pid: app.processIdentifier,
-                        position: position,
-                        size: size,
-                        isRunning: true
-                    )
-                }
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let result = success ? "success" : "failed"
                 if success {
@@ -115,41 +106,49 @@ enum AppLauncher {
 
     // MARK: - AX API Resize
 
+    /// 앱의 현재 포커스 윈도우 중 "표준 윈도우"(문서 창)만 반환.
+    /// 팔레트/다이얼로그/시트 등은 제외해 엉뚱한 보조 창을 리사이즈하지 않는다.
+    private static func focusedStandardWindow(_ app: AXUIElement) -> AXUIElement? {
+        var windowValue: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(
+                app, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
+            let windowValue
+        else { return nil }
+        let win = windowValue as! AXUIElement
+        var subroleValue: AnyObject?
+        if AXUIElementCopyAttributeValue(win, kAXSubroleAttribute as CFString, &subroleValue)
+            == .success, let subrole = subroleValue as? String,
+            subrole != (kAXStandardWindowSubrole as String)
+        {
+            return nil  // 팔레트/다이얼로그 등 → 대상 아님
+        }
+        return win
+    }
+
     private static func axResize(
         pid: pid_t, position: CGPoint, size: CGSize, isRunning: Bool
     ) -> Bool {
         let app = AXUIElementCreateApplication(pid)
-        let maxAttempts = isRunning ? 30 : 50
-        let interval: useconds_t = isRunning ? 50_000 : 100_000
+        let interval: useconds_t = 120_000  // 120ms
 
         if isRunning {
             usleep(150_000)
         }
 
-        // 첫 포커스 윈도우에 적용한 뒤에도 계속 폴링하다가, 포커스 윈도우가 "다른"
-        // 윈도우로 바뀌면 다시 중앙정렬한다. Excel 등은 시작 화면(스플래시)이 먼저
-        // 포커스를 잡고, 그 뒤에 실제 문서 윈도우가 뜨기 때문에, 한 번만 적용하면
-        // 엉뚱한 윈도우(시작 화면)를 리사이즈하고 끝나 "됐다 안 됐다" 하게 된다.
+        // 콜드 스타트는 앱 실행 + 실제 문서 윈도우 표시까지 지연이 크므로 넉넉히 폴링한다.
+        // 조기 종료하지 않는다 — 시작 화면(스플래시)이 잠시 포커스를 잡고 있다가
+        // 실제 문서 윈도우가 뒤늦게 뜨는 Excel 같은 앱을 놓치지 않기 위함.
+        // 포커스가 "다른" 표준 윈도우로 바뀌면 다시 중앙정렬한다. 같은 윈도우는
+        // 재적용하지 않으므로 사용자가 창을 옮겨도 방해하지 않는다.
+        let deadline = CFAbsoluteTimeGetCurrent() + (isRunning ? 5.0 : 15.0)
         var lastResized: AXUIElement?
-        var quietPolls = 0
-        let quietLimit = isRunning ? 8 : 12  // 동일 윈도우가 이만큼 유지되면 종료
 
-        for _ in 0..<maxAttempts {
-            var windowValue: AnyObject?
-            let err = AXUIElementCopyAttributeValue(
-                app, kAXFocusedWindowAttribute as CFString, &windowValue)
-            if err == .success, let window = windowValue {
-                // AXUIElementCopyAttributeValue 성공 시 항상 AXUIElement 타입
-                let win = window as! AXUIElement
+        while CFAbsoluteTimeGetCurrent() < deadline {
+            if let win = focusedStandardWindow(app) {
                 if lastResized == nil || !CFEqual(lastResized!, win) {
-                    // 새로운(또는 첫) 포커스 윈도우 → 적용
                     LauncherUtils.axApplyBounds(win, position: position, size: size)
                     lastResized = win
-                    quietPolls = 0
-                } else {
-                    // 같은 윈도우가 계속 포커스 → 안정화된 것으로 보고 종료
-                    quietPolls += 1
-                    if quietPolls >= quietLimit { return true }
                 }
             }
             usleep(interval)
