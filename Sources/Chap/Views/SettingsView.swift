@@ -30,7 +30,7 @@ struct SettingsView: View {
             // 이름을 정하지 않은 채(기본 "New Launchable") 벗어난 새 사이트는 폐기 —
             // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지
             if let old = oldValue, old != newValue, old < vm.sites.count,
-                vm.sites[old].name == "New Launchable"
+                vm.sites[old].name == Defaults.newSiteName
             {
                 let target = newValue.flatMap { idx in
                     idx < vm.sites.count ? vm.sites[idx] : nil
@@ -444,7 +444,7 @@ struct SettingsView: View {
         }()
         vm.sites.append(
             Site(
-                name: "New Launchable", url: type == .url ? "https://" : "",
+                name: Defaults.newSiteName, url: type == .url ? "https://" : "",
                 width: Defaults.defaultWidth, height: Defaults.defaultHeight,
                 x: Defaults.defaultX, y: Defaults.defaultY, launchType: type))
         isAddingNew = true
@@ -599,7 +599,7 @@ struct SettingsView: View {
     }
 
     private func checkRequiredFields(site: Site) -> String? {
-        if site.name.isEmpty || site.name == "New Launchable" { return "Name" }
+        if site.name.isEmpty || site.name == Defaults.newSiteName { return "Name" }
         switch site.launchType {
         case .url:
             if site.url.isEmpty || site.url == "https://" { return "URL" }

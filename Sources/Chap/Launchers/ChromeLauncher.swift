@@ -3,9 +3,21 @@ import Cocoa
 
 /// Chrome --app 모드로 URL을 열고 AX API로 윈도우 크기를 조정하는 런처
 enum ChromeLauncher {
+    private static let appPath = "/Applications/Google Chrome.app"
+    private static let bundleID = "com.google.Chrome"
+    private static let appName = "Google Chrome"
+
+    /// Chrome을 --app 모드로 실행 (open -na)
+    private static func runChromeApp(url: String) throws {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-na", appName, "--args", "--app=\(url)"]
+        try task.run()
+    }
+
     /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈
     static func launch(_ site: Site, resizeQueue: DispatchQueue, onComplete: (() -> Void)? = nil) {
-        guard FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app") else {
+        guard FileManager.default.fileExists(atPath: appPath) else {
             LauncherUtils.showAlert(message: "Google Chrome is not installed.")
             onComplete?()
             return
@@ -23,10 +35,7 @@ enum ChromeLauncher {
 
         guard let screen = targetScreen(for: site) else {
             NSLog("[Chap] No display available — launching Chrome without resize")
-            let openTask = Process()
-            openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-            openTask.arguments = ["-na", "Google Chrome", "--args", "--app=\(site.url)"]
-            try? openTask.run()
+            try? runChromeApp(url: site.url)
             onComplete?()
             return
         }
@@ -37,7 +46,7 @@ enum ChromeLauncher {
 
         // Chrome pid 캐싱 + 실행 전 윈도우 집합 기록
         let chromeApp = NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier == "com.google.Chrome"
+            $0.bundleIdentifier == bundleID
         }
         let chromeRunning = chromeApp != nil
         let chromePid = chromeApp?.processIdentifier ?? -1
@@ -47,11 +56,8 @@ enum ChromeLauncher {
               site.name, chromeRunning ? 1 : 0, windowsBefore.count)
 
         // Chrome --app 모드로 실행
-        let openTask = Process()
-        openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        openTask.arguments = ["-na", "Google Chrome", "--args", "--app=\(site.url)"]
         do {
-            try openTask.run()
+            try runChromeApp(url: site.url)
         } catch {
             LauncherUtils.showAlert(
                 message: "Failed to launch Chrome.", info: error.localizedDescription)
@@ -107,7 +113,7 @@ enum ChromeLauncher {
                 pid = cachedPid
             } else {
                 guard let app = NSWorkspace.shared.runningApplications.first(where: {
-                    $0.bundleIdentifier == "com.google.Chrome"
+                    $0.bundleIdentifier == bundleID
                 }) else {
                     usleep(interval)
                     continue

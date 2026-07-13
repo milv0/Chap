@@ -109,7 +109,7 @@ struct SiteConfigView: View {
                     get: { site.url },
                     set: { newURL in
                         site.url = newURL
-                        if (site.name == "New Launchable" || site.name.isEmpty),
+                        if (site.name == Defaults.newSiteName || site.name.isEmpty),
                            let host = URL(string: newURL)?.host {
                             site.name = host.replacingOccurrences(of: "www.", with: "")
                                 .components(separatedBy: ".").first?.capitalized ?? host
@@ -140,7 +140,7 @@ struct SiteConfigView: View {
                                 if !newPath.isEmpty {
                                     let appName = URL(fileURLWithPath: newPath)
                                         .deletingPathExtension().lastPathComponent
-                                    if site.name == "New Launchable" || site.name.isEmpty {
+                                    if site.name == Defaults.newSiteName || site.name.isEmpty {
                                         site.name = appName
                                     }
                                 }
@@ -258,7 +258,7 @@ struct SiteConfigView: View {
                         get: { site.folderPath ?? "" },
                         set: { newPath in
                             site.folderPath = newPath
-                            if (site.name == "New Launchable" || site.name.isEmpty), !newPath.isEmpty {
+                            if (site.name == Defaults.newSiteName || site.name.isEmpty), !newPath.isEmpty {
                                 site.name = URL(fileURLWithPath: newPath).lastPathComponent
                             }
                         }
@@ -312,7 +312,7 @@ struct SiteConfigView: View {
         let newAppName = url.deletingPathExtension().lastPathComponent
         // 이전 앱 이름과 같거나 기본값이면 새 앱 이름으로 변경
         let oldAppName = site.appPath.map { URL(fileURLWithPath: $0).deletingPathExtension().lastPathComponent }
-        if site.name == "New Launchable" || site.name.isEmpty || site.name == oldAppName {
+        if site.name == Defaults.newSiteName || site.name.isEmpty || site.name == oldAppName {
             site.name = newAppName
         }
         site.appPath = url.path
@@ -326,7 +326,7 @@ struct SiteConfigView: View {
         panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory())
         guard panel.runModal() == .OK, let url = panel.url else { return }
         site.folderPath = url.path
-        if site.name == "New Launchable" || site.name.isEmpty {
+        if site.name == Defaults.newSiteName || site.name.isEmpty {
             site.name = url.lastPathComponent
         }
     }

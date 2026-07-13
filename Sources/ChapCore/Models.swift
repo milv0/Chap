@@ -6,6 +6,9 @@ public enum Defaults {
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "1.0.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
+    /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
+    /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
+    public static let newSiteName = "New Launchable"
     public static let defaultWidth = 800
     public static let defaultHeight = 600
     public static let defaultX = 100
