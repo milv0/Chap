@@ -40,19 +40,20 @@ struct SiteModelTests {
 
 @Suite("Config Model")
 struct ConfigModelTests {
-    @Test("defaults runInBackground to true when key is missing")
-    func defaultsRunInBackground() throws {
+    @Test("defaults showGuideWindow to true when key is missing")
+    func defaultsShowGuideWindow() throws {
         let json = #"{"sites":[]}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(config.runInBackground == true)
+        #expect(config.showGuideWindow == true)
     }
 
-    @Test func respectsExplicitRunInBackground() throws {
+    @Test("ignores legacy runInBackground key without error")
+    func ignoresLegacyRunInBackground() throws {
         let json = #"{"runInBackground":false,"sites":[]}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(config.runInBackground == false)
+        #expect(config.sites.isEmpty)
     }
 
     @Test func decodesMultipleSites() throws {
@@ -67,14 +68,16 @@ struct ConfigModelTests {
 
     @Test func roundTripsWithAllFields() throws {
         let original = Config(
-            runInBackground: false,
+            showGuideWindow: false,
+            launchAtLogin: true,
             sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300, x: 20, y: 30)]
         )
 
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(Config.self, from: data)
 
-        #expect(decoded.runInBackground == original.runInBackground)
+        #expect(decoded.showGuideWindow == original.showGuideWindow)
+        #expect(decoded.launchAtLogin == original.launchAtLogin)
         #expect(decoded.sites == original.sites)
     }
 }

@@ -9,10 +9,6 @@ public func isValidDomain(_ domain: String) -> Bool {
     return true
 }
 
-public func chromeBoundsString(x: Int, y: Int, width: Int, height: Int) -> String {
-    "\(x), \(y), \(x + width), \(y + height)"
-}
-
 public var cursorScreen: NSScreen {
     let mouseLocation = NSEvent.mouseLocation
     return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) }

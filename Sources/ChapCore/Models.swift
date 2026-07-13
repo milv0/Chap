@@ -7,10 +7,6 @@ public enum Defaults {
     public static let defaultHeight = 600
     public static let defaultX = 100
     public static let defaultY = 100
-    public static let resizeDelay = 0.2
-    public static let coldStartDelay = 1.0
-    public static let resizeRetries = 40
-    public static let retryInterval = 0.3
     public static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
 
@@ -97,20 +93,18 @@ public struct Site: Codable, Equatable {
 }
 
 public struct Config: Codable {
-    public var runInBackground: Bool
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
-        case runInBackground, showGuideWindow, showGhostWindow, launchAtLogin, sites
+        case showGuideWindow, showGhostWindow, launchAtLogin, sites
     }
 
     public init(
-        runInBackground: Bool = true, showGuideWindow: Bool = true,
+        showGuideWindow: Bool = true,
         launchAtLogin: Bool = false, sites: [Site]
     ) {
-        self.runInBackground = runInBackground
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
         self.sites = sites
@@ -118,7 +112,6 @@ public struct Config: Codable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        runInBackground = try container.decodeIfPresent(Bool.self, forKey: .runInBackground) ?? true
         // "showGuideWindow" 우선, 없으면 "showGhostWindow"에서 마이그레이션
         showGuideWindow = try container.decodeIfPresent(Bool.self, forKey: .showGuideWindow)
             ?? container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
@@ -128,7 +121,6 @@ public struct Config: Codable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(runInBackground, forKey: .runInBackground)
         try container.encode(showGuideWindow, forKey: .showGuideWindow)
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
         try container.encode(sites, forKey: .sites)

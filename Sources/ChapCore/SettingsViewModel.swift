@@ -2,45 +2,40 @@ import Foundation
 
 public struct SettingsPayload {
     public let sites: [Site]
-    public let runInBackground: Bool
     public let showGuideWindow: Bool
     public let launchAtLogin: Bool
 }
 
 public final class SettingsViewModel: ObservableObject {
     @Published public var sites: [Site]
-    @Published public var runInBackground: Bool
     @Published public var showGuideWindow: Bool
     @Published public var launchAtLogin: Bool
     @Published public var originalSites: [Site]
-    @Published public var originalBg: Bool
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
-    public var onSave: ((SettingsPayload) -> Void)?
+    /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
+    public var onSave: ((SettingsPayload) -> Bool)?
     public var onReload: (() -> Void)?
 
     public var hasChanges: Bool {
-        sites != originalSites || runInBackground != originalBg
-            || showGuideWindow != originalGuide || launchAtLogin != originalLogin
+        sites != originalSites || showGuideWindow != originalGuide
+            || launchAtLogin != originalLogin
     }
 
     public func markSaved() {
         originalSites = sites
-        originalBg = runInBackground
         originalGuide = showGuideWindow
         originalLogin = launchAtLogin
     }
 
     public init(
-        sites: [Site], runInBackground: Bool, showGuideWindow: Bool = true,
+        sites: [Site], showGuideWindow: Bool = true,
         launchAtLogin: Bool = false
     ) {
         self.sites = sites
-        self.runInBackground = runInBackground
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
         self.originalSites = sites
-        self.originalBg = runInBackground
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
     }
