@@ -1,6 +1,6 @@
 # Chap
 
-A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window sizing.
+A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
@@ -19,7 +19,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
 - **Import/Export** — Share config via JSON file or paste
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
-- **Background Mode** — Runs without Dock icon when enabled
+- **Launch at Login** — Optional auto-start via macOS Login Items
 
 ## Requirements
 
@@ -33,9 +33,9 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 | Type | What it does | Window control |
 |------|-------------|---------------|
-| URL | Opens in Chrome `--app` mode (no address bar) | AppleScript bounds |
-| App | Launches macOS app via NSWorkspace | System Events position/size |
-| Finder | Opens folder in Finder | Finder bounds |
+| URL | Opens in Chrome `--app` mode (no address bar) | AX API (new window detection via CFEqual) |
+| App | Launches macOS app via NSWorkspace | AX API (AXObserver + polling fallback) |
+| Finder | Opens folder in Finder | AppleScript bounds |
 | Shell | Runs script via `$SHELL -c` | N/A |
 
 ### Keyboard Shortcuts
@@ -61,16 +61,14 @@ Stored at `~/.chap.json`:
 
 ```json
 {
-  "runInBackground": true,
   "showGuideWindow": true,
+  "launchAtLogin": false,
   "sites": [
     {
       "name": "GitHub",
       "url": "https://github.com/",
       "width": 800,
       "height": 600,
-      "x": 100,
-      "y": 100,
       "launchType": "url",
       "displayName": "Built-in Retina Display",
       "shortcut": "G"
@@ -80,14 +78,16 @@ Stored at `~/.chap.json`:
       "url": "",
       "width": 1000,
       "height": 400,
-      "x": 100,
-      "y": 100,
       "launchType": "finder",
       "folderPath": "~/Downloads"
     }
   ]
 }
 ```
+
+Windows are always centered on the target display automatically. Position is calculated at launch time based on window size and screen geometry.
+
+> **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 
 ## License
 

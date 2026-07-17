@@ -10,15 +10,15 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 
 Sources/
 ├── Chap/                          ← 앱 타겟
-│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap)
+│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 마이그레이션
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Launchers/                 ← 런처별 실행 로직
 │   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
-│   │   ├── AppLauncher.swift      ← App (AX API 직접 리사이즈)
+│   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert, checkAccessibility
-│   │   ├── ResizeLogger.swift     ← CSV 성능 로그
+│   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
@@ -30,7 +30,8 @@ Sources/
 ├── ChapCore/                      ← 코어 로직 (테스트 대상)
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
-│   └── Validation.swift           ← 도메인 검증, 좌표 계산
+│   ├── Validation.swift           ← 도메인 검증, 좌표 계산
+│   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
     ├── SettingsViewModelTests.swift
@@ -38,23 +39,41 @@ Tests/ChapCoreTests/               ← 유닛 테스트
 
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
-├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (gitignore)
+├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트
 └── .harness/                      ← AI 어시스턴트 규칙
 
 Runtime:
 ├── ~/.chap.json                   ← 사용자 설정 파일
 ├── ~/.chap.json.bak               ← 자동 백업
-└── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV)
+└── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV, DEBUG 빌드만)
+
+
+## 데이터 모델
+
+Site 모델 필드:
+  - name: String              사이트 이름
+  - url: String               URL (launchType=url일 때 사용)
+  - width: Int                윈도우 너비
+  - height: Int               윈도우 높이
+  - displayName: String?      대상 디스플레이 이름 (nil이면 커서 화면)
+  - launchType: LaunchType    url | app | finder | shell
+  - appPath: String?          앱 경로 (launchType=app)
+  - script: String?           스크립트 내용 (launchType=shell)
+  - folderPath: String?       폴더 경로 (launchType=finder)
+  - shortcut: String?         커스텀 단축키 ("T" → ⌥T)
+
+※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.
 
 
 ## 핵심 기능
 
 - 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
 - URL → Chrome --app 모드 + AX API 리사이즈
-- App → 실행 + AX API 리사이즈 (실패 시 1초 후 재시도)
+- App → 실행 + AXObserver(kAXWindowCreated) + AX API 리사이즈
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + 미니맵 클릭으로 디스플레이 선택 (재클릭 시 Auto)
+- 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 중복 체크, 예약키 ./,  차단)
 - 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
@@ -63,6 +82,7 @@ Runtime:
 - 사이트 추가 시 Name 필드 자동 포커스
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
 - Config 자동 백업 (.bak) + 파싱 실패 시 기본값 복구
+- 레거시 필드 자동 정리 (x, y, hotkey, showGhostWindow, runInBackground)
 - 타입별 그룹 사이드바 + 메뉴바 구분선
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
@@ -70,6 +90,7 @@ Runtime:
 - 설정 창 크기/위치 자동 기억
 - Guide Window (리사이즈 위치 미리보기)
 - 접근성 권한 자동 재시도 + 권한 제거 감지
+- Launch at Login (SMAppService)
 - Restart / Uninstall (설정 File 메뉴)
 
 
@@ -92,22 +113,30 @@ Runtime:
 ## 런처 타입별 동작
 
   URL:     Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
-  App:     NSWorkspace.openApplication → AX API로 포커스 윈도우 → position/size 설정
+  App:     NSWorkspace.openApplication → AXObserver(kAXWindowCreated) → 표준 윈도우 중앙정렬
   Finder:  단일 AppleScript로 열기+리사이즈 동시 (딜레이 없음)
   Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
 리사이즈 전략:
   URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 6초)
   URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
-  App (실행 중):         AX API 폴링 50ms 간격 (포커스 윈도우 감지, 최대 1.5초 + 1초 재시도)
-  App (콜드 스타트):     AX API 폴링 100ms 간격 (최대 5초 + 1초 재시도)
+  App (실행 중):         AXObserver + 100ms 재스캔 (grace 3초, 최대 8초)
+  App (콜드 스타트):     AXObserver + 100ms 재스캔 (grace 3초, 최대 20초)
+  App (AXObserver 실패): 폴링 폴백 120ms 간격
   Finder:               딜레이 없음 (열기+리사이즈 단일 스크립트)
 
 Chrome 윈도우 감지 방식:
   1. 실행 전 전체 윈도우 목록(AXUIElement[]) 저장
-  2. 실행 후 폴링: 윈도우 수 증가 확인
+  2. 실행 후 폴링: 새 윈도우 등장 확인
   3. CFEqual로 이전 목록과 비교하여 새 윈도우 식별
-  4. 새 윈도우를 못 찾으면 windows[0] fallback
+  4. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
+
+App 윈도우 감지 방식 (AXObserver):
+  1. AXObserverCreate로 kAXWindowCreatedNotification 구독
+  2. 콜백에서 subrole 체크 → 표준 윈도우만 중앙정렬
+  3. 이미 떠 있는 윈도우도 100ms 간격 재스캔으로 정렬
+  4. 첫 정렬 후 grace(3초) 동안 새 창이 없으면 종료
+  5. AXObserver 생성 실패 시 focusedWindow 폴링 폴백
 
 
 ## 사용 API / 프레임워크
@@ -119,6 +148,7 @@ Chrome 윈도우 감지 방식:
   - AXUIElementCopyAttributeValue             윈도우 획득 (kAXFocusedWindow / kAXWindows)
   - AXUIElementSetAttributeValue              윈도우 position/size 설정
   - AXValueCreate(.cgPoint / .cgSize)         좌표/크기 값 생성
+  - AXObserverCreate / AXObserverAddNotification  윈도우 생성 이벤트 구독
   - AXIsProcessTrusted()                      접근성 권한 확인
   - AXIsProcessTrustedWithOptions()           접근성 권한 요청 다이얼로그
   - CFEqual()                                 윈도우 동일성 비교
@@ -144,9 +174,23 @@ Chrome 윈도우 감지 방식:
   - NSScreen.localizedName            디스플레이 이름 매칭
   - visibleFrame / frame              좌표 변환 (NSScreen ↔ AppleScript 좌표계)
 
-### NSWindow
-  용도: 설정 창 관리
-  - setFrameAutosaveName              창 크기/위치 자동 저장/복원
+### ServiceManagement
+  용도: Login Item 등록/해제
+  - SMAppService.mainApp.register()   로그인 시 자동 실행 등록
+  - SMAppService.mainApp.unregister() 자동 실행 해제
+
+
+## 마이그레이션 이력
+
+### Config 필드 마이그레이션
+  앱 시작 시 stripLegacyConfigFields()가 자동 실행:
+  - x, y 필드 제거 (항상 화면 중앙 배치로 변경, 2026-07)
+  - hotkey → shortcut 필드명 변경
+  - showGhostWindow → showGuideWindow 필드명 변경
+  - runInBackground 필드 제거 (항상 accessory 모드)
+
+### Config 파일 마이그레이션
+  - ~/.quickaccess.json → ~/.chap.json (앱 이름 변경)
 
 
 ## 리사이즈 성능 개선 이력 (2026-06-22)
@@ -162,7 +206,7 @@ Chrome 윈도우 감지 방식:
   | URL (Case) | running | 0.74~0.87s |
 
 ### 변경 후 (AX API 방식)
-  구조: 앱 실행 → AX API 폴링(50ms) → 윈도우 감지 즉시 리사이즈
+  구조: 앱 실행 → AX API 폴링(50ms) / AXObserver → 윈도우 감지 즉시 리사이즈
 
   | 타입 | 상태 | 소요 시간 | 개선폭 |
   |------|------|-----------|--------|
@@ -172,25 +216,27 @@ Chrome 윈도우 감지 방식:
   | URL (Case) | running | 0.34~0.52s | **약 40%** |
 
 ### 수정한 것
-  1. AppLauncher: Process+osascript+SystemEvents → AXUIElementSetAttributeValue 직접 호출
+  1. AppLauncher: Process+osascript+SystemEvents → AXObserver + AXUIElementSetAttributeValue
   2. ChromeLauncher: Process+osascript+Chrome AppleScript → AX API 윈도우 목록 비교로 새 윈도우 감지
   3. LauncherUtils: setPosition/setSize/axApplyBounds/checkAccessibility 공용 함수로 통합
   4. 폴링 간격: 고정 딜레이 배열(0.5~2.0초) → 50ms 간격 폴링
   5. Accessibility 체크: ChromeLauncher에도 추가
   6. pid 캐싱: Chrome running 시 매 폴링마다 runningApplications 조회 제거
-  7. App resize 실패 시 1초 후 자동 재시도
-  8. Chrome 타임아웃: running 시 2초 → 4초 (윈도우 많을 때 대응), cold 시 6초 → 10초
+  7. App: AXObserver로 이벤트 기반 감지, 실패 시 폴링 폴백
+  8. Chrome 타임아웃: running 시 6초, cold 시 10초
 
 ### 남은 병목 (제어 불가)
   - App running: 150ms activate 대기 (macOS 포커스 전환 시간)
   - URL: Chrome 윈도우 생성 시간 (0.3~0.5s, Chrome 내부 처리)
+  - 슬립 복귀 후 첫 실행: Chrome warm-up 지연 (1~4초, 간헐적)
 
 
 ## 권한 요구사항
 
 1. 접근성 (Accessibility): 글로벌 단축키 + 윈도우 리사이즈
-   - 앱 시작 시 2초 간격 재시도, 30초 후 alert
-   - 허용 후 앱 재시작 필요 → Restart 메뉴 제공
+   - 앱 시작 시 2초 간격 재시도, 30초 후 폴링 종료
+   - 메뉴 열 때 권한 재확인 (늦게 허용한 경우 대응)
+   - 허용 후 자동 등록 (재시작 불필요)
    - 권한 제거 감지: CGEvent tap disabled → AXIsProcessTrusted 체크 → 상태바 경고
 
 2. 자동화 (Automation): Finder AppleScript 제어
