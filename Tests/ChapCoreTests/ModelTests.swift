@@ -7,7 +7,7 @@ import Testing
 struct SiteModelTests {
     @Test func roundTripsIdentically() throws {
         let original = Site(
-            name: "Test", url: "https://example.com", width: 400, height: 200, x: 50, y: 50)
+            name: "Test", url: "https://example.com", width: 400, height: 200)
 
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(Site.self, from: data)
@@ -24,8 +24,6 @@ struct SiteModelTests {
         #expect(site.url == "https://github.com")
         #expect(site.width == 800)
         #expect(site.height == 600)
-        #expect(site.x == 100)
-        #expect(site.y == 100)
         #expect(site.displayName == nil)
     }
 
@@ -70,7 +68,7 @@ struct ConfigModelTests {
         let original = Config(
             showGuideWindow: false,
             launchAtLogin: true,
-            sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300, x: 20, y: 30)]
+            sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300)]
         )
 
         let data = try JSONEncoder().encode(original)
@@ -113,7 +111,7 @@ struct LaunchTypeTests {
 
     @Test func roundTripsAppType() throws {
         let original = Site(
-            name: "App", url: "", width: 800, height: 600, x: 0, y: 0,
+            name: "App", url: "", width: 800, height: 600,
             launchType: .app, appPath: "/Applications/Safari.app")
 
         let data = try JSONEncoder().encode(original)
@@ -124,7 +122,7 @@ struct LaunchTypeTests {
 
     @Test func roundTripsShellType() throws {
         let original = Site(
-            name: "Script", url: "", width: 800, height: 600, x: 0, y: 0,
+            name: "Script", url: "", width: 800, height: 600,
             launchType: .shell, script: "ls -la\necho done")
 
         let data = try JSONEncoder().encode(original)

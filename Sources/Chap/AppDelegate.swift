@@ -23,6 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         migrateConfigIfNeeded()
         copyDefaultConfigIfNeeded()
         loadConfig()
+        stripLegacyConfigFields()
         applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(.accessory)
 
@@ -281,14 +282,45 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
     }
 
+    /// 설정 파일에 남아 있는 레거시 필드(x, y, hotkey, showGhostWindow 등)를 제거.
+    /// loadConfig() 후 호출하면 decode→encode 과정에서 레거시 키가 자동 탈락하므로,
+    /// 파일 원본에 해당 키가 있으면 한 번 덮어써서 정리한다.
+    func stripLegacyConfigFields() {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
+              let rawJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let sites = rawJSON["sites"] as? [[String: Any]]
+        else { return }
+
+        // 레거시 키가 하나라도 존재하면 re-save
+        let legacyKeys: Set<String> = ["x", "y", "hotkey"]
+        let hasLegacy = sites.contains { site in
+            !legacyKeys.isDisjoint(with: site.keys)
+        } || rawJSON.keys.contains("showGhostWindow") || rawJSON.keys.contains("runInBackground")
+
+        guard hasLegacy else { return }
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        do {
+            let cleanData = try encoder.encode(config)
+            let bakPath = configPath + ".bak"
+            try? FileManager.default.removeItem(atPath: bakPath)
+            try? FileManager.default.copyItem(atPath: configPath, toPath: bakPath)
+            try cleanData.write(to: URL(fileURLWithPath: configPath), options: .atomic)
+            Log.config.info("Stripped legacy fields from config file")
+        } catch {
+            Log.config.error("Failed to strip legacy fields: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     func copyDefaultConfigIfNeeded() {
         if !FileManager.default.fileExists(atPath: configPath) {
             let defaultJSON = """
                 {
                   "sites": [
-                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100, "launchType": "url"},
-                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100, "launchType": "url"},
-                    {"name": "Downloads", "url": "", "width": 1000, "height": 400, "x": 100, "y": 100, "launchType": "finder", "folderPath": "~/Downloads"}
+                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "launchType": "url"},
+                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "launchType": "url"},
+                    {"name": "Downloads", "url": "", "width": 1000, "height": 400, "launchType": "finder", "folderPath": "~/Downloads"}
                   ]
                 }
                 """

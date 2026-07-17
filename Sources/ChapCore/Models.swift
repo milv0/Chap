@@ -11,8 +11,7 @@ public enum Defaults {
     public static let newSiteName = "New Launchable"
     public static let defaultWidth = 800
     public static let defaultHeight = 600
-    public static let defaultX = 100
-    public static let defaultY = 100
+
     public static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
 
@@ -28,8 +27,6 @@ public struct Site: Codable, Equatable {
     public var url: String
     public var width: Int
     public var height: Int
-    public var x: Int
-    public var y: Int
     public var displayName: String?
     public var launchType: LaunchType
     public var appPath: String?
@@ -38,7 +35,7 @@ public struct Site: Codable, Equatable {
     public var shortcut: String?  // 예: "T", "G" → ⌥T, ⌥G로 실행. nil이면 단축키 없음.
 
     public init(
-        name: String, url: String, width: Int, height: Int, x: Int, y: Int,
+        name: String, url: String, width: Int, height: Int,
         displayName: String? = nil, launchType: LaunchType = .url,
         appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
         shortcut: String? = nil
@@ -47,8 +44,6 @@ public struct Site: Codable, Equatable {
         self.url = url
         self.width = width
         self.height = height
-        self.x = x
-        self.y = y
         self.displayName = displayName
         self.launchType = launchType
         self.appPath = appPath
@@ -68,8 +63,9 @@ public struct Site: Codable, Equatable {
         url = try container.decode(String.self, forKey: .url)
         width = try container.decode(Int.self, forKey: .width)
         height = try container.decode(Int.self, forKey: .height)
-        x = try container.decode(Int.self, forKey: .x)
-        y = try container.decode(Int.self, forKey: .y)
+        // x, y는 기존 JSON 호환을 위해 decode만 하고 무시 (항상 화면 중앙 배치)
+        _ = try container.decodeIfPresent(Int.self, forKey: .x)
+        _ = try container.decodeIfPresent(Int.self, forKey: .y)
         displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
         launchType = try container.decodeIfPresent(LaunchType.self, forKey: .launchType) ?? .url
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
@@ -86,8 +82,7 @@ public struct Site: Codable, Equatable {
         try container.encode(url, forKey: .url)
         try container.encode(width, forKey: .width)
         try container.encode(height, forKey: .height)
-        try container.encode(x, forKey: .x)
-        try container.encode(y, forKey: .y)
+        // x, y는 더 이상 저장하지 않음 (항상 화면 중앙 배치)
         try container.encodeIfPresent(displayName, forKey: .displayName)
         try container.encode(launchType, forKey: .launchType)
         try container.encodeIfPresent(appPath, forKey: .appPath)
@@ -135,10 +130,9 @@ public struct Config: Codable {
 
     public static let `default` = Config(sites: [
         Site(
-            name: "Google", url: "https://www.google.com/", width: 600, height: 400,
-            x: Defaults.defaultX, y: Defaults.defaultY),
+            name: "Google", url: "https://www.google.com/", width: 600, height: 400),
         Site(
             name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth,
-            height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY),
+            height: Defaults.defaultHeight),
     ])
 }

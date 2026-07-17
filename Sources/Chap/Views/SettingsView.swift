@@ -447,7 +447,7 @@ struct SettingsView: View {
             Site(
                 name: Defaults.newSiteName, url: type == .url ? "https://" : "",
                 width: Defaults.defaultWidth, height: Defaults.defaultHeight,
-                x: Defaults.defaultX, y: Defaults.defaultY, launchType: type))
+                launchType: type))
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
