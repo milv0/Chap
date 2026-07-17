@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct QAView: View {
-    private let sections: [(String, [(String, String)])] = [
+    @State private var isEnglish = false
+
+    private var sections: [(String, [(String, String)])] {
+        isEnglish ? englishSections : koreanSections
+    }
+
+    // MARK: - Korean
+
+    private let koreanSections: [(String, [(String, String)])] = [
         ("설치 & 권한", [
             ("앱을 처음 실행했는데 단축키가 안 먹어요.",
              "접근성 권한이 필요합니다. System Settings → Privacy & Security → Accessibility에서 Chap을 허용해주세요. 메뉴바 아이콘에 경고 표시(⚠️)가 있다면 권한이 없는 상태입니다."),
@@ -64,35 +72,123 @@ struct QAView: View {
         ]),
     ]
 
+    // MARK: - English
+
+    private let englishSections: [(String, [(String, String)])] = [
+        ("Installation & Permissions", [
+            ("Shortcuts don't work after first launch.",
+             "Accessibility permission is required. Go to System Settings → Privacy & Security → Accessibility and enable Chap. If the menubar icon shows a warning badge (⚠️), permission is not granted."),
+            ("I granted permission but it still doesn't work.",
+             "You need to restart the app after granting permission. Click the menubar icon → Restart."),
+            ("Do I need Chrome to use Chap?",
+             "Only the URL type requires Chrome. App, Finder, and Shell types work without Chrome."),
+            ("What macOS version is required?",
+             "macOS 14.0 (Sonoma) or later is required."),
+        ]),
+        ("Shortcuts", [
+            ("How do I set up shortcuts?",
+             "In Settings, enter a single key in the \"Shortcut (⌥ +)\" field for each site. For example: enter T → press ⌥T to launch."),
+            ("Is a shortcut required?",
+             "No. You can also launch sites by clicking the menubar icon."),
+            ("What if I assign the same shortcut to two sites?",
+             "A duplicate warning appears and it won't be saved. Use a different key."),
+            ("Can I change ⌥. and ⌥, shortcuts?",
+             "No. ⌥. (open menu) and ⌥, (open settings) are fixed system shortcuts."),
+        ]),
+        ("Site Configuration", [
+            ("Why is there no address bar when opening a URL?",
+             "It opens in Chrome's --app mode, which provides a clean web-app experience without browser UI."),
+            ("Windows always open in the center. Can I change the position?",
+             "Currently, windows are always centered on the target display. Custom positioning is not supported."),
+            ("How do I open on a specific monitor?",
+             "Click the desired monitor in the Display Preview minimap. Click again to return to Auto (cursor-based). You can also use the Display dropdown."),
+            ("What if I register the same URL/app twice?",
+             "A duplicate warning appears and it won't be saved."),
+            ("What is the Shell type?",
+             "It executes terminal commands or scripts. No window resizing is performed."),
+        ]),
+        ("Settings & Saving", [
+            ("How do I save changes?",
+             "Click a field → edit → press Enter or navigate to another site to auto-save. You can also use ⌘S."),
+            ("How do I quickly add a site?",
+             "Press ⌘N to add a new site with automatic focus on the Name field."),
+            ("Where is the config file stored?",
+             "At ~/.chap.json. You can edit it manually; changes take effect after restarting the app."),
+            ("I lost my settings. Can I recover them?",
+             "An automatic backup exists at ~/.chap.json.bak. Copy it to ~/.chap.json to restore."),
+            ("How do I transfer settings to another computer?",
+             "Use Settings → Export to save a JSON file, then Import it on the other computer. You can also drag & drop a .json file onto the settings window."),
+        ]),
+        ("Display & Resize", [
+            ("Which screen does it open on with multiple monitors?",
+             "You can assign a display per site. If not set (Auto), it opens on the screen where your cursor is."),
+            ("What is the Guide Window?",
+             "It shows a translucent outline where the window will appear when launching a site. Toggle it with the \"Guide Window\" switch at the bottom of Settings."),
+            ("What if the window is larger than the monitor?",
+             "It's automatically scaled down to fit within the monitor's visible area."),
+        ]),
+        ("Miscellaneous", [
+            ("I don't see a Dock icon.",
+             "That's normal. Chap is a menubar-only app and doesn't appear in the Dock."),
+            ("How do I completely uninstall?",
+             "In Settings, click the 📁 menu → Uninstall. This removes the app along with its config files."),
+            ("The app suddenly stopped responding to shortcuts.",
+             "Accessibility permission may have been revoked. Check if the menubar icon shows a warning badge, and re-enable permission in System Settings."),
+        ]),
+    ]
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DS.spacing) {
-                ForEach(sections.indices, id: \.self) { sIdx in
-                    let section = sections[sIdx]
-                    CardSection {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(section.0)
-                                .font(DS.headlineFont)
-                                .foregroundColor(DS.textPrimary)
-                            ForEach(section.1.indices, id: \.self) { qIdx in
-                                let qa = section.1[qIdx]
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Q. \(qa.0)")
-                                        .font(DS.bodyFont.weight(.medium))
-                                        .foregroundColor(DS.textPrimary)
-                                    Text("A. \(qa.1)")
-                                        .font(DS.bodyFont)
-                                        .foregroundColor(DS.textSecondary)
-                                }
-                                if qIdx < section.1.count - 1 {
-                                    Divider()
+        VStack(spacing: 0) {
+            // Language toggle header
+            HStack {
+                Spacer()
+                Button(action: { isEnglish.toggle() }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 12))
+                        Text(isEnglish ? "한국어" : "English")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(DS.accent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(DS.accentSoft)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, DS.padding)
+            .padding(.top, DS.paddingSmall)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.spacing) {
+                    ForEach(sections.indices, id: \.self) { sIdx in
+                        let section = sections[sIdx]
+                        CardSection {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(section.0)
+                                    .font(DS.headlineFont)
+                                    .foregroundColor(DS.textPrimary)
+                                ForEach(section.1.indices, id: \.self) { qIdx in
+                                    let qa = section.1[qIdx]
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Q. \(qa.0)")
+                                            .font(DS.bodyFont.weight(.medium))
+                                            .foregroundColor(DS.textPrimary)
+                                        Text("A. \(qa.1)")
+                                            .font(DS.bodyFont)
+                                            .foregroundColor(DS.textSecondary)
+                                    }
+                                    if qIdx < section.1.count - 1 {
+                                        Divider()
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                .padding(DS.padding)
             }
-            .padding(DS.padding)
         }
         .frame(minWidth: 1000, minHeight: 500)
         .background(DS.surfaceBg)
