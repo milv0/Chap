@@ -395,6 +395,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             title: "Q&A", action: #selector(openQA), keyEquivalent: "")
         qa.target = self
         menu.addItem(qa)
+        let bug = NSMenuItem(
+            title: "Report Bug", action: #selector(reportBug), keyEquivalent: "")
+        bug.image = NSImage(systemSymbolName: "ladybug", accessibilityDescription: "Report Bug")
+        bug.target = self
+        menu.addItem(bug)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
         about.target = self
@@ -437,6 +442,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+
+    @objc func reportBug() {
+        if let url = URL(string: "https://github.com/milv0/Chap/issues/new") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     // MARK: - Site opening
