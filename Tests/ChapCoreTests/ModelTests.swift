@@ -25,6 +25,7 @@ struct SiteModelTests {
         #expect(site.width == 800)
         #expect(site.height == 600)
         #expect(site.displayName == nil)
+        #expect(site.windowSizePreset == nil)
     }
 
     @Test func decodesWithDisplayName() throws {
@@ -33,6 +34,18 @@ struct SiteModelTests {
         let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
 
         #expect(site.displayName == "Built-in Retina Display")
+    }
+
+    @Test func roundTripsWindowSizePreset() throws {
+        let original = Site(
+            name: "Work", url: "https://work.com", width: 1200, height: 750,
+            windowSizePreset: WindowSizePresets.standard.id)
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Site.self, from: data)
+
+        #expect(decoded.windowSizePreset == WindowSizePresets.standard.id)
+        #expect(decoded == original)
     }
 }
 
@@ -151,19 +164,23 @@ struct WindowSizePresetTests {
             InitialWindowSizeRecommendations.recommendation(for: .url)
                 == InitialWindowSizeRecommendation(
                     widthRatio: 0.66, heightRatio: 0.66,
-                    aspectRatio: Defaults.defaultWindowAspectRatio))
+                    aspectRatio: Defaults.defaultWindowAspectRatio,
+                    sizePresetID: WindowSizePresets.standard.id))
         #expect(
             InitialWindowSizeRecommendations.recommendation(for: .app)
                 == InitialWindowSizeRecommendation(
-                    widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil))
+                    widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil,
+                    sizePresetID: WindowSizePresets.comfortable.id))
         #expect(
             InitialWindowSizeRecommendations.recommendation(for: .finder)
                 == InitialWindowSizeRecommendation(
-                    widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil))
+                    widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil,
+                    sizePresetID: WindowSizePresets.compact.id))
         #expect(
             InitialWindowSizeRecommendations.recommendation(for: .shell)
                 == InitialWindowSizeRecommendation(
                     widthRatio: 0.66, heightRatio: 0.66,
-                    aspectRatio: Defaults.defaultWindowAspectRatio))
+                    aspectRatio: Defaults.defaultWindowAspectRatio,
+                    sizePresetID: WindowSizePresets.standard.id))
     }
 }

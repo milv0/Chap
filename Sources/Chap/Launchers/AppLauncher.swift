@@ -249,7 +249,8 @@ enum AppLauncher {
     }
 
     /// 표준 윈도우(문서 창)면 아직 정렬 안 한 경우에 한해 중앙정렬한다.
-    /// 팔레트/다이얼로그/시트(비표준 subrole)는 건드리지 않는다.
+    /// Office 시작 화면처럼 표준 subrole이 아니어도 위치/크기를 바꿀 수 있는 창은
+    /// Office 앱에 한해 정렬한다. 팔레트/시트처럼 크기 변경 불가능한 창은 건드리지 않는다.
     private static func centerIfStandard(_ window: AXUIElement, ctx: ResizeContext) {
         guard isCurrentObservation(ctx) else { return }
         var subroleValue: AnyObject?
@@ -257,13 +258,19 @@ enum AppLauncher {
             == .success, let subrole = subroleValue as? String,
             subrole != (kAXStandardWindowSubrole as String)
         {
-            if !ctx.skipped.contains(where: { CFEqual($0, window) }) {
-                ctx.skipped.append(window)
-                Log.launcher.debug(
-                    "AX skip non-standard window for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
+            if ctx.policy.isMicrosoftOffice, isResizableWindow(window) {
+                Log.launcher.info(
+                    "AX applying Office non-standard window for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
                 )
+            } else {
+                if !ctx.skipped.contains(where: { CFEqual($0, window) }) {
+                    ctx.skipped.append(window)
+                    Log.launcher.debug(
+                        "AX skip non-standard window for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
+                    )
+                }
+                return
             }
-            return
         }
         if ctx.resized.contains(where: { CFEqual($0, window) }) { return }
         Log.launcher.info(
@@ -375,7 +382,7 @@ enum AppLauncher {
             return ResizeObservationResult(latency: nil, wasSuperseded: true)
         }
         if ctx.firstResizeLatency == nil {
-            logWindowSnapshot(app: app, ctx: ctx, reason: "timeout")
+            logWindowSnapshot(app: app, ctx: ctx, reason: "timeout", asError: true)
         }
         return ResizeObservationResult(latency: ctx.firstResizeLatency, wasSuperseded: false)
     }
@@ -444,9 +451,22 @@ enum AppLauncher {
         logWindowSnapshot(app: app, ctx: ctx, reason: "scan")
     }
 
-    private static func logWindowSnapshot(app: AXUIElement, ctx: ResizeContext, reason: String) {
+    private static func logWindowSnapshot(
+        app: AXUIElement, ctx: ResizeContext, reason: String, asError: Bool = false
+    ) {
         ctx.lastSnapshotTime = CFAbsoluteTimeGetCurrent()
         let windows = axWindows(app)
+        if asError {
+            Log.launcher.error(
+                "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(focusedWindowSummary(app), privacy: .public)"
+            )
+            for (index, window) in windows.enumerated() {
+                Log.launcher.error(
+                    "AX window[\(index, privacy: .public)] for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
+                )
+            }
+            return
+        }
         Log.launcher.debug(
             "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(focusedWindowSummary(app), privacy: .public)"
         )
@@ -499,6 +519,12 @@ enum AppLauncher {
             "role=\(role) subrole=\(subrole) position=\(position) size=\(size) canSetPosition=\(positionSettable) canSetSize=\(sizeSettable)"
     }
 
+    private static func isResizableWindow(_ window: AXUIElement) -> Bool {
+        stringAttribute(window, kAXRoleAttribute as CFString) == (kAXWindowRole as String)
+            && isAttributeSettable(window, kAXPositionAttribute as CFString)
+            && isAttributeSettable(window, kAXSizeAttribute as CFString)
+    }
+
     private static func windowTitle(_ window: AXUIElement) -> String {
         stringAttribute(window, kAXTitleAttribute as CFString)
     }
@@ -543,5 +569,11 @@ enum AppLauncher {
         let error = AXUIElementIsAttributeSettable(element, attribute, &settable)
         guard error == .success else { return "error:\(error.rawValue)" }
         return settable.boolValue ? "true" : "false"
+    }
+
+    private static func isAttributeSettable(_ element: AXUIElement, _ attribute: CFString) -> Bool {
+        var settable = DarwinBoolean(false)
+        return AXUIElementIsAttributeSettable(element, attribute, &settable) == .success
+            && settable.boolValue
     }
 }

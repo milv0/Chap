@@ -17,22 +17,26 @@ struct SiteConfigView: View {
     private let sizePresets = WindowSizePresets.all
 
     private var selectedSizePreset: WindowSizePreset? {
-        sizePreset(for: detectedSizeSelection)
+        WindowSizePresets.preset(withID: activeSizePresetID)
     }
 
     private var previewSizePreset: WindowSizePreset? {
-        sizePreset(for: hoveredSizeSelection ?? detectedSizeSelection)
+        if let hoveredSizeSelection {
+            return sizePreset(for: hoveredSizeSelection)
+        }
+        return selectedSizePreset
     }
 
-    private var detectedSizeSelection: Int {
-        guard selectedPreviewScreen != nil else { return 0 }
-        for (index, preset) in sizePresets.enumerated() {
-            let presetSize = size(for: preset, on: selectedPreviewScreen)
-            if site.width == presetSize.width && site.height == presetSize.height {
-                return index + 1
-            }
+    private var activeSizePresetID: String? {
+        if WindowSizePresets.preset(withID: site.windowSizePreset) != nil {
+            return site.windowSizePreset
         }
-        return 0
+        return nil
+    }
+
+    private var selectedSizeSelection: Int {
+        guard let activeSizePresetID else { return 0 }
+        return sizePresets.firstIndex { $0.id == activeSizePresetID }.map { $0 + 1 } ?? 0
     }
 
     private var previewWidth: Int {
@@ -44,15 +48,15 @@ struct SiteConfigView: View {
     }
 
     private var requestedPreviewWidth: Int {
-        if let preset = previewSizePreset {
-            return size(for: preset, on: selectedPreviewScreen).width
+        if let preset = previewSizePreset, let screen = selectedPreviewScreen {
+            return windowSize(for: preset, appliedTo: site, on: screen).width
         }
         return site.width
     }
 
     private var requestedPreviewHeight: Int {
-        if let preset = previewSizePreset {
-            return size(for: preset, on: selectedPreviewScreen).height
+        if let preset = previewSizePreset, let screen = selectedPreviewScreen {
+            return windowSize(for: preset, appliedTo: site, on: screen).height
         }
         return site.height
     }
@@ -71,6 +75,16 @@ struct SiteConfigView: View {
 
     private var previewSizeText: String {
         "\(previewWidth)x\(previewHeight) pt"
+    }
+
+    private var displayedWindowSize: (width: Int, height: Int) {
+        guard let preset = selectedSizePreset else {
+            return (site.width, site.height)
+        }
+        guard let screen = selectedPreviewScreen else {
+            return windowSize(for: preset, on: nil)
+        }
+        return windowSize(for: preset, appliedTo: site, on: screen)
     }
 
     var body: some View {
@@ -239,11 +253,11 @@ struct SiteConfigView: View {
                         selection: Binding(
                             get: { site.displayName ?? "Auto" },
                             set: { newDisplay in
-                                let currentSizeSelection = detectedSizeSelection
+                                let currentSizePresetID = activeSizePresetID
                                 isEditing = true
                                 site.displayName = newDisplay == "Auto" ? nil : newDisplay
-                                if currentSizeSelection > 0 {
-                                    applySize(for: currentSizeSelection)
+                                if let currentSizePresetID {
+                                    applySize(forPresetID: currentSizePresetID)
                                 }
                             }
                         )
@@ -271,9 +285,12 @@ struct SiteConfigView: View {
                     InputField(
                         label: "Width",
                         text: Binding(
-                            get: { "\(site.width)" },
+                            get: { "\(displayedWindowSize.width)" },
                             set: { newValue in
+                                let currentSize = displayedWindowSize
                                 isEditing = true
+                                site.windowSizePreset = nil
+                                site.height = currentSize.height
                                 site.width = max(100, Int(newValue) ?? site.width)
                             }),
                         placeholder: ""
@@ -283,9 +300,12 @@ struct SiteConfigView: View {
                     InputField(
                         label: "Height",
                         text: Binding(
-                            get: { "\(site.height)" },
+                            get: { "\(displayedWindowSize.height)" },
                             set: { newValue in
+                                let currentSize = displayedWindowSize
                                 isEditing = true
+                                site.windowSizePreset = nil
+                                site.width = currentSize.width
                                 site.height = max(100, Int(newValue) ?? site.height)
                             }),
                         placeholder: ""
@@ -343,13 +363,20 @@ struct SiteConfigView: View {
         .popover(isPresented: $isSizePresetPopoverPresented, arrowEdge: .bottom) {
             SizePresetPopover(
                 presets: sizePresets,
-                selectedSelection: detectedSizeSelection,
+                selectedSelection: selectedSizeSelection,
                 hoveredSelection: $hoveredSizeSelection,
                 currentCustomSizeText: "\(site.width)x\(site.height) pt",
                 onSelect: { selection in
                     isEditing = true
                     hoveredSizeSelection = nil
                     isSizePresetPopoverPresented = false
+                    if selection == 0 {
+                        let currentSize = displayedWindowSize
+                        site.windowSizePreset = nil
+                        site.width = currentSize.width
+                        site.height = currentSize.height
+                        return
+                    }
                     applySize(for: selection)
                 }
             )
@@ -453,7 +480,22 @@ struct SiteConfigView: View {
 
     private func applySize(for selection: Int) {
         guard let preset = sizePreset(for: selection) else { return }
-        let fittedSize = size(for: preset, on: selectedPreviewScreen)
+        applySize(for: preset)
+    }
+
+    private func applySize(forPresetID id: String) {
+        guard let preset = WindowSizePresets.preset(withID: id) else { return }
+        applySize(for: preset)
+    }
+
+    private func applySize(for preset: WindowSizePreset) {
+        let fittedSize: (width: Int, height: Int)
+        if let screen = selectedPreviewScreen {
+            fittedSize = windowSize(for: preset, appliedTo: site, on: screen)
+        } else {
+            fittedSize = windowSize(for: preset, on: nil)
+        }
+        site.windowSizePreset = preset.id
         site.width = fittedSize.width
         site.height = fittedSize.height
     }
@@ -463,23 +505,6 @@ struct SiteConfigView: View {
         return sizePresets[selection - 1]
     }
 
-    private func size(for preset: WindowSizePreset, on screen: NSScreen?) -> (
-        width: Int, height: Int
-    ) {
-        guard let screen else {
-            return (Defaults.defaultWidth, Defaults.defaultHeight)
-        }
-        let width = max(
-            100, Int((screen.visibleFrame.width * CGFloat(preset.widthRatio)).rounded(.down)))
-        let height: Int
-        if let aspectRatio = preset.aspectRatio {
-            height = max(100, Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down)))
-        } else {
-            height = max(
-                100, Int((screen.visibleFrame.height * CGFloat(preset.heightRatio)).rounded(.down)))
-        }
-        return fittedWindowSize(width: width, height: height, on: screen)
-    }
 }
 
 private struct SizePresetPopover: View {

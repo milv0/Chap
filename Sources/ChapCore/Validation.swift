@@ -17,13 +17,23 @@ public var cursorScreen: NSScreen? {
         ?? NSScreen.screens.first
 }
 
+/// 내장 디스플레이. Auto 프리셋 크기 기준으로 사용한다.
+public var builtInScreen: NSScreen? {
+    NSScreen.screens.first { screen in
+        guard
+            let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")]
+                as? CGDirectDisplayID
+        else { return false }
+        return CGDisplayIsBuiltin(displayID) != 0
+    }
+}
+
 /// 사이트가 열릴 대상 화면. 지정된 displayName이 없거나 매칭 화면이 없으면
 /// 커서 화면으로, 그마저 없으면 nil로 폴백.
 public func targetScreen(for site: Site) -> NSScreen? {
     if let name = site.displayName {
         return NSScreen.screens.first { $0.localizedName == name }
-            ?? NSScreen.main
-            ?? NSScreen.screens.first
+            ?? cursorScreen
     }
     return cursorScreen
 }
@@ -66,6 +76,66 @@ public func fittedWindowSize(width: Int, height: Int, on screen: NSScreen) -> (
     )
 }
 
+public func windowSize(
+    widthRatio: Double, heightRatio: Double, aspectRatio: Double?, on screen: NSScreen?
+) -> (width: Int, height: Int) {
+    guard let screen else {
+        return (Defaults.defaultWidth, Defaults.defaultHeight)
+    }
+    let width = max(100, Int((screen.visibleFrame.width * CGFloat(widthRatio)).rounded(.down)))
+    let height: Int
+    if let aspectRatio {
+        height = max(100, Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down)))
+    } else {
+        height = max(100, Int((screen.visibleFrame.height * CGFloat(heightRatio)).rounded(.down)))
+    }
+    return fittedWindowSize(width: width, height: height, on: screen)
+}
+
+public func windowSize(for preset: WindowSizePreset, on screen: NSScreen?) -> (
+    width: Int, height: Int
+) {
+    windowSize(
+        widthRatio: preset.widthRatio,
+        heightRatio: preset.heightRatio,
+        aspectRatio: preset.aspectRatio,
+        on: screen)
+}
+
+public func windowSize(for recommendation: InitialWindowSizeRecommendation, on screen: NSScreen?)
+    -> (width: Int, height: Int)
+{
+    windowSize(
+        widthRatio: recommendation.widthRatio,
+        heightRatio: recommendation.heightRatio,
+        aspectRatio: recommendation.aspectRatio,
+        on: screen)
+}
+
+public func windowSize(
+    for preset: WindowSizePreset, referenceScreen: NSScreen?, fittingScreen: NSScreen
+) -> (width: Int, height: Int) {
+    let requestedSize = windowSize(for: preset, on: referenceScreen)
+    return fittedWindowSize(
+        width: requestedSize.width,
+        height: requestedSize.height,
+        on: fittingScreen)
+}
+
+public func windowSize(for preset: WindowSizePreset, appliedTo site: Site, on screen: NSScreen) -> (
+    width: Int, height: Int
+) {
+    let referenceScreen = site.displayName == nil ? builtInScreen ?? screen : screen
+    return windowSize(for: preset, referenceScreen: referenceScreen, fittingScreen: screen)
+}
+
+public func effectiveWindowSize(for site: Site, on screen: NSScreen) -> (width: Int, height: Int) {
+    if let preset = WindowSizePresets.preset(withID: site.windowSizePreset) {
+        return windowSize(for: preset, appliedTo: site, on: screen)
+    }
+    return fittedWindowSize(width: site.width, height: site.height, on: screen)
+}
+
 /// Calculate AppleScript-compatible bounds (top-left origin) for centering a window on a given screen.
 /// NSScreen uses bottom-left AppKit screen coordinates; AX/AppleScript bounds use top-left coordinates.
 /// The primary screen (screens[0]) defines the global coordinate origin.
@@ -77,7 +147,7 @@ public func centeredBounds(for site: Site, on screen: NSScreen) -> (
 ) {
     let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
     let visibleFrame = screen.visibleFrame
-    let fittedSize = fittedWindowSize(width: site.width, height: site.height, on: screen)
+    let fittedSize = effectiveWindowSize(for: site, on: screen)
     let bw = fittedSize.width
     let bh = fittedSize.height
     let bx = Int(visibleFrame.minX + (visibleFrame.width - CGFloat(bw)) / 2)

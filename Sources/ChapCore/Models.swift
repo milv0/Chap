@@ -25,12 +25,11 @@ public enum LaunchType: String, Codable, CaseIterable {
 }
 
 public struct WindowSizePreset: Equatable, Identifiable {
+    public let id: String
     public let label: String
     public let widthRatio: Double
     public let heightRatio: Double
     public let aspectRatio: Double?
-
-    public var id: String { label }
 
     public var ratioText: String {
         if aspectRatio != nil {
@@ -47,26 +46,34 @@ public struct WindowSizePreset: Equatable, Identifiable {
 
 public enum WindowSizePresets {
     public static let compact = WindowSizePreset(
-        label: "Compact", widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+        id: "compact", label: "Compact", widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
     public static let standard = WindowSizePreset(
-        label: "Standard", widthRatio: 0.66, heightRatio: 0.66,
+        id: "standard", label: "Standard", widthRatio: 0.66, heightRatio: 0.66,
         aspectRatio: Defaults.defaultWindowAspectRatio)
     public static let comfortable = WindowSizePreset(
-        label: "Comfortable", widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil)
+        id: "comfortable", label: "Comfortable", widthRatio: 0.74, heightRatio: 0.76,
+        aspectRatio: nil)
     public static let wide = WindowSizePreset(
-        label: "Wide", widthRatio: 0.69, heightRatio: 0.59, aspectRatio: nil)
+        id: "wide", label: "Wide", widthRatio: 0.69, heightRatio: 0.59, aspectRatio: nil)
     public static let tall = WindowSizePreset(
-        label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil)
+        id: "tall", label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil)
     public static let workspace = WindowSizePreset(
-        label: "Workspace", widthRatio: 0.82, heightRatio: 0.82, aspectRatio: nil)
+        id: "workspace", label: "Workspace", widthRatio: 0.86, heightRatio: 0.86,
+        aspectRatio: nil)
 
     public static let all = [compact, standard, comfortable, wide, tall, workspace]
+
+    public static func preset(withID id: String?) -> WindowSizePreset? {
+        guard let id else { return nil }
+        return all.first { $0.id == id }
+    }
 }
 
 public struct InitialWindowSizeRecommendation: Equatable {
     public let widthRatio: Double
     public let heightRatio: Double
     public let aspectRatio: Double?
+    public let sizePresetID: String?
 }
 
 public enum InitialWindowSizeRecommendations {
@@ -75,13 +82,16 @@ public enum InitialWindowSizeRecommendations {
         case .url, .shell:
             return InitialWindowSizeRecommendation(
                 widthRatio: 0.66, heightRatio: 0.66,
-                aspectRatio: Defaults.defaultWindowAspectRatio)
+                aspectRatio: Defaults.defaultWindowAspectRatio,
+                sizePresetID: WindowSizePresets.standard.id)
         case .app:
             return InitialWindowSizeRecommendation(
-                widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil)
+                widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil,
+                sizePresetID: WindowSizePresets.comfortable.id)
         case .finder:
             return InitialWindowSizeRecommendation(
-                widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+                widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil,
+                sizePresetID: WindowSizePresets.compact.id)
         }
     }
 }
@@ -92,6 +102,7 @@ public struct Site: Codable, Equatable {
     public var width: Int
     public var height: Int
     public var displayName: String?
+    public var windowSizePreset: String?
     public var launchType: LaunchType
     public var appPath: String?
     public var script: String?
@@ -100,7 +111,7 @@ public struct Site: Codable, Equatable {
 
     public init(
         name: String, url: String, width: Int, height: Int,
-        displayName: String? = nil, launchType: LaunchType = .url,
+        displayName: String? = nil, windowSizePreset: String? = nil, launchType: LaunchType = .url,
         appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
         shortcut: String? = nil
     ) {
@@ -109,6 +120,7 @@ public struct Site: Codable, Equatable {
         self.width = width
         self.height = height
         self.displayName = displayName
+        self.windowSizePreset = windowSizePreset
         self.launchType = launchType
         self.appPath = appPath
         self.script = script
@@ -117,7 +129,7 @@ public struct Site: Codable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case name, url, width, height, x, y, displayName, launchType
+        case name, url, width, height, x, y, displayName, windowSizePreset, launchType
         case appPath, script, folderPath, shortcut, hotkey
     }
 
@@ -131,6 +143,7 @@ public struct Site: Codable, Equatable {
         _ = try container.decodeIfPresent(Int.self, forKey: .x)
         _ = try container.decodeIfPresent(Int.self, forKey: .y)
         displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+        windowSizePreset = try container.decodeIfPresent(String.self, forKey: .windowSizePreset)
         launchType = try container.decodeIfPresent(LaunchType.self, forKey: .launchType) ?? .url
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
         script = try container.decodeIfPresent(String.self, forKey: .script)
@@ -149,6 +162,7 @@ public struct Site: Codable, Equatable {
         try container.encode(height, forKey: .height)
         // x, y는 더 이상 저장하지 않음 (항상 화면 중앙 배치)
         try container.encodeIfPresent(displayName, forKey: .displayName)
+        try container.encodeIfPresent(windowSizePreset, forKey: .windowSizePreset)
         try container.encode(launchType, forKey: .launchType)
         try container.encodeIfPresent(appPath, forKey: .appPath)
         try container.encodeIfPresent(script, forKey: .script)

@@ -452,32 +452,17 @@ struct SettingsView: View {
             }
             return .url
         }()
-        let defaultSize = defaultWindowSize(for: type)
+        let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
+        let defaultSize = windowSize(for: recommendation, on: builtInScreen ?? cursorScreen)
         vm.sites.append(
             Site(
                 name: Defaults.newSiteName, url: type == .url ? "https://" : "",
                 width: defaultSize.width, height: defaultSize.height,
+                windowSizePreset: recommendation.sizePresetID,
                 launchType: type))
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
-    }
-
-    private func defaultWindowSize(for type: LaunchType) -> (width: Int, height: Int) {
-        guard let screen = cursorScreen else {
-            return (Defaults.defaultWidth, Defaults.defaultHeight)
-        }
-        let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
-        let width = Int(
-            (screen.visibleFrame.width * CGFloat(recommendation.widthRatio)).rounded(.down))
-        let height: Int
-        if let aspectRatio = recommendation.aspectRatio {
-            height = Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down))
-        } else {
-            height = Int(
-                (screen.visibleFrame.height * CGFloat(recommendation.heightRatio)).rounded(.down))
-        }
-        return fittedWindowSize(width: width, height: height, on: screen)
     }
 
     private func removeSite() {
