@@ -7,10 +7,10 @@ import Foundation
 /// 최종 사용자 기기에 사용 이력(무엇을 언제 열었는지)이 쌓이는 것을 막기 위함.
 enum ResizeLogger {
     #if DEBUG
-    private static let logDir: String = {
-        let home = NSHomeDirectory()
-        return (home as NSString).appendingPathComponent("Library/Logs/Chap")
-    }()
+        private static let logDir: String = {
+            let home = NSHomeDirectory()
+            return (home as NSString).appendingPathComponent("Library/Logs/Chap")
+        }()
     #endif
 
     /// 리사이즈 결과 기록 (DEBUG 빌드에서만 동작, 릴리스에서는 no-op)
@@ -31,32 +31,33 @@ enum ResizeLogger {
         size: String = ""
     ) {
         #if DEBUG
-        // 로그 디렉토리 생성
-        try? FileManager.default.createDirectory(atPath: logDir, withIntermediateDirectories: true)
+            // 로그 디렉토리 생성
+            try? FileManager.default.createDirectory(
+                atPath: logDir, withIntermediateDirectories: true)
 
-        // 일별 파일명
-        let dateStr = ISO8601DateFormatter.string(
-            from: Date(), timeZone: .current, formatOptions: [.withFullDate])
-        let filePath = (logDir as NSString).appendingPathComponent("resize_\(dateStr).csv")
+            // 일별 파일명
+            let dateStr = ISO8601DateFormatter.string(
+                from: Date(), timeZone: .current, formatOptions: [.withFullDate])
+            let filePath = (logDir as NSString).appendingPathComponent("resize_\(dateStr).csv")
 
-        // 헤더 (파일 없으면 추가)
-        if !FileManager.default.fileExists(atPath: filePath) {
-            let header =
-                "timestamp,site,type,app_state,attempt,delay,total_time,result,window_count,display,size\n"
-            try? header.write(toFile: filePath, atomically: true, encoding: .utf8)
-        }
+            // 헤더 (파일 없으면 추가)
+            if !FileManager.default.fileExists(atPath: filePath) {
+                let header =
+                    "timestamp,site,type,app_state,attempt,delay,total_time,result,window_count,display,size\n"
+                try? header.write(toFile: filePath, atomically: true, encoding: .utf8)
+            }
 
-        // CSV 행 추가
-        let timestamp = ISO8601DateFormatter.string(
-            from: Date(), timeZone: .current, formatOptions: [.withInternetDateTime])
-        let row =
-            "\(timestamp),\(site),\(type),\(appState),\(attempt),\(String(format: "%.2f", delay)),\(String(format: "%.2f", totalTime)),\(result),\(windowCount),\(display),\(size)\n"
+            // CSV 행 추가
+            let timestamp = ISO8601DateFormatter.string(
+                from: Date(), timeZone: .current, formatOptions: [.withInternetDateTime])
+            let row =
+                "\(timestamp),\(site),\(type),\(appState),\(attempt),\(String(format: "%.2f", delay)),\(String(format: "%.2f", totalTime)),\(result),\(windowCount),\(display),\(size)\n"
 
-        if let handle = FileHandle(forWritingAtPath: filePath) {
-            handle.seekToEndOfFile()
-            handle.write(row.data(using: .utf8) ?? Data())
-            handle.closeFile()
-        }
+            if let handle = FileHandle(forWritingAtPath: filePath) {
+                handle.seekToEndOfFile()
+                handle.write(row.data(using: .utf8) ?? Data())
+                handle.closeFile()
+            }
         #endif
     }
 }

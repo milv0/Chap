@@ -40,7 +40,13 @@ Tests/ChapCoreTests/               ← 유닛 테스트
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
 ├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트
-└── .harness/                      ← AI 어시스턴트 규칙
+├── AGENTS.md                      ← Codex 지침 (→ .harness/codex/AGENTS.md)
+└── .harness/                      ← AI 어시스턴트 하네스
+    ├── shared/rules/              ← 공통 규칙 (Swift, 테스트, 커밋, 아키텍처)
+    ├── shared/hooks/              ← 공통 훅 (swift-format.sh)
+    ├── claude/                    ← Claude Code 지침/설정/명령
+    ├── kiro/                      ← Kiro steering/훅
+    └── codex/                     ← Codex AGENTS.md 원본
 
 Runtime:
 ├── ~/.chap.json                   ← 사용자 설정 파일

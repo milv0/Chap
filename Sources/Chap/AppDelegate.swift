@@ -250,11 +250,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     func showWelcomeWindow() {
         let window = NSWindow(contentViewController: NSHostingController(rootView: Text("")))
         // [weak window] 캡처로 window → view → closure → window 순환 참조 방지
-        let welcomeView = WelcomeView(onOpenSettings: { [weak self] in
-            self?.openSettings()
-        }, onClose: { [weak window] in
-            window?.close()
-        })
+        let welcomeView = WelcomeView(
+            onOpenSettings: { [weak self] in
+                self?.openSettings()
+            },
+            onClose: { [weak window] in
+                window?.close()
+            })
         window.contentViewController = NSHostingController(rootView: welcomeView)
         window.title = ""
         window.titlebarAppearsTransparent = true
@@ -287,15 +289,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     /// 파일 원본에 해당 키가 있으면 한 번 덮어써서 정리한다.
     func stripLegacyConfigFields() {
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-              let rawJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let sites = rawJSON["sites"] as? [[String: Any]]
+            let rawJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let sites = rawJSON["sites"] as? [[String: Any]]
         else { return }
 
         // 레거시 키가 하나라도 존재하면 re-save
         let legacyKeys: Set<String> = ["x", "y", "hotkey"]
-        let hasLegacy = sites.contains { site in
-            !legacyKeys.isDisjoint(with: site.keys)
-        } || rawJSON.keys.contains("showGhostWindow") || rawJSON.keys.contains("runInBackground")
+        let hasLegacy =
+            sites.contains { site in
+                !legacyKeys.isDisjoint(with: site.keys)
+            } || rawJSON.keys.contains("showGhostWindow")
+            || rawJSON.keys.contains("runInBackground")
 
         guard hasLegacy else { return }
 
@@ -309,7 +313,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             try cleanData.write(to: URL(fileURLWithPath: configPath), options: .atomic)
             Log.config.info("Stripped legacy fields from config file")
         } catch {
-            Log.config.error("Failed to strip legacy fields: \(error.localizedDescription, privacy: .public)")
+            Log.config.error(
+                "Failed to strip legacy fields: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -328,7 +333,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
             } catch {
                 Log.config.error(
-                    "Failed to write default config: \(error.localizedDescription, privacy: .public)")
+                    "Failed to write default config: \(error.localizedDescription, privacy: .public)"
+                )
             }
         }
     }
@@ -346,7 +352,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             DispatchQueue.main.async {
                 let alert = NSAlert()
                 alert.messageText = "Config file is corrupted"
-                alert.informativeText = "~/.chap.json을 읽을 수 없어 기본 설정을 사용합니다.\n백업 파일: ~/.chap.json.bak\n\nError: \(error.localizedDescription)"
+                alert.informativeText =
+                    "~/.chap.json을 읽을 수 없어 기본 설정을 사용합니다.\n백업 파일: ~/.chap.json.bak\n\nError: \(error.localizedDescription)"
                 alert.alertStyle = .warning
                 alert.runModal()
             }
@@ -356,9 +363,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     func buildMenu() {
         let menu = NSMenu()
+        let launchTypeOrder = Dictionary(
+            uniqueKeysWithValues: LaunchType.allCases.enumerated().map { ($1, $0) })
         let sortedSites = config.sites.enumerated().sorted {
-            LaunchType.allCases.firstIndex(of: $0.element.launchType)!
-                < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
+            launchTypeOrder[$0.element.launchType, default: Int.max]
+                < launchTypeOrder[$1.element.launchType, default: Int.max]
         }
         var lastType: LaunchType? = nil
         for (i, site) in sortedSites {
@@ -525,10 +534,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
                 try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
             } catch {
-                Log.config.error("Failed to save config: \(error.localizedDescription, privacy: .public)")
+                Log.config.error(
+                    "Failed to save config: \(error.localizedDescription, privacy: .public)")
                 LauncherUtils.showAlert(
                     message: "Failed to save settings",
-                    info: "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)")
+                    info:
+                        "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)"
+                )
                 return false
             }
             self.config = newConfig
@@ -663,7 +675,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
         } catch {
             Log.app.error(
-                "Login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+                "Login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 }

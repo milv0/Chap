@@ -103,39 +103,25 @@ Arrange-Act-Assert (AAA) 구조. 구간 분리는 빈 줄:
 
 ## 8. Test Execution
 
-SPM (`swift test`) 사용:
+XcodeGen/Xcode 프로젝트 기준으로 실행:
 
 ```bash
-swift test                    # 전체 테스트 실행
-swift test --filter ModelTests  # 특정 Suite 만 실행
+xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" test
 ```
 
-`Package.swift` 구조:
-```swift
-// swift-tools-version: 5.9
-import PackageDescription
-
-let package = Package(
-    name: "Chap",
-    platforms: [.macOS(.v14)],
-    targets: [
-        .target(name: "ChapCore", path: "Sources", exclude: ["main.swift"]),
-        .testTarget(name: "ChapTests", dependencies: ["ChapCore"], path: "Tests"),
-        .executableTarget(name: "Chap", dependencies: ["ChapCore"], path: "Sources", sources: ["main.swift"]),
-    ]
-)
-```
+현재 저장소에는 `Package.swift`가 없다. `swift test`를 사용하지 말고
+`Chap.xcodeproj`의 `Chap` scheme을 테스트한다.
 
 ## 9. Testability를 위한 코드 분리
 
-테스트 가능하게 하려면 단일 파일에서 추출:
-- `Sources/Models.swift` — `Site`, `Config`
-- `Sources/SettingsViewModel.swift` — `SettingsViewModel`
-- `Sources/Validation.swift` — `isValidDomain(_:)`, `chromeBoundsString(...)`
-- `Sources/Chap.swift` — AppDelegate, UI, entry point (테스트 대상 아님)
+테스트 가능하게 하려면 앱 타겟 의존성이 적은 로직을 `Sources/ChapCore/`로 둔다:
+- `Sources/ChapCore/Models.swift` — `Site`, `Config`, `LaunchType`, `Defaults`
+- `Sources/ChapCore/SettingsViewModel.swift` — `SettingsViewModel`
+- `Sources/ChapCore/Validation.swift` — `isValidDomain(_:)`, `targetScreen(for:)`, `centeredBounds(for:on:)`
+- `Sources/Chap/` — AppDelegate, launchers, SwiftUI views (직접 테스트 대상 아님)
 
 순수 로직을 free function 또는 static method 로 추출하면 의존성 없이 테스트 가능:
 ```swift
 func isValidDomain(_ domain: String) -> Bool { ... }
-func chromeBoundsString(x: Int, y: Int, width: Int, height: Int) -> String { ... }
+func centeredBounds(for site: Site, on screen: NSScreen) -> (left: Int, top: Int, right: Int, bottom: Int) { ... }
 ```

@@ -44,12 +44,12 @@
 
 | 경로/영역 | scope |
 |-----------|-------|
-| `Chap.swift` (AppDelegate, 핵심 로직) | `app` |
-| `Chap.swift` (SwiftUI 뷰) | `ui` |
-| `Chap.swift` (Config/Site 모델) | `model` |
-| `build.sh`, `install.sh` | `build` |
-| `docs/`, `index.html` | `docs` |
-| `.claude/`, `CLAUDE.md` | `claude` |
+| `Sources/Chap/AppDelegate.swift`, `Sources/Chap/Launchers/` | `app` |
+| `Sources/Chap/Views/` | `ui` |
+| `Sources/ChapCore/Models.swift`, `Sources/ChapCore/Validation.swift`, `Sources/ChapCore/SettingsViewModel.swift` | `model` |
+| `project.yml`, XcodeGen/Xcode project settings | `build` |
+| `README.md`, `ARCHITECTURE.txt`, docs | `docs` |
+| `.harness/`, `.claude`, `.kiro`, `AGENTS.md` | `claude` |
 | 여러 영역 광범위 | `repo` |
 
 ### 2.3 summary 규칙

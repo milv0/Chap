@@ -35,15 +35,21 @@ enum ShellLauncher {
                 if process.terminationStatus != 0 {
                     let errorStr = String(data: outputData, encoding: .utf8) ?? "Unknown error"
                     Log.launcher.error(
-                        "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)")
-                    LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                        "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)"
+                    )
+                    LauncherUtils.showAlert(
+                        message: "Script failed (exit \(process.terminationStatus))", info: errorStr
+                    )
                 } else {
-                    Log.launcher.notice("Shell script succeeded for \(site.name, privacy: .private)")
+                    Log.launcher.notice(
+                        "Shell script succeeded for \(site.name, privacy: .private)")
                 }
             } catch {
                 Log.launcher.error(
-                    "Failed to execute script for \(site.name, privacy: .private): \(error.localizedDescription, privacy: .public)")
-                LauncherUtils.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
+                    "Failed to execute script for \(site.name, privacy: .private): \(error.localizedDescription, privacy: .public)"
+                )
+                LauncherUtils.showAlert(
+                    message: "Failed to execute script.", info: error.localizedDescription)
             }
         }
     }

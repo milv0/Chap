@@ -31,7 +31,9 @@ public func targetScreen(for site: Site) -> NSScreen? {
 /// 좌상단 원점(AppleScript/글로벌) 좌표계의 bounds를
 /// NSWindow 배치에 쓰는 좌하단 원점 NSRect로 변환한다.
 /// 주 화면(screens[0])이 글로벌 원점을 정의한다.
-public func appKitFrame(fromTopLeft bounds: (left: Int, top: Int, right: Int, bottom: Int)) -> NSRect {
+public func appKitFrame(fromTopLeft bounds: (left: Int, top: Int, right: Int, bottom: Int))
+    -> NSRect
+{
     let primaryH = NSScreen.screens.first?.frame.height ?? 0
     let width = CGFloat(bounds.right - bounds.left)
     let height = CGFloat(bounds.bottom - bounds.top)
@@ -42,27 +44,43 @@ public func appKitFrame(fromTopLeft bounds: (left: Int, top: Int, right: Int, bo
         height: height)
 }
 
+/// Scales a requested window size down to fit a screen's visible area while
+/// preserving its aspect ratio. NSScreen frame values are AppKit points, not
+/// physical pixels, so Retina displays can have smaller usable sizes than
+/// names like "Full HD" imply.
+public func fittedWindowSize(width: Int, height: Int, on screen: NSScreen) -> (
+    width: Int, height: Int
+) {
+    let requestedWidth = max(100, width)
+    let requestedHeight = max(100, height)
+    let maxWidth = max(100, Int(screen.visibleFrame.width))
+    let maxHeight = max(100, Int(screen.visibleFrame.height))
+    let scale = min(
+        1.0,
+        CGFloat(maxWidth) / CGFloat(requestedWidth),
+        CGFloat(maxHeight) / CGFloat(requestedHeight)
+    )
+    return (
+        max(100, Int((CGFloat(requestedWidth) * scale).rounded(.down))),
+        max(100, Int((CGFloat(requestedHeight) * scale).rounded(.down)))
+    )
+}
+
 /// Calculate AppleScript-compatible bounds (top-left origin) for centering a window on a given screen.
-/// macOS NSScreen uses bottom-left origin; AppleScript uses top-left origin.
+/// NSScreen uses bottom-left AppKit screen coordinates; AX/AppleScript bounds use top-left coordinates.
 /// The primary screen (screens[0]) defines the global coordinate origin.
 ///
-/// Width/height are clamped to the target screen's visibleFrame so the centered
-/// window fully fits within that screen. Without clamping, a too-tall window
-/// produces a negative `top` which macOS interprets as belonging to the screen
-/// above (e.g. an external monitor stacked above the built-in display), causing
-/// the window to launch on the wrong display.
+/// The window is fitted and centered in `visibleFrame`, matching AppKit's
+/// documented visible screen rect that excludes the menu bar and Dock.
 public func centeredBounds(for site: Site, on screen: NSScreen) -> (
     left: Int, top: Int, right: Int, bottom: Int
 ) {
     let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
-    let origin = screen.frame.origin
-    let screenOffsetX = Int(origin.x)
-    let screenOffsetY = Int(primaryH - origin.y - screen.frame.height)
-    let visW = Int(screen.visibleFrame.width)
-    let visH = Int(screen.visibleFrame.height)
-    let bw = min(site.width, visW)
-    let bh = min(site.height, visH)
-    let bx = screenOffsetX + (Int(screen.frame.width) - bw) / 2
-    let by = screenOffsetY + (Int(screen.frame.height) - bh) / 2
+    let visibleFrame = screen.visibleFrame
+    let fittedSize = fittedWindowSize(width: site.width, height: site.height, on: screen)
+    let bw = fittedSize.width
+    let bh = fittedSize.height
+    let bx = Int(visibleFrame.minX + (visibleFrame.width - CGFloat(bw)) / 2)
+    let by = Int(primaryH - visibleFrame.maxY + (visibleFrame.height - CGFloat(bh)) / 2)
     return (bx, by, bx + bw, by + bh)
 }

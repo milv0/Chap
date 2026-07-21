@@ -115,7 +115,9 @@ struct SettingsView: View {
                     ForEach(LaunchType.allCases, id: \.self) { type in
                         let indices = vm.sites.indices.filter {
                             vm.sites[$0].launchType == type
-                            && (searchText.isEmpty || vm.sites[$0].name.localizedCaseInsensitiveContains(searchText))
+                                && (searchText.isEmpty
+                                    || vm.sites[$0].name.localizedCaseInsensitiveContains(
+                                        searchText))
                         }
                         if !indices.isEmpty {
                             Text(typeSectionTitle(type))
@@ -186,11 +188,14 @@ struct SettingsView: View {
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let idx = selectedIndex, idx < vm.sites.count {
-                SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew, onSave: { save() })
-                    .onTapGesture { isEditing = true }
-                    .onChange(of: vm.sites) { _, _ in
-                        if isEditing { save() }
-                    }
+                SiteConfigView(
+                    site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
+                    onSave: { save() }
+                )
+                .onTapGesture { isEditing = true }
+                .onChange(of: vm.sites) { _, _ in
+                    if isEditing { save() }
+                }
             } else {
                 Spacer()
                 VStack(spacing: 8) {
@@ -303,7 +308,8 @@ struct SettingsView: View {
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
                         guideRow(icon: "cursorarrow.click.2", text: "Click menubar icon to select")
-                        guideRow(icon: "keyboard", text: "⌥. menu, ⌥(custom key) launch, ⌥, settings")
+                        guideRow(
+                            icon: "keyboard", text: "⌥. menu, ⌥(custom key) launch, ⌥, settings")
                         guideRow(
                             icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
                     }
@@ -317,7 +323,9 @@ struct SettingsView: View {
                             .foregroundColor(DS.textPrimary)
                         guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Shortcut)")
                         guideRow(icon: "display", text: "Choose display + size — always centered")
-                        guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save, ⌘N to add")
+                        guideRow(
+                            icon: "cursorarrow.click",
+                            text: "Click to edit, Enter or ⌘S to save, ⌘N to add")
                         guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -411,7 +419,8 @@ struct SettingsView: View {
         }
         guard !displayOrder.isEmpty else { return }
         guard let current = selectedIndex,
-              let pos = displayOrder.firstIndex(of: current) else {
+            let pos = displayOrder.firstIndex(of: current)
+        else {
             selectedIndex = displayOrder.first
             return
         }
@@ -565,7 +574,11 @@ struct SettingsView: View {
                 return
             }
         }
-        let saved = vm.onSave?(SettingsPayload(sites: vm.sites, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin)) ?? true
+        let saved =
+            vm.onSave?(
+                SettingsPayload(
+                    sites: vm.sites, showGuideWindow: vm.showGuideWindow,
+                    launchAtLogin: vm.launchAtLogin)) ?? true
         if saved {
             vm.markSaved()
         }
@@ -575,7 +588,11 @@ struct SettingsView: View {
     /// 편집 중인 사이트의 검증 상태와 무관하게 항상 저장되도록
     /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
     private func saveGlobals() {
-        let saved = vm.onSave?(SettingsPayload(sites: vm.originalSites, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin)) ?? true
+        let saved =
+            vm.onSave?(
+                SettingsPayload(
+                    sites: vm.originalSites, showGuideWindow: vm.showGuideWindow,
+                    launchAtLogin: vm.launchAtLogin)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin
@@ -589,9 +606,13 @@ struct SettingsView: View {
             case .url:
                 if !site.url.isEmpty && site.url == other.url { return other.name }
             case .app:
-                if let path = site.appPath, !path.isEmpty, path == other.appPath { return other.name }
+                if let path = site.appPath, !path.isEmpty, path == other.appPath {
+                    return other.name
+                }
             case .finder:
-                if let path = site.folderPath, !path.isEmpty, path == other.folderPath { return other.name }
+                if let path = site.folderPath, !path.isEmpty, path == other.folderPath {
+                    return other.name
+                }
             case .shell:
                 break
             }
@@ -605,11 +626,11 @@ struct SettingsView: View {
         case .url:
             if site.url.isEmpty || site.url == "https://" { return "URL" }
         case .app:
-            if site.appPath == nil || site.appPath!.isEmpty { return "App path" }
+            if site.appPath?.isEmpty ?? true { return "App path" }
         case .finder:
-            if site.folderPath == nil || site.folderPath!.isEmpty { return "Folder path" }
+            if site.folderPath?.isEmpty ?? true { return "Folder path" }
         case .shell:
-            if site.script == nil || site.script!.isEmpty { return "Script" }
+            if site.script?.isEmpty ?? true { return "Script" }
         }
         return nil
     }
@@ -618,7 +639,8 @@ struct SettingsView: View {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "chap.json"
-        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        panel.directoryURL =
+            FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
         // 디스크 파일이 아닌 현재 편집 상태를 내보냄 (저장 안 된 변경분 포함)
@@ -686,7 +708,10 @@ struct SettingsView: View {
             let bakPath = Defaults.configPath + ".bak"
             try? FileManager.default.removeItem(atPath: bakPath)
             try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
-            try data.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .prettyPrinted
+            let cleanData = try encoder.encode(config)
+            try cleanData.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
             vm.sites = config.sites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin

@@ -70,7 +70,10 @@ struct SettingsViewModelTests {
             Site(name: "Added", url: "https://added.com", width: 300, height: 200))
         vm.showGuideWindow = false
         vm.launchAtLogin = true
-        _ = vm.onSave?(SettingsPayload(sites: vm.sites, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin))
+        _ = vm.onSave?(
+            SettingsPayload(
+                sites: vm.sites, showGuideWindow: vm.showGuideWindow,
+                launchAtLogin: vm.launchAtLogin))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)

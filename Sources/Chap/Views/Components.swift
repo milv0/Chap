@@ -103,8 +103,9 @@ struct SidebarDropDelegate: DropDelegate {
             guard let str = str, let from = Int(str) else { return }
             DispatchQueue.main.async {
                 guard from != self.currentIndex,
-                      from < self.sites.count, self.currentIndex < self.sites.count,
-                      self.sites[from].launchType == self.sites[self.currentIndex].launchType else { return }
+                    from < self.sites.count, self.currentIndex < self.sites.count,
+                    self.sites[from].launchType == self.sites[self.currentIndex].launchType
+                else { return }
                 let site = self.sites.remove(at: from)
                 self.sites.insert(site, at: self.currentIndex)
                 self.selectedIndex = self.currentIndex
@@ -239,12 +240,14 @@ struct MinimapSwiftUI: View {
                     displayName.flatMap { name in screens.first { $0.localizedName == name } }
                     ?? NSScreen.main ?? screens.first
                 if let targetScreen {
-                    let tFrame = targetScreen.frame
-                    let screenLocalX = (tFrame.origin.x - minX) * scale
-                    let screenLocalY = (maxY - tFrame.origin.y - tFrame.height) * scale
+                    let visibleFrame = targetScreen.visibleFrame
+                    let visibleLocalX = (visibleFrame.origin.x - minX) * scale
+                    let visibleLocalY = (maxY - visibleFrame.origin.y - visibleFrame.height) * scale
 
-                    let winX = screenLocalX + (tFrame.width * scale - CGFloat(width) * scale) / 2
-                    let winY = screenLocalY + (tFrame.height * scale - CGFloat(height) * scale) / 2
+                    let winX =
+                        visibleLocalX + (visibleFrame.width * scale - CGFloat(width) * scale) / 2
+                    let winY =
+                        visibleLocalY + (visibleFrame.height * scale - CGFloat(height) * scale) / 2
 
                     RoundedRectangle(cornerRadius: 2)
                         .fill(DS.accent.opacity(0.25))

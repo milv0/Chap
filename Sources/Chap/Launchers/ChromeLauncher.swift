@@ -55,13 +55,15 @@ enum ChromeLauncher {
         let windowsBefore: [AXUIElement] = chromeRunning ? axWindows(pid: chromePid) : []
 
         Log.launcher.info(
-            "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)")
+            "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
+        )
 
         // Chrome --app 모드로 실행
         do {
             try runChromeApp(url: site.url)
         } catch {
-            Log.launcher.error("Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
+            Log.launcher.error(
+                "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
             LauncherUtils.showAlert(
                 message: "Failed to launch Chrome.", info: error.localizedDescription)
             onComplete?()
@@ -90,10 +92,12 @@ enum ChromeLauncher {
             let result = success ? "success" : "failed"
             if success {
                 Log.launcher.notice(
-                    "Chrome AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                    "Chrome AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
+                )
             } else {
                 Log.launcher.error(
-                    "Chrome AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s")
+                    "Chrome AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
+                )
             }
             ResizeLogger.log(
                 site: site.name, type: "url",
@@ -114,16 +118,19 @@ enum ChromeLauncher {
         chromeRunning: Bool
     ) -> Bool {
         let maxAttempts = chromeRunning ? 120 : 100
-        let interval: useconds_t = chromeRunning ? 50_000 : 100_000  // 50ms / 100ms (running 6s / cold 10s)
+        // 50ms / 100ms polling gives running/cold timeouts of 6s / 10s.
+        let interval: useconds_t = chromeRunning ? 50_000 : 100_000
 
         for _ in 0..<maxAttempts {
             let pid: pid_t
             if chromeRunning {
                 pid = cachedPid
             } else {
-                guard let app = NSWorkspace.shared.runningApplications.first(where: {
-                    $0.bundleIdentifier == bundleID
-                }) else {
+                guard
+                    let app = NSWorkspace.shared.runningApplications.first(where: {
+                        $0.bundleIdentifier == bundleID
+                    })
+                else {
                     usleep(interval)
                     continue
                 }

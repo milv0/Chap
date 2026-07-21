@@ -4,7 +4,8 @@ public enum Defaults {
     /// 앱 번들의 CFBundleShortVersionString에서 읽음 (About 창 표시용).
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
-        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "1.0.0"
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
+        ?? "1.0.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -72,7 +73,8 @@ public struct Site: Codable, Equatable {
         script = try container.decodeIfPresent(String.self, forKey: .script)
         folderPath = try container.decodeIfPresent(String.self, forKey: .folderPath)
         // "shortcut" 우선, 없으면 "hotkey"에서 마이그레이션
-        shortcut = try container.decodeIfPresent(String.self, forKey: .shortcut)
+        shortcut =
+            try container.decodeIfPresent(String.self, forKey: .shortcut)
             ?? container.decodeIfPresent(String.self, forKey: .hotkey)
     }
 
@@ -114,7 +116,8 @@ public struct Config: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         // "showGuideWindow" 우선, 없으면 "showGhostWindow"에서 마이그레이션
-        showGuideWindow = try container.decodeIfPresent(Bool.self, forKey: .showGuideWindow)
+        showGuideWindow =
+            try container.decodeIfPresent(Bool.self, forKey: .showGuideWindow)
             ?? container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         sites = try container.decode([Site].self, forKey: .sites)
