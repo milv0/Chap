@@ -17,7 +17,7 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "plus.circle.fill",
                     title: "Add Sites",
-                    description: "Register sites with name, URL, and window size"
+                    description: "Register sites, apps, folders, and scripts"
                 )
                 OnboardingCard(
                     icon: "keyboard",
@@ -27,7 +27,7 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "display",
                     title: "Choose Display",
-                    description: "Pick a screen and size — always centered"
+                    description: "Pick Auto or a display, then choose a size preset"
                 )
                 OnboardingCard(
                     icon: "bolt.fill",

@@ -13,7 +13,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
 - **Multi-Monitor** — Target a specific display or auto-detect cursor screen
 - **Auto-Center** — Windows always open centered on the target display
-- **Size Presets** — Tiny to Full, or set custom width/height
+- **Size Presets** — Compact, Standard, Comfortable, Wide, Tall, Workspace, or Custom
 - **Display Minimap** — Visual preview of window placement across all monitors
 - **Global Hotkeys** — `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
@@ -71,6 +71,7 @@ Stored at `~/.chap.json`:
       "height": 600,
       "launchType": "url",
       "displayName": "Built-in Retina Display",
+      "windowSizePreset": "standard",
       "shortcut": "G"
     },
     {
@@ -79,13 +80,14 @@ Stored at `~/.chap.json`:
       "width": 1000,
       "height": 400,
       "launchType": "finder",
+      "windowSizePreset": "compact",
       "folderPath": "~/Downloads"
     }
   ]
 }
 ```
 
-Windows are always centered on the target display automatically. Position is calculated at launch time based on window size and screen geometry.
+Windows are always centered on the target display automatically. If `displayName` is omitted, Chap opens on the cursor screen. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
 
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 

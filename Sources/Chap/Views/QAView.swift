@@ -65,7 +65,7 @@ struct QAView: View {
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
-                    "설정의 Display Preview에서 원하는 모니터를 클릭하세요. 다시 클릭하면 Auto(커서 위치 기반)로 돌아갑니다. 또는 Display 드롭다운에서 선택할 수도 있습니다."
+                    "설정의 Display Preview에서 원하는 모니터를 클릭하세요. 다시 클릭하면 Auto로 돌아갑니다. Auto는 마우스 커서가 있는 화면에 열립니다."
                 ),
                 (
                     "같은 URL/앱을 두 번 등록하면?",
@@ -108,6 +108,18 @@ struct QAView: View {
                 (
                     "멀티 모니터에서 어떤 화면에 열리나요?",
                     "사이트별로 디스플레이를 지정할 수 있습니다. 지정 안 하면(Auto) 마우스 커서가 있는 화면에 열립니다."
+                ),
+                (
+                    "Size Preset은 어떻게 동작하나요?",
+                    "Compact, Standard, Comfortable, Wide, Tall, Workspace 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
+                ),
+                (
+                    "Auto에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
+                    "Auto는 창을 커서가 있는 화면에 띄우지만, 프리셋 크기는 항상 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. 특정 디스플레이를 직접 선택하면 그 디스플레이 기준으로 계산합니다."
+                ),
+                (
+                    "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
+                    "URL과 Shell은 Standard, App은 Comfortable, Finder는 Compact로 시작합니다. 이후 사용자가 바꿔 저장한 프리셋은 앱을 재시작해도 그대로 유지됩니다."
                 ),
                 (
                     "Guide Window가 뭔가요?",
@@ -196,7 +208,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I open on a specific monitor?",
-                    "Click the desired monitor in the Display Preview minimap. Click again to return to Auto (cursor-based). You can also use the Display dropdown."
+                    "Click the desired monitor in the Display Preview minimap. Click again to return to Auto. Auto opens on the screen where your cursor is."
                 ),
                 (
                     "What if I register the same URL/app twice?",
@@ -239,6 +251,18 @@ struct QAView: View {
                 (
                     "Which screen does it open on with multiple monitors?",
                     "You can assign a display per site. If not set (Auto), it opens on the screen where your cursor is."
+                ),
+                (
+                    "How do Size Presets work?",
+                    "Choose Compact, Standard, Comfortable, Wide, Tall, or Workspace to recalculate the size for the screen at launch time. Editing Width or Height switches the item to Custom and saves that exact size."
+                ),
+                (
+                    "What size reference does Auto use on external monitors?",
+                    "Auto opens on the cursor screen, but preset sizes are calculated from the built-in display first, then fitted to the target screen. If you select a specific display, that display is used as the preset reference."
+                ),
+                (
+                    "Which preset is used for new items?",
+                    "URL and Shell start with Standard, App starts with Comfortable, and Finder starts with Compact. After you save a different preset, it stays with that item across app restarts."
                 ),
                 (
                     "What is the Guide Window?",

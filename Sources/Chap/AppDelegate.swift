@@ -402,6 +402,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         menu.addItem(settings)
         let qa = NSMenuItem(
             title: "Q&A", action: #selector(openQA), keyEquivalent: "")
+        qa.image = NSImage(
+            systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
         qa.target = self
         menu.addItem(qa)
         let bug = NSMenuItem(
@@ -411,6 +413,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         menu.addItem(bug)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
+        about.image = NSImage(
+            systemSymbolName: "info.circle", accessibilityDescription: "About Chap")
         about.target = self
         menu.addItem(about)
         menu.addItem(.separator())

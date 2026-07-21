@@ -76,7 +76,7 @@ Site 모델 필드:
 
 - 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
 - URL → Chrome --app 모드 + AX API 리사이즈
-- App → 실행 + AXObserver(kAXWindowCreated) + AX API 리사이즈
+- App → 실행 + AXObserver(kAXWindowCreated) + AX API 리사이즈 (Office 비표준 리사이즈 가능 창 포함)
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + 미니맵 클릭으로 디스플레이 선택 (재클릭 시 Auto)
@@ -121,7 +121,7 @@ Site 모델 필드:
 ## 런처 타입별 동작
 
   URL:     Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
-  App:     NSWorkspace.openApplication → AXObserver(kAXWindowCreated) → 표준 윈도우 중앙정렬
+  App:     NSWorkspace.openApplication → AXObserver(kAXWindowCreated) → 리사이즈 가능 윈도우 중앙정렬
   Finder:  단일 AppleScript로 열기+리사이즈 동시 (딜레이 없음)
   Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
@@ -141,10 +141,11 @@ Chrome 윈도우 감지 방식:
 
 App 윈도우 감지 방식 (AXObserver):
   1. AXObserverCreate로 kAXWindowCreatedNotification 구독
-  2. 콜백에서 subrole 체크 → 표준 윈도우만 중앙정렬
+  2. 콜백에서 subrole 체크 → 표준 윈도우 중앙정렬
   3. 이미 떠 있는 윈도우도 100ms 간격 재스캔으로 정렬
-  4. 첫 정렬 후 grace(3초) 동안 새 창이 없으면 종료
-  5. AXObserver 생성 실패 시 focusedWindow 폴링 폴백
+  4. Office 앱은 리사이즈 가능한 비표준 AXWindow도 중앙정렬
+  5. 첫 정렬 후 grace(3초) 동안 새 창이 없으면 종료
+  6. AXObserver 생성 실패 시 focusedWindow 폴링 폴백
 
 
 ## 사용 API / 프레임워크

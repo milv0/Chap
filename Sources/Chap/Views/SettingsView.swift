@@ -321,8 +321,8 @@ struct SettingsView: View {
                         Text("Settings  ⌘")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Shortcut)")
-                        guideRow(icon: "display", text: "Choose display + size — always centered")
+                        guideRow(icon: "plus.circle", text: "Add launchables with shortcuts")
+                        guideRow(icon: "display", text: "Choose display + size preset")
                         guideRow(
                             icon: "cursorarrow.click",
                             text: "Click to edit, Enter or ⌘S to save, ⌘N to add")
