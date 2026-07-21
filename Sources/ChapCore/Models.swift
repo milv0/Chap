@@ -54,7 +54,7 @@ public enum WindowSizePresets {
     public static let comfortable = WindowSizePreset(
         label: "Comfortable", widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil)
     public static let wide = WindowSizePreset(
-        label: "Wide", widthRatio: 0.66, heightRatio: 0.56, aspectRatio: nil)
+        label: "Wide", widthRatio: 0.69, heightRatio: 0.59, aspectRatio: nil)
     public static let tall = WindowSizePreset(
         label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil)
     public static let workspace = WindowSizePreset(

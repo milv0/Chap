@@ -6,10 +6,8 @@ struct SiteConfigView: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
     var isNew: Bool = false
-    @State private var sizeSelection = 0
     @State private var hoveredSizeSelection: Int?
     @State private var isSizePresetPopoverPresented = false
-    @State private var suppressOnChange = false
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
     @FocusState private var nameFieldFocused: Bool
@@ -19,11 +17,22 @@ struct SiteConfigView: View {
     private let sizePresets = WindowSizePresets.all
 
     private var selectedSizePreset: WindowSizePreset? {
-        sizePreset(for: sizeSelection)
+        sizePreset(for: detectedSizeSelection)
     }
 
     private var previewSizePreset: WindowSizePreset? {
-        sizePreset(for: hoveredSizeSelection ?? sizeSelection)
+        sizePreset(for: hoveredSizeSelection ?? detectedSizeSelection)
+    }
+
+    private var detectedSizeSelection: Int {
+        guard selectedPreviewScreen != nil else { return 0 }
+        for (index, preset) in sizePresets.enumerated() {
+            let presetSize = size(for: preset, on: selectedPreviewScreen)
+            if site.width == presetSize.width && site.height == presetSize.height {
+                return index + 1
+            }
+        }
+        return 0
     }
 
     private var previewWidth: Int {
@@ -139,7 +148,6 @@ struct SiteConfigView: View {
             .padding(.bottom, DS.padding)
         }
         .disabled(!isEditing)
-        .onAppear { detectSizePreset() }
     }
 
     // MARK: - URL Fields
@@ -231,10 +239,11 @@ struct SiteConfigView: View {
                         selection: Binding(
                             get: { site.displayName ?? "Auto" },
                             set: { newDisplay in
+                                let currentSizeSelection = detectedSizeSelection
                                 isEditing = true
                                 site.displayName = newDisplay == "Auto" ? nil : newDisplay
-                                if sizeSelection > 0 {
-                                    applySize(for: sizeSelection)
+                                if currentSizeSelection > 0 {
+                                    applySize(for: currentSizeSelection)
                                 }
                             }
                         )
@@ -265,7 +274,6 @@ struct SiteConfigView: View {
                             get: { "\(site.width)" },
                             set: { newValue in
                                 isEditing = true
-                                sizeSelection = 0
                                 site.width = max(100, Int(newValue) ?? site.width)
                             }),
                         placeholder: ""
@@ -278,7 +286,6 @@ struct SiteConfigView: View {
                             get: { "\(site.height)" },
                             set: { newValue in
                                 isEditing = true
-                                sizeSelection = 0
                                 site.height = max(100, Int(newValue) ?? site.height)
                             }),
                         placeholder: ""
@@ -336,17 +343,14 @@ struct SiteConfigView: View {
         .popover(isPresented: $isSizePresetPopoverPresented, arrowEdge: .bottom) {
             SizePresetPopover(
                 presets: sizePresets,
-                selectedSelection: sizeSelection,
+                selectedSelection: detectedSizeSelection,
                 hoveredSelection: $hoveredSizeSelection,
                 currentCustomSizeText: "\(site.width)x\(site.height) pt",
                 onSelect: { selection in
                     isEditing = true
-                    sizeSelection = selection
                     hoveredSizeSelection = nil
                     isSizePresetPopoverPresented = false
-                    if !suppressOnChange {
-                        applySize(for: selection)
-                    }
+                    applySize(for: selection)
                 }
             )
             .frame(width: dropdownControlWidth)
@@ -445,26 +449,6 @@ struct SiteConfigView: View {
         if site.name == Defaults.newSiteName || site.name.isEmpty {
             site.name = url.lastPathComponent
         }
-    }
-
-    private func detectSizePreset() {
-        DispatchQueue.main.async {
-            suppressOnChange = true
-            var detectedSize = 0
-            for (i, preset) in sizePresets.enumerated() {
-                let presetSize = size(for: preset, on: selectedPreviewScreen)
-                if site.width == presetSize.width && site.height == presetSize.height {
-                    detectedSize = i + 1
-                    break
-                }
-            }
-            sizeSelection = detectedSize
-            suppressOnChange = false
-        }
-    }
-
-    private func applySize() {
-        applySize(for: sizeSelection)
     }
 
     private func applySize(for selection: Int) {
