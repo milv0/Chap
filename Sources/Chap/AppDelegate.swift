@@ -556,7 +556,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Chap Settings"
-        window.setContentSize(NSSize(width: 700, height: 580))
+        window.setContentSize(NSSize(width: 770, height: 580))
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 400)

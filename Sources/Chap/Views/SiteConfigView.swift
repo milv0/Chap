@@ -14,31 +14,15 @@ struct SiteConfigView: View {
     @State private var reservedKeyChar = ""
     @FocusState private var nameFieldFocused: Bool
     var onSave: (() -> Void)?
+    private let dropdownControlWidth: CGFloat = 180
 
-    fileprivate struct SizePreset: Identifiable {
-        let label: String
-        let widthRatio: CGFloat
-        let heightRatio: CGFloat
+    private let sizePresets = WindowSizePresets.all
 
-        var id: String { label }
-    }
-
-    private let sizePresets: [SizePreset] = [
-        SizePreset(label: "Small 40%", widthRatio: 0.40, heightRatio: 0.40),
-        SizePreset(label: "Medium 55%", widthRatio: 0.55, heightRatio: 0.55),
-        SizePreset(label: "Large 70%", widthRatio: 0.70, heightRatio: 0.70),
-        SizePreset(label: "Max 90%", widthRatio: 0.90, heightRatio: 0.90),
-        SizePreset(label: "Wide 75x50%", widthRatio: 0.75, heightRatio: 0.50),
-        SizePreset(label: "Wide 90x55%", widthRatio: 0.90, heightRatio: 0.55),
-        SizePreset(label: "Tall 45x75%", widthRatio: 0.45, heightRatio: 0.75),
-        SizePreset(label: "Tall 55x85%", widthRatio: 0.55, heightRatio: 0.85),
-    ]
-
-    private var selectedSizePreset: SizePreset? {
+    private var selectedSizePreset: WindowSizePreset? {
         sizePreset(for: sizeSelection)
     }
 
-    private var previewSizePreset: SizePreset? {
+    private var previewSizePreset: WindowSizePreset? {
         sizePreset(for: hoveredSizeSelection ?? sizeSelection)
     }
 
@@ -247,9 +231,10 @@ struct SiteConfigView: View {
                         selection: Binding(
                             get: { site.displayName ?? "Auto" },
                             set: { newDisplay in
+                                isEditing = true
                                 site.displayName = newDisplay == "Auto" ? nil : newDisplay
                                 if sizeSelection > 0 {
-                                    DispatchQueue.main.async { applySize() }
+                                    applySize(for: sizeSelection)
                                 }
                             }
                         )
@@ -260,6 +245,7 @@ struct SiteConfigView: View {
                         }
                     }
                     .labelsHidden()
+                    .frame(width: dropdownControlWidth, alignment: .leading)
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -278,6 +264,7 @@ struct SiteConfigView: View {
                         text: Binding(
                             get: { "\(site.width)" },
                             set: { newValue in
+                                isEditing = true
                                 sizeSelection = 0
                                 site.width = max(100, Int(newValue) ?? site.width)
                             }),
@@ -290,6 +277,7 @@ struct SiteConfigView: View {
                         text: Binding(
                             get: { "\(site.height)" },
                             set: { newValue in
+                                isEditing = true
                                 sizeSelection = 0
                                 site.height = max(100, Int(newValue) ?? site.height)
                             }),
@@ -330,12 +318,13 @@ struct SiteConfigView: View {
                     .font(DS.bodyFont)
                     .foregroundColor(DS.textPrimary)
                     .lineLimit(1)
+                Spacer(minLength: 6)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(DS.textTertiary)
             }
             .padding(.horizontal, 8)
-            .frame(height: 26)
+            .frame(width: dropdownControlWidth, height: 26, alignment: .leading)
             .background(DS.surfaceBg)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(
@@ -344,7 +333,6 @@ struct SiteConfigView: View {
             )
         }
         .buttonStyle(.plain)
-        .fixedSize(horizontal: true, vertical: false)
         .popover(isPresented: $isSizePresetPopoverPresented, arrowEdge: .bottom) {
             SizePresetPopover(
                 presets: sizePresets,
@@ -352,15 +340,16 @@ struct SiteConfigView: View {
                 hoveredSelection: $hoveredSizeSelection,
                 currentCustomSizeText: "\(site.width)x\(site.height) pt",
                 onSelect: { selection in
+                    isEditing = true
                     sizeSelection = selection
                     hoveredSizeSelection = nil
                     isSizePresetPopoverPresented = false
                     if !suppressOnChange {
-                        DispatchQueue.main.async { applySize() }
+                        applySize(for: selection)
                     }
                 }
             )
-            .frame(width: 220)
+            .frame(width: dropdownControlWidth)
             .onDisappear { hoveredSizeSelection = nil }
         }
     }
@@ -475,31 +464,42 @@ struct SiteConfigView: View {
     }
 
     private func applySize() {
-        guard let preset = selectedSizePreset else { return }
-        let fittedSize = size(for: preset, on: selectedPreviewScreen)
-        DispatchQueue.main.async {
-            site.width = fittedSize.width
-            site.height = fittedSize.height
-        }
+        applySize(for: sizeSelection)
     }
 
-    private func sizePreset(for selection: Int) -> SizePreset? {
+    private func applySize(for selection: Int) {
+        guard let preset = sizePreset(for: selection) else { return }
+        let fittedSize = size(for: preset, on: selectedPreviewScreen)
+        site.width = fittedSize.width
+        site.height = fittedSize.height
+    }
+
+    private func sizePreset(for selection: Int) -> WindowSizePreset? {
         guard selection > 0, selection <= sizePresets.count else { return nil }
         return sizePresets[selection - 1]
     }
 
-    private func size(for preset: SizePreset, on screen: NSScreen?) -> (width: Int, height: Int) {
+    private func size(for preset: WindowSizePreset, on screen: NSScreen?) -> (
+        width: Int, height: Int
+    ) {
         guard let screen else {
             return (Defaults.defaultWidth, Defaults.defaultHeight)
         }
-        let width = max(100, Int((screen.visibleFrame.width * preset.widthRatio).rounded(.down)))
-        let height = max(100, Int((screen.visibleFrame.height * preset.heightRatio).rounded(.down)))
+        let width = max(
+            100, Int((screen.visibleFrame.width * CGFloat(preset.widthRatio)).rounded(.down)))
+        let height: Int
+        if let aspectRatio = preset.aspectRatio {
+            height = max(100, Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down)))
+        } else {
+            height = max(
+                100, Int((screen.visibleFrame.height * CGFloat(preset.heightRatio)).rounded(.down)))
+        }
         return fittedWindowSize(width: width, height: height, on: screen)
     }
 }
 
 private struct SizePresetPopover: View {
-    let presets: [SiteConfigView.SizePreset]
+    let presets: [WindowSizePreset]
     let selectedSelection: Int
     @Binding var hoveredSelection: Int?
     let currentCustomSizeText: String
@@ -514,7 +514,7 @@ private struct SizePresetPopover: View {
                     row(
                         selection: index + 1,
                         title: preset.label,
-                        sizeText: ""
+                        sizeText: preset.ratioText
                     )
                 }
             }
@@ -528,11 +528,17 @@ private struct SizePresetPopover: View {
         let isSelected = selectedSelection == selection
 
         return HStack(spacing: 6) {
-            Text(sizeText.isEmpty ? title : "\(title) (\(sizeText))")
+            Text(title)
                 .font(DS.bodyFont)
                 .foregroundColor(DS.textPrimary)
                 .lineLimit(1)
             Spacer()
+            if !sizeText.isEmpty {
+                Text(sizeText)
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textTertiary)
+                    .lineLimit(1)
+            }
             if isSelected {
                 Image(systemName: "checkmark")
                     .font(.system(size: 11, weight: .semibold))

@@ -85,7 +85,7 @@ Site 모델 필드:
 - 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
 - 필수 필드 미입력 시 저장 차단 (URL/앱경로/폴더/스크립트)
 - 사이트 검색 (사이드바 이름 필터)
-- 사이트 추가 시 Name 필드 자동 포커스
+- 사이트 추가 시 Name 필드 자동 포커스 + 타입별 초기 추천 크기(URL Standard 상당, App Comfortable 상당, Finder Compact 상당)
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
 - Config 자동 백업 (.bak) + 파싱 실패 시 기본값 복구
 - 레거시 필드 자동 정리 (x, y, hotkey, showGhostWindow, runInBackground)

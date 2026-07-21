@@ -12,6 +12,7 @@ public enum Defaults {
     public static let newSiteName = "New Launchable"
     public static let defaultWidth = 800
     public static let defaultHeight = 600
+    public static let defaultWindowAspectRatio = 16.0 / 10.0
 
     public static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
 }
@@ -21,6 +22,68 @@ public enum LaunchType: String, Codable, CaseIterable {
     case app
     case finder
     case shell
+}
+
+public struct WindowSizePreset: Equatable, Identifiable {
+    public let label: String
+    public let widthRatio: Double
+    public let heightRatio: Double
+    public let aspectRatio: Double?
+
+    public var id: String { label }
+
+    public var ratioText: String {
+        if aspectRatio != nil {
+            return "16:10"
+        }
+        let widthPercent = Int((widthRatio * 100).rounded())
+        let heightPercent = Int((heightRatio * 100).rounded())
+        if widthPercent == heightPercent {
+            return "\(widthPercent)%"
+        }
+        return "\(widthPercent)x\(heightPercent)%"
+    }
+}
+
+public enum WindowSizePresets {
+    public static let compact = WindowSizePreset(
+        label: "Compact", widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+    public static let standard = WindowSizePreset(
+        label: "Standard", widthRatio: 0.66, heightRatio: 0.66,
+        aspectRatio: Defaults.defaultWindowAspectRatio)
+    public static let comfortable = WindowSizePreset(
+        label: "Comfortable", widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil)
+    public static let wide = WindowSizePreset(
+        label: "Wide", widthRatio: 0.66, heightRatio: 0.56, aspectRatio: nil)
+    public static let tall = WindowSizePreset(
+        label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil)
+    public static let workspace = WindowSizePreset(
+        label: "Workspace", widthRatio: 0.82, heightRatio: 0.82, aspectRatio: nil)
+
+    public static let all = [compact, standard, comfortable, wide, tall, workspace]
+}
+
+public struct InitialWindowSizeRecommendation: Equatable {
+    public let widthRatio: Double
+    public let heightRatio: Double
+    public let aspectRatio: Double?
+}
+
+public enum InitialWindowSizeRecommendations {
+    public static func recommendation(for type: LaunchType) -> InitialWindowSizeRecommendation {
+        switch type {
+        case .url, .shell:
+            return InitialWindowSizeRecommendation(
+                widthRatio: 0.66, heightRatio: 0.66,
+                aspectRatio: Defaults.defaultWindowAspectRatio)
+        case .app:
+            return InitialWindowSizeRecommendation(
+                widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil)
+        case .finder:
+            return InitialWindowSizeRecommendation(
+                widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+        }
+    }
 }
 
 public struct Site: Codable, Equatable {

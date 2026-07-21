@@ -22,7 +22,7 @@ struct SettingsView: View {
             Divider()
             mainPanel
         }
-        .frame(minWidth: 700, minHeight: 580)
+        .frame(minWidth: 770, minHeight: 580)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
             isAddingNew = false
@@ -452,14 +452,32 @@ struct SettingsView: View {
             }
             return .url
         }()
+        let defaultSize = defaultWindowSize(for: type)
         vm.sites.append(
             Site(
                 name: Defaults.newSiteName, url: type == .url ? "https://" : "",
-                width: Defaults.defaultWidth, height: Defaults.defaultHeight,
+                width: defaultSize.width, height: defaultSize.height,
                 launchType: type))
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
+    }
+
+    private func defaultWindowSize(for type: LaunchType) -> (width: Int, height: Int) {
+        guard let screen = cursorScreen else {
+            return (Defaults.defaultWidth, Defaults.defaultHeight)
+        }
+        let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
+        let width = Int(
+            (screen.visibleFrame.width * CGFloat(recommendation.widthRatio)).rounded(.down))
+        let height: Int
+        if let aspectRatio = recommendation.aspectRatio {
+            height = Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down))
+        } else {
+            height = Int(
+                (screen.visibleFrame.height * CGFloat(recommendation.heightRatio)).rounded(.down))
+        }
+        return fittedWindowSize(width: width, height: height, on: screen)
     }
 
     private func removeSite() {

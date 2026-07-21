@@ -131,3 +131,39 @@ struct LaunchTypeTests {
         #expect(decoded == original)
     }
 }
+
+@Suite("Window Size Presets")
+struct WindowSizePresetTests {
+    @Test func providesPresetLabelsInDisplayOrder() {
+        #expect(
+            WindowSizePresets.all.map(\.label) == [
+                "Compact",
+                "Standard",
+                "Comfortable",
+                "Wide",
+                "Tall",
+                "Workspace",
+            ])
+    }
+
+    @Test func initialRecommendationsMatchLaunchType() {
+        #expect(
+            InitialWindowSizeRecommendations.recommendation(for: .url)
+                == InitialWindowSizeRecommendation(
+                    widthRatio: 0.66, heightRatio: 0.66,
+                    aspectRatio: Defaults.defaultWindowAspectRatio))
+        #expect(
+            InitialWindowSizeRecommendations.recommendation(for: .app)
+                == InitialWindowSizeRecommendation(
+                    widthRatio: 0.74, heightRatio: 0.76, aspectRatio: nil))
+        #expect(
+            InitialWindowSizeRecommendations.recommendation(for: .finder)
+                == InitialWindowSizeRecommendation(
+                    widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil))
+        #expect(
+            InitialWindowSizeRecommendations.recommendation(for: .shell)
+                == InitialWindowSizeRecommendation(
+                    widthRatio: 0.66, heightRatio: 0.66,
+                    aspectRatio: Defaults.defaultWindowAspectRatio))
+    }
+}
