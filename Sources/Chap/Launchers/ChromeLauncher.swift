@@ -8,6 +8,34 @@ enum ChromeLauncher {
     private static let bundleID = "com.google.Chrome"
     private static let appName = "Google Chrome"
 
+    /// 여러 Chrome 런치가 겹칠 때(서로 다른 URL을 빠르게 연속 실행) 같은 새 창을 두 런치가
+    /// 붙잡아 서로 다른 크기로 리사이즈하는 오배정을 막는다. 이미 다른 런치가 리사이즈한 창은
+    /// claim되어 다음 런치는 건너뛴다. Chrome 리사이즈는 공유 serial 큐에서 실행되어 접근이
+    /// 직렬화되지만, 방어적으로 락을 둔다. (App 런처의 observationRegistry와 같은 계열의 장치.)
+    private static let claimedWindows = ClaimedWindowRegistry()
+
+    private final class ClaimedWindowRegistry {
+        private let lock = NSLock()
+        private var claimed: [AXUIElement] = []
+
+        /// candidates(새 창 후보) 중 아직 claim되지 않은 첫 창을 claim해 반환.
+        /// liveWindows에 더 이상 없는(닫힌) 창은 정리해 레지스트리 무한 증가를 막는다.
+        func claimFirstUnclaimed(from candidates: [AXUIElement], liveWindows: [AXUIElement])
+            -> AXUIElement?
+        {
+            lock.lock()
+            defer { lock.unlock() }
+            claimed.removeAll { existing in
+                !liveWindows.contains { CFEqual($0, existing) }
+            }
+            for window in candidates where !claimed.contains(where: { CFEqual($0, window) }) {
+                claimed.append(window)
+                return window
+            }
+            return nil
+        }
+    }
+
     /// Chrome을 --app 모드로 실행 (open -na)
     private static func runChromeApp(url: String) throws {
         let task = Process()
@@ -52,7 +80,8 @@ enum ChromeLauncher {
         }
         let chromeRunning = chromeApp != nil
         let chromePid = chromeApp?.processIdentifier ?? -1
-        let windowsBefore: [AXUIElement] = chromeRunning ? axWindows(pid: chromePid) : []
+        let windowsBefore: [AXUIElement] =
+            chromeRunning ? captureExistingWindows(pid: chromePid) : []
 
         Log.launcher.info(
             "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
@@ -140,9 +169,13 @@ enum ChromeLauncher {
             // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
             // (카운트 비교는 폴링 중 사용자가 다른 윈도우를 열거나 닫으면 깨짐)
             let windows = axWindows(pid: pid)
-            if let newWindow = windows.first(where: { win in
+            let newWindows = windows.filter { win in
                 !windowsBefore.contains { CFEqual($0, win) }
-            }) {
+            }
+            // 다른 런치가 이미 붙잡은 창은 건너뛰고, claim에 성공한 새 창만 리사이즈
+            if let newWindow = claimedWindows.claimFirstUnclaimed(
+                from: newWindows, liveWindows: windows)
+            {
                 LauncherUtils.axApplyBounds(newWindow, position: position, size: size)
                 return true
             }
@@ -158,6 +191,20 @@ enum ChromeLauncher {
             app, kAXWindowsAttribute as CFString, &windowsValue)
         if err == .success, let windows = windowsValue as? [AXUIElement] {
             return windows
+        }
+        return []
+    }
+
+    /// 실행 전 Chrome 창 목록 스냅샷. 창이 떠 있는 running 상태에서도 AX 윈도우 읽기가
+    /// 순간적으로 빈 배열을 반환할 수 있는데, 이 빈 스냅샷을 기준(baseline)으로 삼으면
+    /// 이후 폴링에서 잡힌 "기존" 창이 새 --app 창으로 오인돼 리사이즈된다(사용자가 보던
+    /// 창이 갑자기 튐). 짧게 재시도해 실제 창 집합을 확보한다. 정말로 창이 없는 Chrome은
+    /// 계속 빈 배열이므로 콜드/무창 케이스의 기존 동작을 깨지 않는다.
+    private static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
+        for attempt in 0..<5 {
+            let windows = axWindows(pid: pid)
+            if !windows.isEmpty { return windows }
+            if attempt < 4 { usleep(30_000) }
         }
         return []
     }
