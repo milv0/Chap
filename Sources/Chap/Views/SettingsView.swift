@@ -54,17 +54,7 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showGuide) { guideSheet }
-        .alert("Shortcut Conflict", isPresented: $duplicateShortcutAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("⌥\(duplicateShortcutChar) is already assigned to another site.")
-        }
-        .alert("Duplicate Site", isPresented: $duplicateSiteAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(duplicateSiteMessage)
-        }
-        .alert("Required Field", isPresented: $emptyFieldAlert) {
+        .alert("Validation Error", isPresented: $emptyFieldAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(emptyFieldMessage)
@@ -192,6 +182,7 @@ struct SettingsView: View {
                     site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
                     onSave: { save() }
                 )
+                .id(idx)
                 .onTapGesture { isEditing = true }
                 .onChange(of: vm.sites) { _, _ in
                     if isEditing { save() }
@@ -536,47 +527,58 @@ struct SettingsView: View {
         }
     }
 
-    @State private var duplicateShortcutAlert = false
-    @State private var duplicateShortcutChar = ""
-    @State private var duplicateSiteAlert = false
-    @State private var duplicateSiteMessage = ""
     @State private var emptyFieldAlert = false
     @State private var emptyFieldMessage = ""
 
     private func save(showAlerts: Bool = false) {
-        if let idx = selectedIndex, idx < vm.sites.count {
-            let site = vm.sites[idx]
+        // Full config validation across ALL sites (not just selected)
+        let config = Config(
+            showGuideWindow: vm.showGuideWindow,
+            launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+        let result = validateConfig(config)
 
-            // 필수 필드 체크 — alert는 수동 저장 시에만
-            let missingField = checkRequiredFields(site: site)
-            if let field = missingField {
-                if showAlerts {
-                    emptyFieldMessage = "\(field) is required for \(site.launchType.rawValue) type."
-                    emptyFieldAlert = true
-                }
-                return
-            }
-
-            // 단축키 중복 체크
-            if let key = site.shortcut?.uppercased(), !key.isEmpty {
-                if vm.sites.enumerated().contains(where: {
-                    $0.offset != idx && $0.element.shortcut?.uppercased() == key
-                }) {
-                    duplicateShortcutChar = key
-                    duplicateShortcutAlert = true
-                    vm.sites[idx].shortcut = nil
-                    return
-                }
-            }
-
-            // 사이트 중복 체크 (동일 URL, 앱, 폴더)
-            let duplicateName = checkDuplicateSite(index: idx, site: site)
-            if let name = duplicateName {
-                duplicateSiteMessage = "\"\(site.name)\" is duplicated with \"\(name)\"."
-                duplicateSiteAlert = true
-                return
-            }
+        // For auto-saves (not user-triggered), silently skip if invalid
+        if !result.isValid && !showAlerts {
+            return
         }
+
+        // For manual saves, show validation errors
+        if !result.isValid {
+            let errorMessages = result.errors.map { issue in
+                let siteName =
+                    issue.siteIndex < vm.sites.count ? vm.sites[issue.siteIndex].name : "?"
+                return "• \(siteName): \(issue.message)"
+            }.joined(separator: "\n")
+            emptyFieldMessage = errorMessages
+            emptyFieldAlert = true
+            return
+        }
+
+        // Show warnings (non-blocking) only on manual save
+        if showAlerts && !result.warnings.isEmpty {
+            let warningMessages = result.warnings.map { issue in
+                let siteName =
+                    issue.siteIndex < vm.sites.count ? vm.sites[issue.siteIndex].name : "?"
+                return "• \(siteName): \(issue.message)"
+            }.joined(separator: "\n")
+            let alert = NSAlert()
+            alert.messageText = "Saved with warnings"
+            alert.informativeText = warningMessages
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            // Save first, then show warning
+            let saved =
+                vm.onSave?(
+                    SettingsPayload(
+                        sites: vm.sites, showGuideWindow: vm.showGuideWindow,
+                        launchAtLogin: vm.launchAtLogin)) ?? true
+            if saved {
+                vm.markSaved()
+            }
+            alert.runModal()
+            return
+        }
+
         let saved =
             vm.onSave?(
                 SettingsPayload(
@@ -600,42 +602,6 @@ struct SettingsView: View {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin
         }
-    }
-
-    private func checkDuplicateSite(index: Int, site: Site) -> String? {
-        for (i, other) in vm.sites.enumerated() where i != index {
-            guard other.launchType == site.launchType else { continue }
-            switch site.launchType {
-            case .url:
-                if !site.url.isEmpty && site.url == other.url { return other.name }
-            case .app:
-                if let path = site.appPath, !path.isEmpty, path == other.appPath {
-                    return other.name
-                }
-            case .finder:
-                if let path = site.folderPath, !path.isEmpty, path == other.folderPath {
-                    return other.name
-                }
-            case .shell:
-                break
-            }
-        }
-        return nil
-    }
-
-    private func checkRequiredFields(site: Site) -> String? {
-        if site.name.isEmpty || site.name == Defaults.newSiteName { return "Name" }
-        switch site.launchType {
-        case .url:
-            if site.url.isEmpty || site.url == "https://" { return "URL" }
-        case .app:
-            if site.appPath?.isEmpty ?? true { return "App path" }
-        case .finder:
-            if site.folderPath?.isEmpty ?? true { return "Folder path" }
-        case .shell:
-            if site.script?.isEmpty ?? true { return "Script" }
-        }
-        return nil
     }
 
     private func exportConfig() {
@@ -708,7 +674,34 @@ struct SettingsView: View {
     private func applyConfigData(_ data: Data) {
         do {
             let config = try JSONDecoder().decode(Config.self, from: data)
-            let sanitizedSites = sanitizedShortcuts(for: config.sites)
+
+            // Normalize using import normalization (includes display UUID migration)
+            let connectedDisplays = NSScreen.screens.map {
+                DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
+            }
+            let importResult = normalizeForImport(
+                sites: config.sites, connectedDisplays: connectedDisplays)
+
+            // Blocking issues: reject import entirely, don't modify VM/file
+            if !importResult.blockingIssues.isEmpty {
+                let issueMessages = importResult.blockingIssues.map { issue in
+                    let siteName =
+                        issue.siteIndex < config.sites.count
+                        ? config.sites[issue.siteIndex].name : "?"
+                    return "• \(siteName): \(issue.message)"
+                }.joined(separator: "\n")
+                let alert = NSAlert()
+                alert.messageText = "Import blocked"
+                alert.informativeText =
+                    "The following issues must be fixed in the source file before importing:\n\n\(issueMessages)"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+                return
+            }
+
+            // Apply normalized sites
+            let normalizedSites = importResult.sites
             let bakPath = Defaults.configPath + ".bak"
             try? FileManager.default.removeItem(atPath: bakPath)
             try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
@@ -717,17 +710,43 @@ struct SettingsView: View {
             let cleanData = try encoder.encode(
                 Config(
                     showGuideWindow: config.showGuideWindow,
-                    launchAtLogin: config.launchAtLogin, sites: sanitizedSites))
+                    launchAtLogin: config.launchAtLogin, sites: normalizedSites))
             try cleanData.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
-            vm.sites = sanitizedSites
+            vm.sites = normalizedSites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
-            vm.markSaved()  // 방금 디스크에 반영했으므로 기준값 갱신 (닫을 때 오경보 방지)
+            vm.markSaved()
             vm.onReload?()
+
+            let adjustmentLines = importResult.fixes.map { fix in
+                let siteName =
+                    fix.siteIndex < normalizedSites.count
+                    ? normalizedSites[fix.siteIndex].name : "?"
+                return "• \(siteName): \(fix.message)"
+            }
+            let warningLines = importResult.warnings.map { warning in
+                let siteName =
+                    warning.siteIndex < normalizedSites.count
+                    ? normalizedSites[warning.siteIndex].name : "?"
+                return "• \(siteName): \(warning.message)"
+            }
             let alert = NSAlert()
-            alert.messageText = "Import successful"
-            alert.informativeText = "\(sanitizedSites.count) site(s) loaded."
+            if adjustmentLines.isEmpty && warningLines.isEmpty {
+                alert.messageText = "Import successful"
+                alert.informativeText = "\(normalizedSites.count) site(s) loaded."
+            } else {
+                alert.messageText = "Import successful with adjustments"
+                var sections = ["\(normalizedSites.count) site(s) loaded."]
+                if !adjustmentLines.isEmpty {
+                    sections.append("Automatic fixes:\n\(adjustmentLines.joined(separator: "\n"))")
+                }
+                if !warningLines.isEmpty {
+                    sections.append("Display warnings:\n\(warningLines.joined(separator: "\n"))")
+                }
+                alert.informativeText = sections.joined(separator: "\n\n")
+            }
             alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
             alert.runModal()
         } catch {
             showImportError(error.localizedDescription)

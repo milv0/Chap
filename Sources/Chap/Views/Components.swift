@@ -198,7 +198,7 @@ struct MinimapSwiftUI: View {
         return screen.localizedName == selectedName
     }
 
-    /// 미리보기 창을 그릴 대상 화면(식별자 → 이름 → 주 화면).
+    /// 미리보기 창을 그릴 대상 화면(식별자 → 이름 → 커서 화면).
     private func previewScreen(_ screens: [NSScreen]) -> NSScreen? {
         if let id = selectedIdentifier,
             let screen = screens.first(where: { displayUUID(for: $0) == id })
@@ -210,7 +210,8 @@ struct MinimapSwiftUI: View {
         {
             return screen
         }
-        return NSScreen.main ?? screens.first
+        // Auto mode: target the cursor screen
+        return cursorScreen ?? NSScreen.main ?? screens.first
     }
 
     var body: some View {

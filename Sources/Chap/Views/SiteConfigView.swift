@@ -11,6 +11,12 @@ struct SiteConfigView: View {
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
     @FocusState private var nameFieldFocused: Bool
+    /// Numeric draft state: width/height text while user is typing.
+    /// nil means "not currently editing" → display computed value.
+    @State private var widthDraft: String?
+    @State private var heightDraft: String?
+    @FocusState private var widthFocused: Bool
+    @FocusState private var heightFocused: Bool
     var onSave: (() -> Void)?
     private let dropdownControlWidth: CGFloat = 180
 
@@ -270,6 +276,17 @@ struct SiteConfigView: View {
                     }
                     .labelsHidden()
                     .frame(width: dropdownControlWidth, alignment: .leading)
+                    // Display warning for ambiguous/disconnected state
+                    if let warning = displayWarningText {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(.orange)
+                            Text(warning)
+                                .font(DS.captionFont)
+                                .foregroundColor(.orange)
+                        }
+                    }
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
@@ -283,40 +300,60 @@ struct SiteConfigView: View {
                 }
 
                 HStack(spacing: DS.paddingSmall) {
-                    InputField(
-                        label: "Width",
-                        text: Binding(
-                            get: { "\(displayedWindowSize.width)" },
-                            set: { newValue in
-                                let currentSize = displayedWindowSize
-                                // 표시값과 동일한 값이 다시 커밋되는 경우(포커스 이동/Enter 등)엔
-                                // 프리셋을 풀지 않는다. 실제 사용자가 값을 바꿨을 때만 Custom으로 전환.
-                                guard let parsed = Int(newValue), parsed != currentSize.width
-                                else { return }
-                                isEditing = true
-                                site.windowSizePreset = nil
-                                site.height = currentSize.height
-                                site.width = max(100, parsed)
-                            }),
-                        placeholder: ""
-                    )
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Width")
+                            .font(DS.captionFont)
+                            .foregroundColor(DS.textSecondary)
+                        TextField(
+                            "",
+                            text: Binding(
+                                get: { widthDraft ?? "\(displayedWindowSize.width)" },
+                                set: { widthDraft = $0 }
+                            )
+                        )
+                        .textFieldStyle(.plain)
+                        .font(DS.bodyFont)
+                        .padding(DS.paddingSmall)
+                        .background(DS.surfaceBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(DS.border, lineWidth: 1)
+                        )
+                        .focused($widthFocused)
+                        .onSubmit { commitWidthDraft() }
+                        .onChange(of: widthFocused) { _, focused in
+                            if !focused { commitWidthDraft() }
+                        }
+                    }
                     .frame(width: 80)
 
-                    InputField(
-                        label: "Height",
-                        text: Binding(
-                            get: { "\(displayedWindowSize.height)" },
-                            set: { newValue in
-                                let currentSize = displayedWindowSize
-                                guard let parsed = Int(newValue), parsed != currentSize.height
-                                else { return }
-                                isEditing = true
-                                site.windowSizePreset = nil
-                                site.width = currentSize.width
-                                site.height = max(100, parsed)
-                            }),
-                        placeholder: ""
-                    )
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Height")
+                            .font(DS.captionFont)
+                            .foregroundColor(DS.textSecondary)
+                        TextField(
+                            "",
+                            text: Binding(
+                                get: { heightDraft ?? "\(displayedWindowSize.height)" },
+                                set: { heightDraft = $0 }
+                            )
+                        )
+                        .textFieldStyle(.plain)
+                        .font(DS.bodyFont)
+                        .padding(DS.paddingSmall)
+                        .background(DS.surfaceBg)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(DS.border, lineWidth: 1)
+                        )
+                        .focused($heightFocused)
+                        .onSubmit { commitHeightDraft() }
+                        .onChange(of: heightFocused) { _, focused in
+                            if !focused { commitHeightDraft() }
+                        }
+                    }
                     .frame(width: 80)
                 }
             }
@@ -468,12 +505,36 @@ struct SiteConfigView: View {
         {
             return id
         }
-        if let name = site.displayName,
-            let screen = NSScreen.screens.first(where: { $0.localizedName == name })
-        {
-            return displayUUID(for: screen) ?? name
+        if let name = site.displayName {
+            let matches = NSScreen.screens.filter { $0.localizedName == name }
+            if matches.count == 1, let screen = matches.first {
+                return displayUUID(for: screen) ?? name
+            }
         }
         return "Auto"
+    }
+
+    /// Display warning: shows if displayName is set but cannot be resolved.
+    /// Does NOT save an arbitrary UUID — user must reselect.
+    private var displayWarningText: String? {
+        // No display set → Auto, no warning
+        guard site.displayName != nil || site.displayIdentifier != nil else { return nil }
+        // If identifier matches a connected screen → fine
+        if let id = site.displayIdentifier, !id.isEmpty,
+            NSScreen.screens.contains(where: { displayUUID(for: $0) == id })
+        {
+            return nil
+        }
+        // Try name matching
+        guard let name = site.displayName, !name.isEmpty else {
+            return "Selected display is disconnected — please reselect"
+        }
+        let matches = NSScreen.screens.filter { $0.localizedName == name }
+        if matches.count == 1 { return nil }
+        if matches.count > 1 {
+            return "Multiple '\(name)' displays — please reselect"
+        }
+        return "'\(name)' is disconnected"
     }
 
     /// Picker 선택 태그를 site.displayIdentifier/displayName에 반영.
@@ -575,6 +636,36 @@ struct SiteConfigView: View {
     private func sizePreset(for selection: Int) -> WindowSizePreset? {
         guard selection > 0, selection <= sizePresets.count else { return nil }
         return sizePresets[selection - 1]
+    }
+
+    // MARK: - Numeric Draft Commit
+
+    /// Commit width draft to model. Only changes to Custom if value actually differs.
+    private func commitWidthDraft() {
+        guard let draft = widthDraft else { return }
+        widthDraft = nil
+        let currentSize = displayedWindowSize
+        guard let parsed = Int(draft), parsed >= 100, parsed != currentSize.width else {
+            return  // Invalid or unchanged → discard draft, keep model untouched
+        }
+        isEditing = true
+        site.windowSizePreset = nil
+        site.height = currentSize.height
+        site.width = parsed
+    }
+
+    /// Commit height draft to model. Only changes to Custom if value actually differs.
+    private func commitHeightDraft() {
+        guard let draft = heightDraft else { return }
+        heightDraft = nil
+        let currentSize = displayedWindowSize
+        guard let parsed = Int(draft), parsed >= 100, parsed != currentSize.height else {
+            return
+        }
+        isEditing = true
+        site.windowSizePreset = nil
+        site.width = currentSize.width
+        site.height = parsed
     }
 
 }
