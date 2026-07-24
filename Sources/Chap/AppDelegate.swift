@@ -10,8 +10,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let configPath = Defaults.configPath
     var settingsWindow: NSWindow?
     var qaWindow: NSWindow?
+    var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
-    let resizeQueue = DispatchQueue(label: "com.mingyupark.Chap.resize")
     // tap 콜백 스레드와 메인 스레드가 함께 접근하므로 락으로 보호
     private let menuOpenLock = OSAllocatedUnfairLock(initialState: false)
 
@@ -264,9 +264,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         window.isReleasedWhenClosed = false
         window.setContentSize(NSSize(width: 420, height: 480))
         window.center()
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        welcomeWindow = window
     }
 
     // MARK: - Config handling
@@ -348,6 +350,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
             config.sites = sanitizedShortcuts(for: config.sites)
+
+            // Display UUID migration: augment legacy displayName-only sites with UUID
+            let connectedDisplays = NSScreen.screens.map {
+                DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
+            }
+            let migrationResult = migrateDisplayIdentifiers(
+                sites: config.sites, connectedDisplays: connectedDisplays)
+            if migrationResult.sites != config.sites {
+                config.sites = migrationResult.sites
+                // Auto-save migrated identifiers
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                if let cleanData = try? encoder.encode(config) {
+                    let bakPath = configPath + ".bak"
+                    try? FileManager.default.removeItem(atPath: bakPath)
+                    try? FileManager.default.copyItem(atPath: configPath, toPath: bakPath)
+                    try? cleanData.write(
+                        to: URL(fileURLWithPath: configPath), options: .atomic)
+                    Log.config.info("Auto-saved display UUID migration")
+                }
+            }
+            // Log any warnings about ambiguous/disconnected displays
+            for warning in migrationResult.warnings {
+                Log.config.warning(
+                    "Display migration: \(warning.message, privacy: .public)")
+            }
         } catch {
             Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
             DispatchQueue.main.async {
@@ -443,8 +471,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 400, height: 400)
+        window.delegate = self
         window.center()
         window.makeKeyAndOrderFront(nil)
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         qaWindow = window
     }
@@ -481,7 +511,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         switch site.launchType {
         case .url:
-            ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
+            ChromeLauncher.launch(site) {
                 if let token = guideToken { GuideWindow.dismiss(token) }
             }
         case .app:
@@ -527,9 +557,27 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             showGuideWindow: config.showGuideWindow, launchAtLogin: config.launchAtLogin)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
-            let newConfig = Config(
+            // Full config validation before saving
+            let validationConfig = Config(
                 showGuideWindow: payload.showGuideWindow,
                 launchAtLogin: payload.launchAtLogin, sites: payload.sites)
+            let result = validateConfig(validationConfig)
+            if !result.isValid {
+                let errorMessages = result.errors.map { issue in
+                    "[\(issue.siteIndex + 1)] \(issue.message)"
+                }.joined(separator: "\n")
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Cannot save settings"
+                    alert.informativeText =
+                        "Please fix the following errors:\n\n\(errorMessages)"
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+                return false
+            }
+            let newConfig = validationConfig
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             do {
@@ -591,19 +639,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        if let vm = settingsVM, vm.hasChanges {
-            let alert = NSAlert()
-            alert.messageText = "You have unsaved changes."
-            alert.informativeText = "Changes will be lost if you close."
-            alert.addButton(withTitle: "Close")
-            alert.addButton(withTitle: "Cancel")
-            if alert.runModal() != .alertFirstButtonReturn {
-                return false
+        // Settings window: check for unsaved changes
+        if sender == settingsWindow {
+            if let vm = settingsVM, vm.hasChanges {
+                let alert = NSAlert()
+                alert.messageText = "You have unsaved changes."
+                alert.informativeText = "Changes will be lost if you close."
+                alert.addButton(withTitle: "Close")
+                alert.addButton(withTitle: "Cancel")
+                if alert.runModal() != .alertFirstButtonReturn {
+                    return false
+                }
             }
         }
-        settingsVM = nil
-        settingsWindow = nil
         return true
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window == settingsWindow {
+            settingsVM = nil
+            settingsWindow = nil
+        } else if window == qaWindow {
+            qaWindow = nil
+        } else if window == welcomeWindow {
+            welcomeWindow = nil
+        }
+        // 모든 관리 창이 닫히면 accessory로 복원
+        restoreAccessoryIfNeeded()
+    }
+
+    /// 모든 관리 창(Settings, QA, Welcome)이 닫혀 있을 때 activation policy를
+    /// accessory로 복원하여 Dock 아이콘을 숨긴다.
+    private func restoreAccessoryIfNeeded() {
+        let hasVisibleWindow =
+            (settingsWindow?.isVisible ?? false)
+            || (qaWindow?.isVisible ?? false)
+            || (welcomeWindow?.isVisible ?? false)
+        if !hasVisibleWindow {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
