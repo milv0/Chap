@@ -31,12 +31,18 @@ Sources/
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
 │   ├── Validation.swift           ← 도메인 검증, 좌표 계산(순수 코어+NSScreen 래퍼),
-│   │                                단축키 정규화(sanitizedShortcuts), 디스플레이 매칭(resolvedDisplayIndex)
+│   │                                단축키 정규화, UUID 우선·이름 unique 디스플레이 매칭
+│   ├── ConfigValidation.swift     ← 전체 sites 필수값·URL·크기·중복 검증
+│   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID 마이그레이션
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
     ├── SettingsViewModelTests.swift
-    └── ValidationTests.swift
+    ├── ValidationTests.swift
+    ├── GeometryTests.swift
+    ├── ConfigValidationTests.swift
+    ├── ImportNormalizationTests.swift
+    └── AXBoundsResultTests.swift
 
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
@@ -79,8 +85,16 @@ Site 모델 필드:
 ## 핵심 기능
 
 - 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
-- URL → Chrome --app 모드 + AX API 리사이즈
-- App → 실행 + AXObserver(kAXWindowCreated) + AX API 리사이즈 (Office 비표준 리사이즈 가능 창 포함)
+- URL → Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
+- App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
+  (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
+- AX bounds 결과: position/size set error와 실제 readback을 반환하고 fully/partial/failed로 기록
+- Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·URL host·크기·preset·중복 검증
+- Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
+- Legacy displayName: unique name만 UUID 보강; stale UUID 갱신, ambiguous/disconnected는 재선택 안내
+- Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
+- 숫자 width/height는 draft로 편집해 Enter/blur 때 commit하며 실제 변경 때만 Custom 전환
+- Auto 미니맵은 현재 커서 화면에 window preview 표시
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + 미니맵 클릭으로 디스플레이 선택 (재클릭 시 Auto)
@@ -160,30 +174,35 @@ Site 모델 필드:
 리사이즈 전략:
   URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 6초)
   URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
-  App (실행 중):         AXObserver + 100ms 재스캔 (grace 3초, 최대 8초)
-  App (콜드 스타트):     AXObserver + 100ms 재스캔 (grace 3초, 최대 20초)
+  App (실행 중):         AXObserver + 50ms 재스캔, 새 창이 없으면 0.2초 후 focused 창 하나 처리
+  App (콜드 스타트):     AXObserver + 100ms 재스캔 (일반 최대 20초, Office 최대 30초)
   App (AXObserver 실패): 폴링 폴백 120ms 간격
   Finder:               딜레이 없음 (열기+리사이즈 단일 스크립트)
 
 Chrome 윈도우 감지 방식:
-  1. 실행 전 전체 윈도우 목록(AXUIElement[]) 저장
+  1. 모든 요청을 단일 requestCoordinator serial queue에서 처리
+     (baseline → open -na Process → 새 창 polling → AX readback 검증). 이전 요청 완료 전 다음
+     Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이 1:1로 대응함. queue wait와
+     processing latency를 분리해 로그에 기록
+  2. 실행 전 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
        새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
-  2. 실행 후 폴링: 새 윈도우 등장 확인
-  3. CFEqual로 이전 목록과 비교하여 새 윈도우 식별
-  4. 여러 Chrome 런치가 겹칠 때(서로 다른 URL 빠른 연속 실행) 같은 새 창을 두 런치가 잡아
-     서로 다른 크기로 리사이즈하는 오배정을 방지: ClaimedWindowRegistry로 이미 다른 런치가
-     붙잡은 창은 건너뛰고 claim에 성공한 새 창만 리사이즈. 닫힌 창은 pruning해 무한 증가 방지
-  5. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
+  3. 실행 후 폴링하고 CFEqual로 이전 목록과 비교하여 첫 새 윈도우 식별
+  4. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
+  5. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
+  6. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
 
 App 윈도우 감지 방식 (AXObserver):
-  1. AXObserverCreate로 kAXWindowCreatedNotification 구독
-  2. 콜백에서 subrole 체크 → 표준 윈도우 중앙정렬
-  3. 이미 떠 있는 윈도우도 100ms 간격 재스캔으로 정렬
-  4. Office 앱은 리사이즈 가능한 비표준 AXWindow도 중앙정렬
-  5. 첫 정렬 후 grace(3초) 동안 새 창이 없으면 종료
-  6. AXObserver 생성 실패 시 focusedWindow 폴링 폴백
+  1. openApplication 전 기존 AX window baseline을 캡처
+  2. AXObserverCreate로 kAXWindowCreatedNotification 구독 + 100ms 재스캔
+  3. baseline에 없는 첫 표준 새 창 하나만 리사이즈 (기존 여러 창 일괄 변경 금지)
+  4. Office 앱은 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 grace 동안 추가 관찰
+  5. 실행 중 앱은 새 창이 0.2초 안에 없으면 focused 표준 창 하나를 즉시 처리;
+     cold 앱은 timeout까지 새 창을 기다린 뒤 focused fallback
+  6. AXWindow 역할과 position/size settable을 검증해 AXHelpTag 등 보조 요소를 제외
+  7. AXObserver 생성 실패 시에도 동일한 new-one → focused-one polling 정책 사용
+  8. 각 적용 후 실제 position/size readback으로 fully/partial/failed 판정
 
 
 ## 사용 API / 프레임워크
@@ -223,8 +242,8 @@ App 윈도우 감지 방식 (AXObserver):
   - NSScreen.localizedName            디스플레이 이름 매칭 (UUID 실패 시 폴백)
   - visibleFrame / frame              좌표 변환 (NSScreen ↔ AppleScript 좌표계)
 
-  디스플레이 매칭(resolvedDisplayIndex, 순수 함수): displayIdentifier(UUID) → displayName →
-  커서 화면 순. 순수 코어로 분리되어 유닛테스트로 검증됨(DisplayMatchingTests).
+  디스플레이 매칭(resolvedDisplayIndex, 순수 함수): displayIdentifier(UUID) → unique displayName →
+  커서 화면 순. 같은 이름이 여러 개면 임의 화면을 고르지 않고 재선택 상태로 유지한다.
 
 ### ServiceManagement
   용도: Login Item 등록/해제

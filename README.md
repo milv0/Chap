@@ -11,13 +11,15 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 - **Menubar Resident** — Always accessible from the status bar
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
-- **Multi-Monitor** — Target a specific display or use Auto for the cursor screen
+- **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Standard, Comfortable, Wide, Tall, Workspace, or Custom
-- **Display Minimap** — Visual preview of window placement across all monitors
+- **Display Minimap** — Auto previews the cursor screen; click to select a display
 - **Global Hotkeys** — `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
-- **Import/Export** — Share config via JSON file or paste
+- **Verified Window Placement** — AX position and size are read back before success is reported
+- **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
+- **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
 
@@ -72,6 +74,7 @@ Stored at `~/.chap.json`:
       "height": 600,
       "launchType": "url",
       "displayName": "Built-in Retina Display",
+      "displayIdentifier": "DISPLAY-UUID",
       "windowSizePreset": "standard",
       "shortcut": "G"
     },
@@ -88,7 +91,7 @@ Stored at `~/.chap.json`:
 }
 ```
 
-Windows are always centered on the target display automatically. If `displayName` is omitted, Chap opens on the cursor screen. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
+Windows are always centered on the target display automatically. If `displayName` and `displayIdentifier` are omitted, Chap opens on the cursor screen. Legacy name-only display settings are augmented with a UUID only when the connected-name match is unique; ambiguous or disconnected displays are preserved and shown for manual reselection. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
 
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 
