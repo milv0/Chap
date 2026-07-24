@@ -30,7 +30,8 @@ Sources/
 ├── ChapCore/                      ← 코어 로직 (테스트 대상)
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
-│   ├── Validation.swift           ← 도메인 검증, 좌표 계산
+│   ├── Validation.swift           ← 도메인 검증, 좌표 계산(순수 코어+NSScreen 래퍼),
+│   │                                단축키 정규화(sanitizedShortcuts), 디스플레이 매칭(resolvedDisplayIndex)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -61,7 +62,10 @@ Site 모델 필드:
   - url: String               URL (launchType=url일 때 사용)
   - width: Int                윈도우 너비
   - height: Int               윈도우 높이
-  - displayName: String?      대상 디스플레이 이름 (nil이면 커서 화면)
+  - displayName: String?      대상 디스플레이 이름 (nil이면 커서 화면). UI 표시 + 폴백 매칭용
+  - displayIdentifier: String? 대상 디스플레이 UUID(CGDisplay). 매칭 우선순위 1순위.
+                              동일 모델 외장 모니터가 여러 대여도 물리 디스플레이별로 달라 정확히 구분됨.
+                              nil이면(구버전 config/Auto) displayName으로 폴백
   - windowSizePreset: String? 프리셋 ID (Auto면 내장 화면 기준, 지정 화면이면 대상 화면 기준, nil이면 Custom)
   - launchType: LaunchType    url | app | finder | shell
   - appPath: String?          앱 경로 (launchType=app)
@@ -84,6 +88,9 @@ Site 모델 필드:
 - Auto 디스플레이 프리셋은 내장 화면 기준 크기로 계산 후 커서 화면에 맞춤
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 중복 체크, 예약키 ./,  차단)
+  - 단축키 정규화(sanitizedShortcuts): UI 저장뿐 아니라 config 로드(loadConfig)·Import
+    (applyConfigData) 경로에서도 중복(대소문자 무시, 앞의 것 유지)·예약키(./,)·공백을 정리.
+    손으로 편집한 ~/.chap.json이나 Import JSON의 잘못된 단축키가 런타임에 새어 들지 않음
 - 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
 - 필수 필드 미입력 시 저장 차단 (URL/앱경로/폴더/스크립트)
 - 사이트 검색 (사이드바 이름 필터)
@@ -95,11 +102,36 @@ Site 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창 크기/위치 자동 기억
+- 설정 창은 770x580 크기로 커서 화면 중앙에 표시
 - Guide Window (리사이즈 위치 미리보기)
+  - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
+    빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
 - 접근성 권한 자동 재시도 + 권한 제거 감지
 - Launch at Login (SMAppService)
-- Restart / Uninstall (설정 File 메뉴)
+- Restart (메뉴바) / Restart App·Uninstall (설정 창 하단 folder 메뉴)
+
+## 메뉴바 메뉴 구성
+
+  [사이트들 — 타입별 그룹, 구분선으로 분리]
+  ────────
+  Settings...   (⌥,)
+  Q&A
+  Report Bug
+  About Chap
+  ────────
+  Restart
+  ────────
+  Quit
+
+## 설정 창 하단 folder 메뉴
+
+  Import from File...
+  Paste JSON...
+  ────────
+  Export...
+  ────────
+  Restart App
+  Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak 삭제 → 앱 휴지통 이동)
 
 
 ## 단축키
@@ -135,9 +167,15 @@ Site 모델 필드:
 
 Chrome 윈도우 감지 방식:
   1. 실행 전 전체 윈도우 목록(AXUIElement[]) 저장
+     - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
+       재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
+       새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
   2. 실행 후 폴링: 새 윈도우 등장 확인
   3. CFEqual로 이전 목록과 비교하여 새 윈도우 식별
-  4. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
+  4. 여러 Chrome 런치가 겹칠 때(서로 다른 URL 빠른 연속 실행) 같은 새 창을 두 런치가 잡아
+     서로 다른 크기로 리사이즈하는 오배정을 방지: ClaimedWindowRegistry로 이미 다른 런치가
+     붙잡은 창은 건너뛰고 claim에 성공한 새 창만 리사이즈. 닫힌 창은 pruning해 무한 증가 방지
+  5. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
 
 App 윈도우 감지 방식 (AXObserver):
   1. AXObserverCreate로 kAXWindowCreatedNotification 구독
@@ -180,8 +218,13 @@ App 윈도우 감지 방식 (AXObserver):
 ### NSScreen
   용도: 멀티 모니터 좌표 계산, 대상 화면 결정
   - NSScreen.screens                  전체 디스플레이 목록
-  - NSScreen.localizedName            디스플레이 이름 매칭
+  - CGDisplayCreateUUIDFromDisplayID  디스플레이 안정 고유 ID (displayUUID) — 매칭 1순위,
+                                      동일 모델 외장 모니터 다중 사용 시에도 정확히 구분
+  - NSScreen.localizedName            디스플레이 이름 매칭 (UUID 실패 시 폴백)
   - visibleFrame / frame              좌표 변환 (NSScreen ↔ AppleScript 좌표계)
+
+  디스플레이 매칭(resolvedDisplayIndex, 순수 함수): displayIdentifier(UUID) → displayName →
+  커서 화면 순. 순수 코어로 분리되어 유닛테스트로 검증됨(DisplayMatchingTests).
 
 ### ServiceManagement
   용도: Login Item 등록/해제
