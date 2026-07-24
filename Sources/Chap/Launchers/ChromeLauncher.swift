@@ -3,15 +3,24 @@ import Cocoa
 import os
 
 /// Chrome --app 모드로 URL을 열고 AX API로 윈도우 크기를 조정하는 런처
+///
+/// 모든 Chrome launch 요청은 단일 serial queue(requestCoordinator)에서 직렬 처리된다:
+/// baseline capture → Process launch → poll for new window → resize.
+/// 이렇게 하면 빠르게 연속 실행해도 요청-창 1:1 대응이 보장된다.
 enum ChromeLauncher {
     private static let appPath = "/Applications/Google Chrome.app"
     private static let bundleID = "com.google.Chrome"
     private static let appName = "Google Chrome"
 
-    /// 여러 Chrome 런치가 겹칠 때(서로 다른 URL을 빠르게 연속 실행) 같은 새 창을 두 런치가
-    /// 붙잡아 서로 다른 크기로 리사이즈하는 오배정을 막는다. 이미 다른 런치가 리사이즈한 창은
-    /// claim되어 다음 런치는 건너뛴다. Chrome 리사이즈는 공유 serial 큐에서 실행되어 접근이
-    /// 직렬화되지만, 방어적으로 락을 둔다. (App 런처의 observationRegistry와 같은 계열의 장치.)
+    /// 단일 request coordinator serial queue.
+    /// Process launch도 이 큐 안에서 수행하여 요청-창 1:1 순서를 보장한다.
+    private static let requestCoordinator = DispatchQueue(
+        label: "com.mingyupark.Chap.ChromeRequestCoordinator",
+        qos: .userInitiated
+    )
+
+    /// 여러 Chrome 런치가 겹칠 때 같은 새 창을 두 런치가 붙잡는 오배정을 방어적으로 막는다.
+    /// requestCoordinator가 직렬화하지만, 방어적으로 유지.
     private static let claimedWindows = ClaimedWindowRegistry()
 
     private final class ClaimedWindowRegistry {
@@ -44,8 +53,9 @@ enum ChromeLauncher {
         try task.run()
     }
 
-    /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈
-    static func launch(_ site: Site, resizeQueue: DispatchQueue, onComplete: (() -> Void)? = nil) {
+    /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈.
+    ///
+    static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
         guard FileManager.default.fileExists(atPath: appPath) else {
             Log.launcher.error("Google Chrome is not installed at \(appPath, privacy: .public)")
             LauncherUtils.showAlert(message: "Google Chrome is not installed.")
@@ -64,9 +74,18 @@ enum ChromeLauncher {
         }
 
         guard let screen = targetScreen(for: site) else {
-            Log.launcher.info("No display available — launching Chrome without resize")
-            try? runChromeApp(url: site.url)
-            onComplete?()
+            Log.launcher.info("No display available — queueing Chrome without resize")
+            requestCoordinator.async {
+                do {
+                    try runChromeApp(url: site.url)
+                } catch {
+                    Log.launcher.error(
+                        "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
+                    LauncherUtils.showAlert(
+                        message: "Failed to launch Chrome.", info: error.localizedDescription)
+                }
+                onComplete?()
+            }
             return
         }
         let bounds = centeredBounds(for: site, on: screen)
@@ -74,78 +93,107 @@ enum ChromeLauncher {
         // Accessibility 권한 확인
         let canResize = LauncherUtils.checkAccessibility()
 
-        // Chrome pid 캐싱 + 실행 전 윈도우 집합 기록
-        let chromeApp = NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier == bundleID
-        }
-        let chromeRunning = chromeApp != nil
-        let chromePid = chromeApp?.processIdentifier ?? -1
-        let windowsBefore: [AXUIElement] =
-            chromeRunning ? captureExistingWindows(pid: chromePid) : []
-
-        Log.launcher.info(
-            "Chrome launch for \(site.name, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
-        )
-
-        // Chrome --app 모드로 실행
-        do {
-            try runChromeApp(url: site.url)
-        } catch {
-            Log.launcher.error(
-                "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
-            LauncherUtils.showAlert(
-                message: "Failed to launch Chrome.", info: error.localizedDescription)
-            onComplete?()
-            return
-        }
-
-        guard canResize else {
-            Log.launcher.info("Accessibility not granted — launching without resize")
-            onComplete?()
-            return
-        }
-
-        let startTime = CFAbsoluteTimeGetCurrent()
         let position = CGPoint(x: bounds.left, y: bounds.top)
-        let size = CGSize(width: bounds.right - bounds.left, height: bounds.bottom - bounds.top)
+        let size = CGSize(
+            width: bounds.right - bounds.left, height: bounds.bottom - bounds.top)
+        let screenName = screen.localizedName
+        let siteName = site.name
+        let siteUrl = site.url
+        let siteWidth = site.width
+        let siteHeight = site.height
 
-        resizeQueue.async {
-            let success = axResizeNewWindow(
+        // 모든 작업을 requestCoordinator serial queue에서 직렬 처리
+        let enqueuedAt = CFAbsoluteTimeGetCurrent()
+        requestCoordinator.async {
+            let startTime = CFAbsoluteTimeGetCurrent()
+            let queueWait = startTime - enqueuedAt
+            Log.launcher.info(
+                "Chrome coordinator dequeued \(siteName, privacy: .private) after \(queueWait, format: .fixed(precision: 2))s"
+            )
+
+            // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록
+            let chromeApp = NSWorkspace.shared.runningApplications.first {
+                $0.bundleIdentifier == bundleID
+            }
+            let chromeRunning = chromeApp != nil
+            let chromePid = chromeApp?.processIdentifier ?? -1
+            let windowsBefore: [AXUIElement] =
+                chromeRunning ? captureExistingWindows(pid: chromePid) : []
+
+            Log.launcher.info(
+                "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
+            )
+
+            // 2. Process launch (큐 안에서 수행)
+            do {
+                try runChromeApp(url: siteUrl)
+            } catch {
+                Log.launcher.error(
+                    "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
+                DispatchQueue.main.async {
+                    LauncherUtils.showAlert(
+                        message: "Failed to launch Chrome.", info: error.localizedDescription)
+                }
+                onComplete?()
+                return
+            }
+
+            guard canResize else {
+                Log.launcher.info("Accessibility not granted — launching without resize")
+                onComplete?()
+                return
+            }
+
+            // 3. Poll + Resize
+            let result = axResizeNewWindow(
                 cachedPid: chromePid,
                 windowsBefore: windowsBefore,
                 position: position,
                 size: size,
                 chromeRunning: chromeRunning
             )
-            let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-            let result = success ? "success" : "failed"
-            if success {
-                Log.launcher.notice(
-                    "Chrome AX resize success for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
-                )
+            let processingTime = CFAbsoluteTimeGetCurrent() - startTime
+            let resultLabel = result?.level.rawValue ?? "failed"
+            if let result {
+                switch result.level {
+                case .fullyApplied:
+                    Log.launcher.notice(
+                        "Chrome AX resize verified for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                    )
+                case .partiallyApplied:
+                    Log.launcher.warning(
+                        "Chrome AX resize partially applied for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                    )
+                case .failed:
+                    Log.launcher.error(
+                        "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                    )
+                }
             } else {
                 Log.launcher.error(
-                    "Chrome AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
+                    "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
                 )
             }
             ResizeLogger.log(
-                site: site.name, type: "url",
+                site: siteName, type: "url",
                 appState: chromeRunning ? "running" : "cold",
                 attempt: 1, delay: 0,
-                totalTime: elapsed, result: result,
+                totalTime: processingTime,
+                result: resultLabel,
                 windowCount: windowsBefore.count,
-                display: screen.localizedName,
-                size: "\(site.width)x\(site.height)")
+                display: screenName,
+                size: "\(siteWidth)x\(siteHeight)")
             onComplete?()
         }
     }
 
     // MARK: - AX API Resize
 
+    /// 새 Chrome 창을 폴링해 찾고, 찾으면 리사이즈. AXBoundsResult를 반환 (못 찾으면 nil).
     private static func axResizeNewWindow(
         cachedPid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
         chromeRunning: Bool
-    ) -> Bool {
+    ) -> AXBoundsResult? {
         let maxAttempts = chromeRunning ? 120 : 100
         // 50ms / 100ms polling gives running/cold timeouts of 6s / 10s.
         let interval: useconds_t = chromeRunning ? 50_000 : 100_000
@@ -167,7 +215,6 @@ enum ChromeLauncher {
             }
 
             // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
-            // (카운트 비교는 폴링 중 사용자가 다른 윈도우를 열거나 닫으면 깨짐)
             let windows = axWindows(pid: pid)
             let newWindows = windows.filter { win in
                 !windowsBefore.contains { CFEqual($0, win) }
@@ -176,12 +223,16 @@ enum ChromeLauncher {
             if let newWindow = claimedWindows.claimFirstUnclaimed(
                 from: newWindows, liveWindows: windows)
             {
-                LauncherUtils.axApplyBounds(newWindow, position: position, size: size)
-                return true
+                let boundsResult = LauncherUtils.axApplyBounds(
+                    newWindow, position: position, size: size)
+                Log.launcher.info(
+                    "Chrome AX bounds applied: level=\(boundsResult.level.rawValue, privacy: .public) pos=\(boundsResult.positionWithinTolerance) size=\(boundsResult.sizeWithinTolerance)"
+                )
+                return boundsResult
             }
             usleep(interval)
         }
-        return false
+        return nil
     }
 
     private static func axWindows(pid: pid_t) -> [AXUIElement] {
@@ -195,11 +246,7 @@ enum ChromeLauncher {
         return []
     }
 
-    /// 실행 전 Chrome 창 목록 스냅샷. 창이 떠 있는 running 상태에서도 AX 윈도우 읽기가
-    /// 순간적으로 빈 배열을 반환할 수 있는데, 이 빈 스냅샷을 기준(baseline)으로 삼으면
-    /// 이후 폴링에서 잡힌 "기존" 창이 새 --app 창으로 오인돼 리사이즈된다(사용자가 보던
-    /// 창이 갑자기 튐). 짧게 재시도해 실제 창 집합을 확보한다. 정말로 창이 없는 Chrome은
-    /// 계속 빈 배열이므로 콜드/무창 케이스의 기존 동작을 깨지 않는다.
+    /// 실행 전 Chrome 창 목록 스냅샷. 짧게 재시도해 실제 창 집합을 확보한다.
     private static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
         for attempt in 0..<5 {
             let windows = axWindows(pid: pid)
