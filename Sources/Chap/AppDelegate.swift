@@ -347,6 +347,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
         do {
             config = try JSONDecoder().decode(Config.self, from: data)
+            config.sites = sanitizedShortcuts(for: config.sites)
         } catch {
             Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
             DispatchQueue.main.async {
@@ -472,16 +473,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func launchSite(_ site: Site) {
-        let useGuide = config.showGuideWindow && site.launchType == .url
-        if useGuide, let screen = targetScreen(for: site) {
+        var guideToken: Int?
+        if config.showGuideWindow, site.launchType == .url, let screen = targetScreen(for: site) {
             let bounds = centeredBounds(for: site, on: screen)
-            GuideWindow.show(bounds: bounds)
+            guideToken = GuideWindow.show(bounds: bounds)
         }
 
         switch site.launchType {
         case .url:
             ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
-                if useGuide { GuideWindow.dismiss() }
+                if let token = guideToken { GuideWindow.dismiss(token) }
             }
         case .app:
             AppLauncher.launch(site)
