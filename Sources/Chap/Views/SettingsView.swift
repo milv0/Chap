@@ -708,21 +708,25 @@ struct SettingsView: View {
     private func applyConfigData(_ data: Data) {
         do {
             let config = try JSONDecoder().decode(Config.self, from: data)
+            let sanitizedSites = sanitizedShortcuts(for: config.sites)
             let bakPath = Defaults.configPath + ".bak"
             try? FileManager.default.removeItem(atPath: bakPath)
             try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
-            let cleanData = try encoder.encode(config)
+            let cleanData = try encoder.encode(
+                Config(
+                    showGuideWindow: config.showGuideWindow,
+                    launchAtLogin: config.launchAtLogin, sites: sanitizedSites))
             try cleanData.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
-            vm.sites = config.sites
+            vm.sites = sanitizedSites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
             vm.markSaved()  // 방금 디스크에 반영했으므로 기준값 갱신 (닫을 때 오경보 방지)
             vm.onReload?()
             let alert = NSAlert()
             alert.messageText = "Import successful"
-            alert.informativeText = "\(config.sites.count) site(s) loaded."
+            alert.informativeText = "\(sanitizedSites.count) site(s) loaded."
             alert.alertStyle = .informational
             alert.runModal()
         } catch {

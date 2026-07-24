@@ -251,11 +251,11 @@ struct SiteConfigView: View {
                     Picker(
                         "",
                         selection: Binding(
-                            get: { site.displayName ?? "Auto" },
-                            set: { newDisplay in
+                            get: { selectedDisplayTag },
+                            set: { newTag in
                                 let currentSizePresetID = activeSizePresetID
                                 isEditing = true
-                                site.displayName = newDisplay == "Auto" ? nil : newDisplay
+                                applyDisplaySelection(tag: newTag)
                                 if let currentSizePresetID {
                                     applySize(forPresetID: currentSizePresetID)
                                 }
@@ -263,8 +263,9 @@ struct SiteConfigView: View {
                         )
                     ) {
                         Text("Auto (cursor screen)").tag("Auto")
-                        ForEach(NSScreen.screens, id: \.localizedName) { screen in
-                            Text(screen.localizedName).tag(screen.localizedName)
+                        ForEach(NSScreen.screens, id: \.self) { screen in
+                            Text(displayLabel(for: screen))
+                                .tag(displayUUID(for: screen) ?? screen.localizedName)
                         }
                     }
                     .labelsHidden()
@@ -288,10 +289,14 @@ struct SiteConfigView: View {
                             get: { "\(displayedWindowSize.width)" },
                             set: { newValue in
                                 let currentSize = displayedWindowSize
+                                // 표시값과 동일한 값이 다시 커밋되는 경우(포커스 이동/Enter 등)엔
+                                // 프리셋을 풀지 않는다. 실제 사용자가 값을 바꿨을 때만 Custom으로 전환.
+                                guard let parsed = Int(newValue), parsed != currentSize.width
+                                else { return }
                                 isEditing = true
                                 site.windowSizePreset = nil
                                 site.height = currentSize.height
-                                site.width = max(100, Int(newValue) ?? site.width)
+                                site.width = max(100, parsed)
                             }),
                         placeholder: ""
                     )
@@ -303,10 +308,12 @@ struct SiteConfigView: View {
                             get: { "\(displayedWindowSize.height)" },
                             set: { newValue in
                                 let currentSize = displayedWindowSize
+                                guard let parsed = Int(newValue), parsed != currentSize.height
+                                else { return }
                                 isEditing = true
                                 site.windowSizePreset = nil
                                 site.width = currentSize.width
-                                site.height = max(100, Int(newValue) ?? site.height)
+                                site.height = max(100, parsed)
                             }),
                         placeholder: ""
                     )
@@ -326,10 +333,15 @@ struct SiteConfigView: View {
                         .foregroundColor(DS.textTertiary)
                 }
                 MinimapSwiftUI(
-                    width: previewWidth, height: previewHeight, displayName: $site.displayName
+                    width: previewWidth, height: previewHeight,
+                    selectedIdentifier: site.displayIdentifier,
+                    selectedName: site.displayName,
+                    onSelect: { selectDisplay($0) }
                 )
                 .frame(maxWidth: .infinity, minHeight: 100)
-                .id("\(previewWidth)-\(previewHeight)-\(site.displayName ?? "auto")")
+                .id(
+                    "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")"
+                )
             }
             .frame(maxWidth: .infinity)
         }
@@ -447,6 +459,66 @@ struct SiteConfigView: View {
     }
 
     // MARK: - Actions
+
+    /// 현재 Picker에서 선택 상태로 표시할 태그. UUID 우선, 없으면(구버전 config)
+    /// 연결된 화면 중 이름이 일치하는 것의 UUID로 해석, 그마저 없으면 "Auto".
+    private var selectedDisplayTag: String {
+        if let id = site.displayIdentifier, !id.isEmpty,
+            NSScreen.screens.contains(where: { displayUUID(for: $0) == id })
+        {
+            return id
+        }
+        if let name = site.displayName,
+            let screen = NSScreen.screens.first(where: { $0.localizedName == name })
+        {
+            return displayUUID(for: screen) ?? name
+        }
+        return "Auto"
+    }
+
+    /// Picker 선택 태그를 site.displayIdentifier/displayName에 반영.
+    /// UUID(식별)와 name(표시·폴백)을 함께 저장한다.
+    private func applyDisplaySelection(tag: String) {
+        if tag == "Auto" {
+            site.displayIdentifier = nil
+            site.displayName = nil
+            return
+        }
+        if let screen = NSScreen.screens.first(where: { displayUUID(for: $0) == tag }) {
+            site.displayIdentifier = tag
+            site.displayName = screen.localizedName
+        } else if let screen = NSScreen.screens.first(where: { $0.localizedName == tag }) {
+            // UUID를 못 얻는 화면(폴백 태그가 이름인 경우)
+            site.displayIdentifier = nil
+            site.displayName = screen.localizedName
+        }
+    }
+
+    /// 같은 localizedName을 가진 화면이 여러 대면 "(1)", "(2)"로 구분해 표시.
+    private func displayLabel(for screen: NSScreen) -> String {
+        let name = screen.localizedName
+        let sameName = NSScreen.screens.filter { $0.localizedName == name }
+        guard sameName.count > 1, let index = sameName.firstIndex(of: screen) else { return name }
+        return "\(name) (\(index + 1))"
+    }
+
+    /// 미니맵 등에서 NSScreen(또는 Auto=nil)으로 디스플레이를 선택할 때 공용 처리.
+    /// Picker와 동일하게 displayIdentifier(UUID)+displayName을 함께 세팅하고,
+    /// 활성 프리셋이 있으면 새 화면 기준으로 크기를 재계산한다.
+    private func selectDisplay(_ screen: NSScreen?) {
+        let currentSizePresetID = activeSizePresetID
+        isEditing = true
+        if let screen {
+            site.displayIdentifier = displayUUID(for: screen)
+            site.displayName = screen.localizedName
+        } else {
+            site.displayIdentifier = nil
+            site.displayName = nil
+        }
+        if let currentSizePresetID {
+            applySize(forPresetID: currentSizePresetID)
+        }
+    }
 
     private func browseForApp() {
         let panel = NSOpenPanel()

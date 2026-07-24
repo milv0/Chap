@@ -184,7 +184,34 @@ struct PillPicker: View {
 struct MinimapSwiftUI: View {
     let width: Int
     let height: Int
-    @Binding var displayName: String?
+    /// 현재 선택된 디스플레이 식별(하이라이트/미리보기용). 둘 다 nil이면 Auto.
+    let selectedIdentifier: String?
+    let selectedName: String?
+    /// 디스플레이 선택 콜백. nil이면 Auto(커서 화면).
+    let onSelect: (NSScreen?) -> Void
+
+    /// 화면이 현재 선택 상태인지. Auto(둘 다 nil)면 전체 하이라이트.
+    /// UUID 우선 매칭으로 동일 모델 모니터도 정확히 구분한다.
+    private func isSelected(_ screen: NSScreen) -> Bool {
+        if selectedIdentifier == nil, selectedName == nil { return true }
+        if let id = selectedIdentifier { return displayUUID(for: screen) == id }
+        return screen.localizedName == selectedName
+    }
+
+    /// 미리보기 창을 그릴 대상 화면(식별자 → 이름 → 주 화면).
+    private func previewScreen(_ screens: [NSScreen]) -> NSScreen? {
+        if let id = selectedIdentifier,
+            let screen = screens.first(where: { displayUUID(for: $0) == id })
+        {
+            return screen
+        }
+        if let name = selectedName,
+            let screen = screens.first(where: { $0.localizedName == name })
+        {
+            return screen
+        }
+        return NSScreen.main ?? screens.first
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -208,38 +235,41 @@ struct MinimapSwiftUI: View {
                     let frame = screens[i].frame
                     let sx = (frame.origin.x - minX) * scale
                     let sy = (maxY - frame.origin.y - frame.height) * scale
-                    let isSelected = displayName == nil || screens[i].localizedName == displayName
+                    let selected = isSelected(screens[i])
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(isSelected ? DS.accent.opacity(0.08) : DS.cardBg)
+                        .fill(selected ? DS.accent.opacity(0.08) : DS.cardBg)
                         .frame(width: frame.width * scale, height: frame.height * scale)
                         .overlay(
                             VStack(spacing: 2) {
                                 Text(screens[i].localizedName)
                                     .font(.system(size: 8))
-                                    .foregroundColor(isSelected ? DS.accent : DS.textTertiary)
+                                    .foregroundColor(selected ? DS.accent : DS.textTertiary)
                             }
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 4).stroke(
-                                isSelected ? DS.accent : DS.border
+                                selected ? DS.accent : DS.border
                             )
                         )
                         .offset(x: offsetX + sx, y: offsetY + sy)
                         .onTapGesture {
-                            if displayName == screens[i].localizedName {
-                                // 이미 선택된 모니터 다시 클릭 → Auto
-                                displayName = nil
+                            // 이미 선택된 (식별자 기준) 화면 재클릭 → Auto, 아니면 해당 화면 선택
+                            if selectedIdentifier != nil,
+                                displayUUID(for: screens[i]) == selectedIdentifier
+                            {
+                                onSelect(nil)
+                            } else if selectedIdentifier == nil,
+                                selectedName == screens[i].localizedName
+                            {
+                                onSelect(nil)
                             } else {
-                                displayName = screens[i].localizedName
+                                onSelect(screens[i])
                             }
                         }
                 }
 
-                let targetScreen =
-                    displayName.flatMap { name in screens.first { $0.localizedName == name } }
-                    ?? NSScreen.main ?? screens.first
-                if let targetScreen {
+                if let targetScreen = previewScreen(screens) {
                     let visibleFrame = targetScreen.visibleFrame
                     let visibleLocalX = (visibleFrame.origin.x - minX) * scale
                     let visibleLocalY = (maxY - visibleFrame.origin.y - visibleFrame.height) * scale
