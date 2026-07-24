@@ -97,10 +97,11 @@ public func resolvedDisplayIndex(
     {
         return index
     }
-    if let name = displayName, !name.isEmpty,
-        let index = displays.firstIndex(where: { $0.name == name })
-    {
-        return index
+    if let name = displayName, !name.isEmpty {
+        let matchingIndices = displays.indices.filter { displays[$0].name == name }
+        if matchingIndices.count == 1 {
+            return matchingIndices[0]
+        }
     }
     return nil
 }

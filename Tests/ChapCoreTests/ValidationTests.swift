@@ -65,6 +65,18 @@ struct DisplayMatchingTests {
             resolvedDisplayIndex(displayIdentifier: nil, displayName: nil, among: displays) == nil)
     }
 
+    @Test("does not choose an ambiguous display name without a UUID")
+    func ambiguousNameDoesNotResolve() {
+        let displays = [builtIn, ext1, ext2]
+        #expect(
+            resolvedDisplayIndex(
+                displayIdentifier: nil, displayName: "DELL U2720Q", among: displays) == nil)
+        #expect(
+            resolvedDisplayIndex(
+                displayIdentifier: "UUID-GONE", displayName: "DELL U2720Q", among: displays)
+                == nil)
+    }
+
     @Test("empty identifier/name are ignored")
     func emptyIgnored() {
         let displays = [builtIn, ext1]
