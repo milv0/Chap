@@ -9,6 +9,37 @@ public func isValidDomain(_ domain: String) -> Bool {
     return true
 }
 
+/// Chap이 자체 글로벌 단축키로 예약한 키. 사이트가 가져갈 수 없다.
+/// ⌥. → 메뉴 열기, ⌥, → 설정 열기.
+public let reservedShortcutKeys: Set<String> = [".", ","]
+
+/// 신뢰할 수 없는 소스(Import된 JSON, 손으로 편집한 ~/.chap.json)에서 온 사이트의
+/// 단축키를 정규화한다. 설정 UI는 저장 시 이 규칙을 강제하지만 import/디스크 로드
+/// 경로는 우회하므로, 두 경로에서 이 함수를 호출해 동일한 상태를 보장한다.
+///
+/// 규칙:
+/// - 공백만 있거나 빈 단축키 → nil
+/// - 예약키(".", ",") → nil
+/// - 중복 단축키(대소문자 무시) → 앞의 것만 유지, 나머지는 nil
+///
+/// 저장된 대소문자 표기는 유지한다(메뉴 keyEquivalent가 그대로 사용).
+public func sanitizedShortcuts(for sites: [Site]) -> [Site] {
+    var seen = Set<String>()
+    return sites.map { site in
+        var sanitized = site
+        guard let raw = site.shortcut else { return sanitized }
+        let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let upper = key.uppercased()
+        if key.isEmpty || reservedShortcutKeys.contains(key) || seen.contains(upper) {
+            sanitized.shortcut = nil
+        } else {
+            seen.insert(upper)
+            sanitized.shortcut = key
+        }
+        return sanitized
+    }
+}
+
 /// 커서가 위치한 화면. 사용 가능한 화면이 하나도 없으면 nil.
 public var cursorScreen: NSScreen? {
     let mouseLocation = NSEvent.mouseLocation
@@ -28,14 +59,61 @@ public var builtInScreen: NSScreen? {
     }
 }
 
-/// 사이트가 열릴 대상 화면. 지정된 displayName이 없거나 매칭 화면이 없으면
-/// 커서 화면으로, 그마저 없으면 nil로 폴백.
+/// 사이트가 열릴 대상 화면. displayIdentifier(UUID) → displayName 순으로 매칭하고,
+/// 둘 다 실패하거나 지정이 없으면(Auto) 커서 화면으로 폴백. 커서 화면도 없으면 nil.
 public func targetScreen(for site: Site) -> NSScreen? {
-    if let name = site.displayName {
-        return NSScreen.screens.first { $0.localizedName == name }
-            ?? cursorScreen
+    let screens = NSScreen.screens
+    let candidates = screens.map {
+        DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
+    }
+    if let index = resolvedDisplayIndex(
+        displayIdentifier: site.displayIdentifier,
+        displayName: site.displayName,
+        among: candidates)
+    {
+        return screens[index]
     }
     return cursorScreen
+}
+
+/// 디스플레이 매칭에 필요한 최소 정보(순수 로직 테스트용).
+public struct DisplayMatchCandidate: Equatable {
+    public let identifier: String?
+    public let name: String
+    public init(identifier: String?, name: String) {
+        self.identifier = identifier
+        self.name = name
+    }
+}
+
+/// 저장된 식별자/이름과 현재 연결된 디스플레이 목록으로 대상 인덱스를 결정한다.
+/// UUID 완전 일치를 최우선으로 하여 동일 이름(같은 모델) 모니터도 정확히 구분하고,
+/// UUID가 없거나(구버전 config) 매칭 실패 시 이름으로 폴백한다. 아무것도 못 맞추면 nil.
+public func resolvedDisplayIndex(
+    displayIdentifier: String?, displayName: String?, among displays: [DisplayMatchCandidate]
+) -> Int? {
+    if let id = displayIdentifier, !id.isEmpty,
+        let index = displays.firstIndex(where: { $0.identifier == id })
+    {
+        return index
+    }
+    if let name = displayName, !name.isEmpty,
+        let index = displays.firstIndex(where: { $0.name == name })
+    {
+        return index
+    }
+    return nil
+}
+
+/// NSScreen의 안정적 고유 식별자(CGDisplay UUID 문자열). 물리 디스플레이별로 다르며
+/// 재연결·재부팅에도 대체로 유지된다. 동일 모델 외장 모니터 여러 대도 구분된다.
+public func displayUUID(for screen: NSScreen) -> String? {
+    guard
+        let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")]
+            as? CGDirectDisplayID,
+        let uuid = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue()
+    else { return nil }
+    return CFUUIDCreateString(nil, uuid) as String
 }
 
 /// 좌상단 원점(AppleScript/글로벌) 좌표계의 bounds를
@@ -44,12 +122,20 @@ public func targetScreen(for site: Site) -> NSScreen? {
 public func appKitFrame(fromTopLeft bounds: (left: Int, top: Int, right: Int, bottom: Int))
     -> NSRect
 {
-    let primaryH = NSScreen.screens.first?.frame.height ?? 0
+    appKitFrame(
+        fromTopLeft: bounds,
+        primaryHeight: NSScreen.screens.first?.frame.height ?? 0)
+}
+
+/// 좌표 변환 순수 코어(테스트 대상). primaryHeight는 주 화면 높이.
+public func appKitFrame(
+    fromTopLeft bounds: (left: Int, top: Int, right: Int, bottom: Int), primaryHeight: CGFloat
+) -> NSRect {
     let width = CGFloat(bounds.right - bounds.left)
     let height = CGFloat(bounds.bottom - bounds.top)
     return NSRect(
         x: CGFloat(bounds.left),
-        y: primaryH - CGFloat(bounds.top) - height,
+        y: primaryHeight - CGFloat(bounds.top) - height,
         width: width,
         height: height)
 }
@@ -61,18 +147,28 @@ public func appKitFrame(fromTopLeft bounds: (left: Int, top: Int, right: Int, bo
 public func fittedWindowSize(width: Int, height: Int, on screen: NSScreen) -> (
     width: Int, height: Int
 ) {
-    let requestedWidth = max(100, width)
-    let requestedHeight = max(100, height)
-    let maxWidth = max(100, Int(screen.visibleFrame.width))
-    let maxHeight = max(100, Int(screen.visibleFrame.height))
+    fittedSize(
+        requestedWidth: width, requestedHeight: height,
+        maxWidth: Int(screen.visibleFrame.width), maxHeight: Int(screen.visibleFrame.height))
+}
+
+/// 요청 크기를 최대 영역(maxWidth×maxHeight) 안에 종횡비를 유지한 채 축소하는 순수 코어.
+/// 요청/최대 모두 최소 100pt로 클램프하며, 이미 들어맞으면 그대로 둔다.
+public func fittedSize(requestedWidth: Int, requestedHeight: Int, maxWidth: Int, maxHeight: Int)
+    -> (width: Int, height: Int)
+{
+    let rw = max(100, requestedWidth)
+    let rh = max(100, requestedHeight)
+    let mw = max(100, maxWidth)
+    let mh = max(100, maxHeight)
     let scale = min(
         1.0,
-        CGFloat(maxWidth) / CGFloat(requestedWidth),
-        CGFloat(maxHeight) / CGFloat(requestedHeight)
+        CGFloat(mw) / CGFloat(rw),
+        CGFloat(mh) / CGFloat(rh)
     )
     return (
-        max(100, Int((CGFloat(requestedWidth) * scale).rounded(.down))),
-        max(100, Int((CGFloat(requestedHeight) * scale).rounded(.down)))
+        max(100, Int((CGFloat(rw) * scale).rounded(.down))),
+        max(100, Int((CGFloat(rh) * scale).rounded(.down)))
     )
 }
 
@@ -82,14 +178,27 @@ public func windowSize(
     guard let screen else {
         return (Defaults.defaultWidth, Defaults.defaultHeight)
     }
-    let width = max(100, Int((screen.visibleFrame.width * CGFloat(widthRatio)).rounded(.down)))
+    return windowSizeFromRatio(
+        widthRatio: widthRatio, heightRatio: heightRatio, aspectRatio: aspectRatio,
+        visibleWidth: screen.visibleFrame.width, visibleHeight: screen.visibleFrame.height)
+}
+
+/// 화면 가시영역(visibleWidth×visibleHeight) 대비 비율로 창 크기를 구하는 순수 코어.
+/// aspectRatio가 있으면 높이는 너비/비율로, 없으면 heightRatio로 계산한 뒤 가시영역에 맞춘다.
+public func windowSizeFromRatio(
+    widthRatio: Double, heightRatio: Double, aspectRatio: Double?,
+    visibleWidth: CGFloat, visibleHeight: CGFloat
+) -> (width: Int, height: Int) {
+    let width = max(100, Int((visibleWidth * CGFloat(widthRatio)).rounded(.down)))
     let height: Int
     if let aspectRatio {
         height = max(100, Int((CGFloat(width) / CGFloat(aspectRatio)).rounded(.down)))
     } else {
-        height = max(100, Int((screen.visibleFrame.height * CGFloat(heightRatio)).rounded(.down)))
+        height = max(100, Int((visibleHeight * CGFloat(heightRatio)).rounded(.down)))
     }
-    return fittedWindowSize(width: width, height: height, on: screen)
+    return fittedSize(
+        requestedWidth: width, requestedHeight: height,
+        maxWidth: Int(visibleWidth), maxHeight: Int(visibleHeight))
 }
 
 public func windowSize(for preset: WindowSizePreset, on screen: NSScreen?) -> (
@@ -146,11 +255,18 @@ public func centeredBounds(for site: Site, on screen: NSScreen) -> (
     left: Int, top: Int, right: Int, bottom: Int
 ) {
     let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
-    let visibleFrame = screen.visibleFrame
     let fittedSize = effectiveWindowSize(for: site, on: screen)
-    let bw = fittedSize.width
-    let bh = fittedSize.height
+    return centeredBounds(
+        fittedWidth: fittedSize.width, fittedHeight: fittedSize.height,
+        visibleFrame: screen.visibleFrame, primaryHeight: primaryH)
+}
+
+/// 이미 맞춰진 크기(fittedWidth×fittedHeight)를 가시영역 중앙에 배치하는 좌상단 원점
+/// bounds를 계산하는 순수 코어. primaryHeight는 주 화면(글로벌 원점) 높이.
+public func centeredBounds(
+    fittedWidth bw: Int, fittedHeight bh: Int, visibleFrame: CGRect, primaryHeight: CGFloat
+) -> (left: Int, top: Int, right: Int, bottom: Int) {
     let bx = Int(visibleFrame.minX + (visibleFrame.width - CGFloat(bw)) / 2)
-    let by = Int(primaryH - visibleFrame.maxY + (visibleFrame.height - CGFloat(bh)) / 2)
+    let by = Int(primaryHeight - visibleFrame.maxY + (visibleFrame.height - CGFloat(bh)) / 2)
     return (bx, by, bx + bw, by + bh)
 }

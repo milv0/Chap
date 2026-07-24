@@ -102,6 +102,11 @@ public struct Site: Codable, Equatable {
     public var width: Int
     public var height: Int
     public var displayName: String?
+    /// 대상 디스플레이의 안정적 고유 ID (CGDisplay UUID 문자열).
+    /// displayName과 함께 저장하며, 매칭은 이 값을 우선한다. 동일 모델 외장 모니터가
+    /// 여러 대여도 물리 디스플레이별로 다른 값이라 정확히 구분된다. nil이면(구버전 config
+    /// 또는 Auto) displayName으로 폴백한다.
+    public var displayIdentifier: String?
     public var windowSizePreset: String?
     public var launchType: LaunchType
     public var appPath: String?
@@ -111,7 +116,8 @@ public struct Site: Codable, Equatable {
 
     public init(
         name: String, url: String, width: Int, height: Int,
-        displayName: String? = nil, windowSizePreset: String? = nil, launchType: LaunchType = .url,
+        displayName: String? = nil, displayIdentifier: String? = nil,
+        windowSizePreset: String? = nil, launchType: LaunchType = .url,
         appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
         shortcut: String? = nil
     ) {
@@ -120,6 +126,7 @@ public struct Site: Codable, Equatable {
         self.width = width
         self.height = height
         self.displayName = displayName
+        self.displayIdentifier = displayIdentifier
         self.windowSizePreset = windowSizePreset
         self.launchType = launchType
         self.appPath = appPath
@@ -129,7 +136,8 @@ public struct Site: Codable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case name, url, width, height, x, y, displayName, windowSizePreset, launchType
+        case name, url, width, height, x, y, displayName, displayIdentifier
+        case windowSizePreset, launchType
         case appPath, script, folderPath, shortcut, hotkey
     }
 
@@ -143,6 +151,7 @@ public struct Site: Codable, Equatable {
         _ = try container.decodeIfPresent(Int.self, forKey: .x)
         _ = try container.decodeIfPresent(Int.self, forKey: .y)
         displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+        displayIdentifier = try container.decodeIfPresent(String.self, forKey: .displayIdentifier)
         windowSizePreset = try container.decodeIfPresent(String.self, forKey: .windowSizePreset)
         launchType = try container.decodeIfPresent(LaunchType.self, forKey: .launchType) ?? .url
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
@@ -162,6 +171,7 @@ public struct Site: Codable, Equatable {
         try container.encode(height, forKey: .height)
         // x, y는 더 이상 저장하지 않음 (항상 화면 중앙 배치)
         try container.encodeIfPresent(displayName, forKey: .displayName)
+        try container.encodeIfPresent(displayIdentifier, forKey: .displayIdentifier)
         try container.encodeIfPresent(windowSizePreset, forKey: .windowSizePreset)
         try container.encode(launchType, forKey: .launchType)
         try container.encodeIfPresent(appPath, forKey: .appPath)
