@@ -21,6 +21,6 @@
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Chap controls Finder and Google Chrome to position their windows at the size and location you set.</string>
+	<string>Chap controls Finder to open folders and position Finder windows at the size and location you set.</string>
 </dict>
 </plist>

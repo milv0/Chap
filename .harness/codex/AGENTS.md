@@ -42,7 +42,7 @@ Launch types:
 - `url`: Chrome `--app` mode via `/usr/bin/open`; AX API detects and resizes the
   new Chrome window.
 - `app`: `NSWorkspace.openApplication`; AXObserver plus polling fallback resizes
-  standard windows.
+  standard windows, and resizable non-standard Office windows.
 - `finder`: Finder AppleScript opens the folder and sets bounds atomically.
 - `shell`: runs the configured script through `$SHELL -c`; no resize.
 

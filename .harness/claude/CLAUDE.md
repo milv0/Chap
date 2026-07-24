@@ -63,7 +63,7 @@ Launch types:
 | Type | Execution | Window control | Accessibility |
 | --- | --- | --- | --- |
 | `url` | Chrome `--app` mode via `/usr/bin/open` | AX API detects the new Chrome window and applies bounds | Required for resize |
-| `app` | `NSWorkspace.openApplication` | AXObserver plus polling fallback applies bounds to standard windows | Required for resize |
+| `app` | `NSWorkspace.openApplication` | AXObserver plus polling fallback applies bounds to standard windows, plus resizable non-standard Office windows | Required for resize |
 | `finder` | Finder AppleScript opens folder and sets bounds atomically | Finder AppleScript | Automation permission |
 | `shell` | User shell runs script with `$SHELL -c` | None | Not required |
 

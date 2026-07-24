@@ -29,7 +29,7 @@ There is no `Package.swift`; do not use `swift test`.
 - `Option + custom key`: launch the matching site.
 - `Option + ,`: open Settings.
 - URL launch uses Chrome `--app` plus AX API resize.
-- App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize.
+- App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize, including resizable non-standard Office windows.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Shell launch runs the configured script through `$SHELL -c`.
 

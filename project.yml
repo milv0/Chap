@@ -23,7 +23,7 @@ targets:
         CFBundleIconFile: AppIcon
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSAppleEventsUsageDescription: "Chap controls Finder and Google Chrome to position their windows at the size and location you set."
+        NSAppleEventsUsageDescription: "Chap controls Finder to open folders and position Finder windows at the size and location you set."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap

@@ -11,7 +11,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 - **Menubar Resident** — Always accessible from the status bar
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
-- **Multi-Monitor** — Target a specific display or auto-detect cursor screen
+- **Multi-Monitor** — Target a specific display or use Auto for the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Standard, Comfortable, Wide, Tall, Workspace, or Custom
 - **Display Minimap** — Visual preview of window placement across all monitors
@@ -25,7 +25,8 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 - macOS 14.0+ (Sonoma)
 - Google Chrome (for URL launch type)
-- Accessibility permission (for global hotkeys and app window resizing)
+- Accessibility permission (for global hotkeys and URL/app window resizing)
+- Automation permission when using Finder folder launch
 
 ## Usage
 

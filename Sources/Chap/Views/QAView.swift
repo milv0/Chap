@@ -19,11 +19,15 @@ struct QAView: View {
                 ),
                 (
                     "권한을 허용했는데도 안 돼요.",
-                    "권한 허용 후 앱을 한 번 재시작해야 합니다. 메뉴바 아이콘 → Restart를 눌러주세요."
+                    "Chap이 2초 간격으로 최대 30초 동안 권한을 다시 확인합니다. 그 이후에 권한을 허용했다면 메뉴바 아이콘을 한 번 열거나 Settings를 열면 단축키 등록을 다시 시도합니다."
                 ),
                 (
                     "Chrome이 없으면 사용 못 하나요?",
                     "URL 타입만 Chrome이 필요합니다. App, Finder, Shell 타입은 Chrome 없이도 사용 가능합니다."
+                ),
+                (
+                    "Finder 권한 요청이 뜨는 이유는?",
+                    "Finder 타입은 폴더를 열고 창 위치를 맞추기 위해 AppleScript 자동화를 사용합니다. 처음 사용할 때 macOS가 Finder 제어 권한을 요청할 수 있습니다."
                 ),
                 (
                     "macOS 버전 요구사항이 뭔가요?",
@@ -162,11 +166,15 @@ struct QAView: View {
                 ),
                 (
                     "I granted permission but it still doesn't work.",
-                    "You need to restart the app after granting permission. Click the menubar icon → Restart."
+                    "Chap checks permission every 2 seconds for up to 30 seconds. If you grant permission later, open the menubar menu or Settings once to retry shortcut registration."
                 ),
                 (
                     "Do I need Chrome to use Chap?",
                     "Only the URL type requires Chrome. App, Finder, and Shell types work without Chrome."
+                ),
+                (
+                    "Why does Finder ask for permission?",
+                    "The Finder type uses AppleScript automation to open folders and position Finder windows. macOS may ask for permission to control Finder the first time you use it."
                 ),
                 (
                     "What macOS version is required?",
