@@ -5,6 +5,7 @@ import os
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
+    private let configStore = ConfigStore()
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
@@ -702,16 +703,10 @@ struct SettingsView: View {
 
             // Apply normalized sites
             let normalizedSites = importResult.sites
-            let bakPath = Defaults.configPath + ".bak"
-            try? FileManager.default.removeItem(atPath: bakPath)
-            try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let cleanData = try encoder.encode(
+            try configStore.save(
                 Config(
                     showGuideWindow: config.showGuideWindow,
                     launchAtLogin: config.launchAtLogin, sites: normalizedSites))
-            try cleanData.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
             vm.sites = normalizedSites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin

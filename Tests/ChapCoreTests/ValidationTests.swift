@@ -21,6 +21,27 @@ struct DomainValidationTests {
     }
 }
 
+@Suite("Launch URL Validation")
+struct LaunchURLValidationTests {
+    @Test(arguments: [
+        ("https://example.com", true),
+        (" http://sub.domain.co.uk/path?q=1 ", true),
+        ("ftp://example.com", false),
+        ("example.com", false),
+        ("https://", false),
+        ("https://bad host.com", false),
+        ("https://evil<script>.com", false),
+    ])
+    func launchURLValidation(url: String, shouldPass: Bool) {
+        #expect(isValidLaunchURL(url) == shouldPass)
+    }
+
+    @Test("returns host for valid launch URL")
+    func returnsHost() {
+        #expect(launchURLHost("https://www.example.com/path") == "www.example.com")
+    }
+}
+
 @Suite("Display Matching")
 struct DisplayMatchingTests {
     private let builtIn = DisplayMatchCandidate(
@@ -96,6 +117,34 @@ struct DisplayMatchingTests {
         let decoded = try JSONDecoder().decode(Site.self, from: data)
         #expect(decoded.displayIdentifier == "UUID-C")
         #expect(decoded == original)
+    }
+}
+
+@Suite("Display Selection")
+struct DisplaySelectionTests {
+    @Test("nil display fields mean Auto")
+    func nilDisplayFieldsMeanAuto() {
+        let site = Site(name: "A", url: "https://a.com", width: 800, height: 600)
+
+        #expect(!hasExplicitDisplaySelection(site))
+    }
+
+    @Test("displayIdentifier alone is explicit")
+    func displayIdentifierAloneIsExplicit() {
+        let site = Site(
+            name: "A", url: "https://a.com", width: 800, height: 600,
+            displayIdentifier: "UUID-A")
+
+        #expect(hasExplicitDisplaySelection(site))
+    }
+
+    @Test("blank display fields mean Auto")
+    func blankDisplayFieldsMeanAuto() {
+        let site = Site(
+            name: "A", url: "https://a.com", width: 800, height: 600,
+            displayName: " ", displayIdentifier: "")
+
+        #expect(!hasExplicitDisplaySelection(site))
     }
 }
 

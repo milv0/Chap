@@ -96,7 +96,7 @@ public func validateConfig(_ config: Config) -> ValidationResult {
                     ValidationIssue(
                         siteIndex: index, field: .url, severity: .error,
                         message: "URL is required for URL launch type."))
-            } else if !isValidHTTPURL(url) {
+            } else if !isValidLaunchURL(url) {
                 issues.append(
                     ValidationIssue(
                         siteIndex: index, field: .url, severity: .error,
@@ -164,19 +164,6 @@ public func validateConfig(_ config: Config) -> ValidationResult {
 }
 
 // MARK: - Private Helpers
-
-/// URL이 http/https scheme과 비어 있지 않은 host를 모두 갖는지 확인한다.
-private func isValidHTTPURL(_ urlString: String) -> Bool {
-    guard let components = URLComponents(string: urlString),
-        let scheme = components.scheme?.lowercased(),
-        scheme == "http" || scheme == "https",
-        let host = components.host,
-        !host.isEmpty
-    else {
-        return false
-    }
-    return true
-}
 
 /// 중복 shortcut 감지(대소문자 무시). 두 번째 이후 출현을 error로 보고.
 private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {

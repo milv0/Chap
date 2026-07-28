@@ -13,7 +13,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
-- **Size Presets** — Compact, Standard, Comfortable, Wide, Tall, Workspace, or Custom
+- **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
 - **Display Minimap** — Auto previews the cursor screen; click to select a display
 - **Global Hotkeys** — `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
 - **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
@@ -91,7 +91,7 @@ Stored at `~/.chap.json`:
 }
 ```
 
-Windows are always centered on the target display automatically. If `displayName` and `displayIdentifier` are omitted, Chap opens on the cursor screen. Legacy name-only display settings are augmented with a UUID only when the connected-name match is unique; ambiguous or disconnected displays are preserved and shown for manual reselection. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
+Windows are always centered on the target display automatically. If `displayName` and `displayIdentifier` are omitted, Chap opens on the cursor screen. Legacy name-only display settings are augmented with a UUID only when the connected-name match is unique; connected UUIDs refresh the display name, while ambiguous or disconnected displays are preserved and shown for manual reselection. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
 
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 

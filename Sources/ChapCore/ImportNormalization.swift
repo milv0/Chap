@@ -82,9 +82,11 @@ public func normalizeForImport(
         sites: normalized, connectedDisplays: connectedDisplays)
     normalized = migration.sites
     for index in normalized.indices
-    where normalized[index].displayIdentifier != beforeMigration[index].displayIdentifier {
+    where normalized[index].displayIdentifier != beforeMigration[index].displayIdentifier
+        || normalized[index].displayName != beforeMigration[index].displayName
+    {
         fixes.append(
-            ImportFix(siteIndex: index, message: "Display identifier was updated."))
+            ImportFix(siteIndex: index, message: "Display selection was updated."))
     }
 
     let beforeShortcuts = normalized
@@ -126,8 +128,11 @@ public func migrateDisplayIdentifiers(
     for (index, site) in sites.enumerated() {
         if let identifier = site.displayIdentifier,
             !identifier.isEmpty,
-            connectedDisplays.contains(where: { $0.identifier == identifier })
+            let connectedDisplay = connectedDisplays.first(where: { $0.identifier == identifier })
         {
+            if site.displayName != connectedDisplay.name {
+                result[index].displayName = connectedDisplay.name
+            }
             continue
         }
 

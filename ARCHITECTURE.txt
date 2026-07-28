@@ -10,8 +10,9 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 
 Sources/
 ├── Chap/                          ← 앱 타겟
-│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 마이그레이션
+│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 창 orchestration
 │   ├── main.swift                 ← 엔트리포인트
+│   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
 │   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
 │   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
@@ -29,25 +30,37 @@ Sources/
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
 ├── ChapCore/                      ← 코어 로직 (테스트 대상)
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
+│   ├── ConfigStore.swift          ← config 파일 읽기/쓰기/백업/레거시 정리·파일 마이그레이션
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
 │   ├── Validation.swift           ← 도메인 검증, 좌표 계산(순수 코어+NSScreen 래퍼),
 │   │                                단축키 정규화, UUID 우선·이름 unique 디스플레이 매칭
-│   ├── ConfigValidation.swift     ← 전체 sites 필수값·URL·크기·중복 검증
-│   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID 마이그레이션
+│   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
+│   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
+    ├── ConfigStoreTests.swift
     ├── SettingsViewModelTests.swift
     ├── ValidationTests.swift
     ├── GeometryTests.swift
     ├── ConfigValidationTests.swift
     ├── ImportNormalizationTests.swift
     └── AXBoundsResultTests.swift
+Resources/                          ← 앱 아이콘/상태바 이미지 리소스
+├── AppIcon.icns
+└── StatusBarIcon.png
+assets/                             ← 배포·디자인용 원본 아이콘 에셋
+└── icons/
+    ├── icon-orange.svg
+    └── icon-purple.svg
 
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
-├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트
+├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (.gitignore 대상)
 ├── AGENTS.md                      ← Codex 지침 (→ .harness/codex/AGENTS.md)
+├── .claude/                       ← Claude Code 지침 링크 (→ .harness/claude)
+├── .kiro/                         ← Kiro 지침 링크 (→ .harness/kiro)
+├── logs/                          ← 과거 로컬 리사이즈 로그 (.gitignore 대상)
 └── .harness/                      ← AI 어시스턴트 하네스
     ├── shared/rules/              ← 공통 규칙 (Swift, 테스트, 커밋, 아키텍처)
     ├── shared/hooks/              ← 공통 훅 (swift-format.sh)
@@ -68,10 +81,11 @@ Site 모델 필드:
   - url: String               URL (launchType=url일 때 사용)
   - width: Int                윈도우 너비
   - height: Int               윈도우 높이
-  - displayName: String?      대상 디스플레이 이름 (nil이면 커서 화면). UI 표시 + 폴백 매칭용
+  - displayName: String?      대상 디스플레이 이름. UI 표시 + 폴백 매칭용
   - displayIdentifier: String? 대상 디스플레이 UUID(CGDisplay). 매칭 우선순위 1순위.
                               동일 모델 외장 모니터가 여러 대여도 물리 디스플레이별로 달라 정확히 구분됨.
-                              nil이면(구버전 config/Auto) displayName으로 폴백
+                              nil이면(구버전 config/Auto) displayName으로 폴백.
+                              displayName/displayIdentifier가 둘 다 nil이면 Auto(커서 화면)
   - windowSizePreset: String? 프리셋 ID (Auto면 내장 화면 기준, 지정 화면이면 대상 화면 기준, nil이면 Custom)
   - launchType: LaunchType    url | app | finder | shell
   - appPath: String?          앱 경로 (launchType=app)
@@ -85,13 +99,14 @@ Site 모델 필드:
 ## 핵심 기능
 
 - 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
-- URL → Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
+- URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
 - AX bounds 결과: position/size set error와 실제 readback을 반환하고 fully/partial/failed로 기록
-- Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·URL host·크기·preset·중복 검증
+- Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
-- Legacy displayName: unique name만 UUID 보강; stale UUID 갱신, ambiguous/disconnected는 재선택 안내
+- Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
+  stale UUID 갱신, ambiguous/disconnected는 재선택 안내
 - Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
 - 숫자 width/height는 draft로 편집해 Enter/blur 때 commit하며 실제 변경 때만 Custom 전환
 - Auto 미니맵은 현재 커서 화면에 window preview 표시
@@ -99,6 +114,7 @@ Site 모델 필드:
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + 미니맵 클릭으로 디스플레이 선택 (재클릭 시 Auto)
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
+- 크기 프리셋: Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, Custom
 - Auto 디스플레이 프리셋은 내장 화면 기준 크기로 계산 후 커서 화면에 맞춤
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 중복 체크, 예약키 ./,  차단)
@@ -110,7 +126,7 @@ Site 모델 필드:
 - 사이트 검색 (사이드바 이름 필터)
 - 사이트 추가 시 Name 필드 자동 포커스 + 타입별 초기 추천 크기(URL Standard 상당, App Comfortable 상당, Finder Compact 상당)
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
-- Config 자동 백업 (.bak) + 파싱 실패 시 기본값 복구
+- ConfigStore가 config 읽기/쓰기/백업(.bak)/레거시 정리를 일원화; 파싱 실패 시 기본값 복구
 - 레거시 필드 자동 정리 (x, y, hotkey, showGhostWindow, runInBackground)
 - 타입별 그룹 사이드바 + 메뉴바 구분선
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
@@ -166,7 +182,7 @@ Site 모델 필드:
 
 ## 런처 타입별 동작
 
-  URL:     Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
+  URL:     HTTP(S) URL 검증 → Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
   App:     NSWorkspace.openApplication → AXObserver(kAXWindowCreated) → 리사이즈 가능 윈도우 중앙정렬
   Finder:  단일 AppleScript로 열기+리사이즈 동시 (딜레이 없음)
   Shell:   Process로 스크립트 실행 (리사이즈 없음)

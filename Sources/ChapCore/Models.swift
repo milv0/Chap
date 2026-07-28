@@ -47,6 +47,8 @@ public struct WindowSizePreset: Equatable, Identifiable {
 public enum WindowSizePresets {
     public static let compact = WindowSizePreset(
         id: "compact", label: "Compact", widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+    public static let focus = WindowSizePreset(
+        id: "focus", label: "Focus", widthRatio: 0.55, heightRatio: 0.58, aspectRatio: nil)
     public static let standard = WindowSizePreset(
         id: "standard", label: "Standard", widthRatio: 0.66, heightRatio: 0.66,
         aspectRatio: Defaults.defaultWindowAspectRatio)
@@ -60,8 +62,10 @@ public enum WindowSizePresets {
     public static let workspace = WindowSizePreset(
         id: "workspace", label: "Workspace", widthRatio: 0.86, heightRatio: 0.86,
         aspectRatio: nil)
+    public static let max = WindowSizePreset(
+        id: "max", label: "Max", widthRatio: 0.94, heightRatio: 0.92, aspectRatio: nil)
 
-    public static let all = [compact, standard, comfortable, wide, tall, workspace]
+    public static let all = [compact, focus, standard, comfortable, wide, tall, workspace, max]
 
     public static func preset(withID id: String?) -> WindowSizePreset? {
         guard let id else { return nil }

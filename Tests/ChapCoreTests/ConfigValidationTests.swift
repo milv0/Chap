@@ -98,6 +98,15 @@ struct ConfigValidationTests {
         #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .url })
     }
 
+    @Test("url host must pass launch URL validation")
+    func urlHostMustPassLaunchValidation() {
+        let site = Site(
+            name: "Test", url: "https://bad host.com", width: 800, height: 600,
+            launchType: .url)
+        let result = validateConfig(Config(sites: [site]))
+        #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .url })
+    }
+
     // MARK: - Duplicate Detection
 
     @Test("duplicate shortcuts are detected")

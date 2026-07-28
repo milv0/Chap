@@ -63,9 +63,9 @@ enum ChromeLauncher {
             return
         }
 
-        let rawDomain = URL(string: site.url)?.host ?? ""
-        guard isValidDomain(rawDomain) else {
-            Log.launcher.error("Invalid domain: \(rawDomain, privacy: .private)")
+        let trimmedURL = site.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard launchURLHost(trimmedURL) != nil else {
+            Log.launcher.error("Invalid URL: \(site.url, privacy: .private)")
             LauncherUtils.showAlert(
                 message: "Invalid URL for \"\(site.name)\".",
                 info: "URL을 확인해주세요: \(site.url)")
@@ -98,7 +98,7 @@ enum ChromeLauncher {
             width: bounds.right - bounds.left, height: bounds.bottom - bounds.top)
         let screenName = screen.localizedName
         let siteName = site.name
-        let siteUrl = site.url
+        let siteUrl = trimmedURL
         let siteWidth = site.width
         let siteHeight = site.height
 

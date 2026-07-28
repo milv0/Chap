@@ -9,6 +9,25 @@ public func isValidDomain(_ domain: String) -> Bool {
     return true
 }
 
+/// URL launch type이 저장/실행 가능한 HTTP(S) URL인지 확인한다.
+public func isValidLaunchURL(_ urlString: String) -> Bool {
+    launchURLHost(urlString) != nil
+}
+
+/// URL launch type이 사용할 host를 반환한다. 유효하지 않으면 nil.
+public func launchURLHost(_ urlString: String) -> String? {
+    let trimmedURL = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard let components = URLComponents(string: trimmedURL),
+        let scheme = components.scheme?.lowercased(),
+        scheme == "http" || scheme == "https",
+        let host = components.host,
+        isValidDomain(host)
+    else {
+        return nil
+    }
+    return host
+}
+
 /// Chap이 자체 글로벌 단축키로 예약한 키. 사이트가 가져갈 수 없다.
 /// ⌥. → 메뉴 열기, ⌥, → 설정 열기.
 public let reservedShortcutKeys: Set<String> = [".", ","]
@@ -57,6 +76,13 @@ public var builtInScreen: NSScreen? {
         else { return false }
         return CGDisplayIsBuiltin(displayID) != 0
     }
+}
+
+/// 저장된 사이트가 Auto가 아닌 특정 디스플레이를 가리키는지 확인한다.
+public func hasExplicitDisplaySelection(_ site: Site) -> Bool {
+    let identifier = site.displayIdentifier?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let name = site.displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    return !identifier.isEmpty || !name.isEmpty
 }
 
 /// 사이트가 열릴 대상 화면. displayIdentifier(UUID) → displayName 순으로 매칭하고,
@@ -235,7 +261,7 @@ public func windowSize(
 public func windowSize(for preset: WindowSizePreset, appliedTo site: Site, on screen: NSScreen) -> (
     width: Int, height: Int
 ) {
-    let referenceScreen = site.displayName == nil ? builtInScreen ?? screen : screen
+    let referenceScreen = hasExplicitDisplaySelection(site) ? screen : builtInScreen ?? screen
     return windowSize(for: preset, referenceScreen: referenceScreen, fittingScreen: screen)
 }
 

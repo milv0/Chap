@@ -203,6 +203,20 @@ struct ImportNormalizationTests {
         #expect(result.sites[0].displayIdentifier == "UUID-EXISTING")
     }
 
+    @Test("connected displayIdentifier with missing displayName is completed")
+    func connectedIdentifierCompletesDisplayName() {
+        let site = Site(
+            name: "Test", url: "https://example.com", width: 800, height: 600,
+            displayName: nil, displayIdentifier: "UUID-EXISTING", launchType: .url)
+        let displays = [
+            DisplayMatchCandidate(identifier: "UUID-EXISTING", name: "Studio Display")
+        ]
+        let result = normalizeForImport(sites: [site], connectedDisplays: displays)
+        #expect(result.sites[0].displayIdentifier == "UUID-EXISTING")
+        #expect(result.sites[0].displayName == "Studio Display")
+        #expect(result.fixes.contains { $0.siteIndex == 0 })
+    }
+
     @Test("stale displayIdentifier is updated when name match is unique")
     func staleIdentifierUpdated() {
         let site = Site(
@@ -253,6 +267,22 @@ struct DisplayMigrationTests {
         ]
         let result = migrateDisplayIdentifiers(sites: sites, connectedDisplays: displays)
         #expect(result.sites[0].displayIdentifier == "UUID-DELL")
+    }
+
+    @Test("migrateDisplayIdentifiers completes missing name for connected UUID")
+    func completesMissingNameForConnectedUUID() {
+        let sites = [
+            Site(
+                name: "A", url: "https://a.com", width: 800, height: 600,
+                displayName: nil, displayIdentifier: "UUID-DELL", launchType: .url)
+        ]
+        let displays = [
+            DisplayMatchCandidate(identifier: "UUID-DELL", name: "DELL U2720Q")
+        ]
+        let result = migrateDisplayIdentifiers(sites: sites, connectedDisplays: displays)
+        #expect(result.sites[0].displayIdentifier == "UUID-DELL")
+        #expect(result.sites[0].displayName == "DELL U2720Q")
+        #expect(result.warnings.isEmpty)
     }
 
     @Test("migrateDisplayIdentifiers reports ambiguous names")

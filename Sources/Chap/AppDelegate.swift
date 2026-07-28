@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
+    private let configStore = ConfigStore()
     var settingsWindow: NSWindow?
     var qaWindow: NSWindow?
     var welcomeWindow: NSWindow?
@@ -277,12 +278,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     /// 기존 ~/.quickaccess.json → ~/.chap.json 마이그레이션
     func migrateConfigIfNeeded() {
-        let oldPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
-        if FileManager.default.fileExists(atPath: oldPath)
-            && !FileManager.default.fileExists(atPath: configPath)
-        {
-            try? FileManager.default.moveItem(atPath: oldPath, toPath: configPath)
-            Log.config.info("Migrated config from ~/.quickaccess.json to ~/.chap.json")
+        do {
+            if try configStore.migrateLegacyConfigPathIfNeeded() {
+                Log.config.info("Migrated config from ~/.quickaccess.json to ~/.chap.json")
+            }
+        } catch {
+            Log.config.error(
+                "Failed to migrate legacy config: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -290,30 +292,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     /// loadConfig() 후 호출하면 decode→encode 과정에서 레거시 키가 자동 탈락하므로,
     /// 파일 원본에 해당 키가 있으면 한 번 덮어써서 정리한다.
     func stripLegacyConfigFields() {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)),
-            let rawJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let sites = rawJSON["sites"] as? [[String: Any]]
-        else { return }
-
-        // 레거시 키가 하나라도 존재하면 re-save
-        let legacyKeys: Set<String> = ["x", "y", "hotkey"]
-        let hasLegacy =
-            sites.contains { site in
-                !legacyKeys.isDisjoint(with: site.keys)
-            } || rawJSON.keys.contains("showGhostWindow")
-            || rawJSON.keys.contains("runInBackground")
-
-        guard hasLegacy else { return }
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
         do {
-            let cleanData = try encoder.encode(config)
-            let bakPath = configPath + ".bak"
-            try? FileManager.default.removeItem(atPath: bakPath)
-            try? FileManager.default.copyItem(atPath: configPath, toPath: bakPath)
-            try cleanData.write(to: URL(fileURLWithPath: configPath), options: .atomic)
-            Log.config.info("Stripped legacy fields from config file")
+            if try configStore.stripLegacyFieldsIfNeeded(using: config) {
+                Log.config.info("Stripped legacy fields from config file")
+            }
         } catch {
             Log.config.error(
                 "Failed to strip legacy fields: \(error.localizedDescription, privacy: .public)")
@@ -321,61 +303,32 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func copyDefaultConfigIfNeeded() {
-        if !FileManager.default.fileExists(atPath: configPath) {
-            let defaultJSON = """
-                {
-                  "sites": [
-                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "launchType": "url"},
-                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "launchType": "url"},
-                    {"name": "Downloads", "url": "", "width": 1000, "height": 400, "launchType": "finder", "folderPath": "~/Downloads"}
-                  ]
-                }
-                """
-            do {
-                try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
-            } catch {
-                Log.config.error(
-                    "Failed to write default config: \(error.localizedDescription, privacy: .public)"
-                )
-            }
+        do {
+            _ = try configStore.createDefaultConfigIfNeeded()
+        } catch {
+            Log.config.error(
+                "Failed to write default config: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
     func loadConfig() {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else {
-            Log.config.error("Failed to read config file at \(self.configPath, privacy: .public)")
-            config = .default
-            return
+        let connectedDisplays = NSScreen.screens.map {
+            DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
         }
         do {
-            config = try JSONDecoder().decode(Config.self, from: data)
-            config.sites = sanitizedShortcuts(for: config.sites)
-
-            // Display UUID migration: augment legacy displayName-only sites with UUID
-            let connectedDisplays = NSScreen.screens.map {
-                DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
+            let result = try configStore.load(connectedDisplays: connectedDisplays)
+            config = result.config
+            if result.didAutoSaveDisplayMigration {
+                Log.config.info("Auto-saved display UUID migration")
             }
-            let migrationResult = migrateDisplayIdentifiers(
-                sites: config.sites, connectedDisplays: connectedDisplays)
-            if migrationResult.sites != config.sites {
-                config.sites = migrationResult.sites
-                // Auto-save migrated identifiers
-                let encoder = JSONEncoder()
-                encoder.outputFormatting = .prettyPrinted
-                if let cleanData = try? encoder.encode(config) {
-                    let bakPath = configPath + ".bak"
-                    try? FileManager.default.removeItem(atPath: bakPath)
-                    try? FileManager.default.copyItem(atPath: configPath, toPath: bakPath)
-                    try? cleanData.write(
-                        to: URL(fileURLWithPath: configPath), options: .atomic)
-                    Log.config.info("Auto-saved display UUID migration")
-                }
-            }
-            // Log any warnings about ambiguous/disconnected displays
-            for warning in migrationResult.warnings {
+            for warning in result.displayWarnings {
                 Log.config.warning(
                     "Display migration: \(warning.message, privacy: .public)")
             }
+        } catch ConfigStoreError.readFailed {
+            Log.config.error("Failed to read config file at \(self.configPath, privacy: .public)")
+            config = .default
         } catch {
             Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
             DispatchQueue.main.async {
@@ -578,14 +531,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 return false
             }
             let newConfig = validationConfig
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
             do {
-                let data = try encoder.encode(newConfig)
-                let bakPath = self.configPath + ".bak"
-                try? FileManager.default.removeItem(atPath: bakPath)
-                try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
-                try data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
+                try self.configStore.save(newConfig)
             } catch {
                 Log.config.error(
                     "Failed to save config: \(error.localizedDescription, privacy: .public)")

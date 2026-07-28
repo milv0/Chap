@@ -115,7 +115,7 @@ struct QAView: View {
                 ),
                 (
                     "Size Preset은 어떻게 동작하나요?",
-                    "Compact, Standard, Comfortable, Wide, Tall, Workspace 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
+                    "Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
                 ),
                 (
                     "Auto에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
@@ -262,7 +262,7 @@ struct QAView: View {
                 ),
                 (
                     "How do Size Presets work?",
-                    "Choose Compact, Standard, Comfortable, Wide, Tall, or Workspace to recalculate the size for the screen at launch time. Editing Width or Height switches the item to Custom and saves that exact size."
+                    "Choose Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, or Max to recalculate the size for the screen at launch time. Editing Width or Height switches the item to Custom and saves that exact size."
                 ),
                 (
                     "What size reference does Auto use on external monitors?",

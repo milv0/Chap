@@ -151,11 +151,13 @@ struct WindowSizePresetTests {
         #expect(
             WindowSizePresets.all.map(\.label) == [
                 "Compact",
+                "Focus",
                 "Standard",
                 "Comfortable",
                 "Wide",
                 "Tall",
                 "Workspace",
+                "Max",
             ])
     }
 
