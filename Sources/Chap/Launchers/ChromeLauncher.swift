@@ -90,9 +90,6 @@ enum ChromeLauncher {
         }
         let bounds = centeredBounds(for: site, on: screen)
 
-        // Accessibility 권한 확인
-        let canResize = LauncherUtils.checkAccessibility()
-
         let position = CGPoint(x: bounds.left, y: bounds.top)
         let size = CGSize(
             width: bounds.right - bounds.left, height: bounds.bottom - bounds.top)
@@ -138,7 +135,7 @@ enum ChromeLauncher {
                 return
             }
 
-            guard canResize else {
+            guard AccessibilityPermission.isTrusted else {
                 Log.launcher.info("Accessibility not granted — launching without resize")
                 onComplete?()
                 return
@@ -168,11 +165,13 @@ enum ChromeLauncher {
                     Log.launcher.error(
                         "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
                     )
+                    AccessibilityPermission.notifyResizeFailure()
                 }
             } else {
                 Log.launcher.error(
                     "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
                 )
+                AccessibilityPermission.notifyResizeFailure()
             }
             ResizeLogger.log(
                 site: siteName, type: "url",

@@ -11,6 +11,7 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 Sources/
 ├── Chap/                          ← 앱 타겟
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 창 orchestration
+│   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
@@ -18,7 +19,7 @@ Sources/
 │   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
-│   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert, checkAccessibility
+│   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
 │   └── Views/                     ← UI
@@ -103,6 +104,7 @@ Site 모델 필드:
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
 - AX bounds 결과: position/size set error와 실제 readback을 반환하고 fully/partial/failed로 기록
+- URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
 - Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
@@ -136,7 +138,7 @@ Site 모델 필드:
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
-- 접근성 권한 자동 재시도 + 권한 제거 감지
+- 접근성 권한 안내 직후 자동 재시도 + 권한 제거 감지
 - Launch at Login (SMAppService)
 - Restart (메뉴바) / Restart App·Uninstall (설정 창 하단 folder 메뉴)
 
@@ -188,7 +190,7 @@ Site 모델 필드:
   Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
 리사이즈 전략:
-  URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (새 윈도우 목록 비교 감지, 최대 6초)
+  URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (캐싱한 Chrome PID에서 새 윈도우 비교 감지, 최대 6초)
   URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
   App (실행 중):         AXObserver + 50ms 재스캔, 새 창이 없으면 0.2초 후 focused 창 하나 처리
   App (콜드 스타트):     AXObserver + 100ms 재스캔 (일반 최대 20초, Office 최대 30초)
@@ -197,14 +199,14 @@ Site 모델 필드:
 
 Chrome 윈도우 감지 방식:
   1. 모든 요청을 단일 requestCoordinator serial queue에서 처리
-     (baseline → open -na Process → 새 창 polling → AX readback 검증). 이전 요청 완료 전 다음
-     Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이 1:1로 대응함. queue wait와
-     processing latency를 분리해 로그에 기록
-  2. 실행 전 전체 윈도우 목록(AXUIElement[]) 저장
+     (cached Chrome PID baseline → open -na Process → 새 창 polling → AX readback 검증).
+     이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
+     1:1로 대응함. queue wait와 processing latency를 분리해 로그에 기록
+  2. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
        새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
-  3. 실행 후 폴링하고 CFEqual로 이전 목록과 비교하여 첫 새 윈도우 식별
+  3. 실행 후 동일 PID를 폴링하고 CFEqual로 이전 목록과 비교하여 첫 새 윈도우 식별
   4. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
   5. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
   6. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
@@ -231,8 +233,8 @@ App 윈도우 감지 방식 (AXObserver):
   - AXUIElementSetAttributeValue              윈도우 position/size 설정
   - AXValueCreate(.cgPoint / .cgSize)         좌표/크기 값 생성
   - AXObserverCreate / AXObserverAddNotification  윈도우 생성 이벤트 구독
-  - AXIsProcessTrusted()                      접근성 권한 확인
-  - AXIsProcessTrustedWithOptions()           접근성 권한 요청 다이얼로그
+  - AXIsProcessTrusted()                      접근성 권한 확인 (AccessibilityPermission)
+  - AXIsProcessTrustedWithOptions()           접근성 권한 요청 다이얼로그 (AccessibilityPermission)
   - CFEqual()                                 윈도우 동일성 비교
 
 ### AppKit (NSWorkspace)
@@ -305,9 +307,9 @@ App 윈도우 감지 방식 (AXObserver):
 ### 수정한 것
   1. AppLauncher: Process+osascript+SystemEvents → AXObserver + AXUIElementSetAttributeValue
   2. ChromeLauncher: Process+osascript+Chrome AppleScript → AX API 윈도우 목록 비교로 새 윈도우 감지
-  3. LauncherUtils: setPosition/setSize/axApplyBounds/checkAccessibility 공용 함수로 통합
+  3. LauncherUtils: setPosition/setSize/axApplyBounds 공용 함수로 통합
   4. 폴링 간격: 고정 딜레이 배열(0.5~2.0초) → 50ms 간격 폴링
-  5. Accessibility 체크: ChromeLauncher에도 추가
+  5. Accessibility 체크: AccessibilityPermission 단일 진입점으로 통합
   6. pid 캐싱: Chrome running 시 매 폴링마다 runningApplications 조회 제거
   7. App: AXObserver로 이벤트 기반 감지, 실패 시 폴링 폴백
   8. Chrome 타임아웃: running 시 6초, cold 시 10초
@@ -321,10 +323,12 @@ App 윈도우 감지 방식 (AXObserver):
 ## 권한 요구사항
 
 1. 접근성 (Accessibility): 글로벌 단축키 + 윈도우 리사이즈
-   - 앱 시작 시 2초 간격 재시도, 30초 후 폴링 종료
-   - 메뉴 열 때 권한 재확인 (늦게 허용한 경우 대응)
+   - 첫 실행/권한 없음 상태에서 macOS Accessibility 프롬프트 표시
+   - 앱 시작/활성화/메뉴 열기/Settings 열기/사이트 실행 시 AXIsProcessTrusted 재확인
+   - 권한 프롬프트 또는 접근성 설정 열기 직후에만 2초 간격으로 최대 30초 감지
    - 허용 후 자동 등록 (재시작 불필요)
-   - 권한 제거 감지: CGEvent tap disabled → AXIsProcessTrusted 체크 → 상태바 경고
+   - 권한 제거 감지: 다음 권한 체크, URL/App 리사이즈 실패, 또는 CGEvent tap disabled
+     → 상태바 경고 + 1회 알림
 
 2. 자동화 (Automation): Finder AppleScript 제어
    - osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)

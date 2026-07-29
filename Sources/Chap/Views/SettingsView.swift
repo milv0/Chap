@@ -9,6 +9,7 @@ struct SettingsView: View {
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
+    @State private var isGuideEnglish = false
     @State private var showPasteJSON = false
     @State private var pasteJSONText = ""
     @State private var dropTargeted = false
@@ -23,7 +24,7 @@ struct SettingsView: View {
             Divider()
             mainPanel
         }
-        .frame(minWidth: 770, minHeight: 580)
+        .frame(minWidth: 770, minHeight: 600)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
             isAddingNew = false
@@ -287,38 +288,70 @@ struct SettingsView: View {
 
     private var guideSheet: some View {
         VStack(spacing: DS.spacing) {
-            Spacer()
+            HStack {
+                Text(isGuideEnglish ? "User Guide" : "사용자 가이드")
+                    .font(DS.titleFont)
+                    .foregroundColor(DS.textPrimary)
 
-            Text("User Guide")
-                .font(DS.titleFont)
-                .foregroundColor(DS.textPrimary)
+                Spacer()
+
+                Picker("", selection: $isGuideEnglish) {
+                    Text("한국어").tag(false)
+                    Text("English").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 150)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+
+            Spacer()
 
             VStack(spacing: 10) {
                 CardSection {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("App Usage  ⌥")
+                        Text(isGuideEnglish ? "Launch" : "실행")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "cursorarrow.click.2", text: "Click menubar icon to select")
                         guideRow(
-                            icon: "keyboard", text: "⌥. menu, ⌥(custom key) launch, ⌥, settings")
+                            icon: "cursorarrow.click.2",
+                            text: isGuideEnglish
+                                ? "Use the menubar icon to launch items"
+                                : "메뉴바 아이콘에서 항목을 실행")
                         guideRow(
-                            icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
+                            icon: "keyboard",
+                            text: isGuideEnglish
+                                ? "⌥. menu, ⌥ custom key launch, ⌥, settings"
+                                : "⌥. 메뉴, ⌥ 커스텀키 실행, ⌥, 설정")
+                        guideRow(
+                            icon: "checkmark.shield",
+                            text: isGuideEnglish
+                                ? "Allow Accessibility for shortcuts and resizing"
+                                : "단축키와 리사이즈를 위해 접근성 권한 허용")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 CardSection {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Settings  ⌘")
+                        Text(isGuideEnglish ? "Settings" : "설정")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "plus.circle", text: "Add launchables with shortcuts")
-                        guideRow(icon: "display", text: "Choose display + size preset")
                         guideRow(
-                            icon: "cursorarrow.click",
-                            text: "Click to edit, Enter or ⌘S to save, ⌘N to add")
-                        guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
+                            icon: "plus.circle",
+                            text: isGuideEnglish
+                                ? "Add URL, App, Finder, or Shell items"
+                                : "URL, App, Finder, Shell 항목 추가")
+                        guideRow(
+                            icon: "display",
+                            text: isGuideEnglish
+                                ? "Choose a display and size preset per item"
+                                : "항목별 디스플레이와 크기 프리셋 선택")
+                        guideRow(
+                            icon: "square.and.arrow.down",
+                            text: isGuideEnglish
+                                ? "Import/export JSON from the folder menu"
+                                : "폴더 메뉴에서 JSON 가져오기/내보내기")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -327,11 +360,31 @@ struct SettingsView: View {
 
             Spacer()
 
-            PrimaryButton(title: "Close") { showGuide = false }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 24)
+            VStack(spacing: 10) {
+                Button(action: openQAFromGuide) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "questionmark.circle")
+                        Text(isGuideEnglish ? "Open Full Q&A" : "전체 Q&A 열기")
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(DS.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(DS.cardBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(DS.border, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                PrimaryButton(title: isGuideEnglish ? "Close" : "닫기") { showGuide = false }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 24)
         }
-        .frame(width: 440, height: 540)
+        .frame(width: 460, height: 540)
         .background(DS.surfaceBg)
     }
 
@@ -423,6 +476,13 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func openQAFromGuide() {
+        showGuide = false
+        DispatchQueue.main.async {
+            (NSApp.delegate as? AppDelegate)?.openQA()
+        }
+    }
 
     private func guideRow(icon: String, text: String) -> some View {
         HStack(spacing: 10) {

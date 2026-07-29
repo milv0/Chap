@@ -19,7 +19,7 @@ struct QAView: View {
                 ),
                 (
                     "권한을 허용했는데도 안 돼요.",
-                    "Chap이 2초 간격으로 최대 30초 동안 권한을 다시 확인합니다. 그 이후에 권한을 허용했다면 메뉴바 아이콘을 한 번 열거나 Settings를 열면 단축키 등록을 다시 시도합니다."
+                    "Chap은 앱 시작, 메뉴 열기, Settings 열기, 항목 실행 전에 권한을 다시 확인합니다. 권한 안내 직후에는 30초 동안 자동으로 허용 여부를 감지합니다."
                 ),
                 (
                     "Chrome이 없으면 사용 못 하나요?",
@@ -166,7 +166,7 @@ struct QAView: View {
                 ),
                 (
                     "I granted permission but it still doesn't work.",
-                    "Chap checks permission every 2 seconds for up to 30 seconds. If you grant permission later, open the menubar menu or Settings once to retry shortcut registration."
+                    "Chap checks permission on launch, menu open, Settings open, and item launch. After a permission prompt, it watches for approval for 30 seconds."
                 ),
                 (
                     "Do I need Chrome to use Chap?",
@@ -352,6 +352,7 @@ struct QAView: View {
                     }
                 }
                 .padding(DS.padding)
+                .textSelection(.enabled)
             }
         }
         .frame(minWidth: 1000, minHeight: 500)

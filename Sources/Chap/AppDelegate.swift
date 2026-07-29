@@ -5,6 +5,17 @@ import SwiftUI
 import os
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
+    private enum AccessibilityState {
+        case unknown
+        case granted
+        case denied
+    }
+
+    private enum AccessibilityGrantPolling {
+        static let interval: TimeInterval = 2.0
+        static let duration: TimeInterval = 30.0
+    }
+
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
@@ -15,6 +26,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var settingsVM: SettingsViewModel?
     // tap 콜백 스레드와 메인 스레드가 함께 접근하므로 락으로 보호
     private let menuOpenLock = OSAllocatedUnfairLock(initialState: false)
+    private var accessibilityState: AccessibilityState = .unknown
+    private var accessibilityGrantPollTimer: Timer?
+    private var accessibilityGrantPollEndDate: Date?
+    private var didShowAccessibilityAlert = false
+    private var didRequestAccessibilitySystemPrompt = false
+    private var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -40,7 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
         }
         buildMenu()
-        registerGlobalShortcuts()
+        initializeAccessibilityHandling()
 
         let guideDisabled = UserDefaults.standard.bool(forKey: "guideDisabled")
         if !guideDisabled {
@@ -53,13 +73,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Global Shortcuts
 
     private var eventTap: CFMachPort?
-    // 접근성 권한이 없을 때 권한이 켜질 때까지 주기적으로 확인하는 타이머.
-    // 사용자가 (아무리 늦게라도) 권한을 허용하면 자동으로 단축키를 등록한다 —
-    // 수동 재시작 불필요.
-    private var accessibilityPollTimer: Timer?
-    private var accessibilityPollDeadline: Date?
 
     private func registerGlobalShortcuts() {
+        guard eventTap == nil else { return }
+
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         guard
             let tap = CGEvent.tapCreate(
@@ -76,15 +93,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                         if let tap = appDelegate.eventTap {
                             CGEvent.tapEnable(tap: tap, enable: true)
                         }
-                        // re-enable 후에도 권한이 없으면 사용자에게 알림
-                        if !AXIsProcessTrusted() {
-                            Log.app.error("Accessibility permission revoked")
-                            DispatchQueue.main.async {
-                                appDelegate.updateStatusIcon(accessible: false)
-                                appDelegate.showAccessibilityAlert()
-                            }
-                        } else {
-                            Log.app.info("CGEvent tap re-enabled after system disable")
+                        DispatchQueue.main.async {
+                            appDelegate.refreshAccessibilityState(
+                                reason: "event tap disabled", showAlert: true)
                         }
                         return Unmanaged.passRetained(event)
                     }
@@ -145,12 +156,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         else {
             Log.app.error("Failed to create CGEvent tap — check Accessibility permission")
             updateStatusIcon(accessible: false)
-            startAccessibilityPolling()
             return
         }
 
         eventTap = tap
-        stopAccessibilityPolling()
         updateStatusIcon(accessible: true)
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
@@ -158,53 +167,123 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         Log.app.info("CGEvent tap registered successfully")
     }
 
-    /// 접근성 권한을 2초 간격으로 최대 30초 동안 확인한다. 권한이 생기면 단축키를
-    /// 등록하고, 30초가 지나면 폴링을 멈춘다(무한 폴링 방지). 그 이후 늦게 허용한 경우는
-    /// 사용자가 메뉴바 아이콘을 눌러 메뉴가 열릴 때(menuWillOpen) 다시 확인·재폴링한다.
-    private func startAccessibilityPolling() {
-        guard accessibilityPollTimer == nil else { return }
-        accessibilityPollDeadline = Date().addingTimeInterval(30)
-        accessibilityPollTimer = Timer.scheduledTimer(
-            withTimeInterval: 2.0, repeats: true
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            if self.eventTap != nil {
-                self.stopAccessibilityPolling()
-                return
+    private func initializeAccessibilityHandling() {
+        let shouldPromptUser = !isRunningTests
+        refreshAccessibilityState(
+            reason: "launch", showAlert: false,
+            requestSystemPrompt: shouldPromptUser)
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActiveNotification),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(axResizeDidFailNotification),
+            name: .chapAXResizeFailed,
+            object: nil)
+    }
+
+    @objc private func applicationDidBecomeActiveNotification(_ notification: Notification) {
+        refreshAccessibilityState(reason: "app active", showAlert: false)
+    }
+
+    @objc private func axResizeDidFailNotification(_ notification: Notification) {
+        refreshAccessibilityState(reason: "resize failure", showAlert: true)
+    }
+
+    private func startTemporaryAccessibilityGrantPolling(reason: String) {
+        guard !isRunningTests else { return }
+        accessibilityGrantPollEndDate = Date().addingTimeInterval(
+            AccessibilityGrantPolling.duration)
+        guard accessibilityGrantPollTimer == nil else { return }
+
+        let timer = Timer(timeInterval: AccessibilityGrantPolling.interval, repeats: true) {
+            [weak self] _ in
+            self?.pollAccessibilityGrant(reason: reason)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        accessibilityGrantPollTimer = timer
+    }
+
+    private func pollAccessibilityGrant(reason: String) {
+        if let endDate = accessibilityGrantPollEndDate, Date() > endDate {
+            stopTemporaryAccessibilityGrantPolling()
+            return
+        }
+        refreshAccessibilityState(reason: reason, showAlert: false)
+    }
+
+    private func stopTemporaryAccessibilityGrantPolling() {
+        accessibilityGrantPollTimer?.invalidate()
+        accessibilityGrantPollTimer = nil
+        accessibilityGrantPollEndDate = nil
+    }
+
+    private func refreshAccessibilityState(
+        reason: String, showAlert: Bool, requestSystemPrompt: Bool = false
+    ) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async {
+                self.refreshAccessibilityState(
+                    reason: reason, showAlert: showAlert, requestSystemPrompt: requestSystemPrompt)
             }
-            if AXIsProcessTrusted() {
-                Log.app.info("Accessibility granted — registering shortcuts")
-                self.registerGlobalShortcuts()
-                return
+            return
+        }
+
+        let isTrusted = AccessibilityPermission.isTrusted
+        let previousState = accessibilityState
+        accessibilityState = isTrusted ? .granted : .denied
+        updateStatusIcon(accessible: isTrusted)
+
+        if isTrusted {
+            stopTemporaryAccessibilityGrantPolling()
+            didShowAccessibilityAlert = false
+            if eventTap == nil {
+                Log.app.info(
+                    "Accessibility granted from \(reason, privacy: .public) — registering shortcuts"
+                )
+                registerGlobalShortcuts()
             }
-            if let deadline = self.accessibilityPollDeadline, Date() >= deadline {
-                Log.app.info("Accessibility poll timed out (30s) — will recheck on menu open")
-                self.stopAccessibilityPolling()
-            }
+            return
+        }
+
+        if requestSystemPrompt {
+            requestAccessibilitySystemPromptIfNeeded()
+            startTemporaryAccessibilityGrantPolling(reason: "permission prompt")
+        }
+
+        if eventTap != nil {
+            invalidateGlobalShortcuts()
+        }
+
+        let wasRevoked = previousState == .granted
+        if wasRevoked {
+            Log.app.error("Accessibility permission revoked from \(reason, privacy: .public)")
+        }
+
+        if wasRevoked || showAlert, !didShowAccessibilityAlert {
+            didShowAccessibilityAlert = true
+            showAccessibilityAlert()
         }
     }
 
-    private func stopAccessibilityPolling() {
-        accessibilityPollTimer?.invalidate()
-        accessibilityPollTimer = nil
-        accessibilityPollDeadline = nil
+    private func requestAccessibilitySystemPromptIfNeeded() {
+        guard !didRequestAccessibilitySystemPrompt else { return }
+        didRequestAccessibilitySystemPrompt = true
+        AccessibilityPermission.requestSystemPrompt()
     }
 
-    /// 단축키가 아직 등록 안 됐다면, 지금 권한이 생겼는지 확인해 등록한다.
-    /// 아직 없으면 30초 폴링을 (재)시작한다. 메뉴바 아이콘 클릭·설정 열기 시 호출.
-    private func recheckAccessibilityIfNeeded() {
-        guard eventTap == nil else { return }
-        if AXIsProcessTrusted() {
-            Log.app.info("Accessibility granted — registering shortcuts")
-            registerGlobalShortcuts()
-        } else {
-            startAccessibilityPolling()
-        }
+    private func invalidateGlobalShortcuts() {
+        guard let tap = eventTap else { return }
+        CFMachPortInvalidate(tap)
+        eventTap = nil
     }
 
     // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
     func menuWillOpen(_ menu: NSMenu) {
-        recheckAccessibilityIfNeeded()
+        refreshAccessibilityState(reason: "menu", showAlert: false)
     }
 
     private func updateStatusIcon(accessible: Bool) {
@@ -229,18 +308,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
         {
             NSWorkspace.shared.open(url)
+            startTemporaryAccessibilityGrantPolling(reason: "accessibility settings")
         }
     }
 
     /// 접근성 권한이 없을 때, 시스템 설정으로 바로 이동하는 버튼이 포함된 알림
     func showAccessibilityAlert() {
         DispatchQueue.main.async {
+            guard !AccessibilityPermission.isTrusted else {
+                self.didShowAccessibilityAlert = false
+                self.updateStatusIcon(accessible: true)
+                return
+            }
             let alert = NSAlert()
-            alert.messageText = "Accessibility Permission Lost"
-            alert.informativeText =
-                "Chap의 접근성 권한이 제거되었습니다.\n단축키를 다시 사용하려면 접근성에서 Chap을 허용해주세요."
+            alert.messageText = "Allow Accessibility"
+            alert.informativeText = "System Settings에서 Chap을 허용해주세요."
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "Open System Settings")
+            alert.addButton(withTitle: "Open Settings")
             alert.addButton(withTitle: "Later")
             if alert.runModal() == .alertFirstButtonReturn {
                 self.openAccessibilitySettings()
@@ -456,6 +540,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     func launchSite(_ site: Site) {
+        let needsAccessibility = site.launchType == .url || site.launchType == .app
+        refreshAccessibilityState(reason: "launch", showAlert: needsAccessibility)
+
         var guideToken: Int?
         if config.showGuideWindow, site.launchType == .url, let screen = targetScreen(for: site) {
             let bounds = centeredBounds(for: site, on: screen)
@@ -496,7 +583,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Settings
 
     @objc func openSettings() {
-        recheckAccessibilityIfNeeded()
+        refreshAccessibilityState(reason: "settings", showAlert: false)
         if let w = settingsWindow, w.isVisible {
             // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동
             moveToCursorScreenCenter(w)
@@ -556,7 +643,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Chap Settings"
-        window.setContentSize(NSSize(width: 770, height: 580))
+        window.setContentSize(NSSize(width: 770, height: 600))
         window.styleMask = [.titled, .closable, .resizable]
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 400)

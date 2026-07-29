@@ -187,18 +187,4 @@ enum LauncherUtils {
         )
     }
 
-    // MARK: - Accessibility 권한
-
-    private static var accessibilityPromptShown = false
-
-    static func checkAccessibility() -> Bool {
-        let trusted = AXIsProcessTrusted()
-        if trusted { return true }
-        if !accessibilityPromptShown {
-            accessibilityPromptShown = true
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
-            AXIsProcessTrustedWithOptions(options)
-        }
-        return false
-    }
 }

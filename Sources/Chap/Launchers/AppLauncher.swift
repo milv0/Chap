@@ -104,7 +104,7 @@ enum AppLauncher {
             "AppLauncher target screen=\(screen.localizedName, privacy: .public) bounds={left:\(bounds.left), top:\(bounds.top), w:\(bw), h:\(bh)} requested=\(site.width)x\(site.height, privacy: .public)"
         )
 
-        guard LauncherUtils.checkAccessibility() else {
+        guard AccessibilityPermission.isTrusted else {
             Log.launcher.info("Accessibility not granted — launching without resize")
             let appURL = URL(fileURLWithPath: path)
             let openConfig = NSWorkspace.OpenConfiguration()
@@ -203,12 +203,14 @@ enum AppLauncher {
                         Log.launcher.error(
                             "AX resize verification failed for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s"
                         )
+                        AccessibilityPermission.notifyResizeFailure()
                     }
                 } else {
                     resultLabel = "failed"
                     Log.launcher.error(
                         "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
                     )
+                    AccessibilityPermission.notifyResizeFailure()
                 }
                 ResizeLogger.log(
                     site: site.name, type: "app",
