@@ -67,7 +67,7 @@ public var cursorScreen: NSScreen? {
         ?? NSScreen.screens.first
 }
 
-/// 내장 디스플레이. Auto 프리셋 크기 기준으로 사용한다.
+/// 내장 디스플레이. Follow Cursor 프리셋 크기 기준으로 사용한다.
 public var builtInScreen: NSScreen? {
     NSScreen.screens.first { screen in
         guard
@@ -78,7 +78,7 @@ public var builtInScreen: NSScreen? {
     }
 }
 
-/// 저장된 사이트가 Auto가 아닌 특정 디스플레이를 가리키는지 확인한다.
+/// 저장된 사이트가 Follow Cursor가 아닌 특정 디스플레이를 가리키는지 확인한다.
 public func hasExplicitDisplaySelection(_ site: Site) -> Bool {
     let identifier = site.displayIdentifier?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let name = site.displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -86,7 +86,7 @@ public func hasExplicitDisplaySelection(_ site: Site) -> Bool {
 }
 
 /// 사이트가 열릴 대상 화면. displayIdentifier(UUID) → displayName 순으로 매칭하고,
-/// 둘 다 실패하거나 지정이 없으면(Auto) 커서 화면으로 폴백. 커서 화면도 없으면 nil.
+/// 둘 다 실패하거나 지정이 없으면(Follow Cursor) 커서 화면으로 폴백. 커서 화면도 없으면 nil.
 public func targetScreen(for site: Site) -> NSScreen? {
     let screens = NSScreen.screens
     let candidates = screens.map {
@@ -130,6 +130,26 @@ public func resolvedDisplayIndex(
         }
     }
     return nil
+}
+
+public func displaySizeOverrideIndex(
+    displayIdentifier: String?, displayName: String?, among overrides: [DisplaySizeOverride]
+) -> Int? {
+    let candidates = overrides.map {
+        DisplayMatchCandidate(identifier: $0.displayIdentifier, name: $0.displayName ?? "")
+    }
+    return resolvedDisplayIndex(
+        displayIdentifier: displayIdentifier, displayName: displayName, among: candidates)
+}
+
+public func displaySizeOverride(for site: Site, on screen: NSScreen) -> DisplaySizeOverride? {
+    guard
+        let index = displaySizeOverrideIndex(
+            displayIdentifier: displayUUID(for: screen),
+            displayName: screen.localizedName,
+            among: site.displaySizeOverrides)
+    else { return nil }
+    return site.displaySizeOverrides[index]
 }
 
 /// NSScreen의 안정적 고유 식별자(CGDisplay UUID 문자열). 물리 디스플레이별로 다르며
@@ -265,7 +285,19 @@ public func windowSize(for preset: WindowSizePreset, appliedTo site: Site, on sc
     return windowSize(for: preset, referenceScreen: referenceScreen, fittingScreen: screen)
 }
 
+public func effectiveWindowSize(for override: DisplaySizeOverride, on screen: NSScreen) -> (
+    width: Int, height: Int
+) {
+    if let preset = WindowSizePresets.preset(withID: override.windowSizePreset) {
+        return windowSize(for: preset, referenceScreen: screen, fittingScreen: screen)
+    }
+    return fittedWindowSize(width: override.width, height: override.height, on: screen)
+}
+
 public func effectiveWindowSize(for site: Site, on screen: NSScreen) -> (width: Int, height: Int) {
+    if let override = displaySizeOverride(for: site, on: screen) {
+        return effectiveWindowSize(for: override, on: screen)
+    }
     if let preset = WindowSizePresets.preset(withID: site.windowSizePreset) {
         return windowSize(for: preset, appliedTo: site, on: screen)
     }

@@ -118,12 +118,72 @@ struct DisplayMatchingTests {
         #expect(decoded.displayIdentifier == "UUID-C")
         #expect(decoded == original)
     }
+
+    @Test("display size override matches current screen by UUID")
+    func displaySizeOverrideMatchesUUID() {
+        let overrides = [
+            DisplaySizeOverride(
+                displayName: "Built-in Retina Display",
+                displayIdentifier: "UUID-A",
+                windowSizePreset: "max",
+                width: 1000,
+                height: 700),
+            DisplaySizeOverride(
+                displayName: "DELL U2720Q",
+                displayIdentifier: "UUID-B",
+                windowSizePreset: "standard",
+                width: 1200,
+                height: 750),
+        ]
+
+        #expect(
+            displaySizeOverrideIndex(
+                displayIdentifier: "UUID-B",
+                displayName: "DELL U2720Q",
+                among: overrides) == 1)
+    }
+
+    @Test("display size override falls back to unique display name")
+    func displaySizeOverrideFallsBackToName() {
+        let overrides = [
+            DisplaySizeOverride(
+                displayName: "Built-in Retina Display",
+                displayIdentifier: nil,
+                width: 1000,
+                height: 700),
+            DisplaySizeOverride(
+                displayName: "DELL U2720Q",
+                displayIdentifier: nil,
+                width: 1200,
+                height: 750),
+        ]
+
+        #expect(
+            displaySizeOverrideIndex(
+                displayIdentifier: nil,
+                displayName: "DELL U2720Q",
+                among: overrides) == 1)
+    }
+
+    @Test("ambiguous display size override names do not match")
+    func ambiguousDisplaySizeOverrideDoesNotMatch() {
+        let overrides = [
+            DisplaySizeOverride(displayName: "DELL U2720Q", width: 1200, height: 750),
+            DisplaySizeOverride(displayName: "DELL U2720Q", width: 1300, height: 800),
+        ]
+
+        #expect(
+            displaySizeOverrideIndex(
+                displayIdentifier: nil,
+                displayName: "DELL U2720Q",
+                among: overrides) == nil)
+    }
 }
 
 @Suite("Display Selection")
 struct DisplaySelectionTests {
-    @Test("nil display fields mean Auto")
-    func nilDisplayFieldsMeanAuto() {
+    @Test("nil display fields mean Follow Cursor")
+    func nilDisplayFieldsMeanFollowCursor() {
         let site = Site(name: "A", url: "https://a.com", width: 800, height: 600)
 
         #expect(!hasExplicitDisplaySelection(site))
@@ -138,8 +198,8 @@ struct DisplaySelectionTests {
         #expect(hasExplicitDisplaySelection(site))
     }
 
-    @Test("blank display fields mean Auto")
-    func blankDisplayFieldsMeanAuto() {
+    @Test("blank display fields mean Follow Cursor")
+    func blankDisplayFieldsMeanFollowCursor() {
         let site = Site(
             name: "A", url: "https://a.com", width: 800, height: 600,
             displayName: " ", displayIdentifier: "")

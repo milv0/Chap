@@ -35,6 +35,22 @@ struct ImportNormalizationTests {
         #expect(result.sites[0].height == 600)
     }
 
+    @Test("clamps display override size below 100")
+    func clampsDisplayOverrideSize() {
+        let site = Site(
+            name: "Test", url: "https://example.com", width: 800, height: 600,
+            displaySizeOverrides: [
+                DisplaySizeOverride(
+                    displayName: "Built-in Retina Display",
+                    width: 50,
+                    height: 30)
+            ],
+            launchType: .url)
+        let result = normalizeForImport(sites: [site], connectedDisplays: [])
+        #expect(result.sites[0].displaySizeOverrides[0].width == 100)
+        #expect(result.sites[0].displaySizeOverrides[0].height == 100)
+    }
+
     // MARK: - Unknown Preset Removal
 
     @Test("removes unknown preset and preserves custom width/height")
@@ -55,6 +71,22 @@ struct ImportNormalizationTests {
             windowSizePreset: "standard", launchType: .url)
         let result = normalizeForImport(sites: [site], connectedDisplays: [])
         #expect(result.sites[0].windowSizePreset == "standard")
+    }
+
+    @Test("removes unknown display override preset")
+    func removesUnknownDisplayOverridePreset() {
+        let site = Site(
+            name: "Test", url: "https://example.com", width: 800, height: 600,
+            displaySizeOverrides: [
+                DisplaySizeOverride(
+                    displayName: "Built-in Retina Display",
+                    windowSizePreset: "bogus",
+                    width: 900,
+                    height: 600)
+            ],
+            launchType: .url)
+        let result = normalizeForImport(sites: [site], connectedDisplays: [])
+        #expect(result.sites[0].displaySizeOverrides[0].windowSizePreset == nil)
     }
 
     // MARK: - Shortcut Sanitization

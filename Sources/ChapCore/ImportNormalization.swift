@@ -75,6 +75,33 @@ public func normalizeForImport(
             fixes.append(
                 ImportFix(siteIndex: index, message: "Unknown size preset was changed to Custom."))
         }
+
+        for overrideIndex in normalized[index].displaySizeOverrides.indices {
+            if normalized[index].displaySizeOverrides[overrideIndex].width < 100 {
+                normalized[index].displaySizeOverrides[overrideIndex].width = 100
+                fixes.append(
+                    ImportFix(
+                        siteIndex: index,
+                        message: "Display override width was raised to 100."))
+            }
+            if normalized[index].displaySizeOverrides[overrideIndex].height < 100 {
+                normalized[index].displaySizeOverrides[overrideIndex].height = 100
+                fixes.append(
+                    ImportFix(
+                        siteIndex: index,
+                        message: "Display override height was raised to 100."))
+            }
+            if let presetID = normalized[index].displaySizeOverrides[overrideIndex]
+                .windowSizePreset,
+                WindowSizePresets.preset(withID: presetID) == nil
+            {
+                normalized[index].displaySizeOverrides[overrideIndex].windowSizePreset = nil
+                fixes.append(
+                    ImportFix(
+                        siteIndex: index,
+                        message: "Unknown display override preset was changed to Custom."))
+            }
+        }
     }
 
     let beforeMigration = normalized

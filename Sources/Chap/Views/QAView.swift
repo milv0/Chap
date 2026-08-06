@@ -69,7 +69,7 @@ struct QAView: View {
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
-                    "설정의 Display Preview에서 원하는 모니터를 클릭하세요. 다시 클릭하면 Auto로 돌아갑니다. Auto는 마우스 커서가 있는 화면에 열립니다."
+                    "설정의 Display 목록에서 원하는 모니터를 선택하세요. Follow Cursor는 마우스 커서가 있는 화면에 열립니다."
                 ),
                 (
                     "같은 URL/앱을 두 번 등록하면?",
@@ -111,15 +111,15 @@ struct QAView: View {
             [
                 (
                     "멀티 모니터에서 어떤 화면에 열리나요?",
-                    "사이트별로 디스플레이를 지정할 수 있습니다. 지정 안 하면(Auto) 마우스 커서가 있는 화면에 열립니다."
+                    "사이트별로 디스플레이를 지정할 수 있습니다. Follow Cursor를 선택하면 마우스 커서가 있는 화면에 열리고, 다시 누르면 현재 프리뷰 또는 커서 화면으로 고정됩니다."
                 ),
                 (
                     "Size Preset은 어떻게 동작하나요?",
                     "Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
                 ),
                 (
-                    "Auto에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
-                    "Auto는 창을 커서가 있는 화면에 띄우지만, 프리셋 크기는 항상 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. 특정 디스플레이를 직접 선택하면 그 디스플레이 기준으로 계산합니다."
+                    "Follow Cursor에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
+                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Display Preview에서 모니터를 클릭한 뒤 Size Preset이나 Width/Height를 바꾸면 그 화면 전용 크기로 저장되며, 프리뷰 박스 왼쪽 위에 현재 preset 이름이 표시됩니다."
                 ),
                 (
                     "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
@@ -216,7 +216,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I open on a specific monitor?",
-                    "Click the desired monitor in the Display Preview minimap. Click again to return to Auto. Auto opens on the screen where your cursor is."
+                    "Choose the desired monitor from the Display list. Follow Cursor opens on the screen where your cursor is."
                 ),
                 (
                     "What if I register the same URL/app twice?",
@@ -258,15 +258,15 @@ struct QAView: View {
             [
                 (
                     "Which screen does it open on with multiple monitors?",
-                    "You can assign a display per site. If not set (Auto), it opens on the screen where your cursor is."
+                    "You can assign a display per site. Choose Follow Cursor to open on the screen where your cursor is; press it again to pin the current preview or cursor screen."
                 ),
                 (
                     "How do Size Presets work?",
                     "Choose Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, or Max to recalculate the size for the screen at launch time. Editing Width or Height switches the item to Custom and saves that exact size."
                 ),
                 (
-                    "What size reference does Auto use on external monitors?",
-                    "Auto opens on the cursor screen, but preset sizes are calculated from the built-in display first, then fitted to the target screen. If you select a specific display, that display is used as the preset reference."
+                    "What size reference does Follow Cursor use on external monitors?",
+                    "Follow Cursor opens on the cursor screen, but default preset sizes are calculated from the built-in display first, then fitted to the target screen. Click a monitor in Display Preview, then change Size Preset or Width/Height to save a size for that screen. The preview box shows the current preset name in the top-left corner."
                 ),
                 (
                     "Which preset is used for new items?",

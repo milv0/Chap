@@ -181,6 +181,22 @@ struct ConfigValidationTests {
         #expect(!result.issues.contains { $0.field == .windowSizePreset })
     }
 
+    @Test("unknown display override preset is detected")
+    func unknownDisplayOverridePreset() {
+        let site = Site(
+            name: "Test", url: "https://example.com", width: 800, height: 600,
+            displaySizeOverrides: [
+                DisplaySizeOverride(
+                    displayName: "Built-in Retina Display",
+                    windowSizePreset: "nonexistent",
+                    width: 900,
+                    height: 600)
+            ],
+            launchType: .url)
+        let result = validateConfig(Config(sites: [site]))
+        #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .windowSizePreset })
+    }
+
     // MARK: - Size Validation
 
     @Test("width below 100 is invalid")
@@ -196,6 +212,22 @@ struct ConfigValidationTests {
         let site = Site(
             name: "Test", url: "https://example.com", width: 800, height: 50, launchType: .url)
         let result = validateConfig(Config(sites: [site]))
+        #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .height })
+    }
+
+    @Test("display override size below 100 is invalid")
+    func displayOverrideSizeBelowMinimum() {
+        let site = Site(
+            name: "Test", url: "https://example.com", width: 800, height: 600,
+            displaySizeOverrides: [
+                DisplaySizeOverride(
+                    displayName: "Built-in Retina Display",
+                    width: 90,
+                    height: 80)
+            ],
+            launchType: .url)
+        let result = validateConfig(Config(sites: [site]))
+        #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .width })
         #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .height })
     }
 
