@@ -165,6 +165,34 @@ enum LauncherUtils {
 
     // MARK: - AX API 공용
 
+    /// pid의 AX 윈도우 목록. 실패 시 빈 배열.
+    static func axWindows(pid: pid_t) -> [AXUIElement] {
+        axWindows(app: AXUIElementCreateApplication(pid))
+    }
+
+    /// AX 앱 요소의 윈도우 목록. 실패 시 빈 배열.
+    static func axWindows(app: AXUIElement) -> [AXUIElement] {
+        var value: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value)
+                == .success,
+            let windows = value as? [AXUIElement]
+        else { return [] }
+        return windows
+    }
+
+    /// 실행 전 앱 창 목록 스냅샷. AX 윈도우 읽기가 순간적으로 빈 배열을 반환할 수 있어
+    /// 짧게 재시도해 실제 창 집합을 확보한다.
+    static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
+        let app = AXUIElementCreateApplication(pid)
+        for attempt in 0..<5 {
+            let windows = axWindows(app: app)
+            if !windows.isEmpty { return windows }
+            if attempt < 4 { usleep(30_000) }
+        }
+        return []
+    }
+
     static func axSetPosition(_ window: AXUIElement, _ point: CGPoint) -> AXError {
         var p = point
         guard let value = AXValueCreate(.cgPoint, &p) else { return .failure }

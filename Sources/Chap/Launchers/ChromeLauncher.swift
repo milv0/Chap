@@ -77,7 +77,7 @@ enum ChromeLauncher {
             Log.launcher.info("No display available — queueing Chrome without resize")
             requestCoordinator.async {
                 do {
-                    try runChromeApp(url: site.url)
+                    try runChromeApp(url: trimmedURL)
                 } catch {
                     Log.launcher.error(
                         "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
@@ -115,7 +115,7 @@ enum ChromeLauncher {
             let chromeRunning = chromeApp != nil
             let chromePid = chromeApp?.processIdentifier ?? -1
             let windowsBefore: [AXUIElement] =
-                chromeRunning ? captureExistingWindows(pid: chromePid) : []
+                chromeRunning ? LauncherUtils.captureExistingWindows(pid: chromePid) : []
 
             Log.launcher.info(
                 "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
@@ -216,7 +216,7 @@ enum ChromeLauncher {
             }
 
             // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
-            let windows = axWindows(pid: pid)
+            let windows = LauncherUtils.axWindows(pid: pid)
             let newWindows = windows.filter { win in
                 !windowsBefore.contains { CFEqual($0, win) }
             }
@@ -234,26 +234,5 @@ enum ChromeLauncher {
             usleep(interval)
         }
         return nil
-    }
-
-    private static func axWindows(pid: pid_t) -> [AXUIElement] {
-        let app = AXUIElementCreateApplication(pid)
-        var windowsValue: AnyObject?
-        let err = AXUIElementCopyAttributeValue(
-            app, kAXWindowsAttribute as CFString, &windowsValue)
-        if err == .success, let windows = windowsValue as? [AXUIElement] {
-            return windows
-        }
-        return []
-    }
-
-    /// 실행 전 Chrome 창 목록 스냅샷. 짧게 재시도해 실제 창 집합을 확보한다.
-    private static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
-        for attempt in 0..<5 {
-            let windows = axWindows(pid: pid)
-            if !windows.isEmpty { return windows }
-            if attempt < 4 { usleep(30_000) }
-        }
-        return []
     }
 }
