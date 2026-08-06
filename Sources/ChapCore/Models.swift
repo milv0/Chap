@@ -119,7 +119,10 @@ public struct DisplaySizeOverride: Codable, Equatable {
     }
 }
 
-public struct Site: Codable, Equatable {
+public struct Site: Codable, Equatable, Identifiable {
+    /// 세션 한정 안정 식별자. 인코딩/디코딩·동등성 비교에서 제외되며,
+    /// SwiftUI가 재정렬·이동 후에도 편집 뷰를 올바른 사이트에 고정하는 데 쓴다.
+    public let id = UUID()
     public var name: String
     public var url: String
     public var width: Int
@@ -211,6 +214,19 @@ public struct Site: Codable, Equatable {
         try container.encodeIfPresent(folderPath, forKey: .folderPath)
         try container.encodeIfPresent(shortcut, forKey: .shortcut)
         // hotkey는 encode하지 않음 (마이그레이션 완료)
+    }
+
+    /// id는 세션 한정 식별자이므로 값 동등성 비교에서 제외한다.
+    /// (hasChanges 판정·round-trip 테스트가 값 기준으로 동작해야 함)
+    public static func == (lhs: Site, rhs: Site) -> Bool {
+        lhs.name == rhs.name && lhs.url == rhs.url && lhs.width == rhs.width
+            && lhs.height == rhs.height && lhs.displayName == rhs.displayName
+            && lhs.displayIdentifier == rhs.displayIdentifier
+            && lhs.windowSizePreset == rhs.windowSizePreset
+            && lhs.displaySizeOverrides == rhs.displaySizeOverrides
+            && lhs.launchType == rhs.launchType && lhs.appPath == rhs.appPath
+            && lhs.script == rhs.script && lhs.folderPath == rhs.folderPath
+            && lhs.shortcut == rhs.shortcut
     }
 }
 

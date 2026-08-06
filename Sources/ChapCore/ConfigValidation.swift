@@ -199,7 +199,18 @@ private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {
             !shortcut.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else { continue }
 
-        let key = shortcut.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let trimmed = shortcut.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 예약키(".", ",")는 메뉴/설정 전역 단축키와 충돌하므로 거부.
+        if reservedShortcutKeys.contains(trimmed) {
+            issues.append(
+                ValidationIssue(
+                    siteIndex: index, field: .shortcut, severity: .error,
+                    message: "Shortcut '\(shortcut)' is reserved and cannot be used."))
+            continue
+        }
+
+        let key = trimmed.uppercased()
         if let firstIndex = seen[key] {
             issues.append(
                 ValidationIssue(

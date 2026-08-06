@@ -73,6 +73,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Global Shortcuts
 
     private var eventTap: CFMachPort?
+    private var eventTapRunLoopSource: CFRunLoopSource?
 
     private func registerGlobalShortcuts() {
         guard eventTap == nil else { return }
@@ -162,6 +163,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         eventTap = tap
         updateStatusIcon(accessible: true)
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        eventTapRunLoopSource = runLoopSource
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         Log.app.info("CGEvent tap registered successfully")
@@ -277,6 +279,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     private func invalidateGlobalShortcuts() {
         guard let tap = eventTap else { return }
+        if let source = eventTapRunLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+            eventTapRunLoopSource = nil
+        }
         CFMachPortInvalidate(tap)
         eventTap = nil
     }
@@ -781,6 +787,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     private func applyLoginItem(enabled: Bool) {
         let service = SMAppService.mainApp
+        // 이미 목표 상태면 호출 생략. 특히 미등록 상태에서 unregister()는
+        // 매 실행 throw하므로(정상 실행마다 로그 노이즈), status로 먼저 거른다.
+        let isRegistered = service.status == .enabled
+        guard enabled != isRegistered else { return }
         do {
             if enabled {
                 try service.register()

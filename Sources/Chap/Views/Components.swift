@@ -106,9 +106,13 @@ struct SidebarDropDelegate: DropDelegate {
                     from < self.sites.count, self.currentIndex < self.sites.count,
                     self.sites[from].launchType == self.sites[self.currentIndex].launchType
                 else { return }
+                // from < currentIndex이면 remove로 뒤 요소가 한 칸 당겨지므로
+                // 삽입 위치를 보정해야 드래그 방향과 무관하게 target 앞에 놓인다.
+                let destination =
+                    from < self.currentIndex ? self.currentIndex - 1 : self.currentIndex
                 let site = self.sites.remove(at: from)
-                self.sites.insert(site, at: self.currentIndex)
-                self.selectedIndex = self.currentIndex
+                self.sites.insert(site, at: destination)
+                self.selectedIndex = destination
                 self.onDrop()
             }
         }

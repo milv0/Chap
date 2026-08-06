@@ -123,6 +123,39 @@ struct ConfigValidationTests {
         #expect(result.issues.contains { $0.field == .shortcut && $0.severity == .error })
     }
 
+    @Test("reserved shortcut keys are rejected")
+    func reservedShortcut() {
+        let sites = [
+            Site(
+                name: "A", url: "https://a.com", width: 800, height: 600, launchType: .url,
+                shortcut: "."),
+            Site(
+                name: "B", url: "https://b.com", width: 800, height: 600, launchType: .url,
+                shortcut: ","),
+        ]
+        let result = validateConfig(Config(sites: sites))
+        #expect(result.errors.filter { $0.field == .shortcut }.count == 2)
+    }
+
+    @Test("a reserved shortcut does not mask a real duplicate")
+    func reservedShortcutDoesNotMaskDuplicate() {
+        let sites = [
+            Site(
+                name: "A", url: "https://a.com", width: 800, height: 600, launchType: .url,
+                shortcut: "."),
+            Site(
+                name: "B", url: "https://b.com", width: 800, height: 600, launchType: .url,
+                shortcut: "G"),
+            Site(
+                name: "C", url: "https://c.com", width: 800, height: 600, launchType: .url,
+                shortcut: "g"),
+        ]
+        let result = validateConfig(Config(sites: sites))
+
+        #expect(result.errors.filter { $0.field == .shortcut }.count == 2)
+        #expect(result.errors.contains { $0.field == .shortcut && $0.siteIndex == 2 })
+    }
+
     @Test("duplicate URLs across url-type sites are warned")
     func duplicateURLs() {
         let sites = [
