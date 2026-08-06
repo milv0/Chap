@@ -30,17 +30,22 @@ struct SettingsView: View {
         .frame(minWidth: 770, minHeight: 600)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
+            let newlySelectedID = newValue.flatMap { idx in
+                idx < vm.sites.count ? vm.sites[idx].id : nil
+            }
+            // addSite가 방금 만든 사이트로의 전환이면 편집 상태·추적 id를 유지한다
+            // (여기서 초기화하면 새 사이트가 편집 모드로 열리지 않고 폐기 추적도 끊긴다).
+            if let pendingID = pendingNewSiteID, pendingID == newlySelectedID {
+                searchFocused = false
+                return
+            }
             isAddingNew = false
             isEditing = false
             searchFocused = false
             // 이름을 정하지 않은 채(기본 "New Launchable") 벗어난 새 사이트는 폐기 —
             // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지.
             // 인덱스가 아닌 id로 추적해 재정렬·삭제로 인덱스가 밀려도 정확히 그 사이트만 제거.
-            let newlySelectedID = newValue.flatMap { idx in
-                idx < vm.sites.count ? vm.sites[idx].id : nil
-            }
             if oldValue != newValue, let pendingID = pendingNewSiteID,
-                pendingID != newlySelectedID,
                 let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
                 vm.sites[pendingIdx].name == Defaults.newSiteName
             {
@@ -121,13 +126,20 @@ struct SettingsView: View {
                                     || vm.sites[$0].name.localizedCaseInsensitiveContains(
                                         searchText))
                         }
-                        if !indices.isEmpty {
+                        // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
+                        // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
+                        if !indices.isEmpty || searchText.isEmpty {
                             Text(typeSectionTitle(type))
                                 .font(DS.captionFont)
                                 .foregroundColor(DS.textSecondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
+                            if indices.isEmpty {
+                                SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
+                                    addSite(type: type)
+                                }
+                            }
                             ForEach(indices, id: \.self) { i in
                                 SidebarItem(
                                     icon: sidebarIcon(for: vm.sites[i]),
@@ -162,7 +174,7 @@ struct SettingsView: View {
 
             HStack(spacing: 4) {
                 ToolbarIconButton(
-                    icon: "plus", color: DS.textSecondary, action: addSite)
+                    icon: "plus", color: DS.textSecondary, action: { addSite() })
                 ToolbarIconButton(
                     icon: "minus", color: DS.danger,
                     action: { showDeleteAlert = true },
@@ -506,9 +518,17 @@ struct SettingsView: View {
         }
     }
 
-    private func addSite() {
-        // 현재 선택된 사이트의 타입을 물려받아, 선택된 섹션(URL/App/Finder/Shell)에 추가
+    /// 새 사이트 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
+    private func addSite(type explicitType: LaunchType? = nil) {
+        // 이름을 정하지 않은 직전 placeholder가 남아 있으면 먼저 폐기해 중복 누적을 막는다.
+        if let pendingID = pendingNewSiteID,
+            let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
+            vm.sites[pendingIdx].name == Defaults.newSiteName
+        {
+            vm.sites.remove(at: pendingIdx)
+        }
         let type: LaunchType = {
+            if let explicitType { return explicitType }
             if let idx = selectedIndex, idx < vm.sites.count {
                 return vm.sites[idx].launchType
             }

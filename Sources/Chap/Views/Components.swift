@@ -53,6 +53,38 @@ struct SidebarItem: View {
     }
 }
 
+// MARK: - Sidebar Add Row
+
+/// 비어 있는 타입 섹션에 표시되는 placeholder 행.
+/// 항목이 하나도 없는 타입(예: Shell)도 사이드바에서 바로 추가할 수 있게 한다.
+struct SidebarAddRow: View {
+    let label: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11))
+                    .foregroundColor(DS.textTertiary)
+                    .frame(width: 20)
+                Text(label)
+                    .font(DS.bodyFont)
+                    .foregroundColor(DS.textTertiary)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.horizontal, DS.paddingSmall)
+            .padding(.vertical, 8)
+            .background(isHovered ? DS.border.opacity(0.3) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in isHovered = hovering }
+    }
+}
+
 // MARK: - Onboarding Card
 
 struct OnboardingCard: View {

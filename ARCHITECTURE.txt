@@ -137,6 +137,8 @@ Site 모델 필드:
 - ConfigStore가 config 읽기/쓰기/백업(.bak)/레거시 정리를 일원화; 파싱 실패 시 기본값 복구
 - 레거시 필드 자동 정리 (x, y, hotkey, showGhostWindow, runInBackground)
 - 타입별 그룹 사이드바 + 메뉴바 구분선
+  - 검색 중이 아니면 url/app/finder/shell 네 섹션을 항상 표시하고, 빈 섹션은
+    "Add <Type>" 행으로 해당 타입 항목을 바로 추가 (검색 중에는 매칭 없는 섹션 숨김)
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
