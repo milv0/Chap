@@ -4,17 +4,6 @@ import SwiftUI
 import os
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
-    private enum AccessibilityState {
-        case unknown
-        case granted
-        case denied
-    }
-
-    private enum AccessibilityGrantPolling {
-        static let interval: TimeInterval = 2.0
-        static let duration: TimeInterval = 30.0
-    }
-
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
@@ -24,12 +13,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     private let globalHotKeyManager = GlobalHotKeyManager()
+    private lazy var accessibilityController = AccessibilityStateController(
+        suppressesInteractivePrompts: isRunningTests)
     private var isStatusMenuOpen = false
-    private var accessibilityState: AccessibilityState = .unknown
-    private var accessibilityGrantPollTimer: Timer?
-    private var accessibilityGrantPollEndDate: Date?
-    private var didShowAccessibilityAlert = false
-    private var didRequestAccessibilitySystemPrompt = false
     private var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
             || NSClassFromString("XCTestCase") != nil
@@ -48,18 +34,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         NSApp.setActivationPolicy(.accessory)
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
-        if let button = statusItem.button {
-            if let icon = NSImage(named: "StatusBarIcon") {
-                icon.isTemplate = true
-                icon.size = NSSize(width: 22, height: 22)
-                button.image = icon
-            } else {
-                button.image = NSImage(
-                    systemSymbolName: "bolt.fill", accessibilityDescription: "Chap")
-            }
-        }
+        statusItem.button?.image = statusIconImage(accessible: true)
         buildMenu()
-        initializeAccessibilityHandling()
+        accessibilityController.onAccessibleChanged = { [weak self] accessible in
+            self?.updateStatusIcon(accessible: accessible)
+        }
+        accessibilityController.start()
 
         let guideDisabled = UserDefaults.standard.bool(forKey: "guideDisabled")
         if !guideDisabled {
@@ -73,157 +53,57 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         globalHotKeyManager.stop()
     }
 
-    private func initializeAccessibilityHandling() {
-        let shouldPromptUser = !isRunningTests
-        refreshAccessibilityState(
-            reason: "launch", showAlert: false,
-            requestSystemPrompt: shouldPromptUser)
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(applicationDidBecomeActiveNotification),
-            name: NSApplication.didBecomeActiveNotification,
-            object: nil)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(axResizeDidFailNotification),
-            name: .chapAXResizeFailed,
-            object: nil)
-    }
-
-    @objc private func applicationDidBecomeActiveNotification(_ notification: Notification) {
-        refreshAccessibilityState(reason: "app active", showAlert: false)
-    }
-
-    @objc private func axResizeDidFailNotification(_ notification: Notification) {
-        refreshAccessibilityState(reason: "resize failure", showAlert: true)
-    }
-
-    private func startTemporaryAccessibilityGrantPolling(reason: String) {
-        guard !isRunningTests else { return }
-        accessibilityGrantPollEndDate = Date().addingTimeInterval(
-            AccessibilityGrantPolling.duration)
-        guard accessibilityGrantPollTimer == nil else { return }
-
-        let timer = Timer(timeInterval: AccessibilityGrantPolling.interval, repeats: true) {
-            [weak self] _ in
-            self?.pollAccessibilityGrant(reason: reason)
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        accessibilityGrantPollTimer = timer
-    }
-
-    private func pollAccessibilityGrant(reason: String) {
-        if let endDate = accessibilityGrantPollEndDate, Date() > endDate {
-            stopTemporaryAccessibilityGrantPolling()
-            return
-        }
-        refreshAccessibilityState(reason: reason, showAlert: false)
-    }
-
-    private func stopTemporaryAccessibilityGrantPolling() {
-        accessibilityGrantPollTimer?.invalidate()
-        accessibilityGrantPollTimer = nil
-        accessibilityGrantPollEndDate = nil
-    }
-
-    private func refreshAccessibilityState(
-        reason: String, showAlert: Bool, requestSystemPrompt: Bool = false
-    ) {
-        guard Thread.isMainThread else {
-            DispatchQueue.main.async {
-                self.refreshAccessibilityState(
-                    reason: reason, showAlert: showAlert, requestSystemPrompt: requestSystemPrompt)
-            }
-            return
-        }
-
-        let isTrusted = AccessibilityPermission.isTrusted
-        let previousState = accessibilityState
-        accessibilityState = isTrusted ? .granted : .denied
-        updateStatusIcon(accessible: isTrusted)
-
-        if isTrusted {
-            stopTemporaryAccessibilityGrantPolling()
-            didShowAccessibilityAlert = false
-            return
-        }
-
-        if requestSystemPrompt {
-            requestAccessibilitySystemPromptIfNeeded()
-            startTemporaryAccessibilityGrantPolling(reason: "permission prompt")
-        }
-
-        let wasRevoked = previousState == .granted
-        if wasRevoked {
-            Log.app.error("Accessibility permission revoked from \(reason, privacy: .public)")
-        }
-
-        if wasRevoked || showAlert, !didShowAccessibilityAlert {
-            didShowAccessibilityAlert = true
-            showAccessibilityAlert()
-        }
-    }
-
-    private func requestAccessibilitySystemPromptIfNeeded() {
-        guard !didRequestAccessibilitySystemPrompt else { return }
-        didRequestAccessibilitySystemPrompt = true
-        AccessibilityPermission.requestSystemPrompt()
-    }
-
     // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
     func menuWillOpen(_ menu: NSMenu) {
-        refreshAccessibilityState(reason: "menu", showAlert: false)
+        accessibilityController.refresh(reason: "menu", showAlert: false)
+    }
+
+    /// 상태바 아이콘. 권한이 있으면 커스텀 템플릿 아이콘, 없으면 경고 배지 심볼.
+    private func statusIconImage(accessible: Bool) -> NSImage? {
+        if accessible, let icon = NSImage(named: "StatusBarIcon") {
+            icon.isTemplate = true
+            icon.size = NSSize(width: 22, height: 22)
+            return icon
+        }
+        let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
+        return NSImage(systemSymbolName: iconName, accessibilityDescription: "Chap")
     }
 
     private func updateStatusIcon(accessible: Bool) {
         DispatchQueue.main.async {
-            guard let button = self.statusItem.button else { return }
-            if accessible, let icon = NSImage(named: "StatusBarIcon") {
-                icon.isTemplate = true
-                icon.size = NSSize(width: 22, height: 22)
-                button.image = icon
-            } else {
-                let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
-                button.image = NSImage(
-                    systemSymbolName: iconName, accessibilityDescription: "Chap")
-            }
+            self.statusItem.button?.image = self.statusIconImage(accessible: accessible)
         }
     }
 
-    /// 시스템 설정의 접근성 창을 직접 연다
-    func openAccessibilitySettings() {
-        if let url = URL(
-            string:
-                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
-        {
-            NSWorkspace.shared.open(url)
-            startTemporaryAccessibilityGrantPolling(reason: "accessibility settings")
-        }
+    // MARK: - Managed windows (Settings / QA / Welcome)
+
+    /// Settings/QA/Welcome 공용 관리 창 생성. delegate 연결과 재사용 가능 설정까지 담당.
+    private func makeManagedWindow(
+        title: String, contentSize: NSSize, styleMask: NSWindow.StyleMask,
+        minSize: NSSize? = nil
+    ) -> NSWindow {
+        let window = NSWindow(contentViewController: NSHostingController(rootView: EmptyView()))
+        window.title = title
+        window.styleMask = styleMask
+        window.isReleasedWhenClosed = false
+        window.setContentSize(contentSize)
+        if let minSize { window.minSize = minSize }
+        window.delegate = self
+        return window
     }
 
-    /// 접근성 권한이 없을 때, 시스템 설정으로 바로 이동하는 버튼이 포함된 알림
-    func showAccessibilityAlert() {
-        DispatchQueue.main.async {
-            guard !AccessibilityPermission.isTrusted else {
-                self.didShowAccessibilityAlert = false
-                self.updateStatusIcon(accessible: true)
-                return
-            }
-            let alert = NSAlert()
-            alert.messageText = "Allow Accessibility"
-            alert.informativeText = "System Settings에서 Chap을 허용해주세요."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "Open Settings")
-            alert.addButton(withTitle: "Later")
-            if alert.runModal() == .alertFirstButtonReturn {
-                self.openAccessibilitySettings()
-            }
-        }
+    /// 관리 창을 앞으로 가져오고 Dock 아이콘을 활성화(.regular)한다.
+    private func presentManagedWindow(_ window: NSWindow) {
+        window.makeKeyAndOrderFront(nil)
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     func showWelcomeWindow() {
-        let window = NSWindow(contentViewController: NSHostingController(rootView: Text("")))
+        let window = makeManagedWindow(
+            title: "", contentSize: NSSize(width: 420, height: 480),
+            styleMask: [.titled, .closable])
+        window.titlebarAppearsTransparent = true
         // [weak window] 캡처로 window → view → closure → window 순환 참조 방지
         let welcomeView = WelcomeView(
             onOpenSettings: { [weak self] in
@@ -233,16 +113,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 window?.close()
             })
         window.contentViewController = NSHostingController(rootView: welcomeView)
-        window.title = ""
-        window.titlebarAppearsTransparent = true
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 420, height: 480))
         window.center()
-        window.delegate = self
-        window.makeKeyAndOrderFront(nil)
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        presentManagedWindow(window)
         welcomeWindow = window
     }
 
@@ -418,18 +290,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             NSApp.activate(ignoringOtherApps: true)
             return
         }
-        let hostingController = NSHostingController(rootView: QAView())
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = "Chap Q&A"
-        window.setContentSize(NSSize(width: 1120, height: 900))
-        window.styleMask = [.titled, .closable, .resizable]
-        window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 400, height: 400)
-        window.delegate = self
+        let window = makeManagedWindow(
+            title: "Chap Q&A", contentSize: NSSize(width: 1120, height: 900),
+            styleMask: [.titled, .closable, .resizable],
+            minSize: NSSize(width: 400, height: 400))
+        window.contentViewController = NSHostingController(rootView: QAView())
         window.center()
-        window.makeKeyAndOrderFront(nil)
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        presentManagedWindow(window)
         qaWindow = window
     }
 
@@ -458,7 +325,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     func launchSite(_ site: Site) {
         let needsAccessibility = site.launchType == .url || site.launchType == .app
-        refreshAccessibilityState(reason: "launch", showAlert: needsAccessibility)
+        accessibilityController.refresh(reason: "launch", showAlert: needsAccessibility)
 
         var guideToken: Int?
         if config.showGuideWindow, site.launchType == .url, let screen = targetScreen(for: site) {
@@ -500,7 +367,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     // MARK: - Settings
 
     @objc func openSettings() {
-        refreshAccessibilityState(reason: "settings", showAlert: false)
+        accessibilityController.refresh(reason: "settings", showAlert: false)
         if let w = settingsWindow, w.isVisible {
             // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동
             moveToCursorScreenCenter(w)
@@ -553,19 +420,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             return true
         }
         let settingsView = SettingsView(vm: vm)
-        let hostingController = NSHostingController(rootView: settingsView)
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = "Chap Settings"
-        window.setContentSize(NSSize(width: 770, height: 600))
-        window.styleMask = [.titled, .closable, .resizable]
-        window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 600, height: 400)
-        window.delegate = self
+        let window = makeManagedWindow(
+            title: "Chap Settings", contentSize: NSSize(width: 770, height: 600),
+            styleMask: [.titled, .closable, .resizable],
+            minSize: NSSize(width: 600, height: 400))
+        window.contentViewController = NSHostingController(rootView: settingsView)
         // 커서가 있는 화면 중앙에 표시
         moveToCursorScreenCenter(window)
-        window.makeKeyAndOrderFront(nil)
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        presentManagedWindow(window)
         settingsWindow = window
         settingsVM = vm
     }
