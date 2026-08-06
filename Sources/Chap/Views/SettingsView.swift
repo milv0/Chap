@@ -15,6 +15,9 @@ struct SettingsView: View {
     @State private var dropTargeted = false
     @State private var isEditing = false
     @State private var isAddingNew = false
+    /// addSite로 갓 추가된, 아직 이름을 정하지 않은 사이트의 id.
+    /// 선택이 벗어날 때 이 사이트가 여전히 placeholder면 폐기한다.
+    @State private var pendingNewSiteID: UUID?
     @State private var searchText = ""
     @FocusState private var searchFocused: Bool
 
@@ -27,22 +30,34 @@ struct SettingsView: View {
         .frame(minWidth: 770, minHeight: 600)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
+            let newlySelectedID = newValue.flatMap { idx in
+                idx < vm.sites.count ? vm.sites[idx].id : nil
+            }
+            // addSite가 방금 만든 사이트로의 전환이면 편집 상태·추적 id를 유지한다
+            // (여기서 초기화하면 새 사이트가 편집 모드로 열리지 않고 폐기 추적도 끊긴다).
+            if let pendingID = pendingNewSiteID, pendingID == newlySelectedID {
+                searchFocused = false
+                return
+            }
             isAddingNew = false
             isEditing = false
             searchFocused = false
             // 이름을 정하지 않은 채(기본 "New Launchable") 벗어난 새 사이트는 폐기 —
-            // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지
-            if let old = oldValue, old != newValue, old < vm.sites.count,
-                vm.sites[old].name == Defaults.newSiteName
+            // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지.
+            // 인덱스가 아닌 id로 추적해 재정렬·삭제로 인덱스가 밀려도 정확히 그 사이트만 제거.
+            if oldValue != newValue, let pendingID = pendingNewSiteID,
+                let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
+                vm.sites[pendingIdx].name == Defaults.newSiteName
             {
-                let target = newValue.flatMap { idx in
-                    idx < vm.sites.count ? vm.sites[idx] : nil
+                pendingNewSiteID = nil
+                vm.sites.remove(at: pendingIdx)
+                // 클릭한 사이트가 제거로 인덱스가 밀렸을 수 있으므로 id로 다시 찾음
+                selectedIndex = newlySelectedID.flatMap { id in
+                    vm.sites.firstIndex(where: { $0.id == id })
                 }
-                vm.sites.remove(at: old)
-                // 클릭한 사이트가 제거로 인덱스가 밀렸을 수 있으므로 다시 찾음
-                selectedIndex = target.flatMap { vm.sites.firstIndex(of: $0) }
                 return
             }
+            pendingNewSiteID = nil
             // 선택 변경 시 자동 저장
             save()
         }
@@ -111,13 +126,20 @@ struct SettingsView: View {
                                     || vm.sites[$0].name.localizedCaseInsensitiveContains(
                                         searchText))
                         }
-                        if !indices.isEmpty {
+                        // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
+                        // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
+                        if !indices.isEmpty || searchText.isEmpty {
                             Text(typeSectionTitle(type))
                                 .font(DS.captionFont)
                                 .foregroundColor(DS.textSecondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
+                            if indices.isEmpty {
+                                SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
+                                    addSite(type: type)
+                                }
+                            }
                             ForEach(indices, id: \.self) { i in
                                 SidebarItem(
                                     icon: sidebarIcon(for: vm.sites[i]),
@@ -152,7 +174,7 @@ struct SettingsView: View {
 
             HStack(spacing: 4) {
                 ToolbarIconButton(
-                    icon: "plus", color: DS.textSecondary, action: addSite)
+                    icon: "plus", color: DS.textSecondary, action: { addSite() })
                 ToolbarIconButton(
                     icon: "minus", color: DS.danger,
                     action: { showDeleteAlert = true },
@@ -184,7 +206,7 @@ struct SettingsView: View {
                     site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
                     onSave: { save() }
                 )
-                .id(idx)
+                .id(vm.sites[idx].id)
                 .onTapGesture { isEditing = true }
                 .onChange(of: vm.sites) { _, _ in
                     if isEditing { save() }
@@ -496,9 +518,17 @@ struct SettingsView: View {
         }
     }
 
-    private func addSite() {
-        // 현재 선택된 사이트의 타입을 물려받아, 선택된 섹션(URL/App/Finder/Shell)에 추가
+    /// 새 사이트 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
+    private func addSite(type explicitType: LaunchType? = nil) {
+        // 이름을 정하지 않은 직전 placeholder가 남아 있으면 먼저 폐기해 중복 누적을 막는다.
+        if let pendingID = pendingNewSiteID,
+            let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
+            vm.sites[pendingIdx].name == Defaults.newSiteName
+        {
+            vm.sites.remove(at: pendingIdx)
+        }
         let type: LaunchType = {
+            if let explicitType { return explicitType }
             if let idx = selectedIndex, idx < vm.sites.count {
                 return vm.sites[idx].launchType
             }
@@ -506,12 +536,13 @@ struct SettingsView: View {
         }()
         let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
         let defaultSize = windowSize(for: recommendation, on: builtInScreen ?? cursorScreen)
-        vm.sites.append(
-            Site(
-                name: Defaults.newSiteName, url: type == .url ? "https://" : "",
-                width: defaultSize.width, height: defaultSize.height,
-                windowSizePreset: recommendation.sizePresetID,
-                launchType: type))
+        let newSite = Site(
+            name: Defaults.newSiteName, url: type == .url ? "https://" : "",
+            width: defaultSize.width, height: defaultSize.height,
+            windowSizePreset: recommendation.sizePresetID,
+            launchType: type)
+        vm.sites.append(newSite)
+        pendingNewSiteID = newSite.id
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
@@ -519,6 +550,7 @@ struct SettingsView: View {
 
     private func removeSite() {
         guard let idx = selectedIndex, idx < vm.sites.count else { return }
+        pendingNewSiteID = nil
         vm.sites.remove(at: idx)
         selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
         isEditing = false

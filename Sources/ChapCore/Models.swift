@@ -100,7 +100,29 @@ public enum InitialWindowSizeRecommendations {
     }
 }
 
-public struct Site: Codable, Equatable {
+public struct DisplaySizeOverride: Codable, Equatable {
+    public var displayName: String?
+    public var displayIdentifier: String?
+    public var windowSizePreset: String?
+    public var width: Int
+    public var height: Int
+
+    public init(
+        displayName: String? = nil, displayIdentifier: String? = nil,
+        windowSizePreset: String? = nil, width: Int, height: Int
+    ) {
+        self.displayName = displayName
+        self.displayIdentifier = displayIdentifier
+        self.windowSizePreset = windowSizePreset
+        self.width = width
+        self.height = height
+    }
+}
+
+public struct Site: Codable, Equatable, Identifiable {
+    /// 세션 한정 안정 식별자. 인코딩/디코딩·동등성 비교에서 제외되며,
+    /// SwiftUI가 재정렬·이동 후에도 편집 뷰를 올바른 사이트에 고정하는 데 쓴다.
+    public let id = UUID()
     public var name: String
     public var url: String
     public var width: Int
@@ -109,9 +131,10 @@ public struct Site: Codable, Equatable {
     /// 대상 디스플레이의 안정적 고유 ID (CGDisplay UUID 문자열).
     /// displayName과 함께 저장하며, 매칭은 이 값을 우선한다. 동일 모델 외장 모니터가
     /// 여러 대여도 물리 디스플레이별로 다른 값이라 정확히 구분된다. nil이면(구버전 config
-    /// 또는 Auto) displayName으로 폴백한다.
+    /// 또는 Follow Cursor) displayName으로 폴백한다.
     public var displayIdentifier: String?
     public var windowSizePreset: String?
+    public var displaySizeOverrides: [DisplaySizeOverride]
     public var launchType: LaunchType
     public var appPath: String?
     public var script: String?
@@ -121,9 +144,10 @@ public struct Site: Codable, Equatable {
     public init(
         name: String, url: String, width: Int, height: Int,
         displayName: String? = nil, displayIdentifier: String? = nil,
-        windowSizePreset: String? = nil, launchType: LaunchType = .url,
-        appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
-        shortcut: String? = nil
+        windowSizePreset: String? = nil,
+        displaySizeOverrides: [DisplaySizeOverride] = [],
+        launchType: LaunchType = .url, appPath: String? = nil, script: String? = nil,
+        folderPath: String? = nil, shortcut: String? = nil
     ) {
         self.name = name
         self.url = url
@@ -132,6 +156,7 @@ public struct Site: Codable, Equatable {
         self.displayName = displayName
         self.displayIdentifier = displayIdentifier
         self.windowSizePreset = windowSizePreset
+        self.displaySizeOverrides = displaySizeOverrides
         self.launchType = launchType
         self.appPath = appPath
         self.script = script
@@ -141,7 +166,7 @@ public struct Site: Codable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case name, url, width, height, x, y, displayName, displayIdentifier
-        case windowSizePreset, launchType
+        case windowSizePreset, displaySizeOverrides, launchType
         case appPath, script, folderPath, shortcut, hotkey
     }
 
@@ -157,6 +182,9 @@ public struct Site: Codable, Equatable {
         displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
         displayIdentifier = try container.decodeIfPresent(String.self, forKey: .displayIdentifier)
         windowSizePreset = try container.decodeIfPresent(String.self, forKey: .windowSizePreset)
+        displaySizeOverrides =
+            try container.decodeIfPresent(
+                [DisplaySizeOverride].self, forKey: .displaySizeOverrides) ?? []
         launchType = try container.decodeIfPresent(LaunchType.self, forKey: .launchType) ?? .url
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
         script = try container.decodeIfPresent(String.self, forKey: .script)
@@ -177,12 +205,28 @@ public struct Site: Codable, Equatable {
         try container.encodeIfPresent(displayName, forKey: .displayName)
         try container.encodeIfPresent(displayIdentifier, forKey: .displayIdentifier)
         try container.encodeIfPresent(windowSizePreset, forKey: .windowSizePreset)
+        if !displaySizeOverrides.isEmpty {
+            try container.encode(displaySizeOverrides, forKey: .displaySizeOverrides)
+        }
         try container.encode(launchType, forKey: .launchType)
         try container.encodeIfPresent(appPath, forKey: .appPath)
         try container.encodeIfPresent(script, forKey: .script)
         try container.encodeIfPresent(folderPath, forKey: .folderPath)
         try container.encodeIfPresent(shortcut, forKey: .shortcut)
         // hotkey는 encode하지 않음 (마이그레이션 완료)
+    }
+
+    /// id는 세션 한정 식별자이므로 값 동등성 비교에서 제외한다.
+    /// (hasChanges 판정·round-trip 테스트가 값 기준으로 동작해야 함)
+    public static func == (lhs: Site, rhs: Site) -> Bool {
+        lhs.name == rhs.name && lhs.url == rhs.url && lhs.width == rhs.width
+            && lhs.height == rhs.height && lhs.displayName == rhs.displayName
+            && lhs.displayIdentifier == rhs.displayIdentifier
+            && lhs.windowSizePreset == rhs.windowSizePreset
+            && lhs.displaySizeOverrides == rhs.displaySizeOverrides
+            && lhs.launchType == rhs.launchType && lhs.appPath == rhs.appPath
+            && lhs.script == rhs.script && lhs.folderPath == rhs.folderPath
+            && lhs.shortcut == rhs.shortcut
     }
 }
 

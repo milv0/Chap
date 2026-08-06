@@ -68,6 +68,7 @@ public struct ValidationResult: Sendable {
 /// - 중복(error): shortcut(case-insensitive), url(url타입), appPath(app타입), folderPath(finder타입)
 /// - preset: windowSizePreset이 설정됐으면 알려진 값이어야 함
 /// - size: width·height 최소 100
+/// - displaySizeOverrides: 각 override의 preset·width·height도 동일하게 검증
 public func validateConfig(_ config: Config) -> ValidationResult {
     var issues: [ValidationIssue] = []
 
@@ -154,6 +155,29 @@ public func validateConfig(_ config: Config) -> ValidationResult {
                     siteIndex: index, field: .height, severity: .error,
                     message: "Height must be at least 100."))
         }
+
+        for override in site.displaySizeOverrides {
+            if let presetID = override.windowSizePreset,
+                WindowSizePresets.preset(withID: presetID) == nil
+            {
+                issues.append(
+                    ValidationIssue(
+                        siteIndex: index, field: .windowSizePreset, severity: .error,
+                        message: "Unknown display size preset '\(presetID)'."))
+            }
+            if override.width < 100 {
+                issues.append(
+                    ValidationIssue(
+                        siteIndex: index, field: .width, severity: .error,
+                        message: "Display override width must be at least 100."))
+            }
+            if override.height < 100 {
+                issues.append(
+                    ValidationIssue(
+                        siteIndex: index, field: .height, severity: .error,
+                        message: "Display override height must be at least 100."))
+            }
+        }
     }
 
     // Cross-site duplicate detection
@@ -175,7 +199,18 @@ private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {
             !shortcut.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         else { continue }
 
-        let key = shortcut.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let trimmed = shortcut.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 예약키(".", ",")는 메뉴/설정 전역 단축키와 충돌하므로 거부.
+        if reservedShortcutKeys.contains(trimmed) {
+            issues.append(
+                ValidationIssue(
+                    siteIndex: index, field: .shortcut, severity: .error,
+                    message: "Shortcut '\(shortcut)' is reserved and cannot be used."))
+            continue
+        }
+
+        let key = trimmed.uppercased()
         if let firstIndex = seen[key] {
             issues.append(
                 ValidationIssue(

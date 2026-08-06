@@ -27,7 +27,7 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "display",
                     title: "Choose Display",
-                    description: "Pick Auto or a display, then choose a size preset"
+                    description: "Pick Follow Cursor or a display, then choose a size preset"
                 )
                 OnboardingCard(
                     icon: "bolt.fill",

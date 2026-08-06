@@ -53,6 +53,38 @@ struct SidebarItem: View {
     }
 }
 
+// MARK: - Sidebar Add Row
+
+/// 비어 있는 타입 섹션에 표시되는 placeholder 행.
+/// 항목이 하나도 없는 타입(예: Shell)도 사이드바에서 바로 추가할 수 있게 한다.
+struct SidebarAddRow: View {
+    let label: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: "plus")
+                    .font(.system(size: 11))
+                    .foregroundColor(DS.textTertiary)
+                    .frame(width: 20)
+                Text(label)
+                    .font(DS.bodyFont)
+                    .foregroundColor(DS.textTertiary)
+                    .lineLimit(1)
+                Spacer()
+            }
+            .padding(.horizontal, DS.paddingSmall)
+            .padding(.vertical, 8)
+            .background(isHovered ? DS.border.opacity(0.3) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in isHovered = hovering }
+    }
+}
+
 // MARK: - Onboarding Card
 
 struct OnboardingCard: View {
@@ -106,9 +138,13 @@ struct SidebarDropDelegate: DropDelegate {
                     from < self.sites.count, self.currentIndex < self.sites.count,
                     self.sites[from].launchType == self.sites[self.currentIndex].launchType
                 else { return }
+                // from < currentIndex이면 remove로 뒤 요소가 한 칸 당겨지므로
+                // 삽입 위치를 보정해야 드래그 방향과 무관하게 target 앞에 놓인다.
+                let destination =
+                    from < self.currentIndex ? self.currentIndex - 1 : self.currentIndex
                 let site = self.sites.remove(at: from)
-                self.sites.insert(site, at: self.currentIndex)
-                self.selectedIndex = self.currentIndex
+                self.sites.insert(site, at: destination)
+                self.selectedIndex = destination
                 self.onDrop()
             }
         }
@@ -182,20 +218,37 @@ struct PillPicker: View {
 // MARK: - Minimap
 
 struct MinimapSwiftUI: View {
-    let width: Int
-    let height: Int
-    /// 현재 선택된 디스플레이 식별(하이라이트/미리보기용). 둘 다 nil이면 Auto.
+    /// 실행 대상 디스플레이 식별. 둘 다 nil이면 Follow Cursor.
     let selectedIdentifier: String?
     let selectedName: String?
-    /// 디스플레이 선택 콜백. nil이면 Auto(커서 화면).
-    let onSelect: (NSScreen?) -> Void
+    /// Follow Cursor 상태에서 size/preset을 편집 중인 디스플레이.
+    let focusedIdentifier: String?
+    let focusedName: String?
+    let previewSizeForScreen: (NSScreen) -> (width: Int, height: Int)
+    let previewLabelForScreen: (NSScreen) -> String
+    /// Follow Cursor 상태에서 preview 클릭 시 size/preset 편집 화면만 바꾼다.
+    let onPreviewSelect: (NSScreen) -> Void
 
-    /// 화면이 현재 선택 상태인지. Auto(둘 다 nil)면 전체 하이라이트.
+    private var isFollowingCursor: Bool {
+        selectedIdentifier == nil && selectedName == nil
+    }
+
+    /// 화면이 현재 선택 상태인지. Follow Cursor(둘 다 nil)면 전체 하이라이트.
     /// UUID 우선 매칭으로 동일 모델 모니터도 정확히 구분한다.
     private func isSelected(_ screen: NSScreen) -> Bool {
         if selectedIdentifier == nil, selectedName == nil { return true }
         if let id = selectedIdentifier { return displayUUID(for: screen) == id }
         return screen.localizedName == selectedName
+    }
+
+    private func isFocused(_ screen: NSScreen) -> Bool {
+        if let id = focusedIdentifier {
+            return displayUUID(for: screen) == id
+        }
+        if let name = focusedName {
+            return screen.localizedName == name
+        }
+        return false
     }
 
     /// 미리보기 창을 그릴 대상 화면(식별자 → 이름 → 커서 화면).
@@ -210,8 +263,15 @@ struct MinimapSwiftUI: View {
         {
             return screen
         }
-        // Auto mode: target the cursor screen
+        // Follow Cursor mode: target the cursor screen
         return cursorScreen ?? NSScreen.main ?? screens.first
+    }
+
+    private func previewScreens(_ screens: [NSScreen]) -> [NSScreen] {
+        if isFollowingCursor {
+            return screens
+        }
+        return previewScreen(screens).map { [$0] } ?? []
     }
 
     var body: some View {
@@ -237,53 +297,65 @@ struct MinimapSwiftUI: View {
                     let sx = (frame.origin.x - minX) * scale
                     let sy = (maxY - frame.origin.y - frame.height) * scale
                     let selected = isSelected(screens[i])
+                    let focused = isFollowingCursor && isFocused(screens[i])
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(selected ? DS.accent.opacity(0.08) : DS.cardBg)
+                        .fill(
+                            focused
+                                ? DS.accent.opacity(0.16)
+                                : (selected ? DS.accent.opacity(0.08) : DS.cardBg)
+                        )
                         .frame(width: frame.width * scale, height: frame.height * scale)
                         .overlay(
                             VStack(spacing: 2) {
                                 Text(screens[i].localizedName)
                                     .font(.system(size: 8))
-                                    .foregroundColor(selected ? DS.accent : DS.textTertiary)
+                                    .foregroundColor(
+                                        selected || focused ? DS.accent : DS.textTertiary)
                             }
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 4).stroke(
-                                selected ? DS.accent : DS.border
+                                selected || focused ? DS.accent : DS.border,
+                                lineWidth: focused ? 2 : 1
                             )
                         )
                         .offset(x: offsetX + sx, y: offsetY + sy)
                         .onTapGesture {
-                            // 이미 선택된 (식별자 기준) 화면 재클릭 → Auto, 아니면 해당 화면 선택
-                            if selectedIdentifier != nil,
-                                displayUUID(for: screens[i]) == selectedIdentifier
-                            {
-                                onSelect(nil)
-                            } else if selectedIdentifier == nil,
-                                selectedName == screens[i].localizedName
-                            {
-                                onSelect(nil)
-                            } else {
-                                onSelect(screens[i])
-                            }
+                            guard isFollowingCursor else { return }
+                            onPreviewSelect(screens[i])
                         }
                 }
 
-                if let targetScreen = previewScreen(screens) {
+                ForEach(previewScreens(screens), id: \.self) { targetScreen in
+                    let previewSize = previewSizeForScreen(targetScreen)
+                    let previewLabel = previewLabelForScreen(targetScreen)
                     let visibleFrame = targetScreen.visibleFrame
                     let visibleLocalX = (visibleFrame.origin.x - minX) * scale
                     let visibleLocalY = (maxY - visibleFrame.origin.y - visibleFrame.height) * scale
 
                     let winX =
-                        visibleLocalX + (visibleFrame.width * scale - CGFloat(width) * scale) / 2
+                        visibleLocalX
+                        + (visibleFrame.width * scale - CGFloat(previewSize.width) * scale) / 2
                     let winY =
-                        visibleLocalY + (visibleFrame.height * scale - CGFloat(height) * scale) / 2
+                        visibleLocalY
+                        + (visibleFrame.height * scale - CGFloat(previewSize.height) * scale) / 2
 
                     RoundedRectangle(cornerRadius: 2)
                         .fill(DS.accent.opacity(0.25))
                         .overlay(RoundedRectangle(cornerRadius: 2).stroke(DS.accent))
-                        .frame(width: CGFloat(width) * scale, height: CGFloat(height) * scale)
+                        .overlay(alignment: .topLeading) {
+                            Text(previewLabel)
+                                .font(.system(size: 7, weight: .semibold))
+                                .foregroundColor(DS.accent)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .padding(2)
+                        }
+                        .frame(
+                            width: CGFloat(previewSize.width) * scale,
+                            height: CGFloat(previewSize.height) * scale
+                        )
                         .offset(x: offsetX + winX, y: offsetY + winY)
                         .allowsHitTesting(false)
                 }
