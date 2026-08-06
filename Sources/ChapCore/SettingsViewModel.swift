@@ -15,7 +15,6 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalLogin: Bool
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
-    public var onReload: (() -> Void)?
 
     public var hasChanges: Bool {
         sites != originalSites || showGuideWindow != originalGuide

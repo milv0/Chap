@@ -96,8 +96,8 @@ enum ChromeLauncher {
         let screenName = screen.localizedName
         let siteName = site.name
         let siteUrl = trimmedURL
-        let siteWidth = site.width
-        let siteHeight = site.height
+        let requestedWidth = bounds.right - bounds.left
+        let requestedHeight = bounds.bottom - bounds.top
 
         // 모든 작업을 requestCoordinator serial queue에서 직렬 처리
         let enqueuedAt = CFAbsoluteTimeGetCurrent()
@@ -182,7 +182,7 @@ enum ChromeLauncher {
                 result: resultLabel,
                 windowCount: windowsBefore.count,
                 display: screenName,
-                size: "\(siteWidth)x\(siteHeight)",
+                size: "\(requestedWidth)x\(requestedHeight)",
                 detail: detail)
             onComplete?()
         }

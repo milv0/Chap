@@ -79,20 +79,32 @@ public struct ConfigStore {
         }
 
         var config = decodedConfig
+        let sitesBeforeShortcutNormalization = config.sites
         config.sites = sanitizedShortcuts(for: config.sites)
+        let didNormalizeShortcuts = config.sites != sitesBeforeShortcutNormalization
 
         let migrationResult = migrateDisplayIdentifiers(
             sites: config.sites, connectedDisplays: connectedDisplays)
         let didChangeDisplaySelection = migrationResult.sites != config.sites
+        var didAutoSaveDisplayMigration = false
         if didChangeDisplaySelection {
             config.sites = migrationResult.sites
-            try? save(config)
+        }
+        if didNormalizeShortcuts || didChangeDisplaySelection {
+            do {
+                try save(config)
+                didAutoSaveDisplayMigration = didChangeDisplaySelection
+            } catch {
+                Log.config.error(
+                    "Failed to auto-save config normalization: \(error.localizedDescription, privacy: .public)"
+                )
+            }
         }
 
         return ConfigLoadResult(
             config: config,
             displayWarnings: migrationResult.warnings,
-            didAutoSaveDisplayMigration: didChangeDisplaySelection)
+            didAutoSaveDisplayMigration: didAutoSaveDisplayMigration)
     }
 
     @discardableResult

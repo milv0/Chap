@@ -282,6 +282,7 @@ enum AppLauncher {
         /// 리사이즈에 성공한 새 창 (최대 1개; Office는 문서창을 대기해 교체 가능)
         var resizedWindow: AXUIElement?
         var resizedBoundsResult: AXBoundsResult?
+        var processedWindows: [AXUIElement] = []
         var skipped: [AXUIElement] = []
         var firstResizeLatency: TimeInterval?
         var lastResizeTime: CFAbsoluteTime?
@@ -312,6 +313,10 @@ enum AppLauncher {
         func isNewWindow(_ window: AXUIElement) -> Bool {
             !windowsBefore.contains { CFEqual($0, window) }
         }
+
+        func hasProcessed(_ window: AXUIElement) -> Bool {
+            processedWindows.contains { CFEqual($0, window) }
+        }
     }
 
     /// 새 창 하나를 우선 처리. Office 앱은 새 문서창이 나타나면 이전 리사이즈를 교체.
@@ -328,24 +333,29 @@ enum AppLauncher {
             return
         }
 
-        let isNew = ctx.isNewWindow(window)
-        guard isNew else { return }
+        guard ctx.isNewWindow(window), !ctx.hasProcessed(window) else { return }
 
         if ctx.policy.isMicrosoftOffice {
-            if let resizedWindow = ctx.resizedWindow, CFEqual(resizedWindow, window) {
-                return
+            let boundsResult = applyBoundsToWindow(window, ctx: ctx)
+            if boundsResult.applied {
+                ctx.processedWindows.append(window)
             }
-            applyBoundsToWindow(window, ctx: ctx)
             return
         }
 
         if ctx.resizedWindow == nil {
-            applyBoundsToWindow(window, ctx: ctx)
+            let boundsResult = applyBoundsToWindow(window, ctx: ctx)
+            if boundsResult.applied {
+                ctx.processedWindows.append(window)
+            }
         }
     }
 
     /// 실제 bounds 적용 + 결과 기록
-    private static func applyBoundsToWindow(_ window: AXUIElement, ctx: ResizeContext) {
+    @discardableResult
+    private static func applyBoundsToWindow(_ window: AXUIElement, ctx: ResizeContext)
+        -> AXBoundsResult
+    {
         Log.launcher.info(
             "AX applying bounds for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
         )
@@ -353,14 +363,21 @@ enum AppLauncher {
             window, position: ctx.position, size: ctx.size)
         ctx.resizedBoundsResult = boundsResult
         let now = CFAbsoluteTimeGetCurrent()
-        if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
         if boundsResult.applied {
+            if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
             ctx.resizedWindow = window
             ctx.lastResizeTime = now
         }
         Log.launcher.info(
             "AX bounds result for \(ctx.debugLabel, privacy: .private): level=\(boundsResult.level.rawValue, privacy: .public) pos=\(boundsResult.positionWithinTolerance) size=\(boundsResult.sizeWithinTolerance)"
         )
+        return boundsResult
+    }
+
+    static func shouldEndObservationAfterFocusedFallback(
+        didResize: Bool, isMicrosoftOffice: Bool
+    ) -> Bool {
+        didResize && !isMicrosoftOffice
     }
 
     private static func axWindows(_ app: AXUIElement) -> [AXUIElement] {
@@ -456,7 +473,12 @@ enum AppLauncher {
                     "AX trying early focused fallback for \(debugLabel, privacy: .private) after \(elapsed, format: .fixed(precision: 2))s"
                 )
                 _ = focusedWindowFallback(app: app, ctx: ctx)
-                if ctx.didResize { break }
+                if shouldEndObservationAfterFocusedFallback(
+                    didResize: ctx.didResize,
+                    isMicrosoftOffice: ctx.policy.isMicrosoftOffice)
+                {
+                    break
+                }
             }
 
             // 일반 앱: 첫 리사이즈 후 grace 지나면 종료
@@ -522,10 +544,13 @@ enum AppLauncher {
             win, position: ctx.position, size: ctx.size)
         ctx.resizedBoundsResult = boundsResult
         let now = CFAbsoluteTimeGetCurrent()
-        if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
         if boundsResult.applied {
+            if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
             ctx.resizedWindow = win
             ctx.lastResizeTime = now
+            if ctx.isNewWindow(win), !ctx.hasProcessed(win) {
+                ctx.processedWindows.append(win)
+            }
         }
         Log.launcher.info(
             "AX focused fallback result for \(ctx.debugLabel, privacy: .private): level=\(boundsResult.level.rawValue, privacy: .public)"
@@ -542,8 +567,10 @@ enum AppLauncher {
         let interval: useconds_t = 120_000
         let deadline = CFAbsoluteTimeGetCurrent() + policy.timeout
         var resizedWindow: AXUIElement?
+        var processedWindows: [AXUIElement] = []
         var latency: TimeInterval?
         var boundsResult: AXBoundsResult?
+        var lastResizeTime: CFAbsoluteTime?
         var lastSnapshotTime: CFAbsoluteTime = 0
         var didAttemptEarlyFocusedFallback = false
         while CFAbsoluteTimeGetCurrent() < deadline
@@ -568,19 +595,21 @@ enum AppLauncher {
             let newWindows = windows.filter { win in
                 !windowsBefore.contains { CFEqual($0, win) }
             }
-            if resizedWindow == nil {
-                for newWindow in newWindows
-                where isEligibleResizeWindow(newWindow, policy: policy) {
-                    let attemptResult = LauncherUtils.axApplyBounds(
-                        newWindow, position: position, size: size)
-                    boundsResult = attemptResult
-                    if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
-                    if attemptResult.applied {
-                        resizedWindow = newWindow
-                        break
-                    }
+            for newWindow in newWindows
+            where !processedWindows.contains(where: { CFEqual($0, newWindow) })
+                && isEligibleResizeWindow(newWindow, policy: policy)
+                && (policy.isMicrosoftOffice || resizedWindow == nil)
+            {
+                let attemptResult = LauncherUtils.axApplyBounds(
+                    newWindow, position: position, size: size)
+                boundsResult = attemptResult
+                if attemptResult.applied {
+                    let resizeTime = CFAbsoluteTimeGetCurrent()
+                    if latency == nil { latency = resizeTime - startTime }
+                    resizedWindow = newWindow
+                    processedWindows.append(newWindow)
+                    lastResizeTime = resizeTime
                 }
-                if resizedWindow != nil { break }
             }
 
             if resizedWindow == nil, !didAttemptEarlyFocusedFallback,
@@ -600,12 +629,29 @@ enum AppLauncher {
                     let attemptResult = LauncherUtils.axApplyBounds(
                         focusedWindow, position: position, size: size)
                     boundsResult = attemptResult
-                    if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
                     if attemptResult.applied {
+                        let resizeTime = CFAbsoluteTimeGetCurrent()
+                        if latency == nil { latency = resizeTime - startTime }
                         resizedWindow = focusedWindow
-                        break
+                        lastResizeTime = resizeTime
+                        if !windowsBefore.contains(where: { CFEqual($0, focusedWindow) }),
+                            !processedWindows.contains(where: { CFEqual($0, focusedWindow) })
+                        {
+                            processedWindows.append(focusedWindow)
+                        }
+                        if shouldEndObservationAfterFocusedFallback(
+                            didResize: true,
+                            isMicrosoftOffice: policy.isMicrosoftOffice)
+                        {
+                            break
+                        }
                     }
                 }
+            }
+            if let lastResizeTime,
+                CFAbsoluteTimeGetCurrent() - lastResizeTime >= policy.postResizeGrace
+            {
+                break
             }
             usleep(interval)
         }
@@ -628,8 +674,8 @@ enum AppLauncher {
                     boundsResult = attemptResult
                     if attemptResult.applied {
                         resizedWindow = win
+                        if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
                     }
-                    if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
                 }
             }
         }

@@ -28,6 +28,9 @@ There is no `Package.swift`; do not use `swift test`.
 - `Sources/Chap/Views/`: SwiftUI UI.
 - `Tests/ChapCoreTests/`: Swift Testing tests.
 - `.harness/shared/rules/`: shared rules for assistants.
+- `ARCHITECTURE.txt`: structure, features, APIs, change history.
+- `FLOW.md`: runtime flow — startup order, permission state machine, per-launcher
+  sequences with timeouts, thread map, invariants, known issues.
 
 ## Behavior
 
@@ -59,6 +62,9 @@ Follow these files before making relevant changes:
 
 Important expectations:
 
+- Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior.
+  Its invariants section lists past regressions; check it before altering window
+  targeting, timeouts, or the Chrome serial queue.
 - Keep changes scoped to the correct area: `ChapCore` for testable logic,
   `Launchers` for launch behavior, `Views` for UI, `AppDelegate` for app
   lifecycle/menu/window orchestration.

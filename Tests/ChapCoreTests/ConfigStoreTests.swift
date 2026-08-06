@@ -58,6 +58,28 @@ struct ConfigStoreTests {
         #expect(saved.sites[0].displayName == "Studio Display")
     }
 
+    @Test("load persists shortcut normalization")
+    func loadPersistsShortcutNormalization() throws {
+        let fixture = try makeTemporaryStore()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let config = Config(sites: [
+            Site(
+                name: "A", url: "https://a.com", width: 800, height: 600,
+                shortcut: "AB"),
+            Site(
+                name: "B", url: "https://b.com", width: 800, height: 600,
+                shortcut: "K"),
+        ])
+        try fixture.store.save(config)
+
+        let result = try fixture.store.load(connectedDisplays: [])
+
+        let saved = try JSONDecoder().decode(
+            Config.self, from: Data(contentsOf: URL(fileURLWithPath: fixture.store.configPath)))
+        #expect(result.config.sites.map(\.shortcut) == [nil, "K"])
+        #expect(saved.sites.map(\.shortcut) == [nil, "K"])
+    }
+
     @Test("stripLegacyFields removes legacy config keys")
     func stripLegacyFields() throws {
         let fixture = try makeTemporaryStore()

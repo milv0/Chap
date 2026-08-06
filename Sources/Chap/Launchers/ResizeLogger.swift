@@ -12,6 +12,8 @@ import Foundation
 /// 파일에는 헤더에 `detail`이 없다. 1~11열 위치는 그대로여서 기존 분석은 계속 동작한다.
 enum ResizeLogger {
     #if DEBUG
+        private static let fileLock = NSLock()
+
         private static let logDir: String = {
             let home = NSHomeDirectory()
             return (home as NSString).appendingPathComponent("Library/Logs/Chap")
@@ -46,6 +48,9 @@ enum ResizeLogger {
         size: String = "", detail: String = ""
     ) {
         #if DEBUG
+            fileLock.lock()
+            defer { fileLock.unlock() }
+
             // 로그 디렉토리 생성
             try? FileManager.default.createDirectory(
                 atPath: logDir, withIntermediateDirectories: true)

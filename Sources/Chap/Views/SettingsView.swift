@@ -5,7 +5,6 @@ import os
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
-    private let configStore = ConfigStore()
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
@@ -793,17 +792,19 @@ struct SettingsView: View {
                 return
             }
 
-            // Apply normalized sites
             let normalizedSites = importResult.sites
-            try configStore.save(
-                Config(
-                    showGuideWindow: config.showGuideWindow,
-                    launchAtLogin: config.launchAtLogin, sites: normalizedSites))
+            let saved =
+                vm.onSave?(
+                    SettingsPayload(
+                        sites: normalizedSites,
+                        showGuideWindow: config.showGuideWindow,
+                        launchAtLogin: config.launchAtLogin)) ?? false
+            guard saved else { return }
+
             vm.sites = normalizedSites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
             vm.markSaved()
-            vm.onReload?()
 
             let adjustmentLines = importResult.fixes.map { fix in
                 let siteName =

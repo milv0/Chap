@@ -38,6 +38,7 @@ public let reservedShortcutKeys: Set<String> = [".", ","]
 ///
 /// 규칙:
 /// - 공백만 있거나 빈 단축키 → nil
+/// - 한 글자가 아닌 단축키 → nil
 /// - 예약키(".", ",") → nil
 /// - 중복 단축키(대소문자 무시) → 앞의 것만 유지, 나머지는 nil
 ///
@@ -49,7 +50,7 @@ public func sanitizedShortcuts(for sites: [Site]) -> [Site] {
         guard let raw = site.shortcut else { return sanitized }
         let key = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         let upper = key.uppercased()
-        if key.isEmpty || reservedShortcutKeys.contains(key) || seen.contains(upper) {
+        if key.count != 1 || reservedShortcutKeys.contains(key) || seen.contains(upper) {
             sanitized.shortcut = nil
         } else {
             seen.insert(upper)

@@ -45,8 +45,13 @@ Chap/
 ├── Tests/ChapCoreTests/              # Swift Testing unit tests
 ├── Resources/                        # App and status bar icons
 ├── assets/icons/                     # Source SVG icon assets
-└── ARCHITECTURE.txt                  # Human-readable architecture notes
+├── ARCHITECTURE.txt                  # Structure, features, APIs, change history
+└── FLOW.md                           # Runtime flow, invariants, known issues
 ```
+
+Where to look first: `ARCHITECTURE.txt` answers "what exists"; `FLOW.md` answers
+"what runs in what order" (startup sequence, permission state machine, per-launcher
+timeouts, thread map, invariants, known issues).
 
 ## Current Behavior
 
@@ -82,6 +87,9 @@ Follow the shared rules:
 
 Important local expectations:
 
+- Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior.
+  Its invariants section lists past regressions; check it before altering window
+  targeting, timeouts, or the Chrome serial queue.
 - Keep edits scoped to the relevant target: `ChapCore` for testable model logic,
   `Launchers` for launch behavior, `Views` for SwiftUI, and `AppDelegate` for
   lifecycle/menu/window orchestration.

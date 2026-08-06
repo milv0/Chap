@@ -201,6 +201,14 @@ private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {
 
         let trimmed = shortcut.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        if trimmed.count != 1 {
+            issues.append(
+                ValidationIssue(
+                    siteIndex: index, field: .shortcut, severity: .error,
+                    message: "Shortcut must be exactly one character."))
+            continue
+        }
+
         // 예약키(".", ",")는 메뉴/설정 전역 단축키와 충돌하므로 거부.
         if reservedShortcutKeys.contains(trimmed) {
             issues.append(

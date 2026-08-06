@@ -163,8 +163,11 @@ struct SiteConfigView: View {
                         text: Binding(
                             get: { site.shortcut ?? "" },
                             set: { newValue in
+                                let trimmed = newValue.trimmingCharacters(
+                                    in: .whitespacesAndNewlines)
                                 let key =
-                                    newValue.isEmpty ? nil : String(newValue.prefix(1)).uppercased()
+                                    trimmed.isEmpty
+                                    ? nil : String(trimmed.prefix(1)).uppercased()
                                 if let k = key, [".", ","].contains(k) {
                                     reservedKeyAlert = true
                                     reservedKeyChar = k

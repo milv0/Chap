@@ -641,10 +641,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             DispatchQueue.main.async { self.buildMenu() }
             return true
         }
-        vm.onReload = { [weak self] in
-            self?.reloadConfig()
-        }
-
         let settingsView = SettingsView(vm: vm)
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)

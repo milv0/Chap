@@ -156,6 +156,17 @@ struct ConfigValidationTests {
         #expect(result.errors.contains { $0.field == .shortcut && $0.siteIndex == 2 })
     }
 
+    @Test("shortcut must contain exactly one character")
+    func shortcutMustContainOneCharacter() {
+        let site = Site(
+            name: "A", url: "https://a.com", width: 800, height: 600, launchType: .url,
+            shortcut: "AB")
+
+        let result = validateConfig(Config(sites: [site]))
+
+        #expect(result.errors.contains { $0.field == .shortcut })
+    }
+
     @Test("duplicate URLs across url-type sites are warned")
     func duplicateURLs() {
         let sites = [
