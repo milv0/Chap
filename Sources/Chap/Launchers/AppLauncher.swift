@@ -37,6 +37,9 @@ enum AppLauncher {
         let boundsResult: AXBoundsResult?
         /// 리사이즈 대상 창을 아예 못 찾았을 때의 창 상태 요약. 찾은 경우 nil.
         let diagnostic: String?
+
+        static let superseded = ResizeObservationResult(
+            latency: nil, wasSuperseded: true, boundsResult: nil, diagnostic: nil)
     }
 
     /// 같은 앱을 연속 실행하면 이전 AXObserver가 Office grace 시간 동안 남아 중복 스캔한다.
@@ -73,11 +76,13 @@ enum AppLauncher {
         guard let path = site.appPath, !path.isEmpty else {
             Log.launcher.error("No app path configured for \(site.name, privacy: .private)")
             LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
+            onComplete?()
             return
         }
         guard FileManager.default.fileExists(atPath: path) else {
             Log.launcher.error("App not found at: \(path, privacy: .private)")
             LauncherUtils.showAlert(message: "App not found at: \(path)")
+            onComplete?()
             return
         }
 
@@ -87,12 +92,7 @@ enum AppLauncher {
         guard let screen = targetScreen(for: site) else {
             Log.launcher.info(
                 "No display available — launching \(site.name, privacy: .private) without resize")
-            let appURL = URL(fileURLWithPath: path)
-            let openConfig = NSWorkspace.OpenConfiguration()
-            openConfig.activates = true
-            NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { _, _ in
-                onComplete?()
-            }
+            openWithoutResize(path: path, onComplete: onComplete)
             return
         }
         let bounds = centeredBounds(for: site, on: screen)
@@ -108,12 +108,7 @@ enum AppLauncher {
 
         guard AccessibilityPermission.isTrusted else {
             Log.launcher.info("Accessibility not granted — launching without resize")
-            let appURL = URL(fileURLWithPath: path)
-            let openConfig = NSWorkspace.OpenConfiguration()
-            openConfig.activates = true
-            NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { _, _ in
-                onComplete?()
-            }
+            openWithoutResize(path: path, onComplete: onComplete)
             return
         }
 
@@ -127,7 +122,7 @@ enum AppLauncher {
         }?.processIdentifier
         let windowsBefore: [AXUIElement]
         if let pid = baselinePid {
-            windowsBefore = captureExistingWindows(pid: pid)
+            windowsBefore = LauncherUtils.captureExistingWindows(pid: pid)
         } else {
             windowsBefore = []
         }
@@ -232,7 +227,17 @@ enum AppLauncher {
         }
     }
 
-    // MARK: - AX API Resize
+    /// 리사이즈 없이 앱만 실행 (화면 없음 / 접근성 미허용 경로 공용)
+    private static func openWithoutResize(path: String, onComplete: (() -> Void)?) {
+        let appURL = URL(fileURLWithPath: path)
+        let openConfig = NSWorkspace.OpenConfiguration()
+        openConfig.activates = true
+        NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { _, _ in
+            onComplete?()
+        }
+    }
+
+    // MARK: - Observation policy
 
     /// 실행 중 앱은 이미 문서창이 떠 있는 경우가 많아, 새 창을 짧게만 기다린 뒤
     /// focused 창을 리사이즈한다. 이 지연은 실제로 새 창이 뜰 때 시작창을 잘못 잡지
@@ -268,8 +273,10 @@ enum AppLauncher {
         )
     }
 
-    /// 윈도우 리사이즈 대상/상태를 AXObserver 콜백과 공유하기 위한 컨텍스트.
-    /// 콜백과 초기 정렬이 모두 같은 (run loop) 스레드에서 실행되므로 별도 동기화는 불필요.
+    // MARK: - Resize context
+
+    /// 윈도우 리사이즈 대상/상태를 AXObserver 콜백과 관찰 루프가 공유하는 컨텍스트.
+    /// 콜백과 루프가 모두 같은 (run loop) 스레드에서 실행되므로 별도 동기화는 불필요.
     private final class ResizeContext {
         let position: CGPoint
         let size: CGSize
@@ -327,7 +334,7 @@ enum AppLauncher {
             if !ctx.skipped.contains(where: { CFEqual($0, window) }) {
                 ctx.skipped.append(window)
                 Log.launcher.debug(
-                    "AX skip ineligible window for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
+                    "AX skip ineligible window for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) \(AXIntrospection.windowSummary(window), privacy: .public)"
                 )
             }
             return
@@ -335,19 +342,12 @@ enum AppLauncher {
 
         guard ctx.isNewWindow(window), !ctx.hasProcessed(window) else { return }
 
-        if ctx.policy.isMicrosoftOffice {
-            let boundsResult = applyBoundsToWindow(window, ctx: ctx)
-            if boundsResult.applied {
-                ctx.processedWindows.append(window)
-            }
-            return
-        }
+        // 비-Office는 첫 새 창 하나만, Office는 새 문서창이 나타날 때마다 교체
+        guard ctx.policy.isMicrosoftOffice || ctx.resizedWindow == nil else { return }
 
-        if ctx.resizedWindow == nil {
-            let boundsResult = applyBoundsToWindow(window, ctx: ctx)
-            if boundsResult.applied {
-                ctx.processedWindows.append(window)
-            }
+        let boundsResult = applyBoundsToWindow(window, ctx: ctx)
+        if boundsResult.applied {
+            ctx.processedWindows.append(window)
         }
     }
 
@@ -357,7 +357,7 @@ enum AppLauncher {
         -> AXBoundsResult
     {
         Log.launcher.info(
-            "AX applying bounds for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
+            "AX applying bounds for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) \(AXIntrospection.windowSummary(window), privacy: .public)"
         )
         let boundsResult = LauncherUtils.axApplyBounds(
             window, position: ctx.position, size: ctx.size)
@@ -380,17 +380,10 @@ enum AppLauncher {
         didResize && !isMicrosoftOffice
     }
 
-    private static func axWindows(_ app: AXUIElement) -> [AXUIElement] {
-        var value: AnyObject?
-        guard
-            AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,
-            let windows = value as? [AXUIElement]
-        else { return [] }
-        return windows
-    }
+    // MARK: - Observation loop
 
     /// AXObserver로 윈도우 생성을 구독하고, baseline 대비 새 창 하나를 리사이즈.
-    /// 실행 중 앱은 짧은 grace 후, cold 앱은 timeout 후 focused window 하나를 fallback.
+    /// 옵저버 생성이 실패하면 같은 루프를 usleep 폴링으로 수행한다 (관찰 로직 공용).
     private static func observeAndResizeOneWindow(
         pid: pid_t, position: CGPoint, size: CGSize, startTime: CFAbsoluteTime,
         policy: ResizeObservationPolicy, debugLabel: String, observationKey: String,
@@ -411,10 +404,7 @@ enum AppLauncher {
             observationRegistry.finish(key: observationKey, token: observationToken)
         }
 
-        guard isCurrentObservation(ctx) else {
-            return ResizeObservationResult(
-                latency: nil, wasSuperseded: true, boundsResult: nil, diagnostic: nil)
-        }
+        guard isCurrentObservation(ctx) else { return .superseded }
 
         var observer: AXObserver?
         let createErr = AXObserverCreate(
@@ -424,7 +414,7 @@ enum AppLauncher {
                 let ctx = Unmanaged<ResizeContext>.fromOpaque(refcon).takeUnretainedValue()
                 guard AppLauncher.isCurrentObservation(ctx) else { return }
                 Log.launcher.debug(
-                    "AX window-created for \(ctx.debugLabel, privacy: .private): title=\(AppLauncher.windowTitle(element), privacy: .private) \(AppLauncher.windowSummary(element), privacy: .public)"
+                    "AX window-created for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(element), privacy: .private) \(AXIntrospection.windowSummary(element), privacy: .public)"
                 )
                 AppLauncher.resizeIfNewStandardWindow(element, ctx: ctx)
             }, &observer)
@@ -433,13 +423,8 @@ enum AppLauncher {
             Log.launcher.error(
                 "AXObserverCreate failed err=\(createErr.rawValue, privacy: .public) — falling back to polling"
             )
-            return axResizePolling(
-                app: app, position: position, size: size, startTime: startTime,
-                policy: policy,
-                debugLabel: debugLabel,
-                observationKey: observationKey,
-                observationToken: observationToken,
-                windowsBefore: windowsBefore)
+            runResizeLoop(app: app, ctx: ctx) { usleep(120_000) }
+            return finishObservation(app: app, ctx: ctx)
         }
 
         let refcon = Unmanaged.passUnretained(ctx).toOpaque()
@@ -452,25 +437,40 @@ enum AppLauncher {
         let runLoop = CFRunLoopGetCurrent()
         let source = AXObserverGetRunLoopSource(observer)
         CFRunLoopAddSource(runLoop, source, .defaultMode)
+        runResizeLoop(app: app, ctx: ctx) { CFRunLoopRunInMode(.defaultMode, 0.05, false) }
+        CFRunLoopRemoveSource(runLoop, source, .defaultMode)
+        AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
 
-        // 이미 떠 있는 새 윈도우 즉시 스캔 + 주기적 재스캔
-        let hardDeadline = CFAbsoluteTimeGetCurrent() + policy.timeout
+        return finishObservation(app: app, ctx: ctx)
+    }
+
+    /// 옵저버/폴링 공용 관찰 루프.
+    /// 매 사이클: 스냅샷 로깅 → baseline 대비 새 창 스캔 → 대기(wait) →
+    /// focusedFallbackDelay 경과 시 early focused fallback → 마지막 리사이즈 후
+    /// postResizeGrace가 지나면 종료 (Office는 grace 동안 새 문서창을 계속 대기).
+    ///
+    /// - Parameter wait: 사이클 간 대기. 옵저버 경로는 run loop 펌핑(콜백 처리),
+    ///   폴링 경로는 usleep.
+    private static func runResizeLoop(
+        app: AXUIElement, ctx: ResizeContext, wait: () -> Void
+    ) {
+        let hardDeadline = CFAbsoluteTimeGetCurrent() + ctx.policy.timeout
         logWindowSnapshot(app: app, ctx: ctx, reason: "start")
         while CFAbsoluteTimeGetCurrent() < hardDeadline && isCurrentObservation(ctx) {
             logWindowSnapshotIfNeeded(app: app, ctx: ctx)
             // baseline 대비 새 창만 시도
-            for win in axWindows(app) where ctx.isNewWindow(win) {
+            for win in LauncherUtils.axWindows(app: app) where ctx.isNewWindow(win) {
                 resizeIfNewStandardWindow(win, ctx: ctx)
             }
-            CFRunLoopRunInMode(.defaultMode, 0.05, false)
+            wait()
 
             let elapsed = CFAbsoluteTimeGetCurrent() - ctx.startTime
             if !ctx.didResize, !ctx.didAttemptEarlyFocusedFallback,
-                elapsed >= policy.focusedFallbackDelay
+                elapsed >= ctx.policy.focusedFallbackDelay
             {
                 ctx.didAttemptEarlyFocusedFallback = true
                 Log.launcher.info(
-                    "AX trying early focused fallback for \(debugLabel, privacy: .private) after \(elapsed, format: .fixed(precision: 2))s"
+                    "AX trying early focused fallback for \(ctx.debugLabel, privacy: .private) after \(elapsed, format: .fixed(precision: 2))s"
                 )
                 _ = focusedWindowFallback(app: app, ctx: ctx)
                 if shouldEndObservationAfterFocusedFallback(
@@ -481,46 +481,38 @@ enum AppLauncher {
                 }
             }
 
-            // 일반 앱: 첫 리사이즈 후 grace 지나면 종료
-            if !ctx.policy.isMicrosoftOffice, ctx.didResize,
-                let last = ctx.lastResizeTime,
-                CFAbsoluteTimeGetCurrent() - last >= policy.postResizeGrace
-            {
-                break
-            }
-            // Office: grace 동안 새 문서창 계속 대기
-            if ctx.policy.isMicrosoftOffice,
-                let last = ctx.lastResizeTime,
-                CFAbsoluteTimeGetCurrent() - last >= policy.postResizeGrace
+            // 마지막 리사이즈 후 grace가 지나면 종료
+            if let last = ctx.lastResizeTime,
+                CFAbsoluteTimeGetCurrent() - last >= ctx.policy.postResizeGrace
             {
                 break
             }
         }
+    }
 
-        CFRunLoopRemoveSource(runLoop, source, .defaultMode)
-        AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
-        guard isCurrentObservation(ctx) else {
-            return ResizeObservationResult(
-                latency: nil, wasSuperseded: true, boundsResult: nil, diagnostic: nil)
-        }
+    /// 관찰 루프 종료 후 결과 조립. 새 창 리사이즈가 없었으면 focused fallback을
+    /// 한 번 더 시도하고, 그래도 실패면 창 상태 진단을 남긴다.
+    private static func finishObservation(app: AXUIElement, ctx: ResizeContext)
+        -> ResizeObservationResult
+    {
+        guard isCurrentObservation(ctx) else { return .superseded }
 
-        // 새 창이 하나도 없었을 때만 focused window fallback (하나만)
-        if !ctx.didResize {
-            let boundsResult = focusedWindowFallback(app: app, ctx: ctx)
-            var diagnostic: String?
-            if ctx.firstResizeLatency == nil {
-                logWindowSnapshot(app: app, ctx: ctx, reason: "timeout", asError: true)
-                diagnostic = windowStateDiagnostic(app: app)
-            }
+        if ctx.didResize {
             return ResizeObservationResult(
                 latency: ctx.firstResizeLatency, wasSuperseded: false,
-                boundsResult: boundsResult ?? ctx.resizedBoundsResult,
-                diagnostic: diagnostic)
+                boundsResult: ctx.resizedBoundsResult, diagnostic: nil)
         }
 
+        let boundsResult = focusedWindowFallback(app: app, ctx: ctx)
+        var diagnostic: String?
+        if ctx.firstResizeLatency == nil {
+            logWindowSnapshot(app: app, ctx: ctx, reason: "timeout", asError: true)
+            diagnostic = AXIntrospection.windowStateDiagnostic(app: app)
+        }
         return ResizeObservationResult(
             latency: ctx.firstResizeLatency, wasSuperseded: false,
-            boundsResult: ctx.resizedBoundsResult, diagnostic: nil)
+            boundsResult: boundsResult ?? ctx.resizedBoundsResult,
+            diagnostic: diagnostic)
     }
 
     /// 새 창이 없을 때 focused window 하나만 리사이즈 (fallback)
@@ -533,24 +525,16 @@ enum AppLauncher {
                 app, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
             let windowValue
         else { return nil }
-        guard let win = axElement(from: windowValue),
+        guard let win = AXIntrospection.element(from: windowValue),
             isEligibleResizeWindow(win, policy: ctx.policy)
         else { return nil }
 
         Log.launcher.info(
-            "AX focused-window fallback for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(win), privacy: .private) \(windowSummary(win), privacy: .public)"
+            "AX focused-window fallback for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(win), privacy: .private) \(AXIntrospection.windowSummary(win), privacy: .public)"
         )
-        let boundsResult = LauncherUtils.axApplyBounds(
-            win, position: ctx.position, size: ctx.size)
-        ctx.resizedBoundsResult = boundsResult
-        let now = CFAbsoluteTimeGetCurrent()
-        if boundsResult.applied {
-            if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
-            ctx.resizedWindow = win
-            ctx.lastResizeTime = now
-            if ctx.isNewWindow(win), !ctx.hasProcessed(win) {
-                ctx.processedWindows.append(win)
-            }
+        let boundsResult = applyBoundsToWindow(win, ctx: ctx)
+        if boundsResult.applied, ctx.isNewWindow(win), !ctx.hasProcessed(win) {
+            ctx.processedWindows.append(win)
         }
         Log.launcher.info(
             "AX focused fallback result for \(ctx.debugLabel, privacy: .private): level=\(boundsResult.level.rawValue, privacy: .public)"
@@ -558,232 +542,7 @@ enum AppLauncher {
         return boundsResult
     }
 
-    /// AXObserver를 못 쓸 때의 폴백: 새 창 우선, 없으면 focused window 하나만.
-    private static func axResizePolling(
-        app: AXUIElement, position: CGPoint, size: CGSize, startTime: CFAbsoluteTime,
-        policy: ResizeObservationPolicy, debugLabel: String, observationKey: String,
-        observationToken: Int, windowsBefore: [AXUIElement]
-    ) -> ResizeObservationResult {
-        let interval: useconds_t = 120_000
-        let deadline = CFAbsoluteTimeGetCurrent() + policy.timeout
-        var resizedWindow: AXUIElement?
-        var processedWindows: [AXUIElement] = []
-        var latency: TimeInterval?
-        var boundsResult: AXBoundsResult?
-        var lastResizeTime: CFAbsoluteTime?
-        var lastSnapshotTime: CFAbsoluteTime = 0
-        var didAttemptEarlyFocusedFallback = false
-        while CFAbsoluteTimeGetCurrent() < deadline
-            && observationRegistry.isCurrent(key: observationKey, token: observationToken)
-        {
-            let now = CFAbsoluteTimeGetCurrent()
-            if now - lastSnapshotTime >= 1.0 {
-                lastSnapshotTime = now
-                let windows = axWindows(app)
-                Log.launcher.debug(
-                    "AX polling snapshot for \(debugLabel, privacy: .private): windows=\(windows.count, privacy: .public) focused=\(focusedWindowSummary(app), privacy: .public)"
-                )
-                for (index, window) in windows.enumerated() {
-                    Log.launcher.debug(
-                        "AX polling window[\(index, privacy: .public)] for \(debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
-                    )
-                }
-            }
-
-            // 새 창 우선 탐색
-            let windows = axWindows(app)
-            let newWindows = windows.filter { win in
-                !windowsBefore.contains { CFEqual($0, win) }
-            }
-            for newWindow in newWindows
-            where !processedWindows.contains(where: { CFEqual($0, newWindow) })
-                && isEligibleResizeWindow(newWindow, policy: policy)
-                && (policy.isMicrosoftOffice || resizedWindow == nil)
-            {
-                let attemptResult = LauncherUtils.axApplyBounds(
-                    newWindow, position: position, size: size)
-                boundsResult = attemptResult
-                if attemptResult.applied {
-                    let resizeTime = CFAbsoluteTimeGetCurrent()
-                    if latency == nil { latency = resizeTime - startTime }
-                    resizedWindow = newWindow
-                    processedWindows.append(newWindow)
-                    lastResizeTime = resizeTime
-                }
-            }
-
-            if resizedWindow == nil, !didAttemptEarlyFocusedFallback,
-                now - startTime >= policy.focusedFallbackDelay
-            {
-                didAttemptEarlyFocusedFallback = true
-                var focusedValue: AnyObject?
-                if AXUIElementCopyAttributeValue(
-                    app, kAXFocusedWindowAttribute as CFString, &focusedValue) == .success,
-                    let focusedValue,
-                    let focusedWindow = axElement(from: focusedValue),
-                    isEligibleResizeWindow(focusedWindow, policy: policy)
-                {
-                    Log.launcher.info(
-                        "AX polling early focused fallback for \(debugLabel, privacy: .private): title=\(windowTitle(focusedWindow), privacy: .private)"
-                    )
-                    let attemptResult = LauncherUtils.axApplyBounds(
-                        focusedWindow, position: position, size: size)
-                    boundsResult = attemptResult
-                    if attemptResult.applied {
-                        let resizeTime = CFAbsoluteTimeGetCurrent()
-                        if latency == nil { latency = resizeTime - startTime }
-                        resizedWindow = focusedWindow
-                        lastResizeTime = resizeTime
-                        if !windowsBefore.contains(where: { CFEqual($0, focusedWindow) }),
-                            !processedWindows.contains(where: { CFEqual($0, focusedWindow) })
-                        {
-                            processedWindows.append(focusedWindow)
-                        }
-                        if shouldEndObservationAfterFocusedFallback(
-                            didResize: true,
-                            isMicrosoftOffice: policy.isMicrosoftOffice)
-                        {
-                            break
-                        }
-                    }
-                }
-            }
-            if let lastResizeTime,
-                CFAbsoluteTimeGetCurrent() - lastResizeTime >= policy.postResizeGrace
-            {
-                break
-            }
-            usleep(interval)
-        }
-
-        // 새 창 못 찾았으면 focused window fallback
-        if resizedWindow == nil {
-            var windowValue: AnyObject?
-            if AXUIElementCopyAttributeValue(
-                app, kAXFocusedWindowAttribute as CFString, &windowValue) == .success,
-                let windowValue
-            {
-                if let win = axElement(from: windowValue),
-                    isEligibleResizeWindow(win, policy: policy)
-                {
-                    Log.launcher.info(
-                        "AX polling focused-window fallback for \(debugLabel, privacy: .private): title=\(windowTitle(win), privacy: .private)"
-                    )
-                    let attemptResult = LauncherUtils.axApplyBounds(
-                        win, position: position, size: size)
-                    boundsResult = attemptResult
-                    if attemptResult.applied {
-                        resizedWindow = win
-                        if latency == nil { latency = CFAbsoluteTimeGetCurrent() - startTime }
-                    }
-                }
-            }
-        }
-
-        let wasSuperseded = !observationRegistry.isCurrent(
-            key: observationKey,
-            token: observationToken
-        )
-        let diagnostic: String? =
-            (boundsResult == nil && !wasSuperseded) ? windowStateDiagnostic(app: app) : nil
-        return ResizeObservationResult(
-            latency: latency, wasSuperseded: wasSuperseded, boundsResult: boundsResult,
-            diagnostic: diagnostic)
-    }
-
-    // MARK: - Baseline capture
-
-    /// 실행 전 앱 창 목록 스냅샷. AX 윈도우 읽기가 순간적으로 빈 배열을 반환할 수 있어
-    /// 짧게 재시도해 실제 창 집합을 확보한다.
-    private static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
-        let app = AXUIElementCreateApplication(pid)
-        for attempt in 0..<5 {
-            let windows = axWindows(app)
-            if !windows.isEmpty { return windows }
-            if attempt < 4 { usleep(30_000) }
-        }
-        return []
-    }
-
-    // MARK: - Logging helpers
-
-    /// 리사이즈 대상 창을 못 찾고 끝났을 때 남길 창 상태 요약.
-    ///
-    /// 통합 로그의 상세 스냅샷은 보존 기간이 짧아 며칠 뒤에는 사라지므로,
-    /// 원인 판별에 최소한으로 필요한 창 개수·focused 창 메타데이터는 CSV에도 남긴다.
-    private static func windowStateDiagnostic(app: AXUIElement) -> String {
-        "windows=\(axWindows(app).count) focused=[\(focusedWindowSummary(app))]"
-    }
-
-    private static func logWindowSnapshotIfNeeded(app: AXUIElement, ctx: ResizeContext) {
-        let now = CFAbsoluteTimeGetCurrent()
-        guard now - ctx.lastSnapshotTime >= 1.0 else { return }
-        logWindowSnapshot(app: app, ctx: ctx, reason: "scan")
-    }
-
-    private static func logWindowSnapshot(
-        app: AXUIElement, ctx: ResizeContext, reason: String, asError: Bool = false
-    ) {
-        ctx.lastSnapshotTime = CFAbsoluteTimeGetCurrent()
-        let windows = axWindows(app)
-        if asError {
-            Log.launcher.error(
-                "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(focusedWindowSummary(app), privacy: .public)"
-            )
-            for (index, window) in windows.enumerated() {
-                Log.launcher.error(
-                    "AX window[\(index, privacy: .public)] for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
-                )
-            }
-            return
-        }
-        Log.launcher.debug(
-            "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(focusedWindowSummary(app), privacy: .public)"
-        )
-        for (index, window) in windows.enumerated() {
-            Log.launcher.debug(
-                "AX window[\(index, privacy: .public)] for \(ctx.debugLabel, privacy: .private): title=\(windowTitle(window), privacy: .private) \(windowSummary(window), privacy: .public)"
-            )
-        }
-    }
-
-    private static func isCurrentObservation(_ ctx: ResizeContext) -> Bool {
-        observationRegistry.isCurrent(key: ctx.observationKey, token: ctx.observationToken)
-    }
-
-    private static func axElement(from value: AnyObject) -> AXUIElement? {
-        guard CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return (value as! AXUIElement)
-    }
-
-    private static func axValue(from value: AnyObject) -> AXValue? {
-        guard CFGetTypeID(value) == AXValueGetTypeID() else { return nil }
-        return (value as! AXValue)
-    }
-
-    private static func focusedWindowSummary(_ app: AXUIElement) -> String {
-        var value: AnyObject?
-        guard
-            AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &value)
-                == .success,
-            let value,
-            let window = axElement(from: value)
-        else {
-            return "none"
-        }
-        return windowSummary(window)
-    }
-
-    private static func windowSummary(_ window: AXUIElement) -> String {
-        let role = stringAttribute(window, kAXRoleAttribute as CFString)
-        let subrole = stringAttribute(window, kAXSubroleAttribute as CFString)
-        let position = pointAttribute(window, kAXPositionAttribute as CFString)
-        let size = sizeAttribute(window, kAXSizeAttribute as CFString)
-        let positionSettable = isSettable(window, kAXPositionAttribute as CFString)
-        let sizeSettable = isSettable(window, kAXSizeAttribute as CFString)
-        return
-            "role=\(role) subrole=\(subrole) position=\(position) size=\(size) canSetPosition=\(positionSettable) canSetSize=\(sizeSettable)"
-    }
+    // MARK: - Eligibility
 
     static func isEligibleWindowMetadata(
         role: String?, subrole: String?, canSetPosition: Bool, canSetSize: Bool,
@@ -808,60 +567,48 @@ enum AppLauncher {
         return isEligibleWindowMetadata(
             role: roleValue as? String,
             subrole: subroleValue as? String,
-            canSetPosition: isAttributeSettable(window, kAXPositionAttribute as CFString),
-            canSetSize: isAttributeSettable(window, kAXSizeAttribute as CFString),
+            canSetPosition: AXIntrospection.isAttributeSettable(
+                window, kAXPositionAttribute as CFString),
+            canSetSize: AXIntrospection.isAttributeSettable(
+                window, kAXSizeAttribute as CFString),
             isMicrosoftOffice: policy.isMicrosoftOffice)
     }
 
-    private static func windowTitle(_ window: AXUIElement) -> String {
-        stringAttribute(window, kAXTitleAttribute as CFString)
+    // MARK: - Logging helpers
+
+    private static func isCurrentObservation(_ ctx: ResizeContext) -> Bool {
+        observationRegistry.isCurrent(key: ctx.observationKey, token: ctx.observationToken)
     }
 
-    private static func stringAttribute(_ element: AXUIElement, _ attribute: CFString) -> String {
-        var value: AnyObject?
-        guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success, let value
-        else {
-            return "nil"
+    private static func logWindowSnapshotIfNeeded(app: AXUIElement, ctx: ResizeContext) {
+        let now = CFAbsoluteTimeGetCurrent()
+        guard now - ctx.lastSnapshotTime >= 1.0 else { return }
+        logWindowSnapshot(app: app, ctx: ctx, reason: "scan")
+    }
+
+    private static func logWindowSnapshot(
+        app: AXUIElement, ctx: ResizeContext, reason: String, asError: Bool = false
+    ) {
+        ctx.lastSnapshotTime = CFAbsoluteTimeGetCurrent()
+        let windows = LauncherUtils.axWindows(app: app)
+        if asError {
+            Log.launcher.error(
+                "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(AXIntrospection.focusedWindowSummary(app), privacy: .public)"
+            )
+            for (index, window) in windows.enumerated() {
+                Log.launcher.error(
+                    "AX window[\(index, privacy: .public)] for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) \(AXIntrospection.windowSummary(window), privacy: .public)"
+                )
+            }
+            return
         }
-        return String(describing: value)
-    }
-
-    private static func pointAttribute(_ element: AXUIElement, _ attribute: CFString) -> String {
-        var value: AnyObject?
-        guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
-            let value,
-            let axValue = axValue(from: value)
-        else {
-            return "nil"
+        Log.launcher.debug(
+            "AX window snapshot for \(ctx.debugLabel, privacy: .private) reason=\(reason, privacy: .public) windows=\(windows.count, privacy: .public) focused=\(AXIntrospection.focusedWindowSummary(app), privacy: .public)"
+        )
+        for (index, window) in windows.enumerated() {
+            Log.launcher.debug(
+                "AX window[\(index, privacy: .public)] for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) \(AXIntrospection.windowSummary(window), privacy: .public)"
+            )
         }
-        var point = CGPoint.zero
-        guard AXValueGetValue(axValue, .cgPoint, &point) else { return "unreadable" }
-        return "(\(Int(point.x)),\(Int(point.y)))"
-    }
-
-    private static func sizeAttribute(_ element: AXUIElement, _ attribute: CFString) -> String {
-        var value: AnyObject?
-        guard AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
-            let value,
-            let axValue = axValue(from: value)
-        else {
-            return "nil"
-        }
-        var size = CGSize.zero
-        guard AXValueGetValue(axValue, .cgSize, &size) else { return "unreadable" }
-        return "\(Int(size.width))x\(Int(size.height))"
-    }
-
-    private static func isSettable(_ element: AXUIElement, _ attribute: CFString) -> String {
-        var settable = DarwinBoolean(false)
-        let error = AXUIElementIsAttributeSettable(element, attribute, &settable)
-        guard error == .success else { return "error:\(error.rawValue)" }
-        return settable.boolValue ? "true" : "false"
-    }
-
-    private static func isAttributeSettable(_ element: AXUIElement, _ attribute: CFString) -> Bool {
-        var settable = DarwinBoolean(false)
-        return AXUIElementIsAttributeSettable(element, attribute, &settable) == .success
-            && settable.boolValue
     }
 }
