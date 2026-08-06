@@ -315,6 +315,28 @@ App 윈도우 감지 방식 (AXObserver):
   - ~/.quickaccess.json → ~/.chap.json (앱 이름 변경)
 
 
+## 글로벌 단축키 안정성 개선 이력 (2026-08-06)
+
+### 변경 배경
+  기존 active CGEvent tap은 세션의 모든 keyDown을 파이프라인 앞에서 받아 Option 조합인지
+  Chap이 직접 판별했다. 이벤트 처리가 지연되면 일반 키 입력 전달까지 영향을 받을 수 있어,
+  사용 중 발생한 간헐적 키 입력 정지의 구조적 위험 요인으로 판단했다.
+  단, 해당 현상의 원인이 Chap이었다는 직접 로그 증거는 확인되지 않았다.
+
+### 변경 전
+  - CGEvent.tapCreate(.cgSessionEventTap, .headInsertEventTap)로 모든 keyDown 수신
+  - Chap 콜백에서 modifier와 keyCode를 검사한 뒤 대상이 아닌 이벤트를 다시 전달
+  - 글로벌 단축키 등록과 Accessibility 권한이 결합
+  - Chap 이벤트 처리 지연이 일반 키 입력 경로에 영향을 줄 수 있음
+
+### 변경 후
+  - RegisterEventHotKey로 메뉴(⌥.), 설정(⌥,), 사이트(설정된 ⌥커스텀키)만 macOS에 등록
+  - 일반 키 입력은 Chap 프로세스를 통과하지 않음
+  - 글로벌 단축키는 Accessibility 권한과 독립; 권한은 URL/App 리사이즈에만 사용
+  - ASCII 키보드 배열 ID가 실제로 바뀔 때만 문자→keyCode를 다시 계산해 전체 재등록
+  - 등록 계획은 GlobalHotKeyManagerTests로 검증하고, 등록 개수·충돌은 통합 로그에 기록
+
+
 ## 리사이즈 성능 개선 이력 (2026-06-22)
 
 ### 변경 전 (AppleScript 방식)
