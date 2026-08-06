@@ -35,6 +35,8 @@ enum AppLauncher {
         let latency: TimeInterval?
         let wasSuperseded: Bool
         let boundsResult: AXBoundsResult?
+        /// 리사이즈 대상 창을 아예 못 찾았을 때의 창 상태 요약. 찾은 경우 nil.
+        let diagnostic: String?
     }
 
     /// 같은 앱을 연속 실행하면 이전 AXObserver가 Office grace 시간 동안 남아 중복 스캔한다.
@@ -188,8 +190,10 @@ enum AppLauncher {
                 let elapsed = CFAbsoluteTimeGetCurrent() - startTime
                 let latency = result.latency ?? elapsed
                 let resultLabel: String
+                let detail: String
                 if let boundsResult = result.boundsResult {
                     resultLabel = boundsResult.level.rawValue
+                    detail = boundsResult.diagnostic
                     switch boundsResult.level {
                     case .fullyApplied:
                         Log.launcher.notice(
@@ -197,18 +201,19 @@ enum AppLauncher {
                         )
                     case .partiallyApplied:
                         Log.launcher.warning(
-                            "AX resize partially applied for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s"
+                            "AX resize partially applied for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                         )
                     case .failed:
                         Log.launcher.error(
-                            "AX resize verification failed for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s"
+                            "AX resize verification failed for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                         )
                         AccessibilityPermission.notifyResizeFailure()
                     }
                 } else {
                     resultLabel = "failed"
+                    detail = result.diagnostic ?? "no eligible window found"
                     Log.launcher.error(
-                        "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s"
+                        "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                     )
                     AccessibilityPermission.notifyResizeFailure()
                 }
@@ -220,7 +225,8 @@ enum AppLauncher {
                     result: resultLabel,
                     windowCount: windowsBefore.count,
                     display: screen.localizedName,
-                    size: "\(bw)x\(bh)")
+                    size: "\(bw)x\(bh)",
+                    detail: detail)
                 onComplete?()
             }
         }
@@ -389,7 +395,8 @@ enum AppLauncher {
         }
 
         guard isCurrentObservation(ctx) else {
-            return ResizeObservationResult(latency: nil, wasSuperseded: true, boundsResult: nil)
+            return ResizeObservationResult(
+                latency: nil, wasSuperseded: true, boundsResult: nil, diagnostic: nil)
         }
 
         var observer: AXObserver?
@@ -471,23 +478,27 @@ enum AppLauncher {
         CFRunLoopRemoveSource(runLoop, source, .defaultMode)
         AXObserverRemoveNotification(observer, app, kAXWindowCreatedNotification as CFString)
         guard isCurrentObservation(ctx) else {
-            return ResizeObservationResult(latency: nil, wasSuperseded: true, boundsResult: nil)
+            return ResizeObservationResult(
+                latency: nil, wasSuperseded: true, boundsResult: nil, diagnostic: nil)
         }
 
         // 새 창이 하나도 없었을 때만 focused window fallback (하나만)
         if !ctx.didResize {
             let boundsResult = focusedWindowFallback(app: app, ctx: ctx)
+            var diagnostic: String?
             if ctx.firstResizeLatency == nil {
                 logWindowSnapshot(app: app, ctx: ctx, reason: "timeout", asError: true)
+                diagnostic = windowStateDiagnostic(app: app)
             }
             return ResizeObservationResult(
                 latency: ctx.firstResizeLatency, wasSuperseded: false,
-                boundsResult: boundsResult ?? ctx.resizedBoundsResult)
+                boundsResult: boundsResult ?? ctx.resizedBoundsResult,
+                diagnostic: diagnostic)
         }
 
         return ResizeObservationResult(
             latency: ctx.firstResizeLatency, wasSuperseded: false,
-            boundsResult: ctx.resizedBoundsResult)
+            boundsResult: ctx.resizedBoundsResult, diagnostic: nil)
     }
 
     /// 새 창이 없을 때 focused window 하나만 리사이즈 (fallback)
@@ -627,8 +638,11 @@ enum AppLauncher {
             key: observationKey,
             token: observationToken
         )
+        let diagnostic: String? =
+            (boundsResult == nil && !wasSuperseded) ? windowStateDiagnostic(app: app) : nil
         return ResizeObservationResult(
-            latency: latency, wasSuperseded: wasSuperseded, boundsResult: boundsResult)
+            latency: latency, wasSuperseded: wasSuperseded, boundsResult: boundsResult,
+            diagnostic: diagnostic)
     }
 
     // MARK: - Baseline capture
@@ -646,6 +660,14 @@ enum AppLauncher {
     }
 
     // MARK: - Logging helpers
+
+    /// 리사이즈 대상 창을 못 찾고 끝났을 때 남길 창 상태 요약.
+    ///
+    /// 통합 로그의 상세 스냅샷은 보존 기간이 짧아 며칠 뒤에는 사라지므로,
+    /// 원인 판별에 최소한으로 필요한 창 개수·focused 창 메타데이터는 CSV에도 남긴다.
+    private static func windowStateDiagnostic(app: AXUIElement) -> String {
+        "windows=\(axWindows(app).count) focused=[\(focusedWindowSummary(app))]"
+    }
 
     private static func logWindowSnapshotIfNeeded(app: AXUIElement, ctx: ResizeContext) {
         let now = CFAbsoluteTimeGetCurrent()

@@ -1,3 +1,4 @@
+import ApplicationServices
 import Foundation
 import Testing
 
@@ -167,6 +168,92 @@ struct AXBoundsResultTests {
             tolerance: 10.0
         )
         #expect(level == .fullyApplied)
+    }
+}
+
+// MARK: - Diagnostic Summary
+
+@Suite("AXBoundsResult Diagnostic Summary")
+struct AXBoundsResultDiagnosticTests {
+    private func summary(
+        actualPosition: CGPoint?,
+        actualSize: CGSize?,
+        positionError: AXError = .success,
+        sizeError: AXError = .success
+    ) -> String {
+        AXBoundsResult.diagnosticSummary(
+            positionError: positionError,
+            sizeError: sizeError,
+            actualPosition: actualPosition,
+            actualSize: actualSize,
+            requestedPosition: CGPoint(x: 100, y: 200),
+            requestedSize: CGSize(width: 800, height: 600),
+            tolerance: 4.0
+        )
+    }
+
+    @Test("marks both axes ok when within tolerance")
+    func bothAxesOK() {
+        let text = summary(
+            actualPosition: CGPoint(x: 102, y: 200),
+            actualSize: CGSize(width: 800, height: 600))
+
+        #expect(text.contains("pos=ok"))
+        #expect(text.contains("size=ok"))
+    }
+
+    @Test("identifies size as the failing axis when width is clamped")
+    func sizeClampedIsReported() {
+        let text = summary(
+            actualPosition: CGPoint(x: 100, y: 200),
+            actualSize: CGSize(width: 950, height: 600))
+
+        #expect(text.contains("pos=ok"))
+        #expect(text.contains("size=off"))
+        #expect(text.contains("sizeReq=800x600"))
+        #expect(text.contains("sizeAct=950x600"))
+    }
+
+    @Test("identifies position as the failing axis")
+    func positionOffIsReported() {
+        let text = summary(
+            actualPosition: CGPoint(x: 40, y: 12),
+            actualSize: CGSize(width: 800, height: 600))
+
+        #expect(text.contains("pos=off"))
+        #expect(text.contains("posReq=(100 200)"))
+        #expect(text.contains("posAct=(40 12)"))
+        #expect(text.contains("size=ok"))
+    }
+
+    @Test("reports unreadable readback separately from a mismatch")
+    func unreadableReadbackIsDistinct() {
+        let text = summary(actualPosition: nil, actualSize: nil)
+
+        #expect(text.contains("pos=unreadable"))
+        #expect(text.contains("size=unreadable"))
+        #expect(!text.contains("pos=off"))
+    }
+
+    @Test("includes AX error codes for each set call")
+    func includesErrorCodes() {
+        let text = summary(
+            actualPosition: nil,
+            actualSize: nil,
+            positionError: .cannotComplete,
+            sizeError: .success)
+
+        #expect(text.contains("posErr=\(AXError.cannotComplete.rawValue)"))
+        #expect(text.contains("sizeErr=\(AXError.success.rawValue)"))
+    }
+
+    @Test("stays free of commas so it fits one CSV field")
+    func containsNoCommas() {
+        let text = summary(
+            actualPosition: CGPoint(x: 40, y: 12),
+            actualSize: CGSize(width: 950, height: 600))
+
+        #expect(!text.contains(","))
     }
 }
 

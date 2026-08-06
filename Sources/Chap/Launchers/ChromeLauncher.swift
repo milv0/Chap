@@ -151,6 +151,7 @@ enum ChromeLauncher {
             )
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
             let resultLabel = result?.level.rawValue ?? "failed"
+            let detail = result?.diagnostic ?? "no new window found"
             if let result {
                 switch result.level {
                 case .fullyApplied:
@@ -159,17 +160,17 @@ enum ChromeLauncher {
                     )
                 case .partiallyApplied:
                     Log.launcher.warning(
-                        "Chrome AX resize partially applied for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                        "Chrome AX resize partially applied for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                     )
                 case .failed:
                     Log.launcher.error(
-                        "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                        "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                     )
                     AccessibilityPermission.notifyResizeFailure()
                 }
             } else {
                 Log.launcher.error(
-                    "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                    "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                 )
                 AccessibilityPermission.notifyResizeFailure()
             }
@@ -181,7 +182,8 @@ enum ChromeLauncher {
                 result: resultLabel,
                 windowCount: windowsBefore.count,
                 display: screenName,
-                size: "\(siteWidth)x\(siteHeight)")
+                size: "\(siteWidth)x\(siteHeight)",
+                detail: detail)
             onComplete?()
         }
     }

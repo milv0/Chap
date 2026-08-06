@@ -73,6 +73,8 @@ Runtime:
 ├── ~/.chap.json                   ← 사용자 설정 파일
 ├── ~/.chap.json.bak               ← 자동 백업
 └── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV, DEBUG 빌드만)
+                                      열: timestamp,site,type,app_state,attempt,delay,
+                                      total_time,result,window_count,display,size,detail
 
 
 ## 데이터 모델
@@ -106,6 +108,10 @@ Site 모델 필드:
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
 - AX bounds 결과: position/size set error와 실제 readback을 반환하고 fully/partial/failed로 기록
+  - partial/failed는 판정 근거(요청 대비 실제 position/size, 어느 축이 tolerance를 벗어났는지,
+    AX 에러 코드)를 통합 로그와 CSV의 detail 열에 함께 남김
+  - 리사이즈 대상 창을 못 찾고 끝나면 창 개수·focused 창 메타데이터를 detail 열에 기록
+    (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시

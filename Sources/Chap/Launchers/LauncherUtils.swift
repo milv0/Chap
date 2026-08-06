@@ -90,6 +90,64 @@ struct AXBoundsResult {
         if posOK || sizeOK { return .partiallyApplied }
         return .failed
     }
+
+    /// 순수 진단 요약: 어느 축이 tolerance를 벗어났는지와 요청·실제 값을 한 줄로 만든다.
+    ///
+    /// level만 로그에 남기면 partial/failed의 원인(앱 최소 크기 클램프인지, 위치가 밀린
+    /// 것인지, 읽기 실패인지)을 사후에 구분할 수 없어 판정 근거를 함께 남긴다.
+    /// CSV 한 칸으로도 쓰이므로 콤마를 포함하지 않는다.
+    static func diagnosticSummary(
+        positionError: AXError,
+        sizeError: AXError,
+        actualPosition: CGPoint?,
+        actualSize: CGSize?,
+        requestedPosition: CGPoint,
+        requestedSize: CGSize,
+        tolerance: CGFloat = defaultTolerance
+    ) -> String {
+        var tokens: [String] = []
+
+        tokens.append("posReq=(\(pixels(requestedPosition.x)) \(pixels(requestedPosition.y)))")
+        if let actual = actualPosition {
+            let dx = abs(actual.x - requestedPosition.x)
+            let dy = abs(actual.y - requestedPosition.y)
+            tokens.append("posAct=(\(pixels(actual.x)) \(pixels(actual.y)))")
+            tokens.append("pos=\(dx <= tolerance && dy <= tolerance ? "ok" : "off")")
+        } else {
+            tokens.append("posAct=unreadable")
+            tokens.append("pos=unreadable")
+        }
+
+        tokens.append("sizeReq=\(pixels(requestedSize.width))x\(pixels(requestedSize.height))")
+        if let actual = actualSize {
+            let dw = abs(actual.width - requestedSize.width)
+            let dh = abs(actual.height - requestedSize.height)
+            tokens.append("sizeAct=\(pixels(actual.width))x\(pixels(actual.height))")
+            tokens.append("size=\(dw <= tolerance && dh <= tolerance ? "ok" : "off")")
+        } else {
+            tokens.append("sizeAct=unreadable")
+            tokens.append("size=unreadable")
+        }
+
+        tokens.append("posErr=\(positionError.rawValue)")
+        tokens.append("sizeErr=\(sizeError.rawValue)")
+        return tokens.joined(separator: " ")
+    }
+
+    private static func pixels(_ value: CGFloat) -> String {
+        String(Int(value.rounded()))
+    }
+
+    /// 이 결과의 진단 요약 (통합 로그·CSV 공용).
+    var diagnostic: String {
+        Self.diagnosticSummary(
+            positionError: positionOutcome.error,
+            sizeError: sizeOutcome.error,
+            actualPosition: actualPosition,
+            actualSize: actualSize,
+            requestedPosition: requestedPosition,
+            requestedSize: requestedSize)
+    }
 }
 
 /// 런처들이 공통으로 사용하는 유틸리티
