@@ -39,6 +39,7 @@
 | I10 | 같은 앱 연속 실행 시 **최신 관찰만 유효** (`ResizeObservationRegistry` token) | 이전 AXObserver가 Office grace 20초 동안 남아 중복 스캔 |
 | I11 | `GuideWindow.dismiss(token)`은 토큰이 현재일 때만 자기 창을 닫는다 | 연속 실행 시 유령 가이드 창이 남는다 |
 | I12 | 관리 창(Settings/QA/Welcome) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
+| I13 | 글로벌 단축키는 `RegisterEventHotKey`로 **정확한 Option 조합만** 등록. 전체 keyDown event tap 금지 | Chap 메인 스레드 정체가 일반 키 입력 전달을 막는다 |
 
 ---
 
@@ -56,7 +57,7 @@
 5. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
 6. NSApp.setActivationPolicy(.accessory)
 7. statusItem 생성 (28pt, StatusBarIcon template, 없으면 bolt.fill 심볼)
-8. buildMenu()
+8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 전체 재등록
 9. initializeAccessibilityHandling()   권한 확인 + 옵저버 등록 (+ 최초 시스템 프롬프트)
 10. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
 ```
@@ -82,40 +83,47 @@
 | Settings 열기 | `settings` | X | X |
 | 사이트 실행 | `launch` | url/app 타입일 때만 O | X |
 | AX 리사이즈 실패 알림 | `resize failure` | O | X |
-| CGEvent tap 비활성화 | `event tap disabled` | O | X |
 | 권한 감지 폴링 (2s 간격, 최대 30s) | 직전 reason | X | X |
 
 전이 결과:
 
-- **granted**: 폴링 중단, alert 플래그 리셋, `eventTap == nil`이면 `registerGlobalShortcuts()`
-- **denied**: (프롬프트 요청 시) 프롬프트 + 30초 폴링 시작, 기존 tap 무효화, 상태바 아이콘을 경고 심볼로 교체
+- **granted**: 폴링 중단, alert 플래그 리셋
+- **denied**: (프롬프트 요청 시) 프롬프트 + 30초 폴링 시작, 상태바 아이콘을 경고 심볼로 교체
 - **granted → denied (revoke)**: error 로그 + alert 1회 (`didShowAccessibilityAlert`로 중복 차단)
 
 > 리사이즈 실패는 권한 알림을 **오발**하지 않는다. `refreshAccessibilityState`가 `AXIsProcessTrusted()`를 다시 확인하고 trusted면 즉시 return 하기 때문.
+> 글로벌 단축키는 접근성 상태 머신과 독립이다. 권한이 없어도 단축키와 Finder/Shell 실행은 동작하고,
+> URL/App은 실행되지만 AX 리사이즈만 생략한다.
 
 ---
 
 ## 4. 글로벌 단축키 흐름
 
-`CGEvent.tapCreate(.cgSessionEventTap, .headInsertEventTap, keyDown)` — 콜백은 **tap 스레드**에서 실행되므로
-모든 실제 동작은 `DispatchQueue.main.async`로 넘긴다.
-
-콜백 판정 순서 (위에서 먼저 걸리면 끝):
+`AppDelegate › buildMenu()`가 config 변경 때마다
+`GlobalHotKeyManager › configure(sites:actionHandler:)`를 호출한다.
 
 ```
-1. type == tapDisabledByTimeout | tapDisabledByUserInput
-   → tapEnable(true) 재활성화 + 권한 재확인(alert) → 이벤트 통과
-2. flags(⌥⇧⌘⌃ 마스킹) != 정확히 .maskAlternate  → 이벤트 통과
-3. keyCode 47 (".")  → 메뉴 popUp, 이벤트 소비(nil)
-4. keyCodeToChar(keyCode) 가 어떤 site.shortcut 과 대소문자 무시 일치
-                        → launchSite, 이벤트 소비(nil)
-5. keyCode 43 (",")  → openSettings, 이벤트 소비(nil)
-6. 그 외             → 이벤트 통과
+globalHotKeyRegistrations()
+├─ "." → openMenu
+├─ "," → openSettings
+└─ sanitized site.shortcut → launchSite(original index)
+
+configure()
+├─ 이전 EventHotKeyRef 전부 UnregisterEventHotKey
+├─ 현재 ASCII-capable keyboard layout에서 문자→keyCode 계산
+├─ Option + keyCode만 RegisterEventHotKey
+└─ kEventHotKeyPressed 수신 → action ID 조회 → main async
 ```
 
-- 3의 메뉴 열기는 `OSAllocatedUnfairLock`로 **원자적 check-and-set**. 이미 열려 있으면 이벤트만 소비하고 아무것도 안 한다 (연타 시 메뉴 중복 popUp 방지).
-- 4가 5보다 먼저지만, `,` 를 사이트 단축키로 쓸 수는 없다 (I7 + `validateConfig`가 차단).
-- `keyCodeToChar`는 `TISCopyCurrentASCIICapableKeyboardLayoutInputSource`를 쓴다. 한글/일본어 IME 활성 상태에서도 ASCII 레이아웃을 얻기 위함이며, AZERTY/Dvorak 물리 배열도 올바르게 반영된다.
+- macOS는 등록된 Option 조합만 Chap에 전달한다. 일반 keyDown은 Chap 프로세스를 통과하지 않는다.
+- `.`/`,`를 사이트 단축키로 쓸 수는 없다 (I7 + `validateConfig`가 차단).
+- 문자→keyCode는 `TISCopyCurrentASCIICapableKeyboardLayoutInputSource` + `UCKeyTranslate`를 쓴다.
+  한글/일본어 IME 활성 상태에서도 ASCII 레이아웃을 얻고 AZERTY/Dvorak 물리 배열도 반영한다.
+- `kTISNotifySelectedKeyboardInputSourceChanged`를 받아도 ASCII keyboard layout ID가 실제로
+  달라졌을 때만 현재 layout으로 전체 단축키를 재등록한다.
+- 다른 앱이 같은 조합을 먼저 등록했으면 해당 `RegisterEventHotKey`만 실패하고 status를 error 로그에 남긴다.
+- 테스트 프로세스에서는 시스템 전역 단축키를 등록하지 않는다.
+- 메뉴 열림 중 `isStatusMenuOpen`으로 중복 popUp을 막는다.
 - 메뉴 항목에도 같은 키가 `keyEquivalent + .option`으로 붙어 있어, 앱이 활성 상태일 때는 메뉴 경로로도 실행된다.
 
 ---
@@ -394,7 +402,7 @@ VM 갱신 → `markSaved()` → fixes/warnings 요약 alert로 이어진다.
 
 | 작업 | 실행 컨텍스트 | 비고 |
 | --- | --- | --- |
-| CGEvent tap 콜백 | tap 스레드 | 모든 동작은 main으로 hop |
+| Carbon hotkey 이벤트 | application event target | 등록된 Option 조합만 수신, 실제 동작은 main async |
 | `launchSite`, 메뉴, alert, 창 | main | |
 | Chrome 전체 파이프라인 | serial queue `ChromeRequestCoordinator` | Process 실행 포함 (I4) |
 | App 관찰 루프 | `global(qos: .userInitiated)` | 최대 30초 점유. AXObserver run loop source를 이 스레드 런루프에 붙인다 |
@@ -516,7 +524,8 @@ Office 정책의 `postResizeGrace: 20.0`이 정확히 이 상황을 위한 것(�
 | Chrome 창 감지·폴링 | `Chap/Launchers/ChromeLauncher.swift` | I4 유지 (Process를 큐 밖으로 빼지 말 것) |
 | bounds 적용·판정·진단 문자열 | `Chap/Launchers/LauncherUtils.swift` | 순수 함수로 유지 → 테스트 추가 |
 | CSV 열 | `Chap/Launchers/ResizeLogger.swift` | 열은 **끝에만** 추가. 기존 위치 유지 + `ARCHITECTURE.txt`·§11.2 갱신 |
-| 단축키·메뉴·권한·창 관리 | `Chap/AppDelegate.swift` | §3·§4 갱신 |
+| 단축키 등록·키보드 배열 변경 | `Chap/GlobalHotKeyManager.swift` | I13 + §4 유지, `GlobalHotKeyManagerTests` |
+| 메뉴·권한·창 관리 | `Chap/AppDelegate.swift` | §3·§4 갱신 |
 | 크기/좌표 계산, 디스플레이 매칭 | `ChapCore/Validation.swift` | 순수 코어로 분리 → `ValidationTests`/`GeometryTests` |
 | config 스키마 | `ChapCore/Models.swift` | decode 폴백 유지 + `ModelTests` round-trip + `ARCHITECTURE.txt` |
 | 저장/백업/마이그레이션 | `ChapCore/ConfigStore.swift` | `ConfigStoreTests` |

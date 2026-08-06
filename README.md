@@ -15,8 +15,8 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
 - **Display Minimap** — Auto previews the cursor screen; click to select a display
-- **Global Hotkeys** — `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
-- **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
+- **Global Hotkeys** — Only registered `⌥` combinations reach Chap; normal typing bypasses it
+- **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
@@ -27,7 +27,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 - macOS 14.0+ (Sonoma)
 - Google Chrome (for URL launch type)
-- Accessibility permission (for global hotkeys and URL/app window resizing)
+- Accessibility permission (for URL/app window resizing)
 - Automation permission when using Finder folder launch
 
 ## Usage
@@ -55,8 +55,9 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | `↑` `↓` | Navigate sidebar |
 | `Enter` | Save + exit edit mode |
 
-**Setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
-The menubar icon shows a warning badge until permission is granted.
+**Window resizing setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
+Global hotkeys work without this permission; the menubar warning badge indicates that URL/app
+window resizing is unavailable.
 
 ### Config File
 

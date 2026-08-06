@@ -10,8 +10,9 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 
 Sources/
 ├── Chap/                          ← 앱 타겟
-│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 창 orchestration
+│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
+│   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
@@ -46,7 +47,8 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── GeometryTests.swift
     ├── ConfigValidationTests.swift
     ├── ImportNormalizationTests.swift
-    └── AXBoundsResultTests.swift
+    ├── AXBoundsResultTests.swift
+    └── GlobalHotKeyManagerTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
 └── StatusBarIcon.png
@@ -106,7 +108,8 @@ Site 모델 필드:
 
 ## 핵심 기능
 
-- 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
+- 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — RegisterEventHotKey로 정확한 조합만 시스템 등록
+  (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
@@ -269,10 +272,13 @@ App 윈도우 감지 방식 (AXObserver):
   - NSWorkspace.shared.openApplication(at:configuration:)   앱 실행 (pid 콜백)
   - NSWorkspace.shared.runningApplications                  실행 중 앱 목록 조회
 
-### CoreGraphics (CGEvent)
+### Carbon (HIToolbox)
   용도: 글로벌 키보드 단축키
-  - CGEvent.tapCreate()               이벤트 탭 생성 (키 입력 감시)
-  - CFMachPortCreateRunLoopSource()   런루프에 이벤트 소스 등록
+  - RegisterEventHotKey / UnregisterEventHotKey  정확한 Option 조합 등록·해제
+  - InstallEventHandler                         등록된 단축키 이벤트 수신
+  - TISCopyCurrentASCIICapableKeyboardLayoutInputSource / UCKeyTranslate
+                                                 현재 키보드 배열의 문자→keyCode 매핑
+  - kTISNotifySelectedKeyboardInputSourceChanged ASCII 키보드 배열 ID 변경 시 전체 재등록
 
 ### AppleScript (osascript via Process)
   용도: Finder 윈도우 제어 전용
@@ -349,13 +355,12 @@ App 윈도우 감지 방식 (AXObserver):
 
 ## 권한 요구사항
 
-1. 접근성 (Accessibility): 글로벌 단축키 + 윈도우 리사이즈
+1. 접근성 (Accessibility): URL/App 윈도우 리사이즈
    - 첫 실행/권한 없음 상태에서 macOS Accessibility 프롬프트 표시
    - 앱 시작/활성화/메뉴 열기/Settings 열기/사이트 실행 시 AXIsProcessTrusted 재확인
    - 권한 프롬프트 또는 접근성 설정 열기 직후에만 2초 간격으로 최대 30초 감지
-   - 허용 후 자동 등록 (재시작 불필요)
-   - 권한 제거 감지: 다음 권한 체크, URL/App 리사이즈 실패, 또는 CGEvent tap disabled
-     → 상태바 경고 + 1회 알림
+   - 권한 제거 감지: 다음 권한 체크 또는 URL/App 리사이즈 실패 → 상태바 경고 + 1회 알림
+   - 글로벌 단축키는 RegisterEventHotKey 기반이므로 접근성 권한 없이 동작
 
 2. 자동화 (Automation): Finder AppleScript 제어
    - osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)

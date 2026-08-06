@@ -1,4 +1,3 @@
-import Carbon.HIToolbox
 import Cocoa
 import ServiceManagement
 import SwiftUI
@@ -24,8 +23,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var qaWindow: NSWindow?
     var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
-    // tap 콜백 스레드와 메인 스레드가 함께 접근하므로 락으로 보호
-    private let menuOpenLock = OSAllocatedUnfairLock(initialState: false)
+    private let globalHotKeyManager = GlobalHotKeyManager()
+    private var isStatusMenuOpen = false
     private var accessibilityState: AccessibilityState = .unknown
     private var accessibilityGrantPollTimer: Timer?
     private var accessibilityGrantPollEndDate: Date?
@@ -70,103 +69,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
     }
 
-    // MARK: - Global Shortcuts
-
-    private var eventTap: CFMachPort?
-    private var eventTapRunLoopSource: CFRunLoopSource?
-
-    private func registerGlobalShortcuts() {
-        guard eventTap == nil else { return }
-
-        let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
-        guard
-            let tap = CGEvent.tapCreate(
-                tap: .cgSessionEventTap,
-                place: .headInsertEventTap,
-                options: .defaultTap,
-                eventsOfInterest: mask,
-                callback: { proxy, type, event, refcon -> Unmanaged<CGEvent>? in
-                    guard let refcon = refcon else { return Unmanaged.passRetained(event) }
-                    let appDelegate = Unmanaged<AppDelegate>.fromOpaque(refcon)
-                        .takeUnretainedValue()
-
-                    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-                        if let tap = appDelegate.eventTap {
-                            CGEvent.tapEnable(tap: tap, enable: true)
-                        }
-                        DispatchQueue.main.async {
-                            appDelegate.refreshAccessibilityState(
-                                reason: "event tap disabled", showAlert: true)
-                        }
-                        return Unmanaged.passRetained(event)
-                    }
-
-                    let flags = event.flags.intersection([
-                        .maskAlternate, .maskShift, .maskCommand, .maskControl,
-                    ])
-                    guard flags == .maskAlternate else { return Unmanaged.passRetained(event) }
-
-                    let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
-
-                    // ⌥. — open menu (block while menu is open)
-                    if keyCode == 47 {
-                        // 원자적 체크-앤-셋: 이미 열려 있으면 차단, 아니면 열림 표시
-                        let alreadyOpen = appDelegate.menuOpenLock.withLock { isOpen -> Bool in
-                            if isOpen { return true }
-                            isOpen = true
-                            return false
-                        }
-                        guard !alreadyOpen else { return nil }
-                        DispatchQueue.main.async {
-                            guard let button = appDelegate.statusItem.button else {
-                                appDelegate.menuOpenLock.withLock { $0 = false }
-                                return
-                            }
-                            appDelegate.statusItem.menu?.popUp(
-                                positioning: nil, at: .zero, in: button)
-                            appDelegate.menuOpenLock.withLock { $0 = false }
-                        }
-                        return nil
-                    }
-
-                    // ⌥ + 커스텀 키 — launch site by shortcut
-                    if let char = keyCodeToChar(keyCode) {
-                        let upper = char.uppercased()
-                        if let site = appDelegate.config.sites.first(where: {
-                            $0.shortcut?.uppercased() == upper
-                        }) {
-                            DispatchQueue.main.async {
-                                appDelegate.launchSite(site)
-                            }
-                            return nil
-                        }
-                    }
-
-                    // ⌥, — open settings
-                    if keyCode == 43 {
-                        DispatchQueue.main.async {
-                            appDelegate.openSettings()
-                        }
-                        return nil
-                    }
-
-                    return Unmanaged.passRetained(event)
-                },
-                userInfo: Unmanaged.passUnretained(self).toOpaque()
-            )
-        else {
-            Log.app.error("Failed to create CGEvent tap — check Accessibility permission")
-            updateStatusIcon(accessible: false)
-            return
-        }
-
-        eventTap = tap
-        updateStatusIcon(accessible: true)
-        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        eventTapRunLoopSource = runLoopSource
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
-        Log.app.info("CGEvent tap registered successfully")
+    func applicationWillTerminate(_ notification: Notification) {
+        globalHotKeyManager.stop()
     }
 
     private func initializeAccessibilityHandling() {
@@ -242,22 +146,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         if isTrusted {
             stopTemporaryAccessibilityGrantPolling()
             didShowAccessibilityAlert = false
-            if eventTap == nil {
-                Log.app.info(
-                    "Accessibility granted from \(reason, privacy: .public) — registering shortcuts"
-                )
-                registerGlobalShortcuts()
-            }
             return
         }
 
         if requestSystemPrompt {
             requestAccessibilitySystemPromptIfNeeded()
             startTemporaryAccessibilityGrantPolling(reason: "permission prompt")
-        }
-
-        if eventTap != nil {
-            invalidateGlobalShortcuts()
         }
 
         let wasRevoked = previousState == .granted
@@ -275,16 +169,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         guard !didRequestAccessibilitySystemPrompt else { return }
         didRequestAccessibilitySystemPrompt = true
         AccessibilityPermission.requestSystemPrompt()
-    }
-
-    private func invalidateGlobalShortcuts() {
-        guard let tap = eventTap else { return }
-        if let source = eventTapRunLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
-            eventTapRunLoopSource = nil
-        }
-        CFMachPortInvalidate(tap)
-        eventTap = nil
     }
 
     // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
@@ -499,6 +383,33 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         menu.addItem(quit)
         menu.delegate = self
         statusItem.menu = menu
+        configureGlobalHotKeys()
+    }
+
+    private func configureGlobalHotKeys() {
+        guard !isRunningTests else { return }
+        globalHotKeyManager.configure(sites: config.sites) { [weak self] action in
+            self?.handleGlobalHotKeyAction(action)
+        }
+    }
+
+    private func handleGlobalHotKeyAction(_ action: GlobalHotKeyAction) {
+        switch action {
+        case .openMenu:
+            openStatusMenu()
+        case .openSettings:
+            openSettings()
+        case .launchSite(let index):
+            guard config.sites.indices.contains(index) else { return }
+            launchSite(config.sites[index])
+        }
+    }
+
+    private func openStatusMenu() {
+        guard !isStatusMenuOpen, let button = statusItem.button else { return }
+        isStatusMenuOpen = true
+        statusItem.menu?.popUp(positioning: nil, at: .zero, in: button)
+        isStatusMenuOpen = false
     }
 
     @objc func openQA() {
@@ -798,34 +709,5 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                 "Login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
             )
         }
-    }
-}
-
-// MARK: - Key Code → Character mapping
-
-/// 현재 키보드 레이아웃 기준으로 keyCode를 문자로 변환.
-/// TISCopyCurrentASCIICapableKeyboardLayoutInputSource를 사용해, 한글/일본어/중국어 등
-/// CJK 입력기가 활성화된 상태에서도(그 입력 소스엔 uchr 데이터가 없음) 항상 ASCII 호환
-/// 레이아웃을 얻는다. AZERTY/Dvorak 등 비-US 물리 배열도 올바르게 반영됨.
-private func keyCodeToChar(_ keyCode: UInt16) -> String? {
-    guard let source = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
-        let layoutDataPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData)
-    else { return nil }
-    let layoutData = Unmanaged<CFData>.fromOpaque(layoutDataPtr).takeUnretainedValue() as Data
-    return layoutData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
-        guard
-            let keyboardLayout = buffer.baseAddress?.assumingMemoryBound(
-                to: UCKeyboardLayout.self)
-        else { return nil }
-        var deadKeyState: UInt32 = 0
-        var chars = [UniChar](repeating: 0, count: 4)
-        var length = 0
-        // modifierKeyState=0: ⌥ 조합이 아닌 기본 문자를 얻기 위함 (⌥T → "t")
-        let error = UCKeyTranslate(
-            keyboardLayout, keyCode, UInt16(kUCKeyActionDisplay), 0,
-            UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
-            &deadKeyState, chars.count, &length, &chars)
-        guard error == noErr, length > 0 else { return nil }
-        return String(utf16CodeUnits: chars, count: length)
     }
 }

@@ -347,8 +347,8 @@ struct SettingsView: View {
                         guideRow(
                             icon: "checkmark.shield",
                             text: isGuideEnglish
-                                ? "Allow Accessibility for shortcuts and resizing"
-                                : "단축키와 리사이즈를 위해 접근성 권한 허용")
+                                ? "Allow Accessibility for URL/app resizing"
+                                : "URL/App 리사이즈를 위해 접근성 권한 허용")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
