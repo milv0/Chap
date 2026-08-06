@@ -1,17 +1,25 @@
 import Cocoa
 import SwiftUI
 import UniformTypeIdentifiers
+import os
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
+    private let configStore = ConfigStore()
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
+    @State private var isGuideEnglish = false
     @State private var showPasteJSON = false
     @State private var pasteJSONText = ""
     @State private var dropTargeted = false
     @State private var isEditing = false
     @State private var isAddingNew = false
+    /// addSite로 갓 추가된, 아직 이름을 정하지 않은 사이트의 id.
+    /// 선택이 벗어날 때 이 사이트가 여전히 placeholder면 폐기한다.
+    @State private var pendingNewSiteID: UUID?
+    @State private var searchText = ""
+    @FocusState private var searchFocused: Bool
 
     var body: some View {
         HStack(spacing: 0) {
@@ -19,11 +27,37 @@ struct SettingsView: View {
             Divider()
             mainPanel
         }
-        .frame(minWidth: 700, minHeight: 580)
+        .frame(minWidth: 770, minHeight: 600)
         .background(DS.surfaceBg)
-        .onChange(of: selectedIndex) { _, _ in
+        .onChange(of: selectedIndex) { oldValue, newValue in
+            let newlySelectedID = newValue.flatMap { idx in
+                idx < vm.sites.count ? vm.sites[idx].id : nil
+            }
+            // addSite가 방금 만든 사이트로의 전환이면 편집 상태·추적 id를 유지한다
+            // (여기서 초기화하면 새 사이트가 편집 모드로 열리지 않고 폐기 추적도 끊긴다).
+            if let pendingID = pendingNewSiteID, pendingID == newlySelectedID {
+                searchFocused = false
+                return
+            }
             isAddingNew = false
             isEditing = false
+            searchFocused = false
+            // 이름을 정하지 않은 채(기본 "New Launchable") 벗어난 새 사이트는 폐기 —
+            // 미완성 placeholder가 설정 파일/메뉴에 새어 들어가는 것을 방지.
+            // 인덱스가 아닌 id로 추적해 재정렬·삭제로 인덱스가 밀려도 정확히 그 사이트만 제거.
+            if oldValue != newValue, let pendingID = pendingNewSiteID,
+                let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
+                vm.sites[pendingIdx].name == Defaults.newSiteName
+            {
+                pendingNewSiteID = nil
+                vm.sites.remove(at: pendingIdx)
+                // 클릭한 사이트가 제거로 인덱스가 밀렸을 수 있으므로 id로 다시 찾음
+                selectedIndex = newlySelectedID.flatMap { id in
+                    vm.sites.firstIndex(where: { $0.id == id })
+                }
+                return
+            }
+            pendingNewSiteID = nil
             // 선택 변경 시 자동 저장
             save()
         }
@@ -37,15 +71,10 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showGuide) { guideSheet }
-        .alert("Shortcut Conflict", isPresented: $duplicateShortcutAlert) {
+        .alert("Validation Error", isPresented: $emptyFieldAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("⌥\(duplicateShortcutChar) is already assigned to another site.")
-        }
-        .alert("Duplicate Site", isPresented: $duplicateSiteAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(duplicateSiteMessage)
+            Text(emptyFieldMessage)
         }
         .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
@@ -71,23 +100,51 @@ struct SettingsView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 11))
+                    .foregroundColor(DS.textTertiary)
+                TextField("Search", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(DS.captionFont)
+                    .focused($searchFocused)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(DS.surfaceBg)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 8)
+            .padding(.top, 8)
+            .onTapGesture { searchFocused = true }
+
             ScrollView {
-                LazyVStack(spacing: 4) {
+                VStack(spacing: 4) {
                     ForEach(LaunchType.allCases, id: \.self) { type in
-                        let indices = vm.sites.indices.filter { vm.sites[$0].launchType == type }
-                        if !indices.isEmpty {
+                        let indices = vm.sites.indices.filter {
+                            vm.sites[$0].launchType == type
+                                && (searchText.isEmpty
+                                    || vm.sites[$0].name.localizedCaseInsensitiveContains(
+                                        searchText))
+                        }
+                        // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
+                        // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
+                        if !indices.isEmpty || searchText.isEmpty {
                             Text(typeSectionTitle(type))
                                 .font(DS.captionFont)
                                 .foregroundColor(DS.textSecondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 8)
                                 .padding(.top, 8)
+                            if indices.isEmpty {
+                                SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
+                                    addSite(type: type)
+                                }
+                            }
                             ForEach(indices, id: \.self) { i in
                                 SidebarItem(
                                     icon: sidebarIcon(for: vm.sites[i]),
                                     name: vm.sites[i].name,
-                                    subtitle: sidebarSubtitle(for: vm.sites[i]),
-                                    badge: vm.sites[i].shortcut.map { "⌥\($0)" },
+                                    badge: vm.sites[i].shortcut.map { "⌥ \($0)" },
                                     isSelected: selectedIndex == i
                                 )
                                 .contentShape(Rectangle())
@@ -117,7 +174,7 @@ struct SettingsView: View {
 
             HStack(spacing: 4) {
                 ToolbarIconButton(
-                    icon: "plus", color: DS.textSecondary, action: addSite)
+                    icon: "plus", color: DS.textSecondary, action: { addSite() })
                 ToolbarIconButton(
                     icon: "minus", color: DS.danger,
                     action: { showDeleteAlert = true },
@@ -128,11 +185,11 @@ struct SettingsView: View {
                 ToolbarIconButton(
                     icon: "chevron.up", color: DS.textSecondary,
                     action: moveSiteUp,
-                    disabled: selectedIndex == nil || selectedIndex == 0)
+                    disabled: !canMoveUp)
                 ToolbarIconButton(
                     icon: "chevron.down", color: DS.textSecondary,
                     action: moveSiteDown,
-                    disabled: selectedIndex == nil || selectedIndex == vm.sites.count - 1)
+                    disabled: !canMoveDown)
             }
             .padding(.horizontal, 8)
             .frame(height: 40)
@@ -145,11 +202,15 @@ struct SettingsView: View {
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let idx = selectedIndex, idx < vm.sites.count {
-                SiteConfigView(site: $vm.sites[idx], isEditing: $isEditing, onSave: { save() })
-                    .onTapGesture { isEditing = true }
-                    .onChange(of: vm.sites) { _, _ in
-                        if isEditing { save() }
-                    }
+                SiteConfigView(
+                    site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
+                    onSave: { save() }
+                )
+                .id(vm.sites[idx].id)
+                .onTapGesture { isEditing = true }
+                .onChange(of: vm.sites) { _, _ in
+                    if isEditing { save() }
+                }
             } else {
                 Spacer()
                 VStack(spacing: 8) {
@@ -179,14 +240,14 @@ struct SettingsView: View {
                 .controlSize(.small)
                 .font(DS.captionFont)
                 .help("Show window position guide while launching")
-                .onChange(of: vm.showGuideWindow) { _, _ in save() }
+                .onChange(of: vm.showGuideWindow) { _, _ in saveGlobals() }
 
             Toggle("Login", isOn: $vm.launchAtLogin)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .font(DS.captionFont)
                 .help("Open automatically when you log in")
-                .onChange(of: vm.launchAtLogin) { _, _ in save() }
+                .onChange(of: vm.launchAtLogin) { _, _ in saveGlobals() }
 
             Spacer()
 
@@ -227,7 +288,7 @@ struct SettingsView: View {
             }
 
             Button("") {
-                save()
+                save(showAlerts: true)
                 isEditing = false
             }
             .keyboardShortcut(.return, modifiers: [])
@@ -235,7 +296,7 @@ struct SettingsView: View {
             .opacity(0)
 
             Button("") {
-                save()
+                save(showAlerts: true)
             }
             .keyboardShortcut("s", modifiers: .command)
             .frame(width: 0, height: 0)
@@ -249,35 +310,70 @@ struct SettingsView: View {
 
     private var guideSheet: some View {
         VStack(spacing: DS.spacing) {
-            Spacer()
+            HStack {
+                Text(isGuideEnglish ? "User Guide" : "사용자 가이드")
+                    .font(DS.titleFont)
+                    .foregroundColor(DS.textPrimary)
 
-            Text("User Guide")
-                .font(DS.titleFont)
-                .foregroundColor(DS.textPrimary)
+                Spacer()
+
+                Picker("", selection: $isGuideEnglish) {
+                    Text("한국어").tag(false)
+                    Text("English").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 150)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+
+            Spacer()
 
             VStack(spacing: 10) {
                 CardSection {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("App Usage  ⌥")
+                        Text(isGuideEnglish ? "Launch" : "실행")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "cursorarrow.click.2", text: "Click menubar icon to select")
-                        guideRow(icon: "keyboard", text: "⌥Q menu, ⌥(custom key) launch, ⌥, settings")
                         guideRow(
-                            icon: "checkmark.shield", text: "Allow Accessibility for shortcuts")
+                            icon: "cursorarrow.click.2",
+                            text: isGuideEnglish
+                                ? "Use the menubar icon to launch items"
+                                : "메뉴바 아이콘에서 항목을 실행")
+                        guideRow(
+                            icon: "keyboard",
+                            text: isGuideEnglish
+                                ? "⌥. menu, ⌥ custom key launch, ⌥, settings"
+                                : "⌥. 메뉴, ⌥ 커스텀키 실행, ⌥, 설정")
+                        guideRow(
+                            icon: "checkmark.shield",
+                            text: isGuideEnglish
+                                ? "Allow Accessibility for shortcuts and resizing"
+                                : "단축키와 리사이즈를 위해 접근성 권한 허용")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 CardSection {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Settings  ⌘")
+                        Text(isGuideEnglish ? "Settings" : "설정")
                             .font(DS.headlineFont)
                             .foregroundColor(DS.textPrimary)
-                        guideRow(icon: "plus.circle", text: "Add sites (Name + URL + Shortcut)")
-                        guideRow(icon: "display", text: "Choose display + size — always centered")
-                        guideRow(icon: "cursorarrow.click", text: "Click to edit, Enter or ⌘S to save")
-                        guideRow(icon: "square.and.arrow.down", text: "Drag .json to import")
+                        guideRow(
+                            icon: "plus.circle",
+                            text: isGuideEnglish
+                                ? "Add URL, App, Finder, or Shell items"
+                                : "URL, App, Finder, Shell 항목 추가")
+                        guideRow(
+                            icon: "display",
+                            text: isGuideEnglish
+                                ? "Choose a display and size preset per item"
+                                : "항목별 디스플레이와 크기 프리셋 선택")
+                        guideRow(
+                            icon: "square.and.arrow.down",
+                            text: isGuideEnglish
+                                ? "Import/export JSON from the folder menu"
+                                : "폴더 메뉴에서 JSON 가져오기/내보내기")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -286,11 +382,31 @@ struct SettingsView: View {
 
             Spacer()
 
-            PrimaryButton(title: "Close") { showGuide = false }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 24)
+            VStack(spacing: 10) {
+                Button(action: openQAFromGuide) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "questionmark.circle")
+                        Text(isGuideEnglish ? "Open Full Q&A" : "전체 Q&A 열기")
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(DS.accent)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(DS.cardBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(DS.border, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                PrimaryButton(title: isGuideEnglish ? "Close" : "닫기") { showGuide = false }
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 24)
         }
-        .frame(width: 400, height: 460)
+        .frame(width: 460, height: 540)
         .background(DS.surfaceBg)
     }
 
@@ -347,9 +463,48 @@ struct SettingsView: View {
                 .frame(width: 0, height: 0)
                 .opacity(0)
         }
+        Button("") { moveSelection(by: -1) }
+            .keyboardShortcut(.upArrow, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+
+        Button("") { moveSelection(by: 1) }
+            .keyboardShortcut(.downArrow, modifiers: [])
+            .frame(width: 0, height: 0)
+            .opacity(0)
+
+        Button("") { addSite() }
+            .keyboardShortcut("n", modifiers: .command)
+            .frame(width: 0, height: 0)
+            .opacity(0)
+    }
+
+    /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
+    private func moveSelection(by offset: Int) {
+        let displayOrder = LaunchType.allCases.flatMap { type in
+            vm.sites.indices.filter { vm.sites[$0].launchType == type }
+        }
+        guard !displayOrder.isEmpty else { return }
+        guard let current = selectedIndex,
+            let pos = displayOrder.firstIndex(of: current)
+        else {
+            selectedIndex = displayOrder.first
+            return
+        }
+        let newPos = pos + offset
+        if newPos >= 0 && newPos < displayOrder.count {
+            selectedIndex = displayOrder[newPos]
+        }
     }
 
     // MARK: - Helpers
+
+    private func openQAFromGuide() {
+        showGuide = false
+        DispatchQueue.main.async {
+            (NSApp.delegate as? AppDelegate)?.openQA()
+        }
+    }
 
     private func guideRow(icon: String, text: String) -> some View {
         HStack(spacing: 10) {
@@ -363,11 +518,31 @@ struct SettingsView: View {
         }
     }
 
-    private func addSite() {
-        vm.sites.append(
-            Site(
-                name: "New Launchable", url: "https://", width: Defaults.defaultWidth,
-                height: Defaults.defaultHeight, x: Defaults.defaultX, y: Defaults.defaultY))
+    /// 새 사이트 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
+    private func addSite(type explicitType: LaunchType? = nil) {
+        // 이름을 정하지 않은 직전 placeholder가 남아 있으면 먼저 폐기해 중복 누적을 막는다.
+        if let pendingID = pendingNewSiteID,
+            let pendingIdx = vm.sites.firstIndex(where: { $0.id == pendingID }),
+            vm.sites[pendingIdx].name == Defaults.newSiteName
+        {
+            vm.sites.remove(at: pendingIdx)
+        }
+        let type: LaunchType = {
+            if let explicitType { return explicitType }
+            if let idx = selectedIndex, idx < vm.sites.count {
+                return vm.sites[idx].launchType
+            }
+            return .url
+        }()
+        let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
+        let defaultSize = windowSize(for: recommendation, on: builtInScreen ?? cursorScreen)
+        let newSite = Site(
+            name: Defaults.newSiteName, url: type == .url ? "https://" : "",
+            width: defaultSize.width, height: defaultSize.height,
+            windowSizePreset: recommendation.sizePresetID,
+            launchType: type)
+        vm.sites.append(newSite)
+        pendingNewSiteID = newSite.id
         isAddingNew = true
         isEditing = true
         selectedIndex = vm.sites.count - 1
@@ -375,6 +550,7 @@ struct SettingsView: View {
 
     private func removeSite() {
         guard let idx = selectedIndex, idx < vm.sites.count else { return }
+        pendingNewSiteID = nil
         vm.sites.remove(at: idx)
         selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
         isEditing = false
@@ -382,17 +558,44 @@ struct SettingsView: View {
     }
 
     private func moveSiteUp() {
-        guard let idx = selectedIndex, idx > 0 else { return }
-        vm.sites.swapAt(idx, idx - 1)
-        selectedIndex = idx - 1
+        guard let idx = selectedIndex else { return }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx), pos > 0 else { return }
+        let prev = siblings[pos - 1]
+        vm.sites.swapAt(idx, prev)
+        selectedIndex = prev
         save()
     }
 
     private func moveSiteDown() {
-        guard let idx = selectedIndex, idx < vm.sites.count - 1 else { return }
-        vm.sites.swapAt(idx, idx + 1)
-        selectedIndex = idx + 1
+        guard let idx = selectedIndex else { return }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx), pos < siblings.count - 1 else { return }
+        let next = siblings[pos + 1]
+        vm.sites.swapAt(idx, next)
+        selectedIndex = next
         save()
+    }
+
+    /// 선택된 사이트와 같은 타입인 사이트들의 배열 인덱스 (사이드바 그룹 표시 순서와 일치)
+    private func sameTypeIndices() -> [Int] {
+        guard let idx = selectedIndex, idx < vm.sites.count else { return [] }
+        let type = vm.sites[idx].launchType
+        return vm.sites.indices.filter { vm.sites[$0].launchType == type }
+    }
+
+    private var canMoveUp: Bool {
+        guard let idx = selectedIndex else { return false }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx) else { return false }
+        return pos > 0
+    }
+
+    private var canMoveDown: Bool {
+        guard let idx = selectedIndex else { return false }
+        let siblings = sameTypeIndices()
+        guard let pos = siblings.firstIndex(of: idx) else { return false }
+        return pos < siblings.count - 1
     }
 
     private func typeSectionTitle(_ type: LaunchType) -> String {
@@ -417,86 +620,111 @@ struct SettingsView: View {
         }
     }
 
-    private func sidebarSubtitle(for site: Site) -> String? {
-        switch site.launchType {
-        case .url:
-            let urlStr = site.url
-            if let host = URL(string: urlStr)?.host {
-                return host
+    @State private var emptyFieldAlert = false
+    @State private var emptyFieldMessage = ""
+
+    private func save(showAlerts: Bool = false) {
+        // Full config validation across ALL sites (not just selected)
+        let config = Config(
+            showGuideWindow: vm.showGuideWindow,
+            launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+        let result = validateConfig(config)
+
+        // For auto-saves (not user-triggered), silently skip if invalid
+        if !result.isValid && !showAlerts {
+            return
+        }
+
+        // For manual saves, show validation errors
+        if !result.isValid {
+            let errorMessages = result.errors.map { issue in
+                let siteName =
+                    issue.siteIndex < vm.sites.count ? vm.sites[issue.siteIndex].name : "?"
+                return "• \(siteName): \(issue.message)"
+            }.joined(separator: "\n")
+            emptyFieldMessage = errorMessages
+            emptyFieldAlert = true
+            return
+        }
+
+        // Show warnings (non-blocking) only on manual save
+        if showAlerts && !result.warnings.isEmpty {
+            let warningMessages = result.warnings.map { issue in
+                let siteName =
+                    issue.siteIndex < vm.sites.count ? vm.sites[issue.siteIndex].name : "?"
+                return "• \(siteName): \(issue.message)"
+            }.joined(separator: "\n")
+            let alert = NSAlert()
+            alert.messageText = "Saved with warnings"
+            alert.informativeText = warningMessages
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            // Save first, then show warning
+            let saved =
+                vm.onSave?(
+                    SettingsPayload(
+                        sites: vm.sites, showGuideWindow: vm.showGuideWindow,
+                        launchAtLogin: vm.launchAtLogin)) ?? true
+            if saved {
+                vm.markSaved()
             }
-            return nil
-        case .app:
-            if let path = site.appPath {
-                return URL(fileURLWithPath: path).deletingPathExtension().lastPathComponent
-            }
-            return nil
-        case .finder:
-            return site.folderPath
-        case .shell:
-            return "script"
+            alert.runModal()
+            return
+        }
+
+        let saved =
+            vm.onSave?(
+                SettingsPayload(
+                    sites: vm.sites, showGuideWindow: vm.showGuideWindow,
+                    launchAtLogin: vm.launchAtLogin)) ?? true
+        if saved {
+            vm.markSaved()
         }
     }
 
-    @State private var duplicateShortcutAlert = false
-    @State private var duplicateShortcutChar = ""
-    @State private var duplicateSiteAlert = false
-    @State private var duplicateSiteMessage = ""
-
-    private func save() {
-        if let idx = selectedIndex, idx < vm.sites.count {
-            let site = vm.sites[idx]
-
-            // 단축키 중복 체크
-            if let key = site.shortcut?.uppercased(), !key.isEmpty {
-                if vm.sites.enumerated().contains(where: {
-                    $0.offset != idx && $0.element.shortcut?.uppercased() == key
-                }) {
-                    duplicateShortcutChar = key
-                    duplicateShortcutAlert = true
-                    vm.sites[idx].shortcut = nil
-                    return
-                }
-            }
-
-            // 사이트 중복 체크 (동일 URL, 앱, 폴더)
-            let duplicateName = checkDuplicateSite(index: idx, site: site)
-            if let name = duplicateName {
-                duplicateSiteMessage = "\"\(site.name)\" is duplicated with \"\(name)\"."
-                duplicateSiteAlert = true
-                return
-            }
+    /// 전역 토글(Guide Window, Login)만 저장.
+    /// 편집 중인 사이트의 검증 상태와 무관하게 항상 저장되도록
+    /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
+    private func saveGlobals() {
+        let saved =
+            vm.onSave?(
+                SettingsPayload(
+                    sites: vm.originalSites, showGuideWindow: vm.showGuideWindow,
+                    launchAtLogin: vm.launchAtLogin)) ?? true
+        if saved {
+            vm.originalGuide = vm.showGuideWindow
+            vm.originalLogin = vm.launchAtLogin
         }
-        vm.onSave?(SettingsPayload(sites: vm.sites, runInBackground: vm.runInBackground, showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin))
-        vm.markSaved()
-    }
-
-    private func checkDuplicateSite(index: Int, site: Site) -> String? {
-        for (i, other) in vm.sites.enumerated() where i != index {
-            guard other.launchType == site.launchType else { continue }
-            switch site.launchType {
-            case .url:
-                if !site.url.isEmpty && site.url == other.url { return other.name }
-            case .app:
-                if let path = site.appPath, !path.isEmpty, path == other.appPath { return other.name }
-            case .finder:
-                if let path = site.folderPath, !path.isEmpty, path == other.folderPath { return other.name }
-            case .shell:
-                break
-            }
-        }
-        return nil
     }
 
     private func exportConfig() {
-        let downloadsPath = NSString(string: "~/Downloads/chap.json").expandingTildeInPath
-        try? FileManager.default.removeItem(atPath: downloadsPath)
-        try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: downloadsPath)
-        NSLog("[Chap] Config exported to %@", downloadsPath)
-        let alert = NSAlert()
-        alert.messageText = "Export successful"
-        alert.informativeText = "Saved to ~/Downloads/chap.json"
-        alert.alertStyle = .informational
-        alert.runModal()
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "chap.json"
+        panel.directoryURL =
+            FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        // 디스크 파일이 아닌 현재 편집 상태를 내보냄 (저장 안 된 변경분 포함)
+        let config = Config(
+            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        do {
+            try encoder.encode(config).write(to: url, options: .atomic)
+            Log.config.info("Config exported to \(url.path, privacy: .private)")
+            let alert = NSAlert()
+            alert.messageText = "Export successful"
+            alert.informativeText = "Saved to \(url.path)"
+            alert.alertStyle = .informational
+            alert.runModal()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "Export failed"
+            alert.informativeText = error.localizedDescription
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 
     private func restartApp() {
@@ -539,19 +767,73 @@ struct SettingsView: View {
     private func applyConfigData(_ data: Data) {
         do {
             let config = try JSONDecoder().decode(Config.self, from: data)
-            let bakPath = Defaults.configPath + ".bak"
-            try? FileManager.default.removeItem(atPath: bakPath)
-            try? FileManager.default.copyItem(atPath: Defaults.configPath, toPath: bakPath)
-            try data.write(to: URL(fileURLWithPath: Defaults.configPath), options: .atomic)
-            vm.sites = config.sites
-            vm.runInBackground = config.runInBackground
+
+            // Normalize using import normalization (includes display UUID migration)
+            let connectedDisplays = NSScreen.screens.map {
+                DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
+            }
+            let importResult = normalizeForImport(
+                sites: config.sites, connectedDisplays: connectedDisplays)
+
+            // Blocking issues: reject import entirely, don't modify VM/file
+            if !importResult.blockingIssues.isEmpty {
+                let issueMessages = importResult.blockingIssues.map { issue in
+                    let siteName =
+                        issue.siteIndex < config.sites.count
+                        ? config.sites[issue.siteIndex].name : "?"
+                    return "• \(siteName): \(issue.message)"
+                }.joined(separator: "\n")
+                let alert = NSAlert()
+                alert.messageText = "Import blocked"
+                alert.informativeText =
+                    "The following issues must be fixed in the source file before importing:\n\n\(issueMessages)"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+                return
+            }
+
+            // Apply normalized sites
+            let normalizedSites = importResult.sites
+            try configStore.save(
+                Config(
+                    showGuideWindow: config.showGuideWindow,
+                    launchAtLogin: config.launchAtLogin, sites: normalizedSites))
+            vm.sites = normalizedSites
             vm.showGuideWindow = config.showGuideWindow
             vm.launchAtLogin = config.launchAtLogin
+            vm.markSaved()
             vm.onReload?()
+
+            let adjustmentLines = importResult.fixes.map { fix in
+                let siteName =
+                    fix.siteIndex < normalizedSites.count
+                    ? normalizedSites[fix.siteIndex].name : "?"
+                return "• \(siteName): \(fix.message)"
+            }
+            let warningLines = importResult.warnings.map { warning in
+                let siteName =
+                    warning.siteIndex < normalizedSites.count
+                    ? normalizedSites[warning.siteIndex].name : "?"
+                return "• \(siteName): \(warning.message)"
+            }
             let alert = NSAlert()
-            alert.messageText = "Import successful"
-            alert.informativeText = "\(config.sites.count) site(s) loaded."
+            if adjustmentLines.isEmpty && warningLines.isEmpty {
+                alert.messageText = "Import successful"
+                alert.informativeText = "\(normalizedSites.count) site(s) loaded."
+            } else {
+                alert.messageText = "Import successful with adjustments"
+                var sections = ["\(normalizedSites.count) site(s) loaded."]
+                if !adjustmentLines.isEmpty {
+                    sections.append("Automatic fixes:\n\(adjustmentLines.joined(separator: "\n"))")
+                }
+                if !warningLines.isEmpty {
+                    sections.append("Display warnings:\n\(warningLines.joined(separator: "\n"))")
+                }
+                alert.informativeText = sections.joined(separator: "\n\n")
+            }
             alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
             alert.runModal()
         } catch {
             showImportError(error.localizedDescription)

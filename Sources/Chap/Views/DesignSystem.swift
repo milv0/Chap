@@ -95,20 +95,24 @@ struct ToolbarIconButton: View {
     @State private var isHovered = false
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(disabled ? DS.textTertiary : color)
-                .frame(width: 26, height: 26)
-                .background(
-                    isHovered && !disabled
-                        ? DS.border.opacity(0.4)
-                        : Color.clear
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .buttonStyle(.plain)
-        .disabled(disabled)
-        .onHover { hovering in isHovered = hovering }
+        // Button 대신 onTapGesture 사용 — 메뉴바(accessory) 앱에서 창이 비활성일 때
+        // Button은 첫 클릭이 창 활성화에만 쓰여(acceptsFirstMouse=false) 더블클릭이
+        // 필요해지는 반면, 탭 제스처는 첫 클릭에 바로 반응해 사이드바와 일관됨.
+        Image(systemName: icon)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(disabled ? DS.textTertiary : color)
+            .frame(width: 26, height: 26)
+            .background(
+                isHovered && !disabled
+                    ? DS.border.opacity(0.4)
+                    : Color.clear
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard !disabled else { return }
+                action()
+            }
+            .onHover { hovering in isHovered = hovering && !disabled }
     }
 }

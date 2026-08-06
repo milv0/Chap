@@ -1,4 +1,5 @@
 import Cocoa
+import os
 
 /// 쉘 스크립트를 실행하는 런처
 /// 윈도우 리사이즈 없음 — 스크립트가 반드시 윈도우를 생성하지 않으므로
@@ -8,6 +9,7 @@ enum ShellLauncher {
     static func launch(_ site: Site) {
         // 스크립트 유효성 확인
         guard let script = site.script, !script.isEmpty else {
+            Log.launcher.error("No script configured for \(site.name, privacy: .private)")
             LauncherUtils.showAlert(message: "No script configured for \"\(site.name)\".")
             return
         }
@@ -25,15 +27,29 @@ enum ShellLauncher {
         DispatchQueue.global().async {
             do {
                 try process.run()
+                // 파이프 버퍼가 가득 차면 자식 프로세스가 블록되므로
+                // waitUntilExit 전에 출력을 모두 읽어야 데드락이 없음
+                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
                 process.waitUntilExit()
                 // 0이 아닌 종료 코드 = 실패 → 에러 내용을 alert로 표시
                 if process.terminationStatus != 0 {
-                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let errorStr = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                    LauncherUtils.showAlert(message: "Script failed (exit \(process.terminationStatus))", info: errorStr)
+                    let errorStr = String(data: outputData, encoding: .utf8) ?? "Unknown error"
+                    Log.launcher.error(
+                        "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)"
+                    )
+                    LauncherUtils.showAlert(
+                        message: "Script failed (exit \(process.terminationStatus))", info: errorStr
+                    )
+                } else {
+                    Log.launcher.notice(
+                        "Shell script succeeded for \(site.name, privacy: .private)")
                 }
             } catch {
-                LauncherUtils.showAlert(message: "Failed to execute script.", info: error.localizedDescription)
+                Log.launcher.error(
+                    "Failed to execute script for \(site.name, privacy: .private): \(error.localizedDescription, privacy: .public)"
+                )
+                LauncherUtils.showAlert(
+                    message: "Failed to execute script.", info: error.localizedDescription)
             }
         }
     }

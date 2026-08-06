@@ -2,7 +2,7 @@ import SwiftUI
 
 struct WelcomeView: View {
     var onOpenSettings: () -> Void
-    @Environment(\.dismiss) var dismiss
+    var onClose: () -> Void
     @State private var dontShowAgain = false
 
     var body: some View {
@@ -17,17 +17,22 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "plus.circle.fill",
                     title: "Add Sites",
-                    description: "Register sites with name, URL, and window size"
+                    description: "Register sites, apps, folders, and scripts"
+                )
+                OnboardingCard(
+                    icon: "keyboard",
+                    title: "Set Shortcuts",
+                    description: "Assign custom key per site (e.g. T → ⌥T to launch)"
                 )
                 OnboardingCard(
                     icon: "display",
                     title: "Choose Display",
-                    description: "Pick a screen and size — always centered"
+                    description: "Pick Follow Cursor or a display, then choose a size preset"
                 )
                 OnboardingCard(
-                    icon: "keyboard",
+                    icon: "bolt.fill",
                     title: "Quick Launch",
-                    description: "⌥Q menu, ⌥1~9 launch, ⌥, settings"
+                    description: "⌥. menu, ⌥(your key) launch, ⌥, settings"
                 )
             }
             .padding(.horizontal, 24)
@@ -51,7 +56,7 @@ struct WelcomeView: View {
                 if dontShowAgain {
                     UserDefaults.standard.set(true, forKey: "guideDisabled")
                 }
-                dismiss()
+                onClose()
                 onOpenSettings()
             }
             .padding(.horizontal, 40)

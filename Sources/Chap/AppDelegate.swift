@@ -1,15 +1,40 @@
+import Carbon.HIToolbox
 import Cocoa
 import ServiceManagement
 import SwiftUI
+import os
 
-class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
+    private enum AccessibilityState {
+        case unknown
+        case granted
+        case denied
+    }
+
+    private enum AccessibilityGrantPolling {
+        static let interval: TimeInterval = 2.0
+        static let duration: TimeInterval = 30.0
+    }
+
     var statusItem: NSStatusItem!
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
+    private let configStore = ConfigStore()
     var settingsWindow: NSWindow?
+    var qaWindow: NSWindow?
+    var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
-    let resizeQueue = DispatchQueue(label: "com.mingyupark.Chap.resize")
-    private var menuIsOpen = false
+    // tap 콜백 스레드와 메인 스레드가 함께 접근하므로 락으로 보호
+    private let menuOpenLock = OSAllocatedUnfairLock(initialState: false)
+    private var accessibilityState: AccessibilityState = .unknown
+    private var accessibilityGrantPollTimer: Timer?
+    private var accessibilityGrantPollEndDate: Date?
+    private var didShowAccessibilityAlert = false
+    private var didRequestAccessibilitySystemPrompt = false
+    private var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
+    }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
@@ -19,6 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         migrateConfigIfNeeded()
         copyDefaultConfigIfNeeded()
         loadConfig()
+        stripLegacyConfigFields()
         applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(.accessory)
 
@@ -34,19 +60,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             }
         }
         buildMenu()
-        registerGlobalHotkeys()
-
-        if config.sites.contains(where: { $0.launchType == .url }),
-            FileManager.default.fileExists(atPath: "/Applications/Google Chrome.app")
-        {
-            DispatchQueue.global().async {
-                let task = Process()
-                task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-                task.arguments = ["-e", "tell application \"Google Chrome\" to get name"]
-                try? task.run()
-                task.waitUntilExit()
-            }
-        }
+        initializeAccessibilityHandling()
 
         let guideDisabled = UserDefaults.standard.bool(forKey: "guideDisabled")
         if !guideDisabled {
@@ -56,13 +70,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    // MARK: - Global Hotkeys
+    // MARK: - Global Shortcuts
 
     private var eventTap: CFMachPort?
-    private var activationObserver: NSObjectProtocol?
-    private var tapRetryCount = 0
+    private var eventTapRunLoopSource: CFRunLoopSource?
 
-    private func registerGlobalHotkeys() {
+    private func registerGlobalShortcuts() {
+        guard eventTap == nil else { return }
+
         let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue)
         guard
             let tap = CGEvent.tapCreate(
@@ -79,17 +94,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                         if let tap = appDelegate.eventTap {
                             CGEvent.tapEnable(tap: tap, enable: true)
                         }
-                        // re-enable 후에도 권한이 없으면 사용자에게 알림
-                        if !AXIsProcessTrusted() {
-                            NSLog("[Chap] Accessibility permission revoked")
-                            DispatchQueue.main.async {
-                                appDelegate.updateStatusIcon(accessible: false)
-                                appDelegate.showAlert(
-                                    message: "Accessibility Permission Lost",
-                                    info: "Chap의 접근성 권한이 제거되었습니다.\nSystem Settings → Privacy & Security → Accessibility에서 다시 허용해주세요.")
-                            }
-                        } else {
-                            NSLog("[Chap] CGEvent tap re-enabled after system disable")
+                        DispatchQueue.main.async {
+                            appDelegate.refreshAccessibilityState(
+                                reason: "event tap disabled", showAlert: true)
                         }
                         return Unmanaged.passRetained(event)
                     }
@@ -101,18 +108,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
                     let keyCode = UInt16(event.getIntegerValueField(.keyboardEventKeycode))
 
-                    // ⌥Q — open menu (block while menu is open)
-                    if keyCode == 12 {
-                        guard !appDelegate.menuIsOpen else { return nil }
-                        appDelegate.menuIsOpen = true
+                    // ⌥. — open menu (block while menu is open)
+                    if keyCode == 47 {
+                        // 원자적 체크-앤-셋: 이미 열려 있으면 차단, 아니면 열림 표시
+                        let alreadyOpen = appDelegate.menuOpenLock.withLock { isOpen -> Bool in
+                            if isOpen { return true }
+                            isOpen = true
+                            return false
+                        }
+                        guard !alreadyOpen else { return nil }
                         DispatchQueue.main.async {
                             guard let button = appDelegate.statusItem.button else {
-                                appDelegate.menuIsOpen = false
+                                appDelegate.menuOpenLock.withLock { $0 = false }
                                 return
                             }
                             appDelegate.statusItem.menu?.popUp(
                                 positioning: nil, at: .zero, in: button)
-                            appDelegate.menuIsOpen = false
+                            appDelegate.menuOpenLock.withLock { $0 = false }
                         }
                         return nil
                     }
@@ -143,56 +155,141 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 userInfo: Unmanaged.passUnretained(self).toOpaque()
             )
         else {
-            NSLog("[Chap] Failed to create CGEvent tap — check Accessibility permission")
+            Log.app.error("Failed to create CGEvent tap — check Accessibility permission")
             updateStatusIcon(accessible: false)
-            tapRetryCount += 1
-            if tapRetryCount <= 5 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-                    if self?.eventTap == nil {
-                        self?.registerGlobalHotkeys()
-                    }
-                }
-            } else {
-                observeActivationForAccessibility()
-            }
             return
         }
 
         eventTap = tap
-        tapRetryCount = 0
-        removeActivationObserver()
         updateStatusIcon(accessible: true)
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        eventTapRunLoopSource = runLoopSource
         CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
-        NSLog("[Chap] CGEvent tap registered successfully")
+        Log.app.info("CGEvent tap registered successfully")
     }
 
-    private func observeActivationForAccessibility() {
-        guard activationObserver == nil else { return }
-        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil, queue: .main
-        ) { [weak self] notification in
-            guard let self = self, self.eventTap == nil else { return }
-            guard
-                let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey]
-                    as? NSRunningApplication,
-                app.bundleIdentifier == Bundle.main.bundleIdentifier
-            else { return }
-            if AXIsProcessTrusted() {
-                NSLog("[Chap] Accessibility granted — attempting hotkey registration")
-                self.tapRetryCount = 0
-                self.registerGlobalHotkeys()
+    private func initializeAccessibilityHandling() {
+        let shouldPromptUser = !isRunningTests
+        refreshAccessibilityState(
+            reason: "launch", showAlert: false,
+            requestSystemPrompt: shouldPromptUser)
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidBecomeActiveNotification),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(axResizeDidFailNotification),
+            name: .chapAXResizeFailed,
+            object: nil)
+    }
+
+    @objc private func applicationDidBecomeActiveNotification(_ notification: Notification) {
+        refreshAccessibilityState(reason: "app active", showAlert: false)
+    }
+
+    @objc private func axResizeDidFailNotification(_ notification: Notification) {
+        refreshAccessibilityState(reason: "resize failure", showAlert: true)
+    }
+
+    private func startTemporaryAccessibilityGrantPolling(reason: String) {
+        guard !isRunningTests else { return }
+        accessibilityGrantPollEndDate = Date().addingTimeInterval(
+            AccessibilityGrantPolling.duration)
+        guard accessibilityGrantPollTimer == nil else { return }
+
+        let timer = Timer(timeInterval: AccessibilityGrantPolling.interval, repeats: true) {
+            [weak self] _ in
+            self?.pollAccessibilityGrant(reason: reason)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        accessibilityGrantPollTimer = timer
+    }
+
+    private func pollAccessibilityGrant(reason: String) {
+        if let endDate = accessibilityGrantPollEndDate, Date() > endDate {
+            stopTemporaryAccessibilityGrantPolling()
+            return
+        }
+        refreshAccessibilityState(reason: reason, showAlert: false)
+    }
+
+    private func stopTemporaryAccessibilityGrantPolling() {
+        accessibilityGrantPollTimer?.invalidate()
+        accessibilityGrantPollTimer = nil
+        accessibilityGrantPollEndDate = nil
+    }
+
+    private func refreshAccessibilityState(
+        reason: String, showAlert: Bool, requestSystemPrompt: Bool = false
+    ) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async {
+                self.refreshAccessibilityState(
+                    reason: reason, showAlert: showAlert, requestSystemPrompt: requestSystemPrompt)
             }
+            return
+        }
+
+        let isTrusted = AccessibilityPermission.isTrusted
+        let previousState = accessibilityState
+        accessibilityState = isTrusted ? .granted : .denied
+        updateStatusIcon(accessible: isTrusted)
+
+        if isTrusted {
+            stopTemporaryAccessibilityGrantPolling()
+            didShowAccessibilityAlert = false
+            if eventTap == nil {
+                Log.app.info(
+                    "Accessibility granted from \(reason, privacy: .public) — registering shortcuts"
+                )
+                registerGlobalShortcuts()
+            }
+            return
+        }
+
+        if requestSystemPrompt {
+            requestAccessibilitySystemPromptIfNeeded()
+            startTemporaryAccessibilityGrantPolling(reason: "permission prompt")
+        }
+
+        if eventTap != nil {
+            invalidateGlobalShortcuts()
+        }
+
+        let wasRevoked = previousState == .granted
+        if wasRevoked {
+            Log.app.error("Accessibility permission revoked from \(reason, privacy: .public)")
+        }
+
+        if wasRevoked || showAlert, !didShowAccessibilityAlert {
+            didShowAccessibilityAlert = true
+            showAccessibilityAlert()
         }
     }
 
-    private func removeActivationObserver() {
-        if let observer = activationObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-            activationObserver = nil
+    private func requestAccessibilitySystemPromptIfNeeded() {
+        guard !didRequestAccessibilitySystemPrompt else { return }
+        didRequestAccessibilitySystemPrompt = true
+        AccessibilityPermission.requestSystemPrompt()
+    }
+
+    private func invalidateGlobalShortcuts() {
+        guard let tap = eventTap else { return }
+        if let source = eventTapRunLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), source, .commonModes)
+            eventTapRunLoopSource = nil
         }
+        CFMachPortInvalidate(tap)
+        eventTap = nil
+    }
+
+    // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
+    func menuWillOpen(_ menu: NSMenu) {
+        refreshAccessibilityState(reason: "menu", showAlert: false)
     }
 
     private func updateStatusIcon(accessible: Bool) {
@@ -210,20 +307,59 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    func showWelcomeWindow() {
-        let welcomeView = WelcomeView {
-            self.openSettings()
+    /// 시스템 설정의 접근성 창을 직접 연다
+    func openAccessibilitySettings() {
+        if let url = URL(
+            string:
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        {
+            NSWorkspace.shared.open(url)
+            startTemporaryAccessibilityGrantPolling(reason: "accessibility settings")
         }
-        let controller = NSHostingController(rootView: welcomeView)
-        let window = NSWindow(contentViewController: controller)
+    }
+
+    /// 접근성 권한이 없을 때, 시스템 설정으로 바로 이동하는 버튼이 포함된 알림
+    func showAccessibilityAlert() {
+        DispatchQueue.main.async {
+            guard !AccessibilityPermission.isTrusted else {
+                self.didShowAccessibilityAlert = false
+                self.updateStatusIcon(accessible: true)
+                return
+            }
+            let alert = NSAlert()
+            alert.messageText = "Allow Accessibility"
+            alert.informativeText = "System Settings에서 Chap을 허용해주세요."
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Open Settings")
+            alert.addButton(withTitle: "Later")
+            if alert.runModal() == .alertFirstButtonReturn {
+                self.openAccessibilitySettings()
+            }
+        }
+    }
+
+    func showWelcomeWindow() {
+        let window = NSWindow(contentViewController: NSHostingController(rootView: Text("")))
+        // [weak window] 캡처로 window → view → closure → window 순환 참조 방지
+        let welcomeView = WelcomeView(
+            onOpenSettings: { [weak self] in
+                self?.openSettings()
+            },
+            onClose: { [weak window] in
+                window?.close()
+            })
+        window.contentViewController = NSHostingController(rootView: welcomeView)
         window.title = ""
         window.titlebarAppearsTransparent = true
         window.styleMask = [.titled, .closable]
-        window.setContentSize(NSSize(width: 500, height: 380))
+        window.isReleasedWhenClosed = false
+        window.setContentSize(NSSize(width: 420, height: 480))
         window.center()
+        window.delegate = self
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        welcomeWindow = window
     }
 
     // MARK: - Config handling
@@ -232,46 +368,64 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     /// 기존 ~/.quickaccess.json → ~/.chap.json 마이그레이션
     func migrateConfigIfNeeded() {
-        let oldPath = NSString(string: "~/.quickaccess.json").expandingTildeInPath
-        if FileManager.default.fileExists(atPath: oldPath)
-            && !FileManager.default.fileExists(atPath: configPath)
-        {
-            try? FileManager.default.moveItem(atPath: oldPath, toPath: configPath)
-            NSLog("[Chap] Migrated config from ~/.quickaccess.json to ~/.chap.json")
+        do {
+            if try configStore.migrateLegacyConfigPathIfNeeded() {
+                Log.config.info("Migrated config from ~/.quickaccess.json to ~/.chap.json")
+            }
+        } catch {
+            Log.config.error(
+                "Failed to migrate legacy config: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    /// 설정 파일에 남아 있는 레거시 필드(x, y, hotkey, showGhostWindow 등)를 제거.
+    /// loadConfig() 후 호출하면 decode→encode 과정에서 레거시 키가 자동 탈락하므로,
+    /// 파일 원본에 해당 키가 있으면 한 번 덮어써서 정리한다.
+    func stripLegacyConfigFields() {
+        do {
+            if try configStore.stripLegacyFieldsIfNeeded(using: config) {
+                Log.config.info("Stripped legacy fields from config file")
+            }
+        } catch {
+            Log.config.error(
+                "Failed to strip legacy fields: \(error.localizedDescription, privacy: .public)")
         }
     }
 
     func copyDefaultConfigIfNeeded() {
-        if !FileManager.default.fileExists(atPath: configPath) {
-            let defaultJSON = """
-                {
-                  "sites": [
-                    {"name": "Google", "url": "https://www.google.com/", "width": 600, "height": 400, "x": 100, "y": 100, "launchType": "url"},
-                    {"name": "GitHub", "url": "https://github.com/", "width": 800, "height": 600, "x": 100, "y": 100, "launchType": "url"},
-                    {"name": "Downloads", "url": "", "width": 1000, "height": 400, "x": 100, "y": 100, "launchType": "finder", "folderPath": "~/Downloads"}
-                  ]
-                }
-                """
-            do {
-                try defaultJSON.write(toFile: configPath, atomically: true, encoding: .utf8)
-            } catch {
-                NSLog(
-                    "[Chap] Failed to write default config: %@", error.localizedDescription)
-            }
+        do {
+            _ = try configStore.createDefaultConfigIfNeeded()
+        } catch {
+            Log.config.error(
+                "Failed to write default config: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
     func loadConfig() {
-        guard let data = try? Data(contentsOf: URL(fileURLWithPath: configPath)) else {
-            NSLog("[Chap] Failed to read config file at %@", configPath)
-            return
+        let connectedDisplays = NSScreen.screens.map {
+            DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
         }
         do {
-            config = try JSONDecoder().decode(Config.self, from: data)
+            let result = try configStore.load(connectedDisplays: connectedDisplays)
+            config = result.config
+            if result.didAutoSaveDisplayMigration {
+                Log.config.info("Auto-saved display UUID migration")
+            }
+            for warning in result.displayWarnings {
+                Log.config.warning(
+                    "Display migration: \(warning.message, privacy: .public)")
+            }
+        } catch ConfigStoreError.readFailed {
+            Log.config.error("Failed to read config file at \(self.configPath, privacy: .public)")
+            config = .default
         } catch {
+            Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
             DispatchQueue.main.async {
                 let alert = NSAlert()
-                alert.messageText = "Cannot read config file. Using defaults."
+                alert.messageText = "Config file is corrupted"
+                alert.informativeText =
+                    "~/.chap.json을 읽을 수 없어 기본 설정을 사용합니다.\n백업 파일: ~/.chap.json.bak\n\nError: \(error.localizedDescription)"
                 alert.alertStyle = .warning
                 alert.runModal()
             }
@@ -281,11 +435,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func buildMenu() {
         let menu = NSMenu()
+        let launchTypeOrder = Dictionary(
+            uniqueKeysWithValues: LaunchType.allCases.enumerated().map { ($1, $0) })
         let sortedSites = config.sites.enumerated().sorted {
-            LaunchType.allCases.firstIndex(of: $0.element.launchType)!
-                < LaunchType.allCases.firstIndex(of: $1.element.launchType)!
+            launchTypeOrder[$0.element.launchType, default: Int.max]
+                < launchTypeOrder[$1.element.launchType, default: Int.max]
         }
+        var lastType: LaunchType? = nil
         for (i, site) in sortedSites {
+            // 타입이 바뀌면 구분선 추가
+            if let last = lastType, last != site.launchType {
+                menu.addItem(.separator())
+            }
+            lastType = site.launchType
             let keyEquiv = site.shortcut?.lowercased() ?? ""
             let item = NSMenuItem(
                 title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
@@ -310,8 +472,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         settings.keyEquivalentModifierMask = .option
         settings.target = self
         menu.addItem(settings)
+        let qa = NSMenuItem(
+            title: "Q&A", action: #selector(openQA), keyEquivalent: "")
+        qa.image = NSImage(
+            systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
+        qa.target = self
+        menu.addItem(qa)
+        let bug = NSMenuItem(
+            title: "Report Bug", action: #selector(reportBug), keyEquivalent: "")
+        bug.image = NSImage(systemSymbolName: "ladybug", accessibilityDescription: "Report Bug")
+        bug.target = self
+        menu.addItem(bug)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
+        about.image = NSImage(
+            systemSymbolName: "info.circle", accessibilityDescription: "About Chap")
         about.target = self
         menu.addItem(about)
         menu.addItem(.separator())
@@ -322,7 +497,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
         menu.addItem(quit)
+        menu.delegate = self
         statusItem.menu = menu
+    }
+
+    @objc func openQA() {
+        if let w = qaWindow, w.isVisible {
+            w.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let hostingController = NSHostingController(rootView: QAView())
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Chap Q&A"
+        window.setContentSize(NSSize(width: 1120, height: 900))
+        window.styleMask = [.titled, .closable, .resizable]
+        window.isReleasedWhenClosed = false
+        window.minSize = NSSize(width: 400, height: 400)
+        window.delegate = self
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        qaWindow = window
     }
 
     @objc func showAbout() {
@@ -334,6 +531,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         alert.runModal()
     }
 
+    @objc func reportBug() {
+        if let url = URL(string: "https://github.com/milv0/Chap/issues/new") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     // MARK: - Site opening
 
     @objc func openSite(_ sender: NSMenuItem) {
@@ -343,31 +546,39 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func launchSite(_ site: Site) {
-        let useGuide = config.showGuideWindow && site.launchType == .url
-        if useGuide {
-            let screen = targetScreen(for: site)
+        let needsAccessibility = site.launchType == .url || site.launchType == .app
+        refreshAccessibilityState(reason: "launch", showAlert: needsAccessibility)
+
+        var guideToken: Int?
+        if config.showGuideWindow, site.launchType == .url, let screen = targetScreen(for: site) {
             let bounds = centeredBounds(for: site, on: screen)
-            GuideWindow.show(bounds: bounds)
+            guideToken = GuideWindow.show(bounds: bounds)
         }
 
         switch site.launchType {
         case .url:
-            ChromeLauncher.launch(site, resizeQueue: resizeQueue) {
-                if useGuide { GuideWindow.dismiss() }
+            ChromeLauncher.launch(site) {
+                if let token = guideToken { GuideWindow.dismiss(token) }
             }
         case .app:
-            AppLauncher.launch(site, resizeQueue: resizeQueue)
+            AppLauncher.launch(site)
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
-                showAlert(message: "No folder path configured for \"\(site.name)\".")
+                Log.launcher.error("No folder path configured for \(site.name, privacy: .private)")
+                LauncherUtils.showAlert(message: "No folder path configured for \"\(site.name)\".")
                 return
             }
             let expandedPath = NSString(string: path).expandingTildeInPath
             guard FileManager.default.fileExists(atPath: expandedPath) else {
-                showAlert(message: "Folder not found: \(path)")
+                Log.launcher.error("Folder not found: \(expandedPath, privacy: .private)")
+                LauncherUtils.showAlert(message: "Folder not found: \(path)")
                 return
             }
-            let screen = targetScreen(for: site)
+            guard let screen = targetScreen(for: site) else {
+                // 사용 가능한 화면이 없으면 리사이즈 없이 폴더만 연다
+                NSWorkspace.shared.open(URL(fileURLWithPath: expandedPath))
+                return
+            }
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
                 path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
@@ -375,43 +586,60 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
-    private func showAlert(message: String, info: String? = nil) {
-        DispatchQueue.main.async {
-            let alert = NSAlert()
-            alert.messageText = message
-            if let info = info { alert.informativeText = info }
-            alert.alertStyle = .warning
-            alert.runModal()
-        }
-    }
-
     // MARK: - Settings
 
     @objc func openSettings() {
+        refreshAccessibilityState(reason: "settings", showAlert: false)
         if let w = settingsWindow, w.isVisible {
+            // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동
+            moveToCursorScreenCenter(w)
             w.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
 
         let vm = SettingsViewModel(
-            sites: config.sites, runInBackground: config.runInBackground,
+            sites: config.sites,
             showGuideWindow: config.showGuideWindow, launchAtLogin: config.launchAtLogin)
         vm.onSave = { [weak self] payload in
-            guard let self = self else { return }
-            self.config = Config(
-                runInBackground: payload.runInBackground, showGuideWindow: payload.showGuideWindow,
+            guard let self = self else { return false }
+            // Full config validation before saving
+            let validationConfig = Config(
+                showGuideWindow: payload.showGuideWindow,
                 launchAtLogin: payload.launchAtLogin, sites: payload.sites)
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            if let data = try? encoder.encode(self.config) {
-                let bakPath = self.configPath + ".bak"
-                try? FileManager.default.removeItem(atPath: bakPath)
-                try? FileManager.default.copyItem(atPath: self.configPath, toPath: bakPath)
-                try? data.write(to: URL(fileURLWithPath: self.configPath), options: .atomic)
+            let result = validateConfig(validationConfig)
+            if !result.isValid {
+                let errorMessages = result.errors.map { issue in
+                    "[\(issue.siteIndex + 1)] \(issue.message)"
+                }.joined(separator: "\n")
+                DispatchQueue.main.async {
+                    let alert = NSAlert()
+                    alert.messageText = "Cannot save settings"
+                    alert.informativeText =
+                        "Please fix the following errors:\n\n\(errorMessages)"
+                    alert.alertStyle = .warning
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+                return false
             }
+            let newConfig = validationConfig
+            do {
+                try self.configStore.save(newConfig)
+            } catch {
+                Log.config.error(
+                    "Failed to save config: \(error.localizedDescription, privacy: .public)")
+                LauncherUtils.showAlert(
+                    message: "Failed to save settings",
+                    info:
+                        "설정을 \(self.configPath)에 저장하지 못했습니다.\n\nError: \(error.localizedDescription)"
+                )
+                return false
+            }
+            self.config = newConfig
             self.applyLoginItem(enabled: payload.launchAtLogin)
             DispatchQueue.main.async { self.buildMenu() }
+            return true
         }
         vm.onReload = { [weak self] in
             self?.reloadConfig()
@@ -421,16 +649,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Chap Settings"
-        window.setContentSize(NSSize(width: 700, height: 580))
+        window.setContentSize(NSSize(width: 770, height: 600))
         window.styleMask = [.titled, .closable, .resizable]
+        window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 600, height: 400)
-        window.center()
         window.delegate = self
+        // 커서가 있는 화면 중앙에 표시
+        moveToCursorScreenCenter(window)
         window.makeKeyAndOrderFront(nil)
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow = window
         settingsVM = vm
+    }
+
+    /// 윈도우를 커서가 있는 화면의 중앙으로 이동
+    private func moveToCursorScreenCenter(_ window: NSWindow) {
+        guard let screen = cursorScreen else { return }
+        let frameSize = window.frame.size
+        window.setFrameOrigin(
+            NSPoint(
+                x: screen.visibleFrame.midX - frameSize.width / 2,
+                y: screen.visibleFrame.midY - frameSize.height / 2))
     }
 
     @objc func reloadConfig() {
@@ -439,18 +679,46 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        if let vm = settingsVM, vm.hasChanges {
-            let alert = NSAlert()
-            alert.messageText = "You have unsaved changes."
-            alert.informativeText = "Changes will be lost if you close."
-            alert.addButton(withTitle: "Close")
-            alert.addButton(withTitle: "Cancel")
-            if alert.runModal() != .alertFirstButtonReturn {
-                return false
+        // Settings window: check for unsaved changes
+        if sender == settingsWindow {
+            if let vm = settingsVM, vm.hasChanges {
+                let alert = NSAlert()
+                alert.messageText = "You have unsaved changes."
+                alert.informativeText = "Changes will be lost if you close."
+                alert.addButton(withTitle: "Close")
+                alert.addButton(withTitle: "Cancel")
+                if alert.runModal() != .alertFirstButtonReturn {
+                    return false
+                }
             }
         }
-        settingsVM = nil
         return true
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window == settingsWindow {
+            settingsVM = nil
+            settingsWindow = nil
+        } else if window == qaWindow {
+            qaWindow = nil
+        } else if window == welcomeWindow {
+            welcomeWindow = nil
+        }
+        // 모든 관리 창이 닫히면 accessory로 복원
+        restoreAccessoryIfNeeded()
+    }
+
+    /// 모든 관리 창(Settings, QA, Welcome)이 닫혀 있을 때 activation policy를
+    /// accessory로 복원하여 Dock 아이콘을 숨긴다.
+    private func restoreAccessoryIfNeeded() {
+        let hasVisibleWindow =
+            (settingsWindow?.isVisible ?? false)
+            || (qaWindow?.isVisible ?? false)
+            || (welcomeWindow?.isVisible ?? false)
+        if !hasVisibleWindow {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -496,7 +764,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         // 권한 리셋
         let resetTask = Process()
         resetTask.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
-        resetTask.arguments = ["reset", "AppleEvents", "com.mingyupark.Chap"]
+        resetTask.arguments = [
+            "reset", "AppleEvents", Bundle.main.bundleIdentifier ?? "com.mingyupark.Chap",
+        ]
         try? resetTask.run()
         resetTask.waitUntilExit()
         // 설정 파일 삭제
@@ -517,6 +787,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func applyLoginItem(enabled: Bool) {
         let service = SMAppService.mainApp
+        // 이미 목표 상태면 호출 생략. 특히 미등록 상태에서 unregister()는
+        // 매 실행 throw하므로(정상 실행마다 로그 노이즈), status로 먼저 거른다.
+        let isRegistered = service.status == .enabled
+        guard enabled != isRegistered else { return }
         do {
             if enabled {
                 try service.register()
@@ -524,24 +798,38 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 try service.unregister()
             }
         } catch {
-            NSLog(
-                "[Chap] Login item %@: %@", enabled ? "register" : "unregister",
-                error.localizedDescription)
+            Log.app.error(
+                "Login item \(enabled ? "register" : "unregister", privacy: .public) failed: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 }
 
 // MARK: - Key Code → Character mapping
 
+/// 현재 키보드 레이아웃 기준으로 keyCode를 문자로 변환.
+/// TISCopyCurrentASCIICapableKeyboardLayoutInputSource를 사용해, 한글/일본어/중국어 등
+/// CJK 입력기가 활성화된 상태에서도(그 입력 소스엔 uchr 데이터가 없음) 항상 ASCII 호환
+/// 레이아웃을 얻는다. AZERTY/Dvorak 등 비-US 물리 배열도 올바르게 반영됨.
 private func keyCodeToChar(_ keyCode: UInt16) -> String? {
-    let map: [UInt16: String] = [
-        0: "A", 1: "S", 2: "D", 3: "F", 4: "H", 5: "G", 6: "Z", 7: "X",
-        8: "C", 9: "V", 11: "B", 12: "Q", 13: "W", 14: "E", 15: "R",
-        16: "Y", 17: "T", 18: "1", 19: "2", 20: "3", 21: "4", 22: "6",
-        23: "5", 24: "=", 25: "9", 26: "7", 27: "-", 28: "8", 29: "0",
-        30: "]", 31: "O", 32: "U", 33: "[", 34: "I", 35: "P", 37: "L",
-        38: "J", 40: "K", 41: ";", 43: ",", 44: "/", 45: "N", 46: "M",
-        47: ".", 50: "`",
-    ]
-    return map[keyCode]
+    guard let source = TISCopyCurrentASCIICapableKeyboardLayoutInputSource()?.takeRetainedValue(),
+        let layoutDataPtr = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData)
+    else { return nil }
+    let layoutData = Unmanaged<CFData>.fromOpaque(layoutDataPtr).takeUnretainedValue() as Data
+    return layoutData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
+        guard
+            let keyboardLayout = buffer.baseAddress?.assumingMemoryBound(
+                to: UCKeyboardLayout.self)
+        else { return nil }
+        var deadKeyState: UInt32 = 0
+        var chars = [UniChar](repeating: 0, count: 4)
+        var length = 0
+        // modifierKeyState=0: ⌥ 조합이 아닌 기본 문자를 얻기 위함 (⌥T → "t")
+        let error = UCKeyTranslate(
+            keyboardLayout, keyCode, UInt16(kUCKeyActionDisplay), 0,
+            UInt32(LMGetKbdType()), OptionBits(kUCKeyTranslateNoDeadKeysBit),
+            &deadKeyState, chars.count, &length, &chars)
+        guard error == noErr, length > 0 else { return nil }
+        return String(utf16CodeUnits: chars, count: length)
+    }
 }
