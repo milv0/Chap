@@ -143,7 +143,7 @@ enum ChromeLauncher {
 
             // 3. Poll + Resize
             let result = axResizeNewWindow(
-                cachedPid: chromePid,
+                baselinePid: chromePid,
                 windowsBefore: windowsBefore,
                 position: position,
                 size: size,
@@ -172,7 +172,18 @@ enum ChromeLauncher {
                 Log.launcher.error(
                     "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
                 )
-                AccessibilityPermission.notifyResizeFailure()
+                // Chrome이 실행 중이라는데 baseline 창이 0개이고 새 창도 못 잡았다면,
+                // 보통 Chrome이 자동 업데이트된 뒤 재시작을 기다리며 AX에 응답하지 않는
+                // 상태다. 접근성 실패로 오인시키지 말고 재시작을 안내한다.
+                if chromeAppearsUnresponsive(
+                    chromeRunning: chromeRunning,
+                    baselineWindowCount: windowsBefore.count,
+                    foundNewWindow: false)
+                {
+                    notifyChromeUnresponsive()
+                } else {
+                    AccessibilityPermission.notifyResizeFailure()
+                }
             }
             ResizeLogger.log(
                 site: siteName, type: "url",
@@ -190,35 +201,53 @@ enum ChromeLauncher {
 
     // MARK: - AX API Resize
 
+    /// 현재 실행 중인 Chrome 프로세스의 pid. 없으면 nil.
+    private static func currentChromePid() -> pid_t? {
+        NSWorkspace.shared.runningApplications
+            .first { $0.bundleIdentifier == bundleID }?
+            .processIdentifier
+    }
+
     /// 새 Chrome 창을 폴링해 찾고, 찾으면 리사이즈. AXBoundsResult를 반환 (못 찾으면 nil).
+    ///
+    /// 폴링 중 매 반복 현재 Chrome pid를 재조회한다. Chrome이 자동 업데이트 후 relaunch되면
+    /// pid가 바뀌는데, 캐시된 pid를 고정으로 쓰면 죽은 프로세스의 창(항상 0개)만 읽어
+    /// 영원히 실패한다. pid가 baseline 소유 pid와 달라지면(relaunch 감지), 실행 중이던
+    /// Chrome이었으면 새 프로세스의 현재 창을 baseline으로 흡수해 복원된 창을 우리 창으로
+    /// 오인하지 않게 한다.
     private static func axResizeNewWindow(
-        cachedPid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
+        baselinePid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
         chromeRunning: Bool
     ) -> AXBoundsResult? {
         let maxAttempts = chromeRunning ? 120 : 100
         // 50ms / 100ms polling gives running/cold timeouts of 6s / 10s.
         let interval: useconds_t = chromeRunning ? 50_000 : 100_000
 
+        var effectiveBaseline = windowsBefore
+        var baselineOwnerPid = baselinePid
+
         for _ in 0..<maxAttempts {
-            let pid: pid_t
-            if chromeRunning {
-                pid = cachedPid
-            } else {
-                guard
-                    let app = NSWorkspace.shared.runningApplications.first(where: {
-                        $0.bundleIdentifier == bundleID
-                    })
-                else {
-                    usleep(interval)
-                    continue
-                }
-                pid = app.processIdentifier
+            guard let pid = currentChromePid() else {
+                usleep(interval)
+                continue
+            }
+
+            if pid != baselineOwnerPid {
+                Log.launcher.info(
+                    "Chrome pid changed \(baselineOwnerPid, privacy: .public) -> \(pid, privacy: .public); rebaselining"
+                )
+                // 재실행된 프로세스의 복원 창들은 baseline으로 흡수(우리가 연 --app 창만
+                // 새 창으로 남도록). 콜드 스타트였다면 흡수할 창이 없으므로 빈 baseline 유지.
+                effectiveBaseline = chromeRunning ? LauncherUtils.axWindows(pid: pid) : []
+                baselineOwnerPid = pid
+                usleep(interval)
+                continue
             }
 
             // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
             let windows = LauncherUtils.axWindows(pid: pid)
             let newWindows = windows.filter { win in
-                !windowsBefore.contains { CFEqual($0, win) }
+                !effectiveBaseline.contains { CFEqual($0, win) }
             }
             // 다른 런치가 이미 붙잡은 창은 건너뛰고, claim에 성공한 새 창만 리사이즈
             if let newWindow = claimedWindows.claimFirstUnclaimed(
@@ -234,5 +263,101 @@ enum ChromeLauncher {
             usleep(interval)
         }
         return nil
+    }
+
+    // MARK: - Unresponsive Chrome detection
+
+    /// Chrome이 실행 중(`chromeRunning`)이라고 보고되지만 baseline AX 창이 0개이고
+    /// 새 창도 감지하지 못했다면, Chrome이 자동 업데이트 후 재시작 대기 등으로 AX에
+    /// 응답하지 못하는 상태로 본다. 콜드 스타트(창 0개가 정상)나 창이 이미 있는 경우,
+    /// 새 창을 찾은 경우는 제외한다.
+    static func chromeAppearsUnresponsive(
+        chromeRunning: Bool, baselineWindowCount: Int, foundNewWindow: Bool
+    ) -> Bool {
+        chromeRunning && baselineWindowCount == 0 && !foundNewWindow
+    }
+
+    /// 로드된 Chrome Framework dylib 경로에서 버전 문자열을 추출한다.
+    /// 예: `.../Google Chrome Framework.framework/Versions/150.0.7871.189/Google Chrome Framework`
+    /// → `150.0.7871.189`. 경로에 `Versions/` 세그먼트가 없으면 nil.
+    static func frameworkVersion(fromLoadedPath path: String) -> String? {
+        guard let range = path.range(of: "Google Chrome Framework.framework/Versions/") else {
+            return nil
+        }
+        let version = path[range.upperBound...].prefix { $0 != "/" }
+        return version.isEmpty ? nil : String(version)
+    }
+
+    /// 실행 중 프로세스가 로드한 버전과 디스크 번들 버전이 다르면, 업데이트가 설치됐지만
+    /// 아직 relaunch되지 않은 상태다(현재 프로세스는 낡은 프레임워크를 계속 사용).
+    /// 어느 한쪽이라도 알 수 없으면 판단하지 않는다(false).
+    static func isPendingRelaunch(runningVersion: String?, diskVersion: String?) -> Bool {
+        guard let running = runningVersion, let disk = diskVersion,
+            !running.isEmpty, !disk.isEmpty
+        else { return false }
+        return running != disk
+    }
+
+    /// 디스크에 설치된 Chrome.app 번들 버전(CFBundleShortVersionString).
+    private static func diskBundleVersion() -> String? {
+        Bundle(path: appPath)?.infoDictionary?["CFBundleShortVersionString"] as? String
+    }
+
+    /// 실행 중 Chrome 프로세스가 로드한 Chrome Framework 버전. lsof로 로드된 dylib 경로를
+    /// 조회해 파싱한다. 무응답 의심 시에만(throttle 통과 후) 호출한다.
+    private static func runningFrameworkVersion(pid: pid_t) -> String? {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        task.arguments = ["-p", "\(pid)"]
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.standardError = Pipe()
+        do {
+            try task.run()
+        } catch {
+            return nil
+        }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+        guard let output = String(data: data, encoding: .utf8) else { return nil }
+        for line in output.split(separator: "\n")
+        where line.contains("Google Chrome Framework.framework/Versions/") {
+            if let version = frameworkVersion(fromLoadedPath: String(line)) {
+                return version
+            }
+        }
+        return nil
+    }
+
+    private static let restartNoticeLock = NSLock()
+    private static var lastRestartNoticeAt: CFAbsoluteTime = 0
+    /// 큐에 여러 실패가 연속으로 쌓여도 안내가 도배되지 않도록 최소 간격을 둔다.
+    private static let restartNoticeInterval: CFAbsoluteTime = 60
+
+    private static func notifyChromeUnresponsive() {
+        restartNoticeLock.lock()
+        let now = CFAbsoluteTimeGetCurrent()
+        let shouldShow = now - lastRestartNoticeAt >= restartNoticeInterval
+        if shouldShow { lastRestartNoticeAt = now }
+        restartNoticeLock.unlock()
+
+        guard shouldShow else { return }
+
+        // 무응답 의심 시점의 현재 pid로 실행 버전을 조회해 디스크 버전과 비교.
+        // 불일치가 확인되면 원인을 확정해 안내에 버전을 함께 보여준다.
+        let diskVersion = diskBundleVersion()
+        let runningVersion = currentChromePid().flatMap { runningFrameworkVersion(pid: $0) }
+        let pendingRelaunch = isPendingRelaunch(
+            runningVersion: runningVersion, diskVersion: diskVersion)
+
+        var info =
+            "Chrome이 창 크기 조정 요청에 일시적으로 응답하지 않습니다. 편하실 때 주소창에 chrome://restart 를 입력하거나 우측 상단 ⋮ 메뉴에서 재실행하면(열려 있던 탭은 그대로 복원) Chap이 자동으로 인식해 정상화됩니다. 작업 중인 창을 닫을 필요는 없습니다."
+        if pendingRelaunch, let runningVersion, let diskVersion {
+            info =
+                "Chrome 업데이트(\(diskVersion))가 설치됐지만 실행 중인 버전(\(runningVersion))이 아직 재실행되지 않아 창 크기 조정이 일시적으로 동작하지 않습니다.\n\n"
+                + info
+        }
+
+        LauncherUtils.showAlert(message: "Chrome 업데이트 재실행 안내", info: info)
     }
 }
