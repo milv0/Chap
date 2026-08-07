@@ -696,6 +696,26 @@ struct SettingsView: View {
     }
 
     private func exportConfig() {
+        // 디스크 파일이 아닌 현재 편집 상태를 내보내되, 다시 Import 가능한 Config만 허용한다.
+        let config = Config(
+            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+        let validation = validateConfigForExport(config)
+        guard validation.isValid else {
+            let errorMessages = validation.errors.map { issue in
+                let siteName =
+                    issue.siteIndex < vm.sites.count ? vm.sites[issue.siteIndex].name : "?"
+                return "• \(siteName): \(issue.message)"
+            }.joined(separator: "\n")
+            let alert = NSAlert()
+            alert.messageText = "Cannot export config"
+            alert.informativeText =
+                "Please fix the following errors before exporting:\n\n\(errorMessages)"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            return
+        }
+
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "chap.json"
@@ -703,9 +723,6 @@ struct SettingsView: View {
             FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
-        // 디스크 파일이 아닌 현재 편집 상태를 내보냄 (저장 안 된 변경분 포함)
-        let config = Config(
-            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         do {

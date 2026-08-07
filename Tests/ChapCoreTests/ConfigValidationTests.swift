@@ -331,4 +331,24 @@ struct ConfigValidationTests {
         let result = validateConfig(Config(sites: sites))
         #expect(!result.isValid)
     }
+
+    // MARK: - Export Validation
+
+    @Test("invalid config is blocked from export")
+    func invalidConfigIsBlockedFromExport() {
+        let config = Config(sites: [
+            Site(name: "", url: "https://example.com", width: 800, height: 600)
+        ])
+
+        #expect(!validateConfigForExport(config).isValid)
+    }
+
+    @Test("valid config is allowed for export")
+    func validConfigIsAllowedForExport() {
+        let config = Config(sites: [
+            Site(name: "Example", url: "https://example.com", width: 800, height: 600)
+        ])
+
+        #expect(validateConfigForExport(config).isValid)
+    }
 }

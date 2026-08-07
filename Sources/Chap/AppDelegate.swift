@@ -508,13 +508,19 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     }
 
     @objc func restartApp() {
-        let appPath = Bundle.main.bundlePath
-        // 1초 후 재실행하는 백그라운드 프로세스를 띄운 후 종료
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", "sleep 1; open \"\(appPath)\""]
-        try? task.run()
-        NSApp.terminate(nil)
+        task.arguments = AppLifecycleSupport.restartTaskArguments(
+            appPath: Bundle.main.bundlePath)
+        do {
+            try task.run()
+            NSApp.terminate(nil)
+        } catch {
+            Log.app.error(
+                "Failed to schedule app restart: \(error.localizedDescription, privacy: .public)")
+            LauncherUtils.showAlert(
+                message: "Failed to restart Chap", info: error.localizedDescription)
+        }
     }
 
     @objc func uninstallApp() {
@@ -527,24 +533,63 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         alert.alertStyle = .critical
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
-        // Login Item 해제
-        applyLoginItem(enabled: false)
+        let appURL = URL(fileURLWithPath: Bundle.main.bundlePath)
+        NSWorkspace.shared.recycle([appURL]) { [weak self] _, recycleError in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                guard recycleError == nil else {
+                    let detail = recycleError?.localizedDescription ?? "Unknown error"
+                    Log.app.error("Failed to move Chap to Trash: \(detail, privacy: .public)")
+                    let failureAlert = NSAlert()
+                    failureAlert.messageText = "Could not uninstall Chap"
+                    failureAlert.informativeText =
+                        "Chap was not moved to the Trash. Your settings were kept.\n\nError: \(detail)"
+                    failureAlert.alertStyle = .warning
+                    failureAlert.addButton(withTitle: "OK")
+                    failureAlert.runModal()
+                    return
+                }
 
-        // 권한 리셋
+                // 앱이 휴지통으로 옮겨진 뒤에만 로그인 항목, 권한, 설정을 정리한다.
+                self.applyLoginItem(enabled: false)
+                self.resetAppleEventsPermission()
+                do {
+                    try AppLifecycleSupport.removeConfigurationFiles(configPath: self.configPath)
+                } catch {
+                    Log.config.error(
+                        "Failed to remove config during uninstall: \(error.localizedDescription, privacy: .public)"
+                    )
+                    let cleanupAlert = NSAlert()
+                    cleanupAlert.messageText = "Chap moved to Trash"
+                    cleanupAlert.informativeText =
+                        "Some settings could not be removed. Delete these files manually:\n\(self.configPath)\n\(self.configPath).bak\n\nError: \(error.localizedDescription)"
+                    cleanupAlert.alertStyle = .warning
+                    cleanupAlert.addButton(withTitle: "OK")
+                    cleanupAlert.runModal()
+                }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    private func resetAppleEventsPermission() {
         let resetTask = Process()
         resetTask.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
         resetTask.arguments = [
             "reset", "AppleEvents", Bundle.main.bundleIdentifier ?? "com.mingyupark.Chap",
         ]
-        try? resetTask.run()
-        resetTask.waitUntilExit()
-        // 설정 파일 삭제
-        try? FileManager.default.removeItem(atPath: configPath)
-        try? FileManager.default.removeItem(atPath: configPath + ".bak")
-
-        // 앱을 Trash로 이동
-        NSWorkspace.shared.recycle([URL(fileURLWithPath: Bundle.main.bundlePath)]) { _, _ in
-            NSApp.terminate(nil)
+        do {
+            try resetTask.run()
+            resetTask.waitUntilExit()
+            if resetTask.terminationStatus != 0 {
+                Log.app.warning(
+                    "AppleEvents permission reset exited with status \(resetTask.terminationStatus, privacy: .public)"
+                )
+            }
+        } catch {
+            Log.app.warning(
+                "Failed to reset AppleEvents permission: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
