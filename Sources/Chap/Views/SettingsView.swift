@@ -250,16 +250,13 @@ struct SettingsView: View {
 
             Spacer()
 
-            Button(action: { showGuide = true }) {
-                Image(systemName: "questionmark.circle")
-                    .font(.system(size: 13))
-                    .foregroundColor(DS.textSecondary)
-            }
-            .buttonStyle(.plain)
+            ToolbarIconButton(
+                icon: "questionmark.circle", color: DS.textSecondary,
+                action: { showGuide = true }
+            )
             .help("User Guide")
-            .keyboardShortcut("/", modifiers: .command)
 
-            Menu {
+            ToolbarIconMenu(icon: "ellipsis.circle") {
                 Button("Import from File...") { importConfig() }
                 Button("Paste JSON...") {
                     pasteJSONText = ""
@@ -270,13 +267,8 @@ struct SettingsView: View {
                 Divider()
                 Button("Restart App") { restartApp() }
                 Button("Uninstall...") { uninstallApp() }
-            } label: {
-                Image(systemName: "folder")
-                    .font(.system(size: 13))
-                    .foregroundColor(DS.textSecondary)
             }
-            .menuStyle(.borderlessButton)
-            .frame(width: 24)
+            .help("Import, export, and app actions")
 
             if isEditing {
                 Text("Editing")
@@ -285,6 +277,13 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
             }
+
+            // ToolbarIconButton은 탭 제스처 기반이라 키보드 단축키를 직접 못 받으므로
+            // ⌘/ 는 숨김 버튼으로 연결 (아래 Return/⌘S와 같은 패턴)
+            Button("") { showGuide = true }
+                .keyboardShortcut("/", modifiers: .command)
+                .frame(width: 0, height: 0)
+                .opacity(0)
 
             Button("") {
                 save(showAlerts: true)
@@ -371,8 +370,8 @@ struct SettingsView: View {
                         guideRow(
                             icon: "square.and.arrow.down",
                             text: isGuideEnglish
-                                ? "Import/export JSON from the folder menu"
-                                : "폴더 메뉴에서 JSON 가져오기/내보내기")
+                                ? "Import/export JSON from the ··· menu"
+                                : "··· 메뉴에서 JSON 가져오기/내보내기")
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
