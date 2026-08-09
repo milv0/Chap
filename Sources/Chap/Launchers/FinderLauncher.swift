@@ -1,21 +1,62 @@
 import Cocoa
 import os
 
-/// Finder 폴더를 열고 윈도우 크기를 설정하는 런처
-/// 단일 AppleScript로 열기 + 리사이즈를 동시에 처리하므로 딜레이가 필요 없음
+/// Finder 폴더를 열고 윈도우 크기를 설정하는 런처.
 enum FinderLauncher {
-    /// Finder로 폴더를 열고 즉시 윈도우 bounds를 설정
-    /// - Parameters:
-    ///   - path: 열 폴더의 POSIX 경로 (틸드 확장 완료된 상태)
-    ///   - bounds: AppleScript bounds (left, top, right, bottom) — 좌상단 원점 좌표계
+    private static let timeout: TimeInterval = 10
+    private static let outputLimit = 32 * 1024
+
+    /// Finder로 폴더를 열고 즉시 윈도우 bounds를 설정한다.
     static func openAndResize(path: String, bounds: (Int, Int, Int, Int)) {
-        // AppleScript 큰따옴표 문자열 내 이스케이프: \ → \\, " → \"
+        let script = finderScript(path: path, bounds: bounds)
+
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                let result = try ProcessRunner.run(
+                    executable: "/usr/bin/osascript",
+                    arguments: ["-e", script],
+                    timeout: timeout,
+                    outputLimit: outputLimit)
+
+                if result.timedOut {
+                    Log.launcher.error("Finder resize timed out")
+                    LauncherUtils.showAlert(
+                        message: "Finder did not respond",
+                        info:
+                            "Finder 창 열기와 크기 조정이 \(Int(timeout))초 안에 완료되지 않았습니다."
+                    )
+                    return
+                }
+
+                guard result.exitStatus == 0 else {
+                    let detail =
+                        result.stderrString.isEmpty
+                        ? "Finder automation failed."
+                        : result.stderrString
+                    Log.launcher.error("Finder resize failed: \(detail, privacy: .private)")
+                    LauncherUtils.showAlert(
+                        message: "Could not open or resize Finder",
+                        info: detail
+                            + "\n\nSystem Settings → Privacy & Security → Automation에서 Chap의 Finder 제어 권한을 확인해주세요."
+                    )
+                    return
+                }
+            } catch {
+                Log.launcher.error(
+                    "Failed to run Finder script: \(error.localizedDescription, privacy: .public)")
+                LauncherUtils.showAlert(
+                    message: "Failed to run Finder automation", info: error.localizedDescription)
+            }
+        }
+    }
+
+    /// AppleScript 문자열 리터럴에 들어갈 경로를 이스케이프해 스크립트를 만든다.
+    static func finderScript(path: String, bounds: (Int, Int, Int, Int)) -> String {
         let posixPath =
             path
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
-        // AppleScript: Finder 활성화 → 폴더 열기 → 윈도우 크기 설정 (한 번에 실행)
-        let script = """
+        return """
             tell application "Finder"
                 set targetFolder to (POSIX file "\(posixPath)") as alias
                 open targetFolder
@@ -23,28 +64,5 @@ enum FinderLauncher {
                 activate
             end tell
             """
-
-        // 백그라운드에서 AppleScript 실행
-        DispatchQueue.global().async {
-            let task = Process()
-            let pipe = Pipe()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-            task.arguments = ["-e", script]
-            task.standardError = pipe
-            do {
-                try task.run()
-                // 파이프 버퍼 데드락 방지: waitUntilExit 전에 출력을 먼저 읽음
-                let errData = pipe.fileHandleForReading.readDataToEndOfFile()
-                task.waitUntilExit()
-                // 실패 시 에러 로깅 (사용자에게 alert 안 띄움 — Finder는 거의 실패 안 함)
-                if task.terminationStatus != 0 {
-                    let err = String(data: errData, encoding: .utf8) ?? ""
-                    Log.launcher.error("Finder resize failed: \(err, privacy: .private)")
-                }
-            } catch {
-                Log.launcher.error(
-                    "Failed to run Finder script: \(error.localizedDescription, privacy: .public)")
-            }
-        }
     }
 }

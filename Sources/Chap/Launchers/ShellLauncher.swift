@@ -1,49 +1,49 @@
 import Cocoa
 import os
 
-/// 쉘 스크립트를 실행하는 런처
-/// 윈도우 리사이즈 없음 — 스크립트가 반드시 윈도우를 생성하지 않으므로
+/// 쉘 스크립트를 실행하는 런처.
+/// 스크립트는 60초 timeout과 stdout/stderr 각각 64 KiB 제한 아래 실행된다.
 enum ShellLauncher {
-    /// 사용자가 설정한 쉘 스크립트를 실행
-    /// - Parameter site: 실행할 사이트 정보 (script 필드 사용)
+    private static let timeout: TimeInterval = 60
+    private static let outputLimit = 64 * 1024
+
     static func launch(_ site: Site) {
-        // 스크립트 유효성 확인
         guard let script = site.script, !script.isEmpty else {
             Log.launcher.error("No script configured for \(site.name, privacy: .private)")
             LauncherUtils.showAlert(message: "No script configured for \"\(site.name)\".")
             return
         }
 
-        // 사용자의 기본 쉘 사용 (SHELL 환경변수, 없으면 zsh)
         let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: shell)
-        process.arguments = ["-c", script]
-        let pipe = Pipe()
-        process.standardError = pipe
-        process.standardOutput = pipe
-
-        // 백그라운드에서 실행 (UI 블로킹 방지)
-        DispatchQueue.global().async {
+        DispatchQueue.global(qos: .utility).async {
             do {
-                try process.run()
-                // 파이프 버퍼가 가득 차면 자식 프로세스가 블록되므로
-                // waitUntilExit 전에 출력을 모두 읽어야 데드락이 없음
-                let outputData = pipe.fileHandleForReading.readDataToEndOfFile()
-                process.waitUntilExit()
-                // 0이 아닌 종료 코드 = 실패 → 에러 내용을 alert로 표시
-                if process.terminationStatus != 0 {
-                    let errorStr = String(data: outputData, encoding: .utf8) ?? "Unknown error"
+                let result = try ProcessRunner.run(
+                    executable: shell,
+                    arguments: ["-c", script],
+                    timeout: timeout,
+                    outputLimit: outputLimit)
+
+                if result.timedOut {
                     Log.launcher.error(
-                        "Shell script failed for \(site.name, privacy: .private) (exit \(process.terminationStatus)): \(errorStr, privacy: .private)"
+                        "Shell script timed out for \(site.name, privacy: .private) after \(timeout, privacy: .public)s"
                     )
                     LauncherUtils.showAlert(
-                        message: "Script failed (exit \(process.terminationStatus))", info: errorStr
-                    )
-                } else {
-                    Log.launcher.notice(
-                        "Shell script succeeded for \(site.name, privacy: .private)")
+                        message: "Script timed out",
+                        info: "스크립트가 \(Int(timeout))초 안에 끝나지 않아 중단했습니다.")
+                    return
                 }
+
+                guard result.exitStatus == 0 else {
+                    let output = failureOutput(from: result)
+                    Log.launcher.error(
+                        "Shell script failed for \(site.name, privacy: .private) (exit \(result.exitStatus)): \(output, privacy: .private)"
+                    )
+                    LauncherUtils.showAlert(
+                        message: "Script failed (exit \(result.exitStatus))", info: output)
+                    return
+                }
+
+                Log.launcher.notice("Shell script succeeded for \(site.name, privacy: .private)")
             } catch {
                 Log.launcher.error(
                     "Failed to execute script for \(site.name, privacy: .private): \(error.localizedDescription, privacy: .public)"
@@ -52,5 +52,14 @@ enum ShellLauncher {
                     message: "Failed to execute script.", info: error.localizedDescription)
             }
         }
+    }
+
+    private static func failureOutput(from result: ProcessRunner.Result) -> String {
+        let raw = result.stderr.isEmpty ? result.stdoutString : result.stderrString
+        let fallback = raw.isEmpty ? "No error output." : raw
+        if result.stderrTruncated || result.stdoutTruncated {
+            return fallback + "\n\n… output truncated"
+        }
+        return fallback
     }
 }
