@@ -29,6 +29,16 @@ enum AXIntrospection {
         stringAttribute(window, kAXTitleAttribute as CFString)
     }
 
+    /// pid relaunch 전후에 복원된 창을 대응시키기 위한 안정적인 메타데이터 fingerprint.
+    /// AX element identity는 pid가 바뀌면 유지되지 않지만 title/role/subrole은 대체로 유지된다.
+    static func windowFingerprint(_ window: AXUIElement) -> String {
+        [
+            stringAttribute(window, kAXTitleAttribute as CFString),
+            stringAttribute(window, kAXRoleAttribute as CFString),
+            stringAttribute(window, kAXSubroleAttribute as CFString),
+        ].joined(separator: "|")
+    }
+
     /// 창의 role/subrole/position/size/settable 여부 한 줄 요약 (진단 로그용).
     static func windowSummary(_ window: AXUIElement) -> String {
         let role = stringAttribute(window, kAXRoleAttribute as CFString)

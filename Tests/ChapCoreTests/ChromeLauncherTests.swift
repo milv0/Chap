@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import Chap
@@ -67,5 +68,64 @@ struct ChromeLauncherTests {
         #expect(!ChromeLauncher.isPendingRelaunch(runningVersion: nil, diskVersion: "151.0"))
         #expect(!ChromeLauncher.isPendingRelaunch(runningVersion: "150.0", diskVersion: nil))
         #expect(!ChromeLauncher.isPendingRelaunch(runningVersion: "", diskVersion: "151.0"))
+    }
+}
+
+@Suite("Chrome Runtime Observation")
+struct ChromeRuntimeObservationTests {
+    // MARK: - Runtime process and relaunch window selection
+
+    @Test("selects the newest live Chrome process")
+    func selectsNewestProcess() {
+        let candidates = [
+            ChromeProcessCandidate(pid: 10, launchDate: Date(timeIntervalSince1970: 10)),
+            ChromeProcessCandidate(pid: 20, launchDate: Date(timeIntervalSince1970: 20)),
+            ChromeProcessCandidate(
+                pid: 30, launchDate: Date(timeIntervalSince1970: 30), isTerminated: true),
+        ]
+
+        #expect(ChromeObservationPolicy.currentProcess(from: candidates)?.pid == 20)
+    }
+
+    @Test("relaunch matching subtracts restored fingerprints and keeps requested window")
+    func relaunchFingerprintMatching() {
+        let baseline = ["Mail|window", "Docs|window"]
+        let current = ["Docs|window", "New App|window", "Mail|window"]
+
+        #expect(
+            ChromeObservationPolicy.candidateIndicesAfterRelaunch(
+                chromeWasRunning: true,
+                baselineFingerprints: baseline,
+                currentFingerprints: current) == [1])
+    }
+
+    @Test("relaunch matching handles duplicate window fingerprints as a multiset")
+    func relaunchDuplicateFingerprints() {
+        let baseline = ["Untitled|window", "Untitled|window"]
+        let current = ["Untitled|window", "Requested|window", "Untitled|window"]
+
+        #expect(
+            ChromeObservationPolicy.candidateIndicesAfterRelaunch(
+                chromeWasRunning: true,
+                baselineFingerprints: baseline,
+                currentFingerprints: current) == [1])
+    }
+
+    @Test("cold launch treats every current window as a candidate")
+    func coldLaunchCandidates() {
+        #expect(
+            ChromeObservationPolicy.candidateIndicesAfterRelaunch(
+                chromeWasRunning: false,
+                baselineFingerprints: ["Old"],
+                currentFingerprints: ["First", "Second"]) == [0, 1])
+    }
+
+    @Test("parses framework version from lsof output")
+    func parsesLsofOutput() {
+        let output = """
+            Chrome 42 user txt REG /usr/lib/libSystem.B.dylib
+            Chrome 42 user txt REG /Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework/Versions/151.0.7922.76/Google Chrome Framework
+            """
+        #expect(ChromeLauncher.frameworkVersion(fromLsofOutput: output) == "151.0.7922.76")
     }
 }

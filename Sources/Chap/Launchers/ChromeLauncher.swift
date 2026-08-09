@@ -11,6 +11,9 @@ enum ChromeLauncher {
     private static let appPath = "/Applications/Google Chrome.app"
     private static let bundleID = "com.google.Chrome"
     private static let appName = "Google Chrome"
+    private static let runtime = ChromeRuntime.live
+    private static let diagnosticQueue = DispatchQueue(
+        label: "com.mingyupark.Chap.ChromeDiagnostics", qos: .utility)
 
     /// 단일 request coordinator serial queue.
     /// Process launch도 이 큐 안에서 수행하여 요청-창 1:1 순서를 보장한다.
@@ -109,13 +112,13 @@ enum ChromeLauncher {
             )
 
             // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록
-            let chromeApp = NSWorkspace.shared.runningApplications.first {
-                $0.bundleIdentifier == bundleID
-            }
-            let chromeRunning = chromeApp != nil
-            let chromePid = chromeApp?.processIdentifier ?? -1
-            let windowsBefore: [AXUIElement] =
-                chromeRunning ? LauncherUtils.captureExistingWindows(pid: chromePid) : []
+            let chromeProcess = currentChromeProcess(runtime: runtime)
+            let chromeRunning = chromeProcess != nil
+            let chromePid = chromeProcess?.pid ?? -1
+            let windowsBefore =
+                chromeRunning
+                ? captureExistingWindows(pid: chromePid, runtime: runtime)
+                : []
 
             Log.launcher.info(
                 "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
@@ -147,7 +150,8 @@ enum ChromeLauncher {
                 windowsBefore: windowsBefore,
                 position: position,
                 size: size,
-                chromeRunning: chromeRunning
+                chromeRunning: chromeRunning,
+                runtime: runtime
             )
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
             let resultLabel = result?.level.rawValue ?? "failed"
@@ -180,7 +184,8 @@ enum ChromeLauncher {
                     baselineWindowCount: windowsBefore.count,
                     foundNewWindow: false)
                 {
-                    notifyChromeUnresponsive()
+                    scheduleChromeUnresponsiveNotice(
+                        pid: currentChromeProcess(runtime: runtime)?.pid)
                 } else {
                     AccessibilityPermission.notifyResizeFailure()
                 }
@@ -201,55 +206,64 @@ enum ChromeLauncher {
 
     // MARK: - AX API Resize
 
-    /// 현재 실행 중인 Chrome 프로세스의 pid. 없으면 nil.
-    private static func currentChromePid() -> pid_t? {
-        NSWorkspace.shared.runningApplications
-            .first { $0.bundleIdentifier == bundleID }?
-            .processIdentifier
+    private static func currentChromeProcess(runtime: ChromeRuntime) -> ChromeProcessCandidate? {
+        ChromeObservationPolicy.currentProcess(from: runtime.processes(bundleID))
+    }
+
+    private static func captureExistingWindows(pid: pid_t, runtime: ChromeRuntime)
+        -> [AXUIElement]
+    {
+        for attempt in 0..<5 {
+            let windows = runtime.windows(pid)
+            if !windows.isEmpty { return windows }
+            if attempt < 4 { runtime.sleep(30_000) }
+        }
+        return []
     }
 
     /// 새 Chrome 창을 폴링해 찾고, 찾으면 리사이즈. AXBoundsResult를 반환 (못 찾으면 nil).
-    ///
-    /// 폴링 중 매 반복 현재 Chrome pid를 재조회한다. Chrome이 자동 업데이트 후 relaunch되면
-    /// pid가 바뀌는데, 캐시된 pid를 고정으로 쓰면 죽은 프로세스의 창(항상 0개)만 읽어
-    /// 영원히 실패한다. pid가 baseline 소유 pid와 달라지면(relaunch 감지), 실행 중이던
-    /// Chrome이었으면 새 프로세스의 현재 창을 baseline으로 흡수해 복원된 창을 우리 창으로
-    /// 오인하지 않게 한다.
+    /// pid가 바뀌면 이전 창 fingerprint의 multiset을 새 pid 창에서 차감하여 복원 창은
+    /// baseline으로, 남는 창은 요청 후보로 취급한다. 따라서 pid 전환 직후 이미 생성된
+    /// --app 창을 baseline에 흡수하는 race를 피한다.
     private static func axResizeNewWindow(
         baselinePid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
-        chromeRunning: Bool
+        chromeRunning: Bool, runtime: ChromeRuntime
     ) -> AXBoundsResult? {
         let maxAttempts = chromeRunning ? 120 : 100
-        // 50ms / 100ms polling gives running/cold timeouts of 6s / 10s.
         let interval: useconds_t = chromeRunning ? 50_000 : 100_000
-
-        var effectiveBaseline = windowsBefore
+        let baselineFingerprints = windowsBefore.map(AXIntrospection.windowFingerprint)
         var baselineOwnerPid = baselinePid
+        var didRelaunch = false
 
         for _ in 0..<maxAttempts {
-            guard let pid = currentChromePid() else {
-                usleep(interval)
+            guard let process = currentChromeProcess(runtime: runtime) else {
+                runtime.sleep(interval)
                 continue
             }
-
+            let pid = process.pid
             if pid != baselineOwnerPid {
                 Log.launcher.info(
-                    "Chrome pid changed \(baselineOwnerPid, privacy: .public) -> \(pid, privacy: .public); rebaselining"
+                    "Chrome pid changed \(baselineOwnerPid, privacy: .public) -> \(pid, privacy: .public); matching restored windows"
                 )
-                // 재실행된 프로세스의 복원 창들은 baseline으로 흡수(우리가 연 --app 창만
-                // 새 창으로 남도록). 콜드 스타트였다면 흡수할 창이 없으므로 빈 baseline 유지.
-                effectiveBaseline = chromeRunning ? LauncherUtils.axWindows(pid: pid) : []
                 baselineOwnerPid = pid
-                usleep(interval)
-                continue
+                didRelaunch = true
             }
 
-            // 실행 전 윈도우 집합과의 차집합으로 새 윈도우를 특정
-            let windows = LauncherUtils.axWindows(pid: pid)
-            let newWindows = windows.filter { win in
-                !effectiveBaseline.contains { CFEqual($0, win) }
+            let windows = runtime.windows(pid)
+            let newWindows: [AXUIElement]
+            if didRelaunch {
+                let currentFingerprints = windows.map(AXIntrospection.windowFingerprint)
+                let candidateIndices = ChromeObservationPolicy.candidateIndicesAfterRelaunch(
+                    chromeWasRunning: chromeRunning,
+                    baselineFingerprints: baselineFingerprints,
+                    currentFingerprints: currentFingerprints)
+                newWindows = candidateIndices.map { windows[$0] }
+            } else {
+                newWindows = windows.filter { win in
+                    !windowsBefore.contains { CFEqual($0, win) }
+                }
             }
-            // 다른 런치가 이미 붙잡은 창은 건너뛰고, claim에 성공한 새 창만 리사이즈
+
             if let newWindow = claimedWindows.claimFirstUnclaimed(
                 from: newWindows, liveWindows: windows)
             {
@@ -260,7 +274,7 @@ enum ChromeLauncher {
                 )
                 return boundsResult
             }
-            usleep(interval)
+            runtime.sleep(interval)
         }
         return nil
     }
@@ -303,23 +317,7 @@ enum ChromeLauncher {
         Bundle(path: appPath)?.infoDictionary?["CFBundleShortVersionString"] as? String
     }
 
-    /// 실행 중 Chrome 프로세스가 로드한 Chrome Framework 버전. lsof로 로드된 dylib 경로를
-    /// 조회해 파싱한다. 무응답 의심 시에만(throttle 통과 후) 호출한다.
-    private static func runningFrameworkVersion(pid: pid_t) -> String? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
-        task.arguments = ["-p", "\(pid)"]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-        do {
-            try task.run()
-        } catch {
-            return nil
-        }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        task.waitUntilExit()
-        guard let output = String(data: data, encoding: .utf8) else { return nil }
+    static func frameworkVersion(fromLsofOutput output: String) -> String? {
         for line in output.split(separator: "\n")
         where line.contains("Google Chrome Framework.framework/Versions/") {
             if let version = frameworkVersion(fromLoadedPath: String(line)) {
@@ -329,24 +327,41 @@ enum ChromeLauncher {
         return nil
     }
 
+    /// lsof는 전용 diagnostics queue에서 실행되며 ProcessRunner가 timeout과 출력 상한을
+    /// 강제한다. 진단 실패는 resize/launch 결과에 영향을 주지 않는다.
+    private static func runningFrameworkVersion(pid: pid_t) -> String? {
+        guard
+            let result = try? ProcessRunner.run(
+                executable: "/usr/sbin/lsof",
+                arguments: ["-p", "\(pid)"],
+                timeout: 2,
+                outputLimit: 256 * 1024),
+            !result.timedOut,
+            result.exitStatus == 0
+        else { return nil }
+        return frameworkVersion(fromLsofOutput: result.stdoutString)
+    }
+
     private static let restartNoticeLock = NSLock()
     private static var lastRestartNoticeAt: CFAbsoluteTime = 0
-    /// 큐에 여러 실패가 연속으로 쌓여도 안내가 도배되지 않도록 최소 간격을 둔다.
     private static let restartNoticeInterval: CFAbsoluteTime = 60
 
-    private static func notifyChromeUnresponsive() {
+    private static func scheduleChromeUnresponsiveNotice(pid: pid_t?) {
         restartNoticeLock.lock()
         let now = CFAbsoluteTimeGetCurrent()
         let shouldShow = now - lastRestartNoticeAt >= restartNoticeInterval
         if shouldShow { lastRestartNoticeAt = now }
         restartNoticeLock.unlock()
-
         guard shouldShow else { return }
 
-        // 무응답 의심 시점의 현재 pid로 실행 버전을 조회해 디스크 버전과 비교.
-        // 불일치가 확인되면 원인을 확정해 안내에 버전을 함께 보여준다.
+        diagnosticQueue.async {
+            notifyChromeUnresponsive(pid: pid)
+        }
+    }
+
+    private static func notifyChromeUnresponsive(pid: pid_t?) {
         let diskVersion = diskBundleVersion()
-        let runningVersion = currentChromePid().flatMap { runningFrameworkVersion(pid: $0) }
+        let runningVersion = pid.flatMap { runningFrameworkVersion(pid: $0) }
         let pendingRelaunch = isPendingRelaunch(
             runningVersion: runningVersion, diskVersion: diskVersion)
 
