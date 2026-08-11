@@ -22,3 +22,8 @@ Chap.json
 *.app
 logs/
 *.DS_Store
+
+# Direct-distribution artifacts
+build/
+*.dmg
+*.xcarchive
