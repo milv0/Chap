@@ -8,8 +8,9 @@ import Foundation
 /// CSV 열: timestamp,site,type,app_state,attempt,delay,total_time,result,window_count,display,
 /// size,detail
 ///
-/// `detail`은 마지막 열로 추가됐다. 헤더는 파일 생성 시 한 번만 쓰므로 그 이전에 만들어진
-/// 파일에는 헤더에 `detail`이 없다. 1~11열 위치는 그대로여서 기존 분석은 계속 동작한다.
+/// `detail`은 마지막 열로 추가됐다. Chrome은 판정 근거 뒤에 단계별 timing key=value를 붙인다.
+/// 헤더는 파일 생성 시 한 번만 쓰므로 그 이전에 만들어진 파일에는 헤더에 `detail`이 없다.
+/// 1~11열 위치는 그대로여서 기존 분석은 계속 동작한다.
 enum ResizeLogger {
     #if DEBUG
         private static let fileLock = NSLock()

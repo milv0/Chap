@@ -2,6 +2,52 @@ import ApplicationServices
 import Cocoa
 import os
 
+struct ChromePIDTransition: Equatable {
+    let fromPID: pid_t
+    let toPID: pid_t
+    let elapsedSinceLaunch: TimeInterval
+}
+
+struct ChromeLaunchTiming: Equatable {
+    let baselineDuration: TimeInterval
+    let launchRequestDuration: TimeInterval
+    let windowWaitDuration: TimeInterval
+    let boundsApplyDuration: TimeInterval
+    let baselinePID: pid_t
+    let pidTransitions: [ChromePIDTransition]
+
+    var diagnostic: String {
+        let firstTransition = pidTransitions.first?.elapsedSinceLaunch
+        let baselineReturn =
+            pidTransitions
+            .dropFirst()
+            .first { $0.toPID == baselinePID }?
+            .elapsedSinceLaunch
+        let pidPath = ([baselinePID] + pidTransitions.map(\.toPID))
+            .map { $0 < 0 ? "none" : String($0) }
+            .joined(separator: ">")
+
+        return
+            "timing baseline=\(seconds(baselineDuration))s"
+            + " launch=\(seconds(launchRequestDuration))s"
+            + " window_wait=\(seconds(windowWaitDuration))s"
+            + " ax=\(seconds(boundsApplyDuration))s"
+            + " pid_switches=\(pidTransitions.count)"
+            + " first_pid_event=\(optionalSeconds(firstTransition))"
+            + " baseline_pid_return=\(optionalSeconds(baselineReturn))"
+            + " pid_path=\(pidPath)"
+    }
+
+    private func seconds(_ value: TimeInterval) -> String {
+        String(format: "%.3f", locale: Locale(identifier: "en_US_POSIX"), value)
+    }
+
+    private func optionalSeconds(_ value: TimeInterval?) -> String {
+        guard let value else { return "na" }
+        return "\(seconds(value))s"
+    }
+}
+
 /// Chrome --app 모드로 URL을 열고 AX API로 윈도우 크기를 조정하는 런처
 ///
 /// 모든 Chrome launch 요청은 단일 serial queue(requestCoordinator)에서 직렬 처리된다:
@@ -25,6 +71,13 @@ enum ChromeLauncher {
     /// 여러 Chrome 런치가 겹칠 때 같은 새 창을 두 런치가 붙잡는 오배정을 방어적으로 막는다.
     /// requestCoordinator가 직렬화하지만, 방어적으로 유지.
     private static let claimedWindows = ClaimedWindowRegistry()
+
+    private struct WindowResizeObservation {
+        let result: AXBoundsResult?
+        let windowWaitDuration: TimeInterval
+        let boundsApplyDuration: TimeInterval
+        let pidTransitions: [ChromePIDTransition]
+    }
 
     private final class ClaimedWindowRegistry {
         private let lock = NSLock()
@@ -112,6 +165,7 @@ enum ChromeLauncher {
             )
 
             // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록
+            let baselineStartedAt = CFAbsoluteTimeGetCurrent()
             let chromeProcess = currentChromeProcess(runtime: runtime)
             let chromeRunning = chromeProcess != nil
             let chromePid = chromeProcess?.pid ?? -1
@@ -119,12 +173,14 @@ enum ChromeLauncher {
                 chromeRunning
                 ? captureExistingWindows(pid: chromePid, runtime: runtime)
                 : []
+            let baselineDuration = CFAbsoluteTimeGetCurrent() - baselineStartedAt
 
             Log.launcher.info(
                 "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
             )
 
             // 2. Process launch (큐 안에서 수행)
+            let launchStartedAt = CFAbsoluteTimeGetCurrent()
             do {
                 try runChromeApp(url: siteUrl)
             } catch {
@@ -137,6 +193,8 @@ enum ChromeLauncher {
                 onComplete?()
                 return
             }
+            let launchCompletedAt = CFAbsoluteTimeGetCurrent()
+            let launchRequestDuration = launchCompletedAt - launchStartedAt
 
             guard AccessibilityPermission.isTrusted else {
                 Log.launcher.info("Accessibility not granted — launching without resize")
@@ -145,17 +203,31 @@ enum ChromeLauncher {
             }
 
             // 3. Poll + Resize
-            let result = axResizeNewWindow(
+            let observation = axResizeNewWindow(
                 baselinePid: chromePid,
                 windowsBefore: windowsBefore,
                 position: position,
                 size: size,
                 chromeRunning: chromeRunning,
+                launchCompletedAt: launchCompletedAt,
                 runtime: runtime
             )
+            let result = observation.result
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
             let resultLabel = result?.level.rawValue ?? "failed"
-            let detail = result?.diagnostic ?? "no new window found"
+            let timing = ChromeLaunchTiming(
+                baselineDuration: baselineDuration,
+                launchRequestDuration: launchRequestDuration,
+                windowWaitDuration: observation.windowWaitDuration,
+                boundsApplyDuration: observation.boundsApplyDuration,
+                baselinePID: chromePid,
+                pidTransitions: observation.pidTransitions)
+            let timingDiagnostic = timing.diagnostic
+            let resultDetail = result?.diagnostic ?? "no new window found"
+            let detail = "\(resultDetail) | \(timingDiagnostic)"
+            Log.launcher.info(
+                "Chrome stage timing for \(siteName, privacy: .private) — \(timingDiagnostic, privacy: .public)"
+            )
             if let result {
                 switch result.level {
                 case .fullyApplied:
@@ -227,13 +299,14 @@ enum ChromeLauncher {
     /// --app 창을 baseline에 흡수하는 race를 피한다.
     private static func axResizeNewWindow(
         baselinePid: pid_t, windowsBefore: [AXUIElement], position: CGPoint, size: CGSize,
-        chromeRunning: Bool, runtime: ChromeRuntime
-    ) -> AXBoundsResult? {
+        chromeRunning: Bool, launchCompletedAt: CFAbsoluteTime, runtime: ChromeRuntime
+    ) -> WindowResizeObservation {
         let maxAttempts = chromeRunning ? 120 : 100
         let interval: useconds_t = chromeRunning ? 50_000 : 100_000
         let baselineFingerprints = windowsBefore.map(AXIntrospection.windowFingerprint)
         var baselineOwnerPid = baselinePid
         var didRelaunch = false
+        var pidTransitions: [ChromePIDTransition] = []
 
         for _ in 0..<maxAttempts {
             guard let process = currentChromeProcess(runtime: runtime) else {
@@ -242,6 +315,11 @@ enum ChromeLauncher {
             }
             let pid = process.pid
             if pid != baselineOwnerPid {
+                pidTransitions.append(
+                    ChromePIDTransition(
+                        fromPID: baselineOwnerPid,
+                        toPID: pid,
+                        elapsedSinceLaunch: CFAbsoluteTimeGetCurrent() - launchCompletedAt))
                 Log.launcher.info(
                     "Chrome pid changed \(baselineOwnerPid, privacy: .public) -> \(pid, privacy: .public); matching restored windows"
                 )
@@ -267,16 +345,26 @@ enum ChromeLauncher {
             if let newWindow = claimedWindows.claimFirstUnclaimed(
                 from: newWindows, liveWindows: windows)
             {
+                let windowDetectedAt = CFAbsoluteTimeGetCurrent()
                 let boundsResult = LauncherUtils.axApplyBounds(
                     newWindow, position: position, size: size)
+                let boundsAppliedAt = CFAbsoluteTimeGetCurrent()
                 Log.launcher.info(
                     "Chrome AX bounds applied: level=\(boundsResult.level.rawValue, privacy: .public) pos=\(boundsResult.positionWithinTolerance) size=\(boundsResult.sizeWithinTolerance)"
                 )
-                return boundsResult
+                return WindowResizeObservation(
+                    result: boundsResult,
+                    windowWaitDuration: windowDetectedAt - launchCompletedAt,
+                    boundsApplyDuration: boundsAppliedAt - windowDetectedAt,
+                    pidTransitions: pidTransitions)
             }
             runtime.sleep(interval)
         }
-        return nil
+        return WindowResizeObservation(
+            result: nil,
+            windowWaitDuration: CFAbsoluteTimeGetCurrent() - launchCompletedAt,
+            boundsApplyDuration: 0,
+            pidTransitions: pidTransitions)
     }
 
     // MARK: - Unresponsive Chrome detection

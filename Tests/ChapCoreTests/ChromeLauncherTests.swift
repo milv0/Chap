@@ -128,4 +128,41 @@ struct ChromeRuntimeObservationTests {
             """
         #expect(ChromeLauncher.frameworkVersion(fromLsofOutput: output) == "151.0.7922.76")
     }
+
+    @Test("stage timing diagnostic records phase durations and pid handoff")
+    func stageTimingDiagnosticIncludesPIDHandoff() {
+        let timing = ChromeLaunchTiming(
+            baselineDuration: 0.1214,
+            launchRequestDuration: 0.0046,
+            windowWaitDuration: 1.7762,
+            boundsApplyDuration: 0.0214,
+            baselinePID: 2109,
+            pidTransitions: [
+                ChromePIDTransition(
+                    fromPID: 2109, toPID: 37320, elapsedSinceLaunch: 0.2421),
+                ChromePIDTransition(
+                    fromPID: 37320, toPID: 2109, elapsedSinceLaunch: 1.7684),
+            ])
+
+        #expect(
+            timing.diagnostic
+                == "timing baseline=0.121s launch=0.005s window_wait=1.776s ax=0.021s pid_switches=2 first_pid_event=0.242s baseline_pid_return=1.768s pid_path=2109>37320>2109"
+        )
+    }
+
+    @Test("stage timing diagnostic handles a launch without pid transitions")
+    func stageTimingDiagnosticHandlesNoPIDTransitions() {
+        let timing = ChromeLaunchTiming(
+            baselineDuration: 0,
+            launchRequestDuration: 0.01,
+            windowWaitDuration: 0.4,
+            boundsApplyDuration: 0.02,
+            baselinePID: -1,
+            pidTransitions: [])
+
+        #expect(timing.diagnostic.contains("pid_switches=0"))
+        #expect(timing.diagnostic.contains("first_pid_event=na"))
+        #expect(timing.diagnostic.contains("baseline_pid_return=na"))
+        #expect(timing.diagnostic.contains("pid_path=none"))
+    }
 }
