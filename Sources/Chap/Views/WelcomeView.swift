@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WelcomeView: View {
     var onOpenSettings: () -> Void
+    var onOpenAccessibilitySettings: () -> Void
     var onClose: () -> Void
     @State private var dontShowAgain = false
 
@@ -51,6 +52,13 @@ struct WelcomeView: View {
                 .toggleStyle(.checkbox)
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
+
+            Button("Allow Accessibility") {
+                onOpenAccessibilitySettings()
+            }
+            .buttonStyle(.plain)
+            .font(DS.captionFont)
+            .foregroundColor(DS.accent)
 
             PrimaryButton(title: "Get Started") {
                 if dontShowAgain {

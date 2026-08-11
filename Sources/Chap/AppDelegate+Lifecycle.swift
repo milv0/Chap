@@ -50,6 +50,9 @@ extension AppDelegate {
             onOpenSettings: { [weak self] in
                 self?.openSettings()
             },
+            onOpenAccessibilitySettings: { [weak self] in
+                self?.accessibilityController.openAccessibilitySettings()
+            },
             onClose: { [weak window] in
                 window?.close()
             })
@@ -57,6 +60,12 @@ extension AppDelegate {
         window.center()
         presentManagedWindow(window)
         welcomeWindow = window
+        // TestFlight sandbox build에서는 launch 직전 accessory 상태에서 요청한 AX prompt가
+        // 사용자에게 보이지 않을 수 있다. Welcome 창이 key가 된 뒤에 요청한다.
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let self, window?.isVisible == true else { return }
+            self.accessibilityController.requestSystemPromptAfterOnboarding()
+        }
     }
 
     // MARK: - Settings

@@ -39,11 +39,11 @@ final class AccessibilityStateController {
         NotificationCenter.default.removeObserver(self)
     }
 
-    /// 최초 상태 확인 + 노티피케이션 구독. 앱 시작 시 한 번 호출.
+    /// 최초 상태 확인 + 노티피케이션 구독. direct distribution에서는
+    /// main run loop가 시작된 뒤 system prompt를 한 번 요청한다. Welcome이
+    /// 표시되는 경우에도 아래 once-guard가 중복 요청을 막는다.
     func start() {
-        refresh(
-            reason: "launch", showAlert: false,
-            requestSystemPrompt: !suppressesInteractivePrompts)
+        refresh(reason: "launch", showAlert: false)
 
         NotificationCenter.default.addObserver(
             self,
@@ -55,6 +55,31 @@ final class AccessibilityStateController {
             selector: #selector(axResizeDidFailNotification),
             name: .chapAXResizeFailed,
             object: nil)
+
+        DispatchQueue.main.async { [weak self] in
+            self?.requestSystemPromptAtLaunch()
+        }
+    }
+
+    /// Welcome을 사용하지 않거나 "Don't show this again"을 선택해도
+    /// Accessibility 요청이 유실되지 않도록 앱 launch 뒤 한 번 호출한다.
+    func requestSystemPromptAtLaunch() {
+        guard
+            AccessibilityPromptPolicy.shouldRequestAtLaunch(
+                isTrusted: AccessibilityPermission.isTrusted,
+                suppressesInteractivePrompts: suppressesInteractivePrompts)
+        else { return }
+        refresh(reason: "launch prompt", showAlert: false, requestSystemPrompt: true)
+    }
+
+    /// Welcome 창이 표시되어 사용자가 요청 이유를 볼 수 있는 상태에서 시스템 prompt를 요청한다.
+    func requestSystemPromptAfterOnboarding() {
+        guard
+            AccessibilityPromptPolicy.shouldRequestAfterOnboarding(
+                isTrusted: AccessibilityPermission.isTrusted,
+                suppressesInteractivePrompts: suppressesInteractivePrompts)
+        else { return }
+        refresh(reason: "onboarding", showAlert: false, requestSystemPrompt: true)
     }
 
     @objc private func applicationDidBecomeActiveNotification(_ notification: Notification) {
