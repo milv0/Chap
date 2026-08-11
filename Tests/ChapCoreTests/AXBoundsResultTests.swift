@@ -269,6 +269,20 @@ struct AppLauncherWindowPolicyTests {
         #expect(AppLauncher.focusedFallbackDelay(appRunning: false, timeout: 30) == 30)
     }
 
+    @Test("Office keeps observing after a focused fallback resize")
+    func officeKeepsObservingAfterFocusedFallback() {
+        #expect(
+            !AppLauncher.shouldEndObservationAfterFocusedFallback(
+                didResize: true, isMicrosoftOffice: true))
+    }
+
+    @Test("non-Office ends after a focused fallback resize")
+    func nonOfficeEndsAfterFocusedFallback() {
+        #expect(
+            AppLauncher.shouldEndObservationAfterFocusedFallback(
+                didResize: true, isMicrosoftOffice: false))
+    }
+
     @Test("standard resizable AXWindow is eligible")
     func standardWindowIsEligible() {
         #expect(

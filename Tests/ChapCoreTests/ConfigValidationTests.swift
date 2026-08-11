@@ -156,6 +156,17 @@ struct ConfigValidationTests {
         #expect(result.errors.contains { $0.field == .shortcut && $0.siteIndex == 2 })
     }
 
+    @Test("shortcut must contain exactly one character")
+    func shortcutMustContainOneCharacter() {
+        let site = Site(
+            name: "A", url: "https://a.com", width: 800, height: 600, launchType: .url,
+            shortcut: "AB")
+
+        let result = validateConfig(Config(sites: [site]))
+
+        #expect(result.errors.contains { $0.field == .shortcut })
+    }
+
     @Test("duplicate URLs across url-type sites are warned")
     func duplicateURLs() {
         let sites = [
@@ -319,5 +330,25 @@ struct ConfigValidationTests {
         ]
         let result = validateConfig(Config(sites: sites))
         #expect(!result.isValid)
+    }
+
+    // MARK: - Export Validation
+
+    @Test("invalid config is blocked from export")
+    func invalidConfigIsBlockedFromExport() {
+        let config = Config(sites: [
+            Site(name: "", url: "https://example.com", width: 800, height: 600)
+        ])
+
+        #expect(!validateConfigForExport(config).isValid)
+    }
+
+    @Test("valid config is allowed for export")
+    func validConfigIsAllowedForExport() {
+        let config = Config(sites: [
+            Site(name: "Example", url: "https://example.com", width: 800, height: 600)
+        ])
+
+        #expect(validateConfigForExport(config).isValid)
     }
 }

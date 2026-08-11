@@ -18,7 +18,7 @@ public enum Log {
     private static let subsystem =
         Bundle.main.bundleIdentifier ?? "com.mingyupark.Chap"
 
-    /// 앱 생명주기, 이벤트 탭, 권한 등 전반
+    /// 앱 생명주기, 글로벌 단축키, 권한 등 전반
     public static let app = Logger(subsystem: subsystem, category: "app")
     /// 사이트 실행 및 윈도우 리사이즈 (Chrome/App/Finder/Shell)
     public static let launcher = Logger(subsystem: subsystem, category: "launcher")

@@ -9,6 +9,7 @@ public struct ConfigLoadResult {
 public enum ConfigStoreError: LocalizedError {
     case readFailed(path: String)
     case decodeFailed(Error)
+    case backupFailed(path: String, underlying: Error)
 
     public var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ public enum ConfigStoreError: LocalizedError {
             return "Failed to read config file at \(path)."
         case .decodeFailed(let error):
             return error.localizedDescription
+        case .backupFailed(let path, let underlying):
+            return "Failed to create config backup at \(path): \(underlying.localizedDescription)"
         }
     }
 }
@@ -79,20 +82,32 @@ public struct ConfigStore {
         }
 
         var config = decodedConfig
+        let sitesBeforeShortcutNormalization = config.sites
         config.sites = sanitizedShortcuts(for: config.sites)
+        let didNormalizeShortcuts = config.sites != sitesBeforeShortcutNormalization
 
         let migrationResult = migrateDisplayIdentifiers(
             sites: config.sites, connectedDisplays: connectedDisplays)
         let didChangeDisplaySelection = migrationResult.sites != config.sites
+        var didAutoSaveDisplayMigration = false
         if didChangeDisplaySelection {
             config.sites = migrationResult.sites
-            try? save(config)
+        }
+        if didNormalizeShortcuts || didChangeDisplaySelection {
+            do {
+                try save(config)
+                didAutoSaveDisplayMigration = didChangeDisplaySelection
+            } catch {
+                Log.config.error(
+                    "Failed to auto-save config normalization: \(error.localizedDescription, privacy: .public)"
+                )
+            }
         }
 
         return ConfigLoadResult(
             config: config,
             displayWarnings: migrationResult.warnings,
-            didAutoSaveDisplayMigration: didChangeDisplaySelection)
+            didAutoSaveDisplayMigration: didAutoSaveDisplayMigration)
     }
 
     @discardableResult
@@ -124,9 +139,16 @@ public struct ConfigStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         let data = try encoder.encode(config)
-        if createBackup {
-            try? FileManager.default.removeItem(atPath: backupPath)
-            try? FileManager.default.copyItem(atPath: configPath, toPath: backupPath)
+        if createBackup, FileManager.default.fileExists(atPath: configPath) {
+            do {
+                let currentData = try Data(contentsOf: URL(fileURLWithPath: configPath))
+                try currentData.write(
+                    to: URL(fileURLWithPath: backupPath), options: .atomic)
+            } catch {
+                // A save without a trustworthy previous version defeats the backup contract.
+                // Abort before replacing the primary config so the last known-good file survives.
+                throw ConfigStoreError.backupFailed(path: backupPath, underlying: error)
+            }
         }
         try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
     }

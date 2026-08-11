@@ -15,11 +15,11 @@ struct QAView: View {
             [
                 (
                     "앱을 처음 실행했는데 단축키가 안 먹어요.",
-                    "접근성 권한이 필요합니다. System Settings → Privacy & Security → Accessibility에서 Chap을 허용해주세요. 메뉴바 아이콘에 경고 표시(⚠️)가 있다면 권한이 없는 상태입니다."
+                    "단축키에는 접근성 권한이 필요하지 않습니다. Chap을 재시작한 뒤에도 안 되면 다른 앱이 같은 Option 조합을 사용 중인지 확인해주세요."
                 ),
                 (
-                    "권한을 허용했는데도 안 돼요.",
-                    "Chap은 앱 시작, 메뉴 열기, Settings 열기, 항목 실행 전에 권한을 다시 확인합니다. 권한 안내 직후에는 30초 동안 자동으로 허용 여부를 감지합니다."
+                    "접근성 권한을 허용했는데 리사이즈가 안 돼요.",
+                    "Chap은 앱 시작, 메뉴 열기, Settings 열기, URL/App 실행 전에 권한을 다시 확인합니다. 권한 안내 직후에는 30초 동안 자동으로 허용 여부를 감지합니다."
                 ),
                 (
                     "Chrome이 없으면 사용 못 하나요?",
@@ -148,7 +148,7 @@ struct QAView: View {
                 ),
                 (
                     "앱이 갑자기 단축키에 반응을 안 해요.",
-                    "접근성 권한이 제거되었을 수 있습니다. 메뉴바 아이콘에 경고 표시가 있는지 확인하고, System Settings에서 권한을 다시 허용해주세요."
+                    "Chap을 재시작해 단축키를 다시 등록하세요. 계속 안 되면 다른 앱이 같은 Option 조합을 먼저 등록했는지 확인해주세요."
                 ),
             ]
         ),
@@ -162,11 +162,11 @@ struct QAView: View {
             [
                 (
                     "Shortcuts don't work after first launch.",
-                    "Accessibility permission is required. Go to System Settings → Privacy & Security → Accessibility and enable Chap. If the menubar icon shows a warning badge (⚠️), permission is not granted."
+                    "Shortcuts do not require Accessibility permission. Restart Chap, then check whether another app is using the same Option combination."
                 ),
                 (
-                    "I granted permission but it still doesn't work.",
-                    "Chap checks permission on launch, menu open, Settings open, and item launch. After a permission prompt, it watches for approval for 30 seconds."
+                    "I granted Accessibility permission, but resizing still doesn't work.",
+                    "Chap checks permission on launch, menu open, Settings open, and URL/app launch. After a permission prompt, it watches for approval for 30 seconds."
                 ),
                 (
                     "Do I need Chrome to use Chap?",
@@ -295,7 +295,7 @@ struct QAView: View {
                 ),
                 (
                     "The app suddenly stopped responding to shortcuts.",
-                    "Accessibility permission may have been revoked. Check if the menubar icon shows a warning badge, and re-enable permission in System Settings."
+                    "Restart Chap to register its shortcuts again. If the issue continues, check whether another app registered the same Option combination first."
                 ),
             ]
         ),

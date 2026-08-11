@@ -10,8 +10,9 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 
 Sources/
 ├── Chap/                          ← 앱 타겟
-│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 단축키 (CGEvent tap), 창 orchestration
+│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
+│   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
@@ -46,7 +47,8 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── GeometryTests.swift
     ├── ConfigValidationTests.swift
     ├── ImportNormalizationTests.swift
-    └── AXBoundsResultTests.swift
+    ├── AXBoundsResultTests.swift
+    └── GlobalHotKeyManagerTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
 └── StatusBarIcon.png
@@ -58,6 +60,9 @@ assets/                             ← 배포·디자인용 원본 아이콘 �
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
 ├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (.gitignore 대상)
+├── ARCHITECTURE.txt               ← 구조·기능·API·이력 (이 문서)
+├── FLOW.md                        ← 런타임 실행 흐름: 순서, 분기, 스레드, 타임아웃, 판정,
+│                                    불변 규칙, 알려진 이슈 (LLM 온보딩용)
 ├── AGENTS.md                      ← Codex 지침 (→ .harness/codex/AGENTS.md)
 ├── .claude/                       ← Claude Code 지침 링크 (→ .harness/claude)
 ├── .kiro/                         ← Kiro 지침 링크 (→ .harness/kiro)
@@ -75,6 +80,7 @@ Runtime:
 └── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV, DEBUG 빌드만)
                                       열: timestamp,site,type,app_state,attempt,delay,
                                       total_time,result,window_count,display,size,detail
+                                      URL detail: baseline/launch/window_wait/ax timing + PID path
 
 
 ## 데이터 모델
@@ -103,7 +109,8 @@ Site 모델 필드:
 
 ## 핵심 기능
 
-- 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — CGEvent tap
+- 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — RegisterEventHotKey로 정확한 조합만 시스템 등록
+  (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
@@ -115,6 +122,7 @@ Site 모델 필드:
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
+  - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
 - Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
   stale UUID 갱신, ambiguous/disconnected는 재선택 안내
 - Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
@@ -131,10 +139,11 @@ Site 모델 필드:
   preset/custom size가 있으면 우선 적용. Follow Cursor 상태에서 Display Preview로 화면을 고른 뒤
   Size Preset/Width/Height를 바꾸면 override가 자동 생성되고, Use Site Default로 해당 화면 override를 제거
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
-- 사이트별 커스텀 단축키 (optional, 중복 체크, 예약키 ./,  차단)
+- 사이트별 커스텀 단축키 (optional, 정확히 한 글자, 중복 체크, 예약키 ./, 차단)
   - 단축키 정규화(sanitizedShortcuts): UI 저장뿐 아니라 config 로드(loadConfig)·Import
-    (applyConfigData) 경로에서도 중복(대소문자 무시, 앞의 것 유지)·예약키(./,)·공백을 정리.
-    손으로 편집한 ~/.chap.json이나 Import JSON의 잘못된 단축키가 런타임에 새어 들지 않음
+    경로에서도 다글자·중복(대소문자 무시, 앞의 것 유지)·예약키(./,)·공백을 정리하고,
+    config 로드 중 바뀐 값은 즉시 저장. 손으로 편집한 ~/.chap.json이나 Import JSON의
+    잘못된 단축키가 런타임이나 다음 실행에 새어 들지 않음
 - 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
 - 필수 필드 미입력 시 저장 차단 (URL/앱경로/폴더/스크립트)
 - 사이트 검색 (사이드바 이름 필터)
@@ -148,7 +157,7 @@ Site 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 770x580 크기로 커서 화면 중앙에 표시
+- 설정 창은 770x600 크기로 커서 화면 중앙에 표시
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
@@ -191,7 +200,7 @@ Site 모델 필드:
   ⌘1~9   사이트 선택
   ⌘N     사이트 추가
   ⌘S     저장
-  ⌘?     가이드
+  ⌘/     가이드
   ↑↓     목록 이동 (타입 그룹 순서 기준)
   Enter  저장 + 편집 모드 해제
 
@@ -207,7 +216,8 @@ Site 모델 필드:
   URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (캐싱한 Chrome PID에서 새 윈도우 비교 감지, 최대 6초)
   URL (콜드 스타트):     AX API 폴링 100ms 간격 (최대 10초)
   App (실행 중):         AXObserver + 50ms 재스캔, 새 창이 없으면 0.2초 후 focused 창 하나 처리
-  App (콜드 스타트):     AXObserver + 100ms 재스캔 (일반 최대 20초, Office 최대 30초)
+  App (콜드 스타트):     AXObserver + 50ms 재스캔 (일반 최대 20초, Office 최대 30초),
+                        focused fallback은 timeout 이후
   App (AXObserver 실패): 폴링 폴백 120ms 간격
   Finder:               딜레이 없음 (열기+리사이즈 단일 스크립트)
 
@@ -215,26 +225,36 @@ Chrome 윈도우 감지 방식:
   1. 모든 요청을 단일 requestCoordinator serial queue에서 처리
      (cached Chrome PID baseline → open -na Process → 새 창 polling → AX readback 검증).
      이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
-     1:1로 대응함. queue wait와 processing latency를 분리해 로그에 기록
+     1:1로 대응함. queue wait와 processing latency, baseline/launch/window wait/AX apply,
+     PID 전환 경로를 분리해 로그에 기록
   2. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
        새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
-  3. 실행 후 동일 PID를 폴링하고 CFEqual로 이전 목록과 비교하여 첫 새 윈도우 식별
+  3. 매 폴링에서 최신 live Chrome 프로세스를 조회. 동일 PID면 CFEqual 차집합, PID가 바뀌면
+     실행 전 window fingerprint multiset을 차감해 복원 창과 요청 창을 구분
   4. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
   5. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
   6. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
 
 App 윈도우 감지 방식 (AXObserver):
   1. openApplication 전 기존 AX window baseline을 캡처
-  2. AXObserverCreate로 kAXWindowCreatedNotification 구독 + 100ms 재스캔
+  2. AXObserverCreate로 kAXWindowCreatedNotification 구독 + 50ms 재스캔
+     (CFRunLoopRunInMode 0.05초 단위로 콜백 처리와 재스캔을 겸함)
   3. baseline에 없는 첫 표준 새 창 하나만 리사이즈 (기존 여러 창 일괄 변경 금지)
-  4. Office 앱은 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 grace 동안 추가 관찰
+  4. Office 앱은 focused fallback/시작창 리사이즈 후에도 리사이즈 가능한 비표준 문서창과
+     시작창→문서창 전환을 grace 동안 추가 관찰하고, 처리 완료한 창은 다시 적용하지 않음
   5. 실행 중 앱은 새 창이 0.2초 안에 없으면 focused 표준 창 하나를 즉시 처리;
      cold 앱은 timeout까지 새 창을 기다린 뒤 focused fallback
   6. AXWindow 역할과 position/size settable을 검증해 AXHelpTag 등 보조 요소를 제외
-  7. AXObserver 생성 실패 시에도 동일한 new-one → focused-one polling 정책 사용
+  7. AXObserver 생성 실패 시에도 Office 문서창 교체와 grace를 포함한 동일한 polling 정책 사용
   8. 각 적용 후 실제 position/size readback으로 fully/partial/failed 판정
+
+리사이즈 CSV (DEBUG 전용):
+  - ResizeLogger가 NSLock으로 디렉터리 생성, 헤더 확인/생성, append를 직렬화
+  - size는 화면 fitting과 화면별 override를 반영해 AX에 실제 요청한 WxH
+  - App total_time은 첫 fully/partial 적용 시점이며 failed 시도는 latency로 기록하지 않음
+  - URL detail 끝에 단계별 timing key=value와 PID path를 추가해 Chrome 내부 지연을 분리
 
 
 ## 사용 API / 프레임워크
@@ -256,10 +276,13 @@ App 윈도우 감지 방식 (AXObserver):
   - NSWorkspace.shared.openApplication(at:configuration:)   앱 실행 (pid 콜백)
   - NSWorkspace.shared.runningApplications                  실행 중 앱 목록 조회
 
-### CoreGraphics (CGEvent)
+### Carbon (HIToolbox)
   용도: 글로벌 키보드 단축키
-  - CGEvent.tapCreate()               이벤트 탭 생성 (키 입력 감시)
-  - CFMachPortCreateRunLoopSource()   런루프에 이벤트 소스 등록
+  - RegisterEventHotKey / UnregisterEventHotKey  정확한 Option 조합 등록·해제
+  - InstallEventHandler                         등록된 단축키 이벤트 수신
+  - TISCopyCurrentASCIICapableKeyboardLayoutInputSource / UCKeyTranslate
+                                                 현재 키보드 배열의 문자→keyCode 매핑
+  - kTISNotifySelectedKeyboardInputSourceChanged ASCII 키보드 배열 ID 변경 시 전체 재등록
 
 ### AppleScript (osascript via Process)
   용도: Finder 윈도우 제어 전용
@@ -294,6 +317,28 @@ App 윈도우 감지 방식 (AXObserver):
 
 ### Config 파일 마이그레이션
   - ~/.quickaccess.json → ~/.chap.json (앱 이름 변경)
+
+
+## 글로벌 단축키 안정성 개선 이력 (2026-08-06)
+
+### 변경 배경
+  기존 active CGEvent tap은 세션의 모든 keyDown을 파이프라인 앞에서 받아 Option 조합인지
+  Chap이 직접 판별했다. 이벤트 처리가 지연되면 일반 키 입력 전달까지 영향을 받을 수 있어,
+  사용 중 발생한 간헐적 키 입력 정지의 구조적 위험 요인으로 판단했다.
+  단, 해당 현상의 원인이 Chap이었다는 직접 로그 증거는 확인되지 않았다.
+
+### 변경 전
+  - CGEvent.tapCreate(.cgSessionEventTap, .headInsertEventTap)로 모든 keyDown 수신
+  - Chap 콜백에서 modifier와 keyCode를 검사한 뒤 대상이 아닌 이벤트를 다시 전달
+  - 글로벌 단축키 등록과 Accessibility 권한이 결합
+  - Chap 이벤트 처리 지연이 일반 키 입력 경로에 영향을 줄 수 있음
+
+### 변경 후
+  - RegisterEventHotKey로 메뉴(⌥.), 설정(⌥,), 사이트(설정된 ⌥커스텀키)만 macOS에 등록
+  - 일반 키 입력은 Chap 프로세스를 통과하지 않음
+  - 글로벌 단축키는 Accessibility 권한과 독립; 권한은 URL/App 리사이즈에만 사용
+  - ASCII 키보드 배열 ID가 실제로 바뀔 때만 문자→keyCode를 다시 계산해 전체 재등록
+  - 등록 계획은 GlobalHotKeyManagerTests로 검증하고, 등록 개수·충돌은 통합 로그에 기록
 
 
 ## 리사이즈 성능 개선 이력 (2026-06-22)
@@ -336,13 +381,12 @@ App 윈도우 감지 방식 (AXObserver):
 
 ## 권한 요구사항
 
-1. 접근성 (Accessibility): 글로벌 단축키 + 윈도우 리사이즈
+1. 접근성 (Accessibility): URL/App 윈도우 리사이즈
    - 첫 실행/권한 없음 상태에서 macOS Accessibility 프롬프트 표시
    - 앱 시작/활성화/메뉴 열기/Settings 열기/사이트 실행 시 AXIsProcessTrusted 재확인
    - 권한 프롬프트 또는 접근성 설정 열기 직후에만 2초 간격으로 최대 30초 감지
-   - 허용 후 자동 등록 (재시작 불필요)
-   - 권한 제거 감지: 다음 권한 체크, URL/App 리사이즈 실패, 또는 CGEvent tap disabled
-     → 상태바 경고 + 1회 알림
+   - 권한 제거 감지: 다음 권한 체크 또는 URL/App 리사이즈 실패 → 상태바 경고 + 1회 알림
+   - 글로벌 단축키는 RegisterEventHotKey 기반이므로 접근성 권한 없이 동작
 
 2. 자동화 (Automation): Finder AppleScript 제어
    - osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)
@@ -360,3 +404,68 @@ App 윈도우 감지 방식 (AXObserver):
 - 코드 서명: 미등록 (Apple Developer $99 필요)
 - 현재 배포 방식: 소스 clone → xcodegen generate → Xcode 빌드
 - zip/dmg 배포: xattr 필요 + 수동 권한 설정 (서명 없는 앱 한계)
+
+
+## 2026-08 현재 배포·AX 안정화 구조
+
+### Full edition 배포
+
+Chap의 전체 기능(URL/App 타 앱 창 제어와 Shell launcher)은 Mac App Store/TestFlight 대상이 아니다.
+App Store 배포에는 App Sandbox가 필요하지만 AXUIElement 기반 타 앱 제어와 임의 Shell 실행은
+sandbox 모델과 양립하지 않는다. 현재 Release source of truth는 `project.yml`이다.
+
+```
+Release
+├── CODE_SIGN_STYLE = Manual
+├── CODE_SIGN_IDENTITY = Developer ID Application
+├── ENABLE_HARDENED_RUNTIME = YES
+├── OTHER_CODE_SIGN_FLAGS = --timestamp
+└── CODE_SIGN_ENTITLEMENTS = Sources/Chap/Chap.entitlements
+    └── com.apple.security.automation.apple-events
+```
+
+`Chap.entitlements`에는 App Sandbox entitlement가 없다. `Scripts/build-release-dmg.sh`가
+Developer ID signed universal archive를 검증해 DMG를 만들고,
+`Scripts/notarize-release-dmg.sh`가 `notarytool submit --wait` → staple → signature/Gatekeeper
+assessment를 수행한다. notarization credential은 keychain profile에만 저장하며 소스나 config에
+넣지 않는다. Apple 절차는 https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution
+를 따른다.
+
+### 공용 AX bounds pipeline
+
+`LauncherUtils.axApplyBounds(window:position:size:)`는 Chrome과 일반 App launcher가 공유하는
+유일한 bounds 적용 종점이다. `AXResizePolicy.swift`는 AX 호출 없이 순수 계산·정책을 테스트한다.
+[Rectangle](https://github.com/rxhanson/Rectangle)의 공개 구현에서 확인한 안정화 원칙을 다음처럼
+적용한다.
+
+```
+AX app/window element 생성
+├── AXUIElementSetMessagingTimeout(2s)
+├── AXMinSize → AXMinimumSize를 순서대로 읽어 clamp 예측
+├── app.AXEnhancedUserInterface == true이면 false로 전환
+├── set size(target)
+├── set position(target)
+├── set size(target)                  // 다른 디스플레이 이동 뒤 재적용
+├── 20ms 뒤 position/size readback
+├── actual size가 tolerance(4pt)를 넘게 다르면
+│   └── requested center를 보존한 position을 한 번 재적용 → readback
+└── 원래 EnhancedUI가 true였을 때만 true로 복원
+```
+
+최종 `fully`/`partial`/`failed` 판정은 set 반환값이 아닌 readback 비교다. clamp가 일어나면
+중앙 보정이 성공해도 size 자체는 요청값과 달라 `partial`로 남는다. `AXBoundsResult.notes`는
+`enhancedUI=disabled`, `minSize=WxH`, `recentered=(x y)`를 CSV `detail`에 더한다.
+
+`AXWindowIntrospection.swift`는 private `_AXUIElementGetWindow`를 사용하지 않는다. public
+`CGWindowListCopyWindowInfo`에서 AX window의 `pid + frame`을 매칭해 session-local
+`CGWindowID`를 얻고, 실패하면 top bit를 세운 `CFHash` 파생 id를 쓴다. 이 id는 적용·진단용이며
+앱 relaunch 뒤에도 유지되는 식별자가 아니므로, Chrome relaunch 매칭은 계속
+`title|role|subrole` fingerprint multiset이 담당한다.
+
+### Accessibility prompt
+
+`AccessibilityStateController.start()`는 테스트가 아닐 때 main run loop에서 한 번
+`AXIsProcessTrustedWithOptions`를 요청한다. Welcome이 생략됐거나 `guideDisabled=true`여도
+prompt가 유실되지 않는다. Welcome의 **Allow Accessibility** 버튼은 System Settings의
+Accessibility pane을 여는 fallback이며, controller의 once-guard가 launch/Welcome 두 경로의
+중복 prompt를 막는다. macOS는 이미 기록된 TCC 결정을 다시 표시하지 않을 수 있다.

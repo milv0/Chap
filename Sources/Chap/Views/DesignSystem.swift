@@ -116,3 +116,31 @@ struct ToolbarIconButton: View {
             .onHover { hovering in isHovered = hovering && !disabled }
     }
 }
+
+/// ToolbarIconButton과 동일한 시각 규격(12pt medium, 26×26, 호버 배경)의 드롭다운 메뉴.
+/// borderlessButton 메뉴 스타일의 chevron 인디케이터와 자체 패딩을 없애
+/// 툴바 아이콘들과 나란히 놓아도 정렬·크기가 일치한다.
+struct ToolbarIconMenu<Content: View>: View {
+    let icon: String
+    @ViewBuilder let content: () -> Content
+    @State private var isHovered = false
+
+    var body: some View {
+        Menu {
+            content()
+        } label: {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(DS.textSecondary)
+                .frame(width: 26, height: 26)
+                .background(isHovered ? DS.border.opacity(0.4) : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .onHover { hovering in isHovered = hovering }
+    }
+}

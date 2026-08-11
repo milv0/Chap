@@ -5,7 +5,6 @@ import os
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
-    private let configStore = ConfigStore()
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
     @State private var showGuide = false
@@ -19,6 +18,7 @@ struct SettingsView: View {
     /// 선택이 벗어날 때 이 사이트가 여전히 placeholder면 폐기한다.
     @State private var pendingNewSiteID: UUID?
     @State private var searchText = ""
+    @State private var suppressNextSelectionSave = false
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -30,6 +30,12 @@ struct SettingsView: View {
         .frame(minWidth: 770, minHeight: 600)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
+            vm.flushPendingSave()
+            if suppressNextSelectionSave {
+                suppressNextSelectionSave = false
+                searchFocused = false
+                return
+            }
             let newlySelectedID = newValue.flatMap { idx in
                 idx < vm.sites.count ? vm.sites[idx].id : nil
             }
@@ -70,19 +76,36 @@ struct SettingsView: View {
                 Text("This will remove \"\(vm.sites[idx].name)\".")
             }
         }
-        .sheet(isPresented: $showGuide) { guideSheet }
+        .sheet(isPresented: $showGuide) {
+            SettingsGuideSheet(
+                isGuideEnglish: $isGuideEnglish,
+                onClose: { showGuide = false },
+                onOpenQA: { openQAFromGuide() }
+            )
+        }
         .alert("Validation Error", isPresented: $emptyFieldAlert) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(emptyFieldMessage)
         }
-        .sheet(isPresented: $showPasteJSON) { pasteJSONSheet }
+        .sheet(isPresented: $showPasteJSON) {
+            SettingsPasteJSONSheet(
+                pasteJSONText: $pasteJSONText,
+                onCancel: { showPasteJSON = false },
+                onApply: { json in
+                    SettingsConfigTransfer.applyJSONString(
+                        json, vm: vm, onSuccess: handleSuccessfulImport)
+                }
+            )
+        }
+        .onDisappear { vm.flushPendingSave() }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             guard let provider = providers.first else { return false }
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 guard let url = url, url.pathExtension == "json" else { return }
                 DispatchQueue.main.async {
-                    self.importFromURL(url)
+                    SettingsConfigTransfer.importFromURL(
+                        url, vm: self.vm, onSuccess: handleSuccessfulImport)
                 }
             }
             return true
@@ -204,12 +227,15 @@ struct SettingsView: View {
             if let idx = selectedIndex, idx < vm.sites.count {
                 SiteConfigView(
                     site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
-                    onSave: { save() }
+                    onSave: {
+                        vm.cancelPendingSave()
+                        save()
+                    }
                 )
                 .id(vm.sites[idx].id)
                 .onTapGesture { isEditing = true }
                 .onChange(of: vm.sites) { _, _ in
-                    if isEditing { save() }
+                    if isEditing { vm.scheduleAutoSave() }
                 }
             } else {
                 Spacer()
@@ -251,33 +277,28 @@ struct SettingsView: View {
 
             Spacer()
 
-            Button(action: { showGuide = true }) {
-                Image(systemName: "questionmark.circle")
-                    .font(.system(size: 13))
-                    .foregroundColor(DS.textSecondary)
-            }
-            .buttonStyle(.plain)
+            ToolbarIconButton(
+                icon: "questionmark.circle", color: DS.textSecondary,
+                action: { showGuide = true }
+            )
             .help("User Guide")
-            .keyboardShortcut("/", modifiers: .command)
 
-            Menu {
-                Button("Import from File...") { importConfig() }
+            ToolbarIconMenu(icon: "ellipsis.circle") {
+                Button("Import from File...") {
+                    SettingsConfigTransfer.importConfig(
+                        vm: vm, onSuccess: handleSuccessfulImport)
+                }
                 Button("Paste JSON...") {
                     pasteJSONText = ""
                     showPasteJSON = true
                 }
                 Divider()
-                Button("Export...") { exportConfig() }
+                Button("Export...") { SettingsConfigTransfer.exportConfig(vm: vm) }
                 Divider()
                 Button("Restart App") { restartApp() }
                 Button("Uninstall...") { uninstallApp() }
-            } label: {
-                Image(systemName: "folder")
-                    .font(.system(size: 13))
-                    .foregroundColor(DS.textSecondary)
             }
-            .menuStyle(.borderlessButton)
-            .frame(width: 24)
+            .help("Import, export, and app actions")
 
             if isEditing {
                 Text("Editing")
@@ -286,6 +307,13 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
             }
+
+            // ToolbarIconButton은 탭 제스처 기반이라 키보드 단축키를 직접 못 받으므로
+            // ⌘/ 는 숨김 버튼으로 연결 (아래 Return/⌘S와 같은 패턴)
+            Button("") { showGuide = true }
+                .keyboardShortcut("/", modifiers: .command)
+                .frame(width: 0, height: 0)
+                .opacity(0)
 
             Button("") {
                 save(showAlerts: true)
@@ -304,153 +332,6 @@ struct SettingsView: View {
         }
         .padding(.horizontal, DS.paddingSmall)
         .frame(height: 40)
-    }
-
-    // MARK: - Guide Sheet
-
-    private var guideSheet: some View {
-        VStack(spacing: DS.spacing) {
-            HStack {
-                Text(isGuideEnglish ? "User Guide" : "사용자 가이드")
-                    .font(DS.titleFont)
-                    .foregroundColor(DS.textPrimary)
-
-                Spacer()
-
-                Picker("", selection: $isGuideEnglish) {
-                    Text("한국어").tag(false)
-                    Text("English").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 150)
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-
-            Spacer()
-
-            VStack(spacing: 10) {
-                CardSection {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(isGuideEnglish ? "Launch" : "실행")
-                            .font(DS.headlineFont)
-                            .foregroundColor(DS.textPrimary)
-                        guideRow(
-                            icon: "cursorarrow.click.2",
-                            text: isGuideEnglish
-                                ? "Use the menubar icon to launch items"
-                                : "메뉴바 아이콘에서 항목을 실행")
-                        guideRow(
-                            icon: "keyboard",
-                            text: isGuideEnglish
-                                ? "⌥. menu, ⌥ custom key launch, ⌥, settings"
-                                : "⌥. 메뉴, ⌥ 커스텀키 실행, ⌥, 설정")
-                        guideRow(
-                            icon: "checkmark.shield",
-                            text: isGuideEnglish
-                                ? "Allow Accessibility for shortcuts and resizing"
-                                : "단축키와 리사이즈를 위해 접근성 권한 허용")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                CardSection {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(isGuideEnglish ? "Settings" : "설정")
-                            .font(DS.headlineFont)
-                            .foregroundColor(DS.textPrimary)
-                        guideRow(
-                            icon: "plus.circle",
-                            text: isGuideEnglish
-                                ? "Add URL, App, Finder, or Shell items"
-                                : "URL, App, Finder, Shell 항목 추가")
-                        guideRow(
-                            icon: "display",
-                            text: isGuideEnglish
-                                ? "Choose a display and size preset per item"
-                                : "항목별 디스플레이와 크기 프리셋 선택")
-                        guideRow(
-                            icon: "square.and.arrow.down",
-                            text: isGuideEnglish
-                                ? "Import/export JSON from the folder menu"
-                                : "폴더 메뉴에서 JSON 가져오기/내보내기")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(.horizontal, 24)
-
-            Spacer()
-
-            VStack(spacing: 10) {
-                Button(action: openQAFromGuide) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "questionmark.circle")
-                        Text(isGuideEnglish ? "Open Full Q&A" : "전체 Q&A 열기")
-                    }
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(DS.accent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(DS.cardBg)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(DS.border, lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-
-                PrimaryButton(title: isGuideEnglish ? "Close" : "닫기") { showGuide = false }
-            }
-            .padding(.horizontal, 40)
-            .padding(.bottom, 24)
-        }
-        .frame(width: 460, height: 540)
-        .background(DS.surfaceBg)
-    }
-
-    // MARK: - Paste JSON Sheet
-
-    private var pasteJSONSheet: some View {
-        VStack(spacing: DS.spacing) {
-            Text("Paste JSON")
-                .font(DS.headlineFont)
-                .foregroundColor(DS.textPrimary)
-                .padding(.top, DS.padding)
-
-            TextEditor(text: $pasteJSONText)
-                .font(DS.monoFont)
-                .frame(minHeight: 200)
-                .padding(8)
-                .background(DS.surfaceBg)
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DS.radiusSmall)
-                        .stroke(DS.border, lineWidth: 1)
-                )
-                .padding(.horizontal, DS.padding)
-
-            HStack {
-                Button("Cancel") { showPasteJSON = false }
-                    .buttonStyle(.plain)
-                    .foregroundColor(DS.textSecondary)
-                Spacer()
-                PrimaryButton(title: "Apply") {
-                    applyJSONString(pasteJSONText)
-                    showPasteJSON = false
-                }
-                .frame(width: 100)
-                .opacity(
-                    pasteJSONText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1
-                )
-                .disabled(pasteJSONText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
-            .padding(.horizontal, DS.padding)
-            .padding(.bottom, DS.padding)
-        }
-        .frame(width: 500, height: 350)
-        .background(DS.surfaceBg)
     }
 
     // MARK: - Keyboard Shortcuts
@@ -503,18 +384,6 @@ struct SettingsView: View {
         showGuide = false
         DispatchQueue.main.async {
             (NSApp.delegate as? AppDelegate)?.openQA()
-        }
-    }
-
-    private func guideRow(icon: String, text: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 11))
-                .foregroundColor(DS.accent)
-                .frame(width: 16)
-            Text(text)
-                .font(DS.bodyFont)
-                .foregroundColor(DS.textSecondary)
         }
     }
 
@@ -623,7 +492,28 @@ struct SettingsView: View {
     @State private var emptyFieldAlert = false
     @State private var emptyFieldMessage = ""
 
+    private func handleSuccessfulImport() {
+        pendingNewSiteID = nil
+        isAddingNew = false
+        isEditing = false
+
+        let validSelection: Int?
+        if vm.sites.isEmpty {
+            validSelection = nil
+        } else if let selectedIndex, vm.sites.indices.contains(selectedIndex) {
+            validSelection = selectedIndex
+        } else {
+            validSelection = 0
+        }
+
+        if selectedIndex != validSelection {
+            suppressNextSelectionSave = true
+            selectedIndex = validSelection
+        }
+    }
+
     private func save(showAlerts: Bool = false) {
+        vm.cancelPendingSave()
         // Full config validation across ALL sites (not just selected)
         let config = Config(
             showGuideWindow: vm.showGuideWindow,
@@ -659,27 +549,13 @@ struct SettingsView: View {
             alert.informativeText = warningMessages
             alert.alertStyle = .informational
             alert.addButton(withTitle: "OK")
-            // Save first, then show warning
-            let saved =
-                vm.onSave?(
-                    SettingsPayload(
-                        sites: vm.sites, showGuideWindow: vm.showGuideWindow,
-                        launchAtLogin: vm.launchAtLogin)) ?? true
-            if saved {
-                vm.markSaved()
-            }
+            // Save first, then show warning only if persistence succeeded.
+            guard vm.persistCurrentState() else { return }
             alert.runModal()
             return
         }
 
-        let saved =
-            vm.onSave?(
-                SettingsPayload(
-                    sites: vm.sites, showGuideWindow: vm.showGuideWindow,
-                    launchAtLogin: vm.launchAtLogin)) ?? true
-        if saved {
-            vm.markSaved()
-        }
+        _ = vm.persistCurrentState()
     }
 
     /// 전역 토글(Guide Window, Login)만 저장.
@@ -697,36 +573,6 @@ struct SettingsView: View {
         }
     }
 
-    private func exportConfig() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = "chap.json"
-        panel.directoryURL =
-            FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        // 디스크 파일이 아닌 현재 편집 상태를 내보냄 (저장 안 된 변경분 포함)
-        let config = Config(
-            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-        do {
-            try encoder.encode(config).write(to: url, options: .atomic)
-            Log.config.info("Config exported to \(url.path, privacy: .private)")
-            let alert = NSAlert()
-            alert.messageText = "Export successful"
-            alert.informativeText = "Saved to \(url.path)"
-            alert.alertStyle = .informational
-            alert.runModal()
-        } catch {
-            let alert = NSAlert()
-            alert.messageText = "Export failed"
-            alert.informativeText = error.localizedDescription
-            alert.alertStyle = .warning
-            alert.runModal()
-        }
-    }
-
     private func restartApp() {
         if let delegate = NSApp.delegate as? AppDelegate {
             delegate.restartApp()
@@ -737,114 +583,5 @@ struct SettingsView: View {
         if let delegate = NSApp.delegate as? AppDelegate {
             delegate.uninstallApp()
         }
-    }
-
-    private func importConfig() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json]
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        guard let data = try? Data(contentsOf: url) else {
-            showImportError("Could not read file.")
-            return
-        }
-        applyConfigData(data)
-    }
-
-    private func applyJSONString(_ jsonString: String) {
-        guard let data = jsonString.data(using: .utf8) else { return }
-        applyConfigData(data)
-    }
-
-    private func importFromURL(_ url: URL) {
-        guard let data = try? Data(contentsOf: url) else {
-            showImportError("Could not read file.")
-            return
-        }
-        applyConfigData(data)
-    }
-
-    private func applyConfigData(_ data: Data) {
-        do {
-            let config = try JSONDecoder().decode(Config.self, from: data)
-
-            // Normalize using import normalization (includes display UUID migration)
-            let connectedDisplays = NSScreen.screens.map {
-                DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
-            }
-            let importResult = normalizeForImport(
-                sites: config.sites, connectedDisplays: connectedDisplays)
-
-            // Blocking issues: reject import entirely, don't modify VM/file
-            if !importResult.blockingIssues.isEmpty {
-                let issueMessages = importResult.blockingIssues.map { issue in
-                    let siteName =
-                        issue.siteIndex < config.sites.count
-                        ? config.sites[issue.siteIndex].name : "?"
-                    return "• \(siteName): \(issue.message)"
-                }.joined(separator: "\n")
-                let alert = NSAlert()
-                alert.messageText = "Import blocked"
-                alert.informativeText =
-                    "The following issues must be fixed in the source file before importing:\n\n\(issueMessages)"
-                alert.alertStyle = .critical
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
-                return
-            }
-
-            // Apply normalized sites
-            let normalizedSites = importResult.sites
-            try configStore.save(
-                Config(
-                    showGuideWindow: config.showGuideWindow,
-                    launchAtLogin: config.launchAtLogin, sites: normalizedSites))
-            vm.sites = normalizedSites
-            vm.showGuideWindow = config.showGuideWindow
-            vm.launchAtLogin = config.launchAtLogin
-            vm.markSaved()
-            vm.onReload?()
-
-            let adjustmentLines = importResult.fixes.map { fix in
-                let siteName =
-                    fix.siteIndex < normalizedSites.count
-                    ? normalizedSites[fix.siteIndex].name : "?"
-                return "• \(siteName): \(fix.message)"
-            }
-            let warningLines = importResult.warnings.map { warning in
-                let siteName =
-                    warning.siteIndex < normalizedSites.count
-                    ? normalizedSites[warning.siteIndex].name : "?"
-                return "• \(siteName): \(warning.message)"
-            }
-            let alert = NSAlert()
-            if adjustmentLines.isEmpty && warningLines.isEmpty {
-                alert.messageText = "Import successful"
-                alert.informativeText = "\(normalizedSites.count) site(s) loaded."
-            } else {
-                alert.messageText = "Import successful with adjustments"
-                var sections = ["\(normalizedSites.count) site(s) loaded."]
-                if !adjustmentLines.isEmpty {
-                    sections.append("Automatic fixes:\n\(adjustmentLines.joined(separator: "\n"))")
-                }
-                if !warningLines.isEmpty {
-                    sections.append("Display warnings:\n\(warningLines.joined(separator: "\n"))")
-                }
-                alert.informativeText = sections.joined(separator: "\n\n")
-            }
-            alert.alertStyle = .informational
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-        } catch {
-            showImportError(error.localizedDescription)
-        }
-    }
-
-    private func showImportError(_ detail: String) {
-        let alert = NSAlert()
-        alert.messageText = "Failed to import config."
-        alert.informativeText = detail
-        alert.alertStyle = .warning
-        alert.runModal()
     }
 }

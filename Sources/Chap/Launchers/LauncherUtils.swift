@@ -37,6 +37,10 @@ struct AXBoundsResult {
     /// tolerance 기반 판정
     let level: ApplicationLevel
 
+    /// 적용 과정에서 남긴 추가 진단 (EnhancedUI 비활성화, minSize 클램프 예측, 재중앙 보정).
+    /// CSV 한 칸으로도 쓰이므로 콤마를 포함하지 않는다.
+    var notes: [String] = []
+
     /// position이 tolerance 범위 내 일치하는지
     var positionWithinTolerance: Bool {
         guard let actual = actualPosition else { return false }
@@ -140,13 +144,15 @@ struct AXBoundsResult {
 
     /// 이 결과의 진단 요약 (통합 로그·CSV 공용).
     var diagnostic: String {
-        Self.diagnosticSummary(
+        let summary = Self.diagnosticSummary(
             positionError: positionOutcome.error,
             sizeError: sizeOutcome.error,
             actualPosition: actualPosition,
             actualSize: actualSize,
             requestedPosition: requestedPosition,
             requestedSize: requestedSize)
+        guard !notes.isEmpty else { return summary }
+        return "\(summary) \(notes.joined(separator: " "))"
     }
 }
 
@@ -164,6 +170,45 @@ enum LauncherUtils {
     }
 
     // MARK: - AX API 공용
+
+    /// messaging timeout이 적용된 앱 AX 요소.
+    ///
+    /// 시스템 기본 timeout(수 초)은 응답 없는 앱에서 관찰 루프 전체를 멈추게
+    /// 하므로, 이 요소를 통한 호출은 `AXResizePolicy.messagingTimeoutSeconds`로
+    /// 블로킹 시간을 제한한다 (Rectangle의 setMessagingTimeout과 동일).
+    static func axApplication(pid: pid_t) -> AXUIElement {
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(app, AXResizePolicy.messagingTimeoutSeconds)
+        return app
+    }
+
+    /// pid의 AX 윈도우 목록. 실패 시 빈 배열.
+    static func axWindows(pid: pid_t) -> [AXUIElement] {
+        axWindows(app: axApplication(pid: pid))
+    }
+
+    /// AX 앱 요소의 윈도우 목록. 실패 시 빈 배열.
+    static func axWindows(app: AXUIElement) -> [AXUIElement] {
+        var value: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value)
+                == .success,
+            let windows = value as? [AXUIElement]
+        else { return [] }
+        return windows
+    }
+
+    /// 실행 전 앱 창 목록 스냅샷. AX 윈도우 읽기가 순간적으로 빈 배열을 반환할 수 있어
+    /// 짧게 재시도해 실제 창 집합을 확보한다.
+    static func captureExistingWindows(pid: pid_t) -> [AXUIElement] {
+        let app = axApplication(pid: pid)
+        for attempt in 0..<5 {
+            let windows = axWindows(app: app)
+            if !windows.isEmpty { return windows }
+            if attempt < 4 { usleep(30_000) }
+        }
+        return []
+    }
 
     static func axSetPosition(_ window: AXUIElement, _ point: CGPoint) -> AXError {
         var p = point
@@ -203,34 +248,121 @@ enum LauncherUtils {
         return size
     }
 
-    /// 윈도우에 position/size를 안정적으로 적용하고 결과를 상세 반환 (2회 설정 + 읽기 검증)
+    /// 앱의 AXEnhancedUserInterface 상태. 읽기 실패 시 nil.
+    ///
+    /// 이 속성이 켜져 있으면(VoiceOver, 일부 Chromium/Electron 앱) AX
+    /// position/size 설정이 무시되거나 어긋나므로 리사이즈 전에 꺼야 한다.
+    static func axGetEnhancedUserInterface(_ app: AXUIElement) -> Bool? {
+        var value: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(
+                app, Self.enhancedUserInterfaceAttribute, &value) == .success
+        else { return nil }
+        return value as? Bool
+    }
+
+    static func axSetEnhancedUserInterface(_ app: AXUIElement, _ enabled: Bool) {
+        AXUIElementSetAttributeValue(
+            app, Self.enhancedUserInterfaceAttribute, enabled as CFBoolean)
+    }
+
+    private static let enhancedUserInterfaceAttribute = "AXEnhancedUserInterface" as CFString
+
+    /// 윈도우가 보고하는 최소 size. 속성 이름이 앱마다 달라 둘 다 시도한다
+    /// (Rectangle과 동일: AXMinSize → AXMinimumSize).
+    static func axGetMinimumSize(_ window: AXUIElement) -> CGSize? {
+        for attribute in ["AXMinSize", "AXMinimumSize"] {
+            var value: AnyObject?
+            guard
+                AXUIElementCopyAttributeValue(window, attribute as CFString, &value)
+                    == .success,
+                let value,
+                let axValue = AXIntrospection.value(from: value)
+            else { continue }
+            var size = CGSize.zero
+            if AXValueGetValue(axValue, .cgSize, &size) { return size }
+        }
+        return nil
+    }
+
+    /// 윈도우에 position/size를 적용하고 결과를 상세 반환.
+    ///
+    /// Rectangle에서 검증된 절차를 따른다:
+    /// 1. window에 messaging timeout을 걸어 응답 없는 앱에서의 블로킹을 제한.
+    /// 2. 앱의 AXEnhancedUserInterface가 켜져 있으면 끄고 적용 후 복원.
+    /// 3. size → position → size 순서로 적용 (디스플레이 간 이동 시 macOS의
+    ///    현재-화면 기준 size 클램프를 우회).
+    /// 4. 적용 후 실제 값을 읽어 검증하고, 앱이 size를 클램프했으면 요청 중앙점을
+    ///    유지하도록 position을 한 번 더 보정.
     @discardableResult
     static func axApplyBounds(_ window: AXUIElement, position: CGPoint, size: CGSize)
         -> AXBoundsResult
     {
-        // 1차 적용
-        _ = axSetPosition(window, position)
+        AXUIElementSetMessagingTimeout(window, AXResizePolicy.messagingTimeoutSeconds)
+        var notes: [String] = []
+
+        // EnhancedUI 처리를 위한 앱 요소 (pid 읽기 실패 시 생략)
+        var pid = pid_t(0)
+        let appElement: AXUIElement? =
+            AXUIElementGetPid(window, &pid) == .success ? axApplication(pid: pid) : nil
+
+        // 최소 size 클램프 예측 (partial 판정의 원인 구분용)
+        if let minimumSize = axGetMinimumSize(window),
+            AXResizePolicy.predictsMinimumSizeClamp(
+                requestedSize: size, minimumSize: minimumSize)
+        {
+            notes.append("minSize=\(Int(minimumSize.width))x\(Int(minimumSize.height))")
+        }
+
+        // EnhancedUI 비활성화 (원래 켜져 있던 경우에만 복원)
+        var originalEnhancedUI: Bool?
+        if let appElement {
+            originalEnhancedUI = axGetEnhancedUserInterface(appElement)
+            if originalEnhancedUI == true {
+                axSetEnhancedUserInterface(appElement, false)
+                notes.append("enhancedUI=disabled")
+            }
+        }
+
+        // size → position → size (applyOrder)
         _ = axSetSize(window, size)
-        usleep(50_000)
-        // 2차 적용 (안정성)
-        let sizeErr2 = axSetSize(window, size)
-        let posErr2 = axSetPosition(window, position)
+        var finalPosErr = axSetPosition(window, position)
+        let finalSizeErr = axSetSize(window, size)
 
         // 검증을 위해 짧은 대기 후 읽기
         usleep(20_000)
-        let actualPosition = axGetPosition(window)
-        let actualSize = axGetSize(window)
+        var actualPosition = axGetPosition(window)
+        var actualSize = axGetSize(window)
 
-        // 최종 에러: 2차 적용 결과 우선
-        let finalPosErr = posErr2
-        let finalSizeErr = sizeErr2
+        // 앱이 size를 클램프했으면 요청했던 중앙점을 유지하도록 position 보정
+        var verifiedPosition = position
+        if AXResizePolicy.needsCenterPreservingAdjustment(
+            requestedSize: size, actualSize: actualSize,
+            tolerance: AXBoundsResult.defaultTolerance),
+            let clampedSize = actualSize
+        {
+            let adjusted = AXResizePolicy.centerPreservingOrigin(
+                requestedOrigin: position, requestedSize: size, actualSize: clampedSize)
+            finalPosErr = axSetPosition(window, adjusted)
+            verifiedPosition = adjusted
+            notes.append("recentered=(\(Int(adjusted.x)) \(Int(adjusted.y)))")
+            usleep(20_000)
+            actualPosition = axGetPosition(window)
+            actualSize = axGetSize(window)
+        }
+
+        if AXResizePolicy.shouldRestoreEnhancedUI(originalValue: originalEnhancedUI),
+            let appElement
+        {
+            axSetEnhancedUserInterface(appElement, true)
+        }
 
         let level = AXBoundsResult.determineLevel(
             positionError: finalPosErr,
             sizeError: finalSizeErr,
             actualPosition: actualPosition,
             actualSize: actualSize,
-            requestedPosition: position,
+            requestedPosition: verifiedPosition,
             requestedSize: size
         )
 
@@ -239,9 +371,10 @@ enum LauncherUtils {
             sizeOutcome: .init(attribute: kAXSizeAttribute as String, error: finalSizeErr),
             actualPosition: actualPosition,
             actualSize: actualSize,
-            requestedPosition: position,
+            requestedPosition: verifiedPosition,
             requestedSize: size,
-            level: level
+            level: level,
+            notes: notes
         )
     }
 

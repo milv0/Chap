@@ -22,5 +22,9 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Chap controls Finder to open folders and position Finder windows at the size and location you set.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
 </dict>
 </plist>

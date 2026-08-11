@@ -22,6 +22,9 @@ There is no `Package.swift`; do not use `swift test`.
 - `Sources/Chap/Views/`: SwiftUI settings, site config, QA, welcome, components.
 - `Tests/ChapCoreTests/`: Swift Testing unit tests for `ChapCore`.
 - `.harness/shared/rules/`: shared assistant rules.
+- `ARCHITECTURE.txt`: structure, features, APIs, change history.
+- `FLOW.md`: runtime flow — startup order, permission state machine, per-launcher
+  sequences with timeouts, thread map, invariants, known issues.
 
 ## Behavior
 
@@ -35,6 +38,8 @@ There is no `Package.swift`; do not use `swift test`.
 
 ## Rules
 
+- Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior;
+  its invariants section lists past regressions.
 - Follow `.harness/shared/rules/swift-conventions.md`.
 - Follow `.harness/shared/rules/swift-testing.md` for tests.
 - Follow `.harness/shared/rules/architecture-docs.md`; update `ARCHITECTURE.txt`

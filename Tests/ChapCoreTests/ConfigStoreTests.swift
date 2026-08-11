@@ -36,6 +36,30 @@ struct ConfigStoreTests {
         #expect(backup.sites == first.sites)
     }
 
+    @Test("backup failure aborts save and preserves primary config")
+    func backupFailurePreservesPrimary() throws {
+        let fixture = try makeTemporaryStore()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let first = Config(sites: [
+            Site(name: "First", url: "https://first.com", width: 800, height: 600)
+        ])
+        let second = Config(sites: [
+            Site(name: "Second", url: "https://second.com", width: 900, height: 700)
+        ])
+        try fixture.store.save(first)
+        try FileManager.default.createDirectory(
+            atPath: fixture.store.backupPath, withIntermediateDirectories: true)
+
+        #expect(throws: ConfigStoreError.self) {
+            try fixture.store.save(second)
+        }
+
+        let preserved = try JSONDecoder().decode(
+            Config.self,
+            from: Data(contentsOf: URL(fileURLWithPath: fixture.store.configPath)))
+        #expect(preserved.sites == first.sites)
+    }
+
     @Test("load completes displayName for connected displayIdentifier and persists it")
     func loadCompletesDisplayName() throws {
         let fixture = try makeTemporaryStore()
@@ -56,6 +80,28 @@ struct ConfigStoreTests {
         #expect(result.didAutoSaveDisplayMigration)
         #expect(result.config.sites[0].displayName == "Studio Display")
         #expect(saved.sites[0].displayName == "Studio Display")
+    }
+
+    @Test("load persists shortcut normalization")
+    func loadPersistsShortcutNormalization() throws {
+        let fixture = try makeTemporaryStore()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let config = Config(sites: [
+            Site(
+                name: "A", url: "https://a.com", width: 800, height: 600,
+                shortcut: "AB"),
+            Site(
+                name: "B", url: "https://b.com", width: 800, height: 600,
+                shortcut: "K"),
+        ])
+        try fixture.store.save(config)
+
+        let result = try fixture.store.load(connectedDisplays: [])
+
+        let saved = try JSONDecoder().decode(
+            Config.self, from: Data(contentsOf: URL(fileURLWithPath: fixture.store.configPath)))
+        #expect(result.config.sites.map(\.shortcut) == [nil, "K"])
+        #expect(saved.sites.map(\.shortcut) == [nil, "K"])
     }
 
     @Test("stripLegacyFields removes legacy config keys")

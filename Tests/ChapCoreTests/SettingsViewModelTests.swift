@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import Chap
@@ -78,5 +79,44 @@ struct SettingsViewModelTests {
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
         #expect(savedLogin == true)
+    }
+
+    @Test func scheduledAutoSavePersistsLatestValidState() {
+        let queue = DispatchQueue(label: "SettingsViewModelTests.autoSave")
+        let debouncer = SaveDebouncer(delay: 0.02, queue: queue)
+        let vm = SettingsViewModel(sites: baseSites, saveDebouncer: debouncer)
+        let saved = DispatchSemaphore(value: 0)
+        var savedName: String?
+        vm.onSave = { payload in
+            savedName = payload.sites.first?.name
+            saved.signal()
+            return true
+        }
+
+        vm.sites[0].name = "First"
+        vm.scheduleAutoSave()
+        vm.sites[0].name = "Latest"
+        vm.scheduleAutoSave()
+
+        #expect(saved.wait(timeout: .now() + 1) == .success)
+        #expect(savedName == "Latest")
+        #expect(!vm.hasChanges)
+    }
+
+    @Test func scheduledAutoSaveSkipsInvalidState() {
+        let queue = DispatchQueue(label: "SettingsViewModelTests.invalidAutoSave")
+        let debouncer = SaveDebouncer(delay: 0.02, queue: queue)
+        let vm = SettingsViewModel(sites: baseSites, saveDebouncer: debouncer)
+        let unexpectedSave = DispatchSemaphore(value: 0)
+        vm.onSave = { _ in
+            unexpectedSave.signal()
+            return true
+        }
+
+        vm.sites[0].name = ""
+        vm.scheduleAutoSave()
+
+        #expect(unexpectedSave.wait(timeout: .now() + 0.1) == .timedOut)
+        #expect(vm.hasChanges)
     }
 }

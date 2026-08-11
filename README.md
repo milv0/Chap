@@ -15,8 +15,8 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
 - **Display Minimap** — Auto previews the cursor screen; click to select a display
-- **Global Hotkeys** — `⌥.` for menu, `⌥(custom key)` to launch, `⌥,` for settings
-- **Accessibility Aware** — Icon indicates permission status, auto-registers when granted
+- **Global Hotkeys** — Only registered `⌥` combinations reach Chap; normal typing bypasses it
+- **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
@@ -27,7 +27,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 
 - macOS 14.0+ (Sonoma)
 - Google Chrome (for URL launch type)
-- Accessibility permission (for global hotkeys and URL/app window resizing)
+- Accessibility permission (for URL/app window resizing)
 - Automation permission when using Finder folder launch
 
 ## Usage
@@ -55,8 +55,9 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | `↑` `↓` | Navigate sidebar |
 | `Enter` | Save + exit edit mode |
 
-**Setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
-The menubar icon shows a warning badge until permission is granted.
+**Window resizing setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
+Global hotkeys work without this permission; the menubar warning badge indicates that URL/app
+window resizing is unavailable.
 
 ### Config File
 
@@ -94,6 +95,38 @@ Stored at `~/.chap.json`:
 Windows are always centered on the target display automatically. If `displayName` and `displayIdentifier` are omitted, Chap opens on the cursor screen. Legacy name-only display settings are augmented with a UUID only when the connected-name match is unique; connected UUIDs refresh the display name, while ambiguous or disconnected displays are preserved and shown for manual reselection. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
 
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
+
+## Direct Distribution (Developer ID)
+
+Chap’s Accessibility-based window control and Shell launcher are distributed outside the Mac App Store. The full edition uses **Developer ID Application** signing, the Hardened Runtime, and Apple notarization; TestFlight is not a valid test or distribution channel for this edition because it is an App Store sandbox build.
+
+### Build and notarize
+
+1. Create and install a `Developer ID Application` certificate for team `JC4BNFSKBN`: [Apple Developer Help](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/).
+2. Create a local notarytool keychain profile. Do not commit the app-specific password:
+   ```bash
+   xcrun notarytool store-credentials ChapNotary \
+     --apple-id "$APPLE_ID" \
+     --team-id JC4BNFSKBN \
+     --password "$APP_SPECIFIC_PASSWORD"
+   ```
+3. Build a signed DMG:
+   ```bash
+   Scripts/build-release-dmg.sh
+   ```
+4. Submit, staple, and verify it with Gatekeeper:
+   ```bash
+   NOTARYTOOL_KEYCHAIN_PROFILE=ChapNotary \
+     Scripts/notarize-release-dmg.sh build/release/Chap-<version>-<build>.dmg
+   ```
+
+The notarization script waits for Apple’s decision, staples the accepted ticket to the DMG, verifies the embedded app signature, and runs Gatekeeper assessment. See [Apple’s notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) for credential alternatives and troubleshooting.
+
+### Window-control reliability and diagnostics
+
+The URL and App launchers share the same Accessibility bounds pipeline. It follows the proven **size → position → size** order used by [Rectangle](https://github.com/rxhanson/Rectangle) to avoid display-transition clamping, limits unresponsive AX calls to two seconds, temporarily disables `AXEnhancedUserInterface` when an app has enabled it, and verifies final bounds by readback. If an app clamps the requested size, Chap preserves the intended center by applying a corrected position once more.
+
+Debug builds append diagnostics to `~/Library/Logs/Chap/resize_YYYY-MM-DD.csv`. `minSize=WxH` indicates `AXMinSize`/`AXMinimumSize` predicts a clamp; `recentered=(x y)` indicates the center-preserving correction ran; `enhancedUI=disabled` indicates that compatibility path ran. Their absence on a `fully` row is normal: it means the app accepted the requested bounds without needing that recovery path.
 
 ## License
 

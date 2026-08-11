@@ -201,6 +201,14 @@ private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {
 
         let trimmed = shortcut.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        if trimmed.count != 1 {
+            issues.append(
+                ValidationIssue(
+                    siteIndex: index, field: .shortcut, severity: .error,
+                    message: "Shortcut must be exactly one character."))
+            continue
+        }
+
         // 예약키(".", ",")는 메뉴/설정 전역 단축키와 충돌하므로 거부.
         if reservedShortcutKeys.contains(trimmed) {
             issues.append(
@@ -279,4 +287,10 @@ private func detectDuplicateValues(in sites: [Site]) -> [ValidationIssue] {
     }
 
     return issues
+}
+
+/// Export는 Import와 달리 자동 정규화를 거치지 않으므로 파일을 쓰기 전에
+/// 현재 편집 상태 자체가 저장 가능한 Config인지 확인해야 한다.
+public func validateConfigForExport(_ config: Config) -> ValidationResult {
+    validateConfig(config)
 }

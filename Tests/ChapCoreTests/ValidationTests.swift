@@ -238,6 +238,12 @@ struct ShortcutSanitizationTests {
         #expect(result.map(\.shortcut) == [nil, nil, "M"])
     }
 
+    @Test("clears shortcuts containing more than one character")
+    func clearsMultipleCharacters() {
+        let result = sanitizedShortcuts(for: [site("a", "AB"), site("b", "K")])
+        #expect(result.map(\.shortcut) == [nil, "K"])
+    }
+
     @Test("trims surrounding whitespace but preserves the key")
     func trimsWhitespace() {
         let result = sanitizedShortcuts(for: [site("a", " P ")])
