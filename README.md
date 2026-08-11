@@ -96,6 +96,38 @@ Windows are always centered on the target display automatically. If `displayName
 
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 
+## Direct Distribution (Developer ID)
+
+Chap’s Accessibility-based window control and Shell launcher are distributed outside the Mac App Store. The full edition uses **Developer ID Application** signing, the Hardened Runtime, and Apple notarization; TestFlight is not a valid test or distribution channel for this edition because it is an App Store sandbox build.
+
+### Build and notarize
+
+1. Create and install a `Developer ID Application` certificate for team `JC4BNFSKBN`: [Apple Developer Help](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/).
+2. Create a local notarytool keychain profile. Do not commit the app-specific password:
+   ```bash
+   xcrun notarytool store-credentials ChapNotary \
+     --apple-id "$APPLE_ID" \
+     --team-id JC4BNFSKBN \
+     --password "$APP_SPECIFIC_PASSWORD"
+   ```
+3. Build a signed DMG:
+   ```bash
+   Scripts/build-release-dmg.sh
+   ```
+4. Submit, staple, and verify it with Gatekeeper:
+   ```bash
+   NOTARYTOOL_KEYCHAIN_PROFILE=ChapNotary \
+     Scripts/notarize-release-dmg.sh build/release/Chap-<version>-<build>.dmg
+   ```
+
+The notarization script waits for Apple’s decision, staples the accepted ticket to the DMG, verifies the embedded app signature, and runs Gatekeeper assessment. See [Apple’s notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) for credential alternatives and troubleshooting.
+
+### Window-control reliability and diagnostics
+
+The URL and App launchers share the same Accessibility bounds pipeline. It follows the proven **size → position → size** order used by [Rectangle](https://github.com/rxhanson/Rectangle) to avoid display-transition clamping, limits unresponsive AX calls to two seconds, temporarily disables `AXEnhancedUserInterface` when an app has enabled it, and verifies final bounds by readback. If an app clamps the requested size, Chap preserves the intended center by applying a corrected position once more.
+
+Debug builds append diagnostics to `~/Library/Logs/Chap/resize_YYYY-MM-DD.csv`. `minSize=WxH` indicates `AXMinSize`/`AXMinimumSize` predicts a clamp; `recentered=(x y)` indicates the center-preserving correction ran; `enhancedUI=disabled` indicates that compatibility path ran. Their absence on a `fully` row is normal: it means the app accepted the requested bounds without needing that recovery path.
+
 ## License
 
 MIT

@@ -80,6 +80,7 @@ Runtime:
 └── ~/Library/Logs/Chap/           ← 리사이즈 성능 로그 (CSV, DEBUG 빌드만)
                                       열: timestamp,site,type,app_state,attempt,delay,
                                       total_time,result,window_count,display,size,detail
+                                      URL detail: baseline/launch/window_wait/ax timing + PID path
 
 
 ## 데이터 모델
@@ -224,12 +225,14 @@ Chrome 윈도우 감지 방식:
   1. 모든 요청을 단일 requestCoordinator serial queue에서 처리
      (cached Chrome PID baseline → open -na Process → 새 창 polling → AX readback 검증).
      이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
-     1:1로 대응함. queue wait와 processing latency를 분리해 로그에 기록
+     1:1로 대응함. queue wait와 processing latency, baseline/launch/window wait/AX apply,
+     PID 전환 경로를 분리해 로그에 기록
   2. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
        새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
-  3. 실행 후 동일 PID를 폴링하고 CFEqual로 이전 목록과 비교하여 첫 새 윈도우 식별
+  3. 매 폴링에서 최신 live Chrome 프로세스를 조회. 동일 PID면 CFEqual 차집합, PID가 바뀌면
+     실행 전 window fingerprint multiset을 차감해 복원 창과 요청 창을 구분
   4. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
   5. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
   6. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
@@ -251,6 +254,7 @@ App 윈도우 감지 방식 (AXObserver):
   - ResizeLogger가 NSLock으로 디렉터리 생성, 헤더 확인/생성, append를 직렬화
   - size는 화면 fitting과 화면별 override를 반영해 AX에 실제 요청한 WxH
   - App total_time은 첫 fully/partial 적용 시점이며 failed 시도는 latency로 기록하지 않음
+  - URL detail 끝에 단계별 timing key=value와 PID path를 추가해 Chrome 내부 지연을 분리
 
 
 ## 사용 API / 프레임워크
@@ -400,3 +404,68 @@ App 윈도우 감지 방식 (AXObserver):
 - 코드 서명: 미등록 (Apple Developer $99 필요)
 - 현재 배포 방식: 소스 clone → xcodegen generate → Xcode 빌드
 - zip/dmg 배포: xattr 필요 + 수동 권한 설정 (서명 없는 앱 한계)
+
+
+## 2026-08 현재 배포·AX 안정화 구조
+
+### Full edition 배포
+
+Chap의 전체 기능(URL/App 타 앱 창 제어와 Shell launcher)은 Mac App Store/TestFlight 대상이 아니다.
+App Store 배포에는 App Sandbox가 필요하지만 AXUIElement 기반 타 앱 제어와 임의 Shell 실행은
+sandbox 모델과 양립하지 않는다. 현재 Release source of truth는 `project.yml`이다.
+
+```
+Release
+├── CODE_SIGN_STYLE = Manual
+├── CODE_SIGN_IDENTITY = Developer ID Application
+├── ENABLE_HARDENED_RUNTIME = YES
+├── OTHER_CODE_SIGN_FLAGS = --timestamp
+└── CODE_SIGN_ENTITLEMENTS = Sources/Chap/Chap.entitlements
+    └── com.apple.security.automation.apple-events
+```
+
+`Chap.entitlements`에는 App Sandbox entitlement가 없다. `Scripts/build-release-dmg.sh`가
+Developer ID signed universal archive를 검증해 DMG를 만들고,
+`Scripts/notarize-release-dmg.sh`가 `notarytool submit --wait` → staple → signature/Gatekeeper
+assessment를 수행한다. notarization credential은 keychain profile에만 저장하며 소스나 config에
+넣지 않는다. Apple 절차는 https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution
+를 따른다.
+
+### 공용 AX bounds pipeline
+
+`LauncherUtils.axApplyBounds(window:position:size:)`는 Chrome과 일반 App launcher가 공유하는
+유일한 bounds 적용 종점이다. `AXResizePolicy.swift`는 AX 호출 없이 순수 계산·정책을 테스트한다.
+[Rectangle](https://github.com/rxhanson/Rectangle)의 공개 구현에서 확인한 안정화 원칙을 다음처럼
+적용한다.
+
+```
+AX app/window element 생성
+├── AXUIElementSetMessagingTimeout(2s)
+├── AXMinSize → AXMinimumSize를 순서대로 읽어 clamp 예측
+├── app.AXEnhancedUserInterface == true이면 false로 전환
+├── set size(target)
+├── set position(target)
+├── set size(target)                  // 다른 디스플레이 이동 뒤 재적용
+├── 20ms 뒤 position/size readback
+├── actual size가 tolerance(4pt)를 넘게 다르면
+│   └── requested center를 보존한 position을 한 번 재적용 → readback
+└── 원래 EnhancedUI가 true였을 때만 true로 복원
+```
+
+최종 `fully`/`partial`/`failed` 판정은 set 반환값이 아닌 readback 비교다. clamp가 일어나면
+중앙 보정이 성공해도 size 자체는 요청값과 달라 `partial`로 남는다. `AXBoundsResult.notes`는
+`enhancedUI=disabled`, `minSize=WxH`, `recentered=(x y)`를 CSV `detail`에 더한다.
+
+`AXWindowIntrospection.swift`는 private `_AXUIElementGetWindow`를 사용하지 않는다. public
+`CGWindowListCopyWindowInfo`에서 AX window의 `pid + frame`을 매칭해 session-local
+`CGWindowID`를 얻고, 실패하면 top bit를 세운 `CFHash` 파생 id를 쓴다. 이 id는 적용·진단용이며
+앱 relaunch 뒤에도 유지되는 식별자가 아니므로, Chrome relaunch 매칭은 계속
+`title|role|subrole` fingerprint multiset이 담당한다.
+
+### Accessibility prompt
+
+`AccessibilityStateController.start()`는 테스트가 아닐 때 main run loop에서 한 번
+`AXIsProcessTrustedWithOptions`를 요청한다. Welcome이 생략됐거나 `guideDisabled=true`여도
+prompt가 유실되지 않는다. Welcome의 **Allow Accessibility** 버튼은 System Settings의
+Accessibility pane을 여는 fallback이며, controller의 once-guard가 launch/Welcome 두 경로의
+중복 prompt를 막는다. macOS는 이미 기록된 TCC 결정을 다시 표시하지 않을 수 있다.

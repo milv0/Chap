@@ -214,11 +214,14 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
  6. ClaimedWindowRegistry.claimFirstUnclaimed(새 창 후보, liveWindows)
       → 이미 다른 launch가 가져간 창은 건너뛰고, 닫힌 창은 레지스트리에서 정리
  7. axApplyBounds → level 판정 (§8)
- 8. 로그(notice/warning/error) + ResizeLogger.log(type:"url") + onComplete → 가이드 창 닫기
+ 8. 단계별 timing 로그 + ResizeLogger.log(type:"url") + onComplete → 가이드 창 닫기
 ```
 
-- cold 시작일 때만 매 폴링에서 `runningApplications`를 다시 조회한다 (아직 PID가 없으므로).
+- 매 폴링에서 live Chrome 프로세스를 다시 조회해 가장 최근 프로세스를 관찰한다. PID가 바뀌면
+  실행 전 window fingerprint를 새 PID의 창에서 차감해 복원 창과 요청 창을 구분한다.
 - 새 창을 못 찾으면 `result == nil` → `detail = "no new window found"`.
+- 단계별 timing은 baseline·launch request·window wait·AX apply를 분리하고, 관찰된 PID 경로와
+  최초 PID event·원래 baseline PID 복귀 시점을 함께 기록한다. PID 선택 정책과 폴링 동작은 바꾸지 않는다.
 
 ### 7.2 App — `AppLauncher`
 
@@ -451,7 +454,7 @@ subsystem = 번들 ID(`com.mingyupark.Chap`), category = `app` / `launcher` / `c
 | 9 | `window_count` | **실행 전 baseline 창 개수**. 실패 시점의 창 수가 아니다 |
 | 10 | `display` | 대상 디스플레이 이름 |
 | 11 | `size` | 화면 fitting·화면별 override까지 반영해 AX에 실제 요청한 `WxH` |
-| 12 | `detail` | 판정 근거 (§8) 또는 창 상태 요약 |
+| 12 | `detail` | 판정 근거 (§8), 창 상태 요약, URL 타입의 단계별 timing |
 
 7·9번 열의 의미를 착각하면 원인을 오진한다. 특히 `total_time`은 리사이즈에 실패한 행에서는
 `elapsed`(루프 전체)로 대체되지만, 성공 행에서는 첫 `fully`/`partial` 적용까지의 시간이다.
@@ -459,6 +462,25 @@ subsystem = 번들 ID(`com.mingyupark.Chap`), category = `app` / `launcher` / `c
 
 `detail`은 마지막 열로 나중에 추가됐다. 헤더는 파일 생성 시 한 번만 쓰므로 그 이전에 만들어진
 파일에는 헤더에 `detail`이 없다. 1~11열 위치는 그대로여서 기존 분석 스크립트는 계속 동작한다.
+
+URL 타입은 판정 근거 뒤에 다음 고정 형식의 timing suffix를 붙인다.
+
+```text
+timing baseline=0.121s launch=0.005s window_wait=1.776s ax=0.021s
+pid_switches=2 first_pid_event=0.242s baseline_pid_return=1.768s
+pid_path=2109>37320>2109
+```
+
+| 키 | 기준 |
+| --- | --- |
+| `baseline` | 현재 Chrome 프로세스 조회 + 실행 전 AX 창 스냅샷 |
+| `launch` | `/usr/bin/open` Process 시작 요청이 반환될 때까지. Chrome 핸드오프 완료 시간이 아님 |
+| `window_wait` | launch 반환 후 새 AX 창 감지 또는 timeout까지. PID 핸드오프·Chrome 창 생성 포함 |
+| `ax` | position/size 설정 + readback 검증 |
+| `pid_switches` | 폴링 중 관찰된 PID 전환 횟수 |
+| `first_pid_event` | launch 반환 후 최초 PID 전환까지. 없으면 `na` |
+| `baseline_pid_return` | 전환 후 실행 전 PID로 돌아오기까지. 복귀하지 않으면 `na` |
+| `pid_path` | 실행 전 PID부터 관찰된 PID 순서. 콜드 스타트의 시작값은 `none` |
 
 ```bash
 # 오늘 실패·부분 적용만
@@ -542,3 +564,58 @@ xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" test
 
 `swift test`는 쓸 수 없다 (`Package.swift`가 없다). 파일을 추가/삭제/이동했으면 `xcodegen generate` 후
 `ARCHITECTURE.txt`를 갱신한다 (`.harness/shared/rules/architecture-docs.md`).
+
+
+## 2026-08 AX 안정화 실행 보충
+
+### Accessibility system prompt가 Welcome에 종속되지 않는 이유
+
+`AccessibilityStateController › start()`는 `refresh(reason:"launch")`와 observer 등록을 마친 뒤
+main run loop에 `requestSystemPromptAtLaunch()`를 예약한다. interactive 실행이고 아직 trusted가
+아니면 `AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt: true])`를 정확히 한 번 요청하고
+30초 grant polling을 시작한다. `showWelcomeWindow()` 뒤의
+`requestSystemPromptAfterOnboarding()`은 fallback 경로이며, `didRequestSystemPrompt`가 이미 요청된
+경우 중복 호출하지 않는다. 따라서 `guideDisabled=true`도 prompt 요청을 막지 않는다.
+
+### 모든 URL/App 리사이즈의 공통 종점
+
+Chrome/App이 새 창을 식별한 뒤에는 같은 `LauncherUtils › axApplyBounds`로 들어간다.
+각 AX app/window element에 2초 messaging timeout을 걸기 때문에 응답 없는 대상 앱이 관찰 루프를
+시스템 기본 timeout만큼 멈추게 하지 않는다.
+
+```
+axApplyBounds(window, targetPosition, targetSize)
+├─ AXMinSize → AXMinimumSize 읽기
+│   └─ target보다 크면 notes += minSize=WxH
+├─ app.AXEnhancedUserInterface 읽기
+│   └─ true면 false로 전환, notes += enhancedUI=disabled
+├─ set size(targetSize)
+├─ set position(targetPosition)
+├─ set size(targetSize)
+├─ 20ms 대기 → actualPosition / actualSize readback
+├─ actual size가 target과 4pt 초과 차이인가?
+│   ├─ no  → 기존 targetPosition으로 판정
+│   └─ yes → actual size 기준으로 중앙을 보존한 position 재적용
+│             notes += recentered=(x y) → 20ms 대기 → 재-readback
+├─ 원래 EnhancedUI가 true였을 때만 true로 복원
+└─ 최종 readback으로 AXBoundsResult level 판정
+```
+
+`size → position → size` 순서는 화면 사이 창 이동에서 중요하다. macOS가 첫 size를 **현재 화면**의
+가시 영역에 맞춰 clamp할 수 있으므로, position으로 목표 화면에 옮긴 뒤 목표 size를 다시 적용한다.
+실제 size가 앱의 minimum size 때문에 달라지면 center 보정은 위치만 바로잡으며, size readback은
+여전히 다르므로 level은 `partial`이다. 이는 성공을 과장하지 않는 의도된 동작이다.
+
+### 진단 해석
+
+`ResizeLogger`의 `detail`은 기본 `posReq/posAct/sizeReq/sizeAct/posErr/sizeErr` 뒤에 공백으로
+notes를 붙인다. 다음 token은 조건부다.
+
+| token | 의미 | 없을 때 |
+| --- | --- | --- |
+| `enhancedUI=disabled` | 대상 앱이 Enhanced UI를 켜서 Chap이 리사이즈 중 껐다가 복원함 | 기능이 빠진 것이 아니라 대상 앱이 해당 상태가 아니었음 |
+| `minSize=WxH` | AX가 노출한 minimum size가 요청 size보다 큼 | 앱이 minimum attribute를 안 주거나 요청이 minimum 이상 |
+| `recentered=(x y)` | 실제 clamp size로 요청 중앙을 유지하도록 position을 재적용함 | size가 요청과 같거나 4pt tolerance 안 |
+
+App 적용 로그의 `id=`는 public `CGWindowListCopyWindowInfo`의 `pid + frame` 매칭 결과이며, 실패하면
+CFHash 기반 파생 id다. 이 id는 진단용이며 Chrome relaunch 경계를 넘는 identity는 아니다.
