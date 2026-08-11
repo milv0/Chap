@@ -237,7 +237,7 @@ enum AppLauncher {
         -> AXBoundsResult
     {
         Log.launcher.info(
-            "AX applying bounds for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) \(AXIntrospection.windowSummary(window), privacy: .public)"
+            "AX applying bounds for \(ctx.debugLabel, privacy: .private): title=\(AXIntrospection.windowTitle(window), privacy: .private) id=\(AXIntrospection.windowNumber(window), privacy: .public) \(AXIntrospection.windowSummary(window), privacy: .public)"
         )
         let boundsResult = LauncherUtils.axApplyBounds(
             window, position: ctx.position, size: ctx.size)

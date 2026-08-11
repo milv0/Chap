@@ -73,6 +73,56 @@ enum AXIntrospection {
         "windows=\(LauncherUtils.axWindows(app: app).count) focused=[\(focusedWindowSummary(app))]"
     }
 
+    // MARK: - Window number
+
+    /// 세션 내에서 안정적인 창 식별자.
+    ///
+    /// public API인 CGWindowList에서 같은 pid·frame의 창을 찾아 실제
+    /// window number를 얻는다 (Rectangle의 getWindowId에서 private
+    /// `_AXUIElementGetWindow`를 제외한 public 경로와 동일). 매칭이 안 되면
+    /// AX 요소의 CFHash에서 파생한 대체 id를 만든다. window number는 앱
+    /// relaunch 시 window server가 새로 발급하므로 relaunch 전후 매칭에는
+    /// 쓸 수 없다 — 그 용도는 `windowFingerprint`가 담당한다.
+    static func windowNumber(_ window: AXUIElement) -> CGWindowID {
+        var pid = pid_t(0)
+        guard AXUIElementGetPid(window, &pid) == .success,
+            let position = LauncherUtils.axGetPosition(window),
+            let size = LauncherUtils.axGetSize(window),
+            let matched = onScreenWindowNumber(
+                pid: pid, frame: CGRect(origin: position, size: size))
+        else {
+            return derivedWindowNumber(fromElementHash: CFHash(window))
+        }
+        return matched
+    }
+
+    /// 파생 id는 최상위 비트를 세워 실제 window number 공간과 겹치지 않게 한다.
+    /// 실제 number는 window server가 증분 발급하므로 이 영역에 도달하지 않는다.
+    /// CFHash는 같은 창에 대해 조회마다 동일하고 이동·리사이즈에 영향받지 않는다.
+    static func derivedWindowNumber(fromElementHash hash: CFHashCode) -> CGWindowID {
+        CGWindowID(0x8000_0000) | (CGWindowID(truncatingIfNeeded: hash) & 0x7FFF_FFFF)
+    }
+
+    private static func onScreenWindowNumber(pid: pid_t, frame: CGRect) -> CGWindowID? {
+        guard
+            let infos = CGWindowListCopyWindowInfo(
+                [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+                as? [[String: AnyObject]]
+        else { return nil }
+        for info in infos {
+            guard
+                let ownerPid = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
+                ownerPid == pid,
+                let boundsDict = info[kCGWindowBounds as String] as? NSDictionary,
+                let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+                bounds.equalTo(frame),
+                let number = (info[kCGWindowNumber as String] as? NSNumber)?.uint32Value
+            else { continue }
+            return CGWindowID(number)
+        }
+        return nil
+    }
+
     // MARK: - Private
 
     private static func stringAttribute(_ element: AXUIElement, _ attribute: CFString) -> String {

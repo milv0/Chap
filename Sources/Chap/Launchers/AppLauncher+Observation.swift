@@ -47,7 +47,7 @@ extension AppLauncher {
         policy: ResizeObservationPolicy, debugLabel: String, observationKey: String,
         observationToken: Int, windowsBefore: [AXUIElement]
     ) -> ResizeObservationResult {
-        let app = AXUIElementCreateApplication(pid)
+        let app = LauncherUtils.axApplication(pid: pid)
         let ctx = ResizeContext(
             position: position,
             size: size,
