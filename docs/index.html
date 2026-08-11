@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Chap is a fast macOS menu bar launcher for opening sites, apps, folders, and scripts exactly where you want them.">
+  <meta name="description" content="Chap opens a saved command from an Option shortcut and centers its window on the display you choose.">
   <meta name="theme-color" content="#E0E5EC">
-  <title>Chap — Your workspace, on command.</title>
+  <title>Chap — Press Option. Start centered.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -14,20 +14,18 @@
       --surface: #E0E5EC;
       --foreground: #3D4852;
       --muted: #6B7280;
-      --accent: #6C63FF;
-      --accent-light: #8B84FF;
+      --accent: #3664FF;
+      --accent-light: #6688FF;
       --success: #38B2AC;
-      --placeholder: #A0AEC0;
       --shadow-dark: rgb(163 177 198 / .64);
       --shadow-light: rgb(255 255 255 / .58);
-      --shadow-accent-dark: rgb(64 58 175 / .34);
+      --shadow-accent-dark: rgb(29 69 190 / .34);
       --shadow-accent-light: rgb(255 255 255 / .24);
       --raised: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light);
       --raised-hover: 12px 12px 20px rgb(163 177 198 / .7), -12px -12px 20px rgb(255 255 255 / .62);
       --raised-small: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
       --inset: inset 6px 6px 10px var(--shadow-dark), inset -6px -6px 10px var(--shadow-light);
       --inset-deep: inset 10px 10px 20px rgb(163 177 198 / .7), inset -10px -10px 20px rgb(255 255 255 / .62);
-      --inset-small: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
       --radius-card: 32px;
       --radius-control: 16px;
       --ease: 300ms ease-out;
@@ -35,516 +33,124 @@
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body {
-      background: var(--surface);
-      color: var(--foreground);
-      font-family: "DM Sans", sans-serif;
-      line-height: 1.5;
-      margin: 0;
-      min-width: 320px;
-    }
+    body { background: var(--surface); color: var(--foreground); font-family: "DM Sans", sans-serif; line-height: 1.5; margin: 0; min-width: 320px; }
     a { color: inherit; text-decoration: none; }
-    button { color: inherit; font: inherit; }
-    a:focus-visible, button:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 4px;
-    }
-    ::selection { background: rgb(108 99 255 / .22); color: var(--foreground); }
-    [id] { scroll-margin-top: 7.5rem; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    ::selection { background: rgb(54 100 255 / .18); }
 
-    .shell { margin: 0 auto; width: min(1120px, calc(100% - 48px)); }
-    .font-display { font-family: "Plus Jakarta Sans", sans-serif; }
-    .eyebrow {
-      align-items: center;
-      color: var(--muted);
-      display: flex;
-      font-size: .74rem;
-      font-weight: 700;
-      gap: .55rem;
-      letter-spacing: .12em;
-      margin: 0;
-      text-transform: uppercase;
-    }
-    .eyebrow::before {
-      background: var(--accent);
-      border-radius: 50%;
-      box-shadow: var(--raised-small);
-      content: "";
-      height: .45rem;
-      width: .45rem;
-    }
+    .shell { margin: 0 auto; width: min(980px, calc(100% - 48px)); }
+    .display, h1, h2, h3 { font-family: "Plus Jakarta Sans", sans-serif; }
 
-    .site-header {
-      backdrop-filter: blur(14px);
-      background: rgb(224 229 236 / .86);
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-    .nav {
-      align-items: center;
-      display: flex;
-      justify-content: space-between;
-      min-height: 84px;
-    }
-    .brand {
-      align-items: center;
-      display: inline-flex;
-      font-family: "Plus Jakarta Sans", sans-serif;
-      font-size: 1.18rem;
-      font-weight: 800;
-      gap: .7rem;
-      letter-spacing: -.045em;
-      min-height: 44px;
-    }
-    .brand-mark {
-      align-items: center;
-      border-radius: 14px;
-      box-shadow: var(--raised-small);
-      display: inline-flex;
-      height: 42px;
-      justify-content: center;
-      transition: box-shadow var(--ease), transform var(--ease);
-      width: 42px;
-    }
-    .brand:hover .brand-mark { box-shadow: var(--inset-small); transform: rotate(-7deg); }
-    .brand-mark svg { color: var(--accent); height: 22px; width: 22px; }
-    .nav-links { align-items: center; display: flex; gap: .4rem; }
-    .nav-links a {
-      border-radius: 12px;
-      color: var(--muted);
-      font-size: .88rem;
-      font-weight: 700;
-      min-height: 44px;
-      padding: .68rem .8rem;
-      transition: box-shadow var(--ease), color var(--ease), transform var(--ease);
-    }
-    .nav-links a:hover { box-shadow: var(--inset-small); color: var(--foreground); transform: translateY(1px); }
-    .menu-toggle {
-      align-items: center;
-      background: var(--surface);
-      border: 0;
-      border-radius: 14px;
-      box-shadow: var(--raised-small);
-      cursor: pointer;
-      display: none;
-      height: 48px;
-      justify-content: center;
-      padding: 0;
-      transition: box-shadow var(--ease), transform var(--ease);
-      width: 48px;
-    }
-    .menu-toggle:hover { box-shadow: var(--raised-hover); transform: translateY(-1px); }
-    .menu-toggle:active { box-shadow: var(--inset-small); transform: translateY(1px); }
-    .menu-toggle svg { height: 22px; width: 22px; }
-    .mobile-menu {
-      background: var(--surface);
-      border-radius: 0 0 24px 24px;
-      box-shadow: 9px 12px 18px rgb(163 177 198 / .45);
-      left: 0;
-      padding: .4rem max(16px, calc((100vw - 1120px) / 2)) 1rem;
-      position: absolute;
-      right: 0;
-      top: 100%;
-    }
-    .mobile-menu[hidden] { display: none; }
-    .mobile-menu a {
-      align-items: center;
-      border-radius: var(--radius-control);
-      display: flex;
-      font-size: 1rem;
-      font-weight: 700;
-      justify-content: space-between;
-      min-height: 48px;
-      padding: .75rem 1rem;
-    }
-    .mobile-menu a:hover { box-shadow: var(--inset-small); }
+    .site-header { backdrop-filter: blur(14px); background: rgb(224 229 236 / .88); position: sticky; top: 0; z-index: 1; }
+    .nav { align-items: center; display: flex; justify-content: space-between; min-height: 76px; }
+    .brand { align-items: center; display: inline-flex; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.16rem; font-weight: 800; gap: .65rem; letter-spacing: -.04em; min-height: 44px; }
+    .brand-mark { align-items: center; border-radius: 14px; box-shadow: var(--raised-small); color: var(--accent); display: flex; height: 40px; justify-content: center; width: 40px; }
+    .brand-mark svg { height: 21px; width: 21px; }
+    .source-link { border-radius: 12px; color: var(--muted); font-size: .86rem; font-weight: 700; min-height: 44px; padding: .7rem .85rem; transition: box-shadow var(--ease), color var(--ease); }
+    .source-link:hover { box-shadow: var(--inset); color: var(--foreground); }
 
-    .hero { overflow: hidden; padding: clamp(5rem, 10vw, 8.5rem) 0 clamp(6.5rem, 12vw, 10.5rem); position: relative; }
-    .hero::before, .hero::after {
-      border-radius: 50%;
-      content: "";
-      pointer-events: none;
-      position: absolute;
-    }
-    .hero::before {
-      box-shadow: var(--inset-deep);
-      height: 400px;
-      right: -245px;
-      top: 65px;
-      width: 400px;
-    }
-    .hero::after {
-      box-shadow: var(--raised);
-      height: 108px;
-      left: -50px;
-      top: 520px;
-      width: 108px;
-    }
-    .hero-grid { align-items: center; display: grid; gap: clamp(3.25rem, 7vw, 7rem); grid-template-columns: minmax(0, 1fr) minmax(410px, .86fr); position: relative; }
-    .hero-copy { max-width: 600px; }
-    h1, h2, h3 { font-family: "Plus Jakarta Sans", sans-serif; }
-    h1 {
-      font-size: clamp(3.15rem, 6.8vw, 6.2rem);
-      font-weight: 800;
-      letter-spacing: -.075em;
-      line-height: .98;
-      margin: 1.2rem 0 1.45rem;
-    }
-    h1 .accent { color: var(--accent); }
-    .hero-summary { color: var(--muted); font-size: clamp(1.04rem, 1.45vw, 1.18rem); margin: 0; max-width: 540px; }
-    .hero-actions { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.1rem; }
-    .button {
-      align-items: center;
-      background: var(--surface);
-      border: 0;
-      border-radius: var(--radius-control);
-      box-shadow: var(--raised);
-      cursor: pointer;
-      display: inline-flex;
-      font-size: .92rem;
-      font-weight: 700;
-      gap: .6rem;
-      justify-content: center;
-      min-height: 50px;
-      padding: .8rem 1.1rem;
-      transition: background var(--ease), box-shadow var(--ease), color var(--ease), transform var(--ease);
-    }
+    .hero { padding: clamp(5.5rem, 12vw, 9rem) 0 3.5rem; text-align: center; }
+    .eyebrow { align-items: center; color: var(--muted); display: flex; font-size: .72rem; font-weight: 700; gap: .55rem; justify-content: center; letter-spacing: .12em; margin: 0; text-transform: uppercase; }
+    .eyebrow::before { background: var(--accent); border-radius: 50%; box-shadow: var(--raised-small); content: ""; height: .42rem; width: .42rem; }
+    h1 { font-size: clamp(3.4rem, 8vw, 6.7rem); font-weight: 800; letter-spacing: -.085em; line-height: .94; margin: 1.1rem auto 1.3rem; max-width: 760px; }
+    h1 span, .explanation h2 span { color: var(--accent); }
+    .summary { color: var(--muted); font-size: clamp(1.03rem, 1.8vw, 1.2rem); margin: 0 auto; max-width: 600px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 2rem; }
+    .button { align-items: center; background: var(--surface); border: 0; border-radius: var(--radius-control); box-shadow: var(--raised); display: inline-flex; font-size: .92rem; font-weight: 700; gap: .55rem; justify-content: center; min-height: 50px; padding: .8rem 1.1rem; transition: background var(--ease), box-shadow var(--ease), transform var(--ease); }
     .button:hover { box-shadow: var(--raised-hover); transform: translateY(-2px); }
-    .button:active { box-shadow: var(--inset-small); transform: translateY(1px); }
-    .button.primary {
-      background: var(--accent);
-      box-shadow: 8px 8px 16px var(--shadow-accent-dark), -7px -7px 16px var(--shadow-accent-light);
-      color: #fff;
-    }
-    .button.primary:hover { background: var(--accent-light); box-shadow: 11px 11px 20px rgb(64 58 175 / .42), -10px -10px 20px rgb(255 255 255 / .28); }
-    .button.primary:active { box-shadow: inset 4px 4px 8px rgb(64 58 175 / .42), inset -4px -4px 8px rgb(255 255 255 / .18); }
+    .button:active { box-shadow: var(--inset); transform: translateY(1px); }
+    .button.primary { background: var(--accent); box-shadow: 8px 8px 16px var(--shadow-accent-dark), -7px -7px 16px var(--shadow-accent-light); color: #fff; }
+    .button.primary:hover { background: var(--accent-light); }
     .button svg { height: 18px; width: 18px; }
-    .trust-line { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: .79rem; font-weight: 500; gap: .5rem; margin: 1.3rem 0 0; }
-    .trust-line strong { color: var(--success); font-weight: 700; }
-    .trust-line strong::before { content: "✓ "; }
 
-    .hero-visual { margin: 0; position: relative; }
-    .orbit {
-      align-items: center;
-      animation: float 3.4s ease-in-out infinite;
-      border-radius: 50%;
-      box-shadow: var(--raised);
-      display: flex;
-      height: 78px;
-      justify-content: center;
-      position: absolute;
-      right: -22px;
-      top: -32px;
-      width: 78px;
-      z-index: 2;
-    }
-    .orbit-inner { border-radius: 50%; box-shadow: var(--inset); height: 51px; width: 51px; }
-    .workspace-card { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised-hover); padding: clamp(1.25rem, 3vw, 2rem); position: relative; }
-    .workspace-head { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1.4rem; }
-    .workspace-title { align-items: center; display: flex; font-size: .79rem; font-weight: 700; gap: .55rem; }
-    .workspace-title svg { color: var(--accent); height: 18px; width: 18px; }
-    .window-controls { display: flex; gap: .35rem; }
-    .window-controls i { background: var(--surface); border-radius: 50%; box-shadow: var(--inset-small); display: block; height: 10px; width: 10px; }
-    .screen-well { border-radius: 24px; box-shadow: var(--inset-deep); padding: 1.15rem; }
-    .screen-label { color: var(--muted); display: flex; font-size: .66rem; font-weight: 700; justify-content: space-between; letter-spacing: .08em; margin: 0 0 .85rem; text-transform: uppercase; }
-    .monitor-grid { display: grid; gap: .85rem; grid-template-columns: .74fr 1fr; }
-    .monitor {
-      border-radius: 14px;
-      box-shadow: var(--raised-small);
-      min-height: 150px;
-      padding: .72rem;
-      position: relative;
-    }
-    .monitor.primary-monitor { align-self: end; min-height: 124px; }
-    .monitor-label { color: var(--muted); font-size: .58rem; font-weight: 700; letter-spacing: .07em; margin: 0; text-transform: uppercase; }
-    .target-window {
-      background: var(--accent);
-      border-radius: 10px;
-      bottom: .72rem;
-      box-shadow: 4px 4px 8px rgb(64 58 175 / .35), -3px -3px 8px rgb(255 255 255 / .18);
-      color: #fff;
-      left: .72rem;
-      padding: .55rem;
-      position: absolute;
-      right: .72rem;
-      top: 2.1rem;
-    }
-    .target-window::before { background: rgb(255 255 255 / .45); border-radius: 50%; content: ""; display: block; height: 5px; width: 5px; }
-    .target-window p { font-size: .65rem; font-weight: 700; margin: .66rem 0 0; }
-    .launch-status { align-items: center; display: flex; gap: .7rem; margin-top: 1.25rem; }
-    .status-icon { align-items: center; border-radius: 12px; box-shadow: var(--inset); color: var(--success); display: flex; height: 42px; justify-content: center; width: 42px; }
-    .status-icon svg { height: 20px; width: 20px; }
-    .launch-status p { color: var(--muted); font-size: .76rem; line-height: 1.3; margin: 0; }
-    .launch-status strong { color: var(--foreground); display: block; font-size: .83rem; }
-    .hero-visual figcaption { color: var(--muted); font-size: .73rem; margin-top: 1rem; text-align: center; }
+    .screenshot-slot { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised); margin: 3.8rem auto 0; max-width: 760px; padding: clamp(1.2rem, 3vw, 1.8rem); text-align: left; }
+    .screenshot-slot--result { margin-top: 2.5rem; }
+    .slot-canvas { align-items: center; aspect-ratio: 16 / 10; border-radius: 22px; box-shadow: var(--inset-deep); display: flex; justify-content: center; overflow: hidden; position: relative; }
+    .slot-copy { color: var(--muted); max-width: 340px; padding: 1.5rem; text-align: center; }
+    .slot-number { color: var(--accent); display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; margin-bottom: .75rem; }
+    .slot-copy h3 { color: var(--foreground); font-size: clamp(1.25rem, 3vw, 1.65rem); letter-spacing: -.05em; line-height: 1.1; margin: 0; }
+    .slot-copy p { font-size: .88rem; margin: .7rem auto 0; }
+    .slot-spec { color: var(--accent); display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; margin-top: 1.2rem; text-transform: uppercase; }
+    .screenshot-slot figcaption { color: var(--muted); font-size: .78rem; margin-top: 1rem; text-align: center; }
+    .screenshot-slot figcaption strong { color: var(--foreground); }
+    .slot-canvas img { display: block; height: 100%; object-fit: cover; width: 100%; }
 
-    .section { padding: clamp(5.5rem, 10vw, 9rem) 0; }
-    .section-heading { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1.05fr) minmax(260px, .7fr); margin-bottom: clamp(2.8rem, 5vw, 4.5rem); }
-    .section-heading h2, .trust-heading {
-      font-size: clamp(2.45rem, 5vw, 4.5rem);
-      font-weight: 800;
-      letter-spacing: -.07em;
-      line-height: 1.02;
-      margin: 0;
-    }
-    .section-heading p { align-self: end; color: var(--muted); font-size: 1.02rem; margin: 0; max-width: 420px; }
+    .explanation { padding: clamp(4.5rem, 9vw, 7rem) 0; }
+    .explanation h2 { font-size: clamp(2.1rem, 4.5vw, 3.7rem); font-weight: 800; letter-spacing: -.07em; line-height: 1.03; margin: 0 auto 2.2rem; max-width: 650px; text-align: center; }
+    .steps { border-radius: 24px; box-shadow: var(--inset-deep); display: grid; grid-template-columns: repeat(3, 1fr); list-style: none; margin: 0; padding: 1rem; }
+    .steps li { padding: 1.2rem 1.35rem; }
+    .steps li + li { border-left: 1px solid rgb(163 177 198 / .35); }
+    .step-number { color: var(--accent); display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: .75rem; font-weight: 800; letter-spacing: .08em; }
+    .steps strong { display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.04rem; letter-spacing: -.035em; line-height: 1.15; margin: .6rem 0 .4rem; }
+    .steps p { color: var(--muted); font-size: .86rem; margin: 0; }
 
-    .feature-grid { display: grid; gap: 2rem; grid-template-columns: repeat(3, 1fr); }
-    .feature-card { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised); min-height: 315px; padding: 2rem; transition: box-shadow var(--ease), transform var(--ease); }
-    .feature-card:hover { box-shadow: var(--raised-hover); transform: translateY(-3px); }
-    .icon-well { align-items: center; border-radius: 20px; box-shadow: var(--inset-deep); color: var(--accent); display: flex; height: 62px; justify-content: center; width: 62px; }
-    .icon-well svg { height: 27px; width: 27px; }
-    .feature-number { color: var(--muted); display: block; font-size: .68rem; font-weight: 700; letter-spacing: .1em; margin-top: 2rem; text-transform: uppercase; }
-    .feature-card h3 { font-size: 1.4rem; letter-spacing: -.045em; line-height: 1.1; margin: .55rem 0 .7rem; }
-    .feature-card p { color: var(--muted); font-size: .92rem; margin: 0; }
+    .footer { padding: 0 0 2rem; }
+    .footer-inner { align-items: center; display: flex; font-size: .76rem; justify-content: space-between; padding: 1.4rem 0; }
+    .trust { color: var(--success); font-weight: 700; }
+    .footer-links { color: var(--muted); display: flex; gap: 1rem; }
+    .footer-links a:hover { color: var(--accent); }
 
-    .how-shell { border-radius: var(--radius-card); box-shadow: var(--inset-deep); padding: clamp(1.5rem, 5vw, 4rem); }
-    .how-shell .section-heading { margin-bottom: 2.75rem; }
-    .steps { display: grid; gap: 1.5rem; grid-template-columns: repeat(3, 1fr); }
-    .step { background: var(--surface); border-radius: 24px; box-shadow: var(--raised-small); min-height: 230px; padding: 1.55rem; transition: box-shadow var(--ease), transform var(--ease); }
-    .step:hover { box-shadow: var(--raised); transform: translateY(-2px); }
-    .step-number { align-items: center; border-radius: 12px; box-shadow: var(--inset); color: var(--accent); display: inline-flex; font-family: "Plus Jakarta Sans", sans-serif; font-size: .75rem; font-weight: 800; height: 37px; justify-content: center; letter-spacing: .04em; width: 41px; }
-    .step h3 { font-size: 1.22rem; letter-spacing: -.04em; line-height: 1.16; margin: 2.2rem 0 .6rem; }
-    .step p { color: var(--muted); font-size: .9rem; margin: 0; }
-
-    .trust-panel { align-items: center; background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised); display: grid; gap: clamp(2.5rem, 7vw, 6rem); grid-template-columns: minmax(0, .95fr) minmax(260px, .8fr); overflow: hidden; padding: clamp(2rem, 6vw, 5rem); position: relative; }
-    .trust-panel::before, .trust-panel::after { border-radius: 50%; content: ""; pointer-events: none; position: absolute; }
-    .trust-panel::before { box-shadow: var(--inset-deep); height: 280px; left: -170px; top: -155px; width: 280px; }
-    .trust-panel::after { box-shadow: var(--raised); bottom: -110px; height: 180px; right: -95px; width: 180px; }
-    .trust-copy, .proof-list { position: relative; z-index: 1; }
-    .trust-heading span { color: var(--accent); }
-    .trust-copy .eyebrow { margin-bottom: 1rem; }
-    .trust-copy p:last-child { color: var(--muted); margin: 1.2rem 0 0; max-width: 450px; }
-    .proof-list { display: grid; gap: .8rem; list-style: none; margin: 0; padding: 0; }
-    .proof-list li { align-items: center; border-radius: var(--radius-control); box-shadow: var(--inset); color: var(--foreground); display: flex; font-size: .92rem; font-weight: 700; justify-content: space-between; min-height: 60px; padding: .75rem .95rem .75rem 1.05rem; }
-    .proof-list span { align-items: center; background: var(--surface); border-radius: 50%; box-shadow: var(--raised-small); color: var(--success); display: inline-flex; font-size: .9rem; height: 32px; justify-content: center; width: 32px; }
-
-    .footer { padding: 0 0 2.25rem; }
-    .footer-card { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised); padding: clamp(2rem, 6vw, 4.5rem); }
-    .footer-top { align-items: end; display: flex; gap: 2rem; justify-content: space-between; }
-    .footer-top h2 { font-size: clamp(2.2rem, 4.7vw, 4rem); font-weight: 800; letter-spacing: -.07em; line-height: 1; margin: 1rem 0 0; }
-    .footer-meta { color: var(--muted); display: flex; font-size: .76rem; font-weight: 500; justify-content: space-between; margin-top: clamp(3.5rem, 8vw, 6rem); }
-    .footer-meta a { border-radius: 8px; font-weight: 700; padding: .15rem .2rem; }
-    .footer-meta a:hover { color: var(--accent); }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    @media (max-width: 920px) {
-      .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(340px, .75fr); }
-      .hero { padding-top: 5.5rem; }
-      .feature-grid { gap: 1.4rem; }
-      .feature-card { padding: 1.5rem; }
-    }
-    @media (max-width: 760px) {
-      .shell { width: min(100% - 32px, 620px); }
-      .nav { min-height: 72px; }
-      .nav-links { display: none; }
-      .menu-toggle { display: inline-flex; }
-      .hero { padding: 4.5rem 0 6.5rem; }
-      .hero::before { height: 250px; right: -165px; top: 45px; width: 250px; }
-      .hero-grid, .section-heading, .trust-panel { grid-template-columns: 1fr; }
-      .hero-grid { gap: 3.2rem; }
-      .hero-copy { max-width: 600px; }
-      .hero-visual { margin: 0 auto; max-width: 490px; width: calc(100% - 12px); }
-      .section-heading { gap: 1rem; }
-      .feature-grid, .steps { grid-template-columns: 1fr; }
-      .feature-card { min-height: 0; padding: 1.75rem; }
-      .feature-number { margin-top: 1.5rem; }
-      .how-shell { padding: 1.25rem; }
-      .how-shell .section-heading { padding: 1rem .5rem 0; }
-      .steps { gap: 1rem; }
-      .step { min-height: 0; }
-      .step h3 { margin-top: 1.4rem; }
-      .footer-top { align-items: flex-start; flex-direction: column; }
-      .footer-meta { flex-direction: column; gap: .7rem; }
-    }
-    @media (max-width: 480px) {
-      .shell { width: min(100% - 28px, 480px); }
-      .brand { font-size: 1.08rem; }
-      .brand-mark { height: 38px; width: 38px; }
-      h1 { font-size: clamp(2.9rem, 14.5vw, 4.25rem); }
-      .hero-actions { align-items: stretch; flex-direction: column; }
+    @media (max-width: 640px) {
+      .shell { width: min(100% - 32px, 600px); }
+      .hero { padding-top: 4.6rem; }
+      h1 { font-size: clamp(3.1rem, 15vw, 4.6rem); }
+      .cta-row { align-items: stretch; flex-direction: column; }
       .button { width: 100%; }
-      .trust-line { font-size: .72rem; }
-      .workspace-card { border-radius: 25px; padding: 1rem; }
-      .screen-well { padding: .85rem; }
-      .monitor-grid { gap: .6rem; }
-      .monitor { min-height: 124px; }
-      .monitor.primary-monitor { min-height: 104px; }
-      .orbit { height: 62px; right: -13px; top: -26px; width: 62px; }
-      .orbit-inner { height: 41px; width: 41px; }
-      .section { padding: 4.8rem 0; }
-      .feature-card, .trust-panel, .footer-card { border-radius: 25px; }
-      .footer-card { padding: 2rem 1.5rem; }
+      .screenshot-slot { margin-top: 3rem; }
+      .steps { gap: .25rem; grid-template-columns: 1fr; }
+      .steps li + li { border-left: 0; border-top: 1px solid rgb(163 177 198 / .35); }
+      .footer-inner { align-items: flex-start; flex-direction: column; gap: .8rem; }
     }
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
-<body id="top">
+<body>
   <header class="site-header">
     <nav class="shell nav" aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="Chap home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor" stroke="currentColor" stroke-linejoin="round" stroke-width="1.3"/></svg>
-        </span>
-        Chap
-      </a>
-      <div class="nav-links">
-        <a href="#how-it-works">How it works</a>
-        <a href="#notarized">Trust</a>
-        <a href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-      </div>
-      <button class="menu-toggle" type="button" aria-controls="mobile-menu" aria-expanded="false" aria-label="Open navigation menu">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-linecap="round" stroke-width="2"/></svg>
-      </button>
+      <a class="brand" href="/Chap/" aria-label="Chap home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap</a>
+      <a class="source-link" href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
     </nav>
-    <div class="mobile-menu" id="mobile-menu" hidden>
-      <a href="#how-it-works">How it works <span aria-hidden="true">↓</span></a>
-      <a href="#notarized">Trust <span aria-hidden="true">↓</span></a>
-      <a href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-    </div>
   </header>
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
-      <div class="shell hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">A macOS command center</p>
-          <h1 id="hero-title">Your workspace,<br><span class="accent">on command.</span></h1>
-          <p class="hero-summary">Chap launches the sites, apps, folders, and scripts you use every day — on the display, at the size, and with the shortcut you choose.</p>
-          <div class="hero-actions">
-            <a class="button primary" href="https://github.com/milv0/Chap/releases" rel="noreferrer">
-              Get Chap from Releases
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
-            </a>
-            <a class="button" href="#how-it-works">See how it works <span aria-hidden="true">↓</span></a>
-          </div>
-          <p class="trust-line"><strong>Notarized by Apple</strong><span aria-hidden="true">·</span><span>macOS 14+</span><span aria-hidden="true">·</span><span>Universal Apple Silicon + Intel</span></p>
+      <div class="shell">
+        <p class="eyebrow">A macOS command center</p>
+        <h1 id="hero-title">Press Option.<br><span>Start centered.</span></h1>
+        <p class="summary">Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.</p>
+        <div class="cta-row">
+          <a class="button primary" href="https://github.com/milv0/Chap/releases" rel="noreferrer">Get Chap from Releases <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></a>
+          <a class="button" href="https://github.com/milv0/Chap" rel="noreferrer">View source <span aria-hidden="true">↗</span></a>
         </div>
 
-        <figure class="hero-visual" aria-labelledby="workspace-caption">
-          <div class="orbit" aria-hidden="true"><div class="orbit-inner"></div></div>
-          <div class="workspace-card">
-            <div class="workspace-head">
-              <span class="workspace-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.7 1.9 5.3 13h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg>Chap workspace</span>
-              <span class="window-controls" aria-hidden="true"><i></i><i></i><i></i></span>
-            </div>
-            <div class="screen-well">
-              <p class="screen-label"><span>Choose display</span><span>Workspace</span></p>
-              <div class="monitor-grid" aria-hidden="true">
-                <div class="monitor primary-monitor"><p class="monitor-label">Display 1</p></div>
-                <div class="monitor"><p class="monitor-label">Display 2</p><div class="target-window"><span></span><p>Translate</p></div></div>
-              </div>
-            </div>
-            <div class="launch-status">
-              <span class="status-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"/></svg></span>
-              <p><strong>Placed exactly where you meant it.</strong>Display 2 · Workspace preset · verified</p>
-            </div>
-          </div>
-          <figcaption id="workspace-caption">A tactile preview of Chap’s placement controls.</figcaption>
+        <figure class="screenshot-slot" aria-labelledby="command-setup-caption">
+          <div class="slot-canvas"><img src="assets/screenshots/chap-command-setup.svg" alt="Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled."></div>
+          <figcaption id="command-setup-caption"><strong>Command setup.</strong> An illustrative preview based on Chap’s current settings UI.</figcaption>
         </figure>
       </div>
     </section>
 
-    <section class="section" aria-labelledby="built-for-heading">
+    <section class="explanation" aria-labelledby="how-heading">
       <div class="shell">
-        <div class="section-heading">
-          <h2 id="built-for-heading">Built for the part<br>between tasks.</h2>
-          <p>That tiny moment when you need the right tool, in the right place, without breaking your flow.</p>
-        </div>
-        <div class="feature-grid">
-          <article class="feature-card">
-            <div class="icon-well" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M13.7 1.9 5.3 13h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></div>
-            <span class="feature-number">01 / Launch</span>
-            <h3>One shortcut.<br>Four launch types.</h3>
-            <p>Open Chrome app windows, macOS apps, Finder folders, or your own shell scripts from a single menu bar home.</p>
-          </article>
-          <article class="feature-card">
-            <div class="icon-well" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 21h6M12 19v2M7 9h4" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg></div>
-            <span class="feature-number">02 / Place</span>
-            <h3>Every window,<br>already arranged.</h3>
-            <p>Choose a display, use a size preset or custom bounds, then let Chap center your window before your attention moves there.</p>
-          </article>
-          <article class="feature-card">
-            <div class="icon-well" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg></div>
-            <span class="feature-number">03 / Trust</span>
-            <h3>Verify the move,<br>not just the request.</h3>
-            <p>Chap reads back Accessibility bounds after every move, so a successful launch means the window actually landed where expected.</p>
-          </article>
-        </div>
-      </div>
-    </section>
+        <h2 id="how-heading">One shortcut.<br><span>Three remembered choices.</span></h2>
+        <ol class="steps">
+          <li><span class="step-number">01 / COMMAND</span><strong>What opens</strong><p>A URL, app, folder, or script.</p></li>
+          <li><span class="step-number">02 / DISPLAY</span><strong>Where it opens</strong><p>Follow cursor or a named screen.</p></li>
+          <li><span class="step-number">03 / PLACEMENT</span><strong>How it arrives</strong><p>Your size, centered and verified.</p></li>
+        </ol>
 
-    <section class="section" id="how-it-works" aria-labelledby="how-heading">
-      <div class="shell how-shell">
-        <div class="section-heading">
-          <h2 id="how-heading">Set it once.<br>Move faster after.</h2>
-          <p>Chap is deliberate about setup so your everyday launches can be delightfully boring.</p>
-        </div>
-        <div class="steps">
-          <article class="step"><span class="step-number">01</span><h3>Add what you reach for.</h3><p>Save a URL, an app, a folder, or a script. Import and export your setup as JSON when you want to share or back it up.</p></article>
-          <article class="step"><span class="step-number">02</span><h3>Give it a home.</h3><p>Choose Follow Cursor or a specific display. Pick a preset — Compact through Workspace — or enter exact dimensions.</p></article>
-          <article class="step"><span class="step-number">03</span><h3>Call it instantly.</h3><p>Assign an Option shortcut. Chap opens the thing you need and handles the window placement while you keep thinking.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="notarized" aria-labelledby="trust-heading">
-      <div class="shell trust-panel">
-        <div class="trust-copy">
-          <p class="eyebrow">Direct distribution, done properly</p>
-          <h2 class="trust-heading" id="trust-heading">No App Store<br>compromise.<br><span>Still trusted.</span></h2>
-          <p>Chap keeps its full workspace-control feature set while using Apple’s Developer ID signing and notarization path for a verified direct download.</p>
-        </div>
-        <ul class="proof-list">
-          <li>Developer ID signed <span aria-label="Verified">✓</span></li>
-          <li>Apple notarized <span aria-label="Verified">✓</span></li>
-          <li>Hardened Runtime <span aria-label="Verified">✓</span></li>
-          <li>Gatekeeper verified <span aria-label="Verified">✓</span></li>
-        </ul>
+        <figure class="screenshot-slot screenshot-slot--result" aria-labelledby="centered-result-caption">
+          <div class="slot-canvas"><img src="assets/screenshots/chap-guide-window.svg" alt="Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display."></div>
+          <figcaption id="centered-result-caption"><strong>Guide window.</strong> An illustrative preview based on Chap’s actual translucent placement overlay.</figcaption>
+        </figure>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="shell footer-card">
-      <div class="footer-top">
-        <div><p class="eyebrow">Ready when your next task is</p><h2>Less finding.<br>More doing.</h2></div>
-        <a class="button primary" href="https://github.com/milv0/Chap/releases" rel="noreferrer">Download Chap <span aria-hidden="true">↗</span></a>
-      </div>
-      <div class="footer-meta">
-        <span>© 2026 Team Chap</span>
-        <span><a href="https://github.com/milv0/Chap" rel="noreferrer">Source on GitHub</a> · <a href="https://github.com/milv0/Chap/releases" rel="noreferrer">Releases</a></span>
-      </div>
-    </div>
+    <div class="shell footer-inner"><span class="trust">✓ Apple notarized · macOS 14+</span><span class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer">Source</a><a href="https://github.com/milv0/Chap/releases" rel="noreferrer">Releases</a></span></div>
   </footer>
-
-  <script>
-    const menuToggle = document.querySelector('.menu-toggle');
-    const mobileMenu = document.querySelector('#mobile-menu');
-
-    const setMenuOpen = (open) => {
-      menuToggle.setAttribute('aria-expanded', String(open));
-      menuToggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
-      mobileMenu.hidden = !open;
-    };
-
-    menuToggle.addEventListener('click', () => setMenuOpen(mobileMenu.hidden));
-    mobileMenu.addEventListener('click', (event) => {
-      if (event.target.closest('a')) setMenuOpen(false);
-    });
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && !mobileMenu.hidden) {
-        setMenuOpen(false);
-        menuToggle.focus();
-      }
-    });
-  </script>
 </body>
 </html>

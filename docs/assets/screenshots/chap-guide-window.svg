@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Chap Guide Window placement preview</title>
+  <desc id="desc">A native macOS style Studio Display with a translucent blue Chap Guide Window centered at the fictional Quiet Search target bounds.</desc>
+  <rect width="1600" height="1000" rx="30" fill="#F7F7F8"/>
+  <rect x="70" y="76" width="1460" height="756" rx="24" fill="#FFFFFF" stroke="#D8D8DC" stroke-width="2"/>
+  <rect x="70" y="76" width="1460" height="50" rx="24" fill="#FAFAFB"/>
+  <rect x="70" y="102" width="1460" height="24" fill="#FAFAFB"/>
+  <circle cx="102" cy="101" r="11" fill="#FF625B"/><circle cx="138" cy="101" r="11" fill="#D9D9DB"/><circle cx="174" cy="101" r="11" fill="#61C554"/>
+  <text x="800" y="107" fill="#535359" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="17" font-weight="600" text-anchor="middle">Studio Display</text>
+  <rect x="94" y="150" width="1412" height="658" rx="12" fill="#EEF2F7"/>
+  <rect x="94" y="150" width="1412" height="34" rx="12" fill="#FFFFFF"/>
+  <circle cx="120" cy="167" r="5" fill="#FF625B"/><circle cx="138" cy="167" r="5" fill="#FFD15B"/><circle cx="156" cy="167" r="5" fill="#61C554"/>
+  <rect x="200" y="158" width="536" height="18" rx="9" fill="#F0F1F4"/>
+  <text x="218" y="171" fill="#A6A6AD" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="10">quietsearch.example</text>
+  <rect x="94" y="184" width="1412" height="624" fill="#F8FAFC"/>
+  <rect x="128" y="219" width="199" height="552" rx="10" fill="#FFFFFF" stroke="#E6E8EB"/>
+  <rect x="151" y="247" width="153" height="24" rx="6" fill="#F1F4FF"/><text x="166" y="264" fill="#4A72DD" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="11" font-weight="700">Quiet Search</text>
+  <rect x="151" y="293" width="118" height="10" rx="5" fill="#E7E9ED"/><rect x="151" y="319" width="139" height="10" rx="5" fill="#ECEEF1"/><rect x="151" y="345" width="109" height="10" rx="5" fill="#ECEEF1"/>
+  <rect x="366" y="219" width="1103" height="552" rx="10" fill="#FFFFFF" stroke="#E6E8EB"/>
+  <rect x="407" y="261" width="368" height="24" rx="7" fill="#E9EDF3"/><rect x="407" y="305" width="748" height="14" rx="7" fill="#EFF1F4"/><rect x="407" y="331" width="654" height="14" rx="7" fill="#EFF1F4"/><rect x="407" y="382" width="917" height="210" rx="12" fill="#F4F6F9"/>
+  <rect x="407" y="619" width="512" height="14" rx="7" fill="#EFF1F4"/><rect x="407" y="645" width="605" height="14" rx="7" fill="#EFF1F4"/>
+
+  <rect x="697" y="264" width="496" height="408" rx="10" fill="#3664FF" fill-opacity=".055" stroke="#3664FF" stroke-opacity=".82" stroke-width="3"/>
+  <path d="M697 264h20v3h-17v17h-3zm496 0v20h-3v-17h-17v-3zm0 408h-20v-3h17v-17h3zm-496 0v-20h3v17h17v3z" fill="#3664FF"/>
+  <path d="M945 238v460M664 468h562" stroke="#3664FF" stroke-opacity=".23" stroke-width="1.5" stroke-dasharray="7 8"/>
+  <circle cx="945" cy="468" r="5" fill="#3664FF"/><circle cx="945" cy="468" r="13" fill="none" stroke="#3664FF" stroke-opacity=".4" stroke-width="2"/>
+  <rect x="721" y="286" width="130" height="28" rx="8" fill="#FFFFFF" fill-opacity=".92"/>
+  <text x="786" y="305" fill="#3664FF" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="12" font-weight="700" text-anchor="middle">⌥ Q · preview</text>
+
+  <rect x="70" y="853" width="1460" height="72" rx="0" fill="#FFFFFF" stroke="#D8D8DC" stroke-width="2"/>
+  <circle cx="111" cy="888" r="15" fill="#EAF0FF"/><path d="m104 888 5 5 9-10" fill="none" stroke="#3664FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="143" y="883" fill="#45454B" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="17" font-weight="700">Guide Window</text>
+  <text x="143" y="906" fill="#8B8B92" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13">A translucent preview appears at the exact centered bounds before Quiet Search opens.</text>
+  <text x="1460" y="893" fill="#3664FF" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="700" text-anchor="end">Quiet Search · Studio Display · Tall</text>
+</svg>
