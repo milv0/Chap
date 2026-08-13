@@ -9,6 +9,122 @@ struct ScriptEditorFramePreferenceKey: PreferenceKey {
     }
 }
 
+final class UndoableScriptTextView: NSTextView {
+    private let scriptUndoManager = UndoManager()
+
+    override var undoManager: UndoManager? {
+        scriptUndoManager
+    }
+
+    override func keyDown(with event: NSEvent) {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isControlZ =
+            modifiers.contains(.control)
+            && !modifiers.contains(.command)
+            && !modifiers.contains(.option)
+            && event.charactersIgnoringModifiers?.lowercased() == "z"
+
+        guard isControlZ else {
+            super.keyDown(with: event)
+            return
+        }
+
+        if modifiers.contains(.shift) {
+            undoManager?.redo()
+        } else {
+            undoManager?.undo()
+        }
+    }
+}
+
+struct ScriptTextEditor: NSViewRepresentable {
+    @Binding var text: String
+    var isFocused: FocusState<Bool>.Binding
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, isFocused: isFocused)
+    }
+
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.drawsBackground = false
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
+        scrollView.borderType = .noBorder
+
+        let textView = UndoableScriptTextView(frame: .zero)
+        textView.delegate = context.coordinator
+        textView.string = text
+        textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        textView.textColor = .labelColor
+        textView.drawsBackground = false
+        textView.isRichText = false
+        textView.importsGraphics = false
+        textView.allowsUndo = true
+        textView.usesFindBar = true
+        textView.isAutomaticQuoteSubstitutionEnabled = false
+        textView.isAutomaticDashSubstitutionEnabled = false
+        textView.isAutomaticTextReplacementEnabled = false
+        textView.isContinuousSpellCheckingEnabled = false
+        textView.textContainerInset = NSSize(width: 4, height: 4)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude)
+
+        scrollView.documentView = textView
+        return scrollView
+    }
+
+    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? UndoableScriptTextView else { return }
+        context.coordinator.text = $text
+        context.coordinator.isFocused = isFocused
+
+        if textView.string != text {
+            context.coordinator.isApplyingExternalText = true
+            textView.string = text
+            context.coordinator.isApplyingExternalText = false
+        }
+
+        guard let window = textView.window else { return }
+        if isFocused.wrappedValue, window.firstResponder !== textView {
+            window.makeFirstResponder(textView)
+        } else if !isFocused.wrappedValue, window.firstResponder === textView {
+            window.makeFirstResponder(nil)
+        }
+    }
+
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var text: Binding<String>
+        var isFocused: FocusState<Bool>.Binding
+        var isApplyingExternalText = false
+
+        init(text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
+            self.text = text
+            self.isFocused = isFocused
+        }
+
+        func textDidBeginEditing(_ notification: Notification) {
+            isFocused.wrappedValue = true
+        }
+
+        func textDidEndEditing(_ notification: Notification) {
+            isFocused.wrappedValue = false
+        }
+
+        func textDidChange(_ notification: Notification) {
+            guard !isApplyingExternalText,
+                let textView = notification.object as? NSTextView
+            else { return }
+            text.wrappedValue = textView.string
+        }
+    }
+}
+
 /// Launch-type specific input fields extracted from SiteConfigView.
 /// Renders URL, App, Finder, or Shell fields based on the current launchType.
 struct SiteLaunchFields: View {
@@ -147,14 +263,14 @@ struct SiteLaunchFields: View {
             Text("Script")
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
-            TextEditor(
+            ScriptTextEditor(
                 text: Binding(
                     get: { site.script ?? "" },
                     set: { site.script = $0 }
-                )
+                ),
+                isFocused: scriptFocused
             )
-            .font(DS.monoFont)
-            .focused(scriptFocused)
+            .accessibilityLabel("Script")
             .frame(minHeight: 120)
             .padding(8)
             .background(DS.surfaceBg)
