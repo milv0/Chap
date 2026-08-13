@@ -122,6 +122,21 @@ Chap’s Accessibility-based window control and Shell launcher are distributed o
 
 The PKG is the primary distribution artifact: it avoids a mounted disk image and uses the standard macOS Installer flow. The DMG remains available as a manual drag-to-Applications fallback. The notarization scripts wait for Apple’s decision, staple the accepted ticket, and verify the installer signature and Gatekeeper assessment. See [Apple’s notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) for credential alternatives and troubleshooting.
 
+### Release automation
+
+Daily development stays on `dev`: commit and push only that branch. The local release command is intentionally non-mutating unless `--publish` is explicit:
+
+```bash
+# Read-only preflight: validates release prerequisites and prints the plan.
+Scripts/release.sh 1.0.2
+
+# Production release: version bump, validation, dev → main promotion, tag,
+# signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
+Scripts/release.sh 1.0.2 --publish
+```
+
+`--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
+
 ### Window-control reliability and diagnostics
 
 The URL and App launchers share the same Accessibility bounds pipeline. It follows the proven **size → position → size** order used by [Rectangle](https://github.com/rxhanson/Rectangle) to avoid display-transition clamping, limits unresponsive AX calls to two seconds, temporarily disables `AXEnhancedUserInterface` when an app has enabled it, and verifies final bounds by readback. If an app clamps the requested size, Chap preserves the intended center by applying a corrected position once more.
