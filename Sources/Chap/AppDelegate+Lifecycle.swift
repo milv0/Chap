@@ -132,9 +132,9 @@ extension AppDelegate {
         }
         let settingsView = SettingsView(vm: vm)
         let window = makeManagedWindow(
-            title: "Chap Settings", contentSize: NSSize(width: 770, height: 600),
+            title: "Chap Settings", contentSize: NSSize(width: 770, height: 640),
             styleMask: [.titled, .closable, .resizable],
-            minSize: NSSize(width: 600, height: 400))
+            minSize: NSSize(width: 770, height: 640))
         window.contentViewController = NSHostingController(rootView: settingsView)
         // 커서가 있는 화면 중앙에 표시
         moveToCursorScreenCenter(window)

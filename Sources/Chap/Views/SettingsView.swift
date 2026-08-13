@@ -27,7 +27,7 @@ struct SettingsView: View {
             Divider()
             mainPanel
         }
-        .frame(minWidth: 770, minHeight: 600)
+        .frame(minWidth: 770, minHeight: 640)
         .background(DS.surfaceBg)
         .onChange(of: selectedIndex) { oldValue, newValue in
             vm.flushPendingSave()
@@ -225,18 +225,27 @@ struct SettingsView: View {
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let idx = selectedIndex, idx < vm.sites.count {
-                SiteConfigView(
-                    site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
-                    onSave: {
-                        vm.cancelPendingSave()
-                        save()
+                ZStack {
+                    SiteConfigView(
+                        site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
+                        onSave: {
+                            vm.cancelPendingSave()
+                            save()
+                        }
+                    )
+                    .id(vm.sites[idx].id)
+                    .onChange(of: vm.sites) { _, _ in
+                        if isEditing { vm.scheduleAutoSave() }
                     }
-                )
-                .id(vm.sites[idx].id)
-                .onTapGesture { isEditing = true }
-                .onChange(of: vm.sites) { _, _ in
-                    if isEditing { vm.scheduleAutoSave() }
+
+                    if !isEditing {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { isEditing = true }
+                            .accessibilityLabel("Enable editing")
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 Spacer()
                 VStack(spacing: 8) {

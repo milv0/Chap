@@ -14,7 +14,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
-- **Display Minimap** — Auto previews the cursor screen; click to select a display
+- **Display Minimap** — In normal mode, click a display to select the site target; in Follow Cursor, click a display to configure that monitor's size
 - **Global Hotkeys** — Only registered `⌥` combinations reach Chap; normal typing bypasses it
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported

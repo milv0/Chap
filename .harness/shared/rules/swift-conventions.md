@@ -58,6 +58,7 @@
 - 서브뷰에는 필요한 최소 데이터만 전달 (`@Binding` 또는 직접 파라미터)
 - 재사용 스타일은 `ViewModifier` 로 추출. 자체 `@State` 필요하면 반드시 ViewModifier 타입
 - Container(레이아웃) = View struct, Decoration(스타일링) = modifier
+- **Form outer-edge alignment (필수)**: 같은 form section 안의 관련 input/control group은 반드시 같은 leading·trailing outer edge를 공유한다. 단일 control과 여러 control로 이루어진 row를 나란히 둘 때에도, 여러 control의 **group 전체 폭**(각 control 폭 + 중간 spacing)이 기준 control 폭과 정확히 같아야 한다. 의도되지 않은 잔여 여백이나 1–수 pt의 불일치를 남기지 않는다.
 
 ## 5. AppKit + SwiftUI Interop
 

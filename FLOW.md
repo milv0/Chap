@@ -166,12 +166,14 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
 ### 6.2 크기 — `effectiveWindowSize(for:on:)`
 
 ```
-1. 이 화면에 해당하는 displaySizeOverrides 항목이 있나? (UUID → unique name 순 매칭)
-   → 있으면 그 override 의 preset(있으면) 또는 custom w/h 를 화면에 맞춰 반환   [종료]
-2. site.windowSizePreset 이 알려진 preset 인가?
-   → 기준 화면 = 명시적 디스플레이 지정이 있으면 그 화면, 없으면(Follow Cursor) builtInScreen
+1. site가 명시적 display target을 가리키나?
+   → 그렇다면 화면별 override를 무시하고 site.windowSizePreset 또는 site.width × site.height를 대상 화면에 맞춰 반환
+2. Follow Cursor이고 이 화면에 해당하는 displaySizeOverrides 항목이 있나? (UUID → unique name 순 매칭)
+   → 있으면 그 override의 preset(있으면) 또는 custom w/h를 화면에 맞춰 반환   [종료]
+3. site.windowSizePreset 이 알려진 preset 인가?
+   → 기준 화면 = Follow Cursor면 builtInScreen, 명시적 target이면 대상 화면
    → 기준 화면 비율로 크기 산출 후 실행 화면에 맞춤(fit)                        [종료]
-3. site.width × site.height 를 실행 화면에 맞춤(fit)
+4. site.width × site.height 를 실행 화면에 맞춤(fit)
 ```
 
 `fittedSize`는 요청/최대 모두 최소 100pt로 클램프하고 종횡비를 유지하며 축소한다.

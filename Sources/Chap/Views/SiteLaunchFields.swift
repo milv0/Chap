@@ -1,6 +1,14 @@
 import Cocoa
 import SwiftUI
 
+struct ScriptEditorFramePreferenceKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
 /// Launch-type specific input fields extracted from SiteConfigView.
 /// Renders URL, App, Finder, or Shell fields based on the current launchType.
 struct SiteLaunchFields: View {
@@ -11,6 +19,7 @@ struct SiteLaunchFields: View {
     let windowFields: AnyView
     let browseForApp: () -> Void
     let browseFolder: () -> Void
+    var scriptFocused: FocusState<Bool>.Binding
 
     var body: some View {
         switch site.launchType {
@@ -145,6 +154,7 @@ struct SiteLaunchFields: View {
                 )
             )
             .font(DS.monoFont)
+            .focused(scriptFocused)
             .frame(minHeight: 120)
             .padding(8)
             .background(DS.surfaceBg)
@@ -152,6 +162,14 @@ struct SiteLaunchFields: View {
             .overlay(
                 RoundedRectangle(cornerRadius: DS.radiusSmall)
                     .stroke(DS.border, lineWidth: 1)
+            )
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: ScriptEditorFramePreferenceKey.self,
+                        value: proxy.frame(in: .named("SiteConfigForm"))
+                    )
+                }
             )
         }
     }

@@ -172,9 +172,11 @@ struct PillPickerItem: View {
                     .font(.system(size: 10))
                 Text(label)
                     .font(.system(size: 12, weight: isActive ? .semibold : .regular))
+                    .lineLimit(1)
             }
+            .frame(maxWidth: .infinity)
             .foregroundColor(isActive ? .white : DS.textSecondary)
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .background(
                 isActive
@@ -183,6 +185,7 @@ struct PillPickerItem: View {
             )
             .clipShape(Capsule())
         }
+        .frame(maxWidth: .infinity)
         .buttonStyle(.plain)
         .onHover { hovering in isHovered = hovering }
     }
@@ -191,6 +194,7 @@ struct PillPickerItem: View {
 struct PillPicker: View {
     @Binding var selection: LaunchType
 
+    private let barWidth: CGFloat = 420
     private let items: [(LaunchType, String, String)] = [
         (.url, "bolt.fill", "URL"),
         (.app, "app.fill", "App"),
@@ -207,9 +211,26 @@ struct PillPicker: View {
                     isActive: selection == item.0,
                     action: { selection = item.0 }
                 )
+                .frame(maxWidth: .infinity)
             }
+
+            HStack(spacing: 5) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 10))
+                Text("Soon")
+                    .font(.system(size: 12))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundColor(DS.textTertiary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .help("Coming soon")
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Coming soon")
         }
         .padding(4)
+        .frame(width: barWidth)
         .background(DS.border.opacity(0.2))
         .clipShape(Capsule())
     }
@@ -221,7 +242,6 @@ struct MinimapSwiftUI: View {
     /// 실행 대상 디스플레이 식별. 둘 다 nil이면 Follow Cursor.
     let selectedIdentifier: String?
     let selectedName: String?
-    /// Follow Cursor 상태에서 size/preset을 편집 중인 디스플레이.
     let focusedIdentifier: String?
     let focusedName: String?
     let previewSizeForScreen: (NSScreen) -> (width: Int, height: Int)
@@ -251,53 +271,79 @@ struct MinimapSwiftUI: View {
         return false
     }
 
-    /// 미리보기 창을 그릴 대상 화면(식별자 → 이름 → 커서 화면).
+    private func matchingScreen(
+        identifier: String?,
+        name: String?,
+        in screens: [NSScreen]
+    ) -> NSScreen? {
+        if let identifier,
+            let screen = screens.first(where: { displayUUID(for: $0) == identifier })
+        {
+            return screen
+        }
+        if let name {
+            return screens.first(where: { $0.localizedName == name })
+        }
+        return nil
+    }
+
+    /// Detail preview 대상. 명시적으로 선택한 display가 있으면 그것을, 아니면 현재 cursor screen을 표시한다.
     private func previewScreen(_ screens: [NSScreen]) -> NSScreen? {
-        if let id = selectedIdentifier,
-            let screen = screens.first(where: { displayUUID(for: $0) == id })
-        {
-            return screen
+        if let selected = matchingScreen(
+            identifier: selectedIdentifier,
+            name: selectedName,
+            in: screens
+        ) {
+            return selected
         }
-        if let name = selectedName,
-            let screen = screens.first(where: { $0.localizedName == name })
+        if isFollowingCursor,
+            let focused = matchingScreen(
+                identifier: focusedIdentifier,
+                name: focusedName,
+                in: screens
+            )
         {
-            return screen
+            return focused
         }
-        // Follow Cursor mode: target the cursor screen
         return cursorScreen ?? NSScreen.main ?? screens.first
     }
 
-    private func previewScreens(_ screens: [NSScreen]) -> [NSScreen] {
-        if isFollowingCursor {
-            return screens
-        }
-        return previewScreen(screens).map { [$0] } ?? []
-    }
-
-    var body: some View {
+    private func overview(_ screens: [NSScreen]) -> some View {
         GeometryReader { geo in
-            let screens = NSScreen.screens
-            let allFrames = screens.map { $0.frame }
-            let minX = allFrames.map { $0.minX }.min() ?? 0
-            let minY = allFrames.map { $0.minY }.min() ?? 0
-            let maxX = allFrames.map { $0.maxX }.max() ?? 1512
-            let maxY = allFrames.map { $0.maxY }.max() ?? 982
-            let totalW = maxX - minX
-            let totalH = maxY - minY
-
-            let scale = min(geo.size.width / totalW, geo.size.height / totalH)
-            let mapW = totalW * scale
-            let mapH = totalH * scale
-            let offsetX = (geo.size.width - mapW) / 2
-            let offsetY = (geo.size.height - mapH) / 2
+            let allFrames = screens.map(\.frame)
+            let minX = allFrames.map(\.minX).min() ?? 0
+            let minY = allFrames.map(\.minY).min() ?? 0
+            let maxX = allFrames.map(\.maxX).max() ?? 1
+            let maxY = allFrames.map(\.maxY).max() ?? 1
+            let totalWidth = max(maxX - minX, 1)
+            let totalHeight = max(maxY - minY, 1)
+            let padding: CGFloat = 8
+            let availableWidth = max(geo.size.width - padding * 2, 1)
+            let availableHeight = max(geo.size.height - padding * 2, 1)
+            let scale = min(availableWidth / totalWidth, availableHeight / totalHeight)
+            let mapWidth = totalWidth * scale
+            let mapHeight = totalHeight * scale
+            let offsetX = (geo.size.width - mapWidth) / 2
+            let offsetY = (geo.size.height - mapHeight) / 2
 
             ZStack(alignment: .topLeading) {
-                ForEach(0..<screens.count, id: \.self) { i in
-                    let frame = screens[i].frame
-                    let sx = (frame.origin.x - minX) * scale
-                    let sy = (maxY - frame.origin.y - frame.height) * scale
-                    let selected = isSelected(screens[i])
-                    let focused = isFollowingCursor && isFocused(screens[i])
+                ForEach(Array(screens.enumerated()), id: \.offset) { index, screen in
+                    let frame = screen.frame
+                    let renderedSize = CGSize(
+                        width: frame.width * scale,
+                        height: frame.height * scale
+                    )
+                    let x = (frame.minX - minX) * scale
+                    let y = (maxY - frame.minY - frame.height) * scale
+                    let selected = isSelected(screen)
+                    let focused = isFollowingCursor && isFocused(screen)
+                    let highlighted = selected || focused
+                    let label = DisplayPreviewPolicy.overviewLabel(
+                        displayName: screen.localizedName,
+                        displayIndex: index,
+                        renderedSize: renderedSize
+                    )
+                    let usesBadge = label != screen.localizedName
 
                     RoundedRectangle(cornerRadius: 4)
                         .fill(
@@ -305,61 +351,219 @@ struct MinimapSwiftUI: View {
                                 ? DS.accent.opacity(0.16)
                                 : (selected ? DS.accent.opacity(0.08) : DS.cardBg)
                         )
-                        .frame(width: frame.width * scale, height: frame.height * scale)
-                        .overlay(
-                            VStack(spacing: 2) {
-                                Text(screens[i].localizedName)
+                        .frame(width: renderedSize.width, height: renderedSize.height)
+                        .overlay {
+                            if usesBadge {
+                                Text(label)
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundColor(selected ? DS.accent : DS.textSecondary)
+                                    .frame(width: 16, height: 16)
+                                    .background(DS.surfaceBg.opacity(0.9))
+                                    .clipShape(Circle())
+                            } else {
+                                Text(label)
                                     .font(.system(size: 8))
-                                    .foregroundColor(
-                                        selected || focused ? DS.accent : DS.textTertiary)
+                                    .foregroundColor(selected ? DS.accent : DS.textTertiary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .padding(3)
                             }
-                        )
+                        }
                         .overlay(
                             RoundedRectangle(cornerRadius: 4).stroke(
-                                selected || focused ? DS.accent : DS.border,
-                                lineWidth: focused ? 2 : 1
+                                selected ? DS.accent : DS.border,
+                                lineWidth: 1
                             )
                         )
-                        .offset(x: offsetX + sx, y: offsetY + sy)
+                        .contentShape(RoundedRectangle(cornerRadius: 4))
+                        .offset(x: offsetX + x, y: offsetY + y)
+                        .accessibilityLabel("Display \(index + 1): \(screen.localizedName)")
                         .onTapGesture {
-                            guard isFollowingCursor else { return }
-                            onPreviewSelect(screens[i])
+                            onPreviewSelect(screen)
                         }
-                }
-
-                ForEach(previewScreens(screens), id: \.self) { targetScreen in
-                    let previewSize = previewSizeForScreen(targetScreen)
-                    let previewLabel = previewLabelForScreen(targetScreen)
-                    let visibleFrame = targetScreen.visibleFrame
-                    let visibleLocalX = (visibleFrame.origin.x - minX) * scale
-                    let visibleLocalY = (maxY - visibleFrame.origin.y - visibleFrame.height) * scale
-
-                    let winX =
-                        visibleLocalX
-                        + (visibleFrame.width * scale - CGFloat(previewSize.width) * scale) / 2
-                    let winY =
-                        visibleLocalY
-                        + (visibleFrame.height * scale - CGFloat(previewSize.height) * scale) / 2
-
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(DS.accent.opacity(0.25))
-                        .overlay(RoundedRectangle(cornerRadius: 2).stroke(DS.accent))
-                        .overlay(alignment: .topLeading) {
-                            Text(previewLabel)
-                                .font(.system(size: 7, weight: .semibold))
-                                .foregroundColor(DS.accent)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .padding(2)
-                        }
-                        .frame(
-                            width: CGFloat(previewSize.width) * scale,
-                            height: CGFloat(previewSize.height) * scale
-                        )
-                        .offset(x: offsetX + winX, y: offsetY + winY)
-                        .allowsHitTesting(false)
                 }
             }
         }
+        .clipped()
+        .background(DS.surfaceBg)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(DS.border, lineWidth: 1))
+    }
+
+    private func topologyPane(_ screens: [NSScreen]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Text("All Displays")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textSecondary)
+                if isFollowingCursor {
+                    Image(systemName: "cursorarrow")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(DS.accent)
+                }
+            }
+            overview(screens)
+                .frame(
+                    minHeight: DisplayPreviewPolicy.topologyHeight,
+                    maxHeight: .infinity
+                )
+        }
+        .padding(6)
+        .frame(width: 156, alignment: .leading)
+        .frame(maxHeight: .infinity, alignment: .leading)
+        .background(DS.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
+        .accessibilityElement(children: .contain)
+        .accessibilityHint(
+            isFollowingCursor ? "Click a display to configure it" : "Click a display to select it"
+        )
+    }
+
+    private func compactTopologyPane(_ screens: [NSScreen]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Text("All Displays")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textSecondary)
+                if isFollowingCursor {
+                    Image(systemName: "cursorarrow")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(DS.accent)
+                }
+            }
+            overview(screens)
+                .frame(height: DisplayPreviewPolicy.compactTopologyHeight)
+        }
+        .padding(6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DS.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
+        .accessibilityElement(children: .contain)
+        .accessibilityHint(
+            isFollowingCursor ? "Click a display to configure it" : "Click a display to select it"
+        )
+    }
+
+    private func detailCanvas(for screen: NSScreen) -> some View {
+        GeometryReader { geo in
+            let visibleFrame = screen.visibleFrame
+            let displaySize = DisplayPreviewPolicy.detailDisplaySize(
+                displaySize: visibleFrame.size,
+                availableSize: geo.size
+            )
+            let displayScale = min(
+                displaySize.width / max(visibleFrame.width, 1),
+                displaySize.height / max(visibleFrame.height, 1)
+            )
+            let requestedWindowSize = previewSizeForScreen(screen)
+            let windowSize = CGSize(
+                width: min(
+                    CGFloat(requestedWindowSize.width) * displayScale,
+                    displaySize.width - 4
+                ),
+                height: min(
+                    CGFloat(requestedWindowSize.height) * displayScale,
+                    displaySize.height - 4
+                )
+            )
+            let windowLabel = previewLabelForScreen(screen)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 7)
+                    .fill(DS.accent.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7).stroke(DS.accent, lineWidth: 1.5)
+                    )
+                    .frame(width: displaySize.width, height: displaySize.height)
+                    .overlay(alignment: .topLeading) {
+                        Text(screen.localizedName)
+                            .font(.system(size: 8))
+                            .foregroundColor(DS.accent)
+                            .lineLimit(1)
+                            .padding(5)
+                    }
+
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(DS.accent.opacity(0.25))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3).stroke(DS.accent, lineWidth: 1.25)
+                    )
+                    .frame(width: windowSize.width, height: windowSize.height)
+                    .overlay {
+                        if windowSize.width >= 54, windowSize.height >= 28 {
+                            Text(windowLabel)
+                                .font(.system(size: 7, weight: .semibold))
+                                .foregroundColor(DS.accent)
+                                .lineLimit(1)
+                                .padding(3)
+                        }
+                    }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .accessibilityLabel(
+                "\(screen.localizedName) detail preview with \(windowLabel) window centered"
+            )
+        }
+        .frame(maxWidth: .infinity)
+        .background(DS.surfaceBg)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private func previewPanes(for screen: NSScreen, screens: [NSScreen]) -> some View {
+        if screens.count <= 1 {
+            detailCanvas(for: screen)
+                .frame(height: DisplayPreviewPolicy.detailHeight - 21)
+        } else {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: DS.paddingSmall) {
+                    detailCanvas(for: screen)
+                    topologyPane(screens)
+                }
+                .frame(
+                    minWidth: DisplayPreviewPolicy.splitPreviewMinimumWidth,
+                    alignment: .leading
+                )
+                .frame(height: DisplayPreviewPolicy.detailHeight - 21)
+
+                VStack(alignment: .leading, spacing: DS.paddingSmall) {
+                    detailCanvas(for: screen)
+                        .frame(height: DisplayPreviewPolicy.detailHeight - 21)
+                    compactTopologyPane(screens)
+                }
+            }
+        }
+    }
+
+    private func detailPreview(for screen: NSScreen, screens: [NSScreen]) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 6) {
+                Text(isFollowingCursor ? "Focused Display" : "Selected Display")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textSecondary)
+                Spacer()
+                Text(screen.localizedName)
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textTertiary)
+                    .lineLimit(1)
+            }
+
+            previewPanes(for: screen, screens: screens)
+        }
+    }
+
+    var body: some View {
+        let screens = NSScreen.screens
+
+        Group {
+            if let screen = previewScreen(screens) {
+                detailPreview(for: screen, screens: screens)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
