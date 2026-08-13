@@ -12,6 +12,21 @@ struct ScriptEditorFramePreferenceKey: PreferenceKey {
 final class UndoableScriptTextView: NSTextView {
     private let scriptUndoManager = UndoManager()
 
+    static func makeEditable() -> UndoableScriptTextView {
+        let textStorage = NSTextStorage()
+        let layoutManager = NSLayoutManager()
+        let textContainer = NSTextContainer(
+            size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
+        textStorage.addLayoutManager(layoutManager)
+        layoutManager.addTextContainer(textContainer)
+
+        let textView = UndoableScriptTextView(frame: .zero, textContainer: textContainer)
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.allowsUndo = true
+        return textView
+    }
+
     override var undoManager: UndoManager? {
         scriptUndoManager
     }
@@ -52,7 +67,7 @@ struct ScriptTextEditor: NSViewRepresentable {
         scrollView.autohidesScrollers = true
         scrollView.borderType = .noBorder
 
-        let textView = UndoableScriptTextView(frame: .zero)
+        let textView = UndoableScriptTextView.makeEditable()
         textView.delegate = context.coordinator
         textView.string = text
         textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)

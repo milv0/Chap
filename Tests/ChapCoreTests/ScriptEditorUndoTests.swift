@@ -6,32 +6,29 @@ import Testing
 @Suite("Script Editor Undo")
 @MainActor
 struct ScriptEditorUndoTests {
-    @Test("Control-Z undoes and Control-Shift-Z redoes")
-    func controlZUndoRedo() {
+    @Test("editable script text accepts input and Control-Z undo/redo")
+    func editableScriptTextUndoRedo() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 300, height: 200),
             styleMask: [.titled],
             backing: .buffered,
             defer: false)
-        let textView = UndoableScriptTextView(frame: .zero)
+        let textView = UndoableScriptTextView.makeEditable()
         window.contentView = textView
         window.makeFirstResponder(textView)
 
-        guard let undoManager = textView.undoManager else {
-            Issue.record("Script editor must have an undo manager when attached to a window.")
-            return
-        }
+        #expect(textView.isEditable)
+        #expect(textView.isSelectable)
+        #expect(textView.textContainer != nil)
 
-        let target = UndoRedoTarget(undoManager: undoManager)
-        undoManager.registerUndo(withTarget: target) { target in
-            target.undoChange()
-        }
+        textView.insertText("echo Chap", replacementRange: NSRange(location: 0, length: 0))
+        #expect(textView.string == "echo Chap")
 
         textView.keyDown(with: keyEvent(modifiers: [.control]))
-        #expect(target.value == "before")
+        #expect(textView.string.isEmpty)
 
         textView.keyDown(with: keyEvent(modifiers: [.control, .shift]))
-        #expect(target.value == "after")
+        #expect(textView.string == "echo Chap")
     }
 
     private func keyEvent(modifiers: NSEvent.ModifierFlags) -> NSEvent {
@@ -51,29 +48,5 @@ struct ScriptEditorUndoTests {
             fatalError("Failed to create test key event.")
         }
         return event
-    }
-}
-
-@MainActor
-private final class UndoRedoTarget {
-    private let undoManager: UndoManager
-    var value = "after"
-
-    init(undoManager: UndoManager) {
-        self.undoManager = undoManager
-    }
-
-    func undoChange() {
-        value = "before"
-        undoManager.registerUndo(withTarget: self) { target in
-            target.redoChange()
-        }
-    }
-
-    func redoChange() {
-        value = "after"
-        undoManager.registerUndo(withTarget: self) { target in
-            target.undoChange()
-        }
     }
 }
