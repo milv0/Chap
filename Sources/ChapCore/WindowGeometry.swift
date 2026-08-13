@@ -133,7 +133,8 @@ public func effectiveWindowSize(for override: DisplaySizeOverride, on screen: NS
 }
 
 public func effectiveWindowSize(for site: Site, on screen: NSScreen) -> (width: Int, height: Int) {
-    if let override = displaySizeOverride(for: site, on: screen) {
+    if !hasExplicitDisplaySelection(site), let override = displaySizeOverride(for: site, on: screen)
+    {
         return effectiveWindowSize(for: override, on: screen)
     }
     if let preset = WindowSizePresets.preset(withID: site.windowSizePreset) {

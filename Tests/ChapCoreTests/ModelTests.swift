@@ -26,12 +26,11 @@ struct SiteModelTests {
         #expect(site.height == 600)
         #expect(site.displayName == nil)
         #expect(site.windowSizePreset == nil)
-        #expect(site.displaySizeOverrides.isEmpty)
     }
 
     @Test func decodesWithDisplayName() throws {
         let json =
-            #"{"name":"Work","url":"https://work.com","width":800,"height":600,"x":0,"y":0,"displayName":"Built-in Retina Display"}"#
+            #"{"name":"Work","url":"https://work.com","width":800,"height":600,"displayName":"Built-in Retina Display"}"#
         let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
 
         #expect(site.displayName == "Built-in Retina Display")
@@ -49,7 +48,7 @@ struct SiteModelTests {
         #expect(decoded == original)
     }
 
-    @Test func roundTripsDisplaySizeOverrides() throws {
+    @Test func roundTripsFollowCursorDisplaySizeOverrides() throws {
         let original = Site(
             name: "Work", url: "https://work.com", width: 1200, height: 750,
             windowSizePreset: WindowSizePresets.standard.id,
