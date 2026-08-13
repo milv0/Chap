@@ -19,6 +19,8 @@ struct SiteConfigView: View {
     @State private var heightDraft: String?
     @FocusState private var widthFocused: Bool
     @FocusState private var heightFocused: Bool
+    @FocusState private var scriptFocused: Bool
+    @State private var scriptEditorFrame = CGRect.zero
     var onSave: (() -> Void)?
 
     var body: some View {
@@ -26,60 +28,64 @@ struct SiteConfigView: View {
             CardSection {
                 VStack(alignment: .leading, spacing: DS.spacing) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Name")
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.textSecondary)
-                        TextField("Site name", text: $site.name)
-                            .textFieldStyle(.plain)
-                            .font(DS.bodyFont)
-                            .padding(DS.paddingSmall)
-                            .background(DS.surfaceBg)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(DS.border, lineWidth: 1)
-                            )
-                            .focused($nameFieldFocused)
-                    }
-                    .onAppear {
-                        if isNew {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                nameFieldFocused = true
-                            }
-                        }
-                    }
-
-                    InputField(
-                        label: "Shortcut (⌥ +)",
-                        text: Binding(
-                            get: { site.shortcut ?? "" },
-                            set: { newValue in
-                                let trimmed = newValue.trimmingCharacters(
-                                    in: .whitespacesAndNewlines)
-                                let key =
-                                    trimmed.isEmpty
-                                    ? nil : String(trimmed.prefix(1)).uppercased()
-                                if let k = key, [".", ","].contains(k) {
-                                    reservedKeyAlert = true
-                                    reservedKeyChar = k
-                                    return
-                                }
-                                site.shortcut = key
-                            }
-                        ),
-                        placeholder: "예: T → ⌥T"
-                    )
-                    .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
-                        Button("OK", role: .cancel) {}
-                    } message: {
-                        Text("⌥\(reservedKeyChar) is reserved for system use.")
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
                         Text("Type")
                             .font(DS.captionFont)
                             .foregroundColor(DS.textSecondary)
                         PillPicker(selection: $site.launchType)
+                    }
+
+                    HStack(alignment: .top, spacing: DS.spacing) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Name")
+                                .font(DS.captionFont)
+                                .foregroundColor(DS.textSecondary)
+                            TextField("Site name", text: $site.name)
+                                .textFieldStyle(.plain)
+                                .font(DS.bodyFont)
+                                .padding(DS.paddingSmall)
+                                .background(DS.surfaceBg)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(DS.border, lineWidth: 1)
+                                )
+                                .focused($nameFieldFocused)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .onAppear {
+                            if isNew {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    nameFieldFocused = true
+                                }
+                            }
+                        }
+
+                        InputField(
+                            label: "Shortcut (⌥ +)",
+                            text: Binding(
+                                get: { site.shortcut ?? "" },
+                                set: { newValue in
+                                    let trimmed = newValue.trimmingCharacters(
+                                        in: .whitespacesAndNewlines)
+                                    let key =
+                                        trimmed.isEmpty
+                                        ? nil : String(trimmed.prefix(1)).uppercased()
+                                    if let k = key, [".", ","].contains(k) {
+                                        reservedKeyAlert = true
+                                        reservedKeyChar = k
+                                        return
+                                    }
+                                    site.shortcut = key
+                                }
+                            ),
+                            placeholder: "예: T → ⌥T"
+                        )
+                        .frame(width: 180, alignment: .leading)
+                        .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
+                            Button("OK", role: .cancel) {}
+                        } message: {
+                            Text("⌥\(reservedKeyChar) is reserved for system use.")
+                        }
                     }
 
                     SiteLaunchFields(
@@ -100,15 +106,30 @@ struct SiteConfigView: View {
                             )
                         ),
                         browseForApp: browseForApp,
-                        browseFolder: browseFolder
+                        browseFolder: browseFolder,
+                        scriptFocused: $scriptFocused
                     )
                 }
+                .frame(maxWidth: 420, alignment: .leading)
             }
-            .padding(.horizontal, DS.padding)
-            .padding(.top, DS.paddingSmall)
-            .padding(.bottom, DS.padding)
+            .padding(.leading, DS.paddingSmall)
+            .padding(.trailing, DS.padding)
+            .padding(.vertical, DS.paddingSmall)
         }
         .disabled(!isEditing)
+        .coordinateSpace(name: "SiteConfigForm")
+        .onPreferenceChange(ScriptEditorFramePreferenceKey.self) { frame in
+            scriptEditorFrame = frame
+        }
+        .simultaneousGesture(
+            SpatialTapGesture().onEnded { value in
+                guard site.launchType == .shell,
+                    scriptFocused,
+                    !scriptEditorFrame.contains(value.location)
+                else { return }
+                scriptFocused = false
+            }
+        )
     }
 
     // MARK: - Actions

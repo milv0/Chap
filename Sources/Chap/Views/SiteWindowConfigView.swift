@@ -101,7 +101,9 @@ struct SiteWindowConfigView: View {
     }
 
     private var displayedWindowSize: (width: Int, height: Int) {
-        if let override = currentDisplaySizeOverride, let screen = selectedPreviewScreen {
+        if !hasExplicitDisplaySelection(site), let override = currentDisplaySizeOverride,
+            let screen = selectedPreviewScreen
+        {
             return effectiveWindowSize(for: override, on: screen)
         }
         guard let preset = selectedSizePreset else {
@@ -114,7 +116,9 @@ struct SiteWindowConfigView: View {
     }
 
     private var currentDisplaySizeOverrideIndex: Int? {
-        guard let screen = selectedPreviewScreen else { return nil }
+        guard !hasExplicitDisplaySelection(site), let screen = selectedPreviewScreen else {
+            return nil
+        }
         return displaySizeOverrideIndex(
             displayIdentifier: displayUUID(for: screen),
             displayName: screen.localizedName,
@@ -170,160 +174,116 @@ struct SiteWindowConfigView: View {
     // MARK: - Body
 
     var body: some View {
-        HStack(alignment: .top, spacing: DS.spacing) {
+        VStack(alignment: .leading, spacing: DS.spacing) {
             VStack(alignment: .leading, spacing: DS.paddingSmall) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Display")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textSecondary)
-                    Picker(
-                        "",
-                        selection: Binding(
-                            get: { selectedDisplayTag },
-                            set: { newTag in
-                                isEditing = true
-                                applyDisplaySelection(tag: newTag)
+                HStack(alignment: .top, spacing: DS.spacing) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Display")
+                            .font(DS.captionFont)
+                            .foregroundColor(DS.textSecondary)
+                        Picker(
+                            "",
+                            selection: Binding(
+                                get: { selectedDisplayTag },
+                                set: { newTag in
+                                    isEditing = true
+                                    applyDisplaySelection(tag: newTag)
+                                }
+                            )
+                        ) {
+                            ForEach(NSScreen.screens, id: \.self) { screen in
+                                Text(displayLabel(for: screen))
+                                    .tag(displayUUID(for: screen) ?? screen.localizedName)
                             }
-                        )
-                    ) {
-                        ForEach(NSScreen.screens, id: \.self) { screen in
-                            Text(displayLabel(for: screen))
-                                .tag(displayUUID(for: screen) ?? screen.localizedName)
+                        }
+                        .labelsHidden()
+                        .frame(width: dropdownControlWidth, alignment: .leading)
+                        Button {
+                            toggleFollowCursor()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "cursorarrow")
+                                    .font(.system(size: 11, weight: .semibold))
+                                Text("Follow Cursor")
+                                    .font(DS.captionFont)
+                            }
+                            .foregroundColor(
+                                hasExplicitDisplaySelection(site) ? DS.textSecondary : DS.accent
+                            )
+                            .padding(.horizontal, 8)
+                            .frame(width: dropdownControlWidth, height: 24, alignment: .leading)
+                            .background(
+                                hasExplicitDisplaySelection(site) ? DS.surfaceBg : DS.accentSoft
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(
+                                        hasExplicitDisplaySelection(site) ? DS.border : DS.accent,
+                                        lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        if let warning = displayWarningText {
+                            HStack(spacing: 4) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.orange)
+                                Text(warning)
+                                    .font(DS.captionFont)
+                                    .foregroundColor(.orange)
+                            }
                         }
                     }
-                    .labelsHidden()
+
+                    Spacer(minLength: DS.spacing)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Size Preset")
+                                .font(DS.captionFont)
+                                .foregroundColor(DS.textSecondary)
+                            sizePresetDropdown
+                            if selectedSizePreset != nil {
+                                Text(previewSizeText)
+                                    .font(DS.captionFont)
+                                    .foregroundColor(DS.textTertiary)
+                                    .padding(.top, 6)
+                            }
+                        }
+
+                        if selectedSizePreset == nil {
+                            HStack(spacing: 20) {
+                                compactDimensionField(
+                                    label: "W",
+                                    text: Binding(
+                                        get: { widthDraft ?? "\(displayedWindowSize.width)" },
+                                        set: { widthDraft = $0 }
+                                    ),
+                                    focused: widthFocused,
+                                    commit: commitWidthDraft
+                                )
+                                compactDimensionField(
+                                    label: "H",
+                                    text: Binding(
+                                        get: { heightDraft ?? "\(displayedWindowSize.height)" },
+                                        set: { heightDraft = $0 }
+                                    ),
+                                    focused: heightFocused,
+                                    commit: commitHeightDraft
+                                )
+                            }
+                        }
+                    }
                     .frame(width: dropdownControlWidth, alignment: .leading)
-                    Button {
-                        toggleFollowCursor()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "cursorarrow")
-                                .font(.system(size: 11, weight: .semibold))
-                            Text("Follow Cursor")
-                                .font(DS.captionFont)
-                        }
-                        .foregroundColor(
-                            hasExplicitDisplaySelection(site) ? DS.textSecondary : DS.accent
-                        )
-                        .padding(.horizontal, 8)
-                        .frame(width: dropdownControlWidth, height: 24, alignment: .leading)
-                        .background(
-                            hasExplicitDisplaySelection(site) ? DS.surfaceBg : DS.accentSoft
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(
-                                    hasExplicitDisplaySelection(site) ? DS.border : DS.accent,
-                                    lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    if let warning = displayWarningText {
-                        HStack(spacing: 4) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(.orange)
-                            Text(warning)
-                                .font(DS.captionFont)
-                                .foregroundColor(.orange)
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Size Preset")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textSecondary)
-                    sizePresetDropdown
-                    Text(previewSizeText)
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textTertiary)
-                    if currentDisplaySizeOverrideIndex != nil {
-                        HStack(spacing: 6) {
-                            Text("Display-specific")
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textTertiary)
-                            Button("Use Site Default") {
-                                removeCurrentDisplaySizeOverride()
-                            }
-                            .buttonStyle(.plain)
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.accent)
-                        }
-                    }
-                }
-
-                HStack(spacing: DS.paddingSmall) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Width")
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.textSecondary)
-                        TextField(
-                            "",
-                            text: Binding(
-                                get: { widthDraft ?? "\(displayedWindowSize.width)" },
-                                set: { widthDraft = $0 }
-                            )
-                        )
-                        .textFieldStyle(.plain)
-                        .font(DS.bodyFont)
-                        .padding(DS.paddingSmall)
-                        .background(DS.surfaceBg)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(DS.border, lineWidth: 1)
-                        )
-                        .focused(widthFocused)
-                        .onSubmit { commitWidthDraft() }
-                        .onChange(of: widthFocused.wrappedValue) { _, focused in
-                            if !focused { commitWidthDraft() }
-                        }
-                    }
-                    .frame(width: 80)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Height")
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.textSecondary)
-                        TextField(
-                            "",
-                            text: Binding(
-                                get: { heightDraft ?? "\(displayedWindowSize.height)" },
-                                set: { heightDraft = $0 }
-                            )
-                        )
-                        .textFieldStyle(.plain)
-                        .font(DS.bodyFont)
-                        .padding(DS.paddingSmall)
-                        .background(DS.surfaceBg)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(DS.border, lineWidth: 1)
-                        )
-                        .focused(heightFocused)
-                        .onSubmit { commitHeightDraft() }
-                        .onChange(of: heightFocused.wrappedValue) { _, focused in
-                            if !focused { commitHeightDraft() }
-                        }
-                    }
-                    .frame(width: 80)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Display Preview")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textSecondary)
-                    Spacer()
-                    Text(previewSizeText)
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textTertiary)
-                }
+                Text("Display Preview")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textSecondary)
                 MinimapSwiftUI(
                     selectedIdentifier: site.displayIdentifier,
                     selectedName: site.displayName,
@@ -331,15 +291,48 @@ struct SiteWindowConfigView: View {
                     focusedName: sizeEditingDisplayName,
                     previewSizeForScreen: { minimapPreviewSize(for: $0) },
                     previewLabelForScreen: { minimapPreviewLabel(for: $0) },
-                    onPreviewSelect: { focusSizeEditing(on: $0) }
+                    onPreviewSelect: { handleTopologySelection($0) }
                 )
                 .frame(maxWidth: .infinity, minHeight: 100)
                 .id(
-                    "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")-\(sizeEditingDisplayIdentifier ?? sizeEditingDisplayName ?? "cursor")"
+                    "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")"
                 )
             }
             .frame(maxWidth: .infinity)
         }
+    }
+
+    private func compactDimensionField(
+        label: String,
+        text: Binding<String>,
+        focused: FocusState<Bool>.Binding,
+        commit: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(DS.captionFont)
+                .foregroundColor(DS.textSecondary)
+
+            TextField("", text: text)
+                .textFieldStyle(.plain)
+                .font(DS.bodyFont)
+                .padding(.horizontal, 6)
+                .frame(maxWidth: .infinity)
+                .frame(height: 24)
+                .background(DS.surfaceBg)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(DS.border, lineWidth: 1)
+                )
+                .focused(focused)
+                .onSubmit { commit() }
+                .onChange(of: focused.wrappedValue) { _, isFocused in
+                    if !isFocused { commit() }
+                }
+                .accessibilityLabel(label == "W" ? "Width" : "Height")
+        }
+        .frame(width: 80)
     }
 
     // MARK: - Size Preset Dropdown
@@ -435,6 +428,20 @@ struct SiteWindowConfigView: View {
         }
     }
 
+    private func handleTopologySelection(_ screen: NSScreen) {
+        if hasExplicitDisplaySelection(site) {
+            selectDisplay(screen)
+        } else {
+            focusSizeEditing(on: screen)
+        }
+    }
+
+    private func focusSizeEditing(on screen: NSScreen) {
+        isEditing = true
+        sizeEditingDisplayIdentifier = displayUUID(for: screen)
+        sizeEditingDisplayName = screen.localizedName
+    }
+
     private func toggleFollowCursor() {
         if hasExplicitDisplaySelection(site) {
             selectDisplay(nil)
@@ -442,12 +449,6 @@ struct SiteWindowConfigView: View {
         }
         selectDisplay(
             selectedPreviewScreen ?? cursorScreen ?? NSScreen.main ?? NSScreen.screens.first)
-    }
-
-    private func focusSizeEditing(on screen: NSScreen) {
-        guard !hasExplicitDisplaySelection(site) else { return }
-        sizeEditingDisplayIdentifier = displayUUID(for: screen)
-        sizeEditingDisplayName = screen.localizedName
     }
 
     private func applySize(for selection: Int) {
@@ -514,7 +515,9 @@ struct SiteWindowConfigView: View {
         if let hoveredSizeSelection, isSelectedPreviewScreen(screen) {
             return sizePreset(for: hoveredSizeSelection)?.label ?? "Custom"
         }
-        if let override = displaySizeOverride(for: site, on: screen) {
+        if !hasExplicitDisplaySelection(site),
+            let override = displaySizeOverride(for: site, on: screen)
+        {
             return WindowSizePresets.preset(withID: override.windowSizePreset)?.label ?? "Custom"
         }
         return selectedSizePreset?.label ?? "Custom"
@@ -534,19 +537,23 @@ struct SiteWindowConfigView: View {
     }
 
     private func updateCurrentSize(windowSizePreset: String?, width: Int, height: Int) {
-        if let index = currentDisplaySizeOverrideIndex {
-            site.displaySizeOverrides[index].windowSizePreset = windowSizePreset
-            site.displaySizeOverrides[index].width = width
-            site.displaySizeOverrides[index].height = height
-            return
-        }
         if hasExplicitDisplaySelection(site) {
             site.windowSizePreset = windowSizePreset
             site.width = width
             site.height = height
             return
         }
-        if let screen = selectedPreviewScreen {
+        guard let screen = selectedPreviewScreen else {
+            site.windowSizePreset = windowSizePreset
+            site.width = width
+            site.height = height
+            return
+        }
+        if let index = currentDisplaySizeOverrideIndex {
+            site.displaySizeOverrides[index].windowSizePreset = windowSizePreset
+            site.displaySizeOverrides[index].width = width
+            site.displaySizeOverrides[index].height = height
+        } else {
             site.displaySizeOverrides.append(
                 DisplaySizeOverride(
                     displayName: screen.localizedName,
@@ -554,16 +561,6 @@ struct SiteWindowConfigView: View {
                     windowSizePreset: windowSizePreset,
                     width: width,
                     height: height))
-            return
         }
-        site.windowSizePreset = windowSizePreset
-        site.width = width
-        site.height = height
-    }
-
-    private func removeCurrentDisplaySizeOverride() {
-        guard let index = currentDisplaySizeOverrideIndex else { return }
-        isEditing = true
-        site.displaySizeOverrides.remove(at: index)
     }
 }
