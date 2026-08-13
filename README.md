@@ -102,7 +102,7 @@ Chap’s Accessibility-based window control and Shell launcher are distributed o
 
 ### Build and notarize
 
-1. Create and install a `Developer ID Application` certificate for team `JC4BNFSKBN`: [Apple Developer Help](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/).
+1. Create and install both `Developer ID Application` and `Developer ID Installer` certificates for team `JC4BNFSKBN`: [Apple Developer Help](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/).
 2. Create a local notarytool keychain profile. Do not commit the app-specific password:
    ```bash
    xcrun notarytool store-credentials ChapNotary \
@@ -110,17 +110,17 @@ Chap’s Accessibility-based window control and Shell launcher are distributed o
      --team-id JC4BNFSKBN \
      --password "$APP_SPECIFIC_PASSWORD"
    ```
-3. Build a signed DMG:
+3. Build the signed PKG primary installer. It installs Chap into `/Applications` through macOS Installer and also emits a signed DMG for manual installation:
    ```bash
-   Scripts/build-release-dmg.sh
+   Scripts/build-release-pkg.sh
    ```
-4. Submit, staple, and verify it with Gatekeeper:
+4. Submit, staple, and verify the primary installer with Gatekeeper:
    ```bash
    NOTARYTOOL_KEYCHAIN_PROFILE=ChapNotary \
-     Scripts/notarize-release-dmg.sh build/release/Chap-<version>-<build>.dmg
+     Scripts/notarize-release-pkg.sh build/release/Chap-<version>-<build>.pkg
    ```
 
-The notarization script waits for Apple’s decision, staples the accepted ticket to the DMG, verifies the embedded app signature, and runs Gatekeeper assessment. See [Apple’s notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) for credential alternatives and troubleshooting.
+The PKG is the primary distribution artifact: it avoids a mounted disk image and uses the standard macOS Installer flow. The DMG remains available as a manual drag-to-Applications fallback. The notarization scripts wait for Apple’s decision, staple the accepted ticket, and verify the installer signature and Gatekeeper assessment. See [Apple’s notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) for credential alternatives and troubleshooting.
 
 ### Window-control reliability and diagnostics
 
