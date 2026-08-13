@@ -69,7 +69,7 @@ struct QAView: View {
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
-                    "설정의 Display 목록에서 원하는 모니터를 선택하세요. Follow Cursor는 마우스 커서가 있는 화면에 열립니다."
+                    "설정의 Display 목록에서 원하는 모니터를 선택하거나 All Displays에서 화면을 클릭하세요. Follow Cursor는 마우스 커서가 있는 화면에 열립니다."
                 ),
                 (
                     "같은 URL/앱을 두 번 등록하면?",
@@ -119,7 +119,7 @@ struct QAView: View {
                 ),
                 (
                     "Follow Cursor에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
-                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Display Preview에서 모니터를 클릭한 뒤 Size Preset이나 Width/Height를 바꾸면 그 화면 전용 크기로 저장되며, 프리뷰 박스 왼쪽 위에 현재 preset 이름이 표시됩니다."
+                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Follow Cursor 중 All Displays에서 모니터를 클릭하면 커서 추적은 유지한 채 그 화면의 Size Preset 또는 Custom 크기를 따로 편집·저장할 수 있습니다. 일반 모드에서 All Displays를 클릭하면 해당 화면이 사이트의 target display로 선택됩니다. 프리뷰 창 중앙에는 현재 preset 또는 Custom label이 표시됩니다."
                 ),
                 (
                     "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
@@ -216,7 +216,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I open on a specific monitor?",
-                    "Choose the desired monitor from the Display list. Follow Cursor opens on the screen where your cursor is."
+                    "Choose the desired monitor from the Display list or click it in All Displays. Follow Cursor opens on the screen where your cursor is."
                 ),
                 (
                     "What if I register the same URL/app twice?",
@@ -266,7 +266,7 @@ struct QAView: View {
                 ),
                 (
                     "What size reference does Follow Cursor use on external monitors?",
-                    "Follow Cursor opens on the cursor screen, but default preset sizes are calculated from the built-in display first, then fitted to the target screen. Click a monitor in Display Preview, then change Size Preset or Width/Height to save a size for that screen. The preview box shows the current preset name in the top-left corner."
+                    "Follow Cursor opens on the cursor screen, but default preset sizes are calculated from the built-in display first, then fitted to the target screen. While following the cursor, click a monitor in All Displays to edit and save that monitor's own Size Preset or Custom size without leaving Follow Cursor. In normal mode, clicking All Displays selects that screen as the site's target display. The preview window shows the current preset or Custom label in its center."
                 ),
                 (
                     "Which preset is used for new items?",

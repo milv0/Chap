@@ -127,17 +127,14 @@ Site 모델 필드:
   stale UUID 갱신, ambiguous/disconnected는 재선택 안내
 - Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
 - 숫자 width/height는 draft로 편집해 Enter/blur 때 commit하며 실제 변경 때만 Custom 전환
-- Follow Cursor 미니맵은 각 연결 화면에 저장된 화면별 size/default size preview를 동시에 표시하고,
-  클릭한 화면을 size/preset 편집 대상으로 사용. 각 preview 박스 왼쪽 위에 preset 이름 표시
+- Follow Cursor 미니맵은 각 연결 화면의 화면별 size/default size preview를 동시에 표시한다. Follow Cursor에서 화면을 클릭하면 커서 추적을 유지한 채 그 화면을 size/preset 편집 대상으로 삼고, 일반 모드에서 클릭하면 해당 화면을 사이트 target으로 선택한다. 각 preview 창 중앙에 preset 또는 Custom label을 표시한다.
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + Display Picker로 고정 디스플레이 선택, Follow Cursor로 커서 화면 실행
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
 - 크기 프리셋: Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, Custom
 - Follow Cursor 디스플레이 프리셋은 내장 화면 기준 크기로 계산 후 커서 화면에 맞춤
-- 화면별 size override: 외장 디스플레이가 빠져 fallback 화면에서 실행될 때 해당 화면 전용
-  preset/custom size가 있으면 우선 적용. Follow Cursor 상태에서 Display Preview로 화면을 고른 뒤
-  Size Preset/Width/Height를 바꾸면 override가 자동 생성되고, Use Site Default로 해당 화면 override를 제거
+- 화면별 size override: Follow Cursor에서만 적용한다. All Displays에서 편집 대상으로 고른 화면의 preset/custom size는 해당 화면 override로 저장되며, explicit display target 모드의 size edit는 site 전체 size를 갱신한다.
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 정확히 한 글자, 중복 체크, 예약키 ./, 차단)
   - 단축키 정규화(sanitizedShortcuts): UI 저장뿐 아니라 config 로드(loadConfig)·Import
@@ -157,7 +154,7 @@ Site 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 770x600 크기로 커서 화면 중앙에 표시
+- 설정 창은 770x640 크기로 커서 화면 중앙에 표시
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
