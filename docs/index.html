@@ -46,14 +46,17 @@
     .brand { align-items: center; display: inline-flex; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.16rem; font-weight: 800; gap: .65rem; letter-spacing: -.04em; min-height: 44px; }
     .brand-mark { align-items: center; border-radius: 14px; box-shadow: var(--raised-small); color: var(--accent); display: flex; height: 40px; justify-content: center; width: 40px; }
     .brand-mark svg { height: 21px; width: 21px; }
-    .source-link { border-radius: 12px; color: var(--muted); font-size: .86rem; font-weight: 700; min-height: 44px; padding: .7rem .85rem; transition: box-shadow var(--ease), color var(--ease); }
-    .source-link:hover { box-shadow: var(--inset); color: var(--foreground); }
+    .nav-actions { align-items: center; display: flex; gap: .25rem; }
+    .source-link, .language-toggle { border: 0; border-radius: 12px; color: var(--muted); cursor: pointer; font-family: inherit; font-size: .86rem; font-weight: 700; min-height: 44px; padding: .7rem .85rem; transition: box-shadow var(--ease), color var(--ease); }
+    .language-toggle { background: var(--surface); box-shadow: var(--raised-small); }
+    .source-link:hover, .language-toggle:hover { box-shadow: var(--inset); color: var(--foreground); }
+    .language-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
     .hero { padding: clamp(5.5rem, 12vw, 9rem) 0 3.5rem; text-align: center; }
     .eyebrow { align-items: center; color: var(--muted); display: flex; font-size: .72rem; font-weight: 700; gap: .55rem; justify-content: center; letter-spacing: .12em; margin: 0; text-transform: uppercase; }
     .eyebrow::before { background: var(--accent); border-radius: 50%; box-shadow: var(--raised-small); content: ""; height: .42rem; width: .42rem; }
     h1 { font-size: clamp(3.4rem, 8vw, 6.7rem); font-weight: 800; letter-spacing: -.085em; line-height: .94; margin: 1.1rem auto 1.3rem; max-width: 760px; }
-    h1 span, .explanation h2 span { color: var(--accent); }
+    .hero-title-accent, .explanation-title-accent { color: var(--accent); }
     .summary { color: var(--muted); font-size: clamp(1.03rem, 1.8vw, 1.2rem); margin: 0 auto; max-width: 600px; }
     .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 2rem; }
     .button { align-items: center; background: var(--surface); border: 0; border-radius: var(--radius-control); box-shadow: var(--raised); display: inline-flex; font-size: .92rem; font-weight: 700; gap: .55rem; justify-content: center; min-height: 50px; padding: .8rem 1.1rem; transition: background var(--ease), box-shadow var(--ease), transform var(--ease); }
@@ -108,48 +111,158 @@
 </head>
 <body>
   <header class="site-header">
-    <nav class="shell nav" aria-label="Main navigation">
-      <a class="brand" href="/Chap/" aria-label="Chap home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap</a>
-      <a class="source-link" href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    <nav class="shell nav" data-i18n-aria-label="navLabel" aria-label="Main navigation">
+      <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap</a>
+      <div class="nav-actions">
+        <a class="source-link" href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Korean">한국어</button>
+      </div>
     </nav>
   </header>
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div class="shell">
-        <p class="eyebrow">A macOS command center</p>
-        <h1 id="hero-title">Press Option.<br><span>Start centered.</span></h1>
-        <p class="summary">Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.</p>
+        <p class="eyebrow" data-i18n="eyebrow">A macOS command center</p>
+        <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Start centered.</span></h1>
+        <p class="summary" data-i18n="summary">Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.</p>
         <div class="cta-row">
-          <a class="button primary" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.pkg" rel="noreferrer">Install Chap <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></a>
+          <a class="button primary" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.pkg" rel="noreferrer"><span data-i18n="install">Install Chap</span> <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></a>
         </div>
 
         <figure class="screenshot-slot" aria-labelledby="command-setup-caption">
-          <div class="slot-canvas"><img src="assets/screenshots/chap-command-setup.svg" alt="Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled."></div>
-          <figcaption id="command-setup-caption"><strong>Command setup.</strong> An illustrative preview based on Chap’s current settings UI.</figcaption>
+          <div class="slot-canvas"><img src="assets/screenshots/chap-command-setup.svg" data-i18n-alt="commandImageAlt" alt="Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled."></div>
+          <figcaption id="command-setup-caption"><strong data-i18n="commandCaptionTitle">Command setup.</strong> <span data-i18n="commandCaptionText">An illustrative preview based on Chap’s current settings UI.</span></figcaption>
         </figure>
       </div>
     </section>
 
     <section class="explanation" aria-labelledby="how-heading">
       <div class="shell">
-        <h2 id="how-heading">One shortcut.<br><span>Three remembered choices.</span></h2>
+        <h2 id="how-heading"><span data-i18n="howTitlePrimary">One shortcut.</span><br><span class="explanation-title-accent" data-i18n="howTitleAccent">Three remembered choices.</span></h2>
         <ol class="steps">
-          <li><span class="step-number">01 / COMMAND</span><strong>What opens</strong><p>A URL, app, folder, or script.</p></li>
-          <li><span class="step-number">02 / DISPLAY</span><strong>Where it opens</strong><p>Follow cursor or a named screen.</p></li>
-          <li><span class="step-number">03 / PLACEMENT</span><strong>How it arrives</strong><p>Your size, centered and verified.</p></li>
+          <li><span class="step-number" data-i18n="stepOneNumber">01 / COMMAND</span><strong data-i18n="stepOneTitle">What opens</strong><p data-i18n="stepOneText">A URL, app, folder, or script.</p></li>
+          <li><span class="step-number" data-i18n="stepTwoNumber">02 / DISPLAY</span><strong data-i18n="stepTwoTitle">Where it opens</strong><p data-i18n="stepTwoText">Follow cursor or a named screen.</p></li>
+          <li><span class="step-number" data-i18n="stepThreeNumber">03 / PLACEMENT</span><strong data-i18n="stepThreeTitle">How it arrives</strong><p data-i18n="stepThreeText">Your size, centered and verified.</p></li>
         </ol>
 
         <figure class="screenshot-slot screenshot-slot--result" aria-labelledby="centered-result-caption">
-          <div class="slot-canvas"><img src="assets/screenshots/chap-guide-window.svg" alt="Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display."></div>
-          <figcaption id="centered-result-caption"><strong>Guide window.</strong> An illustrative preview based on Chap’s actual translucent placement overlay.</figcaption>
+          <div class="slot-canvas"><img src="assets/screenshots/chap-guide-window.svg" data-i18n-alt="guideImageAlt" alt="Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display."></div>
+          <figcaption id="centered-result-caption"><strong data-i18n="guideCaptionTitle">Guide window.</strong> <span data-i18n="guideCaptionText">An illustrative preview based on Chap’s actual translucent placement overlay.</span></figcaption>
         </figure>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="shell footer-inner"><span class="trust">✓ Apple notarized · macOS 14+</span><span class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer">Source</a><a href="https://github.com/milv0/Chap/releases" rel="noreferrer">Releases</a></span></div>
+    <div class="shell footer-inner"><span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span><span class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer" data-i18n="source">Source</a><a href="https://github.com/milv0/Chap/releases" rel="noreferrer" data-i18n="releases">Releases</a></span></div>
   </footer>
+
+  <script>
+    (() => {
+      const translations = {
+        en: {
+          documentTitle: "Chap — Press Option. Start centered.",
+          description: "Chap opens a saved command from an Option shortcut and centers its window on the display you choose.",
+          navLabel: "Main navigation",
+          homeLabel: "Chap home",
+          switchTo: "Switch to Korean",
+          switchLabel: "한국어",
+          eyebrow: "A macOS command center",
+          heroTitlePrimary: "Press Option.",
+          heroTitleAccent: "Start centered.",
+          summary: "Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.",
+          install: "Install Chap",
+          commandImageAlt: "Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled.",
+          commandCaptionTitle: "Command setup.",
+          commandCaptionText: "An illustrative preview based on Chap’s current settings UI.",
+          howTitlePrimary: "One shortcut.",
+          howTitleAccent: "Three remembered choices.",
+          stepOneNumber: "01 / COMMAND",
+          stepOneTitle: "What opens",
+          stepOneText: "A URL, app, folder, or script.",
+          stepTwoNumber: "02 / DISPLAY",
+          stepTwoTitle: "Where it opens",
+          stepTwoText: "Follow cursor or a named screen.",
+          stepThreeNumber: "03 / PLACEMENT",
+          stepThreeTitle: "How it arrives",
+          stepThreeText: "Your size, centered and verified.",
+          guideImageAlt: "Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display.",
+          guideCaptionTitle: "Guide window.",
+          guideCaptionText: "An illustrative preview based on Chap’s actual translucent placement overlay.",
+          trust: "✓ Apple notarized · macOS 14+",
+          source: "Source",
+          releases: "Releases"
+        },
+        ko: {
+          documentTitle: "Chap — Option 키를 누르세요. 원하는 화면에서 시작합니다.",
+          description: "Chap은 Option 단축키로 저장한 명령을 열고, 선택한 디스플레이 중앙에 창을 배치합니다.",
+          navLabel: "주요 탐색",
+          homeLabel: "Chap 홈",
+          switchTo: "영어로 전환",
+          switchLabel: "EN",
+          eyebrow: "macOS 커맨드 센터",
+          heroTitlePrimary: "Option 키를 누르세요.",
+          heroTitleAccent: "원하는 화면에서 시작합니다.",
+          summary: "Chap은 Option 단축키로 저장한 사이트, 앱, 폴더 또는 스크립트를 열고, 선택한 디스플레이 중앙에 원하는 크기로 배치합니다.",
+          install: "Chap 설치",
+          commandImageAlt: "Translate, Option T, Studio Display, Workspace 크기 프리셋, 가이드 윈도우 활성화를 보여주는 Chap 설정 창 예시 미리보기.",
+          commandCaptionTitle: "명령 설정.",
+          commandCaptionText: "Chap의 현재 설정 UI를 바탕으로 만든 예시 미리보기입니다.",
+          howTitlePrimary: "하나의 단축키.",
+          howTitleAccent: "세 가지 선택을 기억합니다.",
+          stepOneNumber: "01 / 명령",
+          stepOneTitle: "무엇을 열지",
+          stepOneText: "URL, 앱, 폴더 또는 스크립트.",
+          stepTwoNumber: "02 / 디스플레이",
+          stepTwoTitle: "어디에 열지",
+          stepTwoText: "커서를 따르거나 지정한 화면.",
+          stepThreeNumber: "03 / 배치",
+          stepThreeTitle: "어떻게 표시할지",
+          stepThreeText: "원하는 크기로 중앙에 배치하고 확인합니다.",
+          guideImageAlt: "Studio Display의 요청한 대상 영역 중앙에 배치된 Chap 반투명 가이드 윈도우 예시 미리보기.",
+          guideCaptionTitle: "가이드 윈도우.",
+          guideCaptionText: "Chap의 실제 반투명 배치 오버레이를 바탕으로 만든 예시 미리보기입니다.",
+          trust: "✓ Apple 공증 완료 · macOS 14+",
+          source: "소스",
+          releases: "릴리스"
+        }
+      };
+
+      const storageKey = "chap-language";
+      const toggle = document.querySelector("[data-language-toggle]");
+      const storedLanguage = (() => {
+        try { return localStorage.getItem(storageKey); } catch { return null; }
+      })();
+      const initialLanguage = storedLanguage === "en" || storedLanguage === "ko"
+        ? storedLanguage
+        : navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en";
+
+      const applyLanguage = (language) => {
+        const copy = translations[language];
+        document.documentElement.lang = language;
+        document.title = copy.documentTitle;
+        document.querySelector('meta[name="description"]').setAttribute("content", copy.description);
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = copy[element.dataset.i18n];
+        });
+        document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
+          element.alt = copy[element.dataset.i18nAlt];
+        });
+        document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
+          element.setAttribute("aria-label", copy[element.dataset.i18nAriaLabel]);
+        });
+        toggle.textContent = copy.switchLabel;
+        toggle.setAttribute("aria-label", copy.switchTo);
+        toggle.dataset.currentLanguage = language;
+        try { localStorage.setItem(storageKey, language); } catch {}
+      };
+
+      toggle.addEventListener("click", () => {
+        applyLanguage(toggle.dataset.currentLanguage === "en" ? "ko" : "en");
+      });
+      applyLanguage(initialLanguage);
+    })();
+  </script>
 </body>
 </html>
