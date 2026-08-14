@@ -133,7 +133,7 @@ fi
 starting_branch="dev"
 restore_branch() {
   if [[ "$(git branch --show-current)" != "$starting_branch" \
-    && -z "$(git status --porcelain)" \
+    && -z "$(git status --porcelain)" ]] \
     && ! git rev-parse -q --verify MERGE_HEAD >/dev/null; then
     git switch "$starting_branch" >/dev/null
   fi
