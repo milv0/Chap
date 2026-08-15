@@ -68,7 +68,10 @@
     .flow-step small { color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .1em; margin-bottom: .85rem; text-transform: uppercase; }
     .flow-step strong { font-family: var(--display); font-size: .94rem; letter-spacing: -.03em; margin-top: .8rem; }
     .flow-arrow { align-items: center; color: #a1a19b; display: flex; font-size: 1rem; justify-content: center; }
-    .keycap { background: var(--white); border: 1px solid #cfcfca; border-bottom-width: 4px; border-radius: 11px; font-family: var(--display); font-size: 1.18rem; font-weight: 700; min-width: 72px; padding: .75rem .6rem .6rem; }
+    .keycap-group { align-items: center; display: flex; gap: .32rem; }
+    .keycap-plus { color: var(--muted); font-family: var(--display); font-size: .82rem; font-weight: 700; }
+    .keycap { align-items: center; background: var(--white); border: 1px solid #cfcfca; border-bottom-width: 4px; border-radius: 11px; display: inline-flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; justify-content: center; min-width: 48px; padding: .75rem .6rem .6rem; }
+    .keycap--option { background: var(--blue); border-color: var(--blue-dark); color: var(--white); min-width: 58px; }
     .app-icon { align-items: center; background: var(--blue); border-radius: 13px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.35rem; font-weight: 700; height: 58px; justify-content: center; width: 58px; }
     .display-icon { align-items: center; border: 2px solid var(--ink); border-radius: 7px; display: flex; height: 68px; justify-content: center; position: relative; width: 94px; }
     .display-icon::before { background: rgb(49 92 255 / .12); border: 2px solid var(--blue); border-radius: 4px; content: ""; height: 38px; width: 48px; }
@@ -106,7 +109,10 @@
       .flow-step small { font-size: .56rem; margin-bottom: .55rem; }
       .flow-step strong { font-size: .72rem; margin-top: .55rem; }
       .flow-arrow { font-size: .78rem; }
-      .keycap { border-radius: 8px; font-size: .95rem; min-width: 52px; padding: .5rem .35rem .4rem; }
+      .keycap-group { gap: .22rem; }
+      .keycap-plus { font-size: .67rem; }
+      .keycap { border-radius: 8px; font-size: .95rem; min-width: 36px; padding: .5rem .35rem .4rem; }
+      .keycap--option { min-width: 45px; }
       .app-icon { border-radius: 10px; font-size: 1.05rem; height: 44px; width: 44px; }
       .display-icon { height: 48px; width: 68px; }
       .display-icon::before { height: 27px; width: 35px; }
@@ -136,9 +142,9 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="shell hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow" data-i18n="eyebrow">Shortcut launcher for macOS</p>
-          <h1 id="hero-title"><span data-i18n="heroTitlePrimary">One shortcut.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Right where you want it.</span></h1>
-          <p class="summary" data-i18n="summary">Save a site, app, folder, or script. Press Option + a key to open it at your size, centered on your chosen display.</p>
+          <p class="eyebrow" data-i18n="eyebrow">The Option-key launcher for macOS</p>
+          <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Open it centered.</span></h1>
+          <p class="summary" data-i18n="summary">Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.</p>
           <div class="cta-row">
             <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.pkg" rel="noreferrer">
               <span data-i18n="install">Install Chap</span>
@@ -148,17 +154,17 @@
           </div>
         </div>
 
-        <div class="flow-card" role="img" data-i18n-aria-label="flowLabel" aria-label="Option T opens Translate centered on Studio Display">
+        <div class="flow-card" role="img" data-i18n-aria-label="flowLabel" aria-label="Hold Option and press T to open Translate centered on Studio Display">
           <div class="flow-header">
             <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <strong data-i18n="flowTitle">A Chap command</strong>
-            <span data-i18n="flowStatus">Ready anytime</span>
+            <strong data-i18n="flowTitle">Option is the trigger</strong>
+            <span data-i18n="flowStatus">Hold, then launch</span>
           </div>
           <div class="flow" aria-hidden="true">
             <div class="flow-step">
-              <small data-i18n="shortcutLabel">Shortcut</small>
-              <div class="keycap">⌥ T</div>
-              <strong data-i18n="shortcutText">Press anywhere</strong>
+              <small data-i18n="shortcutLabel">Hold Option</small>
+              <div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">T</span></div>
+              <strong data-i18n="shortcutText">Then press a letter</strong>
             </div>
             <div class="flow-arrow">→</div>
             <div class="flow-step">
@@ -190,23 +196,23 @@
     (() => {
       const translations = {
         en: {
-          documentTitle: "Chap — One shortcut. Right where you want it.",
-          description: "Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.",
+          documentTitle: "Chap — Press Option. Open it centered.",
+          description: "Pair Option with a letter to open any site, app, folder, or script centered on the display you choose.",
           navLabel: "Main navigation",
           homeLabel: "Chap home",
           switchTo: "Switch to Korean",
           switchLabel: "한국어",
-          eyebrow: "Shortcut launcher for macOS",
-          heroTitlePrimary: "One shortcut.",
-          heroTitleAccent: "Right where you want it.",
-          summary: "Save a site, app, folder, or script. Press Option + a key to open it at your size, centered on your chosen display.",
+          eyebrow: "The Option-key launcher for macOS",
+          heroTitlePrimary: "Press Option.",
+          heroTitleAccent: "Open it centered.",
+          summary: "Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.",
           install: "Install Chap",
           trust: "✓ Apple notarized · macOS 14+",
-          flowLabel: "Option T opens Translate centered on Studio Display",
-          flowTitle: "A Chap command",
-          flowStatus: "Ready anytime",
-          shortcutLabel: "Shortcut",
-          shortcutText: "Press anywhere",
+          flowLabel: "Hold Option and press T to open Translate centered on Studio Display",
+          flowTitle: "Option is the trigger",
+          flowStatus: "Hold, then launch",
+          shortcutLabel: "Hold Option",
+          shortcutText: "Then press a letter",
           openLabel: "Open",
           openText: "Translate",
           placeLabel: "Place",
@@ -215,23 +221,23 @@
           releases: "Releases"
         },
         ko: {
-          documentTitle: "Chap — 단축키 하나로, 원하는 화면 한가운데.",
-          description: "Option 단축키로 사이트, 앱, 폴더 또는 스크립트를 선택한 디스플레이 중앙에 실행하세요.",
+          documentTitle: "Chap — Option 키를 누르세요. 중앙에 열립니다.",
+          description: "Option 키와 글자 하나를 조합해 사이트, 앱, 폴더 또는 스크립트를 선택한 디스플레이 중앙에 여세요.",
           navLabel: "주요 탐색",
           homeLabel: "Chap 홈",
           switchTo: "영어로 전환",
           switchLabel: "EN",
-          eyebrow: "macOS 단축키 런처",
-          heroTitlePrimary: "단축키 하나로.",
-          heroTitleAccent: "원하는 화면 한가운데.",
-          summary: "사이트, 앱, 폴더 또는 스크립트를 저장하세요. Option + 키를 누르면 선택한 디스플레이 중앙에 원하는 크기로 열립니다.",
+          eyebrow: "macOS Option 키 런처",
+          heroTitlePrimary: "Option 키를 누르세요.",
+          heroTitleAccent: "화면 중앙에 열립니다.",
+          summary: "Option 키와 글자 하나를 조합하세요. Chap이 저장한 사이트, 앱, 폴더 또는 스크립트를 선택한 크기와 디스플레이에 엽니다.",
           install: "Chap 설치",
           trust: "✓ Apple 공증 완료 · macOS 14+",
-          flowLabel: "Option T를 누르면 Translate가 Studio Display 중앙에 열립니다",
-          flowTitle: "Chap 명령 하나",
-          flowStatus: "언제든 준비 완료",
-          shortcutLabel: "단축키",
-          shortcutText: "어디서든 누르기",
+          flowLabel: "Option 키를 누른 채 T를 누르면 Translate가 Studio Display 중앙에 열립니다",
+          flowTitle: "Option 키가 시작점",
+          flowStatus: "누른 뒤 바로 실행",
+          shortcutLabel: "Option 키 누르기",
+          shortcutText: "이어서 글자 하나",
           openLabel: "실행",
           openText: "번역",
           placeLabel: "배치",
