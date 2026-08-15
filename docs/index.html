@@ -3,118 +3,130 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Chap opens a saved command from an Option shortcut and centers its window on the display you choose.">
-  <meta name="theme-color" content="#E0E5EC">
-  <title>Chap — Press Option. Start centered.</title>
+  <meta name="description" content="Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.">
+  <meta name="theme-color" content="#F7F7F4">
+  <title>Chap — One shortcut. Right where you want it.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --surface: #E0E5EC;
-      --foreground: #3D4852;
-      --muted: #6B7280;
-      --accent: #3664FF;
-      --accent-light: #6688FF;
-      --success: #38B2AC;
-      --shadow-dark: rgb(163 177 198 / .64);
-      --shadow-light: rgb(255 255 255 / .58);
-      --shadow-accent-dark: rgb(29 69 190 / .34);
-      --shadow-accent-light: rgb(255 255 255 / .24);
-      --raised: 9px 9px 16px var(--shadow-dark), -9px -9px 16px var(--shadow-light);
-      --raised-hover: 12px 12px 20px rgb(163 177 198 / .7), -12px -12px 20px rgb(255 255 255 / .62);
-      --raised-small: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light);
-      --inset: inset 6px 6px 10px var(--shadow-dark), inset -6px -6px 10px var(--shadow-light);
-      --inset-deep: inset 10px 10px 20px rgb(163 177 198 / .7), inset -10px -10px 20px rgb(255 255 255 / .62);
-      --radius-card: 32px;
-      --radius-control: 16px;
-      --ease: 300ms ease-out;
+      --paper: #f7f7f4;
+      --ink: #161616;
+      --muted: #696966;
+      --line: #deded8;
+      --soft: #ecece7;
+      --white: #fff;
+      --blue: #315cff;
+      --blue-dark: #2147df;
+      --green: #18845b;
+      --radius: 18px;
+      --display: "Bricolage Grotesque", sans-serif;
+      --body: "DM Sans", sans-serif;
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { background: var(--surface); color: var(--foreground); font-family: "DM Sans", sans-serif; line-height: 1.5; margin: 0; min-width: 320px; }
+    body { background: var(--paper); color: var(--ink); display: flex; flex-direction: column; font-family: var(--body); line-height: 1.5; margin: 0; min-height: 100svh; min-width: 320px; }
+    main { display: flex; flex: 1; }
     a { color: inherit; text-decoration: none; }
-    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-    ::selection { background: rgb(54 100 255 / .18); }
+    a:focus-visible, button:focus-visible { outline: 3px solid rgb(49 92 255 / .35); outline-offset: 3px; }
+    button { font: inherit; }
+    ::selection { background: rgb(49 92 255 / .18); }
+    .shell { margin: 0 auto; width: min(1120px, calc(100% - 48px)); }
 
-    .shell { margin: 0 auto; width: min(980px, calc(100% - 48px)); }
-    .display, h1, h2, h3 { font-family: "Plus Jakarta Sans", sans-serif; }
-
-    .site-header { backdrop-filter: blur(14px); background: rgb(224 229 236 / .88); position: sticky; top: 0; z-index: 1; }
-    .nav { align-items: center; display: flex; justify-content: space-between; min-height: 76px; }
-    .brand { align-items: center; display: inline-flex; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.16rem; font-weight: 800; gap: .65rem; letter-spacing: -.04em; min-height: 44px; }
-    .brand-mark { align-items: center; border-radius: 14px; box-shadow: var(--raised-small); color: var(--accent); display: flex; height: 40px; justify-content: center; width: 40px; }
-    .brand-mark svg { height: 21px; width: 21px; }
+    .site-header { background: rgb(247 247 244 / .88); border-bottom: 1px solid rgb(222 222 216 / .75); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
+    .nav { align-items: center; display: flex; justify-content: space-between; min-height: 64px; }
+    .brand { align-items: center; display: inline-flex; font-family: var(--display); font-size: 1.08rem; font-weight: 700; gap: .6rem; letter-spacing: -.03em; }
+    .brand-mark { align-items: center; background: var(--ink); border-radius: 9px; color: var(--white); display: inline-flex; height: 30px; justify-content: center; width: 30px; }
+    .brand-mark svg { height: 16px; width: 16px; }
     .nav-actions { align-items: center; display: flex; gap: .25rem; }
-    .source-link, .language-toggle { border: 0; border-radius: 12px; color: var(--muted); cursor: pointer; font-family: inherit; font-size: .86rem; font-weight: 700; min-height: 44px; padding: .7rem .85rem; transition: box-shadow var(--ease), color var(--ease); }
-    .language-toggle { background: var(--surface); box-shadow: var(--raised-small); }
-    .source-link:hover, .language-toggle:hover { box-shadow: var(--inset); color: var(--foreground); }
-    .language-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    .nav-link, .language-toggle { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
+    .nav-link:hover, .language-toggle:hover { background: var(--soft); color: var(--ink); }
 
-    .hero { padding: clamp(5.5rem, 12vw, 9rem) 0 3.5rem; text-align: center; }
-    .eyebrow { align-items: center; color: var(--muted); display: flex; font-size: .72rem; font-weight: 700; gap: .55rem; justify-content: center; letter-spacing: .12em; margin: 0; text-transform: uppercase; }
-    .eyebrow::before { background: var(--accent); border-radius: 50%; box-shadow: var(--raised-small); content: ""; height: .42rem; width: .42rem; }
-    h1 { font-size: clamp(3.4rem, 8vw, 6.7rem); font-weight: 800; letter-spacing: -.085em; line-height: .94; margin: 1.1rem auto 1.3rem; max-width: 760px; }
-    .hero-title-accent, .explanation-title-accent { color: var(--accent); }
-    .summary { color: var(--muted); font-size: clamp(1.03rem, 1.8vw, 1.2rem); margin: 0 auto; max-width: 600px; }
-    .cta-row { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-top: 2rem; }
-    .button { align-items: center; background: var(--surface); border: 0; border-radius: var(--radius-control); box-shadow: var(--raised); display: inline-flex; font-size: .92rem; font-weight: 700; gap: .55rem; justify-content: center; min-height: 50px; padding: .8rem 1.1rem; transition: background var(--ease), box-shadow var(--ease), transform var(--ease); }
-    .button:hover { box-shadow: var(--raised-hover); transform: translateY(-2px); }
-    .button:active { box-shadow: var(--inset); transform: translateY(1px); }
-    .button.primary { background: var(--accent); box-shadow: 8px 8px 16px var(--shadow-accent-dark), -7px -7px 16px var(--shadow-accent-light); color: #fff; }
-    .button.primary:hover { background: var(--accent-light); }
-    .button svg { height: 18px; width: 18px; }
+    .hero { align-items: center; display: flex; flex: 1; padding: clamp(3rem, 6vw, 5rem) 0; width: 100%; }
+    .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 7vw, 6.5rem); grid-template-columns: minmax(0, .9fr) minmax(460px, 1.1fr); }
+    .eyebrow { color: var(--blue); font-size: .74rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 1.1rem; text-transform: uppercase; }
+    h1 { font-family: var(--display); }
+    h1 { font-size: clamp(3.35rem, 6.3vw, 6.2rem); font-weight: 600; letter-spacing: -.075em; line-height: .93; margin: 0; max-width: 670px; }
+    h1 .hero-title-accent { color: var(--blue); }
+    .summary { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.12rem); margin: 1.6rem 0 0; max-width: 560px; }
+    .cta-row { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.8rem; }
+    .primary-button { align-items: center; background: var(--ink); border-radius: 12px; color: var(--white); display: inline-flex; font-size: .9rem; font-weight: 600; gap: .65rem; min-height: 50px; padding: .8rem 1.1rem .8rem 1.25rem; transition: background 180ms ease, transform 180ms ease; }
+    .primary-button:hover { background: var(--blue); transform: translateY(-2px); }
+    .primary-button svg { height: 17px; width: 17px; }
+    .trust { color: var(--green); font-size: .76rem; font-weight: 600; }
 
-    .screenshot-slot { background: var(--surface); border-radius: var(--radius-card); box-shadow: var(--raised); margin: 3.8rem auto 0; max-width: 760px; padding: clamp(1.2rem, 3vw, 1.8rem); text-align: left; }
-    .screenshot-slot--result { margin-top: 2.5rem; }
-    .slot-canvas { align-items: center; aspect-ratio: 16 / 10; border-radius: 22px; box-shadow: var(--inset-deep); display: flex; justify-content: center; overflow: hidden; position: relative; }
-    .slot-copy { color: var(--muted); max-width: 340px; padding: 1.5rem; text-align: center; }
-    .slot-number { color: var(--accent); display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; margin-bottom: .75rem; }
-    .slot-copy h3 { color: var(--foreground); font-size: clamp(1.25rem, 3vw, 1.65rem); letter-spacing: -.05em; line-height: 1.1; margin: 0; }
-    .slot-copy p { font-size: .88rem; margin: .7rem auto 0; }
-    .slot-spec { color: var(--accent); display: block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; margin-top: 1.2rem; text-transform: uppercase; }
-    .screenshot-slot figcaption { color: var(--muted); font-size: .78rem; margin-top: 1rem; text-align: center; }
-    .screenshot-slot figcaption strong { color: var(--foreground); }
-    .slot-canvas img { display: block; height: 100%; object-fit: cover; width: 100%; }
+    .flow-card { background: var(--white); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 28px 70px rgb(30 30 24 / .09); overflow: hidden; }
+    .flow-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 52px; padding: 0 1rem; }
+    .window-dots { display: flex; gap: 6px; }
+    .window-dots i { background: #d3d3ce; border-radius: 50%; display: block; height: 8px; width: 8px; }
+    .flow-header strong { font-family: var(--display); font-size: .78rem; letter-spacing: -.02em; }
+    .flow-header span { color: var(--muted); font-size: .68rem; }
+    .flow { align-items: stretch; display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr; padding: 1.1rem; }
+    .flow-step { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; min-height: 190px; padding: 1rem; text-align: center; }
+    .flow-step small { color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .1em; margin-bottom: .85rem; text-transform: uppercase; }
+    .flow-step strong { font-family: var(--display); font-size: .94rem; letter-spacing: -.03em; margin-top: .8rem; }
+    .flow-arrow { align-items: center; color: #a1a19b; display: flex; font-size: 1rem; justify-content: center; }
+    .keycap { background: var(--white); border: 1px solid #cfcfca; border-bottom-width: 4px; border-radius: 11px; font-family: var(--display); font-size: 1.18rem; font-weight: 700; min-width: 72px; padding: .75rem .6rem .6rem; }
+    .app-icon { align-items: center; background: var(--blue); border-radius: 13px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.35rem; font-weight: 700; height: 58px; justify-content: center; width: 58px; }
+    .display-icon { align-items: center; border: 2px solid var(--ink); border-radius: 7px; display: flex; height: 68px; justify-content: center; position: relative; width: 94px; }
+    .display-icon::before { background: rgb(49 92 255 / .12); border: 2px solid var(--blue); border-radius: 4px; content: ""; height: 38px; width: 48px; }
+    .display-icon::after { background: var(--ink); bottom: -9px; content: ""; height: 8px; position: absolute; width: 2px; }
+    .format-row { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem; padding: .85rem 1.1rem; }
+    .format-row span { background: var(--paper); border-radius: 999px; color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .08em; padding: .38rem .65rem; text-transform: uppercase; }
 
-    .explanation { padding: clamp(4.5rem, 9vw, 7rem) 0; }
-    .explanation h2 { font-size: clamp(2.1rem, 4.5vw, 3.7rem); font-weight: 800; letter-spacing: -.07em; line-height: 1.03; margin: 0 auto 2.2rem; max-width: 650px; text-align: center; }
-    .steps { border-radius: 24px; box-shadow: var(--inset-deep); display: grid; grid-template-columns: repeat(3, 1fr); list-style: none; margin: 0; padding: 1rem; }
-    .steps li { padding: 1.2rem 1.35rem; }
-    .steps li + li { border-left: 1px solid rgb(163 177 198 / .35); }
-    .step-number { color: var(--accent); display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: .75rem; font-weight: 800; letter-spacing: .08em; }
-    .steps strong { display: block; font-family: "Plus Jakarta Sans", sans-serif; font-size: 1.04rem; letter-spacing: -.035em; line-height: 1.15; margin: .6rem 0 .4rem; }
-    .steps p { color: var(--muted); font-size: .86rem; margin: 0; }
+    .footer { border-top: 1px solid var(--line); }
+    .footer-inner { align-items: center; display: flex; font-size: .75rem; justify-content: space-between; min-height: 76px; }
+    .footer-links { color: var(--muted); display: flex; gap: 1.1rem; }
+    .footer-links a:hover { color: var(--blue); }
 
-    .footer { padding: 0 0 2rem; }
-    .footer-inner { align-items: center; display: flex; font-size: .76rem; justify-content: space-between; padding: 1.4rem 0; }
-    .trust { color: var(--success); font-weight: 700; }
-    .footer-links { color: var(--muted); display: flex; gap: 1rem; }
-    .footer-links a:hover { color: var(--accent); }
-
-    @media (max-width: 640px) {
-      .shell { width: min(100% - 32px, 600px); }
-      .hero { padding-top: 4.6rem; }
-      h1 { font-size: clamp(3.1rem, 15vw, 4.6rem); }
-      .cta-row { align-items: stretch; flex-direction: column; }
-      .button { width: 100%; }
-      .screenshot-slot { margin-top: 3rem; }
-      .steps { gap: .25rem; grid-template-columns: 1fr; }
-      .steps li + li { border-left: 0; border-top: 1px solid rgb(163 177 198 / .35); }
-      .footer-inner { align-items: flex-start; flex-direction: column; gap: .8rem; }
+    @media (max-width: 860px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-copy { text-align: center; }
+      .summary { margin-left: auto; margin-right: auto; }
+      .cta-row { justify-content: center; }
+      .flow-card { margin: 0 auto; max-width: 620px; width: 100%; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 28px, 520px); }
+      .nav { min-height: 58px; }
+      .nav-link { display: none; }
+      .hero { padding: 1.8rem 0; }
+      .hero-grid { gap: 1.5rem; }
+      h1 { font-size: clamp(2.8rem, 14vw, 3.65rem); }
+      html[lang="ko"] h1 { font-size: clamp(2.55rem, 12vw, 3.25rem); }
+      .summary { font-size: .94rem; margin-top: 1.15rem; }
+      .cta-row { align-items: stretch; flex-direction: column; margin-top: 1.35rem; }
+      .primary-button { justify-content: center; width: 100%; }
+      .trust { text-align: center; }
+      .flow-header { min-height: 44px; }
+      .flow { gap: 0; grid-template-columns: 1fr 18px 1fr 18px 1fr; padding: .7rem; }
+      .flow-step { min-height: 118px; padding: .55rem .3rem; }
+      .flow-step small { font-size: .56rem; margin-bottom: .55rem; }
+      .flow-step strong { font-size: .72rem; margin-top: .55rem; }
+      .flow-arrow { font-size: .78rem; }
+      .keycap { border-radius: 8px; font-size: .95rem; min-width: 52px; padding: .5rem .35rem .4rem; }
+      .app-icon { border-radius: 10px; font-size: 1.05rem; height: 44px; width: 44px; }
+      .display-icon { height: 48px; width: 68px; }
+      .display-icon::before { height: 27px; width: 35px; }
+      .format-row { gap: .3rem; padding: .6rem .7rem; }
+      .format-row span { font-size: .55rem; padding: .3rem .5rem; }
+      .footer-inner { align-items: flex-start; flex-direction: column; gap: .3rem; justify-content: center; min-height: 58px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
   <header class="site-header">
     <nav class="shell nav" data-i18n-aria-label="navLabel" aria-label="Main navigation">
-      <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap</a>
+      <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap
+      </a>
       <div class="nav-actions">
-        <a class="source-link" href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        <a class="nav-link" href="https://github.com/milv0/Chap" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Korean">한국어</button>
       </div>
     </nav>
@@ -122,108 +134,108 @@
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
-      <div class="shell">
-        <p class="eyebrow" data-i18n="eyebrow">A macOS command center</p>
-        <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Start centered.</span></h1>
-        <p class="summary" data-i18n="summary">Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.</p>
-        <div class="cta-row">
-          <a class="button primary" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.pkg" rel="noreferrer"><span data-i18n="install">Install Chap</span> <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg></a>
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="eyebrow">Shortcut launcher for macOS</p>
+          <h1 id="hero-title"><span data-i18n="heroTitlePrimary">One shortcut.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Right where you want it.</span></h1>
+          <p class="summary" data-i18n="summary">Save a site, app, folder, or script. Press Option + a key to open it at your size, centered on your chosen display.</p>
+          <div class="cta-row">
+            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.pkg" rel="noreferrer">
+              <span data-i18n="install">Install Chap</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+            </a>
+            <span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span>
+          </div>
         </div>
 
-        <figure class="screenshot-slot" aria-labelledby="command-setup-caption">
-          <div class="slot-canvas"><img src="assets/screenshots/chap-command-setup.svg" data-i18n-alt="commandImageAlt" alt="Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled."></div>
-          <figcaption id="command-setup-caption"><strong data-i18n="commandCaptionTitle">Command setup.</strong> <span data-i18n="commandCaptionText">An illustrative preview based on Chap’s current settings UI.</span></figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section class="explanation" aria-labelledby="how-heading">
-      <div class="shell">
-        <h2 id="how-heading"><span data-i18n="howTitlePrimary">One shortcut.</span><br><span class="explanation-title-accent" data-i18n="howTitleAccent">Three remembered choices.</span></h2>
-        <ol class="steps">
-          <li><span class="step-number" data-i18n="stepOneNumber">01 / COMMAND</span><strong data-i18n="stepOneTitle">What opens</strong><p data-i18n="stepOneText">A URL, app, folder, or script.</p></li>
-          <li><span class="step-number" data-i18n="stepTwoNumber">02 / DISPLAY</span><strong data-i18n="stepTwoTitle">Where it opens</strong><p data-i18n="stepTwoText">Follow cursor or a named screen.</p></li>
-          <li><span class="step-number" data-i18n="stepThreeNumber">03 / PLACEMENT</span><strong data-i18n="stepThreeTitle">How it arrives</strong><p data-i18n="stepThreeText">Your size, centered and verified.</p></li>
-        </ol>
-
-        <figure class="screenshot-slot screenshot-slot--result" aria-labelledby="centered-result-caption">
-          <div class="slot-canvas"><img src="assets/screenshots/chap-guide-window.svg" data-i18n-alt="guideImageAlt" alt="Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display."></div>
-          <figcaption id="centered-result-caption"><strong data-i18n="guideCaptionTitle">Guide window.</strong> <span data-i18n="guideCaptionText">An illustrative preview based on Chap’s actual translucent placement overlay.</span></figcaption>
-        </figure>
+        <div class="flow-card" role="img" data-i18n-aria-label="flowLabel" aria-label="Option T opens Translate centered on Studio Display">
+          <div class="flow-header">
+            <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <strong data-i18n="flowTitle">A Chap command</strong>
+            <span data-i18n="flowStatus">Ready anytime</span>
+          </div>
+          <div class="flow" aria-hidden="true">
+            <div class="flow-step">
+              <small data-i18n="shortcutLabel">Shortcut</small>
+              <div class="keycap">⌥ T</div>
+              <strong data-i18n="shortcutText">Press anywhere</strong>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <small data-i18n="openLabel">Open</small>
+              <div class="app-icon">T</div>
+              <strong data-i18n="openText">Translate</strong>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <small data-i18n="placeLabel">Place</small>
+              <div class="display-icon"></div>
+              <strong data-i18n="placeText">Centered</strong>
+            </div>
+          </div>
+          <div class="format-row" aria-hidden="true"><span>URL</span><span>APP</span><span>FOLDER</span><span>SCRIPT</span></div>
+        </div>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="shell footer-inner"><span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span><span class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer" data-i18n="source">Source</a><a href="https://github.com/milv0/Chap/releases" rel="noreferrer" data-i18n="releases">Releases</a></span></div>
+    <div class="shell footer-inner">
+      <span>Chap 1.0.2 · macOS</span>
+      <span class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer" data-i18n="source">Source</a><a href="https://github.com/milv0/Chap/releases" rel="noreferrer" data-i18n="releases">Releases</a></span>
+    </div>
   </footer>
 
   <script>
     (() => {
       const translations = {
         en: {
-          documentTitle: "Chap — Press Option. Start centered.",
-          description: "Chap opens a saved command from an Option shortcut and centers its window on the display you choose.",
+          documentTitle: "Chap — One shortcut. Right where you want it.",
+          description: "Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.",
           navLabel: "Main navigation",
           homeLabel: "Chap home",
           switchTo: "Switch to Korean",
           switchLabel: "한국어",
-          eyebrow: "A macOS command center",
-          heroTitlePrimary: "Press Option.",
-          heroTitleAccent: "Start centered.",
-          summary: "Chap opens a saved site, app, folder, or script with your Option shortcut — at the size you chose, in the center of the display you chose.",
+          eyebrow: "Shortcut launcher for macOS",
+          heroTitlePrimary: "One shortcut.",
+          heroTitleAccent: "Right where you want it.",
+          summary: "Save a site, app, folder, or script. Press Option + a key to open it at your size, centered on your chosen display.",
           install: "Install Chap",
-          commandImageAlt: "Illustrative preview of Chap's settings window showing Translate, Option T, Studio Display, Workspace size preset, and Guide Window enabled.",
-          commandCaptionTitle: "Command setup.",
-          commandCaptionText: "An illustrative preview based on Chap’s current settings UI.",
-          howTitlePrimary: "One shortcut.",
-          howTitleAccent: "Three remembered choices.",
-          stepOneNumber: "01 / COMMAND",
-          stepOneTitle: "What opens",
-          stepOneText: "A URL, app, folder, or script.",
-          stepTwoNumber: "02 / DISPLAY",
-          stepTwoTitle: "Where it opens",
-          stepTwoText: "Follow cursor or a named screen.",
-          stepThreeNumber: "03 / PLACEMENT",
-          stepThreeTitle: "How it arrives",
-          stepThreeText: "Your size, centered and verified.",
-          guideImageAlt: "Illustrative preview of Chap's translucent Guide Window centered on the requested target bounds on Studio Display.",
-          guideCaptionTitle: "Guide window.",
-          guideCaptionText: "An illustrative preview based on Chap’s actual translucent placement overlay.",
           trust: "✓ Apple notarized · macOS 14+",
+          flowLabel: "Option T opens Translate centered on Studio Display",
+          flowTitle: "A Chap command",
+          flowStatus: "Ready anytime",
+          shortcutLabel: "Shortcut",
+          shortcutText: "Press anywhere",
+          openLabel: "Open",
+          openText: "Translate",
+          placeLabel: "Place",
+          placeText: "Centered",
           source: "Source",
           releases: "Releases"
         },
         ko: {
-          documentTitle: "Chap — Option 키를 누르세요. 원하는 화면에서 시작합니다.",
-          description: "Chap은 Option 단축키로 저장한 명령을 열고, 선택한 디스플레이 중앙에 창을 배치합니다.",
+          documentTitle: "Chap — 단축키 하나로, 원하는 화면 한가운데.",
+          description: "Option 단축키로 사이트, 앱, 폴더 또는 스크립트를 선택한 디스플레이 중앙에 실행하세요.",
           navLabel: "주요 탐색",
           homeLabel: "Chap 홈",
           switchTo: "영어로 전환",
           switchLabel: "EN",
-          eyebrow: "macOS 커맨드 센터",
-          heroTitlePrimary: "Option 키를 누르세요.",
-          heroTitleAccent: "원하는 화면에서 시작합니다.",
-          summary: "Chap은 Option 단축키로 저장한 사이트, 앱, 폴더 또는 스크립트를 열고, 선택한 디스플레이 중앙에 원하는 크기로 배치합니다.",
+          eyebrow: "macOS 단축키 런처",
+          heroTitlePrimary: "단축키 하나로.",
+          heroTitleAccent: "원하는 화면 한가운데.",
+          summary: "사이트, 앱, 폴더 또는 스크립트를 저장하세요. Option + 키를 누르면 선택한 디스플레이 중앙에 원하는 크기로 열립니다.",
           install: "Chap 설치",
-          commandImageAlt: "Translate, Option T, Studio Display, Workspace 크기 프리셋, 가이드 윈도우 활성화를 보여주는 Chap 설정 창 예시 미리보기.",
-          commandCaptionTitle: "명령 설정.",
-          commandCaptionText: "Chap의 현재 설정 UI를 바탕으로 만든 예시 미리보기입니다.",
-          howTitlePrimary: "하나의 단축키.",
-          howTitleAccent: "세 가지 선택을 기억합니다.",
-          stepOneNumber: "01 / 명령",
-          stepOneTitle: "무엇을 열지",
-          stepOneText: "URL, 앱, 폴더 또는 스크립트.",
-          stepTwoNumber: "02 / 디스플레이",
-          stepTwoTitle: "어디에 열지",
-          stepTwoText: "커서를 따르거나 지정한 화면.",
-          stepThreeNumber: "03 / 배치",
-          stepThreeTitle: "어떻게 표시할지",
-          stepThreeText: "원하는 크기로 중앙에 배치하고 확인합니다.",
-          guideImageAlt: "Studio Display의 요청한 대상 영역 중앙에 배치된 Chap 반투명 가이드 윈도우 예시 미리보기.",
-          guideCaptionTitle: "가이드 윈도우.",
-          guideCaptionText: "Chap의 실제 반투명 배치 오버레이를 바탕으로 만든 예시 미리보기입니다.",
           trust: "✓ Apple 공증 완료 · macOS 14+",
+          flowLabel: "Option T를 누르면 Translate가 Studio Display 중앙에 열립니다",
+          flowTitle: "Chap 명령 하나",
+          flowStatus: "언제든 준비 완료",
+          shortcutLabel: "단축키",
+          shortcutText: "어디서든 누르기",
+          openLabel: "실행",
+          openText: "번역",
+          placeLabel: "배치",
+          placeText: "화면 중앙",
           source: "소스",
           releases: "릴리스"
         }
