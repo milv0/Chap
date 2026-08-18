@@ -88,7 +88,9 @@ extension AppDelegate {
             // Full config validation before saving
             let validationConfig = Config(
                 showGuideWindow: payload.showGuideWindow,
-                launchAtLogin: payload.launchAtLogin, sites: payload.sites)
+                launchAtLogin: payload.launchAtLogin,
+                statusBarIcon: self.config.statusBarIcon,
+                sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
                 let errorMessages = result.errors.map { issue in

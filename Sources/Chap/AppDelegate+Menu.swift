@@ -9,15 +9,62 @@ extension AppDelegate {
         accessibilityController.refresh(reason: "menu", showAlert: false)
     }
 
-    /// 상태바 아이콘. 권한이 있으면 커스텀 템플릿 아이콘, 없으면 경고 배지 심볼.
+    /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
     func statusIconImage(accessible: Bool) -> NSImage? {
-        if accessible, let icon = NSImage(named: "StatusBarIcon") {
-            icon.isTemplate = true
-            icon.size = NSSize(width: 22, height: 22)
-            return icon
+        statusIconImage(accessible: accessible, choice: config.statusBarIcon)
+    }
+
+    /// `choice`에 따라 상태바 아이콘을 결정한다. 권한이 없으면 항상 경고 심볼.
+    func statusIconImage(accessible: Bool, choice: StatusBarIconChoice) -> NSImage? {
+        guard accessible else {
+            return Self.statusBarSymbolImage(
+                name: "bolt.trianglebadge.exclamationmark",
+                accessibilityDescription: "Chap – accessibility required")
         }
-        let iconName = accessible ? "bolt.fill" : "bolt.trianglebadge.exclamationmark"
-        return NSImage(systemSymbolName: iconName, accessibilityDescription: "Chap")
+        switch choice {
+        case .default:
+            if let icon = Self.isolatedCopy(
+                of: NSImage(named: "StatusBarIcon"),
+                size: NSSize(width: 22, height: 22))
+            {
+                icon.isTemplate = true
+                return icon
+            }
+            // 리소스 누락 시 심볼 폴백
+            return Self.statusBarSymbolImage(
+                name: "bolt.fill", accessibilityDescription: "Chap")
+        case .lightning:
+            return Self.statusBarSymbolImage(
+                name: "bolt.fill", accessibilityDescription: "Chap")
+        }
+    }
+
+    /// Named 이미지의 독립적인 복사본을 생성하여 원본 캐시를 오염시키지 않는다.
+    /// AppKit의 `NSImage(named:)`는 캐시된 공유 인스턴스를 반환할 수 있으므로,
+    /// 크기를 변경하기 전에 반드시 copy해야 다른 사용처에 영향을 주지 않는다.
+    static func isolatedCopy(of source: NSImage?, size: NSSize) -> NSImage? {
+        guard let source else { return nil }
+        guard let copied = source.copy() as? NSImage else { return nil }
+        copied.size = size
+        return copied
+    }
+
+    /// 상태바에 사용할 SF Symbol 이미지를 고정된 geometry로 생성한다.
+    /// 명시적 pointSize/weight + isTemplate + 22×22 캔버스로 첫 프레임부터
+    /// 안정된 크기를 보장한다.
+    static func statusBarSymbolImage(
+        name: String, accessibilityDescription: String?
+    ) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        guard
+            let image = NSImage(
+                systemSymbolName: name,
+                accessibilityDescription: accessibilityDescription)?
+                .withSymbolConfiguration(config)
+        else { return nil }
+        image.isTemplate = true
+        image.size = NSSize(width: 22, height: 22)
+        return image
     }
 
     func updateStatusIcon(accessible: Bool) {
@@ -60,6 +107,47 @@ extension AppDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
+        // Icon selection submenu
+        let iconMenu = NSMenu()
+        let defaultIconItem = NSMenuItem(
+            title: "Default", action: #selector(selectDefaultIcon), keyEquivalent: "")
+        defaultIconItem.image = {
+            if let img = Self.isolatedCopy(
+                of: NSImage(named: "StatusBarIcon"),
+                size: NSSize(width: 14, height: 14))
+            {
+                img.isTemplate = true
+                return img
+            }
+            let fallback = NSImage(
+                systemSymbolName: "app.fill", accessibilityDescription: nil)
+            fallback?.isTemplate = true
+            fallback?.size = NSSize(width: 14, height: 14)
+            return fallback
+        }()
+        defaultIconItem.target = self
+        if config.statusBarIcon == .default { defaultIconItem.state = .on }
+        iconMenu.addItem(defaultIconItem)
+
+        let lightningIconItem = NSMenuItem(
+            title: "Lightning", action: #selector(selectLightningIcon), keyEquivalent: "")
+        lightningIconItem.image = {
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
+            let img = NSImage(
+                systemSymbolName: "bolt.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(config)
+            img?.isTemplate = true
+            img?.size = NSSize(width: 14, height: 14)
+            return img
+        }()
+        lightningIconItem.target = self
+        if config.statusBarIcon == .lightning { lightningIconItem.state = .on }
+        iconMenu.addItem(lightningIconItem)
+
+        let iconSubmenu = NSMenuItem(title: "Icon", action: nil, keyEquivalent: "")
+        iconSubmenu.submenu = iconMenu
+        menu.addItem(iconSubmenu)
+
         let settings = NSMenuItem(
             title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settings.keyEquivalentModifierMask = .option
@@ -100,6 +188,33 @@ extension AppDelegate {
         globalHotKeyManager.configure(sites: config.sites) { [weak self] action in
             self?.handleGlobalHotKeyAction(action)
         }
+    }
+
+    // MARK: - Icon selection
+
+    @objc func selectDefaultIcon() {
+        applyStatusBarIconChoice(.default)
+    }
+
+    @objc func selectLightningIcon() {
+        applyStatusBarIconChoice(.lightning)
+    }
+
+    private func applyStatusBarIconChoice(_ choice: StatusBarIconChoice) {
+        guard config.statusBarIcon != choice else { return }
+        config.statusBarIcon = choice
+        // 아이콘 즉시 갱신
+        statusItem.button?.image = statusIconImage(
+            accessible: accessibilityController.isAccessible, choice: choice)
+        // 설정 파일에 저장
+        do {
+            try configStore.save(config)
+        } catch {
+            Log.config.error(
+                "Failed to save icon choice: \(error.localizedDescription, privacy: .public)")
+        }
+        // 메뉴를 재구성해 체크마크를 갱신
+        buildMenu()
     }
 
     private func handleGlobalHotKeyAction(_ action: GlobalHotKeyAction) {

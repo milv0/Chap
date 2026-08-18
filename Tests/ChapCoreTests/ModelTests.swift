@@ -103,6 +103,7 @@ struct ConfigModelTests {
         let original = Config(
             showGuideWindow: false,
             launchAtLogin: true,
+            statusBarIcon: .lightning,
             sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300)]
         )
 
@@ -111,7 +112,69 @@ struct ConfigModelTests {
 
         #expect(decoded.showGuideWindow == original.showGuideWindow)
         #expect(decoded.launchAtLogin == original.launchAtLogin)
+        #expect(decoded.statusBarIcon == original.statusBarIcon)
         #expect(decoded.sites == original.sites)
+    }
+}
+
+@Suite("StatusBarIconChoice")
+struct StatusBarIconChoiceTests {
+    @Test func defaultsToDefaultWhenKeyIsMissing() throws {
+        let json = #"{"sites":[]}"#
+        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+
+        #expect(config.statusBarIcon == .default)
+    }
+
+    @Test func decodesLightningChoice() throws {
+        let json = #"{"statusBarIcon":"lightning","sites":[]}"#
+        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+
+        #expect(config.statusBarIcon == .lightning)
+    }
+
+    @Test func decodesDefaultChoice() throws {
+        let json = #"{"statusBarIcon":"default","sites":[]}"#
+        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+
+        #expect(config.statusBarIcon == .default)
+    }
+
+    @Test func roundTripsLightningChoice() throws {
+        let original = Config(
+            statusBarIcon: .lightning,
+            sites: [Site(name: "A", url: "https://a.com", width: 800, height: 600)])
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+        #expect(decoded.statusBarIcon == .lightning)
+    }
+
+    @Test func roundTripsDefaultChoice() throws {
+        let original = Config(
+            statusBarIcon: .default,
+            sites: [])
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+        #expect(decoded.statusBarIcon == .default)
+    }
+
+    @Test func encodesStatusBarIconField() throws {
+        let config = Config(statusBarIcon: .lightning, sites: [])
+
+        let data = try JSONEncoder().encode(config)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+
+        #expect(json?["statusBarIcon"] as? String == "lightning")
+    }
+
+    @Test func allCasesContainsBothOptions() {
+        #expect(StatusBarIconChoice.allCases.count == 2)
+        #expect(StatusBarIconChoice.allCases.contains(.default))
+        #expect(StatusBarIconChoice.allCases.contains(.lightning))
     }
 }
 
