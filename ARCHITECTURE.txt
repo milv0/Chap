@@ -13,6 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
+│   ├── UpdateController.swift     ← Sparkle 2 수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
@@ -41,6 +42,7 @@ Sources/
 │   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
+│   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -64,6 +66,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── SaveDebouncerTests.swift
     ├── AppLifecycleSupportTests.swift
     ├── DisplayPreviewPolicyTests.swift
+    ├── UpdateConfigurationTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
@@ -192,6 +195,7 @@ Config 모델 필드:
   ────────
   Icon ▸ Default (✓)
          Lightning
+  Check for Updates…  (설정 미완료 시 비활성화)
   Settings...   (⌥,)
   Q&A
   Report Bug
@@ -322,6 +326,21 @@ App 윈도우 감지 방식 (AXObserver):
 
   디스플레이 매칭(resolvedDisplayIndex, 순수 함수): displayIdentifier(UUID) → unique displayName →
   커서 화면 순. 같은 이름이 여러 개면 임의 화면을 고르지 않고 재선택 상태로 유지한다.
+
+### Sparkle 2 (SPM, pinned 2.9.6)
+  용도: 수동 업데이트 체크 (manual-only, fail-closed)
+  - SPUStandardUpdaterController   updater 라이프사이클 관리
+  - checkForUpdates(_:)            사용자 요청에 의한 업데이트 확인
+  설정:
+  - SUFeedURL (Info.plist)         appcast 엔드포인트 (HTTPS 필수)
+  - SUPublicEDKey (Info.plist)     EdDSA 서명 검증 공개키 (3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM=)
+  - SUEnableAutomaticChecks=false  자동 체크/스케줄/프롬프트 비활성화
+  동작:
+  - SUFeedURL과 SUPublicEDKey가 모두 유효할 때만 updater 시작
+  - 현재 두 값 모두 설정됨: updater 시작, "Check for Updates…" 활성화
+  - 초기 appcast (docs/appcast.xml)는 빈 피드; 첫 Sparkle 릴리즈에서
+    Scripts/generate-appcast.sh가 서명된 enclosure 엔트리를 추가
+  - 개인키는 앱에 절대 포함하지 않음; 오퍼레이터 Keychain에만 존재
 
 ### ServiceManagement
   용도: Login Item 등록/해제
