@@ -3,15 +3,25 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: Scripts/release.sh <version> [--publish]
+Usage: Scripts/release.sh <version> [--publish | --resume]
 
-Without --publish, runs a read-only preflight and prints the release plan.
+Without flags, runs a read-only preflight and prints the release plan.
 With --publish, updates version metadata, validates the app, promotes dev to
 main, tags the release, builds/notarizes PKG and DMG artifacts, publishes the
 GitHub Release, and waits for GitHub Pages to build the promoted main commit.
 
+With --resume, resumes artifact build/notarization/publishing for a version
+whose tag already exists but whose GitHub Release was never created (e.g. after
+a notarization failure). Strict preconditions are enforced:
+  • Clean dev matching origin/dev
+  • Supplied version matches the app's current MARKETING_VERSION
+  • Local and remote annotated tag v<version> exists
+  • Tag is an ancestor of current main
+  • GitHub Release does not already exist
+  • No version bump, tag creation, or branch promotion is performed
+
 Release notes are read from release-notes/<version>.md (must exist before
---publish). The file contents become the GitHub Release body.
+--publish or --resume). The file contents become the GitHub Release body.
 EOF
 }
 
@@ -22,12 +32,16 @@ fi
 
 version="$1"
 publish=false
+resume=false
 if [[ $# -eq 2 ]]; then
-  if [[ "$2" != "--publish" ]]; then
-    usage >&2
-    exit 64
-  fi
-  publish=true
+  case "$2" in
+    --publish) publish=true ;;
+    --resume)  resume=true ;;
+    *)
+      usage >&2
+      exit 64
+      ;;
+  esac
 fi
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -94,6 +108,132 @@ print(match.group(1))
 PY
 )"
 
+if $resume; then
+  # --resume: strict precondition validation for resuming a failed release.
+  # This mode ONLY builds/notarizes/publishes artifacts for an existing tag
+  # whose GitHub Release was never created (e.g. notarization failure).
+  # It never bumps versions, creates tags, or promotes branches.
+
+  if [[ "$current_version" != "$version" ]]; then
+    echo "--resume: app MARKETING_VERSION ($current_version) does not match $version." >&2
+    echo "This version was not bumped. Cannot resume a release that was not started." >&2
+    exit 65
+  fi
+
+  require_clean_worktree
+  require_identity codesigning "Developer ID Application"
+  require_identity basic "Developer ID Installer"
+
+  # Verify dev matches origin/dev
+  remote_dev="$(git ls-remote origin refs/heads/dev | awk '{print $1}')"
+  if [[ -z "$remote_dev" || "$(git rev-parse HEAD)" != "$remote_dev" ]]; then
+    echo "--resume: local dev must match origin/dev." >&2
+    exit 65
+  fi
+
+  # Verify local annotated tag exists
+  if ! git show-ref --verify --quiet "refs/tags/v$version"; then
+    echo "--resume: local tag v$version does not exist." >&2
+    exit 65
+  fi
+  tag_type="$(git cat-file -t "v$version")"
+  if [[ "$tag_type" != "tag" ]]; then
+    echo "--resume: v$version is not an annotated tag (found: $tag_type)." >&2
+    exit 65
+  fi
+
+  # Verify remote tag exists
+  if ! git ls-remote --exit-code --tags origin "v$version" >/dev/null 2>&1; then
+    echo "--resume: remote tag v$version does not exist on origin." >&2
+    exit 65
+  fi
+
+  # Verify tag is an ancestor of current main
+  tag_commit="$(git rev-list -n1 "v$version")"
+  main_head="$(git rev-parse origin/main)"
+  if ! git merge-base --is-ancestor "$tag_commit" "$main_head"; then
+    echo "--resume: tag v$version is not an ancestor of main." >&2
+    exit 65
+  fi
+
+  # Verify GitHub Release does NOT already exist
+  if gh release view "v$version" --repo milv0/Chap >/dev/null 2>&1; then
+    echo "--resume: GitHub Release v$version already exists. Nothing to resume." >&2
+    exit 65
+  fi
+
+  release_notes_file="$root_dir/release-notes/$version.md"
+  if [[ ! -f "$release_notes_file" ]]; then
+    echo "--resume: missing release notes: $release_notes_file" >&2
+    exit 65
+  fi
+
+  printf 'Resume preconditions passed for v%s.\n' "$version"
+  printf 'Tag v%s exists at %s. GitHub Release not yet created.\n' "$version" "$tag_commit"
+  printf 'Resuming artifact build and publication...\n\n'
+
+  Scripts/build-release-pkg.sh
+  shopt -s nullglob
+  pkg_candidates=(build/release/Chap-"$version"-*.pkg)
+  dmg_candidates=(build/release/Chap-"$version"-*.dmg)
+  if [[ ${#pkg_candidates[@]} -ne 1 || ${#dmg_candidates[@]} -ne 1 ]]; then
+    echo "Expected exactly one PKG and DMG artifact for version $version." >&2
+    exit 1
+  fi
+  pkg_path="${pkg_candidates[0]}"
+  dmg_path="${dmg_candidates[0]}"
+  NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
+    Scripts/notarize-release-pkg.sh "$pkg_path"
+  NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
+    Scripts/notarize-release-dmg.sh "$dmg_path"
+
+  # --- Sparkle appcast generation ---
+  if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
+    Scripts/generate-appcast.sh "$dmg_path"
+    git add -- docs/appcast.xml
+    git diff --staged --quiet docs/appcast.xml || {
+      git commit -m "docs(appcast): add v$version update entry"
+      git push origin main
+      main_commit="$(git rev-parse main)"
+      git switch dev
+      if ! git merge --ff-only main; then
+        echo "Error: dev cannot fast-forward to main after appcast commit." >&2
+        echo "This indicates branch divergence that must be resolved manually." >&2
+        exit 1
+      fi
+      git push origin dev
+      git switch main
+    }
+  else
+    echo "Note: Sparkle appcast not updated (SPARKLE_BIN_DIR/SPARKLE_GENERATE_APPCAST not set)."
+    echo "Run Scripts/generate-appcast.sh manually after release to update the feed."
+  fi
+
+  gh release create "v$version" "$pkg_path" "$dmg_path" \
+    --repo milv0/Chap \
+    --title "Chap $version" \
+    --notes-file "$release_notes_file"
+
+  main_commit="${main_commit:-$(git rev-parse origin/main)}"
+  for attempt in $(seq 1 30); do
+    build_json="$(gh api repos/milv0/Chap/pages/builds/latest)"
+    build_commit="$(printf '%s' "$build_json" | python3 -c 'import json, sys; print(json.load(sys.stdin)["commit"])')"
+    build_status="$(printf '%s' "$build_json" | python3 -c 'import json, sys; print(json.load(sys.stdin)["status"])')"
+    if [[ "$build_commit" == "$main_commit" && "$build_status" == "built" ]]; then
+      echo "GitHub Pages built main commit $main_commit."
+      exit 0
+    fi
+    if [[ "$build_commit" == "$main_commit" && "$build_status" == "errored" ]]; then
+      echo "GitHub Pages failed for main commit $main_commit." >&2
+      exit 1
+    fi
+    sleep 10
+  done
+
+  echo "Timed out waiting for GitHub Pages to build main commit $main_commit." >&2
+  exit 1
+fi
+
 if [[ "$current_version" == "$version" ]]; then
   echo "Version is already $version; choose a new release version." >&2
   exit 65
@@ -119,6 +259,9 @@ Release preflight passed for v$version.
 This was read-only. Daily development remains dev-only: commit and push dev.
 To publish, run from the clean, origin-synced dev branch:
   Scripts/release.sh $version --publish
+
+To resume a failed release whose tag exists but GitHub Release does not:
+  Scripts/release.sh $version --resume
 
 Publish will:
   1. Update $current_version → $version in app, README, and Pages download URLs.
