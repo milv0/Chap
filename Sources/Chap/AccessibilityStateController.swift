@@ -186,7 +186,9 @@ final class AccessibilityStateController {
             }
             let alert = NSAlert()
             alert.messageText = "Allow Accessibility"
-            alert.informativeText = "System Settings에서 Chap을 허용해주세요."
+            alert.informativeText =
+                "Chap needs Accessibility permission to resize windows.\n"
+                + "Go to System Settings → Privacy & Security → Accessibility and enable Chap."
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Open Settings")
             alert.addButton(withTitle: "Later")

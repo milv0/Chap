@@ -39,7 +39,8 @@ struct WelcomeView: View {
             .padding(.horizontal, 24)
 
             Text(
-                "First launch may not resize the window.\nRe-open the site and it will work."
+                "URL sites open in Google Chrome (--app mode).\n"
+                    + "First launch may not resize the window — re-open and it will work."
             )
             .font(DS.captionFont)
             .foregroundColor(DS.textTertiary)

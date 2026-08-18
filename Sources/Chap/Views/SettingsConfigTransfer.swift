@@ -128,8 +128,11 @@ enum SettingsConfigTransfer {
             alert.informativeText =
                 "The following issues must be fixed before importing:\n\n\(issueMessages)"
             alert.alertStyle = .critical
+            alert.addButton(withTitle: "Show Expected Format")
             alert.addButton(withTitle: "OK")
-            alert.runModal()
+            if alert.runModal() == .alertFirstButtonReturn {
+                showFormatReference()
+            }
             return false
 
         case .success(let processed):
@@ -190,6 +193,28 @@ enum SettingsConfigTransfer {
         alert.messageText = "Failed to import config."
         alert.informativeText = detail
         alert.alertStyle = .warning
-        alert.runModal()
+        alert.addButton(withTitle: "Show Expected Format")
+        alert.addButton(withTitle: "OK")
+        if alert.runModal() == .alertFirstButtonReturn {
+            showFormatReference()
+        }
+    }
+
+    /// Presents a scrollable panel showing the expected JSON config format
+    /// so users can fix their file without consulting external documentation.
+    static func showFormatReference() {
+        let alert = NSAlert()
+        alert.messageText = "Expected JSON Format"
+        alert.informativeText =
+            ConfigFormatReference.fieldRequirements + "\n\nExample:\n"
+            + ConfigFormatReference.exampleJSON
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Copy Example")
+        alert.addButton(withTitle: "Close")
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(
+                ConfigFormatReference.exampleJSON, forType: .string)
+        }
     }
 }
