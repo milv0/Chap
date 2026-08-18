@@ -192,52 +192,90 @@ if ! xmllint --noout "$generated_appcast" 2>&1; then
     exit 1
 fi
 
-# Check required Sparkle enclosure attributes for the new version
+# Validate required Sparkle fields using namespace-aware XML queries.
+# Sparkle 2.9.6 represents sparkle:version and sparkle:shortVersionString as XML
+# elements (not enclosure attributes), while edSignature, url, and length are
+# enclosure attributes. This validator handles both representations robustly.
 validate_appcast() {
     local appcast_file="$1"
-    local target_version="$2"
+    local expected_version="$2"
     local errors=0
 
-    # Check that the file contains at least one item with an enclosure
-    if ! grep -q '<enclosure' "$appcast_file"; then
-        echo "Error: appcast.xml contains no <enclosure> elements." >&2
+    # Helper: extract text via xmllint --xpath; returns empty string on failure.
+    xpath_text() {
+        xmllint --xpath "$1" "$appcast_file" 2>/dev/null || true
+    }
+
+    # --- Enclosure URL (attribute on <enclosure>) ---
+    local enc_url
+    enc_url="$(xpath_text 'string(//*[local-name()="enclosure"]/@url)')"
+    if [[ -z "$enc_url" ]]; then
+        echo "Error: appcast.xml missing enclosure url attribute." >&2
+        errors=$((errors + 1))
+    elif [[ "$enc_url" != *"$dmg_filename"* ]]; then
+        echo "Error: enclosure url does not reference expected DMG '$dmg_filename': $enc_url" >&2
         errors=$((errors + 1))
     fi
 
-    # Check for sparkle:edSignature attribute
-    if ! grep -q 'sparkle:edSignature=' "$appcast_file"; then
-        echo "Error: appcast.xml missing sparkle:edSignature attribute." >&2
+    # --- Enclosure length (attribute on <enclosure>) ---
+    local enc_length
+    enc_length="$(xpath_text 'string(//*[local-name()="enclosure"]/@length)')"
+    if [[ -z "$enc_length" || "$enc_length" == "0" ]]; then
+        echo "Error: appcast.xml missing or zero enclosure length attribute." >&2
         errors=$((errors + 1))
     fi
 
-    # Check for sparkle:version attribute (CFBundleVersion)
-    if ! grep -q 'sparkle:version=' "$appcast_file"; then
-        echo "Error: appcast.xml missing sparkle:version attribute." >&2
+    # --- EdDSA signature: may be an enclosure attribute OR a sparkle:edSignature element ---
+    local ed_sig
+    ed_sig="$(xpath_text 'string(//*[local-name()="enclosure"]/@*[local-name()="edSignature"])')"
+    if [[ -z "$ed_sig" ]]; then
+        # Fallback: check for <sparkle:edSignature> element inside <item>
+        ed_sig="$(xpath_text 'string(//*[local-name()="item"][1]/*[local-name()="edSignature"])')"
+    fi
+    if [[ -z "$ed_sig" ]]; then
+        echo "Error: appcast.xml missing EdDSA signature (sparkle:edSignature)." >&2
         errors=$((errors + 1))
     fi
 
-    # Check for url attribute in enclosure
-    if ! grep -q 'url="' "$appcast_file"; then
-        echo "Error: appcast.xml missing url attribute in enclosure." >&2
+    # --- Build version (CFBundleVersion): element or enclosure attribute ---
+    local build_ver
+    # Try element first: <sparkle:version>N</sparkle:version>
+    build_ver="$(xpath_text 'string(//*[local-name()="item"][1]/*[local-name()="version"])')"
+    if [[ -z "$build_ver" ]]; then
+        # Fallback: sparkle:version attribute on <enclosure>
+        build_ver="$(xpath_text 'string(//*[local-name()="enclosure"]/@*[local-name()="version"])')"
+    fi
+    if [[ -z "$build_ver" ]]; then
+        echo "Error: appcast.xml missing build version (sparkle:version element or attribute)." >&2
         errors=$((errors + 1))
     fi
 
-    # Check for length attribute in enclosure
-    if ! grep -q 'length="' "$appcast_file"; then
-        echo "Error: appcast.xml missing length attribute in enclosure." >&2
+    # --- Short version string validation (marketing version) ---
+    local short_ver
+    short_ver="$(xpath_text 'string(//*[local-name()="item"][1]/*[local-name()="shortVersionString"])')"
+    if [[ -z "$short_ver" ]]; then
+        # Fallback: sparkle:shortVersionString attribute on <enclosure>
+        short_ver="$(xpath_text 'string(//*[local-name()="enclosure"]/@*[local-name()="shortVersionString"])')"
+    fi
+    if [[ -n "$expected_version" && -n "$short_ver" && "$short_ver" != "$expected_version" ]]; then
+        echo "Error: appcast shortVersionString '$short_ver' does not match expected '$expected_version'." >&2
         errors=$((errors + 1))
     fi
 
-    # Check the download URL references our expected filename
-    if ! grep -q "$dmg_filename" "$appcast_file"; then
-        echo "Warning: appcast.xml does not reference expected DMG filename: $dmg_filename" >&2
+    # --- Expected download URL prefix check ---
+    if [[ -n "$expected_version" && -n "$enc_url" ]]; then
+        local expected_url_fragment="v$expected_version/"
+        if [[ "$enc_url" != *"$expected_url_fragment"* ]]; then
+            echo "Error: enclosure url does not contain expected version path '$expected_url_fragment': $enc_url" >&2
+            errors=$((errors + 1))
+        fi
     fi
 
     return $errors
 }
 
 if ! validate_appcast "$generated_appcast" "$version"; then
-    echo "Error: Appcast validation failed. The generated feed is missing required attributes." >&2
+    echo "Error: Appcast validation failed. See errors above." >&2
     exit 1
 fi
 
