@@ -188,13 +188,20 @@ if $resume; then
     Scripts/notarize-release-dmg.sh "$dmg_path"
 
   # --- Sparkle appcast generation ---
+  # Appcast must be committed on main for GitHub Pages. Switch to main, generate
+  # the feed entry, commit/push, then fast-forward dev to keep branches in sync.
+  # This mirrors the normal --publish appcast flow.
   if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
+    git switch main
     Scripts/generate-appcast.sh "$dmg_path"
     git add -- docs/appcast.xml
     git diff --staged --quiet docs/appcast.xml || {
       git commit -m "docs(appcast): add v$version update entry"
       git push origin main
-      main_commit="$(git rev-parse main)"
+      main_commit="$(git rev-parse HEAD)"
+      # Synchronize dev to include the appcast commit so branches do not diverge.
+      # main is a direct descendant of dev HEAD (pre-resume they are equal, plus
+      # the appcast commit), so dev can always fast-forward here.
       git switch dev
       if ! git merge --ff-only main; then
         echo "Error: dev cannot fast-forward to main after appcast commit." >&2
@@ -202,19 +209,20 @@ if $resume; then
         exit 1
       fi
       git push origin dev
-      git switch main
     }
+    # Ensure we are back on dev for the remainder of the resume flow.
+    git switch dev
   else
     echo "Note: Sparkle appcast not updated (SPARKLE_BIN_DIR/SPARKLE_GENERATE_APPCAST not set)."
     echo "Run Scripts/generate-appcast.sh manually after release to update the feed."
   fi
 
+  main_commit="${main_commit:-$(git rev-parse origin/main)}"
+
   gh release create "v$version" "$pkg_path" "$dmg_path" \
     --repo milv0/Chap \
     --title "Chap $version" \
     --notes-file "$release_notes_file"
-
-  main_commit="${main_commit:-$(git rev-parse origin/main)}"
   for attempt in $(seq 1 30); do
     build_json="$(gh api repos/milv0/Chap/pages/builds/latest)"
     build_commit="$(printf '%s' "$build_json" | python3 -c 'import json, sys; print(json.load(sys.stdin)["commit"])')"
