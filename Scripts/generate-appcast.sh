@@ -136,7 +136,9 @@ build="${BASH_REMATCH[2]}"
 # --- Prepare staging directory ---
 staging_dir="$(mktemp -d)"
 cleanup() {
+    local rc=$?
     rm -rf "$staging_dir"
+    exit $rc
 }
 trap cleanup EXIT
 
@@ -172,7 +174,7 @@ fi
 
 "$GENERATE_APPCAST" \
     --download-url-prefix "$download_url_prefix/v$version/" \
-    "${key_args[@]}" \
+    ${key_args[@]+"${key_args[@]}"} \
     "$staging_dir"
 
 generated_appcast="$staging_dir/appcast.xml"
