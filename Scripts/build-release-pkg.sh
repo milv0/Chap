@@ -20,7 +20,7 @@ fi
 
 Scripts/build-release-dmg.sh
 
-app_path="$archive_path/Products/Applications/Chap.app"
+app_path="$output_dir/export/Chap.app"
 if [[ ! -d "$app_path" ]]; then
   echo "Expected app was not created: $app_path" >&2
   exit 1
