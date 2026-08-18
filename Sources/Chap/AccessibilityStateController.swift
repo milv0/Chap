@@ -21,6 +21,9 @@ final class AccessibilityStateController {
     /// 권한 상태를 확인할 때마다 호출된다 (아이콘 갱신용).
     var onAccessibleChanged: ((Bool) -> Void)?
 
+    /// 현재 접근성 권한 상태. 아이콘 선택 등 외부에서 직접 조회할 때 쓴다.
+    var isAccessible: Bool { state == .granted }
+
     /// 테스트 실행 중 시스템 프롬프트·폴링·알림을 비활성화한다.
     private let suppressesInteractivePrompts: Bool
 

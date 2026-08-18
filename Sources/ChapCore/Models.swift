@@ -230,21 +230,33 @@ public struct Site: Codable, Equatable, Identifiable {
     }
 }
 
+/// 상태바 아이콘 선택지. rawValue가 config JSON에 저장된다.
+public enum StatusBarIconChoice: String, Codable, CaseIterable {
+    /// 기존 커스텀 템플릿 아이콘 (StatusBarIcon.png).
+    case `default` = "default"
+    /// SF Symbols bolt.fill 아이콘.
+    case lightning = "lightning"
+}
+
 public struct Config: Codable {
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
+    public var statusBarIcon: StatusBarIconChoice
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
-        case showGuideWindow, showGhostWindow, launchAtLogin, sites
+        case showGuideWindow, showGhostWindow, launchAtLogin, statusBarIcon, sites
     }
 
     public init(
         showGuideWindow: Bool = true,
-        launchAtLogin: Bool = false, sites: [Site]
+        launchAtLogin: Bool = false,
+        statusBarIcon: StatusBarIconChoice = .default,
+        sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
+        self.statusBarIcon = statusBarIcon
         self.sites = sites
     }
 
@@ -255,6 +267,9 @@ public struct Config: Codable {
             try container.decodeIfPresent(Bool.self, forKey: .showGuideWindow)
             ?? container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
+        statusBarIcon =
+            try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
+            ?? .default
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -262,6 +277,7 @@ public struct Config: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(showGuideWindow, forKey: .showGuideWindow)
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
+        try container.encode(statusBarIcon, forKey: .statusBarIcon)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

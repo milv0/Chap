@@ -34,6 +34,7 @@ enum ConfigImportProcessor {
         let resultConfig = Config(
             showGuideWindow: config.showGuideWindow,
             launchAtLogin: config.launchAtLogin,
+            statusBarIcon: config.statusBarIcon,
             sites: normalized.sites)
         return .success(
             ProcessedConfigImport(
