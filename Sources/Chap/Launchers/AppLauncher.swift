@@ -20,12 +20,18 @@ enum AppLauncher {
     /// `com.microsoft.` prefix로 판별하면 Teams/Outlook 같은 비대상 앱까지 걸릴 수 있다.
     /// 시작창 -> 문서창 전환이 잦은 문서형 Office 앱만 명시 목록으로 제한한다.
     /// PowerPoint의 ID는 제품명 표기와 다르게 `Powerpoint`가 맞다.
-    private static let microsoftOfficeBundleIds: Set<String> = [
+    static let microsoftOfficeBundleIds: Set<String> = [
         "com.microsoft.Powerpoint",
         "com.microsoft.Excel",
         "com.microsoft.Word",
         "com.microsoft.onenote.mac",
     ]
+
+    /// 번들 ID가 문서형 Microsoft Office 앱인지 판정. Teams/Outlook은 제외된다.
+    static func isMicrosoftOfficeApp(bundleId: String?) -> Bool {
+        guard let bundleId else { return false }
+        return microsoftOfficeBundleIds.contains(bundleId)
+    }
 
     /// 앱을 실행하고 윈도우 크기/위치를 조정
     static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
@@ -202,7 +208,7 @@ enum AppLauncher {
         appRunning ? 0.2 : timeout
     }
 
-    private static func resizeObservationPolicy(
+    static func resizeObservationPolicy(
         bundleId: String?,
         appRunning: Bool
     ) -> ResizeObservationPolicy {

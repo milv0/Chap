@@ -24,7 +24,11 @@ extension AppLauncher {
         guard ctx.isNewWindow(window), !ctx.hasProcessed(window) else { return }
 
         // 비-Office는 첫 새 창 하나만, Office는 새 문서창이 나타날 때마다 교체
-        guard ctx.policy.isMicrosoftOffice || ctx.resizedWindow == nil else { return }
+        guard
+            canResizeNewWindow(
+                isMicrosoftOffice: ctx.policy.isMicrosoftOffice,
+                alreadyResized: ctx.resizedWindow != nil)
+        else { return }
 
         let boundsResult = applyBoundsToWindow(window, ctx: ctx)
         if boundsResult.applied {
@@ -36,6 +40,37 @@ extension AppLauncher {
         didResize: Bool, isMicrosoftOffice: Bool
     ) -> Bool {
         didResize && !isMicrosoftOffice
+    }
+
+    /// 조기 focused fallback 시도 시점인지 판정. 아직 리사이즈하지 못했고,
+    /// 조기 시도를 하지 않았으며, 정책의 focusedFallbackDelay가 경과했을 때 true.
+    static func shouldAttemptEarlyFocusedFallback(
+        didResize: Bool,
+        didAttemptAlready: Bool,
+        elapsed: TimeInterval,
+        focusedFallbackDelay: TimeInterval
+    ) -> Bool {
+        !didResize && !didAttemptAlready && elapsed >= focusedFallbackDelay
+    }
+
+    /// 마지막 리사이즈 이후 grace period가 만료되었는지 판정.
+    /// lastResizeTime이 nil이면 리사이즈된 적 없으므로 grace 종료 조건 불성립.
+    static func isGracePeriodExpired(
+        lastResizeTime: CFAbsoluteTime?,
+        now: CFAbsoluteTime,
+        postResizeGrace: TimeInterval
+    ) -> Bool {
+        guard let last = lastResizeTime else { return false }
+        return now - last >= postResizeGrace
+    }
+
+    /// 새 창을 리사이즈할 수 있는지 판정 (비-Office는 첫 새 창 하나만 허용).
+    /// Office는 grace 동안 새 문서창이 나타나면 이전 리사이즈를 교체할 수 있다.
+    static func canResizeNewWindow(
+        isMicrosoftOffice: Bool,
+        alreadyResized: Bool
+    ) -> Bool {
+        isMicrosoftOffice || !alreadyResized
     }
 
     // MARK: - Observation loop
@@ -123,8 +158,11 @@ extension AppLauncher {
             wait()
 
             let elapsed = CFAbsoluteTimeGetCurrent() - ctx.startTime
-            if !ctx.didResize, !ctx.didAttemptEarlyFocusedFallback,
-                elapsed >= ctx.policy.focusedFallbackDelay
+            if shouldAttemptEarlyFocusedFallback(
+                didResize: ctx.didResize,
+                didAttemptAlready: ctx.didAttemptEarlyFocusedFallback,
+                elapsed: elapsed,
+                focusedFallbackDelay: ctx.policy.focusedFallbackDelay)
             {
                 ctx.didAttemptEarlyFocusedFallback = true
                 Log.launcher.info(
@@ -140,8 +178,10 @@ extension AppLauncher {
             }
 
             // 마지막 리사이즈 후 grace가 지나면 종료
-            if let last = ctx.lastResizeTime,
-                CFAbsoluteTimeGetCurrent() - last >= ctx.policy.postResizeGrace
+            if isGracePeriodExpired(
+                lastResizeTime: ctx.lastResizeTime,
+                now: CFAbsoluteTimeGetCurrent(),
+                postResizeGrace: ctx.policy.postResizeGrace)
             {
                 break
             }
