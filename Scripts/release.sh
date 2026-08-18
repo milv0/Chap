@@ -298,6 +298,35 @@ NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
 NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
   Scripts/notarize-release-dmg.sh "$dmg_path"
 
+# --- Sparkle appcast generation ---
+# Update docs/appcast.xml with a signed entry for the notarized DMG.
+# This runs before the GitHub Release so the appcast commit can be included.
+# The generate-appcast script requires SPARKLE_BIN_DIR or SPARKLE_GENERATE_APPCAST.
+if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
+  Scripts/generate-appcast.sh "$dmg_path"
+  git add -- docs/appcast.xml
+  git diff --staged --quiet docs/appcast.xml || {
+    git commit -m "docs(appcast): add v$version update entry"
+    git push origin main
+    main_commit="$(git rev-parse HEAD)"
+    # Synchronize dev to include the appcast commit so branches do not diverge.
+    # main is a direct descendant of the pre-release dev HEAD (merge commit + optional
+    # appcast commit), so dev can always fast-forward here. If it cannot, the release
+    # invariants were violated; fail with an actionable error rather than force-push.
+    git switch dev
+    if ! git merge --ff-only main; then
+      echo "Error: dev cannot fast-forward to main after appcast commit." >&2
+      echo "This indicates branch divergence that must be resolved manually." >&2
+      exit 1
+    fi
+    git push origin dev
+    git switch main
+  }
+else
+  echo "Note: Sparkle appcast not updated (SPARKLE_BIN_DIR/SPARKLE_GENERATE_APPCAST not set)."
+  echo "Run Scripts/generate-appcast.sh manually after release to update the feed."
+fi
+
 gh release create "v$version" "$pkg_path" "$dmg_path" \
   --repo milv0/Chap \
   --title "Chap $version" \

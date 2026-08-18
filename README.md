@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.0.4-orange)
+![Version](https://img.shields.io/badge/version-1.0.5-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -129,11 +129,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.0.4
+Scripts/release.sh 1.0.5
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.0.4 --publish
+Scripts/release.sh 1.0.5 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
@@ -143,6 +143,47 @@ Scripts/release.sh 1.0.4 --publish
 The URL and App launchers share the same Accessibility bounds pipeline. It follows the proven **size → position → size** order used by [Rectangle](https://github.com/rxhanson/Rectangle) to avoid display-transition clamping, limits unresponsive AX calls to two seconds, temporarily disables `AXEnhancedUserInterface` when an app has enabled it, and verifies final bounds by readback. If an app clamps the requested size, Chap preserves the intended center by applying a corrected position once more.
 
 Debug builds append diagnostics to `~/Library/Logs/Chap/resize_YYYY-MM-DD.csv`. `minSize=WxH` indicates `AXMinSize`/`AXMinimumSize` predicts a clamp; `recentered=(x y)` indicates the center-preserving correction ran; `enhancedUI=disabled` indicates that compatibility path ran. Their absence on a `fully` row is normal: it means the app accepted the requested bounds without needing that recovery path.
+
+### Sparkle update system
+
+Chap uses [Sparkle 2](https://sparkle-project.org/) (pinned at 2.9.6) for manual-only update checks. The architecture is **fail-closed**: the updater starts only when both `SUFeedURL` and `SUPublicEDKey` are present and valid in Info.plist. With both configured, "Check for Updates…" in the menubar triggers a user-initiated check; no automatic background checks or permission dialogs occur.
+
+**Current state:** The updater is fully configured and will check for updates when the user selects the menu item.
+- `SUFeedURL` = `https://milv0.github.io/Chap/appcast.xml`
+- `SUPublicEDKey` = embedded (EdDSA ed25519 public key)
+- `SUEnableAutomaticChecks` = `false`
+
+The initial `docs/appcast.xml` is an empty feed (no items). The first Sparkle-aware release will add a signed enclosure entry via `Scripts/generate-appcast.sh`.
+
+**Appcast publishing (for future releases):**
+
+After artifacts are notarized, the release script automatically invokes `Scripts/generate-appcast.sh` when `SPARKLE_BIN_DIR` or `SPARKLE_GENERATE_APPCAST` is set:
+
+```bash
+# Set the Sparkle CLI location (one of):
+export SPARKLE_BIN_DIR=/path/to/Sparkle/bin
+# or
+export SPARKLE_GENERATE_APPCAST=/path/to/generate_appcast
+
+# The release script calls generate-appcast.sh automatically.
+# For manual invocation after a release:
+Scripts/generate-appcast.sh build/release/Chap-<version>-<build>.dmg
+```
+
+The script signs the notarized DMG with the operator's Keychain-stored EdDSA private key, updates the feed with proper enclosure attributes (edSignature, version, URL, length), validates the XML, and places the result at `docs/appcast.xml` for GitHub Pages deployment.
+
+**Design decisions:**
+- `SUEnableAutomaticChecks` is `false` — starting the updater never schedules background checks or shows the automatic-check permission dialog.
+- Updates are triggered exclusively by the user via the menu item.
+- The EdDSA private key lives only in the operator's Keychain; it is never committed, exported, or logged.
+- Sparkle CLI resolution is fail-closed: scripts abort with an actionable message if tools are not found.
+- Appcast validation checks XML well-formedness and required Sparkle enclosure attributes before accepting an update.
+- No `com.apple.security.network.client` entitlement is added; Chap is a non-sandboxed Developer ID app.
+
+**Remaining live-release validation limits:**
+- The initial `docs/appcast.xml` is empty; the first real update entry will be generated during the next `--publish` release with Sparkle CLI available.
+- End-to-end update download/install flow cannot be validated until a signed appcast entry with a real notarized DMG is deployed to GitHub Pages.
+- Delta updates are generated automatically by `generate_appcast` when multiple versioned archives are present in the staging directory.
 
 ## Changelog
 

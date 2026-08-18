@@ -148,6 +148,15 @@ extension AppDelegate {
         iconSubmenu.submenu = iconMenu
         menu.addItem(iconSubmenu)
 
+        // Check for Updates — disabled when Sparkle configuration is incomplete
+        let updateItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates(_:)),
+            keyEquivalent: "")
+        updateItem.target = self
+        updateItem.isEnabled = updateController.canCheckForUpdates
+        menu.addItem(updateItem)
+
         let settings = NSMenuItem(
             title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
         settings.keyEquivalentModifierMask = .option
@@ -259,6 +268,10 @@ extension AppDelegate {
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+
+    @objc func checkForUpdates(_ sender: Any?) {
+        updateController.checkForUpdates(sender)
     }
 
     @objc func reportBug() {
