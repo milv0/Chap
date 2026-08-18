@@ -30,3 +30,7 @@ build/
 
 # Sisyphus local working files
 .sisyphus/
+
+# Browser automation tooling (local only)
+.playwright-mcp/
+playwright-responses/
