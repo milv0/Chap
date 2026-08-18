@@ -38,8 +38,8 @@
     .site-header { background: rgb(247 247 244 / .88); border-bottom: 1px solid rgb(222 222 216 / .75); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
     .nav { align-items: center; display: flex; justify-content: space-between; min-height: 64px; }
     .brand { align-items: center; display: inline-flex; font-family: var(--display); font-size: 1.08rem; font-weight: 700; gap: .6rem; letter-spacing: -.03em; }
-    .brand-mark { align-items: center; background: var(--ink); border-radius: 9px; color: var(--white); display: inline-flex; height: 30px; justify-content: center; width: 30px; }
-    .brand-mark svg { height: 16px; width: 16px; }
+    .brand-mark { align-items: center; border-radius: 9px; display: inline-flex; height: 30px; justify-content: center; overflow: hidden; width: 30px; }
+    .brand-mark img { display: block; height: 100%; object-fit: cover; width: 100%; }
     .nav-actions { align-items: center; display: flex; gap: .25rem; }
     .nav-link, .language-toggle { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
     .nav-link:hover, .language-toggle:hover { background: var(--soft); color: var(--ink); }
@@ -134,7 +134,7 @@
   <header class="site-header">
     <nav class="shell nav" data-i18n-aria-label="navLabel" aria-label="Main navigation">
       <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home">
-        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m13.7 1.9-8.4 11h5.1l-1 9.2 9.3-11.2h-5.1l.1-9.1Z" fill="currentColor"/></svg></span>Chap
+        <span class="brand-mark" aria-hidden="true"><img src="assets/chap-icon.png" alt="" width="30" height="30"></span>Chap
       </a>
       <div class="nav-actions">
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Korean">한국어</button>
