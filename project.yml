@@ -26,6 +26,12 @@ targets:
         NSAppleEventsUsageDescription: "Chap controls Finder to open folders and position Finder windows at the size and location you set."
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.utilities
+        SUFeedURL: "https://milv0.github.io/Chap/appcast.xml"
+        SUPublicEDKey: "3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM="
+        SUEnableAutomaticChecks: false
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap
@@ -62,6 +68,11 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.9.6
 
 schemes:
   Chap:
