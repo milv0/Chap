@@ -67,6 +67,7 @@ Stored at `~/.chap.json`:
 {
   "showGuideWindow": true,
   "launchAtLogin": false,
+  "statusBarIcon": "default",
   "sites": [
     {
       "name": "GitHub",

@@ -56,7 +56,7 @@
 4. stripLegacyConfigFields()    원본 JSON에 레거시 키가 남아 있으면 1회 덮어써 정리
 5. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
 6. NSApp.setActivationPolicy(.accessory)
-7. statusItem 생성 (28pt, StatusBarIcon template, 없으면 bolt.fill 심볼)
+7. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
 8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 전체 재등록
 9. initializeAccessibilityHandling()   권한 확인 + 옵저버 등록 (+ 최초 시스템 프롬프트)
 10. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만

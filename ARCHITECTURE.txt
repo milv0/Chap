@@ -120,6 +120,12 @@ Site 모델 필드:
   - folderPath: String?       폴더 경로 (launchType=finder)
   - shortcut: String?         커스텀 단축키 ("T" → ⌥T)
 
+Config 모델 필드:
+  - showGuideWindow: Bool     리사이즈 위치 가이드 윈도우 표시 여부
+  - launchAtLogin: Bool       로그인 시 자동 실행
+  - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
+  - sites: [Site]             사이트 목록
+
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.
 
 
@@ -177,12 +183,15 @@ Site 모델 필드:
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
 - 접근성 권한 안내 직후 자동 재시도 + 권한 제거 감지
 - Launch at Login (SMAppService)
+- 상태바 아이콘 선택 (Default/Lightning) — 메뉴바 Icon 서브메뉴에서 즉시 변경, config에 저장·재시작 유지
 - Restart (메뉴바) / Restart App·Uninstall (설정 창 하단 folder 메뉴)
 
 ## 메뉴바 메뉴 구성
 
   [사이트들 — 타입별 그룹, 구분선으로 분리]
   ────────
+  Icon ▸ Default (✓)
+         Lightning
   Settings...   (⌥,)
   Q&A
   Report Bug
