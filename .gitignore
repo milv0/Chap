@@ -27,3 +27,6 @@ logs/
 build/
 *.dmg
 *.xcarchive
+
+# Sisyphus local working files
+.sisyphus/
