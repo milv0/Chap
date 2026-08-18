@@ -12,6 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let globalHotKeyManager = GlobalHotKeyManager()
+    let updateController = UpdateController()
     lazy var accessibilityController = AccessibilityStateController(
         suppressesInteractivePrompts: isRunningTests)
     var isStatusMenuOpen = false
