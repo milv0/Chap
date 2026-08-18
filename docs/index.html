@@ -6,6 +6,7 @@
   <meta name="description" content="Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.">
   <meta name="theme-color" content="#F7F7F4">
   <title>Chap — One shortcut. Right where you want it.</title>
+  <link rel="icon" href="assets/chap-icon.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
@@ -68,6 +69,9 @@
     .window-dots i { background: #d3d3ce; border-radius: 50%; display: block; height: 8px; width: 8px; }
     .flow-header strong { font-family: var(--display); font-size: .78rem; letter-spacing: -.02em; }
     .flow-header span { color: var(--muted); font-size: .68rem; }
+    .flow-viewport { min-height: 212px; }
+    .flow-slide { animation: slide-in 220ms ease-out; }
+    .flow-slide[hidden] { display: none; }
     .flow { align-items: stretch; display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr; padding: 1.1rem; }
     .flow-step { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; min-height: 190px; padding: 1rem; text-align: center; }
     .flow-step small { color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .1em; margin-bottom: .85rem; text-transform: uppercase; }
@@ -77,12 +81,34 @@
     .keycap-plus { color: var(--muted); font-family: var(--display); font-size: .82rem; font-weight: 700; }
     .keycap { align-items: center; background: var(--white); border: 1px solid #cfcfca; border-bottom-width: 4px; border-radius: 11px; display: inline-flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; justify-content: center; min-width: 48px; padding: .75rem .6rem .6rem; }
     .keycap--option { background: var(--blue); border-color: var(--blue-dark); color: var(--white); min-width: 58px; }
-    .app-icon { align-items: center; background: var(--blue); border-radius: 13px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.35rem; font-weight: 700; height: 58px; justify-content: center; width: 58px; }
+    .app-icon { align-items: center; background: var(--blue); border-radius: 13px; display: flex; height: 58px; justify-content: center; overflow: hidden; width: 58px; }
+    .app-icon img { display: block; height: 100%; object-fit: cover; width: 100%; }
+    .launch-glyph { align-items: center; color: var(--blue); display: flex; font-family: var(--display); font-size: 1.45rem; font-weight: 700; height: 58px; justify-content: center; }
+    .chrome-window { background: var(--white); border: 2px solid var(--ink); border-radius: 10px; height: 58px; overflow: hidden; width: 86px; }
+    .chrome-window-bar { align-items: center; background: #f2f2ee; border-bottom: 1px solid var(--line); display: flex; gap: 4px; height: 17px; padding: 0 7px; }
+    .chrome-window-bar i { background: #d4d4ce; border-radius: 50%; display: block; height: 5px; width: 5px; }
+    .chrome-window-bar i:first-child { background: #ee6a5f; }
+    .chrome-window-bar i:nth-child(2) { background: #f2bf4a; }
+    .chrome-window-bar i:last-child { background: #62c655; }
+    .chrome-window-page { background: linear-gradient(135deg, rgb(49 92 255 / .16), rgb(49 92 255 / .03)); border: 1px solid rgb(49 92 255 / .22); border-radius: 4px; display: block; height: 23px; margin: 8px auto; width: 58px; }
+    .finder-folder-icon { height: 62px; object-fit: contain; width: 72px; }
+    .script-glyph { background: #1c1c1a; border-radius: 13px; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; padding: .8rem .55rem; width: 100%; }
     .display-icon { align-items: center; border: 2px solid var(--ink); border-radius: 7px; display: flex; height: 68px; justify-content: center; position: relative; width: 94px; }
     .display-icon::before { background: rgb(49 92 255 / .12); border: 2px solid var(--blue); border-radius: 4px; content: ""; height: 38px; width: 48px; }
     .display-icon::after { background: var(--ink); bottom: -9px; content: ""; height: 8px; position: absolute; width: 2px; }
-    .format-row { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem; padding: .85rem 1.1rem; }
-    .format-row span { background: var(--paper); border-radius: 999px; color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .08em; padding: .38rem .65rem; text-transform: uppercase; }
+    .display-icon--chrome { background: rgb(49 92 255 / .12); }
+    .display-icon--chrome::before { display: none; }
+    .display-icon--chrome .chrome-window { border-width: 1px; border-radius: 4px; height: 30px; position: relative; width: 46px; z-index: 1; }
+    .display-icon--chrome .chrome-window-bar { gap: 2px; height: 9px; padding: 0 3px; }
+    .display-icon--chrome .chrome-window-bar i { height: 2px; width: 2px; }
+    .display-icon--chrome .chrome-window-page { border-radius: 2px; height: 12px; margin: 4px auto; width: 30px; }
+    .terminal-preview { background: #1c1c1a; border-radius: 8px; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .56rem; padding: .65rem .35rem; text-align: left; width: 96px; }
+    .format-row { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 4px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: .75rem 1rem .15rem; padding: 4px; }
+    .launch-type-tab { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .65rem; font-weight: 700; letter-spacing: .08em; min-height: 38px; padding: .55rem .45rem; text-transform: uppercase; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
+    .launch-type-tab:hover { color: var(--ink); }
+    .launch-type-tab[aria-selected="true"] { background: var(--white); box-shadow: 0 2px 9px rgb(30 30 24 / .08); color: var(--blue); }
+    @keyframes slide-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
 
     .footer { border-top: 1px solid var(--line); }
     .footer-inner { align-items: center; display: flex; font-size: .75rem; justify-content: space-between; min-height: 76px; }
@@ -109,20 +135,26 @@
       .primary-button { justify-content: center; width: 100%; }
       .trust { text-align: center; }
       .flow-header { min-height: 44px; }
+      .flow-header strong { font-size: .74rem; }
+      .format-row { gap: 2px; margin: .55rem .65rem .1rem; padding: 3px; }
+      .launch-type-tab { font-size: .58rem; letter-spacing: .05em; min-height: 38px; padding: .45rem .2rem; }
+      .flow-viewport { min-height: 142px; }
       .flow { gap: 0; grid-template-columns: 1fr 18px 1fr 18px 1fr; padding: .7rem; }
       .flow-step { min-height: 118px; padding: .55rem .3rem; }
-      .flow-step small { font-size: .56rem; margin-bottom: .55rem; }
-      .flow-step strong { font-size: .72rem; margin-top: .55rem; }
+      .flow-step small { font-size: .58rem; margin-bottom: .5rem; }
+      .flow-step strong { font-size: .76rem; line-height: 1.25; margin-top: .5rem; }
       .flow-arrow { font-size: .78rem; }
       .keycap-group { gap: .22rem; }
       .keycap-plus { font-size: .67rem; }
       .keycap { border-radius: 8px; font-size: .95rem; min-width: 36px; padding: .5rem .35rem .4rem; }
       .keycap--option { min-width: 45px; }
       .app-icon { border-radius: 10px; font-size: 1.05rem; height: 44px; width: 44px; }
+      .chrome-window { border-radius: 8px; height: 48px; width: 72px; }
+      .chrome-window-bar { height: 14px; }
+      .chrome-window-page { height: 19px; margin: 6px auto; width: 48px; }
+      .finder-folder-icon { height: 46px; width: 54px; }
       .display-icon { height: 48px; width: 68px; }
       .display-icon::before { height: 27px; width: 35px; }
-      .format-row { gap: .3rem; padding: .6rem .7rem; }
-      .format-row span { font-size: .55rem; padding: .3rem .5rem; }
       .footer-inner { align-items: flex-start; flex-direction: column; gap: .3rem; justify-content: center; min-height: 58px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -159,32 +191,55 @@
           </div>
         </div>
 
-        <div class="flow-card" role="img" data-i18n-aria-label="flowLabel" aria-label="Hold Option and press T to open Translate centered on Studio Display">
+        <div class="flow-card" data-carousel role="region" aria-roledescription="carousel" data-i18n-aria-label="carouselLabel" aria-label="Chap launch type examples" tabindex="0">
           <div class="flow-header">
             <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <strong data-i18n="flowTitle">Option is the trigger</strong>
-            <span data-i18n="flowStatus">Hold, then launch</span>
+            <strong data-i18n="carouselTitle">One shortcut, four launch types</strong>
           </div>
-          <div class="flow" aria-hidden="true">
-            <div class="flow-step">
-              <small data-i18n="shortcutLabel">Hold Option</small>
-              <div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">T</span></div>
-              <strong data-i18n="shortcutText">Press your shortcut</strong>
-            </div>
-            <div class="flow-arrow">→</div>
-            <div class="flow-step">
-              <small data-i18n="openLabel">Open</small>
-              <div class="app-icon">T</div>
-              <strong data-i18n="openText">Translate</strong>
-            </div>
-            <div class="flow-arrow">→</div>
-            <div class="flow-step">
-              <small data-i18n="placeLabel">Place</small>
-              <div class="display-icon"></div>
-              <strong data-i18n="placeText">Centered</strong>
-            </div>
+          <div class="format-row" role="tablist" aria-label="Launch types">
+            <button class="launch-type-tab" id="launch-tab-url" type="button" role="tab" data-carousel-select="0" aria-controls="launch-panel-url" aria-selected="true" tabindex="0">URL</button>
+            <button class="launch-type-tab" id="launch-tab-app" type="button" role="tab" data-carousel-select="1" aria-controls="launch-panel-app" aria-selected="false" tabindex="-1">APP</button>
+            <button class="launch-type-tab" id="launch-tab-finder" type="button" role="tab" data-carousel-select="2" aria-controls="launch-panel-finder" aria-selected="false" tabindex="-1">FINDER</button>
+            <button class="launch-type-tab" id="launch-tab-script" type="button" role="tab" data-carousel-select="3" aria-controls="launch-panel-script" aria-selected="false" tabindex="-1">SCRIPT</button>
           </div>
-          <div class="format-row" aria-hidden="true"><span>URL</span><span>APP</span><span>FOLDER</span><span>SCRIPT</span></div>
+          <div class="flow-viewport">
+            <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
+              <div class="flow">
+                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small>URL</small><div class="chrome-window" aria-hidden="true"><span class="chrome-window-bar"><i></i><i></i><i></i></span><span class="chrome-window-page"></span></div><strong data-i18n="urlTarget">Chrome app mode</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon display-icon--chrome" aria-hidden="true"><div class="chrome-window"><span class="chrome-window-bar"><i></i><i></i><i></i></span><span class="chrome-window-page"></span></div></div><strong data-i18n="placeText">Centered</strong></div>
+              </div>
+            </section>
+            <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
+              <div class="flow">
+                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small>APP</small><div class="app-icon"><img src="assets/chap-icon.png" alt="" width="58" height="58"></div><strong>Chap.app</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon" aria-hidden="true"></div><strong data-i18n="placeText">Centered</strong></div>
+              </div>
+            </section>
+            <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
+              <div class="flow">
+                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small>FINDER</small><img class="finder-folder-icon" src="assets/finder-folder.svg" alt="" width="72" height="62"><strong data-i18n="folderTarget">Project files</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon" aria-hidden="true"></div><strong data-i18n="placeText">Centered</strong></div>
+              </div>
+            </section>
+            <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
+              <div class="flow">
+                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small>SCRIPT</small><div class="launch-glyph script-glyph">$ chap</div><strong data-i18n="scriptTarget">Open Chap</strong></div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-step"><small data-i18n="runLabel">Run</small><div class="terminal-preview">$ open -a Chap</div><strong data-i18n="scriptResult">Runs in your shell</strong></div>
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </section>
@@ -213,15 +268,18 @@
           install: "Install Chap",
           dmg: "Manual install (DMG)",
           trust: "✓ Apple notarized · macOS 14+",
-          flowLabel: "Hold Option and press T to open Translate centered on Studio Display",
-          flowTitle: "Option is the trigger",
-          flowStatus: "Hold, then launch",
+          carouselLabel: "Chap launch type examples",
+          carouselTitle: "One shortcut, four launch types",
           shortcutLabel: "Hold Option",
           shortcutText: "Press your shortcut",
           openLabel: "Open",
-          openText: "Translate",
           placeLabel: "Place",
-          placeText: "Centered"
+          placeText: "Centered",
+          runLabel: "Run",
+          urlTarget: "Chrome app mode",
+          folderTarget: "Project files",
+          scriptTarget: "Open Chap",
+          scriptResult: "Runs in your shell"
         },
         ko: {
           documentTitle: "Chap — Option 키를 누르세요. 중앙에 열립니다.",
@@ -237,15 +295,18 @@
           install: "Chap 설치",
           dmg: "수동 설치 (DMG)",
           trust: "✓ Apple 공증 완료 · macOS 14+",
-          flowLabel: "Option 키를 누른 채 T를 누르면 Translate가 Studio Display 중앙에 열립니다",
-          flowTitle: "Option 키가 시작점",
-          flowStatus: "누른 뒤 바로 실행",
+          carouselLabel: "Chap 실행 유형 예시",
+          carouselTitle: "하나의 단축키, 네 가지 실행 방식",
           shortcutLabel: "Option 키 누르기",
           shortcutText: "단축키를 누르세요",
-          openLabel: "실행",
-          openText: "번역",
+          openLabel: "열기",
           placeLabel: "배치",
-          placeText: "화면 중앙"
+          placeText: "화면 중앙",
+          runLabel: "실행",
+          urlTarget: "Chrome 앱 모드",
+          folderTarget: "프로젝트 파일",
+          scriptTarget: "Chap 열기",
+          scriptResult: "셸에서 실행"
         }
       };
 
@@ -281,7 +342,32 @@
       toggle.addEventListener("click", () => {
         applyLanguage(toggle.dataset.currentLanguage === "en" ? "ko" : "en");
       });
+      const carousel = document.querySelector("[data-carousel]");
+      const slides = [...carousel.querySelectorAll("[data-carousel-slide]")];
+      const tabs = [...carousel.querySelectorAll("[role=tab]")];
+      let activeSlide = 0;
+
+      const showSlide = (index, moveFocus = false) => {
+        activeSlide = (index + slides.length) % slides.length;
+        slides.forEach((slide, slideIndex) => { slide.hidden = slideIndex !== activeSlide; });
+        tabs.forEach((tab, tabIndex) => {
+          const isActive = tabIndex === activeSlide;
+          tab.setAttribute("aria-selected", String(isActive));
+          tab.tabIndex = isActive ? 0 : -1;
+        });
+        if (moveFocus) tabs[activeSlide].focus();
+      };
+
+      tabs.forEach((tab) => tab.addEventListener("click", () => showSlide(Number(tab.dataset.carouselSelect))));
+      carousel.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") { event.preventDefault(); showSlide(activeSlide - 1, true); }
+        if (event.key === "ArrowRight") { event.preventDefault(); showSlide(activeSlide + 1, true); }
+        if (event.key === "Home") { event.preventDefault(); showSlide(0, true); }
+        if (event.key === "End") { event.preventDefault(); showSlide(slides.length - 1, true); }
+      });
+
       applyLanguage(initialLanguage);
+      showSlide(0);
     })();
   </script>
 </body>
