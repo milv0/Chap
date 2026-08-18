@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.0.4] — Unreleased
+
+### Added
+
+- **Status bar icon selection** — New "Icon" submenu (immediately before Settings) lets you choose between Default (custom template image) and Lightning (SF Symbols `bolt.fill`). The selection updates the menubar icon immediately and persists as `statusBarIcon` in `~/.chap.json`. Existing configs without the field default to the original icon. The Accessibility-denied warning badge remains unaffected by this setting.
+
+### Improved
+
+- **Shortcut–site copy clarity** — English and Korean landing-page wording now says users press their configured shortcut, replacing the previous copy that referred to pressing a letter.
+
+---
+
 ## [1.0.3] — 2026-08-18
 
 ### Added
