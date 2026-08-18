@@ -18,6 +18,8 @@ Sources/
 │   ├── Launchers/                 ← 런처별 실행 로직
 │   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
 │   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
+│   │   ├── AppLauncher+Observation.swift ← AX 관찰 루프, fallback, eligibility 판정
+│   │   ├── AppLauncherSupport.swift      ← 관찰 정책/결과/레지스트리/컨텍스트 타입
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert
@@ -37,18 +39,32 @@ Sources/
 │   ├── Validation.swift           ← 도메인 검증, 좌표 계산(순수 코어+NSScreen 래퍼),
 │   │                                단축키 정규화, UUID 우선·이름 unique 디스플레이 매칭
 │   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
+│   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
     ├── ConfigStoreTests.swift
+    ├── ConfigFormatReferenceTests.swift
     ├── SettingsViewModelTests.swift
     ├── ValidationTests.swift
     ├── GeometryTests.swift
     ├── ConfigValidationTests.swift
     ├── ImportNormalizationTests.swift
+    ├── ConfigImportProcessorTests.swift
     ├── AXBoundsResultTests.swift
-    └── GlobalHotKeyManagerTests.swift
+    ├── AXResizePolicyTests.swift
+    ├── AppObservationPolicyTests.swift
+    ├── ChromeLauncherTests.swift
+    ├── FinderLauncherTests.swift
+    ├── AccessibilityPromptPolicyTests.swift
+    ├── GlobalHotKeyManagerTests.swift
+    ├── MenuConfigurationSnapshotTests.swift
+    ├── ProcessRunnerTests.swift
+    ├── SaveDebouncerTests.swift
+    ├── AppLifecycleSupportTests.swift
+    ├── DisplayPreviewPolicyTests.swift
+    └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
 └── StatusBarIcon.png
@@ -122,6 +138,7 @@ Site 모델 필드:
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
+  - 차단/실패 알림에 "Show Expected Format" 버튼: 필수 필드 설명 + 예제 JSON 표시 (Copy 가능)
   - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
 - Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
   stale UUID 갱신, ambiguous/disconnected는 재선택 안내

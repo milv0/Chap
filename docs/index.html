@@ -50,6 +50,11 @@
     h1 { font-family: var(--display); }
     h1 { font-size: clamp(3.35rem, 6.3vw, 6.2rem); font-weight: 600; letter-spacing: -.075em; line-height: .93; margin: 0; max-width: 670px; }
     h1 .hero-title-accent { color: var(--blue); }
+    html[lang="ko"] { font-family: "DM Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; overflow-wrap: break-word; word-break: keep-all; }
+    html[lang="ko"] h1, html[lang="ko"] .flow-header strong, html[lang="ko"] .flow-step strong { font-family: "Bricolage Grotesque", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+    html[lang="ko"] h1 { font-size: clamp(3.4rem, 5.5vw, 4.3rem); letter-spacing: -.04em; line-height: .94; }
+    html[lang="ko"] .eyebrow, html[lang="ko"] .flow-step small { letter-spacing: .02em; }
+    html[lang="ko"] .flow-header strong, html[lang="ko"] .flow-step strong { letter-spacing: -.01em; }
     .summary { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.12rem); margin: 1.6rem 0 0; max-width: 560px; }
     .cta-row { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.8rem; }
     .primary-button { align-items: center; background: var(--ink); border-radius: 12px; color: var(--white); display: inline-flex; font-size: .9rem; font-weight: 600; gap: .65rem; min-height: 50px; padding: .8rem 1.1rem .8rem 1.25rem; transition: background 180ms ease, transform 180ms ease; }
@@ -98,7 +103,7 @@
       .hero { padding: 1.8rem 0; }
       .hero-grid { gap: 1.5rem; }
       h1 { font-size: clamp(2.8rem, 14vw, 3.65rem); }
-      html[lang="ko"] h1 { font-size: clamp(2.55rem, 12vw, 3.25rem); }
+      html[lang="ko"] h1 { font-size: clamp(2.35rem, 10.5vw, 2.9rem); letter-spacing: -.025em; line-height: .98; }
       .summary { font-size: .94rem; margin-top: 1.15rem; }
       .cta-row { align-items: stretch; flex-direction: column; margin-top: 1.35rem; }
       .primary-button { justify-content: center; width: 100%; }
@@ -150,6 +155,7 @@
               <span data-i18n="install">Install Chap</span>
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </a>
+            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.0.2/Chap-1.0.2-2.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
             <span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span>
           </div>
         </div>
@@ -207,6 +213,7 @@
           heroTitleAccent: "Open it centered.",
           summary: "Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.",
           install: "Install Chap",
+          dmg: "Manual install (DMG)",
           trust: "✓ Apple notarized · macOS 14+",
           flowLabel: "Hold Option and press T to open Translate centered on Studio Display",
           flowTitle: "Option is the trigger",
@@ -232,6 +239,7 @@
           heroTitleAccent: "화면 중앙에 열립니다.",
           summary: "Option 키와 글자 하나를 조합하세요. Chap이 저장한 사이트, 앱, 폴더 또는 스크립트를 선택한 크기와 디스플레이에 엽니다.",
           install: "Chap 설치",
+          dmg: "수동 설치 (DMG)",
           trust: "✓ Apple 공증 완료 · macOS 14+",
           flowLabel: "Option 키를 누른 채 T를 누르면 Translate가 Studio Display 중앙에 열립니다",
           flowTitle: "Option 키가 시작점",

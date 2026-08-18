@@ -143,6 +143,10 @@ The URL and App launchers share the same Accessibility bounds pipeline. It follo
 
 Debug builds append diagnostics to `~/Library/Logs/Chap/resize_YYYY-MM-DD.csv`. `minSize=WxH` indicates `AXMinSize`/`AXMinimumSize` predicts a clamp; `recentered=(x y)` indicates the center-preserving correction ran; `enhancedUI=disabled` indicates that compatibility path ran. Their absence on a `fully` row is normal: it means the app accepted the requested bounds without needing that recovery path.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+
 ## License
 
 MIT
