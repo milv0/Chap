@@ -9,6 +9,9 @@ Without --publish, runs a read-only preflight and prints the release plan.
 With --publish, updates version metadata, validates the app, promotes dev to
 main, tags the release, builds/notarizes PKG and DMG artifacts, publishes the
 GitHub Release, and waits for GitHub Pages to build the promoted main commit.
+
+Release notes are read from release-notes/<version>.md (must exist before
+--publish). The file contents become the GitHub Release body.
 EOF
 }
 
@@ -96,6 +99,14 @@ if [[ "$current_version" == "$version" ]]; then
   exit 65
 fi
 
+# Release notes must exist for the target version.
+release_notes_file="$root_dir/release-notes/$version.md"
+if [[ ! -f "$release_notes_file" ]]; then
+  echo "Missing release notes: $release_notes_file" >&2
+  echo "Create it before running the release." >&2
+  exit 65
+fi
+
 require_clean_worktree
 ensure_release_does_not_exist
 require_identity codesigning "Developer ID Application"
@@ -115,6 +126,9 @@ Publish will:
   3. Commit/push dev, merge dev into main, and push annotated tag v$version.
   4. Build and notarize PKG primary installer plus DMG fallback.
   5. Create GitHub Release v$version and wait for GitHub Pages to build main.
+
+Release notes ($release_notes_file):
+$(cat "$release_notes_file")
 EOF
   exit 0
 fi
@@ -141,28 +155,107 @@ restore_branch() {
 trap restore_branch EXIT
 
 VERSION="$version" CURRENT_VERSION="$current_version" BUILD_NUMBER="$current_build" python3 - <<'PY'
-import os
+import os, sys
 from pathlib import Path
 
 old = os.environ["CURRENT_VERSION"]
 new = os.environ["VERSION"]
 build = os.environ["BUILD_NUMBER"]
-replacements = {
-    Path("project.yml"): [(f'MARKETING_VERSION: "{old}"', f'MARKETING_VERSION: "{new}"')],
-    Path("Sources/ChapCore/Models.swift"): [(f'?? "{old}"', f'?? "{new}"')],
-    Path("README.md"): [(f'version-{old}-orange', f'version-{new}-orange')],
-    Path("docs/index.html"): [
-        (f'releases/download/v{old}/Chap-{old}-{build}.pkg', f'releases/download/v{new}/Chap-{new}-{build}.pkg'),
-        (f'releases/download/v{old}/Chap-{old}-{build}.dmg', f'releases/download/v{new}/Chap-{new}-{build}.dmg'),
-    ],
-}
-for path, changes in replacements.items():
+
+# Each entry: (file, old_string, new_string, required)
+# required=True means exactly-one occurrence is mandatory; the script aborts if
+# the count is not 1.  required=False means 0 occurrences are silently skipped
+# (the target may not exist yet because another agent is adding it).
+replacements: list[tuple[Path, str, str, bool]] = [
+    # --- project.yml: app version ---
+    (Path("project.yml"),
+     f'MARKETING_VERSION: "{old}"',
+     f'MARKETING_VERSION: "{new}"',
+     True),
+
+    # --- Models.swift: fallback version string ---
+    (Path("Sources/ChapCore/Models.swift"),
+     f'?? "{old}"',
+     f'?? "{new}"',
+     True),
+
+    # --- README.md: badge ---
+    (Path("README.md"),
+     f"version-{old}-orange",
+     f"version-{new}-orange",
+     True),
+
+    # --- README.md: release command example (preflight) ---
+    # The standalone line includes a trailing newline to avoid matching the
+    # substring inside the "--publish" line.
+    (Path("README.md"),
+     f"Scripts/release.sh {old}\n",
+     f"Scripts/release.sh {new}\n",
+     True),
+
+    # --- README.md: release command example (publish) ---
+    (Path("README.md"),
+     f"Scripts/release.sh {old} --publish",
+     f"Scripts/release.sh {new} --publish",
+     True),
+
+    # --- docs/index.html: PKG download URL ---
+    (Path("docs/index.html"),
+     f"releases/download/v{old}/Chap-{old}-{build}.pkg",
+     f"releases/download/v{new}/Chap-{new}-{build}.pkg",
+     True),
+
+    # --- docs/index.html: DMG download URL ---
+    (Path("docs/index.html"),
+     f"releases/download/v{old}/Chap-{old}-{build}.dmg",
+     f"releases/download/v{new}/Chap-{new}-{build}.dmg",
+     True),
+
+    # --- docs/index.html: footer version text ---
+    (Path("docs/index.html"),
+     f"Chap {old} · macOS",
+     f"Chap {new} · macOS",
+     True),
+]
+
+# Pass 1: validate all targets before mutating any file.
+errors: list[str] = []
+for path, before, _after, required in replacements:
+    if not path.exists():
+        errors.append(f"File not found: {path}")
+        continue
     text = path.read_text()
-    for before, after in changes:
-        if text.count(before) != 1:
-            raise SystemExit(f"Expected exactly one {before!r} in {path}")
-        text = text.replace(before, after)
+    count = text.count(before)
+    if required and count != 1:
+        errors.append(
+            f"Expected exactly 1 occurrence of {before!r} in {path}, found {count}")
+    elif not required and count > 1:
+        errors.append(
+            f"Expected 0 or 1 occurrences of {before!r} in {path}, found {count}")
+
+if errors:
+    print("Version bump validation failed:", file=sys.stderr)
+    for e in errors:
+        print(f"  • {e}", file=sys.stderr)
+    sys.exit(1)
+
+# Pass 2: apply replacements (files may appear multiple times; accumulate edits).
+file_contents: dict[Path, str] = {}
+for path, before, after, required in replacements:
+    if path not in file_contents:
+        file_contents[path] = path.read_text()
+    text = file_contents[path]
+    count = text.count(before)
+    if count == 0 and not required:
+        print(f"  [skip] {before!r} not found in {path} (optional)")
+        continue
+    file_contents[path] = text.replace(before, after)
+    print(f"  [ok]   {path}: {before!r} → {after!r}")
+
+for path, text in file_contents.items():
     path.write_text(text)
+
+print(f"\nVersion surfaces updated: {old} → {new}")
 PY
 
 xcodegen
@@ -208,7 +301,7 @@ NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
 gh release create "v$version" "$pkg_path" "$dmg_path" \
   --repo milv0/Chap \
   --title "Chap $version" \
-  --notes "Signed and notarized PKG primary installer with DMG manual-install fallback."
+  --notes-file "$release_notes_file"
 
 for attempt in $(seq 1 30); do
   build_json="$(gh api repos/milv0/Chap/pages/builds/latest)"
