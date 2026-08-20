@@ -188,7 +188,7 @@ struct SiteLaunchFields: View {
 
     private var appFields: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("App")
+            Text("Application")
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
             HStack(spacing: 8) {
