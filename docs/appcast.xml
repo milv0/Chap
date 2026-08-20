@@ -9,9 +9,10 @@
             <title>1.0.5</title>
             <pubDate>Tue, 18 Aug 2026 19:04:27 +0900</pubDate>
             <sparkle:version>2</sparkle:version>
-            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.0.5/Chap-1.0.5-2.dmg" length="3725756" type="application/octet-stream" sparkle:edSignature="OEgScu48hIa3aXEXA39Hdr2Guw5Cvp/WJFl60y9SQIgWC2+x8AgI+MxDv8Aog/FlapgMDJm3+KMvRTpk7K54BA=="/>
+            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.0.6/Chap-1.0.6-2.dmg" length="3722088" type="application/octet-stream" sparkle:edSignature="/YpCpp9utXkbzITgW+CqO5GzEK7leOw3bpgNlAUBOarmnIdgh1+sHG5UvvzkRh9qwC6LsmGGQs5gKPr9twSLDQ=="/>
+            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.0.6-2.md</sparkle:releaseNotesLink>
         </item>
     </channel>
 </rss>
