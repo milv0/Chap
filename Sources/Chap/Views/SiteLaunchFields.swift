@@ -145,9 +145,6 @@ struct ScriptTextEditor: NSViewRepresentable {
 struct SiteLaunchFields: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
-    /// Closure to present the window/display configuration section.
-    /// Provided by the parent so that URL/App/Finder types can embed it.
-    let windowFields: AnyView
     let browseForApp: () -> Void
     let browseFolder: () -> Void
     var scriptFocused: FocusState<Bool>.Binding
@@ -168,106 +165,97 @@ struct SiteLaunchFields: View {
     // MARK: - URL Fields
 
     private var urlFields: some View {
-        Group {
-            InputField(
-                label: "URL",
-                text: Binding(
-                    get: { site.url },
-                    set: { newURL in
-                        site.url = newURL
-                        if site.name == Defaults.newSiteName || site.name.isEmpty,
-                            let host = URL(string: newURL)?.host
-                        {
-                            site.name =
-                                host.replacingOccurrences(of: "www.", with: "")
-                                .components(separatedBy: ".").first?.capitalized ?? host
-                        }
+        InputField(
+            label: "URL",
+            text: Binding(
+                get: { site.url },
+                set: { newURL in
+                    site.url = newURL
+                    if site.name == Defaults.newSiteName || site.name.isEmpty,
+                        let host = URL(string: newURL)?.host
+                    {
+                        site.name =
+                            host.replacingOccurrences(of: "www.", with: "")
+                            .components(separatedBy: ".").first?.capitalized ?? host
                     }
-                ),
-                placeholder: "https://"
-            )
-            windowFields
-        }
+                }
+            ),
+            placeholder: "https://"
+        )
     }
 
     // MARK: - App Fields
 
     private var appFields: some View {
-        Group {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("App")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
-                HStack(spacing: 8) {
-                    TextField(
-                        "/Applications/...",
-                        text: Binding(
-                            get: { site.appPath ?? "" },
-                            set: { newPath in
-                                site.appPath = newPath
-                                if !newPath.isEmpty {
-                                    let appName = URL(fileURLWithPath: newPath)
-                                        .deletingPathExtension().lastPathComponent
-                                    if site.name == Defaults.newSiteName || site.name.isEmpty {
-                                        site.name = appName
-                                    }
+        VStack(alignment: .leading, spacing: 6) {
+            Text("App")
+                .font(DS.captionFont)
+                .foregroundColor(DS.textSecondary)
+            HStack(spacing: 8) {
+                TextField(
+                    "/Applications/...",
+                    text: Binding(
+                        get: { site.appPath ?? "" },
+                        set: { newPath in
+                            site.appPath = newPath
+                            if !newPath.isEmpty {
+                                let appName = URL(fileURLWithPath: newPath)
+                                    .deletingPathExtension().lastPathComponent
+                                if site.name == Defaults.newSiteName || site.name.isEmpty {
+                                    site.name = appName
                                 }
                             }
-                        )
+                        }
                     )
-                    .textFieldStyle(.plain)
-                    .font(DS.bodyFont)
-                    .padding(DS.paddingSmall)
-                    .background(DS.surfaceBg)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(DS.border, lineWidth: 1)
-                    )
+                )
+                .textFieldStyle(.plain)
+                .font(DS.bodyFont)
+                .padding(DS.paddingSmall)
+                .background(DS.surfaceBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(DS.border, lineWidth: 1)
+                )
 
-                    Button(action: browseForApp) {
-                        Image(systemName: "folder.badge.plus")
-                            .font(.system(size: 12))
-                            .foregroundColor(DS.accent)
-                            .padding(8)
-                            .background(DS.accentSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-                    .buttonStyle(.plain)
+                Button(action: browseForApp) {
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 12))
+                        .foregroundColor(DS.accent)
+                        .padding(8)
+                        .background(DS.accentSoft)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .buttonStyle(.plain)
             }
-            windowFields
         }
     }
 
     // MARK: - Finder Fields
 
     private var finderFields: some View {
-        Group {
-            HStack(alignment: .bottom) {
-                InputField(
-                    label: "Folder",
-                    text: Binding(
-                        get: { site.folderPath ?? "" },
-                        set: { newPath in
-                            site.folderPath = newPath
-                            if site.name == Defaults.newSiteName || site.name.isEmpty,
-                                !newPath.isEmpty
-                            {
-                                site.name = URL(fileURLWithPath: newPath).lastPathComponent
-                            }
+        HStack(alignment: .bottom) {
+            InputField(
+                label: "Folder",
+                text: Binding(
+                    get: { site.folderPath ?? "" },
+                    set: { newPath in
+                        site.folderPath = newPath
+                        if site.name == Defaults.newSiteName || site.name.isEmpty,
+                            !newPath.isEmpty
+                        {
+                            site.name = URL(fileURLWithPath: newPath).lastPathComponent
                         }
-                    ),
-                    placeholder: "~/Documents"
-                )
-                Button(action: browseFolder) {
-                    Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .frame(height: 30)
+                    }
+                ),
+                placeholder: "~/Documents"
+            )
+            Button(action: browseFolder) {
+                Image(systemName: "folder.badge.plus")
+                    .font(.system(size: 14))
             }
-            windowFields
+            .buttonStyle(.bordered)
+            .frame(height: 30)
         }
     }
 

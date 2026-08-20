@@ -26,91 +26,8 @@ struct SiteConfigView: View {
     var body: some View {
         ScrollView {
             CardSection {
-                VStack(alignment: .leading, spacing: DS.spacing) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Type")
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.textSecondary)
-                        PillPicker(selection: $site.launchType)
-                    }
-
-                    HStack(alignment: .top, spacing: DS.spacing) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Name")
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textSecondary)
-                            TextField("Site name", text: $site.name)
-                                .textFieldStyle(.plain)
-                                .font(DS.bodyFont)
-                                .padding(DS.paddingSmall)
-                                .background(DS.surfaceBg)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(DS.border, lineWidth: 1)
-                                )
-                                .focused($nameFieldFocused)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .onAppear {
-                            if isNew {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    nameFieldFocused = true
-                                }
-                            }
-                        }
-
-                        InputField(
-                            label: "Shortcut (⌥ +)",
-                            text: Binding(
-                                get: { site.shortcut ?? "" },
-                                set: { newValue in
-                                    let trimmed = newValue.trimmingCharacters(
-                                        in: .whitespacesAndNewlines)
-                                    let key =
-                                        trimmed.isEmpty
-                                        ? nil : String(trimmed.prefix(1)).uppercased()
-                                    if let k = key, [".", ","].contains(k) {
-                                        reservedKeyAlert = true
-                                        reservedKeyChar = k
-                                        return
-                                    }
-                                    site.shortcut = key
-                                }
-                            ),
-                            placeholder: "예: T → ⌥T"
-                        )
-                        .frame(width: 180, alignment: .leading)
-                        .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
-                            Button("OK", role: .cancel) {}
-                        } message: {
-                            Text("⌥\(reservedKeyChar) is reserved for system use.")
-                        }
-                    }
-
-                    SiteLaunchFields(
-                        site: $site,
-                        isEditing: $isEditing,
-                        windowFields: AnyView(
-                            SiteWindowConfigView(
-                                site: $site,
-                                isEditing: $isEditing,
-                                hoveredSizeSelection: $hoveredSizeSelection,
-                                isSizePresetPopoverPresented: $isSizePresetPopoverPresented,
-                                sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
-                                sizeEditingDisplayName: $sizeEditingDisplayName,
-                                widthDraft: $widthDraft,
-                                heightDraft: $heightDraft,
-                                widthFocused: $widthFocused,
-                                heightFocused: $heightFocused
-                            )
-                        ),
-                        browseForApp: browseForApp,
-                        browseFolder: browseFolder,
-                        scriptFocused: $scriptFocused
-                    )
-                }
-                .frame(maxWidth: 420, alignment: .leading)
+                formContent
+                    .frame(maxWidth: 420, alignment: .leading)
             }
             .padding(.leading, DS.paddingSmall)
             .padding(.trailing, DS.padding)
@@ -130,6 +47,102 @@ struct SiteConfigView: View {
                 scriptFocused = false
             }
         )
+    }
+
+    // MARK: - Form Content
+
+    private var formContent: some View {
+        VStack(alignment: .leading, spacing: DS.spacing) {
+            nameSection
+            launchTypeSection
+            SiteLaunchFields(
+                site: $site,
+                isEditing: $isEditing,
+                browseForApp: browseForApp,
+                browseFolder: browseFolder,
+                scriptFocused: $scriptFocused
+            )
+            shortcutSection
+            windowConfiguration
+        }
+    }
+
+    private var nameSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Name")
+                .font(DS.captionFont)
+                .foregroundColor(DS.textSecondary)
+            TextField("Site name", text: $site.name)
+                .textFieldStyle(.plain)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .padding(.horizontal, DS.paddingSmall)
+                .padding(.vertical, 10)
+                .background(DS.surfaceBg)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(DS.border, lineWidth: 1)
+                )
+                .focused($nameFieldFocused)
+        }
+        .onAppear {
+            guard isNew else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                nameFieldFocused = true
+            }
+        }
+    }
+
+    private var launchTypeSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Launch Type")
+                .font(DS.captionFont)
+                .foregroundColor(DS.textSecondary)
+            PillPicker(selection: $site.launchType)
+        }
+    }
+
+    private var shortcutSection: some View {
+        InputField(
+            label: "Shortcut (⌥ +)",
+            text: Binding(
+                get: { site.shortcut ?? "" },
+                set: { newValue in
+                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let key = trimmed.isEmpty ? nil : String(trimmed.prefix(1)).uppercased()
+                    if let key, [".", ","].contains(key) {
+                        reservedKeyAlert = true
+                        reservedKeyChar = key
+                        return
+                    }
+                    site.shortcut = key
+                }
+            ),
+            placeholder: "예: T → ⌥T"
+        )
+        .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("⌥\(reservedKeyChar) is reserved for system use.")
+        }
+    }
+
+    @ViewBuilder
+    private var windowConfiguration: some View {
+        if site.launchType != .shell {
+            SiteWindowConfigView(
+                site: $site,
+                isEditing: $isEditing,
+                hoveredSizeSelection: $hoveredSizeSelection,
+                isSizePresetPopoverPresented: $isSizePresetPopoverPresented,
+                sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
+                sizeEditingDisplayName: $sizeEditingDisplayName,
+                widthDraft: $widthDraft,
+                heightDraft: $heightDraft,
+                widthFocused: $widthFocused,
+                heightFocused: $heightFocused
+            )
+        }
     }
 
     // MARK: - Actions
