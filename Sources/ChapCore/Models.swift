@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "1.0.9"
+        ?? "1.0.10"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -241,21 +241,25 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
 public struct Config: Codable {
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
+    public var optionShortcutsEnabled: Bool
     public var statusBarIcon: StatusBarIconChoice
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
-        case showGuideWindow, showGhostWindow, launchAtLogin, statusBarIcon, sites
+        case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
+        case statusBarIcon, sites
     }
 
     public init(
         showGuideWindow: Bool = true,
         launchAtLogin: Bool = false,
+        optionShortcutsEnabled: Bool = true,
         statusBarIcon: StatusBarIconChoice = .default,
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
+        self.optionShortcutsEnabled = optionShortcutsEnabled
         self.statusBarIcon = statusBarIcon
         self.sites = sites
     }
@@ -267,6 +271,8 @@ public struct Config: Codable {
             try container.decodeIfPresent(Bool.self, forKey: .showGuideWindow)
             ?? container.decodeIfPresent(Bool.self, forKey: .showGhostWindow) ?? true
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
+        optionShortcutsEnabled =
+            try container.decodeIfPresent(Bool.self, forKey: .optionShortcutsEnabled) ?? true
         statusBarIcon =
             try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
             ?? .default
@@ -277,6 +283,7 @@ public struct Config: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(showGuideWindow, forKey: .showGuideWindow)
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
+        try container.encode(optionShortcutsEnabled, forKey: .optionShortcutsEnabled)
         try container.encode(statusBarIcon, forKey: .statusBarIcon)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)

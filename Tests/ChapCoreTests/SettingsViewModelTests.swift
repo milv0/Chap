@@ -55,15 +55,31 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsOptionShortcutsToggle() {
+        let vm = SettingsViewModel(sites: baseSites, optionShortcutsEnabled: true)
+        vm.optionShortcutsEnabled = false
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsStatusBarIconChange() {
+        let vm = SettingsViewModel(sites: baseSites, statusBarIcon: .default)
+        vm.statusBarIcon = .lightning
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
         var savedGuide: Bool?
         var savedLogin: Bool?
+        var savedOptionShortcutsEnabled: Bool?
+        var savedStatusBarIcon: StatusBarIconChoice?
         vm.onSave = { payload in
             savedSites = payload.sites
             savedGuide = payload.showGuideWindow
             savedLogin = payload.launchAtLogin
+            savedOptionShortcutsEnabled = payload.optionShortcutsEnabled
+            savedStatusBarIcon = payload.statusBarIcon
             return true
         }
 
@@ -71,14 +87,20 @@ struct SettingsViewModelTests {
             Site(name: "Added", url: "https://added.com", width: 300, height: 200))
         vm.showGuideWindow = false
         vm.launchAtLogin = true
+        vm.optionShortcutsEnabled = false
+        vm.statusBarIcon = .lightning
         _ = vm.onSave?(
             SettingsPayload(
                 sites: vm.sites, showGuideWindow: vm.showGuideWindow,
-                launchAtLogin: vm.launchAtLogin))
+                launchAtLogin: vm.launchAtLogin,
+                optionShortcutsEnabled: vm.optionShortcutsEnabled,
+                statusBarIcon: vm.statusBarIcon))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
         #expect(savedLogin == true)
+        #expect(savedOptionShortcutsEnabled == false)
+        #expect(savedStatusBarIcon == .lightning)
     }
 
     @Test func scheduledAutoSavePersistsLatestValidState() {

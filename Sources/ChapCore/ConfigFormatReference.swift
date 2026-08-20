@@ -52,5 +52,6 @@ enum ConfigFormatReference {
         • shell:  name, script, width, height
 
         Optional: shortcut, displayName, windowSizePreset
+        Global optional: optionShortcutsEnabled
         """
 }

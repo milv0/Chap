@@ -13,7 +13,11 @@ enum SettingsConfigTransfer {
     /// Shows a validation error alert if the config is invalid for export.
     static func exportConfig(vm: SettingsViewModel) {
         let config = Config(
-            showGuideWindow: vm.showGuideWindow, launchAtLogin: vm.launchAtLogin, sites: vm.sites)
+            showGuideWindow: vm.showGuideWindow,
+            launchAtLogin: vm.launchAtLogin,
+            optionShortcutsEnabled: vm.optionShortcutsEnabled,
+            statusBarIcon: vm.statusBarIcon,
+            sites: vm.sites)
         let validation = validateConfigForExport(config)
         guard validation.isValid else {
             let errorMessages = validation.errors.map { issue in
@@ -143,12 +147,16 @@ enum SettingsConfigTransfer {
                     SettingsPayload(
                         sites: imported.sites,
                         showGuideWindow: imported.showGuideWindow,
-                        launchAtLogin: imported.launchAtLogin)) ?? false
+                        launchAtLogin: imported.launchAtLogin,
+                        optionShortcutsEnabled: imported.optionShortcutsEnabled,
+                        statusBarIcon: imported.statusBarIcon)) ?? false
             guard saved else { return false }
 
             vm.sites = imported.sites
             vm.showGuideWindow = imported.showGuideWindow
             vm.launchAtLogin = imported.launchAtLogin
+            vm.optionShortcutsEnabled = imported.optionShortcutsEnabled
+            vm.statusBarIcon = imported.statusBarIcon
             vm.markSaved()
             onSuccess?()
             showImportSuccess(processed)

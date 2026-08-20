@@ -13,7 +13,11 @@ struct GlobalHotKeyRegistration: Equatable {
     let action: GlobalHotKeyAction
 }
 
-func globalHotKeyRegistrations(for sites: [Site]) -> [GlobalHotKeyRegistration] {
+func globalHotKeyRegistrations(
+    for sites: [Site],
+    optionShortcutsEnabled: Bool
+) -> [GlobalHotKeyRegistration] {
+    guard optionShortcutsEnabled else { return [] }
     let sanitizedSites = sanitizedShortcuts(for: sites)
     var registrations = [
         GlobalHotKeyRegistration(character: ".", action: .openMenu),
@@ -54,11 +58,17 @@ final class GlobalHotKeyManager: NSObject {
 
     func configure(
         sites: [Site],
+        optionShortcutsEnabled: Bool,
         actionHandler: @escaping (GlobalHotKeyAction) -> Void
     ) {
         precondition(Thread.isMainThread)
+        guard optionShortcutsEnabled else {
+            stop()
+            return
+        }
         self.actionHandler = actionHandler
-        registrations = globalHotKeyRegistrations(for: sites)
+        registrations = globalHotKeyRegistrations(
+            for: sites, optionShortcutsEnabled: optionShortcutsEnabled)
         isConfigured = true
         unregisterAllHotKeys()
         registeredKeyboardLayoutIdentifier = nil

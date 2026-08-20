@@ -88,7 +88,8 @@ extension AppDelegate {
                 menu.addItem(.separator())
             }
             lastType = site.launchType
-            let keyEquiv = site.shortcut?.lowercased() ?? ""
+            let keyEquiv =
+                config.optionShortcutsEnabled ? site.shortcut?.lowercased() ?? "" : ""
             let item = NSMenuItem(
                 title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
             if !keyEquiv.isEmpty {
@@ -107,46 +108,6 @@ extension AppDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        // Icon selection submenu
-        let iconMenu = NSMenu()
-        let defaultIconItem = NSMenuItem(
-            title: "Default", action: #selector(selectDefaultIcon), keyEquivalent: "")
-        defaultIconItem.image = {
-            if let img = Self.isolatedCopy(
-                of: NSImage(named: "StatusBarIcon"),
-                size: NSSize(width: 14, height: 14))
-            {
-                img.isTemplate = true
-                return img
-            }
-            let fallback = NSImage(
-                systemSymbolName: "app.fill", accessibilityDescription: nil)
-            fallback?.isTemplate = true
-            fallback?.size = NSSize(width: 14, height: 14)
-            return fallback
-        }()
-        defaultIconItem.target = self
-        if config.statusBarIcon == .default { defaultIconItem.state = .on }
-        iconMenu.addItem(defaultIconItem)
-
-        let lightningIconItem = NSMenuItem(
-            title: "Lightning", action: #selector(selectLightningIcon), keyEquivalent: "")
-        lightningIconItem.image = {
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .regular)
-            let img = NSImage(
-                systemSymbolName: "bolt.fill", accessibilityDescription: nil)?
-                .withSymbolConfiguration(config)
-            img?.isTemplate = true
-            img?.size = NSSize(width: 14, height: 14)
-            return img
-        }()
-        lightningIconItem.target = self
-        if config.statusBarIcon == .lightning { lightningIconItem.state = .on }
-        iconMenu.addItem(lightningIconItem)
-
-        let iconSubmenu = NSMenuItem(title: "Icon", action: nil, keyEquivalent: "")
-        iconSubmenu.submenu = iconMenu
-        menu.addItem(iconSubmenu)
 
         // Check for Updates — disabled when Sparkle configuration is incomplete
         let updateItem = NSMenuItem(
@@ -158,8 +119,11 @@ extension AppDelegate {
         menu.addItem(updateItem)
 
         let settings = NSMenuItem(
-            title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
-        settings.keyEquivalentModifierMask = .option
+            title: "Settings...", action: #selector(openSettings),
+            keyEquivalent: config.optionShortcutsEnabled ? "," : "")
+        if config.optionShortcutsEnabled {
+            settings.keyEquivalentModifierMask = .option
+        }
         settings.target = self
         menu.addItem(settings)
         let qa = NSMenuItem(
@@ -194,36 +158,12 @@ extension AppDelegate {
 
     private func configureGlobalHotKeys() {
         guard !isRunningTests else { return }
-        globalHotKeyManager.configure(sites: config.sites) { [weak self] action in
+        globalHotKeyManager.configure(
+            sites: config.sites,
+            optionShortcutsEnabled: config.optionShortcutsEnabled
+        ) { [weak self] action in
             self?.handleGlobalHotKeyAction(action)
         }
-    }
-
-    // MARK: - Icon selection
-
-    @objc func selectDefaultIcon() {
-        applyStatusBarIconChoice(.default)
-    }
-
-    @objc func selectLightningIcon() {
-        applyStatusBarIconChoice(.lightning)
-    }
-
-    private func applyStatusBarIconChoice(_ choice: StatusBarIconChoice) {
-        guard config.statusBarIcon != choice else { return }
-        config.statusBarIcon = choice
-        // 아이콘 즉시 갱신
-        statusItem.button?.image = statusIconImage(
-            accessible: accessibilityController.isAccessible, choice: choice)
-        // 설정 파일에 저장
-        do {
-            try configStore.save(config)
-        } catch {
-            Log.config.error(
-                "Failed to save icon choice: \(error.localizedDescription, privacy: .public)")
-        }
-        // 메뉴를 재구성해 체크마크를 갱신
-        buildMenu()
     }
 
     private func handleGlobalHotKeyAction(_ action: GlobalHotKeyAction) {

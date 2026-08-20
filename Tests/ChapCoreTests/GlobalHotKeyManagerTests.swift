@@ -12,7 +12,8 @@ struct GlobalHotKeyManagerTests {
             site(name: "C", shortcut: "T"),
         ]
 
-        let registrations = globalHotKeyRegistrations(for: sites)
+        let registrations = globalHotKeyRegistrations(
+            for: sites, optionShortcutsEnabled: true)
 
         #expect(
             registrations == [
@@ -32,7 +33,8 @@ struct GlobalHotKeyManagerTests {
             site(name: "D", shortcut: "g"),
         ]
 
-        let registrations = globalHotKeyRegistrations(for: sites)
+        let registrations = globalHotKeyRegistrations(
+            for: sites, optionShortcutsEnabled: true)
 
         #expect(
             registrations == [
@@ -40,6 +42,15 @@ struct GlobalHotKeyManagerTests {
                 GlobalHotKeyRegistration(character: ",", action: .openSettings),
                 GlobalHotKeyRegistration(character: "G", action: .launchSite(index: 2)),
             ])
+    }
+
+    @Test("disabled Option shortcuts produce no registrations")
+    func disabledOptionShortcutsProduceNoRegistrations() {
+        let registrations = globalHotKeyRegistrations(
+            for: [site(name: "A", shortcut: "G")],
+            optionShortcutsEnabled: false)
+
+        #expect(registrations.isEmpty)
     }
 
     private func site(name: String, shortcut: String?) -> Site {
