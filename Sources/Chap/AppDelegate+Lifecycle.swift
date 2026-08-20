@@ -19,7 +19,12 @@ extension AppDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         statusItem = NSStatusBar.system.statusItem(withLength: 28)
-        statusItem.button?.image = statusIconImage(accessible: true)
+        if let button = statusItem.button {
+            button.alignment = .center
+            button.imagePosition = .imageOnly
+            button.imageScaling = .scaleProportionallyDown
+            button.image = statusIconImage(accessible: true)
+        }
         buildMenu()
         accessibilityController.onAccessibleChanged = { [weak self] accessible in
             self?.updateStatusIcon(accessible: accessible)
@@ -82,14 +87,18 @@ extension AppDelegate {
 
         let vm = SettingsViewModel(
             sites: config.sites,
-            showGuideWindow: config.showGuideWindow, launchAtLogin: config.launchAtLogin)
+            showGuideWindow: config.showGuideWindow,
+            launchAtLogin: config.launchAtLogin,
+            optionShortcutsEnabled: config.optionShortcutsEnabled,
+            statusBarIcon: config.statusBarIcon)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
             let validationConfig = Config(
                 showGuideWindow: payload.showGuideWindow,
                 launchAtLogin: payload.launchAtLogin,
-                statusBarIcon: self.config.statusBarIcon,
+                optionShortcutsEnabled: payload.optionShortcutsEnabled,
+                statusBarIcon: payload.statusBarIcon,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -110,6 +119,8 @@ extension AppDelegate {
             let newConfig = validationConfig
             let previousMenu = MenuConfigurationSnapshot(sites: self.config.sites)
             let previousLoginSetting = self.config.launchAtLogin
+            let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled
+            let previousStatusBarIcon = self.config.statusBarIcon
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -126,8 +137,15 @@ extension AppDelegate {
             if previousLoginSetting != newConfig.launchAtLogin {
                 self.applyLoginItem(enabled: payload.launchAtLogin)
             }
+            if previousStatusBarIcon != newConfig.statusBarIcon {
+                self.statusItem.button?.image = self.statusIconImage(
+                    accessible: self.accessibilityController.isAccessible,
+                    choice: newConfig.statusBarIcon)
+            }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
-            if previousMenu != newMenu {
+            if previousMenu != newMenu
+                || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
+            {
                 DispatchQueue.main.async { self.buildMenu() }
             }
             return true

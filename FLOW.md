@@ -100,10 +100,11 @@
 ## 4. 글로벌 단축키 흐름
 
 `AppDelegate › buildMenu()`가 config 변경 때마다
-`GlobalHotKeyManager › configure(sites:actionHandler:)`를 호출한다.
+`GlobalHotKeyManager › configure(sites:optionShortcutsEnabled:actionHandler:)`를 호출한다.
 
 ```
 globalHotKeyRegistrations()
+├─ optionShortcutsEnabled == false → 빈 등록 목록
 ├─ "." → openMenu
 ├─ "," → openSettings
 └─ sanitized site.shortcut → launchSite(original index)
@@ -116,6 +117,8 @@ configure()
 ```
 
 - macOS는 등록된 Option 조합만 Chap에 전달한다. 일반 keyDown은 Chap 프로세스를 통과하지 않는다.
+- Settings > General의 `Enable Chap Option-Key Triggers`를 끄면 `⌥.`, `⌥,`, 사이트 단축키 등록과
+  메뉴의 Option key equivalent가 모두 즉시 해제된다. 사이트별 shortcut 설정값 자체는 유지된다.
 - `.`/`,`를 사이트 단축키로 쓸 수는 없다 (I7 + `validateConfig`가 차단).
 - 문자→keyCode는 `TISCopyCurrentASCIICapableKeyboardLayoutInputSource` + `UCKeyTranslate`를 쓴다.
   한글/일본어 IME 활성 상태에서도 ASCII 레이아웃을 얻고 AZERTY/Dvorak 물리 배열도 반영한다.
@@ -340,12 +343,18 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
+Settings는 하단의 `Launchables`와 `General` 두 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
+사이드바는 두 탭에서 유지되며, General에서 사이트를 선택하면 Launchables로 복귀한다.
+Launchables는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
+상태바 아이콘을 관리한다.
+
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
 ```
 파일 읽기 실패        → ConfigStoreError.readFailed → Config.default (alert 없음)
 JSON decode 실패      → decodeFailed → alert("Config file is corrupted") + Config.default
 성공
+ ├─ optionShortcutsEnabled 누락 시 true (기존 config 동작 유지)
  ├─ sanitizedShortcuts   빈값/다글자/예약키/중복(대소문자 무시, 앞의 것 유지) → nil
  ├─ migrateDisplayIdentifiers
  │    · UUID가 연결돼 있으면 유지하고 displayName만 최신화
@@ -375,8 +384,8 @@ SettingsView.save(showAlerts:)
 ```
 
 `onSave`가 `false`를 반환하면 `markSaved()`가 호출되지 않으므로, 저장 실패 시 변경 상태가 유지된다.
-전역 토글만 바꿀 때는 `saveGlobals()`가 `originalSites`(마지막 저장 시점)를 써서, 편집 중 사이트의
-검증 실패와 무관하게 저장된다.
+전역 설정(Guide Window/Login/Option Shortcuts/Status Bar Icon)만 바꿀 때는 `saveGlobals()`가
+`originalSites`(마지막 저장 시점)를 써서, 편집 중 사이트의 검증 실패와 무관하게 저장된다.
 
 `hasChanges`는 창 닫기/종료 시 확인 alert의 근거다. `Site.==`는 `id`(세션 한정 UUID)를 제외한 값 비교다.
 

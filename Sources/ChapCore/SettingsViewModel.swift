@@ -4,15 +4,21 @@ public struct SettingsPayload {
     public let sites: [Site]
     public let showGuideWindow: Bool
     public let launchAtLogin: Bool
+    public let optionShortcutsEnabled: Bool
+    public let statusBarIcon: StatusBarIconChoice
 }
 
 public final class SettingsViewModel: ObservableObject {
     @Published public var sites: [Site]
     @Published public var showGuideWindow: Bool
     @Published public var launchAtLogin: Bool
+    @Published public var optionShortcutsEnabled: Bool
+    @Published public var statusBarIcon: StatusBarIconChoice
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
+    @Published public var originalOptionShortcutsEnabled: Bool
+    @Published public var originalStatusBarIcon: StatusBarIconChoice
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -20,12 +26,16 @@ public final class SettingsViewModel: ObservableObject {
     public var hasChanges: Bool {
         sites != originalSites || showGuideWindow != originalGuide
             || launchAtLogin != originalLogin
+            || optionShortcutsEnabled != originalOptionShortcutsEnabled
+            || statusBarIcon != originalStatusBarIcon
     }
 
     public func markSaved() {
         originalSites = sites
         originalGuide = showGuideWindow
         originalLogin = launchAtLogin
+        originalOptionShortcutsEnabled = optionShortcutsEnabled
+        originalStatusBarIcon = statusBarIcon
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -35,6 +45,8 @@ public final class SettingsViewModel: ObservableObject {
             let config = Config(
                 showGuideWindow: self.showGuideWindow,
                 launchAtLogin: self.launchAtLogin,
+                optionShortcutsEnabled: self.optionShortcutsEnabled,
+                statusBarIcon: self.statusBarIcon,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
@@ -55,7 +67,9 @@ public final class SettingsViewModel: ObservableObject {
             onSave?(
                 SettingsPayload(
                     sites: sites, showGuideWindow: showGuideWindow,
-                    launchAtLogin: launchAtLogin)) ?? true
+                    launchAtLogin: launchAtLogin,
+                    optionShortcutsEnabled: optionShortcutsEnabled,
+                    statusBarIcon: statusBarIcon)) ?? true
         if saved { markSaved() }
         return saved
     }
@@ -63,14 +77,20 @@ public final class SettingsViewModel: ObservableObject {
     public init(
         sites: [Site], showGuideWindow: Bool = true,
         launchAtLogin: Bool = false,
+        optionShortcutsEnabled: Bool = true,
+        statusBarIcon: StatusBarIconChoice = .default,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
         self.sites = sites
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
+        self.optionShortcutsEnabled = optionShortcutsEnabled
+        self.statusBarIcon = statusBarIcon
         self.originalSites = sites
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
+        self.originalOptionShortcutsEnabled = optionShortcutsEnabled
+        self.originalStatusBarIcon = statusBarIcon
         self.saveDebouncer = saveDebouncer
     }
 }

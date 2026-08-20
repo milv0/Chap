@@ -89,6 +89,14 @@ struct ConfigModelTests {
         #expect(config.sites.isEmpty)
     }
 
+    @Test("defaults optionShortcutsEnabled to true when key is missing")
+    func defaultsOptionShortcutsEnabled() throws {
+        let config = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"sites":[]}"#.utf8))
+
+        #expect(config.optionShortcutsEnabled)
+    }
+
     @Test func decodesMultipleSites() throws {
         let json =
             #"{"sites":[{"name":"A","url":"https://a.com","width":100,"height":100,"x":0,"y":0},{"name":"B","url":"https://b.com","width":200,"height":200,"x":10,"y":10}]}"#
@@ -103,6 +111,7 @@ struct ConfigModelTests {
         let original = Config(
             showGuideWindow: false,
             launchAtLogin: true,
+            optionShortcutsEnabled: false,
             statusBarIcon: .lightning,
             sites: [Site(name: "X", url: "https://x.com", width: 500, height: 300)]
         )
@@ -112,6 +121,7 @@ struct ConfigModelTests {
 
         #expect(decoded.showGuideWindow == original.showGuideWindow)
         #expect(decoded.launchAtLogin == original.launchAtLogin)
+        #expect(decoded.optionShortcutsEnabled == original.optionShortcutsEnabled)
         #expect(decoded.statusBarIcon == original.statusBarIcon)
         #expect(decoded.sites == original.sites)
     }

@@ -8,7 +8,8 @@ struct ConfigImportProcessorTests {
     @Test("valid JSON returns normalized config")
     func validJSON() throws {
         let source = Config(
-            showGuideWindow: false, launchAtLogin: true,
+            showGuideWindow: false, launchAtLogin: true, optionShortcutsEnabled: false,
+            statusBarIcon: .lightning,
             sites: [
                 Site(name: "Example", url: "https://example.com", width: 80, height: 600)
             ])
@@ -24,6 +25,8 @@ struct ConfigImportProcessorTests {
         #expect(processed.config.sites[0].width == 100)
         #expect(processed.config.showGuideWindow == false)
         #expect(processed.config.launchAtLogin)
+        #expect(!processed.config.optionShortcutsEnabled)
+        #expect(processed.config.statusBarIcon == .lightning)
         #expect(!processed.fixes.isEmpty)
     }
 

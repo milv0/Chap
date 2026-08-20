@@ -126,6 +126,7 @@ Site 모델 필드:
 Config 모델 필드:
   - showGuideWindow: Bool     리사이즈 위치 가이드 윈도우 표시 여부
   - launchAtLogin: Bool       로그인 시 자동 실행
+  - optionShortcutsEnabled: Bool  Option 글로벌 단축키 활성 여부. 누락 시 true
   - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
   - sites: [Site]             사이트 목록
 
@@ -134,7 +135,8 @@ Config 모델 필드:
 
 ## 핵심 기능
 
-- 글로벌 단축키 (⌥., ⌥커스텀키, ⌥,) — RegisterEventHotKey로 정확한 조합만 시스템 등록
+- Settings > General의 Enable Chap Option-Key Triggers 토글로 글로벌 단축키
+  (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
@@ -146,6 +148,9 @@ Config 모델 필드:
     (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
+- Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
+  Launchables는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘
+  설정을 제공하며 General에서 사이드바 항목을 선택하면 Launchables로 복귀
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
   - 차단/실패 알림에 "Show Expected Format" 버튼: 필수 필드 설명 + 예제 JSON 표시 (Copy 가능)
   - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
@@ -377,6 +382,8 @@ App 윈도우 감지 방식 (AXObserver):
 
 ### 변경 후
   - RegisterEventHotKey로 메뉴(⌥.), 설정(⌥,), 사이트(설정된 ⌥커스텀키)만 macOS에 등록
+  - Settings > General에서 Option-Key Triggers를 끄면 모든 Carbon 등록과
+    메뉴 key equivalent를 즉시 해제
   - 일반 키 입력은 Chap 프로세스를 통과하지 않음
   - 글로벌 단축키는 Accessibility 권한과 독립; 권한은 URL/App 리사이즈에만 사용
   - ASCII 키보드 배열 ID가 실제로 바뀔 때만 문자→keyCode를 다시 계산해 전체 재등록
