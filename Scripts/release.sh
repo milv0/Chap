@@ -362,13 +362,13 @@ replacements: list[tuple[Path, str, str, bool]] = [
 
     # --- docs/index.html: PKG download URL ---
     (Path("docs/index.html"),
-     f"releases/download/v{old}/Chap-{old}-{build}.pkg",
+     f"releases/download/v{old}/Chap-{old}-{current_build}.pkg",
      f"releases/download/v{new}/Chap-{new}-{build}.pkg",
      True),
 
     # --- docs/index.html: DMG download URL ---
     (Path("docs/index.html"),
-     f"releases/download/v{old}/Chap-{old}-{build}.dmg",
+     f"releases/download/v{old}/Chap-{old}-{current_build}.dmg",
      f"releases/download/v{new}/Chap-{new}-{build}.dmg",
      True),
 
