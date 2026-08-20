@@ -69,10 +69,10 @@
     .window-dots i { background: #d3d3ce; border-radius: 50%; display: block; height: 8px; width: 8px; }
     .flow-header strong { font-family: var(--display); font-size: .8rem; letter-spacing: -.02em; }
     .window-status { color: var(--muted); font-size: .68rem; font-weight: 600; }
-    .settings-layout { display: grid; grid-template-columns: 136px minmax(0, 1fr); min-height: 386px; }
-    .format-row { background: #f2f2ee; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; padding: .8rem .55rem; }
-    .settings-sidebar-title { color: var(--muted); font-size: .58rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .5rem .3rem; text-transform: uppercase; }
-    .launch-type-tab { align-items: center; background: transparent; border: 0; border-radius: 8px; color: var(--muted); cursor: pointer; display: flex; font-size: .7rem; font-weight: 700; gap: .55rem; min-height: 34px; padding: .5rem .55rem; text-align: left; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
+    .settings-layout { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 386px; }
+    .format-row { background: #f2f2ee; border-bottom: 1px solid var(--line); display: grid; gap: 3px; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: .7rem .8rem; }
+    .settings-sidebar-title { color: var(--muted); font-size: .58rem; font-weight: 800; grid-column: 1 / -1; letter-spacing: .1em; margin: 0 0 .2rem; text-transform: uppercase; }
+    .launch-type-tab { align-items: center; background: transparent; border: 0; border-radius: 8px; color: var(--muted); cursor: pointer; display: flex; font-size: .7rem; font-weight: 700; gap: .4rem; justify-content: center; min-height: 34px; padding: .5rem; text-align: center; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
     .launch-type-tab::before { background: currentColor; border-radius: 50%; content: ""; height: 6px; opacity: .48; width: 6px; }
     .launch-type-tab:hover { background: rgb(49 92 255 / .08); color: var(--ink); }
     .launch-type-tab[aria-selected="true"] { background: var(--white); box-shadow: 0 1px 6px rgb(30 30 24 / .08); color: var(--blue); }
@@ -80,16 +80,17 @@
     .flow-viewport { min-width: 0; }
     .flow-slide { animation: panel-in 220ms ease-out; height: 100%; }
     .flow-slide[hidden] { display: none; }
-    .settings-panel { display: flex; flex-direction: column; gap: 1rem; padding: 1.35rem 1.45rem 1.25rem; }
+    .settings-panel { display: flex; flex-direction: column; gap: 1rem; padding: 1.15rem 1.45rem 1.25rem; }
     .settings-panel-header { align-items: flex-start; display: flex; justify-content: space-between; }
     .settings-eyebrow { color: var(--blue); font-size: .62rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
     .settings-panel h2 { font-family: var(--display); font-size: 1.38rem; letter-spacing: -.045em; line-height: 1; margin: 0; }
     .settings-save { background: var(--ink); border-radius: 8px; color: var(--white); font-size: .68rem; font-weight: 700; padding: .43rem .65rem; }
     .settings-form { display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) 94px; }
     .setting-control { min-width: 0; }
+    .setting-control--full { grid-column: 1 / -1; }
     .setting-control span { color: var(--muted); display: block; font-size: .58rem; font-weight: 800; letter-spacing: .08em; margin-bottom: .32rem; text-transform: uppercase; }
     .setting-value { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: #373735; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .67rem; overflow: hidden; padding: .57rem .65rem; text-overflow: ellipsis; white-space: nowrap; }
-    .setting-value--shortcut { color: var(--blue); font-family: var(--display); font-size: .82rem; font-weight: 700; }
+    .setting-value--shortcut { background: #ebf0ff; border-color: rgb(49 92 255 / .55); color: var(--blue); font-family: var(--display); font-size: .82rem; font-weight: 700; text-align: center; }
     .settings-preview { background: linear-gradient(135deg, #f7f7f4, #f0f2fa); border: 1px solid var(--line); border-radius: 12px; margin-top: auto; padding: .7rem .8rem; }
     .preview-label { color: var(--muted); font-size: .57rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
     .display-stage { align-items: center; display: grid; gap: .7rem; grid-template-columns: 1fr 74px; margin-top: .45rem; }
@@ -190,11 +191,11 @@
           <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Open it centered.</span></h1>
           <p class="summary" data-i18n="summary">Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.</p>
           <div class="cta-row">
-            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.0.8/Chap-1.0.8-4.pkg" rel="noreferrer">
+            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.0.9/Chap-1.0.9-5.pkg" rel="noreferrer">
               <span data-i18n="install">Install Chap</span>
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </a>
-            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.0.8/Chap-1.0.8-4.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
+            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.0.9/Chap-1.0.9-5.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
             <span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span>
           </div>
         </div>
@@ -217,28 +218,28 @@
               <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
                 <div class="settings-panel">
                   <div class="settings-panel-header"><div><p class="settings-eyebrow">URL</p><h2 data-i18n="urlName">Chap website</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsAddress">Address</span><div class="setting-value">https://milv0.github.io/Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="urlName">Chap website</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsAddress">Address</span><div class="setting-value">https://milv0.github.io/Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
                 <div class="settings-panel">
                   <div class="settings-panel-header"><div><p class="settings-eyebrow">APP</p><h2>Chap.app</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsApplication">Application</span><div class="setting-value">/Applications/Chap.app</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value">Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsApplication">Application</span><div class="setting-value">/Applications/Chap.app</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
                 <div class="settings-panel">
                   <div class="settings-panel-header"><div><p class="settings-eyebrow">FINDER</p><h2 data-i18n="finderName">Project files</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsFolder">Folder</span><div class="setting-value">~/Projects/Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="finderName">Project files</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsFolder">Folder</span><div class="setting-value">~/Projects/Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
                 <div class="settings-panel">
                   <div class="settings-panel-header"><div><p class="settings-eyebrow">SCRIPT</p><h2 data-i18n="scriptName">Open Chap</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsScript">Script</span><div class="setting-value">open -a Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="scriptName">Open Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsScript">Script</span><div class="setting-value">open -a Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsRun">Run</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsShell">Your shell</strong><span data-i18n="settingsShellDetail">No window placement needed</span></div><div class="panel-symbol panel-symbol--script" aria-hidden="true">$ chap</div></div></div>
                 </div>
               </section>
@@ -251,7 +252,7 @@
 
   <footer class="footer">
     <div class="shell footer-inner">
-      <span>Chap 1.0.8 · macOS</span>
+      <span>Chap 1.0.9 · macOS</span>
     </div>
   </footer>
 
@@ -278,7 +279,8 @@
           settingsStatus: "Ready to launch",
           settingsLaunchTypes: "Launch types",
           settingsSave: "Save",
-          settingsAddress: "Address",
+          settingsName: "Name",
+          settingsAddress: "URL",
           settingsApplication: "Application",
           settingsFolder: "Folder",
           settingsScript: "Script",
@@ -323,7 +325,8 @@
           settingsStatus: "실행 준비 완료",
           settingsLaunchTypes: "실행 유형",
           settingsSave: "저장",
-          settingsAddress: "주소",
+          settingsName: "이름",
+          settingsAddress: "URL",
           settingsApplication: "앱",
           settingsFolder: "폴더",
           settingsScript: "스크립트",
