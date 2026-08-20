@@ -53,9 +53,9 @@ struct SiteConfigView: View {
 
     private var formContent: some View {
         VStack(alignment: .leading, spacing: DS.spacing) {
-            nameSection
             launchTypeSection
-            launchDetails
+            nameAndShortcutRow
+            launchTargetFields
             windowConfiguration
         }
     }
@@ -67,9 +67,8 @@ struct SiteConfigView: View {
                 .foregroundColor(DS.textSecondary)
             TextField("Site name", text: $site.name)
                 .textFieldStyle(.plain)
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .padding(.horizontal, DS.paddingSmall)
-                .padding(.vertical, 10)
+                .font(DS.bodyFont)
+                .padding(DS.paddingSmall)
                 .background(DS.surfaceBg)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
@@ -95,18 +94,12 @@ struct SiteConfigView: View {
         }
     }
 
-    @ViewBuilder
-    private var launchDetails: some View {
-        if site.launchType == .url {
-            HStack(alignment: .bottom, spacing: DS.spacing) {
-                launchTargetFields
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                shortcutSection(isCompact: true)
-                    .frame(width: 104, alignment: .leading)
-            }
-        } else {
-            launchTargetFields
-            shortcutSection()
+    private var nameAndShortcutRow: some View {
+        HStack(alignment: .bottom, spacing: DS.spacing) {
+            nameSection
+                .frame(maxWidth: .infinity, alignment: .leading)
+            shortcutSection(isCompact: true)
+                .frame(width: 88, alignment: .center)
         }
     }
 
@@ -120,23 +113,31 @@ struct SiteConfigView: View {
         )
     }
 
+    private var shortcutBinding: Binding<String> {
+        Binding(
+            get: { site.shortcut ?? "" },
+            set: { newValue in
+                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                let key = trimmed.isEmpty ? nil : String(trimmed.prefix(1)).uppercased()
+                if let key, [".", ","].contains(key) {
+                    reservedKeyAlert = true
+                    reservedKeyChar = key
+                    return
+                }
+                site.shortcut = key
+            }
+        )
+    }
+
     private func shortcutSection(isCompact: Bool = false) -> some View {
         InputField(
             label: isCompact ? "Shortcut (⌥)" : "Shortcut (⌥ +)",
-            text: Binding(
-                get: { site.shortcut ?? "" },
-                set: { newValue in
-                    let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let key = trimmed.isEmpty ? nil : String(trimmed.prefix(1)).uppercased()
-                    if let key, [".", ","].contains(key) {
-                        reservedKeyAlert = true
-                        reservedKeyChar = key
-                        return
-                    }
-                    site.shortcut = key
-                }
-            ),
-            placeholder: isCompact ? "T" : "예: T → ⌥T"
+            text: shortcutBinding,
+            placeholder: isCompact ? "T" : "예: T → ⌥T",
+            alignment: isCompact ? .center : .leading,
+            textAlignment: isCompact ? .center : .leading,
+            fieldBackground: isCompact ? DS.accentSurface : DS.surfaceBg,
+            fieldBorder: isCompact ? DS.accent.opacity(0.7) : DS.border
         )
         .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
             Button("OK", role: .cancel) {}

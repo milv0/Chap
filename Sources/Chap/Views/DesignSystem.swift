@@ -13,6 +13,7 @@ enum DS {
 
     static let accent = Color(red: 54 / 255, green: 100 / 255, blue: 255 / 255)
     static let accentSoft = accent.opacity(0.08)
+    static let accentSurface = Color(red: 235 / 255, green: 240 / 255, blue: 255 / 255)
     static let cardBg = Color(.controlBackgroundColor)
     static let surfaceBg = Color(.windowBackgroundColor)
     static let textPrimary = Color(.labelColor)
@@ -49,21 +50,26 @@ struct InputField: View {
     let label: String
     @Binding var text: String
     var placeholder: String = ""
+    var alignment: HorizontalAlignment = .leading
+    var textAlignment: TextAlignment = .leading
+    var fieldBackground: Color = DS.surfaceBg
+    var fieldBorder: Color = DS.border
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: alignment, spacing: 6) {
             Text(label)
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .font(DS.bodyFont)
+                .multilineTextAlignment(textAlignment)
                 .padding(DS.paddingSmall)
-                .background(DS.surfaceBg)
+                .background(fieldBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(DS.border, lineWidth: 1)
+                        .stroke(fieldBorder, lineWidth: 1)
                 )
         }
     }

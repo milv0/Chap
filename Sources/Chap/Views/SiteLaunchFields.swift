@@ -217,16 +217,12 @@ struct SiteLaunchFields: View {
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(DS.border, lineWidth: 1)
                 )
-
                 Button(action: browseForApp) {
                     Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 12))
-                        .foregroundColor(DS.accent)
-                        .padding(8)
-                        .background(DS.accentSoft)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .font(.system(size: 14))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .frame(height: 30)
             }
         }
     }
