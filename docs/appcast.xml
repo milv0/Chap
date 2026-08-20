@@ -6,6 +6,15 @@
         <description>Appcast feed for Chap macOS updates.</description>
         <language>en</language>
         <item>
+            <title>1.0.7</title>
+            <pubDate>Thu, 20 Aug 2026 14:07:00 +0900</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.0.7</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.0.7-3.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.0.7/Chap-1.0.7-3.dmg" length="3722676" type="application/octet-stream" sparkle:edSignature="AsRAbQRBoay4ApiM3aILbXy1v+jF1xZN5uCJaPWi2x0xpWocMDoiQavODYPPwocfUY0aG3qP7XHREf1p30cMDg=="/>
+        </item>
+        <item>
             <title>1.0.6</title>
             <pubDate>Tue, 18 Aug 2026 19:04:27 +0900</pubDate>
             <sparkle:version>2</sparkle:version>
