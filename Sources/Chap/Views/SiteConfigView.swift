@@ -55,14 +55,7 @@ struct SiteConfigView: View {
         VStack(alignment: .leading, spacing: DS.spacing) {
             nameSection
             launchTypeSection
-            SiteLaunchFields(
-                site: $site,
-                isEditing: $isEditing,
-                browseForApp: browseForApp,
-                browseFolder: browseFolder,
-                scriptFocused: $scriptFocused
-            )
-            shortcutSection
+            launchDetails
             windowConfiguration
         }
     }
@@ -102,9 +95,34 @@ struct SiteConfigView: View {
         }
     }
 
-    private var shortcutSection: some View {
+    @ViewBuilder
+    private var launchDetails: some View {
+        if site.launchType == .url {
+            HStack(alignment: .bottom, spacing: DS.spacing) {
+                launchTargetFields
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                shortcutSection(isCompact: true)
+                    .frame(width: 104, alignment: .leading)
+            }
+        } else {
+            launchTargetFields
+            shortcutSection()
+        }
+    }
+
+    private var launchTargetFields: some View {
+        SiteLaunchFields(
+            site: $site,
+            isEditing: $isEditing,
+            browseForApp: browseForApp,
+            browseFolder: browseFolder,
+            scriptFocused: $scriptFocused
+        )
+    }
+
+    private func shortcutSection(isCompact: Bool = false) -> some View {
         InputField(
-            label: "Shortcut (⌥ +)",
+            label: isCompact ? "Shortcut (⌥)" : "Shortcut (⌥ +)",
             text: Binding(
                 get: { site.shortcut ?? "" },
                 set: { newValue in
@@ -118,7 +136,7 @@ struct SiteConfigView: View {
                     site.shortcut = key
                 }
             ),
-            placeholder: "예: T → ⌥T"
+            placeholder: isCompact ? "T" : "예: T → ⌥T"
         )
         .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
             Button("OK", role: .cancel) {}
