@@ -29,7 +29,7 @@
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body { background: var(--paper); color: var(--ink); display: flex; flex-direction: column; font-family: var(--body); line-height: 1.5; margin: 0; min-height: 100svh; min-width: 320px; }
-    main { display: flex; flex: 1; }
+    main { display: block; }
     a { color: inherit; text-decoration: none; }
     a:focus-visible, button:focus-visible { outline: 3px solid rgb(49 92 255 / .35); outline-offset: 3px; }
     button { font: inherit; }
@@ -45,8 +45,8 @@
     .nav-link, .language-toggle { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
     .nav-link:hover, .language-toggle:hover { background: var(--soft); color: var(--ink); }
 
-    .hero { align-items: center; display: flex; flex: 1; padding: clamp(3rem, 6vw, 5rem) 0; width: 100%; }
-    .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 7vw, 6.5rem); grid-template-columns: minmax(0, .9fr) minmax(460px, 1.1fr); }
+    .hero { padding: clamp(3rem, 6vw, 5.5rem) 0 clamp(3.5rem, 6vw, 6rem); width: 100%; }
+    .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 6vw, 5.5rem); grid-template-columns: minmax(0, .85fr) minmax(500px, 1.15fr); }
     .eyebrow { color: var(--blue); font-size: .74rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 1.1rem; text-transform: uppercase; }
     h1 { font-family: var(--display); }
     h1 { font-size: clamp(3.35rem, 6.3vw, 6.2rem); font-weight: 600; letter-spacing: -.075em; line-height: .93; margin: 0; max-width: 670px; }
@@ -63,51 +63,46 @@
     .primary-button svg { height: 17px; width: 17px; }
     .trust { color: var(--green); font-size: .76rem; font-weight: 600; }
 
-    .flow-card { background: var(--white); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 28px 70px rgb(30 30 24 / .09); overflow: hidden; }
-    .flow-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 52px; padding: 0 1rem; }
+    .flow-card { background: var(--white); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 32px 80px rgb(30 30 24 / .12); overflow: hidden; }
+    .flow-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 48px; padding: 0 1rem; }
     .window-dots { display: flex; gap: 6px; }
     .window-dots i { background: #d3d3ce; border-radius: 50%; display: block; height: 8px; width: 8px; }
-    .flow-header strong { font-family: var(--display); font-size: .78rem; letter-spacing: -.02em; }
-    .flow-header span { color: var(--muted); font-size: .68rem; }
-    .flow-viewport { min-height: 212px; }
-    .flow-slide { animation: slide-in 220ms ease-out; }
+    .flow-header strong { font-family: var(--display); font-size: .8rem; letter-spacing: -.02em; }
+    .window-status { color: var(--muted); font-size: .68rem; font-weight: 600; }
+    .settings-layout { display: grid; grid-template-columns: 136px minmax(0, 1fr); min-height: 386px; }
+    .format-row { background: #f2f2ee; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 3px; padding: .8rem .55rem; }
+    .settings-sidebar-title { color: var(--muted); font-size: .58rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .5rem .3rem; text-transform: uppercase; }
+    .launch-type-tab { align-items: center; background: transparent; border: 0; border-radius: 8px; color: var(--muted); cursor: pointer; display: flex; font-size: .7rem; font-weight: 700; gap: .55rem; min-height: 34px; padding: .5rem .55rem; text-align: left; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
+    .launch-type-tab::before { background: currentColor; border-radius: 50%; content: ""; height: 6px; opacity: .48; width: 6px; }
+    .launch-type-tab:hover { background: rgb(49 92 255 / .08); color: var(--ink); }
+    .launch-type-tab[aria-selected="true"] { background: var(--white); box-shadow: 0 1px 6px rgb(30 30 24 / .08); color: var(--blue); }
+    .launch-type-tab[aria-selected="true"]::before { opacity: 1; }
+    .flow-viewport { min-width: 0; }
+    .flow-slide { animation: panel-in 220ms ease-out; height: 100%; }
     .flow-slide[hidden] { display: none; }
-    .flow { align-items: stretch; display: grid; grid-template-columns: 1fr 30px 1fr 30px 1fr; padding: 1.1rem; }
-    .flow-step { align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; min-height: 190px; padding: 1rem; text-align: center; }
-    .flow-step small { color: var(--muted); font-size: .65rem; font-weight: 700; letter-spacing: .1em; margin-bottom: .85rem; text-transform: uppercase; }
-    .flow-step strong { font-family: var(--display); font-size: .94rem; letter-spacing: -.03em; margin-top: .8rem; }
-    .flow-arrow { align-items: center; color: #a1a19b; display: flex; font-size: 1rem; justify-content: center; }
-    .keycap-group { align-items: center; display: flex; gap: .32rem; }
-    .keycap-plus { color: var(--muted); font-family: var(--display); font-size: .82rem; font-weight: 700; }
-    .keycap { align-items: center; background: var(--white); border: 1px solid #cfcfca; border-bottom-width: 4px; border-radius: 11px; display: inline-flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; justify-content: center; min-width: 48px; padding: .75rem .6rem .6rem; }
-    .keycap--option { background: var(--blue); border-color: var(--blue-dark); color: var(--white); min-width: 58px; }
-    .app-icon { align-items: center; background: var(--blue); border-radius: 13px; display: flex; height: 58px; justify-content: center; overflow: hidden; width: 58px; }
-    .app-icon img { display: block; height: 100%; object-fit: cover; width: 100%; }
-    .launch-glyph { align-items: center; color: var(--blue); display: flex; font-family: var(--display); font-size: 1.45rem; font-weight: 700; height: 58px; justify-content: center; }
-    .chrome-window { background: var(--white); border: 2px solid var(--ink); border-radius: 10px; height: 58px; overflow: hidden; width: 86px; }
-    .chrome-window-bar { align-items: center; background: #f2f2ee; border-bottom: 1px solid var(--line); display: flex; gap: 4px; height: 17px; padding: 0 7px; }
-    .chrome-window-bar i { background: #d4d4ce; border-radius: 50%; display: block; height: 5px; width: 5px; }
-    .chrome-window-bar i:first-child { background: #ee6a5f; }
-    .chrome-window-bar i:nth-child(2) { background: #f2bf4a; }
-    .chrome-window-bar i:last-child { background: #62c655; }
-    .chrome-window-page { background: linear-gradient(135deg, rgb(49 92 255 / .16), rgb(49 92 255 / .03)); border: 1px solid rgb(49 92 255 / .22); border-radius: 4px; display: block; height: 23px; margin: 8px auto; width: 58px; }
-    .finder-folder-icon { height: 62px; object-fit: contain; width: 72px; }
-    .script-glyph { background: #1c1c1a; border-radius: 13px; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; padding: .8rem .55rem; width: 100%; }
-    .display-icon { align-items: center; border: 2px solid var(--ink); border-radius: 7px; display: flex; height: 68px; justify-content: center; position: relative; width: 94px; }
-    .display-icon::before { background: rgb(49 92 255 / .12); border: 2px solid var(--blue); border-radius: 4px; content: ""; height: 38px; width: 48px; }
-    .display-icon::after { background: var(--ink); bottom: -9px; content: ""; height: 8px; position: absolute; width: 2px; }
-    .display-icon--chrome { background: rgb(49 92 255 / .12); }
-    .display-icon--chrome::before { display: none; }
-    .display-icon--chrome .chrome-window { border-width: 1px; border-radius: 4px; height: 30px; position: relative; width: 46px; z-index: 1; }
-    .display-icon--chrome .chrome-window-bar { gap: 2px; height: 9px; padding: 0 3px; }
-    .display-icon--chrome .chrome-window-bar i { height: 2px; width: 2px; }
-    .display-icon--chrome .chrome-window-page { border-radius: 2px; height: 12px; margin: 4px auto; width: 30px; }
-    .terminal-preview { background: #1c1c1a; border-radius: 8px; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .56rem; padding: .65rem .35rem; text-align: left; width: 96px; }
-    .format-row { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: 4px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: .75rem 1rem .15rem; padding: 4px; }
-    .launch-type-tab { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .65rem; font-weight: 700; letter-spacing: .08em; min-height: 38px; padding: .55rem .45rem; text-transform: uppercase; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
-    .launch-type-tab:hover { color: var(--ink); }
-    .launch-type-tab[aria-selected="true"] { background: var(--white); box-shadow: 0 2px 9px rgb(30 30 24 / .08); color: var(--blue); }
-    @keyframes slide-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+    .settings-panel { display: flex; flex-direction: column; gap: 1rem; padding: 1.35rem 1.45rem 1.25rem; }
+    .settings-panel-header { align-items: flex-start; display: flex; justify-content: space-between; }
+    .settings-eyebrow { color: var(--blue); font-size: .62rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
+    .settings-panel h2 { font-family: var(--display); font-size: 1.38rem; letter-spacing: -.045em; line-height: 1; margin: 0; }
+    .settings-save { background: var(--ink); border-radius: 8px; color: var(--white); font-size: .68rem; font-weight: 700; padding: .43rem .65rem; }
+    .settings-form { display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) 94px; }
+    .setting-control { min-width: 0; }
+    .setting-control span { color: var(--muted); display: block; font-size: .58rem; font-weight: 800; letter-spacing: .08em; margin-bottom: .32rem; text-transform: uppercase; }
+    .setting-value { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: #373735; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .67rem; overflow: hidden; padding: .57rem .65rem; text-overflow: ellipsis; white-space: nowrap; }
+    .setting-value--shortcut { color: var(--blue); font-family: var(--display); font-size: .82rem; font-weight: 700; }
+    .settings-preview { background: linear-gradient(135deg, #f7f7f4, #f0f2fa); border: 1px solid var(--line); border-radius: 12px; margin-top: auto; padding: .7rem .8rem; }
+    .preview-label { color: var(--muted); font-size: .57rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .display-stage { align-items: center; display: grid; gap: .7rem; grid-template-columns: 1fr 74px; margin-top: .45rem; }
+    .display-summary strong { display: block; font-family: var(--display); font-size: .88rem; letter-spacing: -.025em; }
+    .display-summary span { color: var(--muted); display: block; font-size: .64rem; margin-top: .08rem; }
+    .display-map { background: #232a40; border-radius: 7px; height: 48px; padding: 7px; position: relative; }
+    .display-map::before { border: 2px solid #5d80ff; border-radius: 3px; content: ""; inset: 8px 13px; position: absolute; }
+    .display-map::after { background: #5d80ff; border-radius: 2px; content: ""; height: 11px; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 21px; }
+    .panel-symbol { align-items: center; background: var(--blue); border-radius: 12px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; height: 44px; justify-content: center; width: 44px; }
+    .panel-symbol img { border-radius: 11px; display: block; height: 100%; object-fit: cover; width: 100%; }
+    .panel-symbol--folder { background: #e9f2ff; color: #3c82c8; font-size: 1.55rem; }
+    .panel-symbol--script { background: #1c1c1a; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; width: 72px; }
+    @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
 
     .footer { border-top: 1px solid var(--line); }
@@ -134,6 +129,19 @@
       .cta-row { align-items: stretch; flex-direction: column; margin-top: 1.35rem; }
       .primary-button { justify-content: center; width: 100%; }
       .trust { text-align: center; }
+      .flow-card { border-radius: 18px; }
+      .settings-layout { grid-template-columns: 1fr; min-height: 0; }
+      .format-row { border-bottom: 1px solid var(--line); border-right: 0; display: grid; gap: 3px; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: .45rem; }
+      .settings-sidebar-title { display: none; }
+      .launch-type-tab { font-size: .55rem; justify-content: center; min-height: 32px; padding: .4rem .15rem; }
+      .launch-type-tab::before { display: none; }
+      .settings-panel { gap: .85rem; padding: 1rem; }
+      .settings-panel h2 { font-size: 1.2rem; }
+      .settings-form { grid-template-columns: minmax(0, 1fr) 72px; }
+      .setting-value { font-size: .58rem; padding: .5rem; }
+      .settings-preview { padding: .6rem .65rem; }
+      .display-stage { grid-template-columns: 1fr 64px; }
+      .display-map { height: 42px; }
       .flow-header { min-height: 44px; }
       .flow-header strong { font-size: .74rem; }
       .format-row { gap: 2px; margin: .55rem .65rem .1rem; padding: 3px; }
@@ -191,54 +199,50 @@
           </div>
         </div>
 
-        <div class="flow-card" data-carousel role="region" aria-roledescription="carousel" data-i18n-aria-label="carouselLabel" aria-label="Chap launch type examples" tabindex="0">
+        <div class="flow-card" data-carousel role="region" aria-roledescription="carousel" data-i18n-aria-label="carouselLabel" aria-label="Chap settings launch type examples" tabindex="0">
           <div class="flow-header">
             <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <strong data-i18n="carouselTitle">One shortcut, four launch types</strong>
+            <strong data-i18n="settingsTitle">Chap Settings</strong>
+            <span class="window-status" data-i18n="settingsStatus">Ready to launch</span>
           </div>
-          <div class="format-row" role="tablist" aria-label="Launch types">
-            <button class="launch-type-tab" id="launch-tab-url" type="button" role="tab" data-carousel-select="0" aria-controls="launch-panel-url" aria-selected="true" tabindex="0">URL</button>
-            <button class="launch-type-tab" id="launch-tab-app" type="button" role="tab" data-carousel-select="1" aria-controls="launch-panel-app" aria-selected="false" tabindex="-1">APP</button>
-            <button class="launch-type-tab" id="launch-tab-finder" type="button" role="tab" data-carousel-select="2" aria-controls="launch-panel-finder" aria-selected="false" tabindex="-1">FINDER</button>
-            <button class="launch-type-tab" id="launch-tab-script" type="button" role="tab" data-carousel-select="3" aria-controls="launch-panel-script" aria-selected="false" tabindex="-1">SCRIPT</button>
-          </div>
-          <div class="flow-viewport">
-            <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
-              <div class="flow">
-                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small>URL</small><div class="chrome-window" aria-hidden="true"><span class="chrome-window-bar"><i></i><i></i><i></i></span><span class="chrome-window-page"></span></div><strong data-i18n="urlTarget">Chrome app mode</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon display-icon--chrome" aria-hidden="true"><div class="chrome-window"><span class="chrome-window-bar"><i></i><i></i><i></i></span><span class="chrome-window-page"></span></div></div><strong data-i18n="placeText">Centered</strong></div>
-              </div>
-            </section>
-            <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
-              <div class="flow">
-                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small>APP</small><div class="app-icon"><img src="assets/chap-icon.png" alt="" width="58" height="58"></div><strong>Chap.app</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon" aria-hidden="true"></div><strong data-i18n="placeText">Centered</strong></div>
-              </div>
-            </section>
-            <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
-              <div class="flow">
-                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small>FINDER</small><img class="finder-folder-icon" src="assets/finder-folder.svg" alt="" width="72" height="62"><strong data-i18n="folderTarget">Project files</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small data-i18n="placeLabel">Place</small><div class="display-icon" aria-hidden="true"></div><strong data-i18n="placeText">Centered</strong></div>
-              </div>
-            </section>
-            <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
-              <div class="flow">
-                <div class="flow-step"><small data-i18n="shortcutLabel">Hold Option</small><div class="keycap-group"><span class="keycap keycap--option">⌥</span><span class="keycap-plus">+</span><span class="keycap">C</span></div><strong data-i18n="shortcutText">Press your shortcut</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small>SCRIPT</small><div class="launch-glyph script-glyph">$ chap</div><strong data-i18n="scriptTarget">Open Chap</strong></div>
-                <div class="flow-arrow" aria-hidden="true">→</div>
-                <div class="flow-step"><small data-i18n="runLabel">Run</small><div class="terminal-preview">$ open -a Chap</div><strong data-i18n="scriptResult">Runs in your shell</strong></div>
-              </div>
-            </section>
+          <div class="settings-layout">
+            <div class="format-row" role="tablist" data-i18n-aria-label="settingsLaunchTypes" aria-label="Launch types">
+              <p class="settings-sidebar-title" data-i18n="settingsLaunchTypes">Launch types</p>
+              <button class="launch-type-tab" id="launch-tab-url" type="button" role="tab" data-carousel-select="0" aria-controls="launch-panel-url" aria-selected="true" tabindex="0">URL</button>
+              <button class="launch-type-tab" id="launch-tab-app" type="button" role="tab" data-carousel-select="1" aria-controls="launch-panel-app" aria-selected="false" tabindex="-1">APP</button>
+              <button class="launch-type-tab" id="launch-tab-finder" type="button" role="tab" data-carousel-select="2" aria-controls="launch-panel-finder" aria-selected="false" tabindex="-1">FINDER</button>
+              <button class="launch-type-tab" id="launch-tab-script" type="button" role="tab" data-carousel-select="3" aria-controls="launch-panel-script" aria-selected="false" tabindex="-1">SCRIPT</button>
+            </div>
+            <div class="flow-viewport">
+              <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
+                <div class="settings-panel">
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">URL</p><h2 data-i18n="urlName">Chap website</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsAddress">Address</span><div class="setting-value">https://milv0.github.io/Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
+                </div>
+              </section>
+              <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
+                <div class="settings-panel">
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">APP</p><h2>Chap.app</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsApplication">Application</span><div class="setting-value">/Applications/Chap.app</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
+                </div>
+              </section>
+              <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
+                <div class="settings-panel">
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">FINDER</p><h2 data-i18n="finderName">Project files</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsFolder">Folder</span><div class="setting-value">~/Projects/Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
+                </div>
+              </section>
+              <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
+                <div class="settings-panel">
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">SCRIPT</p><h2 data-i18n="scriptName">Open Chap</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsScript">Script</span><div class="setting-value">open -a Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div></div>
+                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsRun">Run</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsShell">Your shell</strong><span data-i18n="settingsShellDetail">No window placement needed</span></div><div class="panel-symbol panel-symbol--script" aria-hidden="true">$ chap</div></div></div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
       </div>
@@ -268,8 +272,26 @@
           install: "Install Chap",
           dmg: "Manual install (DMG)",
           trust: "✓ Apple notarized · macOS 14+",
-          carouselLabel: "Chap launch type examples",
+          carouselLabel: "Chap settings launch type examples",
           carouselTitle: "One shortcut, four launch types",
+          settingsTitle: "Chap Settings",
+          settingsStatus: "Ready to launch",
+          settingsLaunchTypes: "Launch types",
+          settingsSave: "Save",
+          settingsAddress: "Address",
+          settingsApplication: "Application",
+          settingsFolder: "Folder",
+          settingsScript: "Script",
+          settingsShortcut: "Shortcut",
+          settingsDisplay: "Display",
+          settingsRun: "Run",
+          settingsScreen: "Studio Display",
+          settingsCentered: "Centered at launch",
+          settingsShell: "Your shell",
+          settingsShellDetail: "No window placement needed",
+          urlName: "Chap website",
+          finderName: "Project files",
+          scriptName: "Open Chap",
           shortcutLabel: "Hold Option",
           shortcutText: "Press your shortcut",
           openLabel: "Open",
@@ -295,8 +317,26 @@
           install: "Chap 설치",
           dmg: "수동 설치 (DMG)",
           trust: "✓ Apple 공증 완료 · macOS 14+",
-          carouselLabel: "Chap 실행 유형 예시",
+          carouselLabel: "Chap 설정 실행 유형 예시",
           carouselTitle: "하나의 단축키, 네 가지 실행 방식",
+          settingsTitle: "Chap 설정",
+          settingsStatus: "실행 준비 완료",
+          settingsLaunchTypes: "실행 유형",
+          settingsSave: "저장",
+          settingsAddress: "주소",
+          settingsApplication: "앱",
+          settingsFolder: "폴더",
+          settingsScript: "스크립트",
+          settingsShortcut: "단축키",
+          settingsDisplay: "디스플레이",
+          settingsRun: "실행",
+          settingsScreen: "Studio Display",
+          settingsCentered: "실행 시 중앙 배치",
+          settingsShell: "사용자 셸",
+          settingsShellDetail: "창 배치가 필요하지 않음",
+          urlName: "Chap 웹사이트",
+          finderName: "프로젝트 파일",
+          scriptName: "Chap 열기",
           shortcutLabel: "Option 키 누르기",
           shortcutText: "단축키를 누르세요",
           openLabel: "열기",
