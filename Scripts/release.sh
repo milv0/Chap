@@ -199,8 +199,11 @@ if $resume; then
   if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
     git switch main
     Scripts/generate-appcast.sh "$dmg_path"
-    git add -- docs/appcast.xml
-    git diff --staged --quiet docs/appcast.xml || {
+    appcast_notes_path="docs/Chap-${version}-${dmg_path##*-}"
+    appcast_notes_path="${appcast_notes_path%.dmg}.md"
+    cp "$release_notes_file" "$appcast_notes_path"
+    git add -- docs/appcast.xml "$appcast_notes_path"
+    git diff --staged --quiet -- docs/appcast.xml "$appcast_notes_path" || {
       git commit -m "docs(appcast): add v$version update entry"
       git push origin main
       main_commit="$(git rev-parse HEAD)"
@@ -465,8 +468,11 @@ NOTARYTOOL_KEYCHAIN_PROFILE="${NOTARYTOOL_KEYCHAIN_PROFILE:-ChapNotary}" \
 # The generate-appcast script requires SPARKLE_BIN_DIR or SPARKLE_GENERATE_APPCAST.
 if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
   Scripts/generate-appcast.sh "$dmg_path"
-  git add -- docs/appcast.xml
-  git diff --staged --quiet docs/appcast.xml || {
+  appcast_notes_path="docs/Chap-${version}-${dmg_path##*-}"
+  appcast_notes_path="${appcast_notes_path%.dmg}.md"
+  cp "$release_notes_file" "$appcast_notes_path"
+  git add -- docs/appcast.xml "$appcast_notes_path"
+  git diff --staged --quiet -- docs/appcast.xml "$appcast_notes_path" || {
     git commit -m "docs(appcast): add v$version update entry"
     git push origin main
     main_commit="$(git rev-parse HEAD)"
