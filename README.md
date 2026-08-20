@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.0.8-orange)
+![Version](https://img.shields.io/badge/version-1.0.9-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -129,11 +129,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.0.8
+Scripts/release.sh 1.0.9
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.0.8 --publish
+Scripts/release.sh 1.0.9 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
