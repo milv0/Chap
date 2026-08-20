@@ -6,7 +6,7 @@
         <description>Appcast feed for Chap macOS updates.</description>
         <language>en</language>
         <item>
-            <title>1.0.5</title>
+            <title>1.0.6</title>
             <pubDate>Tue, 18 Aug 2026 19:04:27 +0900</pubDate>
             <sparkle:version>2</sparkle:version>
             <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
