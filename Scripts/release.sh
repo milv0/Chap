@@ -107,6 +107,11 @@ if not match:
 print(match.group(1))
 PY
 )"
+if ! [[ "$current_build" =~ ^[1-9][0-9]*$ ]]; then
+  echo "CURRENT_PROJECT_VERSION must be a positive integer: $current_build" >&2
+  exit 65
+fi
+next_build=$((current_build + 1))
 
 if $resume; then
   # --resume: strict precondition validation for resuming a failed release.
@@ -272,7 +277,7 @@ To resume a failed release whose tag exists but GitHub Release does not:
   Scripts/release.sh $version --resume
 
 Publish will:
-  1. Update $current_version → $version in app, README, and Pages download URLs.
+  1. Update $current_version (build $current_build) → $version (build $next_build) in app, README, and Pages download URLs.
   2. Run XcodeGen, Swift format/lint, tests, Debug build, and diff checks.
   3. Commit/push dev, merge dev into main, and push annotated tag v$version.
   4. Build and notarize PKG primary installer plus DMG fallback.
@@ -305,12 +310,13 @@ restore_branch() {
 }
 trap restore_branch EXIT
 
-VERSION="$version" CURRENT_VERSION="$current_version" BUILD_NUMBER="$current_build" python3 - <<'PY'
+VERSION="$version" CURRENT_VERSION="$current_version" CURRENT_BUILD_NUMBER="$current_build" BUILD_NUMBER="$next_build" python3 - <<'PY'
 import os, sys
 from pathlib import Path
 
 old = os.environ["CURRENT_VERSION"]
 new = os.environ["VERSION"]
+current_build = os.environ["CURRENT_BUILD_NUMBER"]
 build = os.environ["BUILD_NUMBER"]
 
 # Each entry: (file, old_string, new_string, required)
@@ -322,6 +328,10 @@ replacements: list[tuple[Path, str, str, bool]] = [
     (Path("project.yml"),
      f'MARKETING_VERSION: "{old}"',
      f'MARKETING_VERSION: "{new}"',
+     True),
+    (Path("project.yml"),
+     f'CURRENT_PROJECT_VERSION: "{current_build}"',
+     f'CURRENT_PROJECT_VERSION: "{build}"',
      True),
 
     # --- Models.swift: fallback version string ---
@@ -406,7 +416,7 @@ for path, before, after, required in replacements:
 for path, text in file_contents.items():
     path.write_text(text)
 
-print(f"\nVersion surfaces updated: {old} → {new}")
+print(f"\nVersion surfaces updated: {old} (build {current_build}) → {new} (build {build})")
 PY
 
 xcodegen
