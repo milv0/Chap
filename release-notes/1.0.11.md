@@ -1,0 +1,10 @@
+## Improved
+
+- **Clearer Option-key setting** — The Option-key trigger control now appears last in the Behavior section, after Guide Window and Open at Login.
+- **Usage notice** — A concise information notice explains when to temporarily disable Chap's Option-key combinations.
+- **App identity footer** — General settings now show the Chap icon and current app version above the bottom navigation.
+
+## Notes
+
+- Existing Option-key trigger preferences remain unchanged.
+- macOS 14.0+ required. Chrome required for URL launch type.
