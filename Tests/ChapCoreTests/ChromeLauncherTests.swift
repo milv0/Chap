@@ -72,21 +72,20 @@ struct ChromeLauncherTests {
 
     // MARK: - Existing URL Window Reuse
 
-    @Test("treats root URLs with and without a trailing slash as equivalent")
-    func rootURLVariants() {
+    @Test("treats URLs with and without a trailing slash as equivalent")
+    func trailingSlashVariants() {
         #expect(
             ChromeLauncher.equivalentChromeURLs(for: "https://example.com")
                 == ["https://example.com", "https://example.com/"])
         #expect(
             ChromeLauncher.equivalentChromeURLs(for: "https://example.com/?q=1")
                 == ["https://example.com/?q=1", "https://example.com?q=1"])
-    }
-
-    @Test("does not collapse non-root URL paths")
-    func pathURLHasNoAlternate() {
         #expect(
             ChromeLauncher.equivalentChromeURLs(for: "https://example.com/docs/")
-                == ["https://example.com/docs/"])
+                == ["https://example.com/docs/", "https://example.com/docs"])
+        #expect(
+            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/docs")
+                == ["https://example.com/docs", "https://example.com/docs/"])
     }
 
     @Test("builds a Chrome script that escapes URL string literals")
@@ -95,6 +94,8 @@ struct ChromeLauncherTests {
             url: #"https://example.com/?value="quoted"\path"#)
 
         #expect(script.contains(#"value=\"quoted\"\\path"#))
+        #expect(script.contains("repeat with chromeTab in tabs of chromeWindow"))
+        #expect(script.contains("set active tab of chromeWindow to chromeTab"))
         #expect(script.contains("set index of chromeWindow to 1"))
         #expect(script.contains(#"return "matched""#))
     }

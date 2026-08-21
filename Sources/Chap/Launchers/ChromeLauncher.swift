@@ -396,18 +396,23 @@ enum ChromeLauncher {
         let app = NSRunningApplication(processIdentifier: process.pid)
         app?.activate(options: .activateIgnoringOtherApps)
         let appElement = LauncherUtils.axApplication(pid: process.pid)
-        for attempt in 0..<10 {
-            if let window = focusedWindow(app: appElement) {
+        for attempt in 0..<20 {
+            if let window = focusedWindow(
+                app: appElement,
+                fallingBackToFirstWindow: attempt == 19)
+            {
                 AXUIElementPerformAction(window, kAXRaiseAction as CFString)
                 return .reused(
                     LauncherUtils.axApplyBounds(window, position: position, size: size))
             }
-            if attempt < 9 { runtime.sleep(50_000) }
+            if attempt < 19 { runtime.sleep(50_000) }
         }
         return .reused(nil)
     }
 
-    private static func focusedWindow(app: AXUIElement) -> AXUIElement? {
+    private static func focusedWindow(
+        app: AXUIElement, fallingBackToFirstWindow: Bool
+    ) -> AXUIElement? {
         var value: AnyObject?
         if AXUIElementCopyAttributeValue(
             app, kAXFocusedWindowAttribute as CFString, &value) == .success,
@@ -416,7 +421,7 @@ enum ChromeLauncher {
         {
             return (value as! AXUIElement)
         }
-        return LauncherUtils.axWindows(app: app).first
+        return fallingBackToFirstWindow ? LauncherUtils.axWindows(app: app).first : nil
     }
 
     static func existingWindowScript(url: String) -> String {
@@ -427,15 +432,18 @@ enum ChromeLauncher {
             set targetURLs to {\(targets)}
             tell application "Google Chrome"
                 repeat with chromeWindow in windows
-                    try
-                        set currentURL to URL of active tab of chromeWindow
-                        if targetURLs contains currentURL then
-                            set index of chromeWindow to 1
-                            activate
-                            delay 0.1
-                            return "matched"
-                        end if
-                    end try
+                    repeat with chromeTab in tabs of chromeWindow
+                        try
+                            set currentURL to URL of chromeTab
+                            if targetURLs contains currentURL then
+                                set active tab of chromeWindow to chromeTab
+                                set index of chromeWindow to 1
+                                activate
+                                delay 0.25
+                                return "matched"
+                            end if
+                        end try
+                    end repeat
                 end repeat
             end tell
             return "not-found"
@@ -451,8 +459,10 @@ enum ChromeLauncher {
             components.path = "/"
         } else if components.path == "/" {
             components.path = ""
+        } else if components.path.hasSuffix("/") {
+            components.path.removeLast()
         } else {
-            return candidates
+            components.path += "/"
         }
         if let alternate = components.string, !candidates.contains(alternate) {
             candidates.append(alternate)
