@@ -211,8 +211,9 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
 [main]  경로/URL/화면 검증 → bounds 계산 → enqueue
 [coordinator]
  1. queueWait 로깅 (대기 시간과 처리 시간을 분리 기록)
- 2. reuseExistingWindow == true이고 Chrome 실행 중이면 AppleScript로 모든 탭 URL 검색
-      매칭 → 해당 window 전면화 → AX focused window(없으면 첫 window) 1개 리사이즈 → 종료
+ 2. reuseExistingWindow == true이고 Chrome 실행 중이면 Chap 프로세스의 AppleScript로 사이트별 세션 window ID를 먼저 검색
+      ID 매칭 → 해당 window 전면화 → AX focused window(없으면 첫 window) 1개 리사이즈 → 종료
+      ID 없음/무효 → 모든 탭 URL 검색 → 매칭한 ID를 세션에 기억한 뒤 같은 처리
       미매칭/자동화 실패 → 아래 새 창 흐름으로 폴백
  3. baseline: Chrome PID 확보 → captureExistingWindows(최대 5회 × 30ms)
  4. Process: /usr/bin/open -na "Google Chrome" --args --app=<url>
@@ -230,9 +231,13 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
   실행 전 window fingerprint를 새 PID의 창에서 차감해 복원 창과 요청 창을 구분한다.
 - 새 창을 못 찾으면 `result == nil` → `detail = "no new window found"`.
 - 재사용 URL 비교는 모든 Chrome 탭의 URL 완전 일치이며 경로 끝 trailing slash는 동등 처리한다.
-  매칭된 탭을 활성화하고 창을 전면화한 뒤 AX focused window가 전파될 때까지 최대 1초 대기해
-  하나만 리사이즈한다. 포커스 값을 읽지 못할 때만 마지막에 첫 AX window로 폴백한다.
-  최초 사용 시 macOS가 Chrome 자동화 권한을 요청할 수 있다.
+  새 창으로 폴백한 경우에도 전면 Chrome window ID를 해당 사이트의 **현재 Chap 실행 세션에만** 기억한다.
+  따라서 로그인 리다이렉트처럼 URL이 바뀌어도 다음 실행에서 같은 창을 재사용할 수 있다. Chrome 재시작
+  또는 창 종료로 ID가 무효가 되면 URL 검색으로 되돌아간다. 매칭된 탭을 활성화하고 창을 전면화한 뒤
+  AX focused window가 전파될 때까지 최대 1초 대기해 하나만 리사이즈한다. 포커스 값을 읽지 못할 때만
+  마지막에 첫 AX window로 폴백한다.
+  최초 사용 시 macOS가 Chrome 자동화 권한을 요청할 수 있다. 거부되면 한 번 권한 안내를 표시하고
+  새 창 흐름으로 폴백한다.
 - 단계별 timing은 baseline·launch request·window wait·AX apply를 분리하고, 관찰된 PID 경로와
   최초 PID event·원래 baseline PID 복귀 시점을 함께 기록한다. PID 선택 정책과 폴링 동작은 바꾸지 않는다.
 

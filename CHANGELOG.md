@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.2] — 2026-08-21
+
+### Fixed
+
+- **Reliable Chrome window reuse** — Chap now requests Chrome Automation
+  permission directly and remembers the first opened Chrome window for each URL
+  launchable during the current app session. This keeps reuse working after a
+  login redirect changes the visible URL, while closed windows and Chrome
+  restarts safely fall back to URL matching.
+
+---
+
 ## [1.1.1] — 2026-08-21
 
 ### Fixed
