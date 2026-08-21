@@ -23,7 +23,7 @@ targets:
         CFBundleIconFile: AppIcon
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSAppleEventsUsageDescription: "Chap controls Finder to open folders and position Finder windows at the size and location you set."
+        NSAppleEventsUsageDescription: "Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows."
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.utilities
         SUFeedURL: "https://milv0.github.io/Chap/appcast.xml"

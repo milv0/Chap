@@ -19,6 +19,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
+- **Optional URL Window Reuse** — Bring forward an existing Chrome window for the same URL
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
@@ -28,7 +29,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - macOS 14.0+ (Sonoma)
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
-- Automation permission when using Finder folder launch
+- Automation permission when reusing Chrome URL windows or using Finder folder launch
 
 ## Usage
 
@@ -75,6 +76,7 @@ Stored at `~/.chap.json`:
       "width": 800,
       "height": 600,
       "launchType": "url",
+      "reuseExistingWindow": false,
       "displayName": "Built-in Retina Display",
       "displayIdentifier": "DISPLAY-UUID",
       "windowSizePreset": "standard",
@@ -188,6 +190,11 @@ The script signs the notarized DMG with the operator's Keychain-stored EdDSA pri
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+See [DESIGN.md](DESIGN.md) for app, Guide Window, and website color tokens.
+
+The website's Product history is intentionally curated. Add an entry only when
+a release introduces a major user-facing capability or meaningfully changes a
+core workflow; routine fixes and visual adjustments stay in release notes.
 
 ## License
 

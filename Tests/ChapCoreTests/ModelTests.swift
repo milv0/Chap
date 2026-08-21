@@ -7,12 +7,38 @@ import Testing
 struct SiteModelTests {
     @Test func roundTripsIdentically() throws {
         let original = Site(
-            name: "Test", url: "https://example.com", width: 400, height: 200)
+            name: "Test", url: "https://example.com", width: 400, height: 200,
+            reuseExistingWindow: true)
 
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(Site.self, from: data)
 
         #expect(decoded == original)
+    }
+
+    @Test("defaults URL window reuse to false when key is missing")
+    func defaultsReuseExistingWindow() throws {
+        let json =
+            #"{"name":"GitHub","url":"https://github.com","width":800,"height":600}"#
+
+        let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
+
+        #expect(!site.reuseExistingWindow)
+    }
+
+    @Test("round-trips URL window reuse")
+    func roundTripsReuseExistingWindow() throws {
+        let original = Site(
+            name: "GitHub", url: "https://github.com", width: 800, height: 600,
+            reuseExistingWindow: true)
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(Site.self, from: data)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+
+        #expect(decoded.reuseExistingWindow)
+        #expect(decoded == original)
+        #expect(json?["reuseExistingWindow"] as? Bool == true)
     }
 
     @Test func decodesAllFields() throws {

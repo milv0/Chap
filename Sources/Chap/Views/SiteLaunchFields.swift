@@ -165,23 +165,35 @@ struct SiteLaunchFields: View {
     // MARK: - URL Fields
 
     private var urlFields: some View {
-        InputField(
-            label: "URL",
-            text: Binding(
-                get: { site.url },
-                set: { newURL in
-                    site.url = newURL
-                    if site.name == Defaults.newSiteName || site.name.isEmpty,
-                        let host = URL(string: newURL)?.host
-                    {
-                        site.name =
-                            host.replacingOccurrences(of: "www.", with: "")
-                            .components(separatedBy: ".").first?.capitalized ?? host
+        VStack(alignment: .leading, spacing: 10) {
+            InputField(
+                label: "URL",
+                text: Binding(
+                    get: { site.url },
+                    set: { newURL in
+                        site.url = newURL
+                        if site.name == Defaults.newSiteName || site.name.isEmpty,
+                            let host = URL(string: newURL)?.host
+                        {
+                            site.name =
+                                host.replacingOccurrences(of: "www.", with: "")
+                                .components(separatedBy: ".").first?.capitalized ?? host
+                        }
                     }
-                }
-            ),
-            placeholder: "https://"
-        )
+                ),
+                placeholder: "https://"
+            )
+
+            HStack(spacing: 8) {
+                Text("Reuse Existing URL Window")
+                    .font(DS.bodyFont)
+                    .foregroundColor(DS.textPrimary)
+                Spacer(minLength: 8)
+                Toggle("", isOn: $site.reuseExistingWindow)
+                    .labelsHidden()
+                    .help("Bring forward a Chrome window already showing this URL.")
+            }
+        }
     }
 
     // MARK: - App Fields

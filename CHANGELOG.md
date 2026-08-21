@@ -2,6 +2,25 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.0] — 2026-08-21
+
+### Added
+
+- **Optional URL window reuse** — Each URL launchable can bring forward an existing
+  Chrome window showing the same address and place it at the configured size and
+  display instead of opening another window.
+- **Curated product history** — The website now records major feature milestones
+  without listing every patch release.
+- **Chap product story** — The website connects Chap's seal-inspired name with
+  fast Option-key access to apps, URLs, folders, and scripts.
+
+### Improved
+
+- **Roomier settings window** — The default Settings height accommodates the new
+  URL option without unnecessary scrolling.
+
+---
+
 ## [1.0.5] — Unreleased
 
 ### Added

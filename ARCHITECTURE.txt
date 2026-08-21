@@ -80,6 +80,7 @@ Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
 ├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (.gitignore 대상)
 ├── ARCHITECTURE.txt               ← 구조·기능·API·이력 (이 문서)
+├── DESIGN.md                     ← 앱·Guide Window·웹 색상 토큰 기준
 ├── FLOW.md                        ← 런타임 실행 흐름: 순서, 분기, 스레드, 타임아웃, 판정,
 │                                    불변 규칙, 알려진 이슈 (LLM 온보딩용)
 ├── AGENTS.md                      ← Codex 지침 (→ .harness/codex/AGENTS.md)
@@ -118,6 +119,7 @@ Site 모델 필드:
   - displaySizeOverrides: [DisplaySizeOverride] 화면별 size/preset override. 실제 실행 화면과
                               UUID → unique displayName 순으로 매칭되면 기본 size보다 우선 적용
   - launchType: LaunchType    url | app | finder | shell
+  - reuseExistingWindow: Bool URL 타입에서 같은 URL의 Chrome 창 재사용 여부. 누락 시 false
   - appPath: String?          앱 경로 (launchType=app)
   - script: String?           스크립트 내용 (launchType=shell)
   - folderPath: String?       폴더 경로 (launchType=finder)
@@ -138,6 +140,8 @@ Config 모델 필드:
 - Settings > General의 Enable Chap Option-Key Triggers 토글로 글로벌 단축키
   (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
+- URL별 Reuse Existing URL Window 토글. 활성화하면 Chrome의 동일 URL 창을 전면화하고
+  focused window 하나만 현재 display/size 설정으로 재배치하며, 없으면 새 --app 창을 연다.
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
@@ -185,7 +189,7 @@ Config 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 770x640 크기로 커서 화면 중앙에 표시
+- 설정 창은 770x680 크기로 커서 화면 중앙에 표시
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
@@ -255,19 +259,22 @@ Config 모델 필드:
 
 Chrome 윈도우 감지 방식:
   1. 모든 요청을 단일 requestCoordinator serial queue에서 처리
-     (cached Chrome PID baseline → open -na Process → 새 창 polling → AX readback 검증).
+     (선택적 동일 URL 재사용 → cached Chrome PID baseline → open -na Process
+     → 새 창 polling → AX readback 검증).
      이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
      1:1로 대응함. queue wait와 processing latency, baseline/launch/window wait/AX apply,
      PID 전환 경로를 분리해 로그에 기록
-  2. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
+  2. reuseExistingWindow가 켜져 있으면 active tab URL이 같은 Chrome window를 전면화하고,
+     Rectangle 방식처럼 AX focused window(없으면 첫 window) 하나만 선택해 readback 검증
+  3. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
        새 창으로 오인돼 리사이즈되는(사용자 창이 튀는) 문제를 방지. 진짜 무창 Chrome은 빈 배열 유지
-  3. 매 폴링에서 최신 live Chrome 프로세스를 조회. 동일 PID면 CFEqual 차집합, PID가 바뀌면
+  4. 매 폴링에서 최신 live Chrome 프로세스를 조회. 동일 PID면 CFEqual 차집합, PID가 바뀌면
      실행 전 window fingerprint multiset을 차감해 복원 창과 요청 창을 구분
-  4. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
-  5. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
-  6. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
+  5. ClaimedWindowRegistry가 이미 처리한 창의 재사용을 방어적으로 차단하고 닫힌 창은 pruning
+  6. position/size 설정 후 실제 값을 읽어 tolerance 내 일치 여부를 fully/partial/failed로 기록
+  7. 새 윈도우를 못 찾으면 타임아웃 (실패 로그)
 
 App 윈도우 감지 방식 (AXObserver):
   1. openApplication 전 기존 AX window baseline을 캡처
@@ -317,9 +324,10 @@ App 윈도우 감지 방식 (AXObserver):
   - kTISNotifySelectedKeyboardInputSourceChanged ASCII 키보드 배열 ID 변경 시 전체 재등록
 
 ### AppleScript (osascript via Process)
-  용도: Finder 윈도우 제어 전용
+  용도: Chrome 동일 URL 창 검색·전면화, Finder 윈도우 제어
+  - Chrome: active tab URL 완전 일치(루트 trailing slash는 동등 처리) → 해당 window를 전면화
   - Finder: "tell application Finder" → open + bounds 설정
-  ※ AppLauncher, ChromeLauncher는 AX API 직접 사용 (성능 최적화)
+  ※ Chrome 창 이동·리사이즈는 AppleScript가 아니라 AX API와 readback 검증 사용
 
 ### NSScreen
   용도: 멀티 모니터 좌표 계산, 대상 화면 결정
@@ -453,6 +461,7 @@ App 윈도우 감지 방식 (AXObserver):
 - 코드 서명: 미등록 (Apple Developer $99 필요)
 - 현재 배포 방식: 소스 clone → xcodegen generate → Xcode 빌드
 - zip/dmg 배포: xattr 필요 + 수동 권한 설정 (서명 없는 앱 한계)
+- docs/index.html의 Product history는 핵심 기능/워크플로가 바뀐 릴리스만 선별 기록
 
 
 ## 2026-08 현재 배포·AX 안정화 구조

@@ -25,7 +25,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Chap controls Finder to open folders and position Finder windows at the size and location you set.</string>
+	<string>Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows.</string>
 	<key>SUEnableAutomaticChecks</key>
 	<false/>
 	<key>SUFeedURL</key>
