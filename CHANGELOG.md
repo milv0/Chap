@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.4] — 2026-08-21
+
+### Fixed
+
+- **Exact Chrome reuse targeting** — URL reuse now applies bounds directly to
+  the selected Chrome window ID instead of resolving a focused accessibility
+  window, preventing other Chrome windows from being resized.
+
+---
+
 ## [1.1.3] — 2026-08-21
 
 ### Fixed

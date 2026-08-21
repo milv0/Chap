@@ -124,6 +124,19 @@ struct ChromeLauncherTests {
         #expect(script.contains("return \"not-found\""))
         #expect(script.contains("with timeout of 3 seconds"))
     }
+
+    @Test("builds a script that resizes the exact tracked Chrome window")
+    func resizeWindowScriptUsesWindowIDAndRequestedBounds() {
+        let script = ChromeLauncher.resizeWindowScript(
+            windowID: 42,
+            position: CGPoint(x: 100, y: 200),
+            size: CGSize(width: 800, height: 600)
+        )
+
+        #expect(script.contains("first window whose id is 42"))
+        #expect(script.contains("set bounds of chromeWindow to {100, 200, 900, 800}"))
+        #expect(script.contains("return \"matched:\""))
+    }
 }
 
 @Suite("Chrome Runtime Observation")
