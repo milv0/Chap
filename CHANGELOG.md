@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.1] — 2026-08-21
+
+### Fixed
+
+- **Existing Chrome URL window reuse** — Chap now searches every tab, treats
+  trailing-slash variants as the same URL, and waits for the matched window to
+  become focused before applying its configured placement.
+
+---
+
 ## [1.1.0] — 2026-08-21
 
 ### Added
