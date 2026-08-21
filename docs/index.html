@@ -47,7 +47,7 @@
     .nav-link, .language-toggle { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
     .nav-link:hover, .language-toggle:hover { background: var(--soft); color: var(--ink); }
 
-    .hero { padding: clamp(3rem, 6vw, 5.5rem) 0 clamp(3.5rem, 6vw, 6rem); width: 100%; }
+    .hero { padding: 7rem 0 7.5rem; width: 100%; }
     .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 6vw, 5.5rem); grid-template-columns: minmax(0, .85fr) minmax(500px, 1.15fr); }
     .eyebrow { color: var(--blue); font-size: .74rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 1.1rem; text-transform: uppercase; }
     h1 { font-family: var(--display); }
@@ -107,12 +107,12 @@
     .panel-symbol--script { background: #1c1c1a; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; width: 72px; }
     @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-    .origin { background: var(--accent-surface); border-bottom: 1px solid rgb(54 100 255 / .18); border-top: 1px solid rgb(54 100 255 / .18); color: var(--ink); padding: 4.5rem 0; scroll-margin-top: 64px; }
-    .origin-layout { align-items: center; display: grid; gap: 4rem; grid-template-columns: 160px minmax(0, 720px); justify-content: center; }
-    .origin-mark { border-radius: 28px; display: block; height: 128px; width: 128px; }
+    .origin { background: var(--accent-surface); border-bottom: 1px solid rgb(54 100 255 / .18); border-top: 1px solid rgb(54 100 255 / .18); color: var(--ink); padding: 2.75rem 0; scroll-margin-top: 64px; }
+    .origin-layout { align-items: center; display: grid; gap: 2.5rem; grid-template-columns: 112px minmax(0, 720px); justify-content: center; }
+    .origin-mark { border-radius: 21px; display: block; height: 96px; width: 96px; }
     .origin-copy .eyebrow { color: var(--blue); }
-    .origin-copy h2 { font-family: var(--display); font-size: 3.5rem; font-weight: 600; letter-spacing: 0; line-height: 1; margin: 0; }
-    .origin-copy p:last-child { color: var(--muted); font-size: 1.06rem; margin: 1.15rem 0 0; max-width: 680px; }
+    .origin-copy h2 { font-family: var(--display); font-size: 2.5rem; font-weight: 600; letter-spacing: 0; line-height: 1; margin: 0; }
+    .origin-copy p:last-child { color: var(--muted); font-size: 1rem; margin: .8rem 0 0; max-width: 680px; }
 
     .history { background: var(--paper); padding: clamp(3.5rem, 7vw, 6rem) 0; scroll-margin-top: 64px; }
     .history-layout { display: grid; gap: clamp(2.5rem, 7vw, 6rem); grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); }
@@ -137,7 +137,7 @@
       .summary { margin-left: auto; margin-right: auto; }
       .cta-row { justify-content: center; }
       .flow-card { margin: 0 auto; max-width: 620px; width: 100%; }
-      .origin-layout { gap: 2.5rem; grid-template-columns: 128px minmax(0, 1fr); }
+      .origin-layout { gap: 2rem; grid-template-columns: 96px minmax(0, 1fr); }
       .history-layout { grid-template-columns: 1fr; }
       .history-intro { position: static; }
     }
@@ -145,7 +145,7 @@
       .shell { width: min(100% - 28px, 520px); }
       .nav { min-height: 58px; }
       .nav-link { display: none; }
-      .hero { padding: 1.8rem 0; }
+      .hero { padding: 2.75rem 0 3.25rem; }
       .hero-grid { gap: 1.5rem; }
       h1 { font-size: clamp(2.8rem, 14vw, 3.65rem); }
       html[lang="ko"] h1 { font-size: clamp(2.35rem, 10.5vw, 2.9rem); letter-spacing: -.025em; line-height: .98; }
@@ -187,12 +187,12 @@
       .finder-folder-icon { height: 46px; width: 54px; }
       .display-icon { height: 48px; width: 68px; }
       .display-icon::before { height: 27px; width: 35px; }
-      .origin { padding: 3rem 0; }
-      .origin-layout { gap: 1.75rem; grid-template-columns: 1fr; text-align: center; }
-      .origin-mark { height: 96px; margin: 0 auto; width: 96px; }
-      .origin-copy .eyebrow { margin-bottom: .8rem; }
-      .origin-copy h2 { font-size: 2.35rem; }
-      .origin-copy p:last-child { font-size: .94rem; margin-top: 1rem; }
+      .origin { padding: 2rem 0; }
+      .origin-layout { gap: 1rem; grid-template-columns: 1fr; text-align: center; }
+      .origin-mark { border-radius: 18px; height: 80px; margin: 0 auto; width: 80px; }
+      .origin-copy .eyebrow { margin-bottom: .6rem; }
+      .origin-copy h2 { font-size: 2rem; }
+      .origin-copy p:last-child { font-size: .94rem; margin-top: .7rem; }
       .history { padding: 3rem 0; }
       .history-layout { gap: 2rem; }
       .history-intro h2 { font-size: 1.75rem; }
