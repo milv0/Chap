@@ -49,7 +49,7 @@ struct ChromeLaunchTiming: Equatable {
 }
 
 enum ChromeWindowReuseScriptResult: Equatable {
-    case matched
+    case matched(windowID: Int)
     case notFound
     case invalidOutput
 }
@@ -66,6 +66,8 @@ enum ChromeLauncher {
     private static let runtime = ChromeRuntime.live
     private static let diagnosticQueue = DispatchQueue(
         label: "com.mingyupark.Chap.ChromeDiagnostics", qos: .utility)
+    private static var didShowChromeAutomationAlert = false
+    private static var trackedWindowIDs: [UUID: Int] = [:]
 
     /// 단일 request coordinator serial queue.
     /// Process launch도 이 큐 안에서 수행하여 요청-창 1:1 순서를 보장한다.
@@ -179,6 +181,7 @@ enum ChromeLauncher {
 
             if shouldReuseExistingWindow {
                 switch reuseExistingWindow(
+                    siteID: site.id,
                     url: siteUrl,
                     position: position,
                     size: size,
@@ -268,6 +271,9 @@ enum ChromeLauncher {
                 runtime: runtime
             )
             let result = observation.result
+            if shouldReuseExistingWindow, result != nil {
+                rememberFrontChromeWindow(for: site.id, runtime: runtime)
+            }
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
             let resultLabel = result?.level.rawValue ?? "failed"
             let timing = ChromeLaunchTiming(
@@ -351,41 +357,39 @@ enum ChromeLauncher {
     // MARK: - Existing URL Window Reuse
 
     private static func reuseExistingWindow(
-        url: String, position: CGPoint, size: CGSize, runtime: ChromeRuntime
+        siteID: UUID, url: String, position: CGPoint, size: CGSize, runtime: ChromeRuntime
     ) -> ExistingWindowReuseOutcome {
         guard currentChromeProcess(runtime: runtime) != nil else { return .notFound }
 
-        let result: ProcessRunner.Result
-        do {
-            result = try ProcessRunner.run(
-                executable: "/usr/bin/osascript",
-                arguments: ["-e", existingWindowScript(url: url)],
-                timeout: 3,
-                outputLimit: 32 * 1024)
-        } catch {
-            return .unavailable(error.localizedDescription)
+        if let trackedWindowID = trackedWindowIDs[siteID] {
+            switch runChromeWindowScript(trackedWindowScript(windowID: trackedWindowID)) {
+            case .result(.matched):
+                return resizeFocusedChromeWindow(position: position, size: size, runtime: runtime)
+            case .result(.notFound):
+                trackedWindowIDs[siteID] = nil
+            case .result(.invalidOutput):
+                return .unavailable("Chrome returned an invalid tracked-window response")
+            case .unavailable(let detail):
+                return .unavailable(detail)
+            }
         }
 
-        if result.timedOut {
-            return .unavailable("Chrome automation timed out")
-        }
-        guard result.exitStatus == 0 else {
-            let detail =
-                result.stderrString.isEmpty
-                ? "Chrome automation exited with status \(result.exitStatus)"
-                : result.stderrString
+        switch runChromeWindowScript(existingWindowScript(url: url)) {
+        case .result(.matched(let windowID)):
+            trackedWindowIDs[siteID] = windowID
+            return resizeFocusedChromeWindow(position: position, size: size, runtime: runtime)
+        case .result(.notFound):
+            return .notFound
+        case .result(.invalidOutput):
+            return .unavailable("Chrome returned an invalid URL-match response")
+        case .unavailable(let detail):
             return .unavailable(detail)
         }
+    }
 
-        switch parseExistingWindowScriptOutput(result.stdoutString) {
-        case .notFound:
-            return .notFound
-        case .invalidOutput:
-            return .unavailable("Chrome automation returned an unexpected response")
-        case .matched:
-            break
-        }
-
+    private static func resizeFocusedChromeWindow(
+        position: CGPoint, size: CGSize, runtime: ChromeRuntime
+    ) -> ExistingWindowReuseOutcome {
         guard AccessibilityPermission.isTrusted else {
             return .reused(nil)
         }
@@ -410,6 +414,38 @@ enum ChromeLauncher {
         return .reused(nil)
     }
 
+    private static func runChromeWindowScript(_ source: String) -> ChromeWindowScriptOutcome {
+        guard let script = NSAppleScript(source: source) else {
+            return .unavailable("Could not create Chrome automation script")
+        }
+        var error: NSDictionary?
+        let output = script.executeAndReturnError(&error)
+        if let error {
+            let errorNumber = (error[NSAppleScript.errorNumber] as? NSNumber)?.intValue
+            if errorNumber == -1743 {
+                showChromeAutomationPermissionAlert()
+                return .unavailable("Chrome automation permission denied")
+            }
+            let errorMessage = error[NSAppleScript.errorMessage] as? String
+            return .unavailable(errorMessage ?? "Chrome automation failed")
+        }
+
+        return .result(parseExistingWindowScriptOutput(output.stringValue ?? ""))
+    }
+
+    private static func rememberFrontChromeWindow(for siteID: UUID, runtime: ChromeRuntime) {
+        guard currentChromeProcess(runtime: runtime) != nil else { return }
+        switch runChromeWindowScript(frontWindowScript()) {
+        case .result(.matched(let windowID)):
+            trackedWindowIDs[siteID] = windowID
+        case .unavailable(let detail):
+            Log.launcher.warning(
+                "Could not remember Chrome window for reuse — \(detail, privacy: .private)")
+        case .result(.notFound), .result(.invalidOutput):
+            break
+        }
+    }
+
     private static func focusedWindow(
         app: AXUIElement, fallingBackToFirstWindow: Bool
     ) -> AXUIElement? {
@@ -430,24 +466,55 @@ enum ChromeLauncher {
             .joined(separator: ", ")
         return """
             set targetURLs to {\(targets)}
-            tell application "Google Chrome"
-                repeat with chromeWindow in windows
-                    repeat with chromeTab in tabs of chromeWindow
-                        try
-                            set currentURL to URL of chromeTab
-                            if targetURLs contains currentURL then
-                                set active tab of chromeWindow to chromeTab
-                                set index of chromeWindow to 1
-                                activate
-                                delay 0.25
-                                return "matched"
-                            end if
-                        end try
+            with timeout of 3 seconds
+                tell application "Google Chrome"
+                    repeat with chromeWindow in windows
+                        repeat with chromeTab in tabs of chromeWindow
+                            try
+                                set currentURL to URL of chromeTab
+                                if targetURLs contains currentURL then
+                                    set active tab of chromeWindow to chromeTab
+                                    set index of chromeWindow to 1
+                                    activate
+                                    delay 0.25
+                                    return "matched:" & ((id of chromeWindow) as text)
+                                end if
+                            end try
+                        end repeat
                     end repeat
-                end repeat
-            end tell
+                end tell
+            end timeout
             return "not-found"
             """
+    }
+
+    static func trackedWindowScript(windowID: Int) -> String {
+        """
+        with timeout of 3 seconds
+            tell application "Google Chrome"
+                try
+                    set chromeWindow to first window whose id is \(windowID)
+                    set index of chromeWindow to 1
+                    activate
+                    delay 0.25
+                    return "matched:" & ((id of chromeWindow) as text)
+                on error number -1728
+                    return "not-found"
+                end try
+            end tell
+        end timeout
+        """
+    }
+
+    private static func frontWindowScript() -> String {
+        """
+        with timeout of 3 seconds
+            tell application "Google Chrome"
+                if (count of windows) is 0 then return "not-found"
+                return "matched:" & ((id of front window) as text)
+            end tell
+        end timeout
+        """
     }
 
     static func equivalentChromeURLs(for url: String) -> [String] {
@@ -474,12 +541,21 @@ enum ChromeLauncher {
         -> ChromeWindowReuseScriptResult
     {
         switch output.trimmingCharacters(in: .whitespacesAndNewlines) {
-        case "matched":
-            return .matched
         case "not-found":
             return .notFound
         default:
-            return .invalidOutput
+            let components =
+                output
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .split(separator: ":", maxSplits: 1)
+            guard components.count == 2,
+                components[0] == "matched",
+                let windowID = Int(components[1]),
+                windowID > 0
+            else {
+                return .invalidOutput
+            }
+            return .matched(windowID: windowID)
         }
     }
 
@@ -487,6 +563,23 @@ enum ChromeLauncher {
         value
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+    }
+
+    private static func showChromeAutomationPermissionAlert() {
+        guard !didShowChromeAutomationAlert else { return }
+        didShowChromeAutomationAlert = true
+        DispatchQueue.main.async {
+            LauncherUtils.showAlert(
+                message: "Allow Chap to control Google Chrome.",
+                info: "Reuse Existing URL Window needs Automation permission. "
+                    + "In System Settings > Privacy & Security > Automation, enable Google Chrome for Chap."
+            )
+        }
+    }
+
+    private enum ChromeWindowScriptOutcome {
+        case result(ChromeWindowReuseScriptResult)
+        case unavailable(String)
     }
 
     /// 새 Chrome 창을 폴링해 찾고, 찾으면 리사이즈. AXBoundsResult를 반환 (못 찾으면 nil).

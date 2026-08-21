@@ -119,7 +119,7 @@ Site 모델 필드:
   - displaySizeOverrides: [DisplaySizeOverride] 화면별 size/preset override. 실제 실행 화면과
                               UUID → unique displayName 순으로 매칭되면 기본 size보다 우선 적용
   - launchType: LaunchType    url | app | finder | shell
-  - reuseExistingWindow: Bool URL 타입에서 같은 URL의 Chrome 창 재사용 여부. 누락 시 false
+  - reuseExistingWindow: Bool URL 타입에서 같은 URL 또는 현재 세션의 연결된 Chrome 창 재사용 여부. 누락 시 false
   - appPath: String?          앱 경로 (launchType=app)
   - script: String?           스크립트 내용 (launchType=shell)
   - folderPath: String?       폴더 경로 (launchType=finder)
@@ -140,8 +140,8 @@ Config 모델 필드:
 - Settings > General의 Enable Chap Option-Key Triggers 토글로 글로벌 단축키
   (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
-- URL별 Reuse Existing URL Window 토글. 활성화하면 Chrome의 동일 URL 창을 전면화하고
-  focused window 하나만 현재 display/size 설정으로 재배치하며, 없으면 새 --app 창을 연다.
+- URL별 Reuse Existing URL Window 토글. 활성화하면 Chrome의 현재 세션 window ID 또는 동일 URL 창을
+  전면화하고 focused window 하나만 현재 display/size 설정으로 재배치하며, 없으면 새 --app 창을 연다.
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
@@ -264,9 +264,10 @@ Chrome 윈도우 감지 방식:
      이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
      1:1로 대응함. queue wait와 processing latency, baseline/launch/window wait/AX apply,
      PID 전환 경로를 분리해 로그에 기록
-  2. reuseExistingWindow가 켜져 있으면 모든 탭에서 URL이 같은 Chrome window를 전면화하고,
-     Rectangle 방식처럼 AX focused window가 전파될 때까지 대기하고, 없으면 마지막에 첫 window
-     하나만 선택해 readback 검증
+  2. reuseExistingWindow가 켜져 있으면 세션에 기억한 Chrome window ID를 우선 전면화하고,
+     무효일 때만 모든 탭에서 URL이 같은 window를 찾는다. 새 창으로 열리면 전면 window ID를 세션에
+     기억한다. Rectangle 방식처럼 AX focused window가 전파될 때까지 대기하고, 없으면 마지막에 첫
+     window 하나만 선택해 readback 검증
   3. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
@@ -324,10 +325,11 @@ App 윈도우 감지 방식 (AXObserver):
                                                  현재 키보드 배열의 문자→keyCode 매핑
   - kTISNotifySelectedKeyboardInputSourceChanged ASCII 키보드 배열 ID 변경 시 전체 재등록
 
-### AppleScript (osascript via Process)
+### AppleScript
   용도: Chrome 동일 URL 창 검색·전면화, Finder 윈도우 제어
-  - Chrome: 모든 탭 URL 완전 일치(경로 끝 trailing slash는 동등 처리) → 해당 tab/window를 전면화
-  - Finder: "tell application Finder" → open + bounds 설정
+  - Chrome: Chap 내부 `NSAppleScript`로 세션 window ID 또는 모든 탭 URL 완전 일치
+            (경로 끝 trailing slash는 동등 처리) → 해당 tab/window를 전면화
+  - Finder: `osascript` Process → "tell application Finder" → open + bounds 설정
   ※ Chrome 창 이동·리사이즈는 AppleScript가 아니라 AX API와 readback 검증 사용
 
 ### NSScreen
@@ -446,8 +448,9 @@ App 윈도우 감지 방식 (AXObserver):
    - 권한 제거 감지: 다음 권한 체크 또는 URL/App 리사이즈 실패 → 상태바 경고 + 1회 알림
    - 글로벌 단축키는 RegisterEventHotKey 기반이므로 접근성 권한 없이 동작
 
-2. 자동화 (Automation): Finder AppleScript 제어
-   - osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)
+2. 자동화 (Automation): Finder AppleScript 및 Chrome URL 창 재사용 제어
+   - Chrome 재사용은 Chap 내부 AppleScript로 실행해 Chap의 Google Chrome 제어 권한을 요청
+   - Finder는 osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)
    - 서명 없는 앱: xattr -cr 후 수동 설정 필요
 
 

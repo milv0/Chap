@@ -97,20 +97,32 @@ struct ChromeLauncherTests {
         #expect(script.contains("repeat with chromeTab in tabs of chromeWindow"))
         #expect(script.contains("set active tab of chromeWindow to chromeTab"))
         #expect(script.contains("set index of chromeWindow to 1"))
-        #expect(script.contains(#"return "matched""#))
+        #expect(script.contains("with timeout of 3 seconds"))
+        #expect(script.contains(#"return "matched:""#))
     }
 
     @Test(
         "parses Chrome reuse script output",
         arguments: [
-            ("matched\n", ChromeWindowReuseScriptResult.matched),
+            ("matched:42\n", ChromeWindowReuseScriptResult.matched(windowID: 42)),
             ("not-found\n", ChromeWindowReuseScriptResult.notFound),
             ("", ChromeWindowReuseScriptResult.invalidOutput),
+            ("matched:0\n", ChromeWindowReuseScriptResult.invalidOutput),
+            ("matched:abc\n", ChromeWindowReuseScriptResult.invalidOutput),
         ])
     func parsesReuseScriptOutput(
         output: String, expected: ChromeWindowReuseScriptResult
     ) {
         #expect(ChromeLauncher.parseExistingWindowScriptOutput(output) == expected)
+    }
+
+    @Test("builds a script that activates a tracked Chrome window")
+    func trackedWindowScriptActivatesWindow() {
+        let script = ChromeLauncher.trackedWindowScript(windowID: 42)
+
+        #expect(script.contains("first window whose id is 42"))
+        #expect(script.contains("return \"not-found\""))
+        #expect(script.contains("with timeout of 3 seconds"))
     }
 }
 
