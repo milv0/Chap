@@ -839,7 +839,7 @@ private struct GeneralSettingsView: View {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 24, height: 24)
+                    .frame(width: 72, height: 72)
                 Text("Chap \(Defaults.appVersion)")
                     .font(.caption)
                     .foregroundColor(DS.textSecondary)
