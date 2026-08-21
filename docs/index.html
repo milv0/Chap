@@ -83,10 +83,9 @@
     .flow-slide { animation: panel-in 220ms ease-out; height: 100%; }
     .flow-slide[hidden] { display: none; }
     .settings-panel { display: flex; flex-direction: column; gap: 1rem; padding: 1.15rem 1.45rem 1.25rem; }
-    .settings-panel-header { align-items: flex-start; display: flex; justify-content: space-between; }
+    .settings-panel-header { align-items: flex-start; display: flex; }
     .settings-eyebrow { color: var(--blue); font-size: .62rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
     .settings-panel h2 { font-family: var(--display); font-size: 1.38rem; letter-spacing: -.045em; line-height: 1; margin: 0; }
-    .settings-save { background: var(--blue); border-radius: 8px; color: var(--white); font-size: .68rem; font-weight: 700; padding: .43rem .65rem; }
     .settings-form { display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) 94px; }
     .setting-control { min-width: 0; }
     .setting-control--full { grid-column: 1 / -1; }
@@ -252,28 +251,28 @@
             <div class="flow-viewport">
               <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
                 <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">URL</p><h2 data-i18n="urlName">Chap website</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">URL</p><h2 data-i18n="urlName">Chap website</h2></div></div>
                   <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="urlName">Chap website</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsAddress">Address</span><div class="setting-value">https://milv0.github.io/Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
                 <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">APP</p><h2>Chap.app</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">APP</p><h2>Chap.app</h2></div></div>
                   <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value">Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsApplication">Application</span><div class="setting-value">/Applications/Chap.app</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
                 <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">FINDER</p><h2 data-i18n="finderName">Project files</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">FINDER</p><h2 data-i18n="finderName">Project files</h2></div></div>
                   <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="finderName">Project files</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsFolder">Folder</span><div class="setting-value">~/Projects/Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
                 </div>
               </section>
               <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
                 <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">SCRIPT</p><h2 data-i18n="scriptName">Open Chap</h2></div><span class="settings-save" data-i18n="settingsSave">Save</span></div>
+                  <div class="settings-panel-header"><div><p class="settings-eyebrow">SCRIPT</p><h2 data-i18n="scriptName">Open Chap</h2></div></div>
                   <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="scriptName">Open Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsScript">Script</span><div class="setting-value">open -a Chap</div></div></div>
                   <div class="settings-preview"><span class="preview-label" data-i18n="settingsRun">Run</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsShell">Your shell</strong><span data-i18n="settingsShellDetail">No window placement needed</span></div><div class="panel-symbol panel-symbol--script" aria-hidden="true">$ chap</div></div></div>
                 </div>
@@ -365,7 +364,6 @@
           settingsTitle: "Chap Settings",
           settingsStatus: "Ready to launch",
           settingsLaunchTypes: "Launch types",
-          settingsSave: "Save",
           settingsName: "Name",
           settingsAddress: "URL",
           settingsApplication: "Application",
@@ -426,7 +424,6 @@
           settingsTitle: "Chap 설정",
           settingsStatus: "실행 준비 완료",
           settingsLaunchTypes: "실행 유형",
-          settingsSave: "저장",
           settingsName: "이름",
           settingsAddress: "URL",
           settingsApplication: "앱",
