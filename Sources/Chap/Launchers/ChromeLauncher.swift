@@ -88,7 +88,7 @@ enum ChromeLauncher {
     }
 
     private enum ExistingWindowReuseOutcome {
-        case reused(AXBoundsResult?)
+        case reused
         case notFound
         case unavailable(String)
     }
@@ -187,13 +187,10 @@ enum ChromeLauncher {
                     size: size,
                     runtime: runtime
                 ) {
-                case .reused(let boundsResult):
+                case .reused:
                     let processingTime = CFAbsoluteTimeGetCurrent() - startTime
-                    let resultLabel = boundsResult?.level.rawValue ?? "focused"
-                    let detail =
-                        boundsResult.map {
-                            "reused existing URL window | \($0.diagnostic)"
-                        } ?? "reused existing URL window without AX resize"
+                    let resultLabel = "applescript"
+                    let detail = "reused existing URL window by Chrome window ID"
                     Log.launcher.notice(
                         "Reused Chrome window for \(siteName, privacy: .private) — result=\(resultLabel, privacy: .public)"
                     )
@@ -364,7 +361,11 @@ enum ChromeLauncher {
         if let trackedWindowID = trackedWindowIDs[siteID] {
             switch runChromeWindowScript(trackedWindowScript(windowID: trackedWindowID)) {
             case .result(.matched):
-                return resizeFocusedChromeWindow(position: position, size: size, runtime: runtime)
+                return resizeChromeWindow(
+                    windowID: trackedWindowID,
+                    position: position,
+                    size: size
+                )
             case .result(.notFound):
                 trackedWindowIDs[siteID] = nil
             case .result(.invalidOutput):
@@ -377,7 +378,7 @@ enum ChromeLauncher {
         switch runChromeWindowScript(existingWindowScript(url: url)) {
         case .result(.matched(let windowID)):
             trackedWindowIDs[siteID] = windowID
-            return resizeFocusedChromeWindow(position: position, size: size, runtime: runtime)
+            return resizeChromeWindow(windowID: windowID, position: position, size: size)
         case .result(.notFound):
             return .notFound
         case .result(.invalidOutput):
@@ -387,29 +388,21 @@ enum ChromeLauncher {
         }
     }
 
-    private static func resizeFocusedChromeWindow(
-        position: CGPoint, size: CGSize, runtime: ChromeRuntime
+    private static func resizeChromeWindow(
+        windowID: Int, position: CGPoint, size: CGSize
     ) -> ExistingWindowReuseOutcome {
-        guard AccessibilityPermission.isTrusted else {
-            return .reused(nil)
+        switch runChromeWindowScript(
+            resizeWindowScript(windowID: windowID, position: position, size: size)
+        ) {
+        case .result(.matched):
+            return .reused
+        case .result(.notFound):
+            return .notFound
+        case .result(.invalidOutput):
+            return .unavailable("Chrome returned an invalid resize response")
+        case .unavailable(let detail):
+            return .unavailable(detail)
         }
-        guard let process = currentChromeProcess(runtime: runtime) else {
-            return .reused(nil)
-        }
-
-        let appElement = LauncherUtils.axApplication(pid: process.pid)
-        for attempt in 0..<20 {
-            if let window = focusedWindow(
-                app: appElement,
-                fallingBackToFirstWindow: attempt == 19)
-            {
-                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
-                return .reused(
-                    LauncherUtils.axApplyBounds(window, position: position, size: size))
-            }
-            if attempt < 19 { runtime.sleep(50_000) }
-        }
-        return .reused(nil)
     }
 
     private static func runChromeWindowScript(_ source: String) -> ChromeWindowScriptOutcome {
@@ -442,20 +435,6 @@ enum ChromeLauncher {
         case .result(.notFound), .result(.invalidOutput):
             break
         }
-    }
-
-    private static func focusedWindow(
-        app: AXUIElement, fallingBackToFirstWindow: Bool
-    ) -> AXUIElement? {
-        var value: AnyObject?
-        if AXUIElementCopyAttributeValue(
-            app, kAXFocusedWindowAttribute as CFString, &value) == .success,
-            let value,
-            CFGetTypeID(value) == AXUIElementGetTypeID()
-        {
-            return (value as! AXUIElement)
-        }
-        return fallingBackToFirstWindow ? LauncherUtils.axWindows(app: app).first : nil
     }
 
     static func existingWindowScript(url: String) -> String {
@@ -502,6 +481,26 @@ enum ChromeLauncher {
             end tell
         end timeout
         """
+    }
+
+    static func resizeWindowScript(windowID: Int, position: CGPoint, size: CGSize) -> String {
+        let left = Int(position.x.rounded())
+        let top = Int(position.y.rounded())
+        let right = left + Int(size.width.rounded())
+        let bottom = top + Int(size.height.rounded())
+        return """
+            with timeout of 3 seconds
+                tell application "Google Chrome"
+                    try
+                        set chromeWindow to first window whose id is \(windowID)
+                        set bounds of chromeWindow to {\(left), \(top), \(right), \(bottom)}
+                        return "matched:" & ((id of chromeWindow) as text)
+                    on error number -1728
+                        return "not-found"
+                    end try
+                end tell
+            end timeout
+            """
     }
 
     private static func frontWindowScript() -> String {

@@ -141,7 +141,7 @@ Config 모델 필드:
   (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
 - URL별 Reuse Existing URL Window 토글. 활성화하면 Chrome의 현재 세션 window ID 또는 동일 URL 창을
-  전면화하고 focused window 하나만 현재 display/size 설정으로 재배치하며, 없으면 새 --app 창을 연다.
+  전면화하고 해당 Chrome window ID에 현재 display/size bounds를 직접 적용하며, 없으면 새 --app 창을 연다.
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
   (Office는 리사이즈 가능한 비표준 문서창과 시작창→문서창 전환을 추가 관찰)
@@ -266,8 +266,8 @@ Chrome 윈도우 감지 방식:
      PID 전환 경로를 분리해 로그에 기록
   2. reuseExistingWindow가 켜져 있으면 세션에 기억한 Chrome window ID를 우선 전면화하고,
      무효일 때만 모든 탭에서 URL이 같은 window를 찾는다. 새 창으로 열리면 전면 window ID를 세션에
-     기억한다. Rectangle 방식처럼 AX focused window가 전파될 때까지 대기하고, 없으면 마지막에 첫
-     window 하나만 선택해 readback 검증
+     기억한다. 재사용 창의 크기·위치는 그 window ID에 Chrome AppleScript bounds를 직접 적용하므로
+     다른 Chrome 창의 AX focused window를 대상으로 삼지 않는다
   3. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
@@ -328,9 +328,10 @@ App 윈도우 감지 방식 (AXObserver):
 ### AppleScript
   용도: Chrome 동일 URL 창 검색·전면화, Finder 윈도우 제어
   - Chrome: Chap 내부 `NSAppleScript`로 세션 window ID 또는 모든 탭 URL 완전 일치
-            (경로 끝 trailing slash는 동등 처리) → 해당 tab/window를 전면화
+            (경로 끝 trailing slash는 동등 처리) → 해당 tab/window를 전면화하고 ID에 bounds 적용
   - Finder: `osascript` Process → "tell application Finder" → open + bounds 설정
-  ※ Chrome 창 이동·리사이즈는 AppleScript가 아니라 AX API와 readback 검증 사용
+  ※ Chrome 새 --app 창은 AX API와 readback 검증을 사용한다. 재사용 창은 AppleScript의 정확한
+     window ID를 사용해 다른 Chrome 창을 선택할 수 없게 한다.
 
 ### NSScreen
   용도: 멀티 모니터 좌표 계산, 대상 화면 결정
