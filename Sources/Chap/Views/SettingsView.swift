@@ -781,56 +781,70 @@ private struct GeneralSettingsView: View {
     let onSave: () -> Void
 
     var body: some View {
-        HStack {
-            Spacer(minLength: 0)
-            Form {
-                Section("Behavior") {
-                    Toggle("Guide Window", isOn: $vm.showGuideWindow)
-                        .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
+        VStack(spacing: 0) {
+            HStack {
+                Spacer(minLength: 0)
+                Form {
+                    Section("Behavior") {
+                        Toggle("Guide Window", isOn: $vm.showGuideWindow)
+                            .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
 
-                    Toggle("Open at Login", isOn: $vm.launchAtLogin)
-                        .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
+                        Toggle("Open at Login", isOn: $vm.launchAtLogin)
+                            .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
 
-                    Toggle(
-                        "Enable Chap Option-Key Triggers",
-                        isOn: $vm.optionShortcutsEnabled
-                    )
-                    .help(
-                        "Disable when another workflow needs Chap's Option-key combinations."
-                    )
-                    .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
+                        Toggle(
+                            "Enable Chap Option-Key Triggers",
+                            isOn: $vm.optionShortcutsEnabled
+                        )
+                        .help(
+                            "Disable when another workflow needs Chap's Option-key combinations."
+                        )
+                        .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
 
-                    Label(
-                        "Turn this off temporarily when another app or workflow needs "
-                            + "Option-key combinations.",
-                        systemImage: "info.circle"
-                    )
-                    .font(.caption)
-                    .foregroundColor(DS.textSecondary)
-                }
+                        Label(
+                            "Turn this off temporarily when another app or workflow needs "
+                                + "Option-key combinations.",
+                            systemImage: "info.circle"
+                        )
+                        .font(.caption)
+                        .foregroundColor(DS.textSecondary)
+                    }
 
-                Section("Appearance") {
-                    HStack(alignment: .center) {
-                        Text("Status Bar Icon")
-                        Spacer()
-                        HStack(spacing: 8) {
-                            ForEach(
-                                StatusBarIconChoice.allCases,
-                                id: \.self
-                            ) { choice in
-                                StatusBarIconChoiceButton(
-                                    choice: choice,
-                                    isSelected: vm.statusBarIcon == choice,
-                                    action: { vm.statusBarIcon = choice })
+                    Section("Appearance") {
+                        HStack(alignment: .center) {
+                            Text("Status Bar Icon")
+                            Spacer()
+                            HStack(spacing: 8) {
+                                ForEach(
+                                    StatusBarIconChoice.allCases,
+                                    id: \.self
+                                ) { choice in
+                                    StatusBarIconChoiceButton(
+                                        choice: choice,
+                                        isSelected: vm.statusBarIcon == choice,
+                                        action: { vm.statusBarIcon = choice })
+                                }
                             }
                         }
+                        .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
                     }
-                    .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
                 }
+                .formStyle(.grouped)
+                .frame(maxWidth: 560)
+                Spacer(minLength: 0)
             }
-            .formStyle(.grouped)
-            .frame(maxWidth: 560)
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            HStack(spacing: 8) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                Text("Chap \(Defaults.appVersion)")
+                    .font(.caption)
+                    .foregroundColor(DS.textSecondary)
+            }
+            .padding(.bottom, 12)
         }
         .background(DS.surfaceBg)
     }
