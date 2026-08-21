@@ -397,8 +397,6 @@ enum ChromeLauncher {
             return .reused(nil)
         }
 
-        let app = NSRunningApplication(processIdentifier: process.pid)
-        app?.activate(options: .activateIgnoringOtherApps)
         let appElement = LauncherUtils.axApplication(pid: process.pid)
         for attempt in 0..<20 {
             if let window = focusedWindow(

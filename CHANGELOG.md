@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.3] — 2026-08-21
+
+### Fixed
+
+- **Correct Chrome reuse placement** — Chap now preserves the Chrome window
+  selected by URL reuse, preventing a separately active Chrome window from
+  being resized instead.
+
+---
+
 ## [1.1.2] — 2026-08-21
 
 ### Fixed
