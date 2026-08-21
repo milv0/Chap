@@ -26,8 +26,8 @@ struct QAView: View {
                     "URL 타입만 Chrome이 필요합니다. App, Finder, Shell 타입은 Chrome 없이도 사용 가능합니다."
                 ),
                 (
-                    "Finder 권한 요청이 뜨는 이유는?",
-                    "Finder 타입은 폴더를 열고 창 위치를 맞추기 위해 AppleScript 자동화를 사용합니다. 처음 사용할 때 macOS가 Finder 제어 권한을 요청할 수 있습니다."
+                    "Chrome 또는 Finder 권한 요청이 뜨는 이유는?",
+                    "URL 창 재사용은 같은 URL의 Chrome 창을 찾고, Finder 타입은 폴더 창을 열기 위해 자동화를 사용합니다. 각 기능을 처음 사용할 때 macOS가 해당 앱 제어 권한을 요청할 수 있습니다."
                 ),
                 (
                     "macOS 버전 요구사항이 뭔가요?",
@@ -173,8 +173,8 @@ struct QAView: View {
                     "Only the URL type requires Chrome. App, Finder, and Shell types work without Chrome."
                 ),
                 (
-                    "Why does Finder ask for permission?",
-                    "The Finder type uses AppleScript automation to open folders and position Finder windows. macOS may ask for permission to control Finder the first time you use it."
+                    "Why does Chrome or Finder ask for permission?",
+                    "URL window reuse uses automation to find a matching Chrome window, while the Finder type uses it to open folder windows. macOS may ask for permission the first time you use either feature."
                 ),
                 (
                     "What macOS version is required?",

@@ -4,23 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.">
-  <meta name="theme-color" content="#F7F7F4">
+  <meta name="theme-color" content="#F5F5F7">
   <title>Chap — One shortcut. Right where you want it.</title>
-  <link rel="icon" href="assets/chap-icon.png" type="image/png">
+  <link rel="icon" href="assets/chap-icon-rounded.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --paper: #f7f7f4;
-      --ink: #161616;
-      --muted: #696966;
-      --line: #deded8;
-      --soft: #ecece7;
+      --paper: #f5f5f7;
+      --ink: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #d9d9de;
+      --soft: #ececf1;
       --white: #fff;
-      --blue: #315cff;
-      --blue-dark: #2147df;
-      --green: #18845b;
+      --blue: #3664ff;
+      --blue-dark: #244cdc;
+      --accent-surface: #ebf0ff;
+      --guide-fill: rgb(54 100 255 / .05);
+      --guide-border: rgb(54 100 255 / .6);
       --radius: 18px;
       --display: "Bricolage Grotesque", sans-serif;
       --body: "DM Sans", sans-serif;
@@ -36,7 +38,7 @@
     ::selection { background: rgb(49 92 255 / .18); }
     .shell { margin: 0 auto; width: min(1120px, calc(100% - 48px)); }
 
-    .site-header { background: rgb(247 247 244 / .88); border-bottom: 1px solid rgb(222 222 216 / .75); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
+    .site-header { background: rgb(245 245 247 / .9); border-bottom: 1px solid rgb(217 217 222 / .8); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
     .nav { align-items: center; display: flex; justify-content: space-between; min-height: 64px; }
     .brand { align-items: center; display: inline-flex; font-family: var(--display); font-size: 1.08rem; font-weight: 700; gap: .6rem; letter-spacing: -.03em; }
     .brand-mark { align-items: center; border-radius: 9px; display: inline-flex; height: 30px; justify-content: center; overflow: hidden; width: 30px; }
@@ -58,10 +60,10 @@
     html[lang="ko"] .flow-header strong, html[lang="ko"] .flow-step strong { letter-spacing: -.01em; }
     .summary { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.12rem); margin: 1.6rem 0 0; max-width: 560px; }
     .cta-row { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.8rem; }
-    .primary-button { align-items: center; background: var(--ink); border-radius: 12px; color: var(--white); display: inline-flex; font-size: .9rem; font-weight: 600; gap: .65rem; min-height: 50px; padding: .8rem 1.1rem .8rem 1.25rem; transition: background 180ms ease, transform 180ms ease; }
-    .primary-button:hover { background: var(--blue); transform: translateY(-2px); }
+    .primary-button { align-items: center; background: var(--blue); border-radius: 12px; color: var(--white); display: inline-flex; font-size: .9rem; font-weight: 600; gap: .65rem; min-height: 50px; padding: .8rem 1.1rem .8rem 1.25rem; transition: background 180ms ease, transform 180ms ease; }
+    .primary-button:hover { background: var(--blue-dark); transform: translateY(-2px); }
     .primary-button svg { height: 17px; width: 17px; }
-    .trust { color: var(--green); font-size: .76rem; font-weight: 600; }
+    .trust { color: var(--blue-dark); font-size: .76rem; font-weight: 600; }
 
     .flow-card { background: var(--white); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 32px 80px rgb(30 30 24 / .12); overflow: hidden; }
     .flow-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 48px; padding: 0 1rem; }
@@ -84,27 +86,45 @@
     .settings-panel-header { align-items: flex-start; display: flex; justify-content: space-between; }
     .settings-eyebrow { color: var(--blue); font-size: .62rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
     .settings-panel h2 { font-family: var(--display); font-size: 1.38rem; letter-spacing: -.045em; line-height: 1; margin: 0; }
-    .settings-save { background: var(--ink); border-radius: 8px; color: var(--white); font-size: .68rem; font-weight: 700; padding: .43rem .65rem; }
+    .settings-save { background: var(--blue); border-radius: 8px; color: var(--white); font-size: .68rem; font-weight: 700; padding: .43rem .65rem; }
     .settings-form { display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) 94px; }
     .setting-control { min-width: 0; }
     .setting-control--full { grid-column: 1 / -1; }
     .setting-control span { color: var(--muted); display: block; font-size: .58rem; font-weight: 800; letter-spacing: .08em; margin-bottom: .32rem; text-transform: uppercase; }
     .setting-value { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: #373735; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .67rem; overflow: hidden; padding: .57rem .65rem; text-overflow: ellipsis; white-space: nowrap; }
     .setting-value--shortcut { background: #ebf0ff; border-color: rgb(49 92 255 / .55); color: var(--blue); font-family: var(--display); font-size: .82rem; font-weight: 700; text-align: center; }
-    .settings-preview { background: linear-gradient(135deg, #f7f7f4, #f0f2fa); border: 1px solid var(--line); border-radius: 12px; margin-top: auto; padding: .7rem .8rem; }
+    .settings-preview { background: var(--guide-fill); border: 1px solid rgb(54 100 255 / .2); border-radius: 12px; margin-top: auto; padding: .7rem .8rem; }
     .preview-label { color: var(--muted); font-size: .57rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
     .display-stage { align-items: center; display: grid; gap: .7rem; grid-template-columns: 1fr 74px; margin-top: .45rem; }
     .display-summary strong { display: block; font-family: var(--display); font-size: .88rem; letter-spacing: -.025em; }
     .display-summary span { color: var(--muted); display: block; font-size: .64rem; margin-top: .08rem; }
-    .display-map { background: #232a40; border-radius: 7px; height: 48px; padding: 7px; position: relative; }
-    .display-map::before { border: 2px solid #5d80ff; border-radius: 3px; content: ""; inset: 8px 13px; position: absolute; }
-    .display-map::after { background: #5d80ff; border-radius: 2px; content: ""; height: 11px; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 21px; }
+    .display-map { background: var(--guide-fill); border: 1px solid var(--guide-border); border-radius: 7px; height: 48px; padding: 7px; position: relative; }
+    .display-map::before { border: 2px solid var(--blue); border-radius: 3px; content: ""; inset: 8px 13px; position: absolute; }
+    .display-map::after { background: var(--blue); border-radius: 2px; content: ""; height: 11px; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 21px; }
     .panel-symbol { align-items: center; background: var(--blue); border-radius: 12px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; height: 44px; justify-content: center; width: 44px; }
     .panel-symbol img { border-radius: 11px; display: block; height: 100%; object-fit: cover; width: 100%; }
     .panel-symbol--folder { background: #e9f2ff; color: #3c82c8; font-size: 1.55rem; }
     .panel-symbol--script { background: #1c1c1a; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; width: 72px; }
     @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+    .origin { background: var(--accent-surface); border-bottom: 1px solid rgb(54 100 255 / .18); border-top: 1px solid rgb(54 100 255 / .18); color: var(--ink); padding: 4.5rem 0; scroll-margin-top: 64px; }
+    .origin-layout { align-items: center; display: grid; gap: 4rem; grid-template-columns: 160px minmax(0, 720px); justify-content: center; }
+    .origin-mark { border-radius: 28px; display: block; height: 128px; width: 128px; }
+    .origin-copy .eyebrow { color: var(--blue); }
+    .origin-copy h2 { font-family: var(--display); font-size: 3.5rem; font-weight: 600; letter-spacing: 0; line-height: 1; margin: 0; }
+    .origin-copy p:last-child { color: var(--muted); font-size: 1.06rem; margin: 1.15rem 0 0; max-width: 680px; }
+
+    .history { background: var(--paper); padding: clamp(3.5rem, 7vw, 6rem) 0; scroll-margin-top: 64px; }
+    .history-layout { display: grid; gap: clamp(2.5rem, 7vw, 6rem); grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); }
+    .history-intro { align-self: start; position: sticky; top: 104px; }
+    .history-intro h2 { font-family: var(--display); font-size: 2rem; font-weight: 600; letter-spacing: 0; line-height: 1.1; margin: 0; }
+    .history-intro p:last-child { color: var(--muted); margin: 1rem 0 0; max-width: 340px; }
+    .history-list { border-top: 1px solid var(--line); }
+    .history-entry { display: grid; gap: 1.25rem; grid-template-columns: 96px minmax(0, 1fr); padding: 1.6rem 0; }
+    .history-entry + .history-entry { border-top: 1px solid var(--line); }
+    .history-version { color: var(--blue); font-family: var(--display); font-size: .94rem; font-weight: 700; }
+    .history-copy h3 { font-family: var(--display); font-size: 1.16rem; letter-spacing: 0; line-height: 1.2; margin: 0; }
+    .history-copy p { color: var(--muted); font-size: .9rem; margin: .45rem 0 0; }
 
     .footer { border-top: 1px solid var(--line); }
     .footer-inner { align-items: center; display: flex; font-size: .75rem; justify-content: space-between; min-height: 76px; }
@@ -117,6 +137,9 @@
       .summary { margin-left: auto; margin-right: auto; }
       .cta-row { justify-content: center; }
       .flow-card { margin: 0 auto; max-width: 620px; width: 100%; }
+      .origin-layout { gap: 2.5rem; grid-template-columns: 128px minmax(0, 1fr); }
+      .history-layout { grid-template-columns: 1fr; }
+      .history-intro { position: static; }
     }
     @media (max-width: 560px) {
       .shell { width: min(100% - 28px, 520px); }
@@ -164,6 +187,16 @@
       .finder-folder-icon { height: 46px; width: 54px; }
       .display-icon { height: 48px; width: 68px; }
       .display-icon::before { height: 27px; width: 35px; }
+      .origin { padding: 3rem 0; }
+      .origin-layout { gap: 1.75rem; grid-template-columns: 1fr; text-align: center; }
+      .origin-mark { height: 96px; margin: 0 auto; width: 96px; }
+      .origin-copy .eyebrow { margin-bottom: .8rem; }
+      .origin-copy h2 { font-size: 2.35rem; }
+      .origin-copy p:last-child { font-size: .94rem; margin-top: 1rem; }
+      .history { padding: 3rem 0; }
+      .history-layout { gap: 2rem; }
+      .history-intro h2 { font-size: 1.75rem; }
+      .history-entry { gap: .55rem; grid-template-columns: 1fr; padding: 1.35rem 0; }
       .footer-inner { align-items: flex-start; flex-direction: column; gap: .3rem; justify-content: center; min-height: 58px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -175,9 +208,11 @@
   <header class="site-header">
     <nav class="shell nav" data-i18n-aria-label="navLabel" aria-label="Main navigation">
       <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home">
-        <span class="brand-mark" aria-hidden="true"><img src="assets/chap-icon.png" alt="" width="30" height="30"></span>Chap
+        <span class="brand-mark" aria-hidden="true"><img src="assets/chap-icon-rounded.png" alt="" width="30" height="30"></span>Chap
       </a>
       <div class="nav-actions">
+        <a class="nav-link" href="#why-chap" data-i18n="originNav">Why Chap?</a>
+        <a class="nav-link" href="#history" data-i18n="historyNav">History</a>
         <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Korean">한국어</button>
       </div>
     </nav>
@@ -191,11 +226,11 @@
           <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Open it centered.</span></h1>
           <p class="summary" data-i18n="summary">Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.</p>
           <div class="cta-row">
-            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.0.13/Chap-1.0.13-9.pkg" rel="noreferrer">
+            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.1.0/Chap-1.1.0-10.pkg" rel="noreferrer">
               <span data-i18n="install">Install Chap</span>
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </a>
-            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.0.13/Chap-1.0.13-9.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
+            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.1.0/Chap-1.1.0-10.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
             <span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span>
           </div>
         </div>
@@ -248,11 +283,61 @@
         </div>
       </div>
     </section>
+
+    <section class="origin" id="why-chap" aria-labelledby="origin-title">
+      <div class="shell origin-layout">
+        <img class="origin-mark" src="assets/chap-icon-rounded.png" alt="" width="128" height="128">
+        <div class="origin-copy">
+          <p class="eyebrow" data-i18n="originEyebrow">Why Chap?</p>
+          <h2 id="origin-title" data-i18n="originTitle">Chap! Straight to it.</h2>
+          <p data-i18n="originBody">The name comes from a seal's quick chap-chap call. Just as a seal glides swiftly through water, Chap uses one Option shortcut to take you straight to an app, URL, folder, or script.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="history" id="history" aria-labelledby="history-title">
+      <div class="shell history-layout">
+        <div class="history-intro">
+          <h2 id="history-title" data-i18n="historyTitle">Product history</h2>
+          <p data-i18n="historySummary">A curated record of releases that changed how Chap works, not every patch.</p>
+        </div>
+        <div class="history-list">
+          <article class="history-entry">
+            <div class="history-version">v1.1.0</div>
+            <div class="history-copy">
+              <h3 data-i18n="history110Title">Reuse the Chrome window already open</h3>
+              <p data-i18n="history110Body">Each URL can now bring its matching Chrome window forward and place it on the configured display instead of opening another window.</p>
+            </div>
+          </article>
+          <article class="history-entry">
+            <div class="history-version">v1.0.10</div>
+            <div class="history-copy">
+              <h3 data-i18n="history1010Title">Pause Option-key triggers when needed</h3>
+              <p data-i18n="history1010Body">General settings added a trigger switch, status bar icon controls, and focused settings navigation while keeping launchables close at hand.</p>
+            </div>
+          </article>
+          <article class="history-entry">
+            <div class="history-version">v1.0.5</div>
+            <div class="history-copy">
+              <h3 data-i18n="history105Title">Secure updates inside Chap</h3>
+              <p data-i18n="history105Body">Manual update checks arrived with Sparkle 2, signed update verification, and a fail-closed update feed.</p>
+            </div>
+          </article>
+          <article class="history-entry">
+            <div class="history-version">v1.0.2</div>
+            <div class="history-copy">
+              <h3 data-i18n="history102Title">First public release</h3>
+              <p data-i18n="history102Body">Chap launched with URL, app, Finder, and shell shortcuts, multi-display placement, and notarized macOS installers.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
     <div class="shell footer-inner">
-      <span>Chap 1.0.13 · macOS</span>
+      <span>Chap 1.1.0 · macOS</span>
     </div>
   </footer>
 
@@ -266,6 +351,8 @@
           homeLabel: "Chap home",
           switchTo: "Switch to Korean",
           switchLabel: "한국어",
+          originNav: "Why Chap?",
+          historyNav: "History",
           eyebrow: "The Option-key launcher for macOS",
           heroTitlePrimary: "Press Option.",
           heroTitleAccent: "Open it centered.",
@@ -294,6 +381,19 @@
           urlName: "Chap website",
           finderName: "Project files",
           scriptName: "Open Chap",
+          originEyebrow: "Why Chap?",
+          originTitle: "Chap! Straight to it.",
+          originBody: "The name comes from a seal's quick chap-chap call. Just as a seal glides swiftly through water, Chap uses one Option shortcut to take you straight to an app, URL, folder, or script.",
+          historyTitle: "Product history",
+          historySummary: "A curated record of releases that changed how Chap works, not every patch.",
+          history110Title: "Reuse the Chrome window already open",
+          history110Body: "Each URL can now bring its matching Chrome window forward and place it on the configured display instead of opening another window.",
+          history1010Title: "Pause Option-key triggers when needed",
+          history1010Body: "General settings added a trigger switch, status bar icon controls, and focused settings navigation while keeping launchables close at hand.",
+          history105Title: "Secure updates inside Chap",
+          history105Body: "Manual update checks arrived with Sparkle 2, signed update verification, and a fail-closed update feed.",
+          history102Title: "First public release",
+          history102Body: "Chap launched with URL, app, Finder, and shell shortcuts, multi-display placement, and notarized macOS installers.",
           shortcutLabel: "Hold Option",
           shortcutText: "Press your shortcut",
           openLabel: "Open",
@@ -312,6 +412,8 @@
           homeLabel: "Chap 홈",
           switchTo: "영어로 전환",
           switchLabel: "EN",
+          originNav: "Chap 이야기",
+          historyNav: "히스토리",
           eyebrow: "macOS Option 키 런처",
           heroTitlePrimary: "Option 키를 누르세요.",
           heroTitleAccent: "화면 중앙에 열립니다.",
@@ -340,6 +442,19 @@
           urlName: "Chap 웹사이트",
           finderName: "프로젝트 파일",
           scriptName: "Chap 열기",
+          originEyebrow: "왜 Chap인가요?",
+          originTitle: "Chap! 하면 바로 도착.",
+          originBody: "Chap은 물개가 내는 경쾌한 chap-chap 소리에서 시작했습니다. 물개가 물 위를 빠르게 미끄러지듯, Chap은 Option 단축키 하나로 앱, URL, 폴더 또는 스크립트까지 곧바로 연결합니다.",
+          historyTitle: "제품 히스토리",
+          historySummary: "모든 패치가 아닌, Chap의 사용 방식을 바꾼 주요 릴리스만 기록합니다.",
+          history110Title: "열려 있는 Chrome 창 재사용",
+          history110Body: "URL마다 새 창을 여는 대신 같은 주소가 열린 Chrome 창을 앞으로 가져와 설정한 디스플레이와 크기로 배치할 수 있습니다.",
+          history1010Title: "필요할 때 Option 키 트리거 일시 정지",
+          history1010Body: "General 설정에 트리거 스위치와 상태 막대 아이콘 설정을 추가하고, Launchables 목록을 유지한 채 설정 화면을 전환할 수 있게 했습니다.",
+          history105Title: "Chap 안에서 안전하게 업데이트",
+          history105Body: "Sparkle 2 기반 수동 업데이트 확인과 서명 검증, 안전 우선 방식의 업데이트 피드를 도입했습니다.",
+          history102Title: "첫 공개 릴리스",
+          history102Body: "URL, 앱, Finder, 셸 단축키와 다중 디스플레이 창 배치, Apple 공증 설치 파일로 Chap을 처음 공개했습니다.",
           shortcutLabel: "Option 키 누르기",
           shortcutText: "단축키를 누르세요",
           openLabel: "열기",

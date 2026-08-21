@@ -48,6 +48,12 @@ struct ChromeLaunchTiming: Equatable {
     }
 }
 
+enum ChromeWindowReuseScriptResult: Equatable {
+    case matched
+    case notFound
+    case invalidOutput
+}
+
 /// Chrome --app 모드로 URL을 열고 AX API로 윈도우 크기를 조정하는 런처
 ///
 /// 모든 Chrome launch 요청은 단일 serial queue(requestCoordinator)에서 직렬 처리된다:
@@ -77,6 +83,12 @@ enum ChromeLauncher {
         let windowWaitDuration: TimeInterval
         let boundsApplyDuration: TimeInterval
         let pidTransitions: [ChromePIDTransition]
+    }
+
+    private enum ExistingWindowReuseOutcome {
+        case reused(AXBoundsResult?)
+        case notFound
+        case unavailable(String)
     }
 
     private final class ClaimedWindowRegistry {
@@ -152,6 +164,7 @@ enum ChromeLauncher {
         let screenName = screen.localizedName
         let siteName = site.name
         let siteUrl = trimmedURL
+        let shouldReuseExistingWindow = site.reuseExistingWindow
         let requestedWidth = bounds.right - bounds.left
         let requestedHeight = bounds.bottom - bounds.top
 
@@ -163,6 +176,48 @@ enum ChromeLauncher {
             Log.launcher.info(
                 "Chrome coordinator dequeued \(siteName, privacy: .private) after \(queueWait, format: .fixed(precision: 2))s"
             )
+
+            if shouldReuseExistingWindow {
+                switch reuseExistingWindow(
+                    url: siteUrl,
+                    position: position,
+                    size: size,
+                    runtime: runtime
+                ) {
+                case .reused(let boundsResult):
+                    let processingTime = CFAbsoluteTimeGetCurrent() - startTime
+                    let resultLabel = boundsResult?.level.rawValue ?? "focused"
+                    let detail =
+                        boundsResult.map {
+                            "reused existing URL window | \($0.diagnostic)"
+                        } ?? "reused existing URL window without AX resize"
+                    Log.launcher.notice(
+                        "Reused Chrome window for \(siteName, privacy: .private) — result=\(resultLabel, privacy: .public)"
+                    )
+                    ResizeLogger.log(
+                        site: siteName, type: "url",
+                        appState: "running",
+                        attempt: 1, delay: 0,
+                        totalTime: processingTime,
+                        result: resultLabel,
+                        windowCount: currentChromeProcess(runtime: runtime).map {
+                            runtime.windows($0.pid).count
+                        } ?? 0,
+                        display: screenName,
+                        size: "\(requestedWidth)x\(requestedHeight)",
+                        detail: detail)
+                    onComplete?()
+                    return
+                case .notFound:
+                    Log.launcher.info(
+                        "No matching Chrome URL window for \(siteName, privacy: .private); opening a new window"
+                    )
+                case .unavailable(let detail):
+                    Log.launcher.warning(
+                        "Chrome URL window reuse unavailable for \(siteName, privacy: .private); opening a new window — \(detail, privacy: .private)"
+                    )
+                }
+            }
 
             // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록
             let baselineStartedAt = CFAbsoluteTimeGetCurrent()
@@ -291,6 +346,137 @@ enum ChromeLauncher {
             if attempt < 4 { runtime.sleep(30_000) }
         }
         return []
+    }
+
+    // MARK: - Existing URL Window Reuse
+
+    private static func reuseExistingWindow(
+        url: String, position: CGPoint, size: CGSize, runtime: ChromeRuntime
+    ) -> ExistingWindowReuseOutcome {
+        guard currentChromeProcess(runtime: runtime) != nil else { return .notFound }
+
+        let result: ProcessRunner.Result
+        do {
+            result = try ProcessRunner.run(
+                executable: "/usr/bin/osascript",
+                arguments: ["-e", existingWindowScript(url: url)],
+                timeout: 3,
+                outputLimit: 32 * 1024)
+        } catch {
+            return .unavailable(error.localizedDescription)
+        }
+
+        if result.timedOut {
+            return .unavailable("Chrome automation timed out")
+        }
+        guard result.exitStatus == 0 else {
+            let detail =
+                result.stderrString.isEmpty
+                ? "Chrome automation exited with status \(result.exitStatus)"
+                : result.stderrString
+            return .unavailable(detail)
+        }
+
+        switch parseExistingWindowScriptOutput(result.stdoutString) {
+        case .notFound:
+            return .notFound
+        case .invalidOutput:
+            return .unavailable("Chrome automation returned an unexpected response")
+        case .matched:
+            break
+        }
+
+        guard AccessibilityPermission.isTrusted else {
+            return .reused(nil)
+        }
+        guard let process = currentChromeProcess(runtime: runtime) else {
+            return .reused(nil)
+        }
+
+        let app = NSRunningApplication(processIdentifier: process.pid)
+        app?.activate(options: .activateIgnoringOtherApps)
+        let appElement = LauncherUtils.axApplication(pid: process.pid)
+        for attempt in 0..<10 {
+            if let window = focusedWindow(app: appElement) {
+                AXUIElementPerformAction(window, kAXRaiseAction as CFString)
+                return .reused(
+                    LauncherUtils.axApplyBounds(window, position: position, size: size))
+            }
+            if attempt < 9 { runtime.sleep(50_000) }
+        }
+        return .reused(nil)
+    }
+
+    private static func focusedWindow(app: AXUIElement) -> AXUIElement? {
+        var value: AnyObject?
+        if AXUIElementCopyAttributeValue(
+            app, kAXFocusedWindowAttribute as CFString, &value) == .success,
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        {
+            return (value as! AXUIElement)
+        }
+        return LauncherUtils.axWindows(app: app).first
+    }
+
+    static func existingWindowScript(url: String) -> String {
+        let targets = equivalentChromeURLs(for: url)
+            .map { "\"\(appleScriptEscaped($0))\"" }
+            .joined(separator: ", ")
+        return """
+            set targetURLs to {\(targets)}
+            tell application "Google Chrome"
+                repeat with chromeWindow in windows
+                    try
+                        set currentURL to URL of active tab of chromeWindow
+                        if targetURLs contains currentURL then
+                            set index of chromeWindow to 1
+                            activate
+                            delay 0.1
+                            return "matched"
+                        end if
+                    end try
+                end repeat
+            end tell
+            return "not-found"
+            """
+    }
+
+    static func equivalentChromeURLs(for url: String) -> [String] {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var components = URLComponents(string: trimmed) else { return [trimmed] }
+
+        var candidates = [trimmed]
+        if components.path.isEmpty {
+            components.path = "/"
+        } else if components.path == "/" {
+            components.path = ""
+        } else {
+            return candidates
+        }
+        if let alternate = components.string, !candidates.contains(alternate) {
+            candidates.append(alternate)
+        }
+        return candidates
+    }
+
+    static func parseExistingWindowScriptOutput(_ output: String)
+        -> ChromeWindowReuseScriptResult
+    {
+        switch output.trimmingCharacters(in: .whitespacesAndNewlines) {
+        case "matched":
+            return .matched
+        case "not-found":
+            return .notFound
+        default:
+            return .invalidOutput
+        }
+    }
+
+    private static func appleScriptEscaped(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
     }
 
     /// 새 Chrome 창을 폴링해 찾고, 찾으면 리사이즈. AXBoundsResult를 반환 (못 찾으면 nil).

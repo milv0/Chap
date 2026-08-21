@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "1.0.13"
+        ?? "1.1.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -136,6 +136,7 @@ public struct Site: Codable, Equatable, Identifiable {
     public var windowSizePreset: String?
     public var displaySizeOverrides: [DisplaySizeOverride]
     public var launchType: LaunchType
+    public var reuseExistingWindow: Bool
     public var appPath: String?
     public var script: String?
     public var folderPath: String?
@@ -146,8 +147,9 @@ public struct Site: Codable, Equatable, Identifiable {
         displayName: String? = nil, displayIdentifier: String? = nil,
         windowSizePreset: String? = nil,
         displaySizeOverrides: [DisplaySizeOverride] = [],
-        launchType: LaunchType = .url, appPath: String? = nil, script: String? = nil,
-        folderPath: String? = nil, shortcut: String? = nil
+        launchType: LaunchType = .url, reuseExistingWindow: Bool = false,
+        appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
+        shortcut: String? = nil
     ) {
         self.name = name
         self.url = url
@@ -158,6 +160,7 @@ public struct Site: Codable, Equatable, Identifiable {
         self.windowSizePreset = windowSizePreset
         self.displaySizeOverrides = displaySizeOverrides
         self.launchType = launchType
+        self.reuseExistingWindow = reuseExistingWindow
         self.appPath = appPath
         self.script = script
         self.folderPath = folderPath
@@ -167,7 +170,7 @@ public struct Site: Codable, Equatable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case name, url, width, height, x, y, displayName, displayIdentifier
         case windowSizePreset, displaySizeOverrides, launchType
-        case appPath, script, folderPath, shortcut, hotkey
+        case reuseExistingWindow, appPath, script, folderPath, shortcut, hotkey
     }
 
     public init(from decoder: Decoder) throws {
@@ -186,6 +189,8 @@ public struct Site: Codable, Equatable, Identifiable {
             try container.decodeIfPresent(
                 [DisplaySizeOverride].self, forKey: .displaySizeOverrides) ?? []
         launchType = try container.decodeIfPresent(LaunchType.self, forKey: .launchType) ?? .url
+        reuseExistingWindow =
+            try container.decodeIfPresent(Bool.self, forKey: .reuseExistingWindow) ?? false
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
         script = try container.decodeIfPresent(String.self, forKey: .script)
         folderPath = try container.decodeIfPresent(String.self, forKey: .folderPath)
@@ -209,6 +214,7 @@ public struct Site: Codable, Equatable, Identifiable {
             try container.encode(displaySizeOverrides, forKey: .displaySizeOverrides)
         }
         try container.encode(launchType, forKey: .launchType)
+        try container.encode(reuseExistingWindow, forKey: .reuseExistingWindow)
         try container.encodeIfPresent(appPath, forKey: .appPath)
         try container.encodeIfPresent(script, forKey: .script)
         try container.encodeIfPresent(folderPath, forKey: .folderPath)
@@ -224,7 +230,9 @@ public struct Site: Codable, Equatable, Identifiable {
             && lhs.displayIdentifier == rhs.displayIdentifier
             && lhs.windowSizePreset == rhs.windowSizePreset
             && lhs.displaySizeOverrides == rhs.displaySizeOverrides
-            && lhs.launchType == rhs.launchType && lhs.appPath == rhs.appPath
+            && lhs.launchType == rhs.launchType
+            && lhs.reuseExistingWindow == rhs.reuseExistingWindow
+            && lhs.appPath == rhs.appPath
             && lhs.script == rhs.script && lhs.folderPath == rhs.folderPath
             && lhs.shortcut == rhs.shortcut
     }

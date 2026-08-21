@@ -69,6 +69,48 @@ struct ChromeLauncherTests {
         #expect(!ChromeLauncher.isPendingRelaunch(runningVersion: "150.0", diskVersion: nil))
         #expect(!ChromeLauncher.isPendingRelaunch(runningVersion: "", diskVersion: "151.0"))
     }
+
+    // MARK: - Existing URL Window Reuse
+
+    @Test("treats root URLs with and without a trailing slash as equivalent")
+    func rootURLVariants() {
+        #expect(
+            ChromeLauncher.equivalentChromeURLs(for: "https://example.com")
+                == ["https://example.com", "https://example.com/"])
+        #expect(
+            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/?q=1")
+                == ["https://example.com/?q=1", "https://example.com?q=1"])
+    }
+
+    @Test("does not collapse non-root URL paths")
+    func pathURLHasNoAlternate() {
+        #expect(
+            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/docs/")
+                == ["https://example.com/docs/"])
+    }
+
+    @Test("builds a Chrome script that escapes URL string literals")
+    func reuseScriptEscapesURL() {
+        let script = ChromeLauncher.existingWindowScript(
+            url: #"https://example.com/?value="quoted"\path"#)
+
+        #expect(script.contains(#"value=\"quoted\"\\path"#))
+        #expect(script.contains("set index of chromeWindow to 1"))
+        #expect(script.contains(#"return "matched""#))
+    }
+
+    @Test(
+        "parses Chrome reuse script output",
+        arguments: [
+            ("matched\n", ChromeWindowReuseScriptResult.matched),
+            ("not-found\n", ChromeWindowReuseScriptResult.notFound),
+            ("", ChromeWindowReuseScriptResult.invalidOutput),
+        ])
+    func parsesReuseScriptOutput(
+        output: String, expected: ChromeWindowReuseScriptResult
+    ) {
+        #expect(ChromeLauncher.parseExistingWindowScriptOutput(output) == expected)
+    }
 }
 
 @Suite("Chrome Runtime Observation")

@@ -13,7 +13,8 @@ enum ConfigFormatReference {
               "url": "https://github.com/",
               "width": 800,
               "height": 600,
-              "launchType": "url"
+              "launchType": "url",
+              "reuseExistingWindow": false
             },
             {
               "name": "Slack",
@@ -51,7 +52,7 @@ enum ConfigFormatReference {
         • finder: name, folderPath, width, height
         • shell:  name, script, width, height
 
-        Optional: shortcut, displayName, windowSizePreset
+        Optional: shortcut, displayName, windowSizePreset, reuseExistingWindow
         Global optional: optionShortcutsEnabled
         """
 }

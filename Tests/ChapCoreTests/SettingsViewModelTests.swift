@@ -20,6 +20,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsURLWindowReuseToggle() {
+        let vm = SettingsViewModel(sites: baseSites)
+        vm.sites[0].reuseExistingWindow = true
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func hasChangesDetectsSiteAddition() {
         let vm = SettingsViewModel(sites: baseSites)
         vm.sites.append(

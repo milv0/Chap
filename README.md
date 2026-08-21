@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.0.13-orange)
+![Version](https://img.shields.io/badge/version-1.1.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -19,6 +19,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
+- **Optional URL Window Reuse** — Bring forward an existing Chrome window for the same URL
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
@@ -28,7 +29,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - macOS 14.0+ (Sonoma)
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
-- Automation permission when using Finder folder launch
+- Automation permission when reusing Chrome URL windows or using Finder folder launch
 
 ## Usage
 
@@ -75,6 +76,7 @@ Stored at `~/.chap.json`:
       "width": 800,
       "height": 600,
       "launchType": "url",
+      "reuseExistingWindow": false,
       "displayName": "Built-in Retina Display",
       "displayIdentifier": "DISPLAY-UUID",
       "windowSizePreset": "standard",
@@ -129,11 +131,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.0.13
+Scripts/release.sh 1.1.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.0.13 --publish
+Scripts/release.sh 1.1.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
@@ -188,6 +190,11 @@ The script signs the notarized DMG with the operator's Keychain-stored EdDSA pri
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
+See [DESIGN.md](DESIGN.md) for app, Guide Window, and website color tokens.
+
+The website's Product history is intentionally curated. Add an entry only when
+a release introduces a major user-facing capability or meaningfully changes a
+core workflow; routine fixes and visual adjustments stay in release notes.
 
 ## License
 
