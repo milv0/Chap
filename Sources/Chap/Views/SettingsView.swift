@@ -785,6 +785,12 @@ private struct GeneralSettingsView: View {
             Spacer(minLength: 0)
             Form {
                 Section("Behavior") {
+                    Toggle("Guide Window", isOn: $vm.showGuideWindow)
+                        .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
+
+                    Toggle("Open at Login", isOn: $vm.launchAtLogin)
+                        .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
+
                     Toggle(
                         "Enable Chap Option-Key Triggers",
                         isOn: $vm.optionShortcutsEnabled
@@ -794,11 +800,13 @@ private struct GeneralSettingsView: View {
                     )
                     .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
 
-                    Toggle("Guide Window", isOn: $vm.showGuideWindow)
-                        .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
-
-                    Toggle("Open at Login", isOn: $vm.launchAtLogin)
-                        .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
+                    Label(
+                        "Turn this off temporarily when another app or workflow needs "
+                            + "Option-key combinations.",
+                        systemImage: "info.circle"
+                    )
+                    .font(.caption)
+                    .foregroundColor(DS.textSecondary)
                 }
 
                 Section("Appearance") {
