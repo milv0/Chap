@@ -264,8 +264,9 @@ Chrome 윈도우 감지 방식:
      이전 요청 완료 전 다음 Process를 시작하지 않아 빠른 연속 launch도 요청과 생성 창이
      1:1로 대응함. queue wait와 processing latency, baseline/launch/window wait/AX apply,
      PID 전환 경로를 분리해 로그에 기록
-  2. reuseExistingWindow가 켜져 있으면 active tab URL이 같은 Chrome window를 전면화하고,
-     Rectangle 방식처럼 AX focused window(없으면 첫 window) 하나만 선택해 readback 검증
+  2. reuseExistingWindow가 켜져 있으면 모든 탭에서 URL이 같은 Chrome window를 전면화하고,
+     Rectangle 방식처럼 AX focused window가 전파될 때까지 대기하고, 없으면 마지막에 첫 window
+     하나만 선택해 readback 검증
   3. 실행 전 캐싱한 Chrome PID의 전체 윈도우 목록(AXUIElement[]) 저장
      - running 상태에서 AX 읽기가 순간적으로 빈 목록을 반환할 수 있어 최대 5회(30ms 간격)
        재시도해 스냅샷을 확보 (captureExistingWindows). 빈 스냅샷을 기준으로 삼으면 기존 창이
@@ -325,7 +326,7 @@ App 윈도우 감지 방식 (AXObserver):
 
 ### AppleScript (osascript via Process)
   용도: Chrome 동일 URL 창 검색·전면화, Finder 윈도우 제어
-  - Chrome: active tab URL 완전 일치(루트 trailing slash는 동등 처리) → 해당 window를 전면화
+  - Chrome: 모든 탭 URL 완전 일치(경로 끝 trailing slash는 동등 처리) → 해당 tab/window를 전면화
   - Finder: "tell application Finder" → open + bounds 설정
   ※ Chrome 창 이동·리사이즈는 AppleScript가 아니라 AX API와 readback 검증 사용
 
