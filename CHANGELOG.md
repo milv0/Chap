@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.7] — 2026-08-23
+
+### Improved
+
+- **Clear reuse control** — The URL reuse setting now uses a dedicated window
+  icon, stronger label hierarchy, and a compact single-row layout. Its full row
+  dims when the launchable is not being edited.
+- **Cleaner menubar actions** — "Check for Updates…" now sits directly above
+  "Restart" in the menubar menu.
+
+---
+
 ## [1.1.6] — 2026-08-23
 
 ### Improved

@@ -110,15 +110,6 @@ extension AppDelegate {
         }
         menu.addItem(.separator())
 
-        // Check for Updates — disabled when Sparkle configuration is incomplete
-        let updateItem = NSMenuItem(
-            title: "Check for Updates…",
-            action: #selector(checkForUpdates(_:)),
-            keyEquivalent: "")
-        updateItem.target = self
-        updateItem.isEnabled = updateController.canCheckForUpdates
-        menu.addItem(updateItem)
-
         let settings = NSMenuItem(
             title: "Settings...", action: #selector(openSettings),
             keyEquivalent: config.optionShortcutsEnabled ? "," : "")
@@ -145,6 +136,16 @@ extension AppDelegate {
         about.target = self
         menu.addItem(about)
         menu.addItem(.separator())
+
+        // Check for Updates — disabled when Sparkle configuration is incomplete
+        let updateItem = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdates(_:)),
+            keyEquivalent: "")
+        updateItem.target = self
+        updateItem.isEnabled = updateController.canCheckForUpdates
+        menu.addItem(updateItem)
+
         let restart = NSMenuItem(title: "Restart", action: #selector(restartApp), keyEquivalent: "")
         restart.target = self
         menu.addItem(restart)
