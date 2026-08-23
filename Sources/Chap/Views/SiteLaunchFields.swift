@@ -191,7 +191,7 @@ struct SiteLaunchFields: View {
                 Spacer(minLength: 8)
                 Toggle("", isOn: $site.reuseExistingWindow)
                     .labelsHidden()
-                    .help("Bring forward a Chrome window already showing this URL.")
+                    .help("Reuse only the Chrome app window this launchable creates.")
             }
         }
     }

@@ -67,7 +67,7 @@ enum ChromeLauncher {
     private static let diagnosticQueue = DispatchQueue(
         label: "com.mingyupark.Chap.ChromeDiagnostics", qos: .utility)
     private static var didShowChromeAutomationAlert = false
-    private static var trackedWindowIDs: [UUID: Int] = [:]
+    private static var trackedWindows: [UUID: TrackedChromeWindow] = [:]
 
     /// 단일 request coordinator serial queue.
     /// Process launch도 이 큐 안에서 수행하여 요청-창 1:1 순서를 보장한다.
@@ -85,6 +85,13 @@ enum ChromeLauncher {
         let windowWaitDuration: TimeInterval
         let boundsApplyDuration: TimeInterval
         let pidTransitions: [ChromePIDTransition]
+    }
+
+    private struct TrackedChromeWindow {
+        let windowID: Int
+        let url: String
+        let processPID: pid_t
+        let processLaunchDate: Date
     }
 
     private enum ExistingWindowReuseOutcome {
@@ -121,6 +128,19 @@ enum ChromeLauncher {
         task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         task.arguments = ["-na", appName, "--args", "--app=\(url)"]
         try task.run()
+    }
+
+    static func configureWindowReuse(sites: [Site]) {
+        var enabledURLs: [UUID: String] = [:]
+        for site in sites where site.launchType == .url && site.reuseExistingWindow {
+            enabledURLs[site.id] = site.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        requestCoordinator.async {
+            trackedWindows = trackedWindows.filter { entry in
+                enabledURLs[entry.key] == entry.value.url
+            }
+        }
     }
 
     /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈.
@@ -210,7 +230,7 @@ enum ChromeLauncher {
                     return
                 case .notFound:
                     Log.launcher.info(
-                        "No matching Chrome URL window for \(siteName, privacy: .private); opening a new window"
+                        "No Chap-managed Chrome window for \(siteName, privacy: .private); opening a new window"
                     )
                 case .unavailable(let detail):
                     Log.launcher.warning(
@@ -228,6 +248,10 @@ enum ChromeLauncher {
                 chromeRunning
                 ? captureExistingWindows(pid: chromePid, runtime: runtime)
                 : []
+            let chromeWindowIDsBefore: Set<Int>? =
+                shouldReuseExistingWindow
+                ? (chromeRunning ? captureChromeWindowIDs() : [])
+                : nil
             let baselineDuration = CFAbsoluteTimeGetCurrent() - baselineStartedAt
 
             Log.launcher.info(
@@ -269,7 +293,12 @@ enum ChromeLauncher {
             )
             let result = observation.result
             if shouldReuseExistingWindow, result != nil {
-                rememberFrontChromeWindow(for: site.id, runtime: runtime)
+                rememberCreatedChromeWindow(
+                    for: site.id,
+                    url: siteUrl,
+                    windowIDsBefore: chromeWindowIDsBefore,
+                    sessionProcess: chromeProcess,
+                    runtime: runtime)
             }
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
             let resultLabel = result?.level.rawValue ?? "failed"
@@ -356,33 +385,37 @@ enum ChromeLauncher {
     private static func reuseExistingWindow(
         siteID: UUID, url: String, position: CGPoint, size: CGSize, runtime: ChromeRuntime
     ) -> ExistingWindowReuseOutcome {
-        guard currentChromeProcess(runtime: runtime) != nil else { return .notFound }
-
-        if let trackedWindowID = trackedWindowIDs[siteID] {
-            switch runChromeWindowScript(trackedWindowScript(windowID: trackedWindowID)) {
-            case .result(.matched):
-                return resizeChromeWindow(
-                    windowID: trackedWindowID,
-                    position: position,
-                    size: size
-                )
-            case .result(.notFound):
-                trackedWindowIDs[siteID] = nil
-            case .result(.invalidOutput):
-                return .unavailable("Chrome returned an invalid tracked-window response")
-            case .unavailable(let detail):
-                return .unavailable(detail)
-            }
+        guard let trackedWindow = trackedWindows[siteID], trackedWindow.url == url else {
+            trackedWindows[siteID] = nil
+            return .notFound
+        }
+        let currentProcess = currentChromeProcess(runtime: runtime)
+        let isSameChromeSession =
+            currentProcess?.pid == trackedWindow.processPID
+            && currentProcess?.launchDate == trackedWindow.processLaunchDate
+        guard isSameChromeSession else {
+            trackedWindows[siteID] = nil
+            return .notFound
         }
 
-        switch runChromeWindowScript(existingWindowScript(url: url)) {
-        case .result(.matched(let windowID)):
-            trackedWindowIDs[siteID] = windowID
-            return resizeChromeWindow(windowID: windowID, position: position, size: size)
+        switch runChromeWindowScript(
+            trackedWindowScript(windowID: trackedWindow.windowID)
+        ) {
+        case .result(.matched):
+            let outcome = resizeChromeWindow(
+                windowID: trackedWindow.windowID,
+                position: position,
+                size: size
+            )
+            if case .notFound = outcome {
+                trackedWindows[siteID] = nil
+            }
+            return outcome
         case .result(.notFound):
+            trackedWindows[siteID] = nil
             return .notFound
         case .result(.invalidOutput):
-            return .unavailable("Chrome returned an invalid URL-match response")
+            return .unavailable("Chrome returned an invalid tracked-window response")
         case .unavailable(let detail):
             return .unavailable(detail)
         }
@@ -405,7 +438,7 @@ enum ChromeLauncher {
         }
     }
 
-    private static func runChromeWindowScript(_ source: String) -> ChromeWindowScriptOutcome {
+    private static func runChromeScript(_ source: String) -> ChromeScriptOutcome {
         guard let script = NSAppleScript(source: source) else {
             return .unavailable("Could not create Chrome automation script")
         }
@@ -421,48 +454,70 @@ enum ChromeLauncher {
             return .unavailable(errorMessage ?? "Chrome automation failed")
         }
 
-        return .result(parseExistingWindowScriptOutput(output.stringValue ?? ""))
+        return .output(output.stringValue ?? "")
     }
 
-    private static func rememberFrontChromeWindow(for siteID: UUID, runtime: ChromeRuntime) {
-        guard currentChromeProcess(runtime: runtime) != nil else { return }
-        switch runChromeWindowScript(frontWindowScript()) {
-        case .result(.matched(let windowID)):
-            trackedWindowIDs[siteID] = windowID
+    private static func runChromeWindowScript(_ source: String) -> ChromeWindowScriptOutcome {
+        switch runChromeScript(source) {
+        case .output(let output):
+            return .result(parseExistingWindowScriptOutput(output))
         case .unavailable(let detail):
-            Log.launcher.warning(
-                "Could not remember Chrome window for reuse — \(detail, privacy: .private)")
-        case .result(.notFound), .result(.invalidOutput):
-            break
+            return .unavailable(detail)
         }
     }
 
-    static func existingWindowScript(url: String) -> String {
-        let targets = equivalentChromeURLs(for: url)
-            .map { "\"\(appleScriptEscaped($0))\"" }
-            .joined(separator: ", ")
-        return """
-            set targetURLs to {\(targets)}
-            with timeout of 3 seconds
-                tell application "Google Chrome"
-                    repeat with chromeWindow in windows
-                        repeat with chromeTab in tabs of chromeWindow
-                            try
-                                set currentURL to URL of chromeTab
-                                if targetURLs contains currentURL then
-                                    set active tab of chromeWindow to chromeTab
-                                    set index of chromeWindow to 1
-                                    activate
-                                    delay 0.25
-                                    return "matched:" & ((id of chromeWindow) as text)
-                                end if
-                            end try
-                        end repeat
-                    end repeat
-                end tell
-            end timeout
-            return "not-found"
-            """
+    private static func captureChromeWindowIDs() -> Set<Int>? {
+        switch runChromeScript(windowIDsScript()) {
+        case .output(let output):
+            return parseWindowIDsScriptOutput(output)
+        case .unavailable(let detail):
+            Log.launcher.warning(
+                "Could not capture Chrome window IDs — \(detail, privacy: .private)")
+            return nil
+        }
+    }
+
+    private static func rememberCreatedChromeWindow(
+        for siteID: UUID,
+        url: String,
+        windowIDsBefore: Set<Int>?,
+        sessionProcess: ChromeProcessCandidate?,
+        runtime: ChromeRuntime
+    ) {
+        guard let windowIDsBefore else {
+            Log.launcher.warning(
+                "Skipped Chrome window tracking because the pre-launch ID snapshot was unavailable")
+            return
+        }
+        guard let process = sessionProcess ?? currentChromeProcess(runtime: runtime) else {
+            return
+        }
+
+        for attempt in 0..<5 {
+            guard let windowIDsAfter = captureChromeWindowIDs() else { return }
+            let createdWindowIDs = windowIDsAfter.subtracting(windowIDsBefore)
+            if let windowID = createdChromeWindowID(
+                before: windowIDsBefore, after: windowIDsAfter)
+            {
+                trackedWindows[siteID] = TrackedChromeWindow(
+                    windowID: windowID,
+                    url: url,
+                    processPID: process.pid,
+                    processLaunchDate: process.launchDate)
+                Log.launcher.info(
+                    "Remembered Chap-created Chrome window id=\(windowID, privacy: .public)")
+                return
+            }
+            if createdWindowIDs.count > 1 {
+                Log.launcher.warning(
+                    "Skipped Chrome window tracking because \(createdWindowIDs.count, privacy: .public) new window IDs were observed"
+                )
+                return
+            }
+            if attempt < 4 { runtime.sleep(50_000) }
+        }
+        Log.launcher.warning(
+            "Skipped Chrome window tracking because no new Chrome window ID was observed")
     }
 
     static func trackedWindowScript(windowID: Int) -> String {
@@ -503,35 +558,44 @@ enum ChromeLauncher {
             """
     }
 
-    private static func frontWindowScript() -> String {
+    static func windowIDsScript() -> String {
         """
         with timeout of 3 seconds
             tell application "Google Chrome"
-                if (count of windows) is 0 then return "not-found"
-                return "matched:" & ((id of front window) as text)
+                set windowIDs to {}
+                repeat with chromeWindow in windows
+                    set end of windowIDs to ((id of chromeWindow) as text)
+                end repeat
+                set previousDelimiters to AppleScript's text item delimiters
+                set AppleScript's text item delimiters to ","
+                set resultText to windowIDs as text
+                set AppleScript's text item delimiters to previousDelimiters
+                return "ids:" & resultText
             end tell
         end timeout
         """
     }
 
-    static func equivalentChromeURLs(for url: String) -> [String] {
-        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard var components = URLComponents(string: trimmed) else { return [trimmed] }
+    static func parseWindowIDsScriptOutput(_ output: String) -> Set<Int>? {
+        let trimmed = output.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("ids:") else { return nil }
+        let payload = String(trimmed.dropFirst(4))
+        guard !payload.isEmpty else { return [] }
 
-        var candidates = [trimmed]
-        if components.path.isEmpty {
-            components.path = "/"
-        } else if components.path == "/" {
-            components.path = ""
-        } else if components.path.hasSuffix("/") {
-            components.path.removeLast()
-        } else {
-            components.path += "/"
+        let components = payload.split(
+            separator: ",", omittingEmptySubsequences: false)
+        var windowIDs = Set<Int>()
+        for component in components {
+            guard let windowID = Int(component), windowID > 0 else { return nil }
+            windowIDs.insert(windowID)
         }
-        if let alternate = components.string, !candidates.contains(alternate) {
-            candidates.append(alternate)
-        }
-        return candidates
+        return windowIDs.count == components.count ? windowIDs : nil
+    }
+
+    static func createdChromeWindowID(before: Set<Int>, after: Set<Int>) -> Int? {
+        let createdWindowIDs = after.subtracting(before)
+        guard createdWindowIDs.count == 1 else { return nil }
+        return createdWindowIDs.first
     }
 
     static func parseExistingWindowScriptOutput(_ output: String)
@@ -556,12 +620,6 @@ enum ChromeLauncher {
         }
     }
 
-    private static func appleScriptEscaped(_ value: String) -> String {
-        value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-    }
-
     private static func showChromeAutomationPermissionAlert() {
         guard !didShowChromeAutomationAlert else { return }
         didShowChromeAutomationAlert = true
@@ -576,6 +634,11 @@ enum ChromeLauncher {
 
     private enum ChromeWindowScriptOutcome {
         case result(ChromeWindowReuseScriptResult)
+        case unavailable(String)
+    }
+
+    private enum ChromeScriptOutcome {
+        case output(String)
         case unavailable(String)
     }
 
