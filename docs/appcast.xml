@@ -6,6 +6,15 @@
         <description>Appcast feed for Chap macOS updates.</description>
         <language>en</language>
         <item>
+            <title>1.1.5</title>
+            <pubDate>Sun, 23 Aug 2026 22:30:06 +0900</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>1.1.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.1.5-15.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.1.5/Chap-1.1.5-15.dmg" length="3808637" type="application/octet-stream" sparkle:edSignature="7MJpQvbLCsuSSOG9zQnETibdYuBDOuOpgZWEpCq6goDCQdVDJJhKd2OkLoqyXqP5Iu/2Hofe1kAlJC8eNTPlAQ=="/>
+        </item>
+        <item>
             <title>1.1.4</title>
             <pubDate>Fri, 21 Aug 2026 17:56:36 +0900</pubDate>
             <sparkle:version>14</sparkle:version>
@@ -22,15 +31,6 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.1.3-13.md</sparkle:releaseNotesLink>
             <enclosure url="https://github.com/milv0/Chap/releases/download/v1.1.3/Chap-1.1.3-13.dmg" length="3792726" type="application/octet-stream" sparkle:edSignature="u0fyO5UmP/mPfpGtdZH6UWuf0UrJH0hURwwi+oFt0cI3Ky/bTEVAdRT/ss+jJmuS9yJ6Fc1ylnodXin/mfdPDA=="/>
-        </item>
-        <item>
-            <title>1.1.2</title>
-            <pubDate>Fri, 21 Aug 2026 17:37:17 +0900</pubDate>
-            <sparkle:version>12</sparkle:version>
-            <sparkle:shortVersionString>1.1.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.1.2-12.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.1.2/Chap-1.1.2-12.dmg" length="3793131" type="application/octet-stream" sparkle:edSignature="Plyw75tKPWVwVRKbYE8jHSsCYc5g3QHI0E5XES6xlgDCK5zpEQ9a4xFXydtqh1VbDINYtNPO71TUzk2kxUiaBg=="/>
         </item>
     </channel>
 </rss>
