@@ -2,6 +2,19 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.6] — 2026-08-23
+
+### Improved
+
+- **Clear URL reuse guidance** — The in-app Q&A now explains first-launch
+  ownership, exact Chrome window reuse, session lifetime, and reset conditions
+  in Korean and English.
+- **Consistent product documentation** — README, import guidance, website
+  history, release notes, and contributor instructions now describe the same
+  Chap-owned window behavior.
+
+---
+
 ## [1.1.5] — 2026-08-23
 
 ### Fixed
@@ -11,6 +24,9 @@ All notable changes to Chap are documented in this file.
   windows, and frontmost windows are never searched as fallback targets.
 - **Safe reuse invalidation** — Tracked Chrome windows are discarded when the
   window closes, Chrome restarts, reuse is disabled, or the URL changes.
+- **Session-scoped ownership** — The first launch opens a new Chrome `--app`
+  window and links it only when exactly one new window ID is observed. Links
+  remain in memory for the current Chap session and are rebuilt after restart.
 
 ---
 

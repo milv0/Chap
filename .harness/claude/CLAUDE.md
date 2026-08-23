@@ -67,7 +67,7 @@ Launch types:
 
 | Type | Execution | Window control | Accessibility |
 | --- | --- | --- | --- |
-| `url` | Chrome `--app` mode via `/usr/bin/open` | AX API detects the new Chrome window and applies bounds | Required for resize |
+| `url` | Chrome `--app` mode via `/usr/bin/open` | AX API detects the new Chrome window; optional reuse targets only that launchable's remembered window ID | Required for resize; Automation required for reuse |
 | `app` | `NSWorkspace.openApplication` | AXObserver plus polling fallback applies bounds to standard windows, plus resizable non-standard Office windows | Required for resize |
 | `finder` | Finder AppleScript opens folder and sets bounds atomically | Finder AppleScript | Automation permission |
 | `shell` | User shell runs script with `$SHELL -c` | None | Not required |
@@ -75,6 +75,9 @@ Launch types:
 Configuration is stored in `~/.chap.json`; `~/.chap.json.bak` is used as the
 backup path. Legacy fields are decoded for compatibility and stripped on app
 launch where applicable.
+
+URL window reuse is session-scoped ownership, not URL matching. It must never
+search user tabs or fall back to the focused/frontmost Chrome window.
 
 ## Rules
 

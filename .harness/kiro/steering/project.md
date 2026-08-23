@@ -31,7 +31,9 @@ There is no `Package.swift`; do not use `swift test`.
 - `Option + .`: open menu.
 - `Option + custom key`: launch the matching site.
 - `Option + ,`: open Settings.
-- URL launch uses Chrome `--app` plus AX API resize.
+- URL launch uses Chrome `--app` plus AX API resize. Optional reuse remembers
+  only the window ID created by that launchable for the current Chap/Chrome
+  session; it never searches user tabs or uses focused/frontmost fallbacks.
 - App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize, including resizable non-standard Office windows.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Shell launch runs the configured script through `$SHELL -c`.

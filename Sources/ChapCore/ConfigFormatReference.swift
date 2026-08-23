@@ -54,5 +54,8 @@ enum ConfigFormatReference {
 
         Optional: shortcut, displayName, windowSizePreset, reuseExistingWindow
         Global optional: optionShortcutsEnabled
+
+        For URL items, reuseExistingWindow reuses only the Chrome app window
+        created by that item during the current Chap session.
         """
 }
