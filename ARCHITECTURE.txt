@@ -204,12 +204,12 @@ Config 모델 필드:
   ────────
   Icon ▸ Default (✓)
          Lightning
-  Check for Updates…  (설정 미완료 시 비활성화)
   Settings...   (⌥,)
   Q&A
   Report Bug
   About Chap
   ────────
+  Check for Updates…  (설정 미완료 시 비활성화)
   Restart
   ────────
   Quit

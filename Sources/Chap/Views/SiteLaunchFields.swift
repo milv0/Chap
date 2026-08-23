@@ -184,15 +184,36 @@ struct SiteLaunchFields: View {
                 placeholder: "https://"
             )
 
-            HStack(spacing: 8) {
+            Divider()
+
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "macwindow.on.rectangle")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(
+                        site.reuseExistingWindow ? DS.accent : DS.textSecondary
+                    )
+                    .frame(width: 28, height: 28)
+                    .background(
+                        site.reuseExistingWindow
+                            ? DS.accentSoft
+                            : DS.border.opacity(0.18)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+
                 Text("Reuse Existing URL Window")
-                    .font(DS.bodyFont)
+                    .font(DS.bodyFont.weight(.medium))
                     .foregroundColor(DS.textPrimary)
+
                 Spacer(minLength: 8)
-                Toggle("", isOn: $site.reuseExistingWindow)
+
+                Toggle("Reuse Existing URL Window", isOn: $site.reuseExistingWindow)
                     .labelsHidden()
-                    .help("Reuse only the Chrome app window this launchable creates.")
+                    .toggleStyle(.switch)
+                    .help(
+                        "Reuse only the Chrome app window created by this launchable."
+                    )
             }
+            .opacity(isEditing ? 1 : 0.45)
         }
     }
 
