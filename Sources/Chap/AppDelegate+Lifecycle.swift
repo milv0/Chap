@@ -134,6 +134,7 @@ extension AppDelegate {
                 return false
             }
             self.config = newConfig
+            ChromeLauncher.configureWindowReuse(sites: newConfig.sites)
             if previousLoginSetting != newConfig.launchAtLogin {
                 self.applyLoginItem(enabled: payload.launchAtLogin)
             }

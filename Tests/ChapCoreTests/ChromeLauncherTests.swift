@@ -72,33 +72,50 @@ struct ChromeLauncherTests {
 
     // MARK: - Existing URL Window Reuse
 
-    @Test("treats URLs with and without a trailing slash as equivalent")
-    func trailingSlashVariants() {
-        #expect(
-            ChromeLauncher.equivalentChromeURLs(for: "https://example.com")
-                == ["https://example.com", "https://example.com/"])
-        #expect(
-            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/?q=1")
-                == ["https://example.com/?q=1", "https://example.com?q=1"])
-        #expect(
-            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/docs/")
-                == ["https://example.com/docs/", "https://example.com/docs"])
-        #expect(
-            ChromeLauncher.equivalentChromeURLs(for: "https://example.com/docs")
-                == ["https://example.com/docs", "https://example.com/docs/"])
+    @Test("builds a script that snapshots Chrome window IDs without changing focus")
+    func windowIDsScriptOnlyReadsWindowIDs() {
+        let script = ChromeLauncher.windowIDsScript()
+
+        #expect(script.contains("repeat with chromeWindow in windows"))
+        #expect(script.contains("id of chromeWindow"))
+        #expect(script.contains(#"return "ids:""#))
+        #expect(script.contains("with timeout of 3 seconds"))
+        #expect(!script.contains("activate"))
+        #expect(!script.contains("set index"))
     }
 
-    @Test("builds a Chrome script that escapes URL string literals")
-    func reuseScriptEscapesURL() {
-        let script = ChromeLauncher.existingWindowScript(
-            url: #"https://example.com/?value="quoted"\path"#)
+    @Test(
+        "parses Chrome window ID snapshots",
+        arguments: [
+            ("ids:12,42\n", Set([12, 42])),
+            ("ids:\n", Set<Int>()),
+        ])
+    func parsesWindowIDSnapshots(output: String, expected: Set<Int>) {
+        #expect(ChromeLauncher.parseWindowIDsScriptOutput(output) == expected)
+    }
 
-        #expect(script.contains(#"value=\"quoted\"\\path"#))
-        #expect(script.contains("repeat with chromeTab in tabs of chromeWindow"))
-        #expect(script.contains("set active tab of chromeWindow to chromeTab"))
-        #expect(script.contains("set index of chromeWindow to 1"))
-        #expect(script.contains("with timeout of 3 seconds"))
-        #expect(script.contains(#"return "matched:""#))
+    @Test(
+        "rejects malformed Chrome window ID snapshots",
+        arguments: ["", "matched:42", "ids:0", "ids:abc", "ids:1,,2", "ids:1,1"])
+    func rejectsMalformedWindowIDSnapshots(output: String) {
+        #expect(ChromeLauncher.parseWindowIDsScriptOutput(output) == nil)
+    }
+
+    @Test("selects only one newly created Chrome window ID")
+    func selectsSingleCreatedWindowID() {
+        #expect(
+            ChromeLauncher.createdChromeWindowID(
+                before: [10, 20], after: [10, 20, 30]) == 30)
+    }
+
+    @Test("does not select an existing or ambiguous Chrome window ID")
+    func rejectsMissingOrAmbiguousCreatedWindowID() {
+        #expect(
+            ChromeLauncher.createdChromeWindowID(
+                before: [10, 20], after: [10, 20]) == nil)
+        #expect(
+            ChromeLauncher.createdChromeWindowID(
+                before: [10], after: [10, 20, 30]) == nil)
     }
 
     @Test(

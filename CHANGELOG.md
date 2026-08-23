@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.5] — 2026-08-23
+
+### Fixed
+
+- **Chap-owned Chrome window reuse** — Each URL launchable now remembers only
+  the Chrome app window it creates after reuse is enabled. User tabs, focused
+  windows, and frontmost windows are never searched as fallback targets.
+- **Safe reuse invalidation** — Tracked Chrome windows are discarded when the
+  window closes, Chrome restarts, reuse is disabled, or the URL changes.
+
+---
+
 ## [1.1.4] — 2026-08-21
 
 ### Fixed

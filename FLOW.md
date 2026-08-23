@@ -40,7 +40,7 @@
 | I11 | `GuideWindow.dismiss(token)`은 토큰이 현재일 때만 자기 창을 닫는다 | 연속 실행 시 유령 가이드 창이 남는다 |
 | I12 | 관리 창(Settings/QA/Welcome) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
 | I13 | 글로벌 단축키는 `RegisterEventHotKey`로 **정확한 Option 조합만** 등록. 전체 keyDown event tap 금지 | Chap 메인 스레드 정체가 일반 키 입력 전달을 막는다 |
-| I14 | URL 창 재사용은 **같은 active-tab URL의 focused 창 1개**만 활성화·리사이즈. 매칭 실패 시 기존 새 창 흐름으로 폴백 | 다른 Chrome 작업 창이 이동되거나 실행 요청이 사라진다 |
+| I14 | URL 창 재사용은 해당 launchable이 **현재 Chap/Chrome 세션에서 직접 만든 window ID 1개**만 활성화·리사이즈. 사용자 탭 URL 검색과 focused 창 폴백은 금지 | 다른 Chrome 작업 창이 이동된다 |
 
 ---
 
@@ -211,10 +211,9 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
 [main]  경로/URL/화면 검증 → bounds 계산 → enqueue
 [coordinator]
  1. queueWait 로깅 (대기 시간과 처리 시간을 분리 기록)
- 2. reuseExistingWindow == true이고 Chrome 실행 중이면 Chap 프로세스의 AppleScript로 사이트별 세션 window ID를 먼저 검색
-      ID 매칭 → 해당 window 전면화 → AX focused window(없으면 첫 window) 1개 리사이즈 → 종료
-      ID 없음/무효 → 모든 탭 URL 검색 → 매칭한 ID를 세션에 기억한 뒤 같은 처리
-      미매칭/자동화 실패 → 아래 새 창 흐름으로 폴백
+ 2. reuseExistingWindow == true이면 사이트별 세션 window ID를 확인
+      현재 Chrome 프로세스 세션과 ID가 모두 일치 → 해당 window 전면화·bounds 적용 → 종료
+      ID 없음/무효/Chrome 재시작 → 아래 새 창 흐름으로 폴백 (사용자 탭 URL 검색 금지)
  3. baseline: Chrome PID 확보 → captureExistingWindows(최대 5회 × 30ms)
  4. Process: /usr/bin/open -na "Google Chrome" --args --app=<url>
  5. 권한 없으면 여기서 종료 (리사이즈 없이 실행만)
@@ -224,18 +223,20 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
  7. ClaimedWindowRegistry.claimFirstUnclaimed(새 창 후보, liveWindows)
       → 이미 다른 launch가 가져간 창은 건너뛰고, 닫힌 창은 레지스트리에서 정리
  8. axApplyBounds → level 판정 (§8)
- 9. 단계별 timing 로그 + ResizeLogger.log(type:"url") + onComplete → 가이드 창 닫기
+ 9. reuseExistingWindow == true이고 새 창 리사이즈 성공 시 launch 전후 Chrome window ID 차집합 확인
+      정확히 1개 → 해당 site의 현재 Chap/Chrome 세션 소유 창으로 기억
+      0개/2개 이상/자동화 실패 → 기억하지 않음 (다음 실행도 새 창)
+10. 단계별 timing 로그 + ResizeLogger.log(type:"url") + onComplete → 가이드 창 닫기
 ```
 
 - 매 폴링에서 live Chrome 프로세스를 다시 조회해 가장 최근 프로세스를 관찰한다. PID가 바뀌면
   실행 전 window fingerprint를 새 PID의 창에서 차감해 복원 창과 요청 창을 구분한다.
 - 새 창을 못 찾으면 `result == nil` → `detail = "no new window found"`.
-- 재사용 URL 비교는 모든 Chrome 탭의 URL 완전 일치이며 경로 끝 trailing slash는 동등 처리한다.
-  새 창으로 폴백한 경우에도 전면 Chrome window ID를 해당 사이트의 **현재 Chap 실행 세션에만** 기억한다.
-  따라서 로그인 리다이렉트처럼 URL이 바뀌어도 다음 실행에서 같은 창을 재사용할 수 있다. Chrome 재시작
-  또는 창 종료로 ID가 무효가 되면 URL 검색으로 되돌아간다. 매칭된 탭을 활성화하고 창을 전면화한 뒤
-  AX focused window가 전파될 때까지 최대 1초 대기해 하나만 리사이즈한다. 포커스 값을 읽지 못할 때만
-  마지막에 첫 AX window로 폴백한다.
+- 재사용은 URL 검색이 아니라 해당 launchable이 직접 만든 Chrome window ID 소유권으로 판정한다.
+  토글 활성화 후 첫 실행은 항상 새 --app 창을 열고, launch 전후 ID 차집합이 정확히 1개일 때만
+  **현재 Chap 실행 세션과 Chrome 프로세스 세션 동안** 기억한다. 로그인 리다이렉트로 URL이 바뀌어도
+  같은 ID를 재사용하며, 토글 비활성화·URL 변경·창 종료·Chrome 재시작 시 ID를 폐기한다.
+  기존 사용자 탭은 URL이 같아도 검색하거나 재사용하지 않는다.
   최초 사용 시 macOS가 Chrome 자동화 권한을 요청할 수 있다. 거부되면 한 번 권한 안내를 표시하고
   새 창 흐름으로 폴백한다.
 - 단계별 timing은 baseline·launch request·window wait·AX apply를 분리하고, 관찰된 PID 경로와

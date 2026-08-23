@@ -74,6 +74,7 @@ extension AppDelegate {
     }
 
     func buildMenu() {
+        ChromeLauncher.configureWindowReuse(sites: config.sites)
         let menu = NSMenu()
         let launchTypeOrder = Dictionary(
             uniqueKeysWithValues: LaunchType.allCases.enumerated().map { ($1, $0) })
