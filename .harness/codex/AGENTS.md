@@ -43,7 +43,9 @@ Global shortcuts:
 Launch types:
 
 - `url`: Chrome `--app` mode via `/usr/bin/open`; AX API detects and resizes the
-  new Chrome window.
+  new Chrome window. Optional reuse remembers only the window ID created by that
+  launchable for the current Chap/Chrome session; never search user tabs or use a
+  focused/frontmost window fallback.
 - `app`: `NSWorkspace.openApplication`; AXObserver plus polling fallback resizes
   standard windows, and resizable non-standard Office windows.
 - `finder`: Finder AppleScript opens the folder and sets bounds atomically.

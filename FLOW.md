@@ -223,7 +223,7 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
  7. ClaimedWindowRegistry.claimFirstUnclaimed(새 창 후보, liveWindows)
       → 이미 다른 launch가 가져간 창은 건너뛰고, 닫힌 창은 레지스트리에서 정리
  8. axApplyBounds → level 판정 (§8)
- 9. reuseExistingWindow == true이고 새 창 리사이즈 성공 시 launch 전후 Chrome window ID 차집합 확인
+ 9. reuseExistingWindow == true이고 AX 대상 새 창을 식별했으면 launch 전후 Chrome window ID 차집합 확인
       정확히 1개 → 해당 site의 현재 Chap/Chrome 세션 소유 창으로 기억
       0개/2개 이상/자동화 실패 → 기억하지 않음 (다음 실행도 새 창)
 10. 단계별 timing 로그 + ResizeLogger.log(type:"url") + onComplete → 가이드 창 닫기
@@ -241,6 +241,78 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
   새 창 흐름으로 폴백한다.
 - 단계별 timing은 baseline·launch request·window wait·AX apply를 분리하고, 관찰된 PID 경로와
   최초 PID event·원래 baseline PID 복귀 시점을 함께 기록한다. PID 선택 정책과 폴링 동작은 바꾸지 않는다.
+
+#### 7.1.1 Chrome `--app` 창 재사용 계약
+
+목적은 "같은 URL을 찾아 재사용"하는 것이 아니라, **특정 launchable의 명령으로 Chap이 만든 창을
+다음 명령에서도 다시 사용**하는 것이다. 설정 토글을 켠 시점에는 Chrome 상태를 캡처하지 않는다.
+사용자가 몇 분 뒤 처음 명령을 실행해도 그 명령의 실행 직전/직후 상태만 비교한다.
+
+세션 상태는 `ChromeLauncher.trackedWindows` 메모리에만 아래 형태로 보관한다.
+
+| 필드 | 용도 |
+| --- | --- |
+| dictionary key `Site.id` | 설정 목록의 각 launchable을 서로 독립적으로 구분 |
+| `url` | 연결 후 launchable URL이 변경됐는지 판정(공백 제거 후 비교) |
+| `windowID` | Chrome AppleScript `window.id`; 전면화·리사이즈할 유일한 대상 |
+| `processPID` | 다른 Chrome 프로세스 세션에서 ID가 우연히 재사용되는 것을 차단 |
+| `processLaunchDate` | 같은 PID 값이 재할당된 경우까지 차단 |
+
+이 상태는 `~/.chap.json`이나 `UserDefaults`에 영속화하지 않는다. 따라서 Chap 재시작 후에는 이전
+창을 인계받지 않고, 각 launchable의 다음 실행을 최초 연결 실행으로 취급한다.
+
+**최초 연결 실행 (`rememberCreatedChromeWindow`)**
+
+```
+1. requestCoordinator에서 실행 직전 Chrome window ID 전체를 AppleScript로 캡처
+   - Chrome 실행 중: 현재 ID 집합
+   - Chrome 미실행: 빈 집합
+2. open -na "Google Chrome" --args --app=<configured-url>
+3. AX baseline 차집합으로 이 요청이 만든 새 창 하나를 식별하고 bounds 적용 시도
+4. Chrome window ID를 최대 5회, 50ms 간격으로 다시 캡처
+5. afterIDs - beforeIDs가 정확히 1개일 때만 그 ID와 Chrome 프로세스 세션을 Site.id에 저장
+```
+
+- 차집합이 0개면 생성 ID가 아직 보이지 않거나 창 생성에 실패한 것이므로 저장하지 않는다.
+- 차집합이 2개 이상이면 어느 창이 이 명령의 소유인지 증명할 수 없으므로 저장하지 않는다.
+- 실행 전/후 ID 캡처가 자동화 권한이나 스크립트 오류로 실패해도 추측하지 않는다.
+- AX 대상 새 창을 식별하지 못하거나 접근성 권한이 없어 AX 단계 전에 종료하면 저장하지 않는다.
+- 저장하지 못한 경우 다음 명령도 새 `--app` 창을 열고 동일한 연결 절차를 다시 시도한다.
+
+**연결된 창 재사용 (`reuseExistingWindow`)**
+
+```
+1. trackedWindows[Site.id] 존재 + 저장 URL == 현재 설정 URL 확인
+2. 현재 Chrome PID + process launch date가 저장 세션과 모두 일치하는지 확인
+3. AppleScript: first window whose id is <windowID>
+4. 그 창의 index를 1로 설정하고 Chrome 활성화
+5. 같은 windowID에 bounds를 직접 설정
+6. 성공하면 새 open 명령 없이 종료
+```
+
+실제 탭 URL은 판정에 사용하지 않는다. 따라서 로그인·리다이렉트·SPA 이동으로 열린 페이지의 URL이
+바뀌어도 같은 창 ID를 재사용한다. 반대로 일반 Chrome 탭의 URL이 설정 URL과 같아도 그 탭이나
+부모 창을 검색하지 않는다. `focused window`, `frontmost window`, 제목 검색도 폴백으로 사용하지
+않는다. 이 금지 규칙은 I14이며, 지키지 않으면 사용자가 작업 중인 Chrome 창이 이동한다.
+
+**연결 폐기와 폴백**
+
+| 조건 | 처리 |
+| --- | --- |
+| Reuse 토글 끔 / launchable 삭제 / URL 타입 아님 | `configureWindowReuse`가 해당 `Site.id` 상태 제거 |
+| 설정 URL 변경 | 저장 URL 불일치로 상태 제거 |
+| Chrome 종료·재시작 | PID 또는 launch date 불일치로 상태 제거 |
+| 연결 창 닫힘 | ID 조회의 `not-found` 응답으로 상태 제거 |
+| 저장 ID 없음 또는 위 검증 실패 | 새 `--app` 창 생성 흐름으로 폴백 |
+| 자동화 응답 오류·권한 거부 | 기존 상태를 추측해 변경하지 않고 새 창 흐름으로 폴백 |
+
+`configureWindowReuse`와 launch 요청은 모두 `requestCoordinator`에 enqueue되므로 상태 필터링과
+읽기·쓰기 사이에 데이터 경합이 없다. 여러 URL 명령도 같은 serial queue를 통과해 각 실행의
+before/after ID 스냅샷이 서로 섞이지 않는다.
+
+Chrome 자동화는 window ID 열거·조회·bounds 설정에 필요하고, 접근성 권한은 새 창 AX 식별과
+검증에 필요하다. 자동화 권한 오류 `-1743`은 안내를 한 번만 표시한다. 어느 권한이 없더라도
+URL 실행 자체는 막지 않으며, 소유권을 증명할 수 없는 기존 창을 대신 선택하지 않고 새 창을 연다.
 
 ### 7.2 App — `AppLauncher`
 

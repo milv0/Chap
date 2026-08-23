@@ -27,7 +27,7 @@ struct QAView: View {
                 ),
                 (
                     "Chrome 또는 Finder 권한 요청이 뜨는 이유는?",
-                    "URL 창 재사용은 같은 URL의 Chrome 창을 찾고, Finder 타입은 폴더 창을 열기 위해 자동화를 사용합니다. 각 기능을 처음 사용할 때 macOS가 해당 앱 제어 권한을 요청할 수 있습니다."
+                    "URL 창 재사용은 Chap이 만든 Chrome 창 ID를 확인하고 제어하며, Finder 타입은 폴더 창을 열기 위해 자동화를 사용합니다. 각 기능을 처음 사용할 때 macOS가 해당 앱 제어 권한을 요청할 수 있습니다."
                 ),
                 (
                     "macOS 버전 요구사항이 뭔가요?",
@@ -62,6 +62,18 @@ struct QAView: View {
                 (
                     "URL을 열면 주소창이 없는 이유는?",
                     "Chrome의 --app 모드로 실행되기 때문입니다. 웹앱처럼 깔끔하게 사용할 수 있습니다."
+                ),
+                (
+                    "\"Reuse Existing URL Window\"는 어떻게 동작하나요?",
+                    "활성화 후 해당 항목을 처음 실행하면 Chap이 새 Chrome --app 창을 열고 그 창 ID를 항목별로 기억합니다. 다음 실행부터는 Chap이 직접 만든 그 창만 앞으로 가져와 설정한 크기와 위치를 다시 적용합니다."
+                ),
+                (
+                    "이미 열어둔 일반 Chrome 탭도 재사용하나요?",
+                    "아니요. URL, 창 제목, 현재 활성 창으로 사용자 탭을 검색하지 않습니다. 다른 Chrome 작업 창이 이동하지 않도록 Chap이 해당 항목으로 직접 만든 창만 재사용합니다."
+                ),
+                (
+                    "재사용 창 연결은 언제 초기화되나요?",
+                    "창을 닫거나 Chrome을 재시작하거나 URL을 변경하거나 재사용 옵션을 끄면 초기화됩니다. 연결 정보는 현재 Chap 실행 중에만 유지되므로 Chap을 재시작한 뒤 첫 실행에서는 새 창을 만들고 다시 연결합니다."
                 ),
                 (
                     "윈도우가 항상 화면 가운데 열려요. 위치를 바꿀 수 있나요?",
@@ -174,7 +186,7 @@ struct QAView: View {
                 ),
                 (
                     "Why does Chrome or Finder ask for permission?",
-                    "URL window reuse uses automation to find a matching Chrome window, while the Finder type uses it to open folder windows. macOS may ask for permission the first time you use either feature."
+                    "URL window reuse uses automation to verify and control the Chrome window ID created by Chap, while the Finder type uses it to open folder windows. macOS may ask for permission the first time you use either feature."
                 ),
                 (
                     "What macOS version is required?",
@@ -209,6 +221,18 @@ struct QAView: View {
                 (
                     "Why is there no address bar when opening a URL?",
                     "It opens in Chrome's --app mode, which provides a clean web-app experience without browser UI."
+                ),
+                (
+                    "How does \"Reuse Existing URL Window\" work?",
+                    "On the first launch after enabling it, Chap opens a new Chrome --app window and remembers that window ID for this launchable. Later launches bring forward only that Chap-created window and reapply its configured size and position."
+                ),
+                (
+                    "Does reuse select a regular Chrome tab I already opened?",
+                    "No. Chap never searches user tabs by URL, window title, or the currently active window. It reuses only the window created by that launchable so another Chrome work window is not moved."
+                ),
+                (
+                    "When is the reused-window link reset?",
+                    "It resets when the window closes, Chrome restarts, the configured URL changes, or reuse is disabled. The link lasts only for the current Chap session, so the first launch after restarting Chap creates and links a new window."
                 ),
                 (
                     "Windows always open in the center. Can I change the position?",

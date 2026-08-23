@@ -8,3 +8,5 @@
   longer searched or selected as reuse targets.
 - Closing the managed window, restarting Chrome, disabling reuse, or changing
   the URL safely clears the tracked window.
+- The link is stored only for the current Chap session. The first launch after
+  enabling reuse or restarting Chap creates and links a new Chrome `--app` window.

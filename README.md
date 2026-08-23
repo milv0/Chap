@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.1.5-orange)
+![Version](https://img.shields.io/badge/version-1.1.6-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -19,7 +19,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
-- **Optional URL Window Reuse** — Bring forward an existing Chrome window for the same URL
+- **Owned URL Window Reuse** — Reopen only the Chrome `--app` window created by that launchable
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
@@ -41,6 +41,18 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | App | Launches macOS app via NSWorkspace | AX API (AXObserver + polling fallback) |
 | Finder | Opens folder in Finder | AppleScript bounds |
 | Shell | Runs script via `$SHELL -c` | N/A |
+
+### Chrome Window Reuse
+
+`Reuse Existing URL Window` is scoped to each URL launchable. On its first launch
+after reuse is enabled, Chap snapshots Chrome window IDs, opens a new `--app`
+window, and remembers it only when the before/after difference identifies exactly
+one new window. Later launches activate and resize that exact window ID.
+
+Chap never searches regular Chrome tabs by URL, title, focus, or frontmost state.
+The tracked link is cleared when the window closes, Chrome restarts, the configured
+URL changes, or reuse is disabled. Tracking is in memory only, so restarting Chap
+causes the next launch to create and link a new window.
 
 ### Keyboard Shortcuts
 
@@ -97,6 +109,10 @@ Stored at `~/.chap.json`:
 
 Windows are always centered on the target display automatically. If `displayName` and `displayIdentifier` are omitted, Chap opens on the cursor screen. Legacy name-only display settings are augmented with a UUID only when the connected-name match is unique; connected UUIDs refresh the display name, while ambiguous or disconnected displays are preserved and shown for manual reselection. Size presets are recalculated at launch time: Auto display uses the built-in display as the preset reference, then fits the result to the cursor screen; an explicit display uses that selected display as the reference. Set `windowSizePreset` to `null` or omit it to use the stored custom `width` and `height`.
 
+For URL entries, `reuseExistingWindow: true` enables the per-launchable,
+Chap-created Chrome window behavior described above. It does not reuse arbitrary
+tabs that happen to show the same URL.
+
 > **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
 
 ## Direct Distribution (Developer ID)
@@ -131,11 +147,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.1.5
+Scripts/release.sh 1.1.6
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.1.5 --publish
+Scripts/release.sh 1.1.6 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
