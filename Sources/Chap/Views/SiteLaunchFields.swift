@@ -1,14 +1,6 @@
 import Cocoa
 import SwiftUI
 
-struct ScriptEditorFramePreferenceKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
 final class UndoableScriptTextView: NSTextView {
     private let scriptUndoManager = UndoManager()
 
@@ -54,10 +46,9 @@ final class UndoableScriptTextView: NSTextView {
 
 struct ScriptTextEditor: NSViewRepresentable {
     @Binding var text: String
-    var isFocused: FocusState<Bool>.Binding
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text, isFocused: isFocused)
+        Coordinator(text: $text)
     }
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -97,38 +88,20 @@ struct ScriptTextEditor: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? UndoableScriptTextView else { return }
         context.coordinator.text = $text
-        context.coordinator.isFocused = isFocused
 
         if textView.string != text {
             context.coordinator.isApplyingExternalText = true
             textView.string = text
             context.coordinator.isApplyingExternalText = false
         }
-
-        guard let window = textView.window else { return }
-        if isFocused.wrappedValue, window.firstResponder !== textView {
-            window.makeFirstResponder(textView)
-        } else if !isFocused.wrappedValue, window.firstResponder === textView {
-            window.makeFirstResponder(nil)
-        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         var text: Binding<String>
-        var isFocused: FocusState<Bool>.Binding
         var isApplyingExternalText = false
 
-        init(text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
+        init(text: Binding<String>) {
             self.text = text
-            self.isFocused = isFocused
-        }
-
-        func textDidBeginEditing(_ notification: Notification) {
-            isFocused.wrappedValue = true
-        }
-
-        func textDidEndEditing(_ notification: Notification) {
-            isFocused.wrappedValue = false
         }
 
         func textDidChange(_ notification: Notification) {
@@ -147,7 +120,6 @@ struct SiteLaunchFields: View {
     @Binding var isEditing: Bool
     let browseForApp: () -> Void
     let browseFolder: () -> Void
-    var scriptFocused: FocusState<Bool>.Binding
 
     var body: some View {
         switch site.launchType {
@@ -299,8 +271,7 @@ struct SiteLaunchFields: View {
                 text: Binding(
                     get: { site.script ?? "" },
                     set: { site.script = $0 }
-                ),
-                isFocused: scriptFocused
+                )
             )
             .accessibilityLabel("Script")
             .frame(minHeight: 120)
@@ -310,14 +281,6 @@ struct SiteLaunchFields: View {
             .overlay(
                 RoundedRectangle(cornerRadius: DS.radiusSmall)
                     .stroke(DS.border, lineWidth: 1)
-            )
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: ScriptEditorFramePreferenceKey.self,
-                        value: proxy.frame(in: .named("SiteConfigForm"))
-                    )
-                }
             )
         }
     }

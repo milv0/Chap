@@ -1,4 +1,5 @@
 import Cocoa
+import SwiftUI
 import Testing
 
 @testable import Chap
@@ -29,6 +30,25 @@ struct ScriptEditorUndoTests {
 
         textView.keyDown(with: keyEvent(modifiers: [.control, .shift]))
         #expect(textView.string == "echo Chap")
+    }
+
+    @Test("script text changes update the bound site value")
+    func scriptTextChangesUpdateBinding() {
+        var script = "echo before"
+        let coordinator = ScriptTextEditor.Coordinator(
+            text: Binding(
+                get: { script },
+                set: { script = $0 }
+            ))
+        let textView = UndoableScriptTextView.makeEditable()
+        textView.delegate = coordinator
+        textView.string = script
+
+        textView.insertText(
+            "\necho after",
+            replacementRange: NSRange(location: textView.string.utf16.count, length: 0))
+
+        #expect(script == "echo before\necho after")
     }
 
     private func keyEvent(modifiers: NSEvent.ModifierFlags) -> NSEvent {
