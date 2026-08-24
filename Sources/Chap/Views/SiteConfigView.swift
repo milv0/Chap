@@ -93,7 +93,8 @@ struct SiteConfigView: View {
             site: $site,
             isEditing: $isEditing,
             browseForApp: browseForApp,
-            browseFolder: browseFolder
+            browseFolder: browseFolder,
+            onSave: { onSave?() }
         )
     }
 
