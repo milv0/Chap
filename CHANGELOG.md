@@ -2,6 +2,17 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.9] — 2026-08-24
+
+### Improved
+
+- **Explicit Shell script saving** — Added a dedicated Save button beneath the
+  multiline Shell editor so Return remains available for script line breaks.
+- **Validated manual saves** — Shell saves now use the same full configuration
+  validation and warning flow as other user-triggered saves.
+
+---
+
 ## [1.1.8] — 2026-08-24
 
 ### Fixed

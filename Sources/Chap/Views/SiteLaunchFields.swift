@@ -120,6 +120,7 @@ struct SiteLaunchFields: View {
     @Binding var isEditing: Bool
     let browseForApp: () -> Void
     let browseFolder: () -> Void
+    let onSave: () -> Void
 
     var body: some View {
         switch site.launchType {
@@ -282,6 +283,16 @@ struct SiteLaunchFields: View {
                 RoundedRectangle(cornerRadius: DS.radiusSmall)
                     .stroke(DS.border, lineWidth: 1)
             )
+
+            HStack {
+                Spacer()
+                Button(action: onSave) {
+                    Label("Save", systemImage: "checkmark")
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+            }
         }
     }
 }

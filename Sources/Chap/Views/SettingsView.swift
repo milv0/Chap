@@ -255,7 +255,7 @@ struct SettingsView: View {
                         site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
                         onSave: {
                             vm.cancelPendingSave()
-                            save()
+                            save(showAlerts: true)
                         }
                     )
                     .id(vm.sites[idx].id)
