@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.8] — 2026-08-24
+
+### Fixed
+
+- **Editable shell scripts** — Removed conflicting SwiftUI tap and focus
+  coordination that could immediately release the AppKit script editor's first
+  responder, preventing text changes in Shell launchables.
+- **Script binding coverage** — Added a regression test that verifies AppKit
+  text input reaches the bound Shell script value.
+
+---
+
 ## [1.1.7] — 2026-08-23
 
 ### Improved

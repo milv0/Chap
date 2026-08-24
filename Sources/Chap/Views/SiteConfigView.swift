@@ -19,8 +19,6 @@ struct SiteConfigView: View {
     @State private var heightDraft: String?
     @FocusState private var widthFocused: Bool
     @FocusState private var heightFocused: Bool
-    @FocusState private var scriptFocused: Bool
-    @State private var scriptEditorFrame = CGRect.zero
     var onSave: (() -> Void)?
 
     var body: some View {
@@ -34,19 +32,6 @@ struct SiteConfigView: View {
             .padding(.vertical, DS.paddingSmall)
         }
         .disabled(!isEditing)
-        .coordinateSpace(name: "SiteConfigForm")
-        .onPreferenceChange(ScriptEditorFramePreferenceKey.self) { frame in
-            scriptEditorFrame = frame
-        }
-        .simultaneousGesture(
-            SpatialTapGesture().onEnded { value in
-                guard site.launchType == .shell,
-                    scriptFocused,
-                    !scriptEditorFrame.contains(value.location)
-                else { return }
-                scriptFocused = false
-            }
-        )
     }
 
     // MARK: - Form Content
@@ -108,8 +93,7 @@ struct SiteConfigView: View {
             site: $site,
             isEditing: $isEditing,
             browseForApp: browseForApp,
-            browseFolder: browseFolder,
-            scriptFocused: $scriptFocused
+            browseFolder: browseFolder
         )
     }
 
