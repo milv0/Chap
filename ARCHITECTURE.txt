@@ -13,7 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
-│   ├── UpdateController.swift     ← Sparkle 2 수동 업데이트 컨트롤러 (fail-closed)
+│   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
@@ -348,16 +348,22 @@ App 윈도우 감지 방식 (AXObserver):
   커서 화면 순. 같은 이름이 여러 개면 임의 화면을 고르지 않고 재선택 상태로 유지한다.
 
 ### Sparkle 2 (SPM, pinned 2.9.6)
-  용도: 수동 업데이트 체크 (manual-only, fail-closed)
+  용도: 24시간 주기 자동 체크와 수동 업데이트 체크 (fail-closed)
   - SPUStandardUpdaterController   updater 라이프사이클 관리
   - checkForUpdates(_:)            사용자 요청에 의한 업데이트 확인
   설정:
   - SUFeedURL (Info.plist)         appcast 엔드포인트 (HTTPS 필수)
   - SUPublicEDKey (Info.plist)     EdDSA 서명 검증 공개키 (3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM=)
-  - SUEnableAutomaticChecks=false  자동 체크/스케줄/프롬프트 비활성화
+  - SUEnableAutomaticChecks=true   자동 체크 기본 활성화, 권한 프롬프트 생략
+  - SUScheduledCheckInterval=86400 Sparkle 내장 스케줄러의 확인 주기(24시간)
+  - SUAllowsAutomaticUpdates=false 자동 다운로드·설치 금지
   동작:
   - SUFeedURL과 SUPublicEDKey가 모두 유효할 때만 updater 시작
   - 현재 두 값 모두 설정됨: updater 시작, "Check for Updates…" 활성화
+  - Settings > General 토글은 Sparkle이 저장하는 자동 확인 설정을 직접 변경
+  - 자동 확인은 최신 버전이면 조용히 종료하고, 업데이트가 있을 때만 Sparkle UI 표시
+  - 자동 확인을 꺼도 메뉴의 수동 "Check for Updates…"는 계속 사용 가능
+  - 테스트 프로세스에서는 네트워크 확인을 막기 위해 updater를 시작하지 않음
   - 초기 appcast (docs/appcast.xml)는 빈 피드; 첫 Sparkle 릴리즈에서
     Scripts/generate-appcast.sh가 서명된 enclosure 엔트리를 추가
   - 개인키는 앱에 절대 포함하지 않음; 오퍼레이터 Keychain에만 존재

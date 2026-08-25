@@ -48,6 +48,11 @@
 
 `main.swift` → `NSApplication` + Edit 메뉴만 구성 → `AppDelegate`.
 
+`AppDelegate` 생성 시 `UpdateController`도 초기화된다. Sparkle 설정이 유효할 때만
+updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설정에 따라 24시간 간격으로 확인한다.
+최신 버전이면 UI 없이 종료하고 업데이트가 있을 때만 Sparkle 기본 UI를 표시한다.
+자동 다운로드·설치는 허용하지 않으며, 테스트 프로세스에서는 updater를 시작하지 않는다.
+
 `AppDelegate › applicationDidFinishLaunching` 은 **순서가 의미를 갖는다**:
 
 ```

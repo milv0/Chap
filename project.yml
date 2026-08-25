@@ -28,15 +28,17 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         SUFeedURL: "https://milv0.github.io/Chap/appcast.xml"
         SUPublicEDKey: "3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM="
-        SUEnableAutomaticChecks: false
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
+        SUAllowsAutomaticUpdates: false
     dependencies:
       - package: Sparkle
         product: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap
-        MARKETING_VERSION: "1.1.10"
-        CURRENT_PROJECT_VERSION: "20"
+        MARKETING_VERSION: "1.1.11"
+        CURRENT_PROJECT_VERSION: "21"
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_IDENTITY: "-"
         INFOPLIST_KEY_LSUIElement: true

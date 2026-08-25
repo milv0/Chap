@@ -40,6 +40,7 @@ private struct SettingsTabButton: View {
 
 struct SettingsView: View {
     @ObservedObject var vm: SettingsViewModel
+    @ObservedObject var updateController: UpdateController
     @State private var selectedTab: SettingsTab = .launchables
     @State private var selectedIndex: Int? = nil
     @State private var showDeleteAlert = false
@@ -161,7 +162,11 @@ struct SettingsView: View {
     }
 
     private var generalTab: some View {
-        GeneralSettingsView(vm: vm, onSave: saveGlobals)
+        GeneralSettingsView(
+            vm: vm,
+            updateController: updateController,
+            onSave: saveGlobals
+        )
     }
 
     // MARK: - Sidebar
@@ -780,6 +785,7 @@ private struct StatusBarIconChoiceButton: View {
 
 private struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
+    @ObservedObject var updateController: UpdateController
     let onSave: () -> Void
 
     var body: some View {
@@ -829,6 +835,22 @@ private struct GeneralSettingsView: View {
                             }
                         }
                         .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
+                    }
+
+                    Section("Updates") {
+                        Toggle(
+                            "Check for Updates Automatically",
+                            isOn: Binding(
+                                get: {
+                                    updateController.automaticallyChecksForUpdates
+                                },
+                                set: {
+                                    updateController.setAutomaticallyChecksForUpdates($0)
+                                }
+                            )
+                        )
+                        .disabled(!updateController.canCheckForUpdates)
+                        .help("Check once per day and notify when an update is available.")
                     }
                 }
                 .formStyle(.grouped)
