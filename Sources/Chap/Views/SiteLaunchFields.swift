@@ -23,6 +23,15 @@ final class UndoableScriptTextView: NSTextView {
         scriptUndoManager
     }
 
+    func setEditingEnabled(_ isEnabled: Bool) {
+        isEditable = isEnabled
+        isSelectable = isEnabled
+        textColor = isEnabled ? .labelColor : .secondaryLabelColor
+        if !isEnabled, window?.firstResponder === self {
+            window?.makeFirstResponder(nil)
+        }
+    }
+
     override func keyDown(with event: NSEvent) {
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let isControlZ =
@@ -46,6 +55,7 @@ final class UndoableScriptTextView: NSTextView {
 
 struct ScriptTextEditor: NSViewRepresentable {
     @Binding var text: String
+    var isEditable = true
 
     func makeCoordinator() -> Coordinator {
         Coordinator(text: $text)
@@ -80,6 +90,7 @@ struct ScriptTextEditor: NSViewRepresentable {
         textView.textContainer?.containerSize = NSSize(
             width: CGFloat.greatestFiniteMagnitude,
             height: CGFloat.greatestFiniteMagnitude)
+        textView.setEditingEnabled(isEditable)
 
         scrollView.documentView = textView
         return scrollView
@@ -88,6 +99,7 @@ struct ScriptTextEditor: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? UndoableScriptTextView else { return }
         context.coordinator.text = $text
+        textView.setEditingEnabled(isEditable)
 
         if textView.string != text {
             context.coordinator.isApplyingExternalText = true
@@ -272,17 +284,19 @@ struct SiteLaunchFields: View {
                 text: Binding(
                     get: { site.script ?? "" },
                     set: { site.script = $0 }
-                )
+                ),
+                isEditable: isEditing
             )
             .accessibilityLabel("Script")
             .frame(minHeight: 120)
             .padding(8)
-            .background(DS.surfaceBg)
+            .background(isEditing ? DS.surfaceBg : DS.border.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
             .overlay(
                 RoundedRectangle(cornerRadius: DS.radiusSmall)
-                    .stroke(DS.border, lineWidth: 1)
+                    .stroke(isEditing ? DS.border : DS.border.opacity(0.45), lineWidth: 1)
             )
+            .opacity(isEditing ? 1 : 0.6)
 
             HStack {
                 Spacer()
