@@ -286,15 +286,35 @@ struct SiteLaunchFields: View {
 
             HStack {
                 Spacer()
-                Button {
-                    guard onSave() else { return }
-                    isEditing = false
-                } label: {
-                    Label("Save", systemImage: "checkmark")
+                if isEditing {
+                    Button {
+                        guard onSave() else { return }
+                        isEditing = false
+                    } label: {
+                        Label("Save", systemImage: "checkmark")
+                            .font(.system(size: 13, weight: .semibold))
+                            .frame(width: 72)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .tint(DS.accent)
+                    .frame(width: 92, height: 30)
+                } else {
+                    Label("Saved", systemImage: "checkmark.circle.fill")
                         .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color(nsColor: .systemGreen))
+                        .frame(width: 90, height: 28)
+                        .background(Color(nsColor: .systemGreen).opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 7)
+                                .stroke(
+                                    Color(nsColor: .systemGreen).opacity(0.35),
+                                    lineWidth: 1
+                                )
+                        )
+                        .frame(width: 92, height: 30)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
             }
         }
     }
