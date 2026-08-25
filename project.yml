@@ -28,7 +28,9 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         SUFeedURL: "https://milv0.github.io/Chap/appcast.xml"
         SUPublicEDKey: "3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM="
-        SUEnableAutomaticChecks: false
+        SUEnableAutomaticChecks: true
+        SUScheduledCheckInterval: 86400
+        SUAllowsAutomaticUpdates: false
     dependencies:
       - package: Sparkle
         product: Sparkle

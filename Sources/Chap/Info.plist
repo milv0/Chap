@@ -26,11 +26,15 @@
 	<string>public.app-category.utilities</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows.</string>
-	<key>SUEnableAutomaticChecks</key>
+	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://milv0.github.io/Chap/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>3RRsmvZE5JAXnPjxynxsphkCltJtZb9ldZb/HjsZyJM=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

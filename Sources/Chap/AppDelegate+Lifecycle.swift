@@ -151,7 +151,10 @@ extension AppDelegate {
             }
             return true
         }
-        let settingsView = SettingsView(vm: vm)
+        let settingsView = SettingsView(
+            vm: vm,
+            updateController: updateController
+        )
         let window = makeManagedWindow(
             title: "Chap Settings", contentSize: NSSize(width: 770, height: 680),
             styleMask: [.titled, .closable, .resizable],

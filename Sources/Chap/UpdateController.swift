@@ -1,4 +1,5 @@
 import Cocoa
+import Combine
 import Sparkle
 import os
 
@@ -7,17 +8,18 @@ import os
 /// The controller starts Sparkle only when both `SUFeedURL` and `SUPublicEDKey`
 /// are present and valid in the running bundle. With both values now embedded in
 /// Info.plist, the updater starts and the "Check for Updates…" menu item is enabled.
-/// `SUEnableAutomaticChecks=false` ensures no background polling or automatic-check
-/// permission dialog occurs.
+/// Sparkle's built-in scheduler checks once per day when automatic checks are enabled.
 ///
 /// Architecture:
-/// - Manual-only checks: `SUEnableAutomaticChecks` is set to `false` in Info.plist.
-///   Starting the updater does not schedule background polling or show the
-///   automatic-check permission dialog.
-/// - The user triggers updates exclusively via the "Check for Updates…" menu item.
+/// - `SUEnableAutomaticChecks=true` enables daily checks without a permission prompt.
+/// - Users can change Sparkle's persisted automatic-check preference in Settings.
+/// - Manual checks remain available regardless of the automatic-check preference.
+/// - Automatic download and installation are disabled; updates require confirmation.
 /// - The EdDSA private key lives only in the operator's Keychain; only the public
 ///   key is shipped in the app.
-final class UpdateController {
+final class UpdateController: ObservableObject {
+
+    @Published private(set) var automaticallyChecksForUpdates = false
 
     /// Whether the updater has a valid configuration and is ready to check.
     var canCheckForUpdates: Bool {
@@ -27,20 +29,29 @@ final class UpdateController {
     private var updaterController: SPUStandardUpdaterController?
 
     init() {
+        guard !Self.isRunningTests else {
+            Log.app.debug("Sparkle updater disabled during tests")
+            return
+        }
         guard UpdateConfiguration.isConfigured() else {
             Log.app.info(
                 "Sparkle updater disabled: incomplete configuration (SUPublicEDKey not set)")
             return
         }
-        // SPUStandardUpdaterController respects SUEnableAutomaticChecks=false from Info.plist.
-        // Starting the updater with automaticallyChecksForUpdates=false means it will never
-        // schedule background polls or show the automatic-check permission prompt.
         let controller = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: nil,
             userDriverDelegate: nil)
         self.updaterController = controller
-        Log.app.info("Sparkle updater started (manual-only, no automatic checks)")
+        automaticallyChecksForUpdates = controller.updater.automaticallyChecksForUpdates
+        Log.app.info(
+            "Sparkle updater started (automatic checks: \(self.automaticallyChecksForUpdates))")
+    }
+
+    func setAutomaticallyChecksForUpdates(_ enabled: Bool) {
+        guard let controller = updaterController else { return }
+        controller.updater.automaticallyChecksForUpdates = enabled
+        automaticallyChecksForUpdates = controller.updater.automaticallyChecksForUpdates
     }
 
     /// Triggers a user-initiated update check.
@@ -52,5 +63,10 @@ final class UpdateController {
             return
         }
         controller.checkForUpdates(sender)
+    }
+
+    private static var isRunningTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            || NSClassFromString("XCTestCase") != nil
     }
 }
