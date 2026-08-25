@@ -120,7 +120,7 @@ struct SiteLaunchFields: View {
     @Binding var isEditing: Bool
     let browseForApp: () -> Void
     let browseFolder: () -> Void
-    let onSave: () -> Void
+    let onSave: () -> Bool
 
     var body: some View {
         switch site.launchType {
@@ -286,7 +286,10 @@ struct SiteLaunchFields: View {
 
             HStack {
                 Spacer()
-                Button(action: onSave) {
+                Button {
+                    guard onSave() else { return }
+                    isEditing = false
+                } label: {
                     Label("Save", systemImage: "checkmark")
                         .font(.system(size: 13, weight: .semibold))
                 }

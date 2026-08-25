@@ -232,7 +232,7 @@ struct SettingsView: View {
                                         currentIndex: i,
                                         sites: $vm.sites,
                                         selectedIndex: $selectedIndex,
-                                        onDrop: { save() }
+                                        onDrop: { _ = save() }
                                     ))
                             }
                         }
@@ -255,7 +255,7 @@ struct SettingsView: View {
                         site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
                         onSave: {
                             vm.cancelPendingSave()
-                            save(showAlerts: true)
+                            return save(showAlerts: true)
                         }
                     )
                     .id(vm.sites[idx].id)
@@ -344,8 +344,9 @@ struct SettingsView: View {
 
             if selectedTab == .launchables {
                 Button("") {
-                    save(showAlerts: true)
-                    isEditing = false
+                    if save(showAlerts: true) {
+                        isEditing = false
+                    }
                 }
                 .keyboardShortcut(.return, modifiers: [])
                 .frame(width: 0, height: 0)
@@ -620,7 +621,8 @@ struct SettingsView: View {
         }
     }
 
-    private func save(showAlerts: Bool = false) {
+    @discardableResult
+    private func save(showAlerts: Bool = false) -> Bool {
         vm.cancelPendingSave()
         // Full config validation across ALL sites (not just selected)
         let config = Config(
@@ -633,7 +635,7 @@ struct SettingsView: View {
 
         // For auto-saves (not user-triggered), silently skip if invalid
         if !result.isValid && !showAlerts {
-            return
+            return false
         }
 
         // For manual saves, show validation errors
@@ -645,7 +647,7 @@ struct SettingsView: View {
             }.joined(separator: "\n")
             emptyFieldMessage = errorMessages
             emptyFieldAlert = true
-            return
+            return false
         }
 
         // Show warnings (non-blocking) only on manual save
@@ -661,12 +663,12 @@ struct SettingsView: View {
             alert.alertStyle = .informational
             alert.addButton(withTitle: "OK")
             // Save first, then show warning only if persistence succeeded.
-            guard vm.persistCurrentState() else { return }
+            guard vm.persistCurrentState() else { return false }
             alert.runModal()
-            return
+            return true
         }
 
-        _ = vm.persistCurrentState()
+        return vm.persistCurrentState()
     }
 
     /// 전역 설정(Guide Window, Login, Option Shortcuts, Status Bar Icon)만 저장.

@@ -2,6 +2,17 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.10] — 2026-08-25
+
+### Fixed
+
+- **Shell save completion state** — Successful Shell script saves now exit edit
+  mode, visibly disabling the editor and its Save button.
+- **Recoverable save failures** — Validation and persistence failures keep the
+  Shell editor active so users can correct the configuration and retry.
+
+---
+
 ## [1.1.9] — 2026-08-24
 
 ### Improved

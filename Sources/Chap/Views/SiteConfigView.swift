@@ -19,7 +19,7 @@ struct SiteConfigView: View {
     @State private var heightDraft: String?
     @FocusState private var widthFocused: Bool
     @FocusState private var heightFocused: Bool
-    var onSave: (() -> Void)?
+    var onSave: (() -> Bool)?
 
     var body: some View {
         ScrollView {
@@ -94,7 +94,7 @@ struct SiteConfigView: View {
             isEditing: $isEditing,
             browseForApp: browseForApp,
             browseFolder: browseFolder,
-            onSave: { onSave?() }
+            onSave: { onSave?() ?? false }
         )
     }
 
