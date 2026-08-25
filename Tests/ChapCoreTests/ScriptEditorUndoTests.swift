@@ -51,6 +51,16 @@ struct ScriptEditorUndoTests {
         #expect(script == "echo before\necho after")
     }
 
+    @Test("disabled script text blocks editing and selection")
+    func disabledScriptTextBlocksInteraction() {
+        let textView = UndoableScriptTextView.makeEditable()
+        textView.setEditingEnabled(false)
+
+        #expect(!textView.isEditable)
+        #expect(!textView.isSelectable)
+        #expect(textView.textColor == .secondaryLabelColor)
+    }
+
     private func keyEvent(modifiers: NSEvent.ModifierFlags) -> NSEvent {
         guard
             let event = NSEvent.keyEvent(
