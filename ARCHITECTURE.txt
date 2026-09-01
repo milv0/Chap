@@ -24,7 +24,7 @@ Sources/
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert
-│   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용)
+│   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용, 14일 초과분 자동 정리)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
@@ -43,6 +43,7 @@ Sources/
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
 │   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
+│   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -67,6 +68,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── AppLifecycleSupportTests.swift
     ├── DisplayPreviewPolicyTests.swift
     ├── UpdateConfigurationTests.swift
+    ├── ResizeLogRetentionTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
