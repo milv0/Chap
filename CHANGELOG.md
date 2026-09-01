@@ -2,6 +2,33 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.12] — 2026-08-25
+
+### Fixed
+
+- **Saved Shell editor state** — Shell script editors now become visibly
+  disabled after a successful save.
+- **Locked saved script text** — Saved script text no longer accepts editing,
+  selection, or keyboard focus until edit mode is enabled again.
+
+---
+
+## [1.1.11] — 2026-08-25
+
+### Added
+
+- **Configurable daily update checks** — A General setting controls automatic
+  update checks; Sparkle's built-in scheduler checks once per day and shows
+  update UI only when a newer version is available. Automatic downloads and
+  installation remain disabled.
+
+### Improved
+
+- **Shell save confirmation** — Shell script saves now show a clear Saved
+  confirmation after the editor is disabled.
+
+---
+
 ## [1.1.10] — 2026-08-25
 
 ### Fixed
