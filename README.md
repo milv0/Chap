@@ -164,14 +164,16 @@ Debug builds append diagnostics to `~/Library/Logs/Chap/resize_YYYY-MM-DD.csv`. 
 
 ### Sparkle update system
 
-Chap uses [Sparkle 2](https://sparkle-project.org/) (pinned at 2.9.6) for manual-only update checks. The architecture is **fail-closed**: the updater starts only when both `SUFeedURL` and `SUPublicEDKey` are present and valid in Info.plist. With both configured, "Check for Updates…" in the menubar triggers a user-initiated check; no automatic background checks or permission dialogs occur.
+Chap uses [Sparkle 2](https://sparkle-project.org/) (pinned at 2.9.6) for update checks. The architecture is **fail-closed**: the updater starts only when both `SUFeedURL` and `SUPublicEDKey` are present and valid in Info.plist. With both configured, Sparkle's built-in scheduler checks once per day, and "Check for Updates…" in the menubar remains available for user-initiated checks at any time.
 
-**Current state:** The updater is fully configured and will check for updates when the user selects the menu item.
+**Current state:** The updater is fully configured. Daily automatic checks are enabled by default and can be toggled in Settings > General; automatic checks finish silently when the app is up to date and show Sparkle's update UI only when a newer version is available.
 - `SUFeedURL` = `https://milv0.github.io/Chap/appcast.xml`
 - `SUPublicEDKey` = embedded (EdDSA ed25519 public key)
-- `SUEnableAutomaticChecks` = `false`
+- `SUEnableAutomaticChecks` = `true` (default on, no permission prompt; user-controllable in Settings)
+- `SUScheduledCheckInterval` = `86400` (24 hours)
+- `SUAllowsAutomaticUpdates` = `false` (no automatic download or installation)
 
-The initial `docs/appcast.xml` is an empty feed (no items). The first Sparkle-aware release will add a signed enclosure entry via `Scripts/generate-appcast.sh`.
+`docs/appcast.xml` is the live signed feed; each `--publish` release appends a signed enclosure entry via `Scripts/generate-appcast.sh`.
 
 **Appcast publishing (for future releases):**
 
@@ -191,16 +193,16 @@ Scripts/generate-appcast.sh build/release/Chap-<version>-<build>.dmg
 The script signs the notarized DMG with the operator's Keychain-stored EdDSA private key, updates the feed with proper enclosure attributes (edSignature, version, URL, length), validates the XML, and places the result at `docs/appcast.xml` for GitHub Pages deployment.
 
 **Design decisions:**
-- `SUEnableAutomaticChecks` is `false` — starting the updater never schedules background checks or shows the automatic-check permission dialog.
-- Updates are triggered exclusively by the user via the menu item.
+- `SUEnableAutomaticChecks` is `true` by default so scheduled daily checks work without a permission dialog; the Settings > General toggle writes Sparkle's own persisted setting.
+- `SUAllowsAutomaticUpdates` stays `false` — updates are downloaded and installed only after the user accepts Sparkle's update prompt.
+- The updater is never started in test processes, keeping tests network-free.
 - The EdDSA private key lives only in the operator's Keychain; it is never committed, exported, or logged.
 - Sparkle CLI resolution is fail-closed: scripts abort with an actionable message if tools are not found.
 - Appcast validation checks XML well-formedness and required Sparkle enclosure attributes before accepting an update.
 - No `com.apple.security.network.client` entitlement is added; Chap is a non-sandboxed Developer ID app.
 
-**Remaining live-release validation limits:**
-- The initial `docs/appcast.xml` is empty; the first real update entry will be generated during the next `--publish` release with Sparkle CLI available.
-- End-to-end update download/install flow cannot be validated until a signed appcast entry with a real notarized DMG is deployed to GitHub Pages.
+**Live-release validation notes:**
+- The signed feed is live and each release is validated end-to-end during `--publish` (notarized DMG, signed enclosure, Pages deployment).
 - Delta updates are generated automatically by `generate_appcast` when multiple versioned archives are present in the staging directory.
 
 ## Changelog
