@@ -30,6 +30,7 @@ Sources/
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
+│       ├── SettingsGeneralView.swift ← General 탭 (Behavior/Appearance/Updates)
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── QAView.swift           ← Q&A 페이지
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
