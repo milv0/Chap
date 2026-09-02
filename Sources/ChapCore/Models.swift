@@ -14,7 +14,8 @@ public enum Defaults {
     public static let defaultHeight = 600
     public static let defaultWindowAspectRatio = 16.0 / 10.0
 
-    public static let domainRegex = try? NSRegularExpression(pattern: "^[a-zA-Z0-9._-]+$")
+    /// 도메인 검증용 정규식. 리터럴이라 컴파일 타임에 유효성이 검증된다.
+    public static let domainRegex = /^[a-zA-Z0-9._-]+$/
 }
 
 public enum LaunchType: String, Codable, CaseIterable {
