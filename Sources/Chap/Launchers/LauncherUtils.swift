@@ -222,30 +222,30 @@ enum LauncherUtils {
         return AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, value)
     }
 
+    /// AXValue 기반 구조체 속성(CGPoint/CGSize)을 읽는 공통 경로.
+    /// 복사 실패, 타입 불일치, 변환 실패는 모두 nil로 강등된다.
+    private static func axCopyValue<T>(
+        _ element: AXUIElement, _ attribute: CFString, as type: AXValueType, initial: T
+    ) -> T? {
+        var value: AnyObject?
+        guard
+            AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
+            let value,
+            let axValue = AXIntrospection.value(from: value)
+        else { return nil }
+        var result = initial
+        guard AXValueGetValue(axValue, type, &result) else { return nil }
+        return result
+    }
+
     /// 윈도우의 현재 position을 읽는다.
     static func axGetPosition(_ window: AXUIElement) -> CGPoint? {
-        var value: AnyObject?
-        let err = AXUIElementCopyAttributeValue(
-            window, kAXPositionAttribute as CFString, &value)
-        guard err == .success, let value else { return nil }
-        guard CFGetTypeID(value) == AXValueGetTypeID() else { return nil }
-        let axValue = value as! AXValue
-        var point = CGPoint.zero
-        guard AXValueGetValue(axValue, .cgPoint, &point) else { return nil }
-        return point
+        axCopyValue(window, kAXPositionAttribute as CFString, as: .cgPoint, initial: .zero)
     }
 
     /// 윈도우의 현재 size를 읽는다.
     static func axGetSize(_ window: AXUIElement) -> CGSize? {
-        var value: AnyObject?
-        let err = AXUIElementCopyAttributeValue(
-            window, kAXSizeAttribute as CFString, &value)
-        guard err == .success, let value else { return nil }
-        guard CFGetTypeID(value) == AXValueGetTypeID() else { return nil }
-        let axValue = value as! AXValue
-        var size = CGSize.zero
-        guard AXValueGetValue(axValue, .cgSize, &size) else { return nil }
-        return size
+        axCopyValue(window, kAXSizeAttribute as CFString, as: .cgSize, initial: .zero)
     }
 
     /// 앱의 AXEnhancedUserInterface 상태. 읽기 실패 시 nil.
@@ -272,15 +272,11 @@ enum LauncherUtils {
     /// (Rectangle과 동일: AXMinSize → AXMinimumSize).
     static func axGetMinimumSize(_ window: AXUIElement) -> CGSize? {
         for attribute in ["AXMinSize", "AXMinimumSize"] {
-            var value: AnyObject?
-            guard
-                AXUIElementCopyAttributeValue(window, attribute as CFString, &value)
-                    == .success,
-                let value,
-                let axValue = AXIntrospection.value(from: value)
-            else { continue }
-            var size = CGSize.zero
-            if AXValueGetValue(axValue, .cgSize, &size) { return size }
+            if let size = axCopyValue(
+                window, attribute as CFString, as: .cgSize, initial: CGSize.zero)
+            {
+                return size
+            }
         }
         return nil
     }
