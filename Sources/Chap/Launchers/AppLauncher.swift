@@ -228,6 +228,7 @@ enum AppLauncher {
                 )
                 AccessibilityPermission.notifyResizeFailure()
             }
+            notifyMinimumSizeClampIfNeeded(boundsResult, siteName: site.name)
         } else {
             resultLabel = "failed"
             detail = result.diagnostic ?? "no eligible window found"
@@ -246,6 +247,39 @@ enum AppLauncher {
             display: displayName,
             size: sizeLabel,
             detail: detail)
+    }
+
+    // MARK: - Minimum size notice
+
+    private static let minimumSizeNoticeLock = NSLock()
+    private static var shownMinimumSizeNoticeKeys: Set<String> = []
+
+    /// 요청 크기가 앱 최소 크기보다 작아 클램프됐으면 원인을 사용자에게 안내한다.
+    /// 같은 launchable·크기 조합은 앱 세션당 한 번만 표시한다 (FLOW.md 이슈 2 개선).
+    private static func notifyMinimumSizeClampIfNeeded(
+        _ boundsResult: AXBoundsResult, siteName: String
+    ) {
+        guard
+            MinimumSizeNoticePolicy.shouldNotify(
+                sizeApplied: boundsResult.sizeWithinTolerance,
+                clampingMinimumSize: boundsResult.clampingMinimumSize),
+            let minimumSize = boundsResult.clampingMinimumSize
+        else { return }
+
+        let key = MinimumSizeNoticePolicy.dedupeKey(
+            siteName: siteName, requestedSize: boundsResult.requestedSize)
+        minimumSizeNoticeLock.lock()
+        let isFirstNotice = shownMinimumSizeNoticeKeys.insert(key).inserted
+        minimumSizeNoticeLock.unlock()
+        guard isFirstNotice else { return }
+
+        Log.launcher.notice(
+            "Minimum size notice for \(siteName, privacy: .private): requested=\(Int(boundsResult.requestedSize.width))x\(Int(boundsResult.requestedSize.height), privacy: .public) minimum=\(Int(minimumSize.width))x\(Int(minimumSize.height), privacy: .public)"
+        )
+        LauncherUtils.showAlert(
+            message: MinimumSizeNoticePolicy.message(siteName: siteName),
+            info: MinimumSizeNoticePolicy.info(
+                minimumSize: minimumSize, requestedSize: boundsResult.requestedSize))
     }
 
     /// 리사이즈 없이 앱만 실행 (화면 없음 / 접근성 미허용 경로 공용)
