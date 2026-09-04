@@ -187,10 +187,9 @@ enum ChromeLauncher {
         let siteName = site.name
         let siteUrl = trimmedURL
         let shouldReuseExistingWindow = site.reuseExistingWindow
-        let requestedWidth = bounds.right - bounds.left
-        let requestedHeight = bounds.bottom - bounds.top
+        let sizeLabel = "\(bounds.right - bounds.left)x\(bounds.bottom - bounds.top)"
 
-        // 모든 작업을 requestCoordinator serial queue에서 직렬 처리
+        // 모든 작업을 requestCoordinator serial queue에서 직렬 처리 (I4)
         let enqueuedAt = CFAbsoluteTimeGetCurrent()
         requestCoordinator.async {
             let startTime = CFAbsoluteTimeGetCurrent()
@@ -199,81 +198,29 @@ enum ChromeLauncher {
                 "Chrome coordinator dequeued \(siteName, privacy: .private) after \(queueWait, format: .fixed(precision: 2))s"
             )
 
-            if shouldReuseExistingWindow {
-                switch reuseExistingWindow(
-                    siteID: site.id,
-                    url: siteUrl,
-                    position: position,
-                    size: size,
-                    runtime: runtime
-                ) {
-                case .reused:
-                    let processingTime = CFAbsoluteTimeGetCurrent() - startTime
-                    let resultLabel = "applescript"
-                    let detail = "reused existing URL window by Chrome window ID"
-                    Log.launcher.notice(
-                        "Reused Chrome window for \(siteName, privacy: .private) — result=\(resultLabel, privacy: .public)"
-                    )
-                    ResizeLogger.log(
-                        site: siteName, type: "url",
-                        appState: "running",
-                        attempt: 1, delay: 0,
-                        totalTime: processingTime,
-                        result: resultLabel,
-                        windowCount: currentChromeProcess(runtime: runtime).map {
-                            runtime.windows($0.pid).count
-                        } ?? 0,
-                        display: screenName,
-                        size: "\(requestedWidth)x\(requestedHeight)",
-                        detail: detail)
-                    onComplete?()
-                    return
-                case .notFound:
-                    Log.launcher.info(
-                        "No Chap-managed Chrome window for \(siteName, privacy: .private); opening a new window"
-                    )
-                case .unavailable(let detail):
-                    Log.launcher.warning(
-                        "Chrome URL window reuse unavailable for \(siteName, privacy: .private); opening a new window — \(detail, privacy: .private)"
-                    )
-                }
-            }
-
-            // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록
-            let baselineStartedAt = CFAbsoluteTimeGetCurrent()
-            let chromeProcess = currentChromeProcess(runtime: runtime)
-            let chromeRunning = chromeProcess != nil
-            let chromePid = chromeProcess?.pid ?? -1
-            let windowsBefore =
-                chromeRunning
-                ? captureExistingWindows(pid: chromePid, runtime: runtime)
-                : []
-            let chromeWindowIDsBefore: Set<Int>? =
-                shouldReuseExistingWindow
-                ? (chromeRunning ? captureChromeWindowIDs() : [])
-                : nil
-            let baselineDuration = CFAbsoluteTimeGetCurrent() - baselineStartedAt
-
-            Log.launcher.info(
-                "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(chromeRunning), windowsBefore=\(windowsBefore.count)"
-            )
-
-            // 2. Process launch (큐 안에서 수행)
-            let launchStartedAt = CFAbsoluteTimeGetCurrent()
-            do {
-                try runChromeApp(url: siteUrl)
-            } catch {
-                Log.launcher.error(
-                    "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
-                DispatchQueue.main.async {
-                    LauncherUtils.showAlert(
-                        message: "Failed to launch Chrome.", info: error.localizedDescription)
-                }
+            if shouldReuseExistingWindow,
+                reuseTrackedWindow(
+                    site: site, siteName: siteName, siteUrl: siteUrl,
+                    position: position, size: size,
+                    screenName: screenName, sizeLabel: sizeLabel,
+                    startTime: startTime)
+            {
                 onComplete?()
                 return
             }
-            let launchCompletedAt = CFAbsoluteTimeGetCurrent()
-            let launchRequestDuration = launchCompletedAt - launchStartedAt
+
+            // 1. Baseline: 실행 전 Chrome 윈도우 집합 기록 (I1/I3)
+            let baseline = captureLaunchBaseline(
+                shouldReuseExistingWindow: shouldReuseExistingWindow)
+            Log.launcher.info(
+                "Chrome coordinator: launch for \(siteName, privacy: .private) — running=\(baseline.running), windowsBefore=\(baseline.windowsBefore.count)"
+            )
+
+            // 2. Process launch (큐 안에서 수행, I4)
+            guard let launchTiming = launchChromeProcess(url: siteUrl) else {
+                onComplete?()
+                return
+            }
 
             guard AccessibilityPermission.isTrusted else {
                 Log.launcher.info("Accessibility not granted — launching without resize")
@@ -283,84 +230,218 @@ enum ChromeLauncher {
 
             // 3. Poll + Resize
             let observation = axResizeNewWindow(
-                baselinePid: chromePid,
-                windowsBefore: windowsBefore,
+                baselinePid: baseline.pid,
+                windowsBefore: baseline.windowsBefore,
                 position: position,
                 size: size,
-                chromeRunning: chromeRunning,
-                launchCompletedAt: launchCompletedAt,
+                chromeRunning: baseline.running,
+                launchCompletedAt: launchTiming.completedAt,
                 runtime: runtime
             )
-            let result = observation.result
-            if shouldReuseExistingWindow, result != nil {
+            if shouldReuseExistingWindow, observation.result != nil {
                 rememberCreatedChromeWindow(
                     for: site.id,
                     url: siteUrl,
-                    windowIDsBefore: chromeWindowIDsBefore,
-                    sessionProcess: chromeProcess,
+                    windowIDsBefore: baseline.windowIDsBefore,
+                    sessionProcess: baseline.process,
                     runtime: runtime)
             }
+            reportLaunchOutcome(
+                observation: observation,
+                baseline: baseline,
+                launchRequestDuration: launchTiming.duration,
+                siteName: siteName,
+                screenName: screenName,
+                sizeLabel: sizeLabel,
+                queueWait: queueWait,
+                startTime: startTime)
+            onComplete?()
+        }
+    }
+
+    // MARK: - Launch phases (requestCoordinator 큐 안에서만 호출)
+
+    /// 세션에 기억된 Chap 소유 창 재사용을 시도한다 (§7.1.1, I14).
+    /// 재사용에 성공해 실행을 끝냈으면 true, 새 창 흐름으로 폴백해야 하면 false.
+    private static func reuseTrackedWindow(
+        site: Site,
+        siteName: String,
+        siteUrl: String,
+        position: CGPoint,
+        size: CGSize,
+        screenName: String,
+        sizeLabel: String,
+        startTime: CFAbsoluteTime
+    ) -> Bool {
+        switch reuseExistingWindow(
+            siteID: site.id,
+            url: siteUrl,
+            position: position,
+            size: size,
+            runtime: runtime
+        ) {
+        case .reused:
             let processingTime = CFAbsoluteTimeGetCurrent() - startTime
-            let resultLabel = result?.level.rawValue ?? "failed"
-            let timing = ChromeLaunchTiming(
-                baselineDuration: baselineDuration,
-                launchRequestDuration: launchRequestDuration,
-                windowWaitDuration: observation.windowWaitDuration,
-                boundsApplyDuration: observation.boundsApplyDuration,
-                baselinePID: chromePid,
-                pidTransitions: observation.pidTransitions)
-            let timingDiagnostic = timing.diagnostic
-            let resultDetail = result?.diagnostic ?? "no new window found"
-            let detail = "\(resultDetail) | \(timingDiagnostic)"
-            Log.launcher.info(
-                "Chrome stage timing for \(siteName, privacy: .private) — \(timingDiagnostic, privacy: .public)"
+            let resultLabel = "applescript"
+            let detail = "reused existing URL window by Chrome window ID"
+            Log.launcher.notice(
+                "Reused Chrome window for \(siteName, privacy: .private) — result=\(resultLabel, privacy: .public)"
             )
-            if let result {
-                switch result.level {
-                case .fullyApplied:
-                    Log.launcher.notice(
-                        "Chrome AX resize verified for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
-                    )
-                case .partiallyApplied:
-                    Log.launcher.warning(
-                        "Chrome AX resize partially applied for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                    )
-                case .failed:
-                    Log.launcher.error(
-                        "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                    )
-                    AccessibilityPermission.notifyResizeFailure()
-                }
-            } else {
-                Log.launcher.error(
-                    "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                )
-                // Chrome이 실행 중이라는데 baseline 창이 0개이고 새 창도 못 잡았다면,
-                // 보통 Chrome이 자동 업데이트된 뒤 재시작을 기다리며 AX에 응답하지 않는
-                // 상태다. 접근성 실패로 오인시키지 말고 재시작을 안내한다.
-                if chromeAppearsUnresponsive(
-                    chromeRunning: chromeRunning,
-                    baselineWindowCount: windowsBefore.count,
-                    foundNewWindow: false)
-                {
-                    scheduleChromeUnresponsiveNotice(
-                        pid: currentChromeProcess(runtime: runtime)?.pid)
-                } else {
-                    AccessibilityPermission.notifyResizeFailure()
-                }
-            }
             ResizeLogger.log(
                 site: siteName, type: "url",
-                appState: chromeRunning ? "running" : "cold",
+                appState: "running",
                 attempt: 1, delay: 0,
                 totalTime: processingTime,
                 result: resultLabel,
-                windowCount: windowsBefore.count,
+                windowCount: currentChromeProcess(runtime: runtime).map {
+                    runtime.windows($0.pid).count
+                } ?? 0,
                 display: screenName,
-                size: "\(requestedWidth)x\(requestedHeight)",
+                size: sizeLabel,
                 detail: detail)
-            onComplete?()
+            return true
+        case .notFound:
+            Log.launcher.info(
+                "No Chap-managed Chrome window for \(siteName, privacy: .private); opening a new window"
+            )
+            return false
+        case .unavailable(let detail):
+            Log.launcher.warning(
+                "Chrome URL window reuse unavailable for \(siteName, privacy: .private); opening a new window — \(detail, privacy: .private)"
+            )
+            return false
         }
+    }
+
+    /// 실행 전 스냅샷. windowsBefore가 새 창 판별의 baseline이고(I1/I3),
+    /// windowIDsBefore는 재사용 연결용 Chrome window ID 차집합의 기준이다.
+    private struct ChromeLaunchBaseline {
+        let process: ChromeProcessCandidate?
+        let windowsBefore: [AXUIElement]
+        let windowIDsBefore: Set<Int>?
+        let duration: TimeInterval
+
+        var running: Bool { process != nil }
+        var pid: pid_t { process?.pid ?? -1 }
+    }
+
+    /// 1단계 — 실행 전 Chrome 프로세스·AX 창 집합·(재사용 시) window ID를 기록한다.
+    private static func captureLaunchBaseline(
+        shouldReuseExistingWindow: Bool
+    ) -> ChromeLaunchBaseline {
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        let chromeProcess = currentChromeProcess(runtime: runtime)
+        let chromeRunning = chromeProcess != nil
+        let chromePid = chromeProcess?.pid ?? -1
+        let windowsBefore =
+            chromeRunning
+            ? captureExistingWindows(pid: chromePid, runtime: runtime)
+            : []
+        let chromeWindowIDsBefore: Set<Int>? =
+            shouldReuseExistingWindow
+            ? (chromeRunning ? captureChromeWindowIDs() : [])
+            : nil
+        return ChromeLaunchBaseline(
+            process: chromeProcess,
+            windowsBefore: windowsBefore,
+            windowIDsBefore: chromeWindowIDsBefore,
+            duration: CFAbsoluteTimeGetCurrent() - startedAt)
+    }
+
+    /// 2단계 — Chrome 프로세스를 큐 안에서 실행한다 (I4).
+    /// 실패 시 에러 로그와 메인 스레드 alert까지 처리하고 nil을 반환한다.
+    private static func launchChromeProcess(
+        url: String
+    ) -> (completedAt: CFAbsoluteTime, duration: TimeInterval)? {
+        let launchStartedAt = CFAbsoluteTimeGetCurrent()
+        do {
+            try runChromeApp(url: url)
+        } catch {
+            Log.launcher.error(
+                "Failed to launch Chrome: \(error.localizedDescription, privacy: .public)")
+            DispatchQueue.main.async {
+                LauncherUtils.showAlert(
+                    message: "Failed to launch Chrome.", info: error.localizedDescription)
+            }
+            return nil
+        }
+        let launchCompletedAt = CFAbsoluteTimeGetCurrent()
+        return (launchCompletedAt, launchCompletedAt - launchStartedAt)
+    }
+
+    /// 관찰 결과를 단계별 timing·레벨별 통합 로그·리사이즈 CSV(I8)로 남긴다.
+    /// 성공 판정은 readback 기반 AXBoundsResult(I2)를 그대로 사용하며,
+    /// 실패 시 Chrome 비응답(자동 업데이트 재시작 대기)을 접근성 실패와 구분한다.
+    private static func reportLaunchOutcome(
+        observation: WindowResizeObservation,
+        baseline: ChromeLaunchBaseline,
+        launchRequestDuration: TimeInterval,
+        siteName: String,
+        screenName: String,
+        sizeLabel: String,
+        queueWait: TimeInterval,
+        startTime: CFAbsoluteTime
+    ) {
+        let result = observation.result
+        let processingTime = CFAbsoluteTimeGetCurrent() - startTime
+        let resultLabel = result?.level.rawValue ?? "failed"
+        let timing = ChromeLaunchTiming(
+            baselineDuration: baseline.duration,
+            launchRequestDuration: launchRequestDuration,
+            windowWaitDuration: observation.windowWaitDuration,
+            boundsApplyDuration: observation.boundsApplyDuration,
+            baselinePID: baseline.pid,
+            pidTransitions: observation.pidTransitions)
+        let timingDiagnostic = timing.diagnostic
+        let resultDetail = result?.diagnostic ?? "no new window found"
+        let detail = "\(resultDetail) | \(timingDiagnostic)"
+        Log.launcher.info(
+            "Chrome stage timing for \(siteName, privacy: .private) — \(timingDiagnostic, privacy: .public)"
+        )
+        if let result {
+            switch result.level {
+            case .fullyApplied:
+                Log.launcher.notice(
+                    "Chrome AX resize verified for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s"
+                )
+            case .partiallyApplied:
+                Log.launcher.warning(
+                    "Chrome AX resize partially applied for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+                )
+            case .failed:
+                Log.launcher.error(
+                    "Chrome AX resize verification failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+                )
+                AccessibilityPermission.notifyResizeFailure()
+            }
+        } else {
+            Log.launcher.error(
+                "Chrome AX resize failed for \(siteName, privacy: .private) — processing=\(processingTime, format: .fixed(precision: 2))s queue=\(queueWait, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+            )
+            // Chrome이 실행 중이라는데 baseline 창이 0개이고 새 창도 못 잡았다면,
+            // 보통 Chrome이 자동 업데이트된 뒤 재시작을 기다리며 AX에 응답하지 않는
+            // 상태다. 접근성 실패로 오인시키지 말고 재시작을 안내한다.
+            if chromeAppearsUnresponsive(
+                chromeRunning: baseline.running,
+                baselineWindowCount: baseline.windowsBefore.count,
+                foundNewWindow: false)
+            {
+                scheduleChromeUnresponsiveNotice(
+                    pid: currentChromeProcess(runtime: runtime)?.pid)
+            } else {
+                AccessibilityPermission.notifyResizeFailure()
+            }
+        }
+        ResizeLogger.log(
+            site: siteName, type: "url",
+            appState: baseline.running ? "running" : "cold",
+            attempt: 1, delay: 0,
+            totalTime: processingTime,
+            result: resultLabel,
+            windowCount: baseline.windowsBefore.count,
+            display: screenName,
+            size: sizeLabel,
+            detail: detail)
     }
 
     // MARK: - AX API Resize
