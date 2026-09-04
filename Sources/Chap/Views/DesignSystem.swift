@@ -13,7 +13,8 @@ enum DS {
 
     static let accent = Color(red: 54 / 255, green: 100 / 255, blue: 255 / 255)
     static let accentSoft = accent.opacity(0.08)
-    static let accentSurface = Color(red: 235 / 255, green: 240 / 255, blue: 255 / 255)
+    /// 강조 입력면. 라이트/다크 모두에서 대비가 유지되도록 고정 RGB 대신 accent 틴트를 쓴다.
+    static let accentSurface = accent.opacity(0.12)
     static let cardBg = Color(.controlBackgroundColor)
     static let surfaceBg = Color(.windowBackgroundColor)
     static let textPrimary = Color(.labelColor)
