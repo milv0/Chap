@@ -2,6 +2,23 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.13] — 2026-09-04
+
+### Improved
+
+- **Launcher maintainability** — Restructured the URL and App launch pipelines
+  into named phases (baseline, launch, observe, report) with identical
+  behavior, timing, and diagnostics.
+- **Leaner internals** — Removed dead code, unified duplicated Accessibility
+  readback helpers, and moved domain validation to a compile-time-checked
+  regex literal.
+- **Settings code organization** — Extracted the General tab into its own view
+  file; no visual or behavioral changes.
+- **Debug diagnostics housekeeping** — Debug builds prune resize diagnostics
+  older than 14 days automatically.
+
+---
+
 ## [1.1.12] — 2026-08-25
 
 ### Fixed
