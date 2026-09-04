@@ -45,6 +45,7 @@ Sources/
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
 │   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
 │   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
+│   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -70,6 +71,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── DisplayPreviewPolicyTests.swift
     ├── UpdateConfigurationTests.swift
     ├── ResizeLogRetentionTests.swift
+    ├── MinimumSizeNoticePolicyTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns

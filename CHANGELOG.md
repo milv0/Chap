@@ -2,6 +2,21 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.14] — 2026-09-04
+
+### Fixed
+
+- **Dark Mode Shortcut field** — The Shortcut input highlight now adapts to
+  the system appearance, so its text stays readable in Dark Mode.
+
+### Added
+
+- **Minimum window size notice** — When an app enforces a minimum window size
+  larger than the configured size, Chap explains the clamp and shows the
+  app's minimum once per launchable and size combination per session.
+
+---
+
 ## [1.1.13] — 2026-09-04
 
 ### Improved

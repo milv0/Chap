@@ -41,6 +41,10 @@ struct AXBoundsResult {
     /// CSV 한 칸으로도 쓰이므로 콤마를 포함하지 않는다.
     var notes: [String] = []
 
+    /// 앱이 보고한 최소 size가 요청 size보다 커서 클램프가 예측된 경우 그 최소 size.
+    /// 사용자 안내(최소 크기 미달 알림)의 근거로 쓰인다. 해당 없음이면 nil.
+    var clampingMinimumSize: CGSize? = nil
+
     /// position이 tolerance 범위 내 일치하는지
     var positionWithinTolerance: Bool {
         guard let actual = actualPosition else { return false }
@@ -302,11 +306,13 @@ enum LauncherUtils {
         let appElement: AXUIElement? =
             AXUIElementGetPid(window, &pid) == .success ? axApplication(pid: pid) : nil
 
-        // 최소 size 클램프 예측 (partial 판정의 원인 구분용)
+        // 최소 size 클램프 예측 (partial 판정의 원인 구분 + 사용자 안내용)
+        var clampingMinimumSize: CGSize?
         if let minimumSize = axGetMinimumSize(window),
             AXResizePolicy.predictsMinimumSizeClamp(
                 requestedSize: size, minimumSize: minimumSize)
         {
+            clampingMinimumSize = minimumSize
             notes.append("minSize=\(Int(minimumSize.width))x\(Int(minimumSize.height))")
         }
 
@@ -370,7 +376,8 @@ enum LauncherUtils {
             requestedPosition: verifiedPosition,
             requestedSize: size,
             level: level,
-            notes: notes
+            notes: notes,
+            clampingMinimumSize: clampingMinimumSize
         )
     }
 
