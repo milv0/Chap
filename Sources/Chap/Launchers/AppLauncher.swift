@@ -34,22 +34,16 @@ enum AppLauncher {
     }
 
     /// 앱을 실행하고 윈도우 크기/위치를 조정
+    ///
+    /// 단계: 경로 검증 → 대상 화면·bounds 결정 → 권한 확인 → baseline 캡처(I1/I3)
+    /// → openApplication → 관찰·결과 보고. 각 단계는 아래 private 메서드로 분리돼 있다.
     static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
-        guard let path = site.appPath, !path.isEmpty else {
-            Log.launcher.error("No app path configured for \(site.name, privacy: .private)")
-            LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
-            onComplete?()
-            return
-        }
-        guard FileManager.default.fileExists(atPath: path) else {
-            Log.launcher.error("App not found at: \(path, privacy: .private)")
-            LauncherUtils.showAlert(message: "App not found at: \(path)")
+        guard let path = validatedAppPath(for: site) else {
             onComplete?()
             return
         }
 
-        let bundle = Bundle(path: path)
-        let bundleId = bundle?.bundleIdentifier
+        let bundleId = Bundle(path: path)?.bundleIdentifier
 
         guard let screen = targetScreen(for: site) else {
             Log.launcher.info(
@@ -74,20 +68,7 @@ enum AppLauncher {
             return
         }
 
-        let appRunning = NSWorkspace.shared.runningApplications.contains {
-            $0.bundleIdentifier == bundleId
-        }
-
-        // 실행 전 baseline: 현재 윈도우 집합 기록
-        let baselinePid: pid_t? = NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier == bundleId
-        }?.processIdentifier
-        let windowsBefore: [AXUIElement]
-        if let pid = baselinePid {
-            windowsBefore = LauncherUtils.captureExistingWindows(pid: pid)
-        } else {
-            windowsBefore = []
-        }
+        let baseline = captureBaseline(bundleId: bundleId)
 
         let appURL = URL(fileURLWithPath: path)
         let openConfig = NSWorkspace.OpenConfiguration()
@@ -105,88 +86,166 @@ enum AppLauncher {
                 onComplete?()
                 return
             }
-            Log.launcher.info(
-                "app opened pid=\(app.processIdentifier) localizedName=\(app.localizedName ?? "?", privacy: .private)"
-            )
-
-            let position = CGPoint(x: bounds.left, y: bounds.top)
-            let size = CGSize(width: bw, height: bh)
-            let policy = resizeObservationPolicy(
-                bundleId: app.bundleIdentifier ?? bundleId,
-                appRunning: appRunning
-            )
-            let observationKey = app.bundleIdentifier ?? bundleId ?? "pid:\(app.processIdentifier)"
-            let observationToken = observationRegistry.begin(key: observationKey)
-            if policy.isMicrosoftOffice {
-                Log.launcher.info(
-                    "Microsoft Office observation policy for \(site.name, privacy: .private): timeout=\(policy.timeout, privacy: .public)s postResizeGrace=\(policy.postResizeGrace, privacy: .public)s focusedFallbackDelay=\(policy.focusedFallbackDelay, privacy: .public)s"
-                )
-            }
-
-            // 관찰(run loop)이 길게 유지될 수 있으므로 전용 백그라운드 큐에서 실행해
-            // 다른 런처(Chrome 등)의 작업을 막지 않도록 한다.
-            DispatchQueue.global(qos: .userInitiated).async {
-                let result = observeAndResizeOneWindow(
-                    pid: app.processIdentifier,
-                    position: position,
-                    size: size,
-                    startTime: startTime,
-                    policy: policy,
-                    debugLabel: site.name,
-                    observationKey: observationKey,
-                    observationToken: observationToken,
-                    windowsBefore: windowsBefore
-                )
-                if result.wasSuperseded {
-                    Log.launcher.info(
-                        "AX observation superseded for \(site.name, privacy: .private)"
-                    )
-                    onComplete?()
-                    return
-                }
-                let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-                let latency = result.latency ?? elapsed
-                let resultLabel: String
-                let detail: String
-                if let boundsResult = result.boundsResult {
-                    resultLabel = boundsResult.level.rawValue
-                    detail = boundsResult.diagnostic
-                    switch boundsResult.level {
-                    case .fullyApplied:
-                        Log.launcher.notice(
-                            "AX resize verified for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s"
-                        )
-                    case .partiallyApplied:
-                        Log.launcher.warning(
-                            "AX resize partially applied for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                        )
-                    case .failed:
-                        Log.launcher.error(
-                            "AX resize verification failed for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                        )
-                        AccessibilityPermission.notifyResizeFailure()
-                    }
-                } else {
-                    resultLabel = "failed"
-                    detail = result.diagnostic ?? "no eligible window found"
-                    Log.launcher.error(
-                        "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s \(detail, privacy: .public)"
-                    )
-                    AccessibilityPermission.notifyResizeFailure()
-                }
-                ResizeLogger.log(
-                    site: site.name, type: "app",
-                    appState: appRunning ? "running" : "cold",
-                    attempt: 1, delay: 0,
-                    totalTime: latency,
-                    result: resultLabel,
-                    windowCount: windowsBefore.count,
-                    display: screen.localizedName,
-                    size: "\(bw)x\(bh)",
-                    detail: detail)
-                onComplete?()
-            }
+            observeAndReport(
+                app: app, site: site, fallbackBundleId: bundleId, screen: screen,
+                bounds: bounds, baseline: baseline, startTime: startTime,
+                onComplete: onComplete)
         }
+    }
+
+    // MARK: - Launch phases
+
+    /// appPath 필수값·존재 검증. 실패 시 에러 로그와 alert까지 처리하고 nil을 반환한다.
+    private static func validatedAppPath(for site: Site) -> String? {
+        guard let path = site.appPath, !path.isEmpty else {
+            Log.launcher.error("No app path configured for \(site.name, privacy: .private)")
+            LauncherUtils.showAlert(message: "No app path configured for \"\(site.name)\".")
+            return nil
+        }
+        guard FileManager.default.fileExists(atPath: path) else {
+            Log.launcher.error("App not found at: \(path, privacy: .private)")
+            LauncherUtils.showAlert(message: "App not found at: \(path)")
+            return nil
+        }
+        return path
+    }
+
+    /// 실행 전 스냅샷. windowsBefore는 새 창 판별의 baseline이다 (I1/I3).
+    private struct LaunchBaseline {
+        let appRunning: Bool
+        let windowsBefore: [AXUIElement]
+    }
+
+    /// 앱 실행 여부와 실행 전 AX 윈도우 집합을 기록한다.
+    private static func captureBaseline(bundleId: String?) -> LaunchBaseline {
+        let runningApp = NSWorkspace.shared.runningApplications.first {
+            $0.bundleIdentifier == bundleId
+        }
+        let windowsBefore: [AXUIElement]
+        if let pid = runningApp?.processIdentifier {
+            windowsBefore = LauncherUtils.captureExistingWindows(pid: pid)
+        } else {
+            windowsBefore = []
+        }
+        return LaunchBaseline(appRunning: runningApp != nil, windowsBefore: windowsBefore)
+    }
+
+    /// openApplication 성공 후: 관찰 정책·supersede 토큰(I10)을 준비하고,
+    /// 전용 백그라운드 큐에서 새 창 관찰과 결과 보고를 수행한다.
+    /// 관찰(run loop)이 길게 유지될 수 있으므로 전용 백그라운드 큐에서 실행해
+    /// 다른 런처(Chrome 등)의 작업을 막지 않도록 한다.
+    private static func observeAndReport(
+        app: NSRunningApplication,
+        site: Site,
+        fallbackBundleId: String?,
+        screen: NSScreen,
+        bounds: (left: Int, top: Int, right: Int, bottom: Int),
+        baseline: LaunchBaseline,
+        startTime: CFAbsoluteTime,
+        onComplete: (() -> Void)?
+    ) {
+        Log.launcher.info(
+            "app opened pid=\(app.processIdentifier) localizedName=\(app.localizedName ?? "?", privacy: .private)"
+        )
+
+        let bw = bounds.right - bounds.left
+        let bh = bounds.bottom - bounds.top
+        let position = CGPoint(x: bounds.left, y: bounds.top)
+        let size = CGSize(width: bw, height: bh)
+        let policy = resizeObservationPolicy(
+            bundleId: app.bundleIdentifier ?? fallbackBundleId,
+            appRunning: baseline.appRunning
+        )
+        let observationKey =
+            app.bundleIdentifier ?? fallbackBundleId ?? "pid:\(app.processIdentifier)"
+        let observationToken = observationRegistry.begin(key: observationKey)
+        if policy.isMicrosoftOffice {
+            Log.launcher.info(
+                "Microsoft Office observation policy for \(site.name, privacy: .private): timeout=\(policy.timeout, privacy: .public)s postResizeGrace=\(policy.postResizeGrace, privacy: .public)s focusedFallbackDelay=\(policy.focusedFallbackDelay, privacy: .public)s"
+            )
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            let result = observeAndResizeOneWindow(
+                pid: app.processIdentifier,
+                position: position,
+                size: size,
+                startTime: startTime,
+                policy: policy,
+                debugLabel: site.name,
+                observationKey: observationKey,
+                observationToken: observationToken,
+                windowsBefore: baseline.windowsBefore
+            )
+            if result.wasSuperseded {
+                Log.launcher.info(
+                    "AX observation superseded for \(site.name, privacy: .private)"
+                )
+                onComplete?()
+                return
+            }
+            reportObservationResult(
+                result, site: site,
+                appState: baseline.appRunning ? "running" : "cold",
+                baselineWindowCount: baseline.windowsBefore.count,
+                displayName: screen.localizedName,
+                sizeLabel: "\(bw)x\(bh)",
+                startTime: startTime)
+            onComplete?()
+        }
+    }
+
+    /// 관찰 결과를 레벨별 통합 로그와 리사이즈 CSV(I8)로 남긴다.
+    /// 성공 판정은 readback 기반 AXBoundsResult(I2)를 그대로 사용한다.
+    private static func reportObservationResult(
+        _ result: ResizeObservationResult,
+        site: Site,
+        appState: String,
+        baselineWindowCount: Int,
+        displayName: String,
+        sizeLabel: String,
+        startTime: CFAbsoluteTime
+    ) {
+        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+        let latency = result.latency ?? elapsed
+        let resultLabel: String
+        let detail: String
+        if let boundsResult = result.boundsResult {
+            resultLabel = boundsResult.level.rawValue
+            detail = boundsResult.diagnostic
+            switch boundsResult.level {
+            case .fullyApplied:
+                Log.launcher.notice(
+                    "AX resize verified for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s"
+                )
+            case .partiallyApplied:
+                Log.launcher.warning(
+                    "AX resize partially applied for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+                )
+            case .failed:
+                Log.launcher.error(
+                    "AX resize verification failed for \(site.name, privacy: .private) — \(latency, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+                )
+                AccessibilityPermission.notifyResizeFailure()
+            }
+        } else {
+            resultLabel = "failed"
+            detail = result.diagnostic ?? "no eligible window found"
+            Log.launcher.error(
+                "AX resize failed for \(site.name, privacy: .private) — \(elapsed, format: .fixed(precision: 2))s \(detail, privacy: .public)"
+            )
+            AccessibilityPermission.notifyResizeFailure()
+        }
+        ResizeLogger.log(
+            site: site.name, type: "app",
+            appState: appState,
+            attempt: 1, delay: 0,
+            totalTime: latency,
+            result: resultLabel,
+            windowCount: baselineWindowCount,
+            display: displayName,
+            size: sizeLabel,
+            detail: detail)
     }
 
     /// 리사이즈 없이 앱만 실행 (화면 없음 / 접근성 미허용 경로 공용)

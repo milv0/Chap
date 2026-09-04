@@ -337,7 +337,6 @@ struct MinimapSwiftUI: View {
                     let y = (maxY - frame.minY - frame.height) * scale
                     let selected = isSelected(screen)
                     let focused = isFollowingCursor && isFocused(screen)
-                    let highlighted = selected || focused
                     let label = DisplayPreviewPolicy.overviewLabel(
                         displayName: screen.localizedName,
                         displayIndex: index,

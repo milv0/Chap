@@ -5,6 +5,8 @@ import Foundation
 ///
 /// 리사이즈 튜닝용 계측 데이터이므로 릴리스 빌드에서는 아무것도 기록하지 않는다.
 /// 최종 사용자 기기에 사용 이력(무엇을 언제 열었는지)이 쌓이는 것을 막기 위함.
+/// 보존 기간(ResizeLogRetention, 기본 14일)이 지난 파일은 프로세스당 한 번,
+/// 첫 기록 직전에 자동 삭제된다.
 /// CSV 열: timestamp,site,type,app_state,attempt,delay,total_time,result,window_count,display,
 /// size,detail
 ///
@@ -14,11 +16,26 @@ import Foundation
 enum ResizeLogger {
     #if DEBUG
         private static let fileLock = NSLock()
+        private static var didCleanUpStaleLogs = false
 
         private static let logDir: String = {
             let home = NSHomeDirectory()
             return (home as NSString).appendingPathComponent("Library/Logs/Chap")
         }()
+
+        /// 보존 기간(기본 14일)이 지난 진단 CSV를 프로세스당 한 번 정리한다.
+        /// fileLock을 잡은 상태에서 호출해야 한다.
+        private static func cleanUpStaleLogsIfNeeded() {
+            guard !didCleanUpStaleLogs else { return }
+            didCleanUpStaleLogs = true
+
+            let fileNames =
+                (try? FileManager.default.contentsOfDirectory(atPath: logDir)) ?? []
+            for name in ResizeLogRetention.staleFileNames(in: fileNames, now: Date()) {
+                let path = (logDir as NSString).appendingPathComponent(name)
+                try? FileManager.default.removeItem(atPath: path)
+            }
+        }
 
         /// CSV 한 칸에 안전하게 넣기 위해 구분자·줄바꿈을 치환한다.
         /// 사이트 이름·디스플레이 이름·진단 문자열에 콤마가 들어가면 열이 밀리기 때문.
@@ -51,6 +68,8 @@ enum ResizeLogger {
         #if DEBUG
             fileLock.lock()
             defer { fileLock.unlock() }
+
+            cleanUpStaleLogsIfNeeded()
 
             // 로그 디렉토리 생성
             try? FileManager.default.createDirectory(
