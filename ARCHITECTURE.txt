@@ -46,6 +46,7 @@ Sources/
 │   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
 │   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
+│   ├── EditActivationPolicy.swift ← 저장 상태 패널 탭의 편집 활성화 판정 (순수 로직)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -72,6 +73,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── UpdateConfigurationTests.swift
     ├── ResizeLogRetentionTests.swift
     ├── MinimumSizeNoticePolicyTests.swift
+    ├── EditActivationPolicyTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
