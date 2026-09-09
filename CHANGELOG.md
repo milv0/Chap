@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.15] — 2026-09-10
+
+### Improved
+
+- **Deliberate Shell editing** — Saved Shell launchables re-enter edit mode
+  only from a click inside the script editor; clicks elsewhere in the panel
+  no longer enable editing. Other launch types keep whole-panel activation.
+
+---
+
 ## [1.1.14] — 2026-09-04
 
 ### Fixed
