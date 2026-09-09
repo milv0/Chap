@@ -125,6 +125,17 @@ struct ScriptTextEditor: NSViewRepresentable {
     }
 }
 
+/// Shell 스크립트 편집기 상자의 글로벌 프레임을 상위 뷰로 전달한다.
+/// 저장 상태에서 "script 영역 내부 탭만 편집 활성화" 판정(EditActivationPolicy)에 쓰인다.
+struct ScriptEditorFramePreferenceKey: PreferenceKey {
+    static let defaultValue: CGRect = .zero
+
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
 /// Launch-type specific input fields extracted from SiteConfigView.
 /// Renders URL, App, Finder, or Shell fields based on the current launchType.
 struct SiteLaunchFields: View {
@@ -297,6 +308,13 @@ struct SiteLaunchFields: View {
                     .stroke(isEditing ? DS.border : DS.border.opacity(0.45), lineWidth: 1)
             )
             .opacity(isEditing ? 1 : 0.6)
+            .background(
+                GeometryReader { proxy in
+                    Color.clear.preference(
+                        key: ScriptEditorFramePreferenceKey.self,
+                        value: proxy.frame(in: .global))
+                }
+            )
 
             HStack {
                 Spacer()
