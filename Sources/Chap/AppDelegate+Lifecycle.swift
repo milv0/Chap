@@ -25,8 +25,8 @@ extension AppDelegate {
             button.imageScaling = .scaleProportionallyDown
             button.image = statusIconImage(accessible: true)
         }
-        keepAwake.onStateChange = { [weak self] in
-            DispatchQueue.main.async { self?.buildMenu() }
+        keepAwake.onEvent = { [weak self] event in
+            DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         buildMenu()
         accessibilityController.onAccessibleChanged = { [weak self] accessible in

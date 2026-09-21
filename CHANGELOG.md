@@ -2,6 +2,17 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.1] — 2026-09-21
+
+### Improved
+
+- **Keep Awake feedback** — Session start, stop, and expiry now show a brief
+  centered coffee-cup HUD with a subtle system sound.
+- **Compact menu settings** — Menu section visibility is a single row of
+  URL / App / Finder / Shell chips in Settings > General.
+
+---
+
 ## [1.3.0] — 2026-09-21
 
 ### Added

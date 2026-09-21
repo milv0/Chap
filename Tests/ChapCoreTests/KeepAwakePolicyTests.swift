@@ -49,6 +49,18 @@ struct KeepAwakePolicyTests {
         #expect(title == "Keep Mac Awake — 1h left")
     }
 
+    @Test("started HUD message names the preset")
+    func startedHUDMessageNamesPreset() {
+        let message = KeepAwakePolicy.hudMessage(startedPresetTitle: "4 Hours")
+
+        #expect(message == "Keep Awake · 4 Hours")
+    }
+
+    @Test("ended HUD message is a fixed off label")
+    func endedHUDMessageIsFixed() {
+        #expect(KeepAwakePolicy.hudMessageEnded == "Keep Awake Off")
+    }
+
     @Test("expired session end falls back to the plain title")
     func expiredSessionShowsPlainTitle() {
         let now = Date(timeIntervalSinceReferenceDate: 1_000_000)

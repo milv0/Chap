@@ -36,4 +36,12 @@ enum KeepAwakePolicy {
         guard let sessionEnd, sessionEnd > now else { return "Keep Mac Awake" }
         return "Keep Mac Awake — \(remainingLabel(until: sessionEnd, now: now)) left"
     }
+
+    /// 세션 시작 HUD 문구.
+    static func hudMessage(startedPresetTitle title: String) -> String {
+        "Keep Awake · \(title)"
+    }
+
+    /// 세션 종료(수동 해제·만료) HUD 문구.
+    static let hudMessageEnded = "Keep Awake Off"
 }
