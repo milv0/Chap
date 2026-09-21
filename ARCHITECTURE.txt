@@ -213,7 +213,7 @@ Config 모델 필드:
 - Launch at Login (SMAppService)
 - 상태바 아이콘 선택 (Default/Lightning) — 메뉴바 Icon 서브메뉴에서 즉시 변경, config에 저장·재시작 유지
   - Lightning 선택 + Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
-- Restart (메뉴바) / Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
+- Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
 ## 메뉴바 메뉴 구성
 
@@ -228,7 +228,6 @@ Config 모델 필드:
   About Chap
   ────────
   Check for Updates…  (설정 미완료 시 비활성화)
-  Restart
   ────────
   Quit
 

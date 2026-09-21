@@ -249,9 +249,6 @@ extension AppDelegate {
         updateItem.isEnabled = updateController.canCheckForUpdates
         menu.addItem(updateItem)
 
-        let restart = NSMenuItem(title: "Restart", action: #selector(restartApp), keyEquivalent: "")
-        restart.target = self
-        menu.addItem(restart)
         menu.addItem(.separator())
         let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
         quit.target = self
