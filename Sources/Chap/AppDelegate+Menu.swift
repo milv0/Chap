@@ -18,7 +18,7 @@ extension AppDelegate {
     func handleKeepAwakeEvent(_ event: KeepAwakeController.Event) {
         switch event {
         case .started(let presetTitle):
-            NSSound(named: "Glass")?.play()
+            NSSound(named: "Purr")?.play()
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
                 symbolName: "cup.and.saucer.fill")
