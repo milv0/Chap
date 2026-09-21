@@ -309,7 +309,7 @@ resolvedDisplayIndex(displayIdentifier, displayName, among: 연결된 화면들)
 | Chrome 종료·재시작 | PID 또는 launch date 불일치로 상태 제거 |
 | 연결 창 닫힘 | ID 조회의 `not-found` 응답으로 상태 제거 |
 | 저장 ID 없음 또는 위 검증 실패 | 새 `--app` 창 생성 흐름으로 폴백 |
-| 자동화 응답 오류·권한 거부 | 기존 상태를 추측해 변경하지 않고 새 창 흐름으로 폴백 |
+| 자동화 응답 오류·권한 거부 | 기존 상태를 추측해 변경하지 않고 새 창 흐름으로 폴백. 일시 오류는 150ms 후 1회 재시도(ChromeReuseRetryPolicy) 후 폴백하고, 권한 거부는 즉시 폴백 |
 
 `configureWindowReuse`와 launch 요청은 모두 `requestCoordinator`에 enqueue되므로 상태 필터링과
 읽기·쓰기 사이에 데이터 경합이 없다. 여러 URL 명령도 같은 serial queue를 통과해 각 실행의

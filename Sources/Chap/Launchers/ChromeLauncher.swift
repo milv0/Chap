@@ -306,8 +306,10 @@ enum ChromeLauncher {
             )
             return false
         case .unavailable(let detail):
+            // detail은 내부 오류 문자열(스크립트에는 window ID만 포함)이라 사용자
+            // 데이터가 없다. 재발 시 통합 로그만으로 원인을 확정할 수 있게 공개한다.
             Log.launcher.warning(
-                "Chrome URL window reuse unavailable for \(siteName, privacy: .private); opening a new window — \(detail, privacy: .private)"
+                "Chrome URL window reuse unavailable for \(siteName, privacy: .private); opening a new window — \(detail, privacy: .public)"
             )
             return false
         }
@@ -479,9 +481,9 @@ enum ChromeLauncher {
             return .notFound
         }
 
-        switch runChromeWindowScript(
-            trackedWindowScript(windowID: trackedWindow.windowID)
-        ) {
+        switch runTrackedWindowScriptRetrying(
+            windowID: trackedWindow.windowID, runtime: runtime)
+        {
         case .result(.matched):
             let outcome = resizeChromeWindow(
                 windowID: trackedWindow.windowID,
@@ -519,6 +521,9 @@ enum ChromeLauncher {
         }
     }
 
+    /// 자동화 권한 거부의 고정 detail. 재시도 판정(권한 거부는 재시도 금지)에도 쓰인다.
+    private static let automationPermissionDeniedDetail = "Chrome automation permission denied"
+
     private static func runChromeScript(_ source: String) -> ChromeScriptOutcome {
         guard let script = NSAppleScript(source: source) else {
             return .unavailable("Could not create Chrome automation script")
@@ -529,7 +534,7 @@ enum ChromeLauncher {
             let errorNumber = (error[NSAppleScript.errorNumber] as? NSNumber)?.intValue
             if errorNumber == -1743 {
                 showChromeAutomationPermissionAlert()
-                return .unavailable("Chrome automation permission denied")
+                return .unavailable(automationPermissionDeniedDetail)
             }
             let errorMessage = error[NSAppleScript.errorMessage] as? String
             return .unavailable(errorMessage ?? "Chrome automation failed")
@@ -544,6 +549,35 @@ enum ChromeLauncher {
             return .result(parseExistingWindowScriptOutput(output))
         case .unavailable(let detail):
             return .unavailable(detail)
+        }
+    }
+
+    /// 추적 창 조회 스크립트를 실행하고, 일시 자동화 오류면 ChromeReuseRetryPolicy에
+    /// 따라 짧게 한 번 재시도한다. 권한 거부는 사용자 조치가 필요하므로 재시도하지
+    /// 않고 즉시 반환한다. 첫 실패가 곧장 새 창 폴백(수 초짜리 느린 경로)으로
+    /// 빠지면서 "다시 누르면 되는" 체감 실패가 되는 것을 줄인다.
+    private static func runTrackedWindowScriptRetrying(
+        windowID: Int, runtime: ChromeRuntime
+    ) -> ChromeWindowScriptOutcome {
+        var attempt = 0
+        while true {
+            let outcome = runChromeWindowScript(trackedWindowScript(windowID: windowID))
+            guard case .unavailable(let detail) = outcome,
+                ChromeReuseRetryPolicy.shouldRetry(
+                    attempt: attempt,
+                    isPermissionDenied: detail == automationPermissionDeniedDetail)
+            else {
+                if attempt > 0, case .result = outcome {
+                    Log.launcher.notice(
+                        "Chrome tracked-window script recovered after retry")
+                }
+                return outcome
+            }
+            attempt += 1
+            Log.launcher.info(
+                "Retrying Chrome tracked-window script after transient failure (attempt \(attempt + 1, privacy: .public)/\(ChromeReuseRetryPolicy.maxAttempts, privacy: .public))"
+            )
+            runtime.sleep(ChromeReuseRetryPolicy.retryDelayMicroseconds)
         }
     }
 
