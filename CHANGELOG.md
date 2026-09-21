@@ -2,6 +2,22 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.1.16] — 2026-09-21
+
+### Fixed
+
+- **More reliable URL window reuse** — Transient Chrome automation failures
+  during window reuse are retried once after a short delay instead of
+  immediately falling back to the slower new-window path; permission denials
+  still fall back right away.
+
+### Improved
+
+- **Clearer reuse diagnostics** — The underlying automation error is recorded
+  in the system log when reuse is unavailable.
+
+---
+
 ## [1.1.15] — 2026-09-10
 
 ### Improved
