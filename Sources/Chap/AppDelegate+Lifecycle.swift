@@ -25,6 +25,9 @@ extension AppDelegate {
             button.imageScaling = .scaleProportionallyDown
             button.image = statusIconImage(accessible: true)
         }
+        keepAwake.onStateChange = { [weak self] in
+            DispatchQueue.main.async { self?.buildMenu() }
+        }
         buildMenu()
         accessibilityController.onAccessibleChanged = { [weak self] accessible in
             self?.updateStatusIcon(accessible: accessible)
@@ -90,7 +93,8 @@ extension AppDelegate {
             showGuideWindow: config.showGuideWindow,
             launchAtLogin: config.launchAtLogin,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
-            statusBarIcon: config.statusBarIcon)
+            statusBarIcon: config.statusBarIcon,
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -99,6 +103,7 @@ extension AppDelegate {
                 launchAtLogin: payload.launchAtLogin,
                 optionShortcutsEnabled: payload.optionShortcutsEnabled,
                 statusBarIcon: payload.statusBarIcon,
+                hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -120,6 +125,7 @@ extension AppDelegate {
             let previousMenu = MenuConfigurationSnapshot(sites: self.config.sites)
             let previousLoginSetting = self.config.launchAtLogin
             let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled
+            let previousHiddenMenuLaunchTypes = self.config.hiddenMenuLaunchTypes
             let previousStatusBarIcon = self.config.statusBarIcon
             do {
                 try self.configStore.save(newConfig)
@@ -146,6 +152,7 @@ extension AppDelegate {
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
             if previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
+                || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
             {
                 DispatchQueue.main.async { self.buildMenu() }
             }
