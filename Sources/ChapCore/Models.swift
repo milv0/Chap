@@ -252,11 +252,13 @@ public struct Config: Codable {
     public var launchAtLogin: Bool
     public var optionShortcutsEnabled: Bool
     public var statusBarIcon: StatusBarIconChoice
+    /// 상태바 메뉴에서 숨길 launch type 섹션. 숨겨도 ⌥ 단축키는 계속 동작한다.
+    public var hiddenMenuLaunchTypes: Set<LaunchType>
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
-        case statusBarIcon, sites
+        case statusBarIcon, hiddenMenuLaunchTypes, sites
     }
 
     public init(
@@ -264,12 +266,14 @@ public struct Config: Codable {
         launchAtLogin: Bool = false,
         optionShortcutsEnabled: Bool = true,
         statusBarIcon: StatusBarIconChoice = .default,
+        hiddenMenuLaunchTypes: Set<LaunchType> = [],
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
         self.optionShortcutsEnabled = optionShortcutsEnabled
         self.statusBarIcon = statusBarIcon
+        self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.sites = sites
     }
 
@@ -285,6 +289,11 @@ public struct Config: Codable {
         statusBarIcon =
             try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
             ?? .default
+        // 키 누락은 빈 집합, 알 수 없는 타입 문자열은 무시한다 (관용 디코딩).
+        hiddenMenuLaunchTypes = Set(
+            (try container.decodeIfPresent([String].self, forKey: .hiddenMenuLaunchTypes)
+                ?? [])
+                .compactMap(LaunchType.init(rawValue:)))
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -294,6 +303,11 @@ public struct Config: Codable {
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
         try container.encode(optionShortcutsEnabled, forKey: .optionShortcutsEnabled)
         try container.encode(statusBarIcon, forKey: .statusBarIcon)
+        // Set 순서 비결정성이 config 파일 diff를 만들지 않도록 고정 순서로 encode.
+        let hiddenOrdered = LaunchType.allCases
+            .filter { hiddenMenuLaunchTypes.contains($0) }
+            .map(\.rawValue)
+        try container.encode(hiddenOrdered, forKey: .hiddenMenuLaunchTypes)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }
