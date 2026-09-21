@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.2] — 2026-09-21
+
+### Improved
+
+- **Keep Awake overlay** — Restyled with Chap's theme accent in the guide
+  window's visual language and doubled the on-screen duration.
+
+---
+
 ## [1.3.1] — 2026-09-21
 
 ### Improved
