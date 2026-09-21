@@ -100,7 +100,8 @@ struct SettingsViewModelTests {
                 sites: vm.sites, showGuideWindow: vm.showGuideWindow,
                 launchAtLogin: vm.launchAtLogin,
                 optionShortcutsEnabled: vm.optionShortcutsEnabled,
-                statusBarIcon: vm.statusBarIcon))
+                statusBarIcon: vm.statusBarIcon,
+                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
