@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.3] — 2026-09-21
+
+### Added
+
+- **Keep Awake icon indicator** — The Lightning status bar icon turns theme
+  blue while a Keep Awake session is active and reverts automatically when
+  it ends or expires.
+
+---
+
 ## [1.3.2] — 2026-09-21
 
 ### Improved

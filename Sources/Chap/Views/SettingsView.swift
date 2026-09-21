@@ -340,6 +340,8 @@ struct SettingsView: View {
                         Divider()
                         Button("Export...") { SettingsConfigTransfer.exportConfig(vm: vm) }
                         Divider()
+                        Button("Report Bug...") { reportBug() }
+                        Divider()
                         Button("Restart App") { restartApp() }
                         Button("Uninstall...") { uninstallApp() }
                     }
@@ -710,6 +712,12 @@ struct SettingsView: View {
             vm.originalOptionShortcutsEnabled = vm.optionShortcutsEnabled
             vm.originalStatusBarIcon = vm.statusBarIcon
             vm.originalHiddenMenuLaunchTypes = vm.hiddenMenuLaunchTypes
+        }
+    }
+
+    private func reportBug() {
+        if let delegate = NSApp.delegate as? AppDelegate {
+            delegate.reportBug()
         }
     }
 

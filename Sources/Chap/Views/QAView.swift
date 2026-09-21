@@ -156,11 +156,44 @@ struct QAView: View {
                 ),
                 (
                     "앱을 완전히 삭제하려면?",
-                    "Settings 하단의 📁 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
+                    "Settings 우측 하단의 ⋯ 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
+                ),
+                (
+                    "버그를 신고하려면?",
+                    "Settings 우측 하단의 ⋯ 메뉴 → Report Bug...를 선택하면 GitHub 이슈 페이지가 열립니다."
                 ),
                 (
                     "앱이 갑자기 단축키에 반응을 안 해요.",
                     "Chap을 재시작해 단축키를 다시 등록하세요. 계속 안 되면 다른 앱이 같은 Option 조합을 먼저 등록했는지 확인해주세요."
+                ),
+            ]
+        ),
+        (
+            "Keep Mac Awake & 메뉴",
+            [
+                (
+                    "Keep Mac Awake는 어떻게 쓰나요?",
+                    "메뉴바 아이콘 클릭 → Keep Mac Awake에서 30분/1시간/4시간/8시간/12시간 중 하나를 고르면 그 시간 동안 화면이 꺼지지 않습니다. 시스템 잠자기(로그아웃)는 막지 않고 화면 꺼짐만 방지합니다."
+                ),
+                (
+                    "세션을 끄고 싶으면?",
+                    "메뉴에서 Keep Mac Awake를 다시 열면 남은 시간과 함께 Turn Off 항목이 보입니다. 클릭하면 즉시 해제됩니다."
+                ),
+                (
+                    "Chap을 종료하거나 재시작하면 세션은?",
+                    "즉시 해제됩니다. 세션 상태는 저장되지 않는 일회성 값이라 다음 실행 시 항상 꺼진 상태로 시작합니다."
+                ),
+                (
+                    "켜고 끌 때 화면에 뜨는 커피 아이콘은 뭔가요?",
+                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. 짧은 알림음도 함께 재생됩니다."
+                ),
+                (
+                    "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
+                    "Settings → General → Menu에서 URL/App/Finder/Shell 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
+                ),
+                (
+                    "섹션을 숨기면 그 사이트들은 단축키로도 실행 안 되나요?",
+                    "아니요. 숨긴 섹션도 설정된 ⌥ 단축키로는 계속 실행됩니다. 메뉴 목록에서만 안 보일 뿐입니다."
                 ),
             ]
         ),
@@ -315,11 +348,44 @@ struct QAView: View {
                 ),
                 (
                     "How do I completely uninstall?",
-                    "In Settings, click the 📁 menu → Uninstall. This removes the app along with its config files."
+                    "In Settings, click the ⋯ menu at the bottom right → Uninstall. This removes the app along with its config files."
+                ),
+                (
+                    "How do I report a bug?",
+                    "In Settings, click the ⋯ menu at the bottom right → Report Bug... to open the GitHub issues page."
                 ),
                 (
                     "The app suddenly stopped responding to shortcuts.",
                     "Restart Chap to register its shortcuts again. If the issue continues, check whether another app registered the same Option combination first."
+                ),
+            ]
+        ),
+        (
+            "Keep Mac Awake & Menu",
+            [
+                (
+                    "How do I use Keep Mac Awake?",
+                    "Click the menubar icon → Keep Mac Awake, then choose 30 minutes, 1, 4, 8, or 12 hours. It only prevents the display from sleeping; it does not block system sleep or log you out."
+                ),
+                (
+                    "How do I turn a session off early?",
+                    "Open Keep Mac Awake again; it shows the remaining time along with a Turn Off item. Clicking it releases the session immediately."
+                ),
+                (
+                    "What happens to a session if I quit or restart Chap?",
+                    "It's released immediately. Session state isn't saved, so Chap always starts with it off."
+                ),
+                (
+                    "What is the coffee cup that briefly appears on screen?",
+                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring), along with a subtle sound."
+                ),
+                (
+                    "How do I shorten the menu's site list?",
+                    "In Settings → General → Menu, click the URL/App/Finder/Shell chips to hide that launch type's section from the menu."
+                ),
+                (
+                    "If I hide a section, do those sites lose their shortcuts too?",
+                    "No. Hidden sections still launch with their configured ⌥ shortcuts; they're only removed from the menu list."
                 ),
             ]
         ),

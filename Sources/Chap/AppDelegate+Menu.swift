@@ -29,6 +29,7 @@ extension AppDelegate {
                 symbolName: "cup.and.saucer")
         }
         buildMenu()
+        updateStatusIcon(accessible: accessibilityController.isAccessible)
     }
 
     func menuWillOpen(_ menu: NSMenu) {
@@ -38,12 +39,19 @@ extension AppDelegate {
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
+    /// Lightning 선택 + Keep Awake 활성 중이면 테마 블루로 색을 바꿔 상태를 표시한다.
     func statusIconImage(accessible: Bool) -> NSImage? {
-        statusIconImage(accessible: accessible, choice: config.statusBarIcon)
+        statusIconImage(
+            accessible: accessible, choice: config.statusBarIcon,
+            keepAwakeActive: keepAwake.isActive)
     }
 
     /// `choice`에 따라 상태바 아이콘을 결정한다. 권한이 없으면 항상 경고 심볼.
-    func statusIconImage(accessible: Bool, choice: StatusBarIconChoice) -> NSImage? {
+    /// `keepAwakeActive`는 Lightning 아이콘에서만 색 전환에 쓰인다 (Default는
+    /// 커스텀 PNG 리소스라 색 전환을 적용하지 않는다).
+    func statusIconImage(
+        accessible: Bool, choice: StatusBarIconChoice, keepAwakeActive: Bool = false
+    ) -> NSImage? {
         guard accessible else {
             return Self.statusBarSymbolImage(
                 name: "bolt.trianglebadge.exclamationmark",
@@ -62,9 +70,48 @@ extension AppDelegate {
             return Self.statusBarSymbolImage(
                 name: "bolt.fill", accessibilityDescription: "Chap")
         case .lightning:
-            return Self.statusBarSymbolImage(
-                name: "bolt.fill", accessibilityDescription: "Chap")
+            guard keepAwakeActive else {
+                return Self.statusBarSymbolImage(
+                    name: "bolt.fill", accessibilityDescription: "Chap")
+            }
+            return Self.accentStatusBarSymbolImage(
+                name: "bolt.fill",
+                accessibilityDescription: "Chap – Keep Awake active")
         }
+    }
+
+    /// 앱 테마 색 (DS.accent와 동일).
+    private static let accentColor = NSColor(
+        red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
+
+    /// `statusBarSymbolImage`와 동일한 geometry로, 색만 테마 블루로 고정한
+    /// non-template 이미지를 만든다. 크기·baseline이 template 버전과 동일하도록
+    /// SymbolConfiguration에 색을 먼저 합성한 뒤 그려서 착시 없는 전환을 보장한다.
+    static func accentStatusBarSymbolImage(
+        name: String, accessibilityDescription: String?
+    ) -> NSImage? {
+        let sizeConfig = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        let colorConfig = NSImage.SymbolConfiguration(paletteColors: [accentColor])
+        let config = sizeConfig.applying(colorConfig)
+        guard
+            let symbol = NSImage(
+                systemSymbolName: name,
+                accessibilityDescription: accessibilityDescription)?
+                .withSymbolConfiguration(config)
+        else { return nil }
+        symbol.isTemplate = false
+
+        let canvas = NSSize(width: 22, height: 22)
+        let image = NSImage(size: canvas)
+        image.lockFocus()
+        let rect = NSRect(
+            x: (canvas.width - symbol.size.width) / 2,
+            y: (canvas.height - symbol.size.height) / 2,
+            width: symbol.size.width, height: symbol.size.height)
+        symbol.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
+        image.unlockFocus()
+        image.isTemplate = false
+        return image
     }
 
     /// Named 이미지의 독립적인 복사본을 생성하여 원본 캐시를 오염시키지 않는다.
@@ -185,11 +232,6 @@ extension AppDelegate {
             systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
         qa.target = self
         menu.addItem(qa)
-        let bug = NSMenuItem(
-            title: "Report Bug", action: #selector(reportBug), keyEquivalent: "")
-        bug.image = NSImage(systemSymbolName: "ladybug", accessibilityDescription: "Report Bug")
-        bug.target = self
-        menu.addItem(bug)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
         about.image = NSImage(
