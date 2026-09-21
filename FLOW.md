@@ -437,7 +437,7 @@ posErr=0 sizeErr=0
 Settings는 하단의 `Launchables`와 `General` 두 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
 사이드바는 두 탭에서 유지되며, General에서 사이트를 선택하면 Launchables로 복귀한다.
 Launchables는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
-상태바 아이콘을 관리한다.
+상태바 아이콘과 메뉴 섹션 표시 여부(launch type별 숨김)를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -514,6 +514,7 @@ VM 갱신 → `markSaved()` → fixes/warnings 요약 alert로 이어진다.
 | Finder / Shell `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
+| Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 
 `ResizeContext`는 락이 없다. AXObserver 콜백과 스캔 루프가 **같은 스레드**에서 실행되기 때문이며,
 이 전제를 깨는 변경(다른 큐에서 ctx 접근)은 데이터 레이스가 된다.

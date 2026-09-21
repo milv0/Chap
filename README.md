@@ -23,6 +23,8 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
+- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; auto-released on expiry or quit
+- **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 
 ## Requirements
 
@@ -81,6 +83,7 @@ Stored at `~/.chap.json`:
   "showGuideWindow": true,
   "launchAtLogin": false,
   "statusBarIcon": "default",
+  "hiddenMenuLaunchTypes": [],
   "sites": [
     {
       "name": "GitHub",
