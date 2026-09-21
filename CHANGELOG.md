@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.4] — 2026-09-21
+
+### Improved
+
+- **Quieter Keep Awake start sound** — Switched from Glass to Purr.
+- **Leaner status bar menu** — Removed Restart from the menu bar list; it
+  remains in the settings window's ⋯ menu.
+- **Clearer tab name** — Renamed the "Launchables" settings tab to
+  "Launchers".
+
+---
+
 ## [1.3.3] — 2026-09-21
 
 ### Added

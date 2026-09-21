@@ -149,7 +149,7 @@ struct SettingsView: View {
     private var settingsTabPicker: some View {
         HStack(spacing: 2) {
             SettingsTabButton(
-                title: "Launchables",
+                title: "Launchers",
                 icon: "square.grid.2x2",
                 isSelected: selectedTab == .launchables,
                 action: { selectedTab = .launchables })
