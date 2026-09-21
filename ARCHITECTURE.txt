@@ -212,11 +212,13 @@ Config 모델 필드:
 - 접근성 권한 안내 직후 자동 재시도 + 권한 제거 감지
 - Launch at Login (SMAppService)
 - 상태바 아이콘 선택 (Default/Lightning) — 메뉴바 Icon 서브메뉴에서 즉시 변경, config에 저장·재시작 유지
-- Restart (메뉴바) / Restart App·Uninstall (설정 창 하단 folder 메뉴)
+- Restart (메뉴바) / Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
 ## 메뉴바 메뉴 구성
 
-  [사이트들 — 타입별 그룹, 구분선으로 분리]
+  [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
+  ────────
+  Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   ────────
   Icon ▸ Default (✓)
          Lightning
@@ -229,12 +231,14 @@ Config 모델 필드:
   ────────
   Quit
 
-## 설정 창 하단 folder 메뉴
+## 설정 창 하단 ⋯ 메뉴
 
   Import from File...
   Paste JSON...
   ────────
   Export...
+  ────────
+  Report Bug...  (GitHub 이슈 페이지)
   ────────
   Restart App
   Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak 삭제 → 앱 휴지통 이동)
