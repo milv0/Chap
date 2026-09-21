@@ -185,11 +185,6 @@ extension AppDelegate {
             systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
         qa.target = self
         menu.addItem(qa)
-        let bug = NSMenuItem(
-            title: "Report Bug", action: #selector(reportBug), keyEquivalent: "")
-        bug.image = NSImage(systemSymbolName: "ladybug", accessibilityDescription: "Report Bug")
-        bug.target = self
-        menu.addItem(bug)
         let about = NSMenuItem(
             title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
         about.image = NSImage(
