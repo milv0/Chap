@@ -23,7 +23,6 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
-- **CPU-Reactive Icon** — Optional lightning-icon animation (pulse or wobble) that speeds up with CPU load, RunCat-style
 
 ## Requirements
 
@@ -82,7 +81,6 @@ Stored at `~/.chap.json`:
   "showGuideWindow": true,
   "launchAtLogin": false,
   "statusBarIcon": "default",
-  "statusBarAnimation": "off",
   "sites": [
     {
       "name": "GitHub",
@@ -229,13 +227,6 @@ credited here and at the corresponding code sites:
   disable-and-restore workaround, and the `AXMinSize` → `AXMinimumSize`
   minimum-size probing (see “Window-control reliability and diagnostics”;
   credited in `AXResizePolicy.swift` and `LauncherUtils.swift`).
-- [RunCat Neo](https://github.com/runcat-dev/RunCatNeo) (Apache-2.0,
-  © Takuto Nakamura / Kyome22 and contributors) — the CPU-driven menu bar
-  animation concept and its usage-to-speed mapping
-  (`fps = clamp(cpu / 5, 1...20)`, from `RunnerService.updateRunnerSpeed`),
-  adapted for Chap's lightning icon with original pulse/wobble keyframes
-  (credited in `StatusIconAnimationPolicy.swift` and
-  `StatusIconAnimator.swift`).
 
 ## License
 
