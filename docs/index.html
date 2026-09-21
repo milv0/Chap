@@ -44,8 +44,8 @@
     .brand-mark { align-items: center; border-radius: 9px; display: inline-flex; height: 30px; justify-content: center; overflow: hidden; width: 30px; }
     .brand-mark img { display: block; height: 100%; object-fit: cover; width: 100%; }
     .nav-actions { align-items: center; display: flex; gap: .25rem; }
-    .nav-link, .language-toggle { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
-    .nav-link:hover, .language-toggle:hover { background: var(--soft); color: var(--ink); }
+    .nav-link { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
+    .nav-link:hover { background: var(--soft); color: var(--ink); }
 
     .hero { padding: 7rem 0 7.5rem; width: 100%; }
     .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 6vw, 5.5rem); grid-template-columns: minmax(0, .85fr) minmax(500px, 1.15fr); }
@@ -212,7 +212,6 @@
       <div class="nav-actions">
         <a class="nav-link" href="#why-chap" data-i18n="originNav">Why Chap?</a>
         <a class="nav-link" href="#history" data-i18n="historyNav">History</a>
-        <button class="language-toggle" type="button" data-language-toggle aria-label="Switch to Korean">한국어</button>
       </div>
     </nav>
   </header>
@@ -349,165 +348,6 @@
 
   <script>
     (() => {
-      const translations = {
-        en: {
-          documentTitle: "Chap — Press Option. Open it centered.",
-          description: "Pair Option with a letter to open any site, app, folder, or script centered on the display you choose.",
-          navLabel: "Main navigation",
-          homeLabel: "Chap home",
-          switchTo: "Switch to Korean",
-          switchLabel: "한국어",
-          originNav: "Why Chap?",
-          historyNav: "History",
-          eyebrow: "The Option-key launcher for macOS",
-          heroTitlePrimary: "Press Option.",
-          heroTitleAccent: "Open it centered.",
-          summary: "Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.",
-          install: "Install Chap",
-          dmg: "Manual install (DMG)",
-          trust: "✓ Apple notarized · macOS 14+",
-          carouselLabel: "Chap settings launch type examples",
-          carouselTitle: "One shortcut, four launch types",
-          settingsTitle: "Chap Settings",
-          settingsStatus: "Ready to launch",
-          settingsLaunchTypes: "Launch types",
-          settingsName: "Name",
-          settingsAddress: "URL",
-          settingsApplication: "Application",
-          settingsFolder: "Folder",
-          settingsScript: "Script",
-          settingsShortcut: "Shortcut",
-          settingsDisplay: "Display",
-          settingsRun: "Run",
-          settingsScreen: "Studio Display",
-          settingsCentered: "Centered at launch",
-          settingsShell: "Your shell",
-          settingsShellDetail: "No window placement needed",
-          urlName: "Chap website",
-          finderName: "Project files",
-          scriptName: "Open Chap",
-          originEyebrow: "Why Chap?",
-          originTitle: "Chap! Straight to it.",
-          originBody: "The name comes from a seal's quick chap-chap call. Just as a seal glides swiftly through water, Chap uses one Option shortcut to take you straight to an app, URL, folder, or script.",
-          historyTitle: "Product history",
-          historySummary: "A curated record of releases that changed how Chap works, not every patch.",
-          history115Title: "Reuse only the window Chap created",
-          history115Body: "Each URL launchable now remembers its own Chrome app window. Chap no longer searches user tabs, focused windows, or frontmost windows.",
-          history110Title: "Reuse the Chrome window already open",
-          history110Body: "Each URL can now bring its matching Chrome window forward and place it on the configured display instead of opening another window.",
-          history1010Title: "Pause Option-key triggers when needed",
-          history1010Body: "General settings added a trigger switch, status bar icon controls, and focused settings navigation while keeping launchables close at hand.",
-          history105Title: "Secure updates inside Chap",
-          history105Body: "Manual update checks arrived with Sparkle 2, signed update verification, and a fail-closed update feed.",
-          history102Title: "First public release",
-          history102Body: "Chap launched with URL, app, Finder, and shell shortcuts, multi-display placement, and notarized macOS installers.",
-          shortcutLabel: "Hold Option",
-          shortcutText: "Press your shortcut",
-          openLabel: "Open",
-          placeLabel: "Place",
-          placeText: "Centered",
-          runLabel: "Run",
-          urlTarget: "Chrome app mode",
-          folderTarget: "Project files",
-          scriptTarget: "Open Chap",
-          scriptResult: "Runs in your shell"
-        },
-        ko: {
-          documentTitle: "Chap — Option 키를 누르세요. 중앙에 열립니다.",
-          description: "Option 키와 글자 하나를 조합해 사이트, 앱, 폴더 또는 스크립트를 선택한 디스플레이 중앙에 여세요.",
-          navLabel: "주요 탐색",
-          homeLabel: "Chap 홈",
-          switchTo: "영어로 전환",
-          switchLabel: "EN",
-          originNav: "Chap 이야기",
-          historyNav: "히스토리",
-          eyebrow: "macOS Option 키 런처",
-          heroTitlePrimary: "Option 키를 누르세요.",
-          heroTitleAccent: "화면 중앙에 열립니다.",
-          summary: "Option 키와 글자 하나를 조합하세요. Chap이 저장한 사이트, 앱, 폴더 또는 스크립트를 선택한 크기와 디스플레이에 엽니다.",
-          install: "Chap 설치",
-          dmg: "수동 설치 (DMG)",
-          trust: "✓ Apple 공증 완료 · macOS 14+",
-          carouselLabel: "Chap 설정 실행 유형 예시",
-          carouselTitle: "하나의 단축키, 네 가지 실행 방식",
-          settingsTitle: "Chap 설정",
-          settingsStatus: "실행 준비 완료",
-          settingsLaunchTypes: "실행 유형",
-          settingsName: "이름",
-          settingsAddress: "URL",
-          settingsApplication: "앱",
-          settingsFolder: "폴더",
-          settingsScript: "스크립트",
-          settingsShortcut: "단축키",
-          settingsDisplay: "디스플레이",
-          settingsRun: "실행",
-          settingsScreen: "Studio Display",
-          settingsCentered: "실행 시 중앙 배치",
-          settingsShell: "사용자 셸",
-          settingsShellDetail: "창 배치가 필요하지 않음",
-          urlName: "Chap 웹사이트",
-          finderName: "프로젝트 파일",
-          scriptName: "Chap 열기",
-          originEyebrow: "왜 Chap인가요?",
-          originTitle: "Chap! 하면 바로 도착.",
-          originBody: "Chap은 물개가 내는 경쾌한 chap-chap 소리에서 시작했습니다. 물개가 물 위를 빠르게 미끄러지듯, Chap은 Option 단축키 하나로 앱, URL, 폴더 또는 스크립트까지 곧바로 연결합니다.",
-          historyTitle: "제품 히스토리",
-          historySummary: "모든 패치가 아닌, Chap의 사용 방식을 바꾼 주요 릴리스만 기록합니다.",
-          history115Title: "Chap이 만든 Chrome 창만 재사용",
-          history115Body: "URL 항목별로 직접 생성한 Chrome 앱 창을 기억합니다. 일반 사용자 탭이나 현재 활성 창, 맨 앞의 창은 더 이상 검색하지 않습니다.",
-          history110Title: "열려 있는 Chrome 창 재사용",
-          history110Body: "URL마다 새 창을 여는 대신 같은 주소가 열린 Chrome 창을 앞으로 가져와 설정한 디스플레이와 크기로 배치할 수 있습니다.",
-          history1010Title: "필요할 때 Option 키 트리거 일시 정지",
-          history1010Body: "General 설정에 트리거 스위치와 상태 막대 아이콘 설정을 추가하고, Launchables 목록을 유지한 채 설정 화면을 전환할 수 있게 했습니다.",
-          history105Title: "Chap 안에서 안전하게 업데이트",
-          history105Body: "Sparkle 2 기반 수동 업데이트 확인과 서명 검증, 안전 우선 방식의 업데이트 피드를 도입했습니다.",
-          history102Title: "첫 공개 릴리스",
-          history102Body: "URL, 앱, Finder, 셸 단축키와 다중 디스플레이 창 배치, Apple 공증 설치 파일로 Chap을 처음 공개했습니다.",
-          shortcutLabel: "Option 키 누르기",
-          shortcutText: "단축키를 누르세요",
-          openLabel: "열기",
-          placeLabel: "배치",
-          placeText: "화면 중앙",
-          runLabel: "실행",
-          urlTarget: "Chrome 앱 모드",
-          folderTarget: "프로젝트 파일",
-          scriptTarget: "Chap 열기",
-          scriptResult: "셸에서 실행"
-        }
-      };
-
-      const storageKey = "chap-language";
-      const toggle = document.querySelector("[data-language-toggle]");
-      const storedLanguage = (() => {
-        try { return localStorage.getItem(storageKey); } catch { return null; }
-      })();
-      const initialLanguage = storedLanguage === "en" || storedLanguage === "ko"
-        ? storedLanguage
-        : navigator.language.toLowerCase().startsWith("ko") ? "ko" : "en";
-
-      const applyLanguage = (language) => {
-        const copy = translations[language];
-        document.documentElement.lang = language;
-        document.title = copy.documentTitle;
-        document.querySelector('meta[name="description"]').setAttribute("content", copy.description);
-        document.querySelectorAll("[data-i18n]").forEach((element) => {
-          element.textContent = copy[element.dataset.i18n];
-        });
-        document.querySelectorAll("[data-i18n-alt]").forEach((element) => {
-          element.alt = copy[element.dataset.i18nAlt];
-        });
-        document.querySelectorAll("[data-i18n-aria-label]").forEach((element) => {
-          element.setAttribute("aria-label", copy[element.dataset.i18nAriaLabel]);
-        });
-        toggle.textContent = copy.switchLabel;
-        toggle.setAttribute("aria-label", copy.switchTo);
-        toggle.dataset.currentLanguage = language;
-        try { localStorage.setItem(storageKey, language); } catch {}
-      };
-
-      toggle.addEventListener("click", () => {
-        applyLanguage(toggle.dataset.currentLanguage === "en" ? "ko" : "en");
-      });
       const carousel = document.querySelector("[data-carousel]");
       const slides = [...carousel.querySelectorAll("[data-carousel-slide]")];
       const tabs = [...carousel.querySelectorAll("[role=tab]")];
@@ -532,7 +372,6 @@
         if (event.key === "End") { event.preventDefault(); showSlide(slides.length - 1, true); }
       });
 
-      applyLanguage(initialLanguage);
       showSlide(0);
     })();
   </script>
