@@ -702,12 +702,14 @@ struct SettingsView: View {
                     sites: vm.originalSites, showGuideWindow: vm.showGuideWindow,
                     launchAtLogin: vm.launchAtLogin,
                     optionShortcutsEnabled: vm.optionShortcutsEnabled,
-                    statusBarIcon: vm.statusBarIcon)) ?? true
+                    statusBarIcon: vm.statusBarIcon,
+                    statusBarAnimation: vm.statusBarAnimation)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin
             vm.originalOptionShortcutsEnabled = vm.optionShortcutsEnabled
             vm.originalStatusBarIcon = vm.statusBarIcon
+            vm.originalStatusBarAnimation = vm.statusBarAnimation
         }
     }
 

@@ -13,6 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
+│   ├── StatusIconAnimator.swift   ← CPU 연동 번개 아이콘 애니메이션 (RunCat 참고)
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
@@ -48,6 +49,7 @@ Sources/
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   ├── EditActivationPolicy.swift ← 저장 상태 패널 탭의 편집 활성화 판정 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
+│   ├── StatusIconAnimationPolicy.swift ← CPU→애니메이션 속도 매핑·프레임 정책 (순수 로직)
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -76,6 +78,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── MinimumSizeNoticePolicyTests.swift
     ├── EditActivationPolicyTests.swift
     ├── ChromeReuseRetryPolicyTests.swift
+    ├── StatusIconAnimationPolicyTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
@@ -139,6 +142,8 @@ Config 모델 필드:
   - launchAtLogin: Bool       로그인 시 자동 실행
   - optionShortcutsEnabled: Bool  Option 글로벌 단축키 활성 여부. 누락 시 true
   - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
+  - statusBarAnimation: StatusBarAnimationChoice  번개 아이콘 CPU 애니메이션
+    ("off" | "pulse" | "wobble"). 누락·알 수 없는 값은 "off". Lightning 선택 시에만 적용
   - sites: [Site]             사이트 목록
 
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.

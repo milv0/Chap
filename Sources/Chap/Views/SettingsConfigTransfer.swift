@@ -149,7 +149,8 @@ enum SettingsConfigTransfer {
                         showGuideWindow: imported.showGuideWindow,
                         launchAtLogin: imported.launchAtLogin,
                         optionShortcutsEnabled: imported.optionShortcutsEnabled,
-                        statusBarIcon: imported.statusBarIcon)) ?? false
+                        statusBarIcon: imported.statusBarIcon,
+                        statusBarAnimation: imported.statusBarAnimation)) ?? false
             guard saved else { return false }
 
             vm.sites = imported.sites
@@ -157,6 +158,7 @@ enum SettingsConfigTransfer {
             vm.launchAtLogin = imported.launchAtLogin
             vm.optionShortcutsEnabled = imported.optionShortcutsEnabled
             vm.statusBarIcon = imported.statusBarIcon
+            vm.statusBarAnimation = imported.statusBarAnimation
             vm.markSaved()
             onSuccess?()
             showImportSuccess(processed)

@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.1.16-orange)
+![Version](https://img.shields.io/badge/version-1.2.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -23,6 +23,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
+- **CPU-Reactive Icon** — Optional lightning-icon animation (pulse or wobble) that speeds up with CPU load, RunCat-style
 
 ## Requirements
 
@@ -81,6 +82,7 @@ Stored at `~/.chap.json`:
   "showGuideWindow": true,
   "launchAtLogin": false,
   "statusBarIcon": "default",
+  "statusBarAnimation": "off",
   "sites": [
     {
       "name": "GitHub",
@@ -147,11 +149,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.1.16
+Scripts/release.sh 1.2.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.1.16 --publish
+Scripts/release.sh 1.2.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
@@ -213,6 +215,27 @@ See [DESIGN.md](DESIGN.md) for app, Guide Window, and website color tokens.
 The website's Product history is intentionally curated. Add an entry only when
 a release introduces a major user-facing capability or meaningfully changes a
 core workflow; routine fixes and visual adjustments stay in release notes.
+
+## Acknowledgments
+
+Chap does not copy source code from other projects. The techniques below were
+adapted from open-source projects and re-implemented independently; they are
+credited here and at the corresponding code sites:
+
+- [Rectangle](https://github.com/rxhanson/Rectangle) (MIT, © Ryan Hanson;
+  based on Spectacle by Eric Czarny) — the production-proven Accessibility
+  resize techniques Chap's window pipeline follows: the
+  **size → position → size** apply order, the `AXEnhancedUserInterface`
+  disable-and-restore workaround, and the `AXMinSize` → `AXMinimumSize`
+  minimum-size probing (see “Window-control reliability and diagnostics”;
+  credited in `AXResizePolicy.swift` and `LauncherUtils.swift`).
+- [RunCat Neo](https://github.com/runcat-dev/RunCatNeo) (Apache-2.0,
+  © Takuto Nakamura / Kyome22 and contributors) — the CPU-driven menu bar
+  animation concept and its usage-to-speed mapping
+  (`fps = clamp(cpu / 5, 1...20)`, from `RunnerService.updateRunnerSpeed`),
+  adapted for Chap's lightning icon with original pulse/wobble keyframes
+  (credited in `StatusIconAnimationPolicy.swift` and
+  `StatusIconAnimator.swift`).
 
 ## License
 

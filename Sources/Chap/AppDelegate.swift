@@ -4,6 +4,7 @@ import os
 
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
+    var statusIconAnimator: StatusIconAnimator?
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
     let configStore = ConfigStore()
