@@ -434,9 +434,9 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
-Settings는 하단의 `Launchables`와 `General` 두 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
-사이드바는 두 탭에서 유지되며, General에서 사이트를 선택하면 Launchables로 복귀한다.
-Launchables는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
+Settings는 하단의 `Launchers`와 `General` 두 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
+사이드바는 두 탭에서 유지되며, General에서 사이트를 선택하면 Launchers로 복귀한다.
+Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
 상태바 아이콘과 메뉴 섹션 표시 여부(launch type별 숨김)를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
