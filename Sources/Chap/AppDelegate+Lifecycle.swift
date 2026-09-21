@@ -25,13 +25,8 @@ extension AppDelegate {
             button.imageScaling = .scaleProportionallyDown
             button.image = statusIconImage(accessible: true)
         }
-        statusIconAnimator = StatusIconAnimator { [weak self] image in
-            self?.statusItem.button?.image = image
-        }
-        // 접근성 상태가 아직 확정 전이므로 정적 아이콘과 같은 가정(accessible)으로
-        // 시작한다. 상태 확정 시 updateStatusIcon → refreshStatusIconPresentation이 보정한다.
-        if config.statusBarIcon == .lightning {
-            statusIconAnimator?.configure(style: config.statusBarAnimation)
+        keepAwake.onStateChange = { [weak self] in
+            DispatchQueue.main.async { self?.buildMenu() }
         }
         buildMenu()
         accessibilityController.onAccessibleChanged = { [weak self] accessible in
@@ -99,7 +94,7 @@ extension AppDelegate {
             launchAtLogin: config.launchAtLogin,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             statusBarIcon: config.statusBarIcon,
-            statusBarAnimation: config.statusBarAnimation)
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -108,7 +103,7 @@ extension AppDelegate {
                 launchAtLogin: payload.launchAtLogin,
                 optionShortcutsEnabled: payload.optionShortcutsEnabled,
                 statusBarIcon: payload.statusBarIcon,
-                statusBarAnimation: payload.statusBarAnimation,
+                hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -130,8 +125,8 @@ extension AppDelegate {
             let previousMenu = MenuConfigurationSnapshot(sites: self.config.sites)
             let previousLoginSetting = self.config.launchAtLogin
             let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled
+            let previousHiddenMenuLaunchTypes = self.config.hiddenMenuLaunchTypes
             let previousStatusBarIcon = self.config.statusBarIcon
-            let previousStatusBarAnimation = self.config.statusBarAnimation
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -149,14 +144,15 @@ extension AppDelegate {
             if previousLoginSetting != newConfig.launchAtLogin {
                 self.applyLoginItem(enabled: payload.launchAtLogin)
             }
-            if previousStatusBarIcon != newConfig.statusBarIcon
-                || previousStatusBarAnimation != newConfig.statusBarAnimation
-            {
-                self.refreshStatusIconPresentation()
+            if previousStatusBarIcon != newConfig.statusBarIcon {
+                self.statusItem.button?.image = self.statusIconImage(
+                    accessible: self.accessibilityController.isAccessible,
+                    choice: newConfig.statusBarIcon)
             }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
             if previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
+                || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
             {
                 DispatchQueue.main.async { self.buildMenu() }
             }

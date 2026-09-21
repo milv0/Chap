@@ -5,8 +5,19 @@ import SwiftUI
 
 extension AppDelegate {
     // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
+    @objc func keepAwakeActivate(_ sender: NSMenuItem) {
+        guard KeepAwakePolicy.presets.indices.contains(sender.tag) else { return }
+        keepAwake.activate(duration: KeepAwakePolicy.presets[sender.tag].duration)
+    }
+
+    @objc func keepAwakeTurnOff() {
+        keepAwake.deactivate()
+    }
+
     func menuWillOpen(_ menu: NSMenu) {
         accessibilityController.refresh(reason: "menu", showAlert: false)
+        keepAwakeMenuItem?.title = KeepAwakePolicy.menuTitle(
+            sessionEnd: keepAwake.sessionEnd, now: Date())
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
@@ -69,21 +80,7 @@ extension AppDelegate {
 
     func updateStatusIcon(accessible: Bool) {
         DispatchQueue.main.async {
-            self.refreshStatusIconPresentation()
-        }
-    }
-
-    /// 아이콘·애니메이션 설정과 접근성 상태를 상태바에 일괄 반영한다.
-    /// 애니메이션은 Lightning 아이콘 + 접근성 정상일 때만 동작하고,
-    /// 그 외에는 정지 후 기존 정적 아이콘(경고 배지 포함)으로 되돌린다.
-    func refreshStatusIconPresentation() {
-        let accessible = accessibilityController.isAccessible
-        let style: StatusBarAnimationChoice =
-            accessible && config.statusBarIcon == .lightning
-            ? config.statusBarAnimation : .off
-        statusIconAnimator?.configure(style: style)
-        if statusIconAnimator?.isAnimating != true {
-            statusItem.button?.image = statusIconImage(accessible: accessible)
+            self.statusItem.button?.image = self.statusIconImage(accessible: accessible)
         }
     }
 
@@ -97,7 +94,9 @@ extension AppDelegate {
                 < launchTypeOrder[$1.element.launchType, default: Int.max]
         }
         var lastType: LaunchType? = nil
-        for (i, site) in sortedSites {
+        var addedSiteItem = false
+        // 숨긴 섹션은 메뉴에서 제외한다. ⌥ 단축키는 config.sites 기준이라 계속 동작.
+        for (i, site) in sortedSites where !config.hiddenMenuLaunchTypes.contains(site.launchType) {
             // 타입이 바뀌면 구분선 추가
             if let last = lastType, last != site.launchType {
                 menu.addItem(.separator())
@@ -121,7 +120,38 @@ extension AppDelegate {
             item.tag = i
             item.target = self
             menu.addItem(item)
+            addedSiteItem = true
         }
+        if addedSiteItem {
+            menu.addItem(.separator())
+        }
+
+        // Keep Mac Awake — 화면 잠자기 방지 세션 (세션 한정, config 미저장)
+        let keepAwakeItem = NSMenuItem(
+            title: KeepAwakePolicy.menuTitle(sessionEnd: keepAwake.sessionEnd, now: Date()),
+            action: nil, keyEquivalent: "")
+        keepAwakeItem.image = NSImage(
+            systemSymbolName: "cup.and.saucer.fill",
+            accessibilityDescription: "Keep Mac Awake")
+        let keepAwakeMenu = NSMenu()
+        if keepAwake.isActive {
+            let turnOff = NSMenuItem(
+                title: "Turn Off", action: #selector(keepAwakeTurnOff), keyEquivalent: "")
+            turnOff.target = self
+            keepAwakeMenu.addItem(turnOff)
+            keepAwakeMenu.addItem(.separator())
+        }
+        for (index, preset) in KeepAwakePolicy.presets.enumerated() {
+            let presetItem = NSMenuItem(
+                title: preset.title, action: #selector(keepAwakeActivate(_:)),
+                keyEquivalent: "")
+            presetItem.tag = index
+            presetItem.target = self
+            keepAwakeMenu.addItem(presetItem)
+        }
+        keepAwakeItem.submenu = keepAwakeMenu
+        menu.addItem(keepAwakeItem)
+        keepAwakeMenuItem = keepAwakeItem
         menu.addItem(.separator())
 
         let settings = NSMenuItem(

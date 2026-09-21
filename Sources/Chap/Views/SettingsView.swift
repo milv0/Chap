@@ -703,13 +703,13 @@ struct SettingsView: View {
                     launchAtLogin: vm.launchAtLogin,
                     optionShortcutsEnabled: vm.optionShortcutsEnabled,
                     statusBarIcon: vm.statusBarIcon,
-                    statusBarAnimation: vm.statusBarAnimation)) ?? true
+                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin
             vm.originalOptionShortcutsEnabled = vm.optionShortcutsEnabled
             vm.originalStatusBarIcon = vm.statusBarIcon
-            vm.originalStatusBarAnimation = vm.statusBarAnimation
+            vm.originalHiddenMenuLaunchTypes = vm.hiddenMenuLaunchTypes
         }
     }
 

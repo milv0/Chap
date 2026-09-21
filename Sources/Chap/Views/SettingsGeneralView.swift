@@ -3,11 +3,35 @@ import SwiftUI
 
 // MARK: - General Tab
 
-/// Settings > General 탭. Behavior/Appearance/Updates 설정과 앱 버전 표시를 담당한다.
+/// Settings > General 탭. Behavior/Appearance/Menu/Updates 설정과 앱 버전 표시를 담당한다.
 struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
     let onSave: () -> Void
+
+    /// 메뉴 섹션 표시 여부 바인딩. 끄면 hiddenMenuLaunchTypes에 추가된다.
+    private func menuSectionVisibilityBinding(for type: LaunchType) -> Binding<Bool> {
+        Binding(
+            get: { !vm.hiddenMenuLaunchTypes.contains(type) },
+            set: { isVisible in
+                if isVisible {
+                    vm.hiddenMenuLaunchTypes.remove(type)
+                } else {
+                    vm.hiddenMenuLaunchTypes.insert(type)
+                }
+                onSave()
+            }
+        )
+    }
+
+    private static func menuSectionName(_ type: LaunchType) -> String {
+        switch type {
+        case .url: return "URL"
+        case .app: return "App"
+        case .finder: return "Finder"
+        case .shell: return "Shell"
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,34 +80,20 @@ struct GeneralSettingsView: View {
                             }
                         }
                         .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
+                    }
 
-                        HStack(alignment: .center) {
-                            Text("CPU Animation")
-                            Spacer()
-                            Picker("CPU Animation", selection: $vm.statusBarAnimation) {
-                                Text("Off").tag(StatusBarAnimationChoice.off)
-                                Text("Pulse").tag(StatusBarAnimationChoice.pulse)
-                                Text("Wobble").tag(StatusBarAnimationChoice.wobble)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .frame(width: 220)
+                    Section("Menu") {
+                        ForEach(LaunchType.allCases, id: \.self) { type in
+                            Toggle(
+                                "Show \(Self.menuSectionName(type)) Launchables",
+                                isOn: menuSectionVisibilityBinding(for: type))
                         }
-                        .disabled(vm.statusBarIcon != .lightning)
-                        .help(
-                            "Animate the Lightning icon with CPU usage: "
-                                + "calm when idle, fast under load."
+                        Label(
+                            "Hidden sections stay launchable with their Option shortcuts.",
+                            systemImage: "info.circle"
                         )
-                        .onChange(of: vm.statusBarAnimation) { _, _ in onSave() }
-
-                        if vm.statusBarIcon != .lightning {
-                            Label(
-                                "CPU Animation is available with the Lightning icon.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
-                        }
+                        .font(.caption)
+                        .foregroundColor(DS.textSecondary)
                     }
 
                     Section("Updates") {

@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "1.2.0"
+        ?? "1.3.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -247,33 +247,18 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
     case lightning = "lightning"
 }
 
-/// 번개 아이콘의 CPU 연동 애니메이션 선택지. rawValue가 config JSON에 저장된다.
-/// Lightning 아이콘이 선택된 경우에만 적용되며, off면 CPU 모니터링도 하지 않는다.
-public enum StatusBarAnimationChoice: String, Codable, CaseIterable {
-    /// 애니메이션 없음. CPU 샘플링도 중단된 정적 아이콘.
-    case off
-    /// 밝기가 고동치는 펄스.
-    case pulse
-    /// 좌우로 기울어지는 흔들림.
-    case wobble
-
-    /// 알 수 없는 rawValue(이후 버전의 값 등)를 off로 강등하는 관용 디코딩용.
-    public init(tolerantRawValue: String?) {
-        self = tolerantRawValue.flatMap(Self.init(rawValue:)) ?? .off
-    }
-}
-
 public struct Config: Codable {
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
     public var optionShortcutsEnabled: Bool
     public var statusBarIcon: StatusBarIconChoice
-    public var statusBarAnimation: StatusBarAnimationChoice
+    /// 상태바 메뉴에서 숨길 launch type 섹션. 숨겨도 ⌥ 단축키는 계속 동작한다.
+    public var hiddenMenuLaunchTypes: Set<LaunchType>
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
-        case statusBarIcon, statusBarAnimation, sites
+        case statusBarIcon, hiddenMenuLaunchTypes, sites
     }
 
     public init(
@@ -281,14 +266,14 @@ public struct Config: Codable {
         launchAtLogin: Bool = false,
         optionShortcutsEnabled: Bool = true,
         statusBarIcon: StatusBarIconChoice = .default,
-        statusBarAnimation: StatusBarAnimationChoice = .off,
+        hiddenMenuLaunchTypes: Set<LaunchType> = [],
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
         self.launchAtLogin = launchAtLogin
         self.optionShortcutsEnabled = optionShortcutsEnabled
         self.statusBarIcon = statusBarIcon
-        self.statusBarAnimation = statusBarAnimation
+        self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.sites = sites
     }
 
@@ -304,10 +289,11 @@ public struct Config: Codable {
         statusBarIcon =
             try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
             ?? .default
-        // 키 누락(구버전 config)과 알 수 없는 값(이후 버전 config) 모두 off로 강등.
-        statusBarAnimation = StatusBarAnimationChoice(
-            tolerantRawValue: try container.decodeIfPresent(
-                String.self, forKey: .statusBarAnimation))
+        // 키 누락은 빈 집합, 알 수 없는 타입 문자열은 무시한다 (관용 디코딩).
+        hiddenMenuLaunchTypes = Set(
+            (try container.decodeIfPresent([String].self, forKey: .hiddenMenuLaunchTypes)
+                ?? [])
+                .compactMap(LaunchType.init(rawValue:)))
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -317,7 +303,11 @@ public struct Config: Codable {
         try container.encode(launchAtLogin, forKey: .launchAtLogin)
         try container.encode(optionShortcutsEnabled, forKey: .optionShortcutsEnabled)
         try container.encode(statusBarIcon, forKey: .statusBarIcon)
-        try container.encode(statusBarAnimation, forKey: .statusBarAnimation)
+        // Set 순서 비결정성이 config 파일 diff를 만들지 않도록 고정 순서로 encode.
+        let hiddenOrdered = LaunchType.allCases
+            .filter { hiddenMenuLaunchTypes.contains($0) }
+            .map(\.rawValue)
+        try container.encode(hiddenOrdered, forKey: .hiddenMenuLaunchTypes)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }
