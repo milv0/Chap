@@ -2,6 +2,24 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.0] — 2026-09-21
+
+### Added
+
+- **Keep Mac Awake** — Menu bar sessions (30 minutes to 12 hours) that keep
+  the display awake via an IOKit power assertion; the menu shows remaining
+  time and the assertion is always released on expiry, turn-off, or quit.
+- **Curated menu** — Per-launch-type visibility toggles in Settings > General
+  hide sections from the status bar menu while their Option shortcuts keep
+  working.
+
+### Removed
+
+- **CPU-reactive lightning animation** — Removed the 1.2.0 status bar
+  animation; leftover `statusBarAnimation` config values are ignored safely.
+
+---
+
 ## [1.2.0] — 2026-09-21
 
 ### Added
