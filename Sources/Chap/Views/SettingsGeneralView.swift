@@ -56,34 +56,6 @@ struct GeneralSettingsView: View {
                             }
                         }
                         .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
-
-                        HStack(alignment: .center) {
-                            Text("CPU Animation")
-                            Spacer()
-                            Picker("CPU Animation", selection: $vm.statusBarAnimation) {
-                                Text("Off").tag(StatusBarAnimationChoice.off)
-                                Text("Pulse").tag(StatusBarAnimationChoice.pulse)
-                                Text("Wobble").tag(StatusBarAnimationChoice.wobble)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .frame(width: 220)
-                        }
-                        .disabled(vm.statusBarIcon != .lightning)
-                        .help(
-                            "Animate the Lightning icon with CPU usage: "
-                                + "calm when idle, fast under load."
-                        )
-                        .onChange(of: vm.statusBarAnimation) { _, _ in onSave() }
-
-                        if vm.statusBarIcon != .lightning {
-                            Label(
-                                "CPU Animation is available with the Lightning icon.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
-                        }
                     }
 
                     Section("Updates") {
