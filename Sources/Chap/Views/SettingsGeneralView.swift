@@ -9,19 +9,14 @@ struct GeneralSettingsView: View {
     @ObservedObject var updateController: UpdateController
     let onSave: () -> Void
 
-    /// 메뉴 섹션 표시 여부 바인딩. 끄면 hiddenMenuLaunchTypes에 추가된다.
-    private func menuSectionVisibilityBinding(for type: LaunchType) -> Binding<Bool> {
-        Binding(
-            get: { !vm.hiddenMenuLaunchTypes.contains(type) },
-            set: { isVisible in
-                if isVisible {
-                    vm.hiddenMenuLaunchTypes.remove(type)
-                } else {
-                    vm.hiddenMenuLaunchTypes.insert(type)
-                }
-                onSave()
-            }
-        )
+    /// 메뉴 섹션 표시 여부를 반전한다. 끄면 hiddenMenuLaunchTypes에 추가된다.
+    private func toggleMenuSection(_ type: LaunchType) {
+        if vm.hiddenMenuLaunchTypes.contains(type) {
+            vm.hiddenMenuLaunchTypes.remove(type)
+        } else {
+            vm.hiddenMenuLaunchTypes.insert(type)
+        }
+        onSave()
     }
 
     private static func menuSectionName(_ type: LaunchType) -> String {
@@ -83,10 +78,17 @@ struct GeneralSettingsView: View {
                     }
 
                     Section("Menu") {
-                        ForEach(LaunchType.allCases, id: \.self) { type in
-                            Toggle(
-                                "Show \(Self.menuSectionName(type)) Launchables",
-                                isOn: menuSectionVisibilityBinding(for: type))
+                        HStack(alignment: .center) {
+                            Text("Sections")
+                            Spacer()
+                            HStack(spacing: 6) {
+                                ForEach(LaunchType.allCases, id: \.self) { type in
+                                    MenuSectionChip(
+                                        title: Self.menuSectionName(type),
+                                        isOn: !vm.hiddenMenuLaunchTypes.contains(type),
+                                        action: { toggleMenuSection(type) })
+                                }
+                            }
                         }
                         Label(
                             "Hidden sections stay launchable with their Option shortcuts.",
@@ -134,6 +136,37 @@ struct GeneralSettingsView: View {
 }
 
 // MARK: - Status Bar Icon Controls
+
+private struct MenuSectionChip: View {
+    let title: String
+    let isOn: Bool
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isOn ? DS.accent : DS.textTertiary)
+                .padding(.horizontal, 10)
+                .frame(height: 26)
+                .background(
+                    isOn ? DS.accentSoft : (isHovered ? DS.border.opacity(0.25) : .clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7)
+                        .stroke(isOn ? DS.accent.opacity(0.6) : DS.border, lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 7))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(isOn ? "Shown in the menu" : "Hidden from the menu")
+        .accessibilityLabel("\(title) menu section")
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .onHover { isHovered = $0 }
+    }
+}
 
 private struct StatusBarIconPreview: View {
     let choice: StatusBarIconChoice
