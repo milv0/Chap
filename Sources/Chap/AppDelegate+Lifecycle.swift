@@ -147,7 +147,8 @@ extension AppDelegate {
             if previousStatusBarIcon != newConfig.statusBarIcon {
                 self.statusItem.button?.image = self.statusIconImage(
                     accessible: self.accessibilityController.isAccessible,
-                    choice: newConfig.statusBarIcon)
+                    choice: newConfig.statusBarIcon,
+                    keepAwakeActive: self.keepAwake.isActive)
             }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
             if previousMenu != newMenu
