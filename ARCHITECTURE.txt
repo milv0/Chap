@@ -14,6 +14,7 @@ Sources/
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 기반 화면 잠자기 방지 세션
+│   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
@@ -389,6 +390,7 @@ App 윈도우 감지 방식 (AXObserver):
   - IOPMAssertionRelease                                     만료·해제 시
   - 앱 종료 시 프로세스 소유 어써션은 IOKit이 자동 해제
   - 상태는 메모리에만 있고 config에 저장하지 않는다
+  - 시작/종료 시 사운드(Glass/Pop)와 중앙 커피 HUD로 피드백한다
 
 ### ServiceManagement
   용도: Login Item 등록/해제

@@ -7,11 +7,28 @@ extension AppDelegate {
     // NSMenuDelegate — 메뉴바 메뉴가 열릴 때 권한 재확인
     @objc func keepAwakeActivate(_ sender: NSMenuItem) {
         guard KeepAwakePolicy.presets.indices.contains(sender.tag) else { return }
-        keepAwake.activate(duration: KeepAwakePolicy.presets[sender.tag].duration)
+        keepAwake.activate(preset: KeepAwakePolicy.presets[sender.tag])
     }
 
     @objc func keepAwakeTurnOff() {
         keepAwake.deactivate()
+    }
+
+    /// Keep Awake 상태 변화 피드백: 사운드 + 중앙 커피 HUD + 메뉴 재구성.
+    func handleKeepAwakeEvent(_ event: KeepAwakeController.Event) {
+        switch event {
+        case .started(let presetTitle):
+            NSSound(named: "Glass")?.play()
+            KeepAwakeHUD.show(
+                message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
+                symbolName: "cup.and.saucer.fill")
+        case .ended:
+            NSSound(named: "Pop")?.play()
+            KeepAwakeHUD.show(
+                message: KeepAwakePolicy.hudMessageEnded,
+                symbolName: "cup.and.saucer")
+        }
+        buildMenu()
     }
 
     func menuWillOpen(_ menu: NSMenu) {
