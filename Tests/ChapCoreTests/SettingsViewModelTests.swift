@@ -54,6 +54,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsStatusBarAnimationChange() {
+        let vm = SettingsViewModel(sites: baseSites, statusBarAnimation: .off)
+        vm.statusBarAnimation = .pulse
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func hasChangesDetectsLoginToggle() {
         let vm = SettingsViewModel(
             sites: baseSites, showGuideWindow: true, launchAtLogin: false)
@@ -100,7 +106,8 @@ struct SettingsViewModelTests {
                 sites: vm.sites, showGuideWindow: vm.showGuideWindow,
                 launchAtLogin: vm.launchAtLogin,
                 optionShortcutsEnabled: vm.optionShortcutsEnabled,
-                statusBarIcon: vm.statusBarIcon))
+                statusBarIcon: vm.statusBarIcon,
+                statusBarAnimation: vm.statusBarAnimation))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
