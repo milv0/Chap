@@ -92,7 +92,7 @@ struct SettingsView: View {
             Divider()
             bottomBar
         }
-        .frame(minWidth: 770, minHeight: 680)
+        .frame(minWidth: 770, minHeight: 700)
         .background(DS.surfaceBg)
         .onChange(of: selectedTab) { _, _ in
             vm.flushPendingSave()
