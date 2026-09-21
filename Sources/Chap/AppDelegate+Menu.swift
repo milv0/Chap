@@ -69,7 +69,21 @@ extension AppDelegate {
 
     func updateStatusIcon(accessible: Bool) {
         DispatchQueue.main.async {
-            self.statusItem.button?.image = self.statusIconImage(accessible: accessible)
+            self.refreshStatusIconPresentation()
+        }
+    }
+
+    /// 아이콘·애니메이션 설정과 접근성 상태를 상태바에 일괄 반영한다.
+    /// 애니메이션은 Lightning 아이콘 + 접근성 정상일 때만 동작하고,
+    /// 그 외에는 정지 후 기존 정적 아이콘(경고 배지 포함)으로 되돌린다.
+    func refreshStatusIconPresentation() {
+        let accessible = accessibilityController.isAccessible
+        let style: StatusBarAnimationChoice =
+            accessible && config.statusBarIcon == .lightning
+            ? config.statusBarAnimation : .off
+        statusIconAnimator?.configure(style: style)
+        if statusIconAnimator?.isAnimating != true {
+            statusItem.button?.image = statusIconImage(accessible: accessible)
         }
     }
 
