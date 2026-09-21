@@ -10,7 +10,10 @@ enum KeepAwakeHUD {
     private static var lastToken = 0
 
     private static let hudSize = NSSize(width: 230, height: 150)
-    private static let visibleDuration: TimeInterval = 1.1
+    private static let visibleDuration: TimeInterval = 2.2
+    /// 앱 테마 색 (DS.accent와 동일). GuideWindow와 같은 컬러감을 위해 사용한다.
+    private static let accent = NSColor(
+        red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
 
     /// 심볼과 문구로 HUD를 띄운다. 이전 HUD가 떠 있으면 즉시 교체한다.
     static func show(message: String, symbolName: String) {
@@ -72,14 +75,22 @@ enum KeepAwakeHUD {
     }
 
     private static func makeContentView(message: String, symbolName: String) -> NSView {
+        // GuideWindow와 같은 컬러감: 밝은 반투명 바탕 + 테마색 틴트/테두리.
         let container = NSVisualEffectView(
             frame: NSRect(origin: .zero, size: hudSize))
-        container.material = .hudWindow
+        container.material = .popover
         container.state = .active
         container.blendingMode = .behindWindow
         container.wantsLayer = true
         container.layer?.cornerRadius = 18
         container.layer?.masksToBounds = true
+        container.layer?.borderWidth = 2
+        container.layer?.borderColor = accent.withAlphaComponent(0.6).cgColor
+
+        let tint = NSView(frame: NSRect(origin: .zero, size: hudSize))
+        tint.wantsLayer = true
+        tint.layer?.backgroundColor = accent.withAlphaComponent(0.1).cgColor
+        tint.autoresizingMask = [.width, .height]
 
         let symbolConfig = NSImage.SymbolConfiguration(pointSize: 44, weight: .medium)
         let imageView = NSImageView(
@@ -87,15 +98,16 @@ enum KeepAwakeHUD {
         imageView.image = NSImage(
             systemSymbolName: symbolName, accessibilityDescription: message)?
             .withSymbolConfiguration(symbolConfig)
-        imageView.contentTintColor = .labelColor
+        imageView.contentTintColor = accent
         imageView.imageAlignment = .alignCenter
 
         let label = NSTextField(labelWithString: message)
         label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = .labelColor
+        label.textColor = accent
         label.alignment = .center
         label.frame = NSRect(x: 8, y: 22, width: hudSize.width - 16, height: 20)
 
+        container.addSubview(tint)
         container.addSubview(imageView)
         container.addSubview(label)
         return container
