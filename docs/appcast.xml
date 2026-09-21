@@ -6,6 +6,15 @@
         <description>Appcast feed for Chap macOS updates.</description>
         <language>en</language>
         <item>
+            <title>1.2.0</title>
+            <pubDate>Mon, 21 Sep 2026 14:46:12 +0900</pubDate>
+            <sparkle:version>27</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.2.0-27.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.2.0/Chap-1.2.0-27.dmg" length="3729186" type="application/octet-stream" sparkle:edSignature="i3QnybZbuWMNbHd6MVy1kfb7TlZzUphYqr/HF8hV6IbvnZQxAGr9uMchBQDebCkeX3FA4zokHQrF+Cr/vitrBg=="/>
+        </item>
+        <item>
             <title>1.1.16</title>
             <pubDate>Mon, 21 Sep 2026 14:15:51 +0900</pubDate>
             <sparkle:version>26</sparkle:version>
@@ -22,15 +31,6 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.1.15-25.md</sparkle:releaseNotesLink>
             <enclosure url="https://github.com/milv0/Chap/releases/download/v1.1.15/Chap-1.1.15-25.dmg" length="3691792" type="application/octet-stream" sparkle:edSignature="8in+tdyGVzSPSRXZENemMlV020pfn6UJxV4G6DPkmqO/rj4bryxvaIf8inWDW1jSLYTbLzL3OSUOJtDdVsp6DQ=="/>
-        </item>
-        <item>
-            <title>1.1.14</title>
-            <pubDate>Fri, 04 Sep 2026 17:18:20 +0900</pubDate>
-            <sparkle:version>24</sparkle:version>
-            <sparkle:shortVersionString>1.1.14</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-1.1.14-24.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/milv0/Chap/releases/download/v1.1.14/Chap-1.1.14-24.dmg" length="3683934" type="application/octet-stream" sparkle:edSignature="v9f7SKp+LCxqfhSsW0sFfP5H/I4Coj6S7AjRb8TTM5TWsrsQpcDCw5CTMSMm+vcDgojgDPXPx4AK9qsYFy1WBw=="/>
         </item>
     </channel>
 </rss>
