@@ -80,9 +80,9 @@ struct GeneralSettingsView: View {
                         .foregroundColor(DS.textSecondary)
 
                         HStack(spacing: 16) {
-                            shortcutHint(key: "⌥.", action: "Open menu")
-                            shortcutHint(key: "⌥,", action: "Open Settings")
-                            shortcutHint(key: "⌥(key)", action: "Launch site")
+                            shortcutHint(key: "⌥ .", action: "Open menu")
+                            shortcutHint(key: "⌥ ,", action: "Open Settings")
+                            shortcutHint(key: "⌥ (key)", action: "Launch site")
                         }
                         .padding(.top, 2)
                     }
