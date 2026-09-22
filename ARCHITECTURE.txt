@@ -170,7 +170,9 @@ Config 모델 필드:
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
   Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘
-  설정을 제공하며 General에서 사이드바 항목을 선택하면 Launchers로 복귀
+  설정을 제공하며 General에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
+  ⌥./⌥,/⌥(key) 단축키 상시 안내가 있다. 하단의 앱 아이콘을 클릭하면 About Chap을 연다
+  (메뉴바에는 About Chap 항목이 없다).
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
   - 차단/실패 알림에 "Show Expected Format" 버튼: 필수 필드 설명 + 예제 JSON 표시 (Copy 가능)
   - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
@@ -225,7 +227,6 @@ Config 모델 필드:
          Lightning
   Settings...   (⌥,)
   Q&A
-  About Chap
   ────────
   Check for Updates…  (설정 미완료 시 비활성화)
   ────────

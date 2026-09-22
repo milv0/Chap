@@ -22,7 +22,7 @@ struct SiteConfigView: View {
     var onSave: (() -> Bool)?
 
     var body: some View {
-        ScrollView {
+        ScrollView(showsIndicators: false) {
             CardSection {
                 formContent
                     .frame(maxWidth: 420, alignment: .leading)

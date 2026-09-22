@@ -28,6 +28,28 @@ struct GeneralSettingsView: View {
         }
     }
 
+    private func showAbout() {
+        if let delegate = NSApp.delegate as? AppDelegate {
+            delegate.showAbout()
+        }
+    }
+
+    /// 키 캡슐 + 동작 설명 한 쌍. Behavior 섹션의 상시 단축키 안내에 쓰인다.
+    private func shortcutHint(key: String, action: String) -> some View {
+        HStack(spacing: 6) {
+            Text(key)
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundColor(DS.textSecondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(DS.border.opacity(0.25))
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+            Text(action)
+                .font(.caption)
+                .foregroundColor(DS.textSecondary)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -56,6 +78,13 @@ struct GeneralSettingsView: View {
                         )
                         .font(.caption)
                         .foregroundColor(DS.textSecondary)
+
+                        HStack(spacing: 16) {
+                            shortcutHint(key: "⌥ .", action: "Open menu")
+                            shortcutHint(key: "⌥ ,", action: "Open Settings")
+                            shortcutHint(key: "⌥ (key)", action: "Launch site")
+                        }
+                        .padding(.top, 2)
                     }
 
                     Section("Appearance") {
@@ -121,10 +150,15 @@ struct GeneralSettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             HStack(spacing: 8) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
+                Button(action: showAbout) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 64, height: 64)
+                }
+                .buttonStyle(.plain)
+                .help("About Chap")
+                .accessibilityLabel("About Chap")
                 Text("Chap \(Defaults.appVersion)")
                     .font(.callout)
                     .foregroundColor(DS.textSecondary)

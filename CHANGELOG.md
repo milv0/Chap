@@ -2,6 +2,22 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.5] — 2026-09-22
+
+### Added
+
+- **Persistent shortcut hints** — Settings > General always shows ⌥ .,
+  ⌥ ,, and ⌥ (key) so they're easy to recall without checking Q&A.
+
+### Improved
+
+- **No more scrollbar in site settings** — Increased the settings window's
+  minimum height and hid the scroll indicator in the site config panel.
+- **About Chap moved** — Removed from the menu bar list; click the app icon
+  in Settings > General to open it.
+
+---
+
 ## [1.3.4] — 2026-09-21
 
 ### Improved

@@ -232,12 +232,6 @@ extension AppDelegate {
             systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
         qa.target = self
         menu.addItem(qa)
-        let about = NSMenuItem(
-            title: "About Chap", action: #selector(showAbout), keyEquivalent: "")
-        about.image = NSImage(
-            systemSymbolName: "info.circle", accessibilityDescription: "About Chap")
-        about.target = self
-        menu.addItem(about)
         menu.addItem(.separator())
 
         // Check for Updates — disabled when Sparkle configuration is incomplete
