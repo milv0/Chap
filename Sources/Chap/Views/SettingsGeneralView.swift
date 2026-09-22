@@ -28,6 +28,12 @@ struct GeneralSettingsView: View {
         }
     }
 
+    private func showAbout() {
+        if let delegate = NSApp.delegate as? AppDelegate {
+            delegate.showAbout()
+        }
+    }
+
     /// 키 캡슐 + 동작 설명 한 쌍. Behavior 섹션의 상시 단축키 안내에 쓰인다.
     private func shortcutHint(key: String, action: String) -> some View {
         HStack(spacing: 6) {
@@ -144,10 +150,15 @@ struct GeneralSettingsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             HStack(spacing: 8) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
+                Button(action: showAbout) {
+                    Image(nsImage: NSApp.applicationIconImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 64, height: 64)
+                }
+                .buttonStyle(.plain)
+                .help("About Chap")
+                .accessibilityLabel("About Chap")
                 Text("Chap \(Defaults.appVersion)")
                     .font(.callout)
                     .foregroundColor(DS.textSecondary)
