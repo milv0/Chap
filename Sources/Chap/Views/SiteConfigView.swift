@@ -118,7 +118,7 @@ struct SiteConfigView: View {
         InputField(
             label: isCompact ? "Shortcut (⌥)" : "Shortcut (⌥ +)",
             text: shortcutBinding,
-            placeholder: isCompact ? "T" : "예: T → ⌥T",
+            placeholder: isCompact ? "–" : "예: T → ⌥T",
             alignment: isCompact ? .center : .leading,
             textAlignment: isCompact ? .center : .leading,
             fieldBackground: isCompact ? DS.accentSurface : DS.surfaceBg,
