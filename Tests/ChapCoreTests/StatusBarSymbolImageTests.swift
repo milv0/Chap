@@ -141,6 +141,16 @@ struct IsolatedCopyImageTests {
         #expect(sharedSource.size == NSSize(width: 64, height: 64))
     }
 
+    @Test func accentTintedImagePreservesGeometryAndIsNonTemplate() {
+        let source = syntheticImage(size: NSSize(width: 22, height: 22))
+
+        let result = AppDelegate.accentTintedStatusBarImage(
+            source, accessibilityDescription: "Chap – Keep Awake active")
+
+        #expect(result?.size == NSSize(width: 22, height: 22))
+        #expect(result?.isTemplate == false)
+        #expect(result?.accessibilityDescription == "Chap – Keep Awake active")
+    }
     /// Regression: two isolated copies from the same source are fully independent.
     @Test func twoCopiesFromSameSourceAreIndependent() {
         let sharedSource = syntheticImage(size: NSSize(width: 48, height: 48))
