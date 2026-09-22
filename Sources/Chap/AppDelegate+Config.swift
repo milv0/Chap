@@ -72,9 +72,4 @@ extension AppDelegate {
             config = .default
         }
     }
-
-    @objc func reloadConfig() {
-        loadConfig()
-        buildMenu()
-    }
 }
