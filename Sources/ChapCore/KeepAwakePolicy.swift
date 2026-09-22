@@ -45,8 +45,6 @@ enum KeepAwakePolicy {
     /// 세션 종료(수동 해제·만료) HUD 문구.
     static let hudMessageEnded = "Keep Awake Off"
 
-    /// Keep Awake 세션이 활성 중일 때만 종료 확인이 필요하다.
-    static func requiresQuitConfirmation(isActive: Bool) -> Bool {
-        isActive
-    }
+    /// 모든 Quit 확인창에 사용하는 간결한 본문.
+    static let quitConfirmationInfo = "Are you sure you want to quit Chap?"
 }

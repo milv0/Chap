@@ -71,13 +71,10 @@ struct KeepAwakePolicyTests {
         #expect(title == "Keep Mac Awake")
     }
 
-    @Test("quit confirmation is required while Keep Awake is active")
-    func activeSessionRequiresQuitConfirmation() {
-        #expect(KeepAwakePolicy.requiresQuitConfirmation(isActive: true))
-    }
-
-    @Test("quit confirmation is skipped while Keep Awake is inactive")
-    func inactiveSessionSkipsQuitConfirmation() {
-        #expect(!KeepAwakePolicy.requiresQuitConfirmation(isActive: false))
+    @Test("quit confirmation asks for explicit confirmation")
+    func quitConfirmationCopy() {
+        #expect(
+            KeepAwakePolicy.quitConfirmationInfo
+                == "Are you sure you want to quit Chap?")
     }
 }
