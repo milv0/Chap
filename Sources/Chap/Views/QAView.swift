@@ -181,11 +181,11 @@ struct QAView: View {
                 ),
                 (
                     "Chap을 종료하거나 재시작하면 세션은?",
-                    "Keep Awake가 활성 중이면 종료 확인창이 먼저 나타나며 Cancel이 기본 선택입니다. Quit Anyway를 명시적으로 선택하면 세션을 해제하고 종료합니다. 세션 상태는 저장되지 않아 다음 실행 시 꺼진 상태로 시작합니다."
+                    "Quit을 선택하면 항상 종료 확인창이 나타나며 Cancel이 기본 선택입니다. Quit을 명시적으로 선택하면 종료하고, Keep Awake가 활성 중이었다면 세션도 함께 해제됩니다. 다음 실행 시 Keep Awake는 꺼진 상태로 시작합니다."
                 ),
                 (
                     "켜고 끌 때 화면에 뜨는 커피 아이콘은 뭔가요?",
-                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. 짧은 알림음도 함께 재생됩니다."
+                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
                 ),
                 (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
@@ -373,11 +373,11 @@ struct QAView: View {
                 ),
                 (
                     "What happens to a session if I quit or restart Chap?",
-                    "When Keep Awake is active, Chap asks for confirmation before quitting, with Cancel as the default. Choosing Quit Anyway releases the session and exits. Session state isn't saved, so Chap starts with it off next time."
+                    "Chap always asks for confirmation before quitting, with Cancel as the default. Choosing Quit exits Chap and releases any active Keep Awake session. Keep Awake starts off next time."
                 ),
                 (
                     "What is the coffee cup that briefly appears on screen?",
-                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring), along with a subtle sound."
+                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring), along with a subtle sound. While active, Chap also turns the status bar icon theme blue."
                 ),
                 (
                     "How do I shorten the menu's site list?",
