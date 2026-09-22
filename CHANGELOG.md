@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.6] — 2026-09-22
+
+### Fixed
+
+- **Clearer empty shortcut field** — The compact Shortcut field shows a dash
+  instead of the letter "T" when no shortcut is set, so it isn't mistaken
+  for an assigned value.
+
+---
+
 ## [1.3.5] — 2026-09-22
 
 ### Added
