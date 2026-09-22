@@ -181,7 +181,7 @@ struct QAView: View {
                 ),
                 (
                     "Chap을 종료하거나 재시작하면 세션은?",
-                    "즉시 해제됩니다. 세션 상태는 저장되지 않는 일회성 값이라 다음 실행 시 항상 꺼진 상태로 시작합니다."
+                    "Keep Awake가 활성 중이면 종료 확인창이 먼저 나타나며 Cancel이 기본 선택입니다. Quit Anyway를 명시적으로 선택하면 세션을 해제하고 종료합니다. 세션 상태는 저장되지 않아 다음 실행 시 꺼진 상태로 시작합니다."
                 ),
                 (
                     "켜고 끌 때 화면에 뜨는 커피 아이콘은 뭔가요?",
@@ -373,7 +373,7 @@ struct QAView: View {
                 ),
                 (
                     "What happens to a session if I quit or restart Chap?",
-                    "It's released immediately. Session state isn't saved, so Chap always starts with it off."
+                    "When Keep Awake is active, Chap asks for confirmation before quitting, with Cancel as the default. Choosing Quit Anyway releases the session and exits. Session state isn't saved, so Chap starts with it off next time."
                 ),
                 (
                     "What is the coffee cup that briefly appears on screen?",

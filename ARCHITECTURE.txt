@@ -207,13 +207,13 @@ Config 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 770x680 크기로 커서 화면 중앙에 표시
+- 설정 창은 최소 770x700 크기로 커서 화면 중앙에 표시
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
 - 접근성 권한 안내 직후 자동 재시도 + 권한 제거 감지
 - Launch at Login (SMAppService)
-- 상태바 아이콘 선택 (Default/Lightning) — 메뉴바 Icon 서브메뉴에서 즉시 변경, config에 저장·재시작 유지
+- 상태바 아이콘 선택 (Default/Lightning) — Settings > General > Appearance에서 변경, config에 저장·재시작 유지
   - Lightning 선택 + Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
 - Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
@@ -223,8 +223,6 @@ Config 모델 필드:
   ────────
   Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   ────────
-  Icon ▸ Default (✓)
-         Lightning
   Settings...   (⌥,)
   Q&A
   ────────
@@ -384,7 +382,7 @@ App 윈도우 감지 방식 (AXObserver):
   - 자동 확인은 최신 버전이면 조용히 종료하고, 업데이트가 있을 때만 Sparkle UI 표시
   - 자동 확인을 꺼도 메뉴의 수동 "Check for Updates…"는 계속 사용 가능
   - 테스트 프로세스에서는 네트워크 확인을 막기 위해 updater를 시작하지 않음
-  - 초기 appcast (docs/appcast.xml)는 빈 피드; 첫 Sparkle 릴리즈에서
+  - docs/appcast.xml은 라이브 서명 피드이며, 각 릴리스에서
     Scripts/generate-appcast.sh가 서명된 enclosure 엔트리를 추가
   - 개인키는 앱에 절대 포함하지 않음; 오퍼레이터 Keychain에만 존재
 
@@ -393,8 +391,9 @@ App 윈도우 감지 방식 (AXObserver):
   - IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep) 세션 시작
   - IOPMAssertionRelease                                     만료·해제 시
   - 앱 종료 시 프로세스 소유 어써션은 IOKit이 자동 해제
+  - Keep Awake 활성 중 Quit은 Cancel 기본 확인창을 띄우며, Quit Anyway를 선택해야 종료
   - 상태는 메모리에만 있고 config에 저장하지 않는다
-  - 시작/종료 시 사운드(Glass/Pop)와 중앙 커피 HUD로 피드백한다
+  - 시작/종료 시 사운드(Purr/Pop)와 중앙 커피 HUD로 피드백한다
 
 ### ServiceManagement
   용도: Login Item 등록/해제
@@ -489,24 +488,25 @@ App 윈도우 감지 방식 (AXObserver):
 2. 자동화 (Automation): Finder AppleScript 및 Chrome URL 창 재사용 제어
    - Chrome 재사용은 Chap 내부 AppleScript로 실행해 Chap의 Google Chrome 제어 권한을 요청
    - Finder는 osascript 실행 시 시스템이 자동 다이얼로그 표시 (서명된 앱)
-   - 서명 없는 앱: xattr -cr 후 수동 설정 필요
+   - Developer ID 서명·공증 배포이며, 최초 사용 시 macOS 자동화 권한 요청에 응답
 
 
 ## 개발 브랜치 전략
 
-  main     ← 안정 버전 (릴리즈 시에만 dev → main PR)
+  main     ← 안정 버전 (Scripts/release.sh --publish가 dev를 merge)
   dev      ← 일상 개발 (직접 커밋 + push)
 
 
 ## 배포 현황
 
-- 코드 서명: 미등록 (Apple Developer $99 필요)
-- 현재 배포 방식: 소스 clone → xcodegen generate → Xcode 빌드
-- zip/dmg 배포: xattr 필요 + 수동 권한 설정 (서명 없는 앱 한계)
+- Developer ID Application/Installer 서명 + Hardened Runtime + Apple 공증
+- PKG가 기본 설치 파일, DMG가 수동 설치 대안
+- Scripts/release.sh --publish가 버전 범프·검증·dev→main merge·태그·공증·GitHub Release·Pages를 수행
+- docs/appcast.xml은 Sparkle EdDSA 서명 피드
 - docs/index.html의 Product history는 핵심 기능/워크플로가 바뀐 릴리스만 선별 기록
 
 
-## 2026-08 현재 배포·AX 안정화 구조
+## 현재 배포·AX 안정화 구조
 
 ### Full edition 배포
 
@@ -524,10 +524,10 @@ Release
     └── com.apple.security.automation.apple-events
 ```
 
-`Chap.entitlements`에는 App Sandbox entitlement가 없다. `Scripts/build-release-dmg.sh`가
-Developer ID signed universal archive를 검증해 DMG를 만들고,
-`Scripts/notarize-release-dmg.sh`가 `notarytool submit --wait` → staple → signature/Gatekeeper
-assessment를 수행한다. notarization credential은 keychain profile에만 저장하며 소스나 config에
+`Chap.entitlements`에는 App Sandbox entitlement가 없다. `Scripts/build-release-pkg.sh`가
+Developer ID signed universal archive에서 기본 PKG와 수동 설치용 DMG를 만들고,
+`Scripts/notarize-release-pkg.sh`가 두 아티팩트를 `notarytool submit --wait` → staple →
+signature/Gatekeeper assessment한다. notarization credential은 keychain profile에만 저장하며 소스나 config에
 넣지 않는다. Apple 절차는 https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution
 를 따른다.
 

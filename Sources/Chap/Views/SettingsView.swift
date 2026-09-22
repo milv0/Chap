@@ -653,6 +653,7 @@ struct SettingsView: View {
             launchAtLogin: vm.launchAtLogin,
             optionShortcutsEnabled: vm.optionShortcutsEnabled,
             statusBarIcon: vm.statusBarIcon,
+            hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
             sites: vm.sites)
         let result = validateConfig(config)
 

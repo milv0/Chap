@@ -226,30 +226,36 @@ enum LauncherUtils {
         return AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, value)
     }
 
-    /// AXValue 기반 구조체 속성(CGPoint/CGSize)을 읽는 공통 경로.
-    /// 복사 실패, 타입 불일치, 변환 실패는 모두 nil로 강등된다.
-    private static func axCopyValue<T>(
-        _ element: AXUIElement, _ attribute: CFString, as type: AXValueType, initial: T
-    ) -> T? {
+    /// AXValue 속성을 읽는 공통 경로. 복사 실패나 타입 불일치는 nil로 강등된다.
+    private static func axValue(
+        _ element: AXUIElement, attribute: CFString
+    ) -> AXValue? {
         var value: AnyObject?
         guard
             AXUIElementCopyAttributeValue(element, attribute, &value) == .success,
-            let value,
-            let axValue = AXIntrospection.value(from: value)
+            let value
         else { return nil }
-        var result = initial
-        guard AXValueGetValue(axValue, type, &result) else { return nil }
-        return result
+        return AXIntrospection.value(from: value)
     }
 
     /// 윈도우의 현재 position을 읽는다.
     static func axGetPosition(_ window: AXUIElement) -> CGPoint? {
-        axCopyValue(window, kAXPositionAttribute as CFString, as: .cgPoint, initial: .zero)
+        guard let value = axValue(window, attribute: kAXPositionAttribute as CFString) else {
+            return nil
+        }
+        var point = CGPoint.zero
+        guard AXValueGetValue(value, .cgPoint, &point) else { return nil }
+        return point
     }
 
     /// 윈도우의 현재 size를 읽는다.
     static func axGetSize(_ window: AXUIElement) -> CGSize? {
-        axCopyValue(window, kAXSizeAttribute as CFString, as: .cgSize, initial: .zero)
+        guard let value = axValue(window, attribute: kAXSizeAttribute as CFString) else {
+            return nil
+        }
+        var size = CGSize.zero
+        guard AXValueGetValue(value, .cgSize, &size) else { return nil }
+        return size
     }
 
     /// 앱의 AXEnhancedUserInterface 상태. 읽기 실패 시 nil.
@@ -276,11 +282,9 @@ enum LauncherUtils {
     /// (Rectangle과 동일: AXMinSize → AXMinimumSize).
     static func axGetMinimumSize(_ window: AXUIElement) -> CGSize? {
         for attribute in ["AXMinSize", "AXMinimumSize"] {
-            if let size = axCopyValue(
-                window, attribute as CFString, as: .cgSize, initial: CGSize.zero)
-            {
-                return size
-            }
+            guard let value = axValue(window, attribute: attribute as CFString) else { continue }
+            var size = CGSize.zero
+            if AXValueGetValue(value, .cgSize, &size) { return size }
         }
         return nil
     }
