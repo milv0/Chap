@@ -95,8 +95,9 @@ All notable changes to Chap are documented in this file.
 - **CPU-reactive lightning icon** — The Lightning status bar icon can animate
   with CPU load (about 1 fps idle up to 20 fps under full load, sampled every
   3 seconds), with Pulse and Wobble styles selectable in Settings > General.
-  CPU sampling runs only while a style is enabled. Speed mapping adapted from
-  RunCat Neo (see Acknowledgments in the README).
+  CPU sampling runs only while a style is enabled. Speed mapping was adapted
+  from [RunCat Neo](https://github.com/runcat-dev/RunCatNeo) (Apache-2.0); the
+  feature was removed in 1.3.0.
 
 ### Changed
 
