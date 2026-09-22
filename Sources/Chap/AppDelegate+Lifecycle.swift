@@ -188,24 +188,18 @@ extension AppDelegate {
     // MARK: - Window close
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        guard sender == settingsWindow else { return true }
+
         // Flush debounced edits before deciding whether anything remains unsaved.
-        if sender == settingsWindow {
-            settingsVM?.flushPendingSave()
-        }
-        // Settings window: check for unsaved changes
-        if sender == settingsWindow {
-            if let vm = settingsVM, vm.hasChanges {
-                let alert = NSAlert()
-                alert.messageText = "You have unsaved changes."
-                alert.informativeText = "Changes will be lost if you close."
-                alert.addButton(withTitle: "Close")
-                alert.addButton(withTitle: "Cancel")
-                if alert.runModal() != .alertFirstButtonReturn {
-                    return false
-                }
-            }
-        }
-        return true
+        settingsVM?.flushPendingSave()
+        guard let vm = settingsVM, vm.hasChanges else { return true }
+
+        let alert = NSAlert()
+        alert.messageText = "You have unsaved changes."
+        alert.informativeText = "Changes will be lost if you close."
+        alert.addButton(withTitle: "Close")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     func windowWillClose(_ notification: Notification) {
