@@ -2,6 +2,25 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.7] — 2026-09-22
+
+### Added
+
+- **Keep Awake quit confirmation** — Active sessions require an explicit
+  "Quit Anyway" choice before Chap exits; Cancel is the default.
+
+### Improved
+
+- **Type-safe Accessibility readback** — Removed an unsafe generic pointer
+  conversion and its Release compiler warning.
+- **Settings consistency** — Manual validation now includes hidden menu
+  sections, and the settings close flow was simplified without behavior
+  changes.
+- **Documentation refresh** — Updated architecture, distribution, menu,
+  Sparkle, Keep Awake, and historical attribution guidance.
+
+---
+
 ## [1.3.6] — 2026-09-22
 
 ### Fixed
