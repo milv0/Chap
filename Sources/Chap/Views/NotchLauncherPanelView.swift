@@ -24,7 +24,7 @@ struct NotchLauncherPanelView: View {
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
     static let shadowPadding: CGFloat = 28
     /// 빙하 스타일의 톱니 최대 깊이. 콘텐츠가 톱니를 침범하지 않게 여백에 더한다.
-    private static let icebergJagDepth: CGFloat = 30
+    private static let icebergJagDepth: CGFloat = 46
 
     /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
