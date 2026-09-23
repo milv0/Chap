@@ -29,16 +29,16 @@ struct NotchLauncherPanelView: View {
 
     /// Dynamic Island 문법의 모션 커브 (DynamicNotchKit과 동일한 구성):
     /// 펼침은 오버슈트가 있는 bouncy, 접힘은 바운스 없는 smooth.
-    static let openAnimation: Animation = .bouncy(duration: 0.45, extraBounce: 0.06)
-    static let closeAnimation: Animation = .smooth(duration: 0.32)
+    static let openAnimation: Animation = .bouncy(duration: 0.32, extraBounce: 0.05)
+    static let closeAnimation: Animation = .smooth(duration: 0.22)
 
     /// 콘텐츠는 형태가 거의 다 커진 뒤에 나타나고, 닫힐 때는 즉시 사라진다.
     /// 등장은 아래에서 떠올라 자리잡는 부드러운 스프링
     /// (Airbnb 검색바 안무의 stiffness 300 / damping 25 상당), 퇴장은 빠른 페이드.
     private var contentAnimation: Animation {
         reveal.revealed
-            ? .interpolatingSpring(stiffness: 300, damping: 25).delay(0.1)
-            : .easeIn(duration: 0.1)
+            ? .interpolatingSpring(stiffness: 420, damping: 27).delay(0.05)
+            : .easeIn(duration: 0.08)
     }
 
     /// 콘텐츠의 자연 크기. 숨김 복사본으로 계측해 morph 목표 크기로 쓴다.

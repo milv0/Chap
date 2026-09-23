@@ -237,7 +237,7 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
             panel.orderOut(nil)
         }
     }
