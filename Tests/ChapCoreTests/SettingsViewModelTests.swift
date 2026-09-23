@@ -85,6 +85,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchPanelOpacityChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelOpacity: 0.6)
+        vm.notchPanelOpacity = 0.9
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
@@ -115,7 +121,8 @@ struct SettingsViewModelTests {
                 statusBarIcon: vm.statusBarIcon,
                 hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: vm.notchLauncherEnabled,
-                notchPanelStyle: vm.notchPanelStyle))
+                notchPanelStyle: vm.notchPanelStyle,
+                notchPanelOpacity: vm.notchPanelOpacity))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
@@ -142,6 +149,9 @@ struct SettingsViewModelTests {
         vm.scheduleAutoSave()
 
         #expect(saved.wait(timeout: .now() + 1) == .success)
+        // 세마포어는 onSave 안에서 신호되므로 markSaved 완료를 보장하지 않는다.
+        // 큐를 비워 persist가 끝난 뒤에 검증한다.
+        queue.sync {}
         #expect(savedName == "Latest")
         #expect(!vm.hasChanges)
     }

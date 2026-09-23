@@ -97,7 +97,8 @@ extension AppDelegate {
             statusBarIcon: config.statusBarIcon,
             hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
             notchLauncherEnabled: config.notchLauncherEnabled,
-            notchPanelStyle: config.notchPanelStyle)
+            notchPanelStyle: config.notchPanelStyle,
+            notchPanelOpacity: config.notchPanelOpacity)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -109,6 +110,7 @@ extension AppDelegate {
                 hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: payload.notchLauncherEnabled,
                 notchPanelStyle: payload.notchPanelStyle,
+                notchPanelOpacity: payload.notchPanelOpacity,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -134,6 +136,7 @@ extension AppDelegate {
             let previousStatusBarIcon = self.config.statusBarIcon
             let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
             let previousNotchPanelStyle = self.config.notchPanelStyle
+            let previousNotchPanelOpacity = self.config.notchPanelOpacity
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -165,6 +168,7 @@ extension AppDelegate {
                 DispatchQueue.main.async { self.buildMenu() }
             } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
                 || previousNotchPanelStyle != newConfig.notchPanelStyle
+                || previousNotchPanelOpacity != newConfig.notchPanelOpacity
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }

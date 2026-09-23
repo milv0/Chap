@@ -9,6 +9,7 @@ public struct SettingsPayload {
     public let hiddenMenuLaunchTypes: Set<LaunchType>
     public let notchLauncherEnabled: Bool
     public let notchPanelStyle: NotchPanelStyle
+    public let notchPanelOpacity: Double
 }
 
 public final class SettingsViewModel: ObservableObject {
@@ -20,6 +21,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var hiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var notchLauncherEnabled: Bool
     @Published public var notchPanelStyle: NotchPanelStyle
+    @Published public var notchPanelOpacity: Double
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
@@ -28,6 +30,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalHiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var originalNotchLauncherEnabled: Bool
     @Published public var originalNotchPanelStyle: NotchPanelStyle
+    @Published public var originalNotchPanelOpacity: Double
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -40,6 +43,7 @@ public final class SettingsViewModel: ObservableObject {
             || hiddenMenuLaunchTypes != originalHiddenMenuLaunchTypes
             || notchLauncherEnabled != originalNotchLauncherEnabled
             || notchPanelStyle != originalNotchPanelStyle
+            || notchPanelOpacity != originalNotchPanelOpacity
     }
 
     public func markSaved() {
@@ -51,6 +55,7 @@ public final class SettingsViewModel: ObservableObject {
         originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         originalNotchLauncherEnabled = notchLauncherEnabled
         originalNotchPanelStyle = notchPanelStyle
+        originalNotchPanelOpacity = notchPanelOpacity
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -65,6 +70,7 @@ public final class SettingsViewModel: ObservableObject {
                 hiddenMenuLaunchTypes: self.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: self.notchLauncherEnabled,
                 notchPanelStyle: self.notchPanelStyle,
+                notchPanelOpacity: self.notchPanelOpacity,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
@@ -90,7 +96,8 @@ public final class SettingsViewModel: ObservableObject {
                     statusBarIcon: statusBarIcon,
                     hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
                     notchLauncherEnabled: notchLauncherEnabled,
-                    notchPanelStyle: notchPanelStyle)) ?? true
+                    notchPanelStyle: notchPanelStyle,
+                    notchPanelOpacity: notchPanelOpacity)) ?? true
         if saved { markSaved() }
         return saved
     }
@@ -103,6 +110,7 @@ public final class SettingsViewModel: ObservableObject {
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
+        notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
         self.sites = sites
@@ -113,6 +121,7 @@ public final class SettingsViewModel: ObservableObject {
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
+        self.notchPanelOpacity = notchPanelOpacity
         self.originalSites = sites
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
@@ -121,6 +130,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.originalNotchLauncherEnabled = notchLauncherEnabled
         self.originalNotchPanelStyle = notchPanelStyle
+        self.originalNotchPanelOpacity = notchPanelOpacity
         self.saveDebouncer = saveDebouncer
     }
 }

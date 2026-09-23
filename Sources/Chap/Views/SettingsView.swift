@@ -709,7 +709,8 @@ struct SettingsView: View {
                     statusBarIcon: vm.statusBarIcon,
                     hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
                     notchLauncherEnabled: vm.notchLauncherEnabled,
-                    notchPanelStyle: vm.notchPanelStyle)) ?? true
+                    notchPanelStyle: vm.notchPanelStyle,
+                    notchPanelOpacity: vm.notchPanelOpacity)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin
