@@ -7,7 +7,8 @@ import SwiftUI
 /// 하단 모서리만 둥글어 노치가 아래로 자라난 것처럼 보인다.
 /// 검정 위 텍스트라 라이트/다크 모드와 무관하게 흰색 계열을 고정한다.
 struct NotchLauncherPanelView: View {
-    let width: CGFloat
+    /// 패널 최소 폭 (노치 폭 + 여유). 섹션이 많으면 자연 폭으로 더 넓어진다.
+    let minWidth: CGFloat
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
     let sections: [LauncherListSection]
@@ -15,16 +16,20 @@ struct NotchLauncherPanelView: View {
 
     @State private var revealed = false
 
+    private static let columnWidth: CGFloat = 160
+
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.spacingSmall) {
+        // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
+        HStack(alignment: .top, spacing: DS.spacing) {
             ForEach(sections, id: \.launchType) { section in
                 sectionView(section)
+                    .frame(width: Self.columnWidth, alignment: .leading)
             }
         }
-        .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, topInset + 6)
+        .padding(.horizontal, DS.padding)
+        .padding(.top, topInset + 8)
         .padding(.bottom, DS.paddingSmall)
-        .frame(width: width, alignment: .leading)
+        .frame(minWidth: minWidth)
         .background(
             UnevenRoundedRectangle(
                 bottomLeadingRadius: 18, bottomTrailingRadius: 18, style: .continuous

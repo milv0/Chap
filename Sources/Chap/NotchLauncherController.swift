@@ -91,12 +91,13 @@ final class NotchLauncherController {
         guard !sections.isEmpty else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
+        // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
         let inset = screen.safeAreaInsets.top
         let notchWidth = Self.notchRect(on: screen).width
-        let panelWidth = max(notchWidth + 80, Self.panelWidth)
+        let minWidth = max(notchWidth + 80, Self.panelWidth)
 
         let content = NotchLauncherPanelView(
-            width: panelWidth,
+            minWidth: minWidth,
             topInset: inset,
             sections: sections,
             onLaunch: { [weak self] siteIndex in
@@ -110,7 +111,7 @@ final class NotchLauncherController {
         let frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: inset,
-            contentSize: CGSize(width: panelWidth, height: size.height - inset))
+            contentSize: CGSize(width: size.width, height: size.height - inset))
 
         let panel = NSPanel(
             contentRect: frame,
