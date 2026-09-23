@@ -254,11 +254,13 @@ public struct Config: Codable {
     public var statusBarIcon: StatusBarIconChoice
     /// 상태바 메뉴에서 숨길 launch type 섹션. 숨겨도 ⌥ 단축키는 계속 동작한다.
     public var hiddenMenuLaunchTypes: Set<LaunchType>
+    /// 노치 런처 표시 여부. 상태바 NSMenu는 이 값과 무관하게 항상 유지된다.
+    public var notchLauncherEnabled: Bool
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
-        case statusBarIcon, hiddenMenuLaunchTypes, sites
+        case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, sites
     }
 
     public init(
@@ -267,6 +269,7 @@ public struct Config: Codable {
         optionShortcutsEnabled: Bool = true,
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
+        notchLauncherEnabled: Bool = false,
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
@@ -274,6 +277,7 @@ public struct Config: Codable {
         self.optionShortcutsEnabled = optionShortcutsEnabled
         self.statusBarIcon = statusBarIcon
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
+        self.notchLauncherEnabled = notchLauncherEnabled
         self.sites = sites
     }
 
@@ -294,6 +298,9 @@ public struct Config: Codable {
             (try container.decodeIfPresent([String].self, forKey: .hiddenMenuLaunchTypes)
                 ?? [])
                 .compactMap(LaunchType.init(rawValue:)))
+        // 값 타입이 어긋나도 설정 전체를 버리지 않고 off로 취급한다 (관용 디코딩).
+        notchLauncherEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchLauncherEnabled)) ?? false
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -308,6 +315,7 @@ public struct Config: Codable {
             .filter { hiddenMenuLaunchTypes.contains($0) }
             .map(\.rawValue)
         try container.encode(hiddenOrdered, forKey: .hiddenMenuLaunchTypes)
+        try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }
