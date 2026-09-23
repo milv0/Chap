@@ -93,14 +93,18 @@ struct NotchLauncherPanelView: View {
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Label(
-                Self.sectionTitle(section.launchType),
-                systemImage: LauncherListPolicy.symbolName(for: section.launchType)
-            )
-            .font(DS.captionFont)
-            .foregroundColor(.white.opacity(0.5))
+        VStack(alignment: .leading, spacing: 3) {
+            // 아이콘은 테마 블루로 스캔 앵커 역할, 라벨은 대비를 높인 보조 흰색.
+            HStack(spacing: 5) {
+                Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.accent)
+                Text(Self.sectionTitle(section.launchType))
+                    .font(DS.captionFont.weight(.semibold))
+                    .foregroundColor(.white.opacity(0.65))
+            }
             .padding(.horizontal, 6)
+            .padding(.bottom, 1)
 
             ForEach(section.entries, id: \.siteIndex) { entry in
                 NotchLauncherRow(entry: entry) {
@@ -130,21 +134,28 @@ private struct NotchLauncherRow: View {
         Button(action: action) {
             HStack {
                 Text(entry.site.name)
-                    .font(DS.bodyFont)
-                    .foregroundColor(.white.opacity(0.92))
+                    .font(DS.bodyFont.weight(.medium))
+                    .foregroundColor(.white.opacity(0.96))
                     .lineLimit(1)
                 Spacer(minLength: DS.spacingSmall)
                 if let shortcut = entry.site.shortcut, !shortcut.isEmpty {
-                    Text("⌥ \(shortcut.uppercased())")
-                        .font(DS.captionFont)
-                        .foregroundColor(.white.opacity(0.45))
+                    // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
+                    Text("⌥\(shortcut.uppercased())")
+                        .font(DS.captionFont.weight(.medium))
+                        .foregroundColor(.white.opacity(0.75))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1.5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .fill(Color.white.opacity(0.10))
+                        )
                 }
             }
             .padding(.horizontal, 6)
-            .padding(.vertical, 4)
+            .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.12) : Color.clear)
+                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
             )
             .contentShape(Rectangle())
         }
