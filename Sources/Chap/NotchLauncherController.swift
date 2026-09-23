@@ -19,6 +19,8 @@ final class NotchLauncherController {
 
     /// 패널에 표시할 섹션 공급자. 항상 최신 config 기준으로 재계산된다.
     var sectionsProvider: () -> [LauncherListSection] = { [] }
+    /// 패널 시각 스타일 공급자.
+    var styleProvider: () -> NotchPanelStyle = { .black }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
@@ -105,6 +107,7 @@ final class NotchLauncherController {
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
+            style: styleProvider(),
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()

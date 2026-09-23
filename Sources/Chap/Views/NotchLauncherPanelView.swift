@@ -11,6 +11,8 @@ struct NotchLauncherPanelView: View {
     let minWidth: CGFloat
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
+    /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
+    let style: NotchPanelStyle
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
 
@@ -21,11 +23,37 @@ struct NotchLauncherPanelView: View {
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
     static let shadowPadding: CGFloat = 28
+    /// 빙하 스타일의 톱니 최대 깊이. 콘텐츠가 톱니를 침범하지 않게 여백에 더한다.
+    private static let icebergJagDepth: CGFloat = 16
 
     /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
-    private static var panelShape: NotchDockShape {
-        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20)
+    private var panelShape: AnyShape {
+        switch style {
+        case .black:
+            return AnyShape(NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20))
+        case .iceberg:
+            return AnyShape(
+                IcebergDockShape(topCornerRadius: 10, jagDepth: Self.icebergJagDepth))
+        }
+    }
+
+    /// 스타일별 채움. 빙하는 노치와 만나는 상단은 검정에 가깝게, 아래로 갈수록
+    /// 얼음빛 파랑으로 깊어지는 그라데이션이다.
+    private var panelFill: AnyShapeStyle {
+        switch style {
+        case .black:
+            return AnyShapeStyle(Color.black)
+        case .iceberg:
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [
+                        Color.black,
+                        Color(red: 16 / 255, green: 38 / 255, blue: 72 / 255),
+                        Color(red: 62 / 255, green: 122 / 255, blue: 190 / 255),
+                    ],
+                    startPoint: .top, endPoint: .bottom))
+        }
     }
 
     var body: some View {
@@ -38,13 +66,16 @@ struct NotchLauncherPanelView: View {
         }
         .padding(.horizontal, DS.padding)
         .padding(.top, topInset + 8)
-        .padding(.bottom, DS.paddingSmall)
+        .padding(
+            .bottom,
+            style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
+        )
         .frame(minWidth: minWidth)
         .background(
-            Self.panelShape
-                .fill(Color.black)
+            panelShape
+                .fill(panelFill)
                 // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-                .overlay(Self.panelShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(panelShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
         )
@@ -158,6 +189,55 @@ struct NotchDockShape: Shape {
         // 본체 오른쪽 벽.
         path.addLine(to: CGPoint(x: rect.maxX - topR, y: rect.minY + topR))
         // 오른쪽 오목 플레어: 본체 오른쪽 벽이 상단 라인으로 흘러나간다.
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
+            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
+    }
+}
+
+/// 빙하 도크 실루엣. 상단 오목 플레어는 NotchDockShape과 같고,
+/// 하단은 빙하 아랫부분처럼 깊이가 불규칙한 톱니로 끝난다.
+/// 톱니 패턴은 결정적이라 열 때마다 모양이 흔들리지 않는다.
+struct IcebergDockShape: Shape {
+    let topCornerRadius: CGFloat
+    /// 톱니 최대 깊이. 각 꼭짓점은 패턴 비율만큼 이 깊이에 도달한다.
+    let jagDepth: CGFloat
+
+    /// 연속된 톱니 꼭짓점의 상대 깊이. 자연스럽게 보이도록 불규칙하게 섞는다.
+    private static let depthPattern: [CGFloat] = [0.85, 0.45, 1.0, 0.55, 0.75, 0.35, 0.9, 0.6]
+    private static let targetToothWidth: CGFloat = 34
+
+    func path(in rect: CGRect) -> Path {
+        let topR = topCornerRadius
+        let baseY = rect.maxY - jagDepth
+        let leftX = rect.minX + topR
+        let rightX = rect.maxX - topR
+        var path = Path()
+
+        // 상단 왼쪽 끝(화면 상단 라인)에서 시작해 오목 플레어로 본체에 진입.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addArc(
+            center: CGPoint(x: rect.minX, y: rect.minY + topR), radius: topR,
+            startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        // 본체 왼쪽 벽은 톱니 기준선까지 내려간다.
+        path.addLine(to: CGPoint(x: leftX, y: baseY))
+
+        // 하단 톱니: 목표 폭에 맞춰 개수를 정하고 패턴 깊이로 꼭짓점을 찍는다.
+        let bodyWidth = rightX - leftX
+        let teeth = max(3, Int((bodyWidth / Self.targetToothWidth).rounded()))
+        let toothWidth = bodyWidth / CGFloat(teeth)
+        for tooth in 0..<teeth {
+            let depth = Self.depthPattern[tooth % Self.depthPattern.count]
+            let tipX = leftX + toothWidth * (CGFloat(tooth) + 0.5)
+            let endX = leftX + toothWidth * CGFloat(tooth + 1)
+            path.addLine(to: CGPoint(x: tipX, y: baseY + jagDepth * depth))
+            path.addLine(to: CGPoint(x: endX, y: baseY))
+        }
+
+        // 본체 오른쪽 벽을 올라가 오목 플레어로 상단 라인에 합류.
+        path.addLine(to: CGPoint(x: rightX, y: rect.minY + topR))
         path.addArc(
             center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
