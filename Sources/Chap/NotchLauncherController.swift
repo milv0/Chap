@@ -90,7 +90,12 @@ final class NotchLauncherController {
         let sections = sectionsProvider()
         guard !sections.isEmpty else { return }
 
+        // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
+        let notchWidth = Self.notchRect(on: screen).width
+        let panelWidth = max(notchWidth + 80, Self.panelWidth)
+
         let content = NotchLauncherPanelView(
+            width: panelWidth,
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
@@ -101,7 +106,7 @@ final class NotchLauncherController {
         let frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: screen.safeAreaInsets.top,
-            panelSize: CGSize(width: Self.panelWidth, height: size.height))
+            panelSize: CGSize(width: panelWidth, height: size.height))
 
         let panel = NSPanel(
             contentRect: frame,
@@ -125,12 +130,8 @@ final class NotchLauncherController {
         container.addSubview(hosting)
         panel.contentView = container
 
-        panel.alphaValue = 0
+        // 등장 애니메이션은 SwiftUI 콘텐츠가 노치 기준 확장으로 처리한다.
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
-            panel.animator().alphaValue = 1
-        }
         self.panel = panel
     }
 
