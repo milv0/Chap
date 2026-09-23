@@ -120,6 +120,14 @@ struct GeneralSettingsView: View {
                             )
                             .onChange(of: vm.notchLauncherEnabled) { _, _ in onSave() }
 
+                        Picker("Notch Style", selection: $vm.notchPanelStyle) {
+                            Text("Black").tag(NotchPanelStyle.black)
+                            Text("Iceberg").tag(NotchPanelStyle.iceberg)
+                        }
+                        .pickerStyle(.segmented)
+                        .disabled(!Self.hasNotchScreen || !vm.notchLauncherEnabled)
+                        .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
+
                         if !Self.hasNotchScreen {
                             Label(
                                 "This Mac has no notch display, so the notch launcher "
