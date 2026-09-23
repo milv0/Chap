@@ -351,4 +351,47 @@ struct ConfigValidationTests {
 
         #expect(validateConfigForExport(config).isValid)
     }
+
+    // MARK: - Per-Launch-Type Count Limit
+
+    @Test("exactly four sites of one launch type is valid")
+    func fourSitesOfOneTypeIsValid() {
+        let sites = (1...4).map {
+            Site(
+                name: "S\($0)", url: "https://a\($0).com", width: 800, height: 600,
+                launchType: .url)
+        }
+
+        #expect(validateConfig(Config(sites: sites)).isValid)
+    }
+
+    @Test("a fifth site of the same launch type is blocked")
+    func fifthSiteOfSameTypeIsBlocked() {
+        let sites = (1...5).map {
+            Site(
+                name: "S\($0)", url: "https://a\($0).com", width: 800, height: 600,
+                launchType: .url)
+        }
+
+        let result = validateConfig(Config(sites: sites))
+
+        #expect(!result.isValid)
+        #expect(result.errors.contains { $0.siteIndex == 4 })
+    }
+
+    @Test("the limit does not affect other launch types")
+    func limitIsIndependentAcrossTypes() {
+        let urls = (1...4).map {
+            Site(
+                name: "U\($0)", url: "https://a\($0).com", width: 800, height: 600,
+                launchType: .url)
+        }
+        let apps = (1...4).map {
+            Site(
+                name: "A\($0)", url: "", width: 800, height: 600, launchType: .app,
+                appPath: "/Applications/App\($0).app")
+        }
+
+        #expect(validateConfig(Config(sites: urls + apps)).isValid)
+    }
 }

@@ -183,6 +183,7 @@ public func validateConfig(_ config: Config) -> ValidationResult {
     // Cross-site duplicate detection
     issues.append(contentsOf: detectDuplicateShortcuts(in: config.sites))
     issues.append(contentsOf: detectDuplicateValues(in: config.sites))
+    issues.append(contentsOf: detectLaunchTypeCountOverLimit(in: config.sites))
 
     return ValidationResult(issues: issues)
 }
@@ -286,6 +287,27 @@ private func detectDuplicateValues(in sites: [Site]) -> [ValidationIssue] {
         }
     }
 
+    return issues
+}
+
+/// launch type별 4개 상한을 넘는 항목을 error로 보고한다. 상한을 넘긴
+/// 시점(각 타입에서 5번째 이후 출현)부터를 문제로 지목해, 어떤 사이트를
+/// 지우거나 옮겨야 하는지 사용자가 알 수 있게 한다.
+private func detectLaunchTypeCountOverLimit(in sites: [Site]) -> [ValidationIssue] {
+    var issues: [ValidationIssue] = []
+    var seenCounts: [LaunchType: Int] = [:]
+
+    for (index, site) in sites.enumerated() {
+        let count = (seenCounts[site.launchType] ?? 0) + 1
+        seenCounts[site.launchType] = count
+        guard count > SiteCountLimitPolicy.maxPerLaunchType else { continue }
+        issues.append(
+            ValidationIssue(
+                siteIndex: index, field: .name, severity: .error,
+                message:
+                    "Only \(SiteCountLimitPolicy.maxPerLaunchType) \(site.launchType.rawValue) "
+                    + "launchables are allowed."))
+    }
     return issues
 }
 
