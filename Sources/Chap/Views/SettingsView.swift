@@ -6,6 +6,7 @@ import os
 private enum SettingsTab: Hashable {
     case launchables
     case general
+    case notch
 }
 
 private struct SettingsTabButton: View {
@@ -79,6 +80,12 @@ struct SettingsView: View {
                         .allowsHitTesting(selectedTab == .general)
                         .disabled(selectedTab != .general)
                         .accessibilityHidden(selectedTab != .general)
+
+                    notchTab
+                        .opacity(selectedTab == .notch ? 1 : 0)
+                        .allowsHitTesting(selectedTab == .notch)
+                        .disabled(selectedTab != .notch)
+                        .accessibilityHidden(selectedTab != .notch)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
@@ -158,6 +165,11 @@ struct SettingsView: View {
                 icon: "gearshape",
                 isSelected: selectedTab == .general,
                 action: { selectedTab = .general })
+            SettingsTabButton(
+                title: "Notch",
+                icon: "macbook",
+                isSelected: selectedTab == .notch,
+                action: { selectedTab = .notch })
         }
         .padding(2)
         .background(DS.border.opacity(0.18))
@@ -170,6 +182,10 @@ struct SettingsView: View {
             updateController: updateController,
             onSave: saveGlobals
         )
+    }
+
+    private var notchTab: some View {
+        NotchSettingsView(vm: vm, onSave: saveGlobals)
     }
 
     // MARK: - Sidebar
