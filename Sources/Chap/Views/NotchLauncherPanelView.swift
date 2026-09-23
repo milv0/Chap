@@ -165,7 +165,10 @@ struct NotchLauncherPanelView: View {
             .padding(.horizontal, 6)
             .padding(.bottom, 1)
 
-            ForEach(section.entries, id: \.siteIndex) { entry in
+            ForEach(
+                section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
+                id: \.siteIndex
+            ) { entry in
                 NotchLauncherRow(entry: entry) {
                     onLaunch(entry.siteIndex)
                 }

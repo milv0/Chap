@@ -29,6 +29,10 @@ public struct LauncherListSection: Equatable {
 /// 표시에서 숨긴 launch type만 제외하며, `⌥` 단축키는 `config.sites` 기준으로
 /// 동작하므로 이 정책의 결과와 무관하게 계속 유효하다.
 public enum LauncherListPolicy {
+    /// 노치 패널 한 칸에 표시할 최대 항목 수. 사이트 자체가 launch type당
+    /// `SiteCountLimitPolicy.maxPerLaunchType`개로 제한되므로 항상 전부 들어간다.
+    public static let maxEntriesPerNotchSlot = 4
+
     /// `LaunchType.allCases` 순서로 섹션을 만들고, 각 섹션 안에서는 저장된 순서를 유지한다.
     public static func sections(
         sites: [Site], hiddenLaunchTypes: Set<LaunchType>

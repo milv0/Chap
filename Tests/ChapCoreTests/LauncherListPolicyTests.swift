@@ -77,4 +77,17 @@ struct LauncherListPolicyTests {
         #expect(LauncherListPolicy.symbolName(for: .finder) == "folder.fill")
         #expect(LauncherListPolicy.symbolName(for: .shell) == "terminal.fill")
     }
+
+    @Test("notch slot entries are capped at four regardless of section size")
+    func notchSlotCapIsFour() {
+        let sites = (1...6).map {
+            site("S\($0)", .url)
+        }
+
+        let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
+        let capped = sections[0].entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot)
+
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot == 4)
+        #expect(capped.count == 4)
+    }
 }

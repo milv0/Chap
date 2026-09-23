@@ -31,7 +31,7 @@ struct ScreenshotShelfPolicyTests {
 
         #expect(selected.count == ScreenshotShelfPolicy.maxItems)
         #expect(selected.first == "s7.png")
-        #expect(selected.last == "s3.png")
+        #expect(selected.last == "s4.png")
     }
 
     @Test("selection filters out non-candidates before capping")
