@@ -27,19 +27,21 @@ struct NotchLauncherPanelView: View {
     let onLaunch: (Int) -> Void
     @ObservedObject var reveal: NotchRevealModel
 
-    @State private var measuredWidth: CGFloat = 0
-
     /// Dynamic Island 문법의 모션 커브 (DynamicNotchKit과 동일한 구성):
     /// 펼침은 오버슈트가 있는 bouncy, 접힘은 바운스 없는 smooth.
     static let openAnimation: Animation = .bouncy(duration: 0.45, extraBounce: 0.06)
     static let closeAnimation: Animation = .smooth(duration: 0.32)
 
-    /// 접힌 상태의 가로 스케일: 패널 실폭 대비 노치 폭 비율.
-    private var collapsedXScale: CGFloat {
-        let width = max(measuredWidth, minWidth)
-        guard width > 0, notchWidth > 0 else { return 0.3 }
-        return min(1, notchWidth / width)
+    /// 콘텐츠는 형태가 거의 다 커진 뒤에 나타나고, 닫힐 때는 즉시 사라진다.
+    /// 아이폰 Dynamic Island처럼 콘텐츠가 늘어나는 왜곡 없이 제자리에서 페이드된다.
+    private var contentAnimation: Animation {
+        reveal.revealed
+            ? .easeOut(duration: 0.22).delay(0.1)
+            : .easeIn(duration: 0.1)
     }
+
+    /// 콘텐츠의 자연 크기. 숨김 복사본으로 계측해 morph 목표 크기로 쓴다.
+    @State private var contentSize: CGSize = .zero
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -103,7 +105,58 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    /// morph 목표 크기. 계측 전에는 최소 폭 기준으로 폴백한다.
+    private var expandedSize: CGSize {
+        contentSize == .zero
+            ? CGSize(width: minWidth, height: topInset + 120) : contentSize
+    }
+
     var body: some View {
+        ZStack(alignment: .top) {
+            // 계측용 숨김 복사본: morph 목표(자연) 크기를 잰다.
+            contentBody
+                .fixedSize()
+                .hidden()
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { contentSize = geo.size }
+                            .onChange(of: geo.size) { _, size in contentSize = size }
+                    }
+                )
+
+            // 실제 morph 컨테이너: 형태의 프레임 자체가 노치 크기에서
+            // 최종 크기로 팽창한다. 콘텐츠는 늘어나지 않고 클리핑된다.
+            ZStack(alignment: .top) {
+                panelShape
+                    .fill(panelFill)
+                    // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
+                    // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
+                    .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                contentBody
+                    .opacity(reveal.revealed ? 1 : 0)
+                    .blur(radius: reveal.revealed ? 0 : 10)
+                    .animation(contentAnimation, value: reveal.revealed)
+            }
+            .frame(
+                width: reveal.revealed ? expandedSize.width : notchWidth,
+                height: reveal.revealed ? expandedSize.height : topInset,
+                alignment: .top
+            )
+            .clipShape(panelShape)
+            // 접힌 상태(= 노치 위 검정)에서는 그림자도 함께 사라진다.
+            .shadow(color: .black.opacity(reveal.revealed ? 0.22 : 0), radius: 9, y: 4)
+        }
+        // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
+        .padding(.horizontal, Self.shadowPadding)
+        .padding(.bottom, Self.shadowPadding)
+        // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
+        // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// 섹션 콘텐츠 본문. morph 컨테이너와 계측 복사본이 공유한다.
+    private var contentBody: some View {
         // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
         HStack(alignment: .top, spacing: DS.spacing) {
             ForEach(sections, id: \.launchType) { section in
@@ -118,36 +171,6 @@ struct NotchLauncherPanelView: View {
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
         )
         .frame(minWidth: minWidth)
-        .background(
-            panelShape
-                .fill(panelFill)
-                // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-                // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
-                .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
-                // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
-                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
-        )
-        // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
-        .padding(.horizontal, Self.shadowPadding)
-        .padding(.bottom, Self.shadowPadding)
-        // Dynamic Island 문법의 펼침/접힘: 노치 폭에서 양방향으로 팽창한다.
-        // 가로는 노치 폭 비율에서, 세로는 노치 높이 근처에서 시작해
-        // 블러가 걷히며 펼쳐진다. 커브는 컨트롤러가 withAnimation으로 구동한다.
-        .background(
-            GeometryReader { geo in
-                Color.clear.onAppear { measuredWidth = geo.size.width }
-            }
-        )
-        .scaleEffect(
-            x: reveal.revealed ? 1 : collapsedXScale,
-            y: reveal.revealed ? 1 : 0.06,
-            anchor: .top
-        )
-        .blur(radius: reveal.revealed ? 0 : 12)
-        .opacity(reveal.revealed ? 1 : 0)
-        // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
-        // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
