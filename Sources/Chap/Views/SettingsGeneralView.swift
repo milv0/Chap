@@ -120,13 +120,31 @@ struct GeneralSettingsView: View {
                             )
                             .onChange(of: vm.notchLauncherEnabled) { _, _ in onSave() }
 
-                        Picker("Notch Style", selection: $vm.notchPanelStyle) {
-                            Text("Black").tag(NotchPanelStyle.black)
-                            Text("Iceberg").tag(NotchPanelStyle.iceberg)
+                        // 세부 설정은 활성화 상태에서만 펼쳐진다.
+                        if Self.hasNotchScreen && vm.notchLauncherEnabled {
+                            Picker("Notch Style", selection: $vm.notchPanelStyle) {
+                                Text("Black").tag(NotchPanelStyle.black)
+                                Text("Iceberg").tag(NotchPanelStyle.iceberg)
+                            }
+                            .pickerStyle(.segmented)
+                            .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
+
+                            HStack {
+                                Text("Panel Opacity")
+                                Slider(
+                                    value: $vm.notchPanelOpacity,
+                                    in: Config.notchPanelOpacityRange
+                                ) { editing in
+                                    // 드래그 중 연속 저장을 피하고 놓는 순간 반영한다.
+                                    if !editing { onSave() }
+                                }
+                                Text("\(Int(vm.notchPanelOpacity * 100))%")
+                                    .font(.caption)
+                                    .foregroundColor(DS.textSecondary)
+                                    .frame(width: 38, alignment: .trailing)
+                                    .monospacedDigit()
+                            }
                         }
-                        .pickerStyle(.segmented)
-                        .disabled(!Self.hasNotchScreen || !vm.notchLauncherEnabled)
-                        .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
 
                         if !Self.hasNotchScreen {
                             Label(
