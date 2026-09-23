@@ -39,7 +39,7 @@ extension AppDelegate {
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
-    /// Lightning 선택 + Keep Awake 활성 중이면 테마 블루로 색을 바꿔 상태를 표시한다.
+    /// Keep Awake 활성 중이면 선택된 아이콘을 테마 블루로 전환해 상태를 표시한다.
     func statusIconImage(accessible: Bool) -> NSImage? {
         statusIconImage(
             accessible: accessible, choice: config.statusBarIcon,
@@ -47,8 +47,8 @@ extension AppDelegate {
     }
 
     /// `choice`에 따라 상태바 아이콘을 결정한다. 권한이 없으면 항상 경고 심볼.
-    /// `keepAwakeActive`는 Lightning 아이콘에서만 색 전환에 쓰인다 (Default는
-    /// 커스텀 PNG 리소스라 색 전환을 적용하지 않는다).
+    /// `keepAwakeActive`는 두 아이콘 모두에 적용된다: Default는 커스텀 PNG의 알파
+    /// 마스크를 테마 블루로 틴트하고, Lightning은 심볼을 테마 블루로 렌더링한다.
     func statusIconImage(
         accessible: Bool, choice: StatusBarIconChoice, keepAwakeActive: Bool = false
     ) -> NSImage? {
