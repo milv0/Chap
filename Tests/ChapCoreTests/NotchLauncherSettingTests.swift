@@ -70,4 +70,44 @@ struct NotchLauncherSettingTests {
 
         #expect(decoded.notchPanelStyle == .iceberg)
     }
+
+    @Test("opacity defaults to 0.6 when the key is missing")
+    func opacityDefaultsWhenMissing() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchPanelOpacity == 0.6)
+    }
+
+    @Test("decodes an explicit opacity")
+    func decodesExplicitOpacity() throws {
+        let config = try decodeConfig(#"{"notchPanelOpacity": 0.85, "sites": []}"#)
+
+        #expect(config.notchPanelOpacity == 0.85)
+    }
+
+    @Test("out-of-range opacities are clamped instead of failing")
+    func outOfRangeOpacityIsClamped() throws {
+        let low = try decodeConfig(#"{"notchPanelOpacity": 0.01, "sites": []}"#)
+        let high = try decodeConfig(#"{"notchPanelOpacity": 7, "sites": []}"#)
+
+        #expect(low.notchPanelOpacity == 0.2)
+        #expect(high.notchPanelOpacity == 1.0)
+    }
+
+    @Test("a wrong opacity value type falls back to the default")
+    func wrongOpacityTypeFallsBack() throws {
+        let config = try decodeConfig(#"{"notchPanelOpacity": "dark", "sites": []}"#)
+
+        #expect(config.notchPanelOpacity == 0.6)
+    }
+
+    @Test("opacity round-trips through encoding")
+    func opacityRoundTripsThroughEncoding() throws {
+        let original = Config(notchPanelOpacity: 0.35, sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchPanelOpacity == 0.35)
+    }
 }

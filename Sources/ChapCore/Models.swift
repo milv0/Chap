@@ -266,11 +266,18 @@ public struct Config: Codable {
     public var notchLauncherEnabled: Bool
     /// 노치 패널의 시각 스타일.
     public var notchPanelStyle: NotchPanelStyle
+    /// 노치 패널 본체의 하단 불투명도 (0.2~1.0). 상단은 항상 완전 검정이다.
+    public var notchPanelOpacity: Double
     public var sites: [Site]
+
+    /// 패널 불투명도의 허용 범위. 하한은 텍스트 가독성 하한선이다.
+    public static let notchPanelOpacityRange: ClosedRange<Double> = 0.2...1.0
+    public static let notchPanelOpacityDefault: Double = 0.6
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
+        case notchPanelOpacity
         case sites
     }
 
@@ -282,6 +289,7 @@ public struct Config: Codable {
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
+        notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
@@ -291,6 +299,7 @@ public struct Config: Codable {
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
+        self.notchPanelOpacity = notchPanelOpacity
         self.sites = sites
     }
 
@@ -318,6 +327,13 @@ public struct Config: Codable {
         notchPanelStyle =
             (try? container.decodeIfPresent(String.self, forKey: .notchPanelStyle))
             .flatMap { NotchPanelStyle(rawValue: $0 ?? "") } ?? .black
+        // 범위 밖 값은 클램프, 타입이 어긋나면 기본값으로 취급한다 (관용 디코딩).
+        let rawOpacity =
+            (try? container.decodeIfPresent(Double.self, forKey: .notchPanelOpacity))
+            .flatMap { $0 } ?? Config.notchPanelOpacityDefault
+        notchPanelOpacity = min(
+            max(rawOpacity, Config.notchPanelOpacityRange.lowerBound),
+            Config.notchPanelOpacityRange.upperBound)
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -334,6 +350,7 @@ public struct Config: Codable {
         try container.encode(hiddenOrdered, forKey: .hiddenMenuLaunchTypes)
         try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
         try container.encode(notchPanelStyle.rawValue, forKey: .notchPanelStyle)
+        try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }
