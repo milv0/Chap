@@ -33,10 +33,11 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: 0.32)
 
     /// 콘텐츠는 형태가 거의 다 커진 뒤에 나타나고, 닫힐 때는 즉시 사라진다.
-    /// 아이폰 Dynamic Island처럼 콘텐츠가 늘어나는 왜곡 없이 제자리에서 페이드된다.
+    /// 등장은 아래에서 떠올라 자리잡는 부드러운 스프링
+    /// (Airbnb 검색바 안무의 stiffness 300 / damping 25 상당), 퇴장은 빠른 페이드.
     private var contentAnimation: Animation {
         reveal.revealed
-            ? .easeOut(duration: 0.22).delay(0.1)
+            ? .interpolatingSpring(stiffness: 300, damping: 25).delay(0.1)
             : .easeIn(duration: 0.1)
     }
 
@@ -136,6 +137,10 @@ struct NotchLauncherPanelView: View {
                 contentBody
                     .opacity(reveal.revealed ? 1 : 0)
                     .blur(radius: reveal.revealed ? 0 : 10)
+                    // 콘텐츠가 페이드만 하지 않고 살짝 아래에서 떠올라 자리잡는다
+                    // (Airbnb 검색바 안무의 content cross-fade phase).
+                    .offset(y: reveal.revealed ? 0 : 8)
+                    .scaleEffect(reveal.revealed ? 1 : 0.97, anchor: .top)
                     .animation(contentAnimation, value: reveal.revealed)
             }
             .frame(
