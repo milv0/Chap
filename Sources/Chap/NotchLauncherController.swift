@@ -16,6 +16,10 @@ final class NotchLauncherController {
     private var panel: NSPanel?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
+    /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
+    private var revealModel: NotchRevealModel?
+    /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
+    private var isPreviewPinned = false
 
     /// 패널에 표시할 섹션 공급자. 항상 최신 config 기준으로 재계산된다.
     var sectionsProvider: () -> [LauncherListSection] = { [] }
@@ -47,6 +51,8 @@ final class NotchLauncherController {
 
     func tearDown() {
         stopVisibilityMonitor()
+        isPreviewPinned = false
+        revealModel = nil
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -106,16 +112,18 @@ final class NotchLauncherController {
         let notchWidth = Self.notchRect(on: screen).width
         let minWidth = max(notchWidth + 80, Self.panelMinWidth)
 
+        let reveal = NotchRevealModel()
+        reveal.bottomOpacity = opacityProvider()
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
             style: styleProvider(),
-            bottomOpacity: opacityProvider(),
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
-            })
+            },
+            reveal: reveal)
         let hosting = NSHostingView(rootView: content)
         // 노치 구간 safe area가 콘텐츠를 아래로 밀지 않게 한다.
         hosting.safeAreaRegions = []
@@ -146,10 +154,36 @@ final class NotchLauncherController {
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = hosting
 
-        // 등장 애니메이션은 SwiftUI 콘텐츠가 노치 기준 확장으로 처리한다.
+        // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
         panel.orderFrontRegardless()
         self.panel = panel
+        self.revealModel = reveal
+        DispatchQueue.main.async {
+            withAnimation(NotchLauncherPanelView.openAnimation) {
+                reveal.revealed = true
+            }
+        }
         startVisibilityMonitor()
+    }
+
+    // MARK: - Opacity preview
+
+    /// 설정 슬라이더 드래그 시작. 패널을 띄워 고정하고 실시간 값을 보여준다.
+    func beginOpacityPreview() {
+        isPreviewPinned = true
+        if panel == nil { showPanel() }
+        revealModel?.bottomOpacity = opacityProvider()
+    }
+
+    /// 드래그 중 값 변경을 즉시 반영한다.
+    func updateOpacityPreview(_ value: Double) {
+        revealModel?.bottomOpacity = value
+    }
+
+    /// 드래그 종료. 고정을 풀면 일반 규칙(마우스 위치)으로 닫힌다.
+    func endOpacityPreview() {
+        isPreviewPinned = false
+        lastInsideDate = Date()
     }
 
     /// 마우스가 노치·패널을 벗어난 채 `hideDelay`를 넘기면 닫는다.
@@ -173,6 +207,11 @@ final class NotchLauncherController {
             stopVisibilityMonitor()
             return
         }
+        // 프리뷰 고정 중에는 마우스 위치와 무관하게 유지한다.
+        if isPreviewPinned {
+            lastInsideDate = Date()
+            return
+        }
         let location = NSEvent.mouseLocation
         let stayRegion = panel.frame
             .union(hotzoneWindow?.frame ?? panel.frame)
@@ -190,14 +229,16 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
-        NSAnimationContext.runAnimationGroup(
-            { context in
-                context.duration = 0.15
-                panel.animator().alphaValue = 0
-            },
-            completionHandler: {
-                panel.orderOut(nil)
-            })
+        // 접힘: 노치로 smooth하게 말려 들어간 뒤 창을 내린다.
+        if let reveal = revealModel {
+            withAnimation(NotchLauncherPanelView.closeAnimation) {
+                reveal.revealed = false
+            }
+        }
+        revealModel = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) {
+            panel.orderOut(nil)
+        }
     }
 }
 

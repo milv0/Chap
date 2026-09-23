@@ -1,5 +1,12 @@
 import SwiftUI
 
+/// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
+/// 불투명도 프리뷰를 구동할 수 있도록 뷰 외부에서 관찰 가능한 모델로 둔다.
+final class NotchRevealModel: ObservableObject {
+    @Published var revealed = false
+    @Published var bottomOpacity: Double = Config.notchPanelOpacityDefault
+}
+
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
 /// `LauncherListPolicy` 결과를 그대로 렌더링한다.
 ///
@@ -13,12 +20,14 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
-    /// 본체 하단 불투명도 (0.2~1.0). 상단 노치 구간은 항상 완전 검정이다.
-    let bottomOpacity: Double
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
+    @ObservedObject var reveal: NotchRevealModel
 
-    @State private var revealed = false
+    /// Dynamic Island 문법의 모션 커브 (DynamicNotchKit과 동일한 구성):
+    /// 펼침은 오버슈트가 있는 bouncy, 접힘은 바운스 없는 smooth.
+    static let openAnimation: Animation = .bouncy(duration: 0.4)
+    static let closeAnimation: Animation = .smooth(duration: 0.32)
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -60,6 +69,7 @@ struct NotchLauncherPanelView: View {
         switch style {
         case .black:
             // 중간 지점은 하단 값과 완전 검정 사이를 보간해 자연스럽게 흘러내린다.
+            let bottomOpacity = reveal.bottomOpacity
             let midOpacity = bottomOpacity + (1 - bottomOpacity) * 0.8
             return AnyShapeStyle(
                 LinearGradient(
@@ -108,17 +118,14 @@ struct NotchLauncherPanelView: View {
         // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
         .padding(.horizontal, Self.shadowPadding)
         .padding(.bottom, Self.shadowPadding)
-        // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
-        .scaleEffect(x: 1, y: revealed ? 1 : 0.4, anchor: .top)
-        .opacity(revealed ? 1 : 0)
+        // Dynamic Island 문법의 펼침/접힘: 노치 기준 확장 + 블러 + 페이드.
+        // 커브는 컨트롤러가 withAnimation으로 구동한다 (펼침 bouncy, 접힘 smooth).
+        .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.25, anchor: .top)
+        .blur(radius: reveal.revealed ? 0 : 8)
+        .opacity(reveal.revealed ? 1 : 0)
         // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
         // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear {
-            withAnimation(.interpolatingSpring(stiffness: 320, damping: 26)) {
-                revealed = true
-            }
-        }
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
