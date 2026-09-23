@@ -94,7 +94,8 @@ extension AppDelegate {
             launchAtLogin: config.launchAtLogin,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             statusBarIcon: config.statusBarIcon,
-            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes)
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: config.notchLauncherEnabled)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -104,6 +105,7 @@ extension AppDelegate {
                 optionShortcutsEnabled: payload.optionShortcutsEnabled,
                 statusBarIcon: payload.statusBarIcon,
                 hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
+                notchLauncherEnabled: payload.notchLauncherEnabled,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {

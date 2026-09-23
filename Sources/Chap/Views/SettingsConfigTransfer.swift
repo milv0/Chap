@@ -150,7 +150,9 @@ enum SettingsConfigTransfer {
                         launchAtLogin: imported.launchAtLogin,
                         optionShortcutsEnabled: imported.optionShortcutsEnabled,
                         statusBarIcon: imported.statusBarIcon,
-                        hiddenMenuLaunchTypes: imported.hiddenMenuLaunchTypes)) ?? false
+                        hiddenMenuLaunchTypes: imported.hiddenMenuLaunchTypes,
+                        // 노치 토글은 기기(노치 유무) 종속이라 import로 덮지 않는다.
+                        notchLauncherEnabled: vm.notchLauncherEnabled)) ?? false
             guard saved else { return false }
 
             vm.sites = imported.sites

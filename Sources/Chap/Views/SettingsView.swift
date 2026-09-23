@@ -654,6 +654,7 @@ struct SettingsView: View {
             optionShortcutsEnabled: vm.optionShortcutsEnabled,
             statusBarIcon: vm.statusBarIcon,
             hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: vm.notchLauncherEnabled,
             sites: vm.sites)
         let result = validateConfig(config)
 
@@ -706,7 +707,8 @@ struct SettingsView: View {
                     launchAtLogin: vm.launchAtLogin,
                     optionShortcutsEnabled: vm.optionShortcutsEnabled,
                     statusBarIcon: vm.statusBarIcon,
-                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes)) ?? true
+                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+                    notchLauncherEnabled: vm.notchLauncherEnabled)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow
             vm.originalLogin = vm.launchAtLogin

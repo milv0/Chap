@@ -7,6 +7,7 @@ public struct SettingsPayload {
     public let optionShortcutsEnabled: Bool
     public let statusBarIcon: StatusBarIconChoice
     public let hiddenMenuLaunchTypes: Set<LaunchType>
+    public let notchLauncherEnabled: Bool
 }
 
 public final class SettingsViewModel: ObservableObject {
@@ -16,12 +17,14 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var optionShortcutsEnabled: Bool
     @Published public var statusBarIcon: StatusBarIconChoice
     @Published public var hiddenMenuLaunchTypes: Set<LaunchType>
+    @Published public var notchLauncherEnabled: Bool
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
     @Published public var originalOptionShortcutsEnabled: Bool
     @Published public var originalStatusBarIcon: StatusBarIconChoice
     @Published public var originalHiddenMenuLaunchTypes: Set<LaunchType>
+    @Published public var originalNotchLauncherEnabled: Bool
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -32,6 +35,7 @@ public final class SettingsViewModel: ObservableObject {
             || optionShortcutsEnabled != originalOptionShortcutsEnabled
             || statusBarIcon != originalStatusBarIcon
             || hiddenMenuLaunchTypes != originalHiddenMenuLaunchTypes
+            || notchLauncherEnabled != originalNotchLauncherEnabled
     }
 
     public func markSaved() {
@@ -41,6 +45,7 @@ public final class SettingsViewModel: ObservableObject {
         originalOptionShortcutsEnabled = optionShortcutsEnabled
         originalStatusBarIcon = statusBarIcon
         originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
+        originalNotchLauncherEnabled = notchLauncherEnabled
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -53,6 +58,7 @@ public final class SettingsViewModel: ObservableObject {
                 optionShortcutsEnabled: self.optionShortcutsEnabled,
                 statusBarIcon: self.statusBarIcon,
                 hiddenMenuLaunchTypes: self.hiddenMenuLaunchTypes,
+                notchLauncherEnabled: self.notchLauncherEnabled,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
@@ -76,7 +82,8 @@ public final class SettingsViewModel: ObservableObject {
                     launchAtLogin: launchAtLogin,
                     optionShortcutsEnabled: optionShortcutsEnabled,
                     statusBarIcon: statusBarIcon,
-                    hiddenMenuLaunchTypes: hiddenMenuLaunchTypes)) ?? true
+                    hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
+                    notchLauncherEnabled: notchLauncherEnabled)) ?? true
         if saved { markSaved() }
         return saved
     }
@@ -87,6 +94,7 @@ public final class SettingsViewModel: ObservableObject {
         optionShortcutsEnabled: Bool = true,
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
+        notchLauncherEnabled: Bool = false,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
         self.sites = sites
@@ -95,12 +103,14 @@ public final class SettingsViewModel: ObservableObject {
         self.optionShortcutsEnabled = optionShortcutsEnabled
         self.statusBarIcon = statusBarIcon
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
+        self.notchLauncherEnabled = notchLauncherEnabled
         self.originalSites = sites
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
         self.originalOptionShortcutsEnabled = optionShortcutsEnabled
         self.originalStatusBarIcon = statusBarIcon
         self.originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
+        self.originalNotchLauncherEnabled = notchLauncherEnabled
         self.saveDebouncer = saveDebouncer
     }
 }

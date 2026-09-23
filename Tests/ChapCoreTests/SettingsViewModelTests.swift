@@ -73,6 +73,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchLauncherToggle() {
+        let vm = SettingsViewModel(sites: baseSites, notchLauncherEnabled: false)
+        vm.notchLauncherEnabled = true
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
@@ -101,7 +107,8 @@ struct SettingsViewModelTests {
                 launchAtLogin: vm.launchAtLogin,
                 optionShortcutsEnabled: vm.optionShortcutsEnabled,
                 statusBarIcon: vm.statusBarIcon,
-                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes))
+                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+                notchLauncherEnabled: vm.notchLauncherEnabled))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
