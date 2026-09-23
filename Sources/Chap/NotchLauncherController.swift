@@ -4,21 +4,30 @@ import SwiftUI
 /// 노치 아래에 런처 목록 패널을 띄우는 컨트롤러.
 ///
 /// 상태바 NSMenu를 대체하지 않는 추가 표면이다. 노치 위 투명 핫존에 마우스가
-/// 올라오면 패널을 펼치고, 마우스가 패널 밖으로 나가거나 항목을 실행하면 닫는다.
+/// 올라오면 패널을 펼치고, 마우스가 노치·패널 영역 밖에 머물면 닫는다.
 /// `.nonactivatingPanel`이라 전면 앱 포커스를 빼앗지 않는다.
+///
+/// 표시 중 판단은 tracking area가 아니라 마우스 위치 폴링 하나로만 한다.
+/// 겹친 두 창의 entered/exited 경합(패널 등장 → 핫존 exited → 숨김 →
+/// 핫존 entered → 재등장)이 플리커를 만들기 때문이다.
 /// 모든 호출은 메인 스레드 전제(AppKit 윈도우 소유).
 final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
-    private var hideTimer: Timer?
+    private var visibilityTimer: Timer?
+    private var lastInsideDate = Date()
 
     /// 패널에 표시할 섹션 공급자. 항상 최신 config 기준으로 재계산된다.
     var sectionsProvider: () -> [LauncherListSection] = { [] }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
-    private static let panelWidth: CGFloat = 300
-    private static let hideDelay: TimeInterval = 0.35
+    private static let panelMinWidth: CGFloat = 300
+    /// 노치·패널 밖에서 이 시간 이상 머물면 닫는다.
+    private static let hideDelay: TimeInterval = 0.4
+    private static let pollInterval: TimeInterval = 0.08
+    /// 경계에서의 미세한 좌표 흔들림으로 닫히지 않도록 주는 여유.
+    private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
     func update(enabled: Bool) {
@@ -33,8 +42,7 @@ final class NotchLauncherController {
     }
 
     func tearDown() {
-        hideTimer?.invalidate()
-        hideTimer = nil
+        stopVisibilityMonitor()
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -57,8 +65,8 @@ final class NotchLauncherController {
         window.ignoresMouseEvents = false
 
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
         tracker.onEntered = { [weak self] in self?.showPanel() }
-        tracker.onExited = { [weak self] in self?.scheduleHide() }
         window.contentView = tracker
         window.orderFrontRegardless()
         hotzoneWindow = window
@@ -83,8 +91,6 @@ final class NotchLauncherController {
     // MARK: - Panel
 
     private func showPanel() {
-        hideTimer?.invalidate()
-        hideTimer = nil
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
         let sections = sectionsProvider()
@@ -94,7 +100,7 @@ final class NotchLauncherController {
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
         let inset = screen.safeAreaInsets.top
         let notchWidth = Self.notchRect(on: screen).width
-        let minWidth = max(notchWidth + 80, Self.panelWidth)
+        let minWidth = max(notchWidth + 80, Self.panelMinWidth)
 
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
@@ -123,35 +129,50 @@ final class NotchLauncherController {
         panel.hasShadow = true
         panel.collectionBehavior = [.canJoinAllSpaces, .transient]
         panel.becomesKeyOnlyIfNeeded = true
-
-        let container = HoverView(frame: NSRect(origin: .zero, size: frame.size))
-        container.onEntered = { [weak self] in
-            self?.hideTimer?.invalidate()
-            self?.hideTimer = nil
-        }
-        container.onExited = { [weak self] in self?.scheduleHide() }
-        hosting.frame = container.bounds
-        hosting.autoresizingMask = [.width, .height]
-        container.addSubview(hosting)
-        panel.contentView = container
+        panel.contentView = hosting
 
         // 등장 애니메이션은 SwiftUI 콘텐츠가 노치 기준 확장으로 처리한다.
         panel.orderFrontRegardless()
         self.panel = panel
+        startVisibilityMonitor()
     }
 
-    private func scheduleHide() {
-        hideTimer?.invalidate()
-        hideTimer = Timer.scheduledTimer(
-            withTimeInterval: Self.hideDelay, repeats: false
+    /// 마우스가 노치·패널을 벗어난 채 `hideDelay`를 넘기면 닫는다.
+    private func startVisibilityMonitor() {
+        stopVisibilityMonitor()
+        lastInsideDate = Date()
+        visibilityTimer = Timer.scheduledTimer(
+            withTimeInterval: Self.pollInterval, repeats: true
         ) { [weak self] _ in
-            self?.hidePanel()
+            self?.evaluateVisibility()
+        }
+    }
+
+    private func stopVisibilityMonitor() {
+        visibilityTimer?.invalidate()
+        visibilityTimer = nil
+    }
+
+    private func evaluateVisibility() {
+        guard let panel else {
+            stopVisibilityMonitor()
+            return
+        }
+        let location = NSEvent.mouseLocation
+        let stayRegion = panel.frame
+            .union(hotzoneWindow?.frame ?? panel.frame)
+            .insetBy(dx: -Self.dwellMargin, dy: -Self.dwellMargin)
+        if stayRegion.contains(location) {
+            lastInsideDate = Date()
+            return
+        }
+        if Date().timeIntervalSince(lastInsideDate) >= Self.hideDelay {
+            hidePanel()
         }
     }
 
     private func hidePanel() {
-        hideTimer?.invalidate()
-        hideTimer = nil
+        stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
         NSAnimationContext.runAnimationGroup(
@@ -165,10 +186,9 @@ final class NotchLauncherController {
     }
 }
 
-/// mouseEntered/Exited 콜백만 제공하는 추적 뷰.
+/// mouseEntered 콜백만 제공하는 추적 뷰.
 private final class HoverView: NSView {
     var onEntered: () -> Void = {}
-    var onExited: () -> Void = {}
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -181,5 +201,4 @@ private final class HoverView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) { onEntered() }
-    override func mouseExited(with event: NSEvent) { onExited() }
 }
