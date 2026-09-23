@@ -221,21 +221,25 @@ struct SettingsView: View {
                         // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
                         // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
                         if !indices.isEmpty || searchText.isEmpty {
-                            Text(typeSectionTitle(type))
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 8)
-                                .padding(.top, 8)
+                            // 제목 옆 (n/4) 카운트로 타입별 한도를 상시 보여준다.
+                            HStack(spacing: 4) {
+                                Text(typeSectionTitle(type))
+                                    .foregroundColor(DS.textSecondary)
+                                Text(
+                                    "(\(SiteCountLimitPolicy.count(of: type, in: vm.sites))"
+                                        + "/\(SiteCountLimitPolicy.maxPerLaunchType))"
+                                )
+                                .foregroundColor(DS.textTertiary)
+                                .monospacedDigit()
+                            }
+                            .font(DS.captionFont)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                             if indices.isEmpty {
                                 SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
                                     addSite(type: type)
                                 }
-                            } else if !SiteCountLimitPolicy.canAdd(type, to: vm.sites) {
-                                Text("Limit reached (\(SiteCountLimitPolicy.maxPerLaunchType))")
-                                    .font(DS.captionFont)
-                                    .foregroundColor(DS.textTertiary)
-                                    .padding(.horizontal, 8)
                             }
                             ForEach(indices, id: \.self) { i in
                                 SidebarItem(
