@@ -144,11 +144,7 @@ struct NotchLauncherPanelView: View {
             .padding(.bottom, 1)
 
             ForEach(section.entries, id: \.siteIndex) { entry in
-                NotchLauncherRow(
-                    entry: entry,
-                    // 패널이 투명해진 만큼 행 받침을 진하게 해 국소 대비를 보상한다.
-                    contrastBackup: 1 - reveal.bottomOpacity
-                ) {
+                NotchLauncherRow(entry: entry) {
                     onLaunch(entry.siteIndex)
                 }
             }
@@ -167,8 +163,6 @@ struct NotchLauncherPanelView: View {
 
 private struct NotchLauncherRow: View {
     let entry: LauncherListEntry
-    /// 0(패널 불투명)~0.8(최대 투명). 값이 클수록 행 받침을 진하게 깐다.
-    let contrastBackup: Double
     let action: () -> Void
 
     @State private var isHovered = false
@@ -191,25 +185,15 @@ private struct NotchLauncherRow: View {
                         .padding(.vertical, 1.5)
                         .background(
                             RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(Color.black.opacity(0.35 + contrastBackup * 0.4))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                        .fill(Color.white.opacity(0.10))
-                                )
+                                .fill(Color.white.opacity(0.10))
                         )
                 }
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 5)
             .background(
-                ZStack {
-                    // 투명해진 만큼 진해지는 국소 받침: 배경화면 위에서도
-                    // 글자 뒤만 어둡게 유지해 대비를 보상한다.
-                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                        .fill(Color.black.opacity(contrastBackup * 0.55))
-                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                        .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
-                }
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
             )
             .contentShape(Rectangle())
         }
