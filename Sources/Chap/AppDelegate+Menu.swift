@@ -271,6 +271,24 @@ extension AppDelegate {
         menu.delegate = self
         statusItem.menu = menu
         configureGlobalHotKeys()
+        refreshNotchLauncher()
+    }
+
+    /// 노치 런처를 최신 config로 동기화한다. 메뉴와 같은 목록 정책을 쓰므로
+    /// 숨긴 섹션·순서가 항상 일치한다. 테스트에서는 창을 만들지 않는다.
+    func refreshNotchLauncher() {
+        guard !isRunningTests else { return }
+        notchLauncher.sectionsProvider = { [weak self] in
+            guard let self else { return [] }
+            return LauncherListPolicy.sections(
+                sites: self.config.sites,
+                hiddenLaunchTypes: self.config.hiddenMenuLaunchTypes)
+        }
+        notchLauncher.onLaunch = { [weak self] index in
+            guard let self, index >= 0, index < self.config.sites.count else { return }
+            self.launchSite(self.config.sites[index])
+        }
+        notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
 
     private func configureGlobalHotKeys() {

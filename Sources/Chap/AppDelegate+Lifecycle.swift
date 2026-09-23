@@ -44,6 +44,7 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         globalHotKeyManager.stop()
+        notchLauncher.tearDown()
     }
 
     // MARK: - Welcome window
@@ -129,6 +130,7 @@ extension AppDelegate {
             let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled
             let previousHiddenMenuLaunchTypes = self.config.hiddenMenuLaunchTypes
             let previousStatusBarIcon = self.config.statusBarIcon
+            let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -158,6 +160,9 @@ extension AppDelegate {
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
             {
                 DispatchQueue.main.async { self.buildMenu() }
+            } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled {
+                // 메뉴 재구성 없이 토글만 바뀌어도 노치 런처는 즉시 반영한다.
+                DispatchQueue.main.async { self.refreshNotchLauncher() }
             }
             return true
         }

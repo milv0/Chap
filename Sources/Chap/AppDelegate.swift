@@ -5,6 +5,7 @@ import os
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     let keepAwake = KeepAwakeController()
+    let notchLauncher = NotchLauncherController()
     weak var keepAwakeMenuItem: NSMenuItem?
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
