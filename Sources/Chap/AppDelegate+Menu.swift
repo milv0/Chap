@@ -63,10 +63,19 @@ extension AppDelegate {
                 of: NSImage(named: "StatusBarIcon"),
                 size: NSSize(width: 22, height: 22))
             {
-                icon.isTemplate = true
-                return icon
+                guard keepAwakeActive else {
+                    icon.isTemplate = true
+                    return icon
+                }
+                return Self.accentTintedStatusBarImage(
+                    icon, accessibilityDescription: "Chap – Keep Awake active")
             }
             // 리소스 누락 시 심볼 폴백
+            if keepAwakeActive {
+                return Self.accentStatusBarSymbolImage(
+                    name: "bolt.fill",
+                    accessibilityDescription: "Chap – Keep Awake active")
+            }
             return Self.statusBarSymbolImage(
                 name: "bolt.fill", accessibilityDescription: "Chap")
         case .lightning:
@@ -111,6 +120,26 @@ extension AppDelegate {
         symbol.draw(in: rect, from: .zero, operation: .sourceOver, fraction: 1)
         image.unlockFocus()
         image.isTemplate = false
+        return image
+    }
+
+    /// Default PNG 아이콘의 알파 마스크를 테마 블루로 틴트한다.
+    /// 원본과 동일한 22×22 canvas를 사용해 Keep Awake 시작/종료 시 geometry가 변하지 않는다.
+    static func accentTintedStatusBarImage(
+        _ source: NSImage, accessibilityDescription: String?
+    ) -> NSImage? {
+        let size = source.size
+        guard size.width > 0, size.height > 0 else { return nil }
+
+        let image = NSImage(size: size)
+        image.lockFocus()
+        source.draw(
+            in: NSRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1)
+        accentColor.setFill()
+        NSRect(origin: .zero, size: size).fill(using: .sourceIn)
+        image.unlockFocus()
+        image.isTemplate = false
+        image.accessibilityDescription = accessibilityDescription
         return image
     }
 

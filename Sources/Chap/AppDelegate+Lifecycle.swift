@@ -335,23 +335,19 @@ extension AppDelegate {
     }
 
     @objc func quitApp() {
-        guard KeepAwakePolicy.requiresQuitConfirmation(isActive: keepAwake.isActive) else {
-            NSApp.terminate(nil)
-            return
-        }
-
         let alert = NSAlert()
-        alert.messageText = "Keep Awake is active"
-        alert.informativeText =
-            "Quitting Chap will end the Keep Awake session and allow the display to sleep again."
+        alert.messageText = "Quit Chap?"
+        alert.informativeText = KeepAwakePolicy.quitConfirmationInfo
         alert.alertStyle = .warning
         // 첫 버튼이 기본(Return) 동작이므로 안전한 Cancel을 먼저 둔다.
         alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Quit Anyway")
+        alert.addButton(withTitle: "Quit")
         alert.buttons.last?.hasDestructiveAction = true
         guard alert.runModal() == .alertSecondButtonReturn else { return }
 
-        keepAwake.deactivate()
+        if keepAwake.isActive {
+            keepAwake.deactivate()
+        }
         NSApp.terminate(nil)
     }
 

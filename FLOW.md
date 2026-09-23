@@ -516,9 +516,9 @@ VM 갱신 → `markSaved()` → fixes/warnings 요약 alert로 이어진다.
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 
-`AppDelegate › quitApp()`은 Keep Awake가 비활성이면 즉시 종료한다. 활성 중이면 Cancel을 기본
-버튼으로 한 확인창을 띄우고, 사용자가 Quit Anyway를 선택한 경우에만 어써션을 명시적으로
-해제한 뒤 종료한다. 강제 종료·크래시에서는 IOKit이 프로세스 소유 어써션을 자동 해제한다.
+`AppDelegate › quitApp()`은 항상 Cancel을 기본 버튼으로 한 종료 확인창을 띄우고, 사용자가 Quit을
+명시적으로 선택한 경우에만 종료한다. Keep Awake가 활성 중이면 어써션을 명시적으로 해제한 뒤
+종료하며, 강제 종료·크래시에서는 IOKit이 프로세스 소유 어써션을 자동 해제한다.
 
 `ResizeContext`는 락이 없다. AXObserver 콜백과 스캔 루프가 **같은 스레드**에서 실행되기 때문이며,
 이 전제를 깨는 변경(다른 큐에서 ctx 접근)은 데이터 레이스가 된다.
