@@ -247,6 +247,14 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
     case lightning = "lightning"
 }
 
+/// 노치 런처 패널의 시각 스타일.
+public enum NotchPanelStyle: String, Codable, CaseIterable {
+    /// 노치와 이어지는 순수 검정 도크.
+    case black = "black"
+    /// 하단이 빙하 아랫부분처럼 뾰족한 얼음 그라데이션 도크.
+    case iceberg = "iceberg"
+}
+
 public struct Config: Codable {
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
@@ -256,11 +264,14 @@ public struct Config: Codable {
     public var hiddenMenuLaunchTypes: Set<LaunchType>
     /// 노치 런처 표시 여부. 상태바 NSMenu는 이 값과 무관하게 항상 유지된다.
     public var notchLauncherEnabled: Bool
+    /// 노치 패널의 시각 스타일.
+    public var notchPanelStyle: NotchPanelStyle
     public var sites: [Site]
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
-        case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, sites
+        case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
+        case sites
     }
 
     public init(
@@ -270,6 +281,7 @@ public struct Config: Codable {
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
+        notchPanelStyle: NotchPanelStyle = .black,
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
@@ -278,6 +290,7 @@ public struct Config: Codable {
         self.statusBarIcon = statusBarIcon
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.notchLauncherEnabled = notchLauncherEnabled
+        self.notchPanelStyle = notchPanelStyle
         self.sites = sites
     }
 
@@ -301,6 +314,10 @@ public struct Config: Codable {
         // 값 타입이 어긋나도 설정 전체를 버리지 않고 off로 취급한다 (관용 디코딩).
         notchLauncherEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchLauncherEnabled)) ?? false
+        // 알 수 없는 스타일 문자열은 기본 스타일로 취급한다 (관용 디코딩).
+        notchPanelStyle =
+            (try? container.decodeIfPresent(String.self, forKey: .notchPanelStyle))
+            .flatMap { NotchPanelStyle(rawValue: $0 ?? "") } ?? .black
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -316,6 +333,7 @@ public struct Config: Codable {
             .map(\.rawValue)
         try container.encode(hiddenOrdered, forKey: .hiddenMenuLaunchTypes)
         try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
+        try container.encode(notchPanelStyle.rawValue, forKey: .notchPanelStyle)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

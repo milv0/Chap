@@ -39,4 +39,35 @@ struct NotchLauncherSettingTests {
 
         #expect(decoded.notchLauncherEnabled)
     }
+
+    @Test("style defaults to black when the key is missing")
+    func styleDefaultsToBlack() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchPanelStyle == .black)
+    }
+
+    @Test("decodes the iceberg style")
+    func decodesIcebergStyle() throws {
+        let config = try decodeConfig(#"{"notchPanelStyle": "iceberg", "sites": []}"#)
+
+        #expect(config.notchPanelStyle == .iceberg)
+    }
+
+    @Test("an unknown style string falls back to black instead of failing")
+    func unknownStyleFallsBackToBlack() throws {
+        let config = try decodeConfig(#"{"notchPanelStyle": "lava", "sites": []}"#)
+
+        #expect(config.notchPanelStyle == .black)
+    }
+
+    @Test("style round-trips through encoding")
+    func styleRoundTripsThroughEncoding() throws {
+        let original = Config(notchPanelStyle: .iceberg, sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchPanelStyle == .iceberg)
+    }
 }
