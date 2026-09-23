@@ -17,6 +17,8 @@ struct NotchLauncherPanelView: View {
     @State private var revealed = false
 
     private static let columnWidth: CGFloat = 160
+    /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
+    static let shadowPadding: CGFloat = 28
 
     var body: some View {
         // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
@@ -35,7 +37,19 @@ struct NotchLauncherPanelView: View {
                 bottomLeadingRadius: 18, bottomTrailingRadius: 18, style: .continuous
             )
             .fill(Color.black)
+            // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
+            .overlay(
+                UnevenRoundedRectangle(
+                    bottomLeadingRadius: 18, bottomTrailingRadius: 18, style: .continuous
+                )
+                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
+            )
+            // 밝은 배경에서 떠 보이게 하는 부드러운 확산 그림자.
+            .shadow(color: .black.opacity(0.45), radius: 16, y: 6)
         )
+        // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
+        .padding(.horizontal, Self.shadowPadding)
+        .padding(.bottom, Self.shadowPadding)
         // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
         .scaleEffect(x: 1, y: revealed ? 1 : 0.4, anchor: .top)
         .opacity(revealed ? 1 : 0)

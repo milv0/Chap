@@ -126,7 +126,9 @@ final class NotchLauncherController {
         panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        // 그림자는 SwiftUI 쪽 확산 그림자가 담당한다. 시스템 그림자는 스케일
+        // 등장 중 형태를 따라오지 못해 잔상을 만들므로 끈다.
+        panel.hasShadow = false
         panel.collectionBehavior = [.canJoinAllSpaces, .transient]
         panel.becomesKeyOnlyIfNeeded = true
         panel.contentView = hosting
