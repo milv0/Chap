@@ -19,6 +19,27 @@ struct NotchSettingsView: View {
         (NSApp.delegate as? AppDelegate)?.notchLauncher
     }
 
+    /// 슬롯 배열의 개별 칸 바인딩. 배열 길이는 모델이 4로 보장한다.
+    private func slotBinding(_ index: Int) -> Binding<NotchWidget> {
+        Binding(
+            get: { vm.notchWidgets.indices.contains(index) ? vm.notchWidgets[index] : .none },
+            set: { newValue in
+                guard vm.notchWidgets.indices.contains(index) else { return }
+                vm.notchWidgets[index] = newValue
+            })
+    }
+
+    private static func widgetName(_ widget: NotchWidget) -> String {
+        switch widget {
+        case .sites: return "Sites"
+        case .apps: return "Apps"
+        case .folders: return "Folders"
+        case .scripts: return "Scripts"
+        case .screenshots: return "Screenshots"
+        case .none: return "Empty"
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -46,6 +67,29 @@ struct NotchSettingsView: View {
 
                     // 세부 설정은 활성화 상태에서만 펼쳐진다.
                     if Self.hasNotchScreen && vm.notchLauncherEnabled {
+                        Section("Widgets") {
+                            // 4칸 각각에 배치할 위젯을 고른다. 왼쪽 칸부터 순서대로.
+                            ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
+                                Picker(
+                                    "Slot \(index + 1)",
+                                    selection: slotBinding(index)
+                                ) {
+                                    ForEach(NotchWidget.allCases, id: \.self) { widget in
+                                        Text(Self.widgetName(widget)).tag(widget)
+                                    }
+                                }
+                                .onChange(of: vm.notchWidgets) { _, _ in onSave() }
+                            }
+
+                            Label(
+                                "Slots fill the panel from the left. Empty slots are "
+                                    + "skipped.",
+                                systemImage: "info.circle"
+                            )
+                            .font(.caption)
+                            .foregroundColor(DS.textSecondary)
+                        }
+
                         Section("Appearance") {
                             Picker("Style", selection: $vm.notchPanelStyle) {
                                 Text("Black").tag(NotchPanelStyle.black)
