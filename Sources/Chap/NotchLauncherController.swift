@@ -21,8 +21,8 @@ final class NotchLauncherController {
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
 
-    /// 패널에 표시할 섹션 공급자. 항상 최신 config 기준으로 재계산된다.
-    var sectionsProvider: () -> [LauncherListSection] = { [] }
+    /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
+    var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .black }
     /// 패널 하단 불투명도 공급자.
@@ -103,8 +103,8 @@ final class NotchLauncherController {
     private func showPanel() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
-        let sections = sectionsProvider()
-        guard !sections.isEmpty else { return }
+        let slots = slotsProvider()
+        guard !slots.isEmpty else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
@@ -118,7 +118,7 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             style: styleProvider(),
-            sections: sections,
+            slots: slots,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)

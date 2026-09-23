@@ -278,11 +278,24 @@ extension AppDelegate {
     /// 숨긴 섹션·순서가 항상 일치한다. 테스트에서는 창을 만들지 않는다.
     func refreshNotchLauncher() {
         guard !isRunningTests else { return }
-        notchLauncher.sectionsProvider = { [weak self] in
+        notchLauncher.slotsProvider = { [weak self] in
             guard let self else { return [] }
-            return LauncherListPolicy.sections(
-                sites: self.config.sites,
-                hiddenLaunchTypes: self.config.hiddenMenuLaunchTypes)
+            // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김
+            // 설정과 무관하게 모든 launch type 섹션에서 고른다.
+            let sections = LauncherListPolicy.sections(
+                sites: self.config.sites, hiddenLaunchTypes: [])
+            return self.config.notchWidgets.compactMap { widget in
+                switch widget {
+                case .none:
+                    return nil
+                case .screenshots:
+                    return .screenshots(ScreenshotShelf.recentScreenshots())
+                case .sites, .apps, .folders, .scripts:
+                    // 해당 타입의 런처가 없으면 칸을 건너뛴다.
+                    return sections.first { $0.launchType == widget.launchType }
+                        .map(NotchSlotContent.launchers)
+                }
+            }
         }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .black

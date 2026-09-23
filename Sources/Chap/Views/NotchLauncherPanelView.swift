@@ -1,5 +1,13 @@
 import SwiftUI
 
+/// 노치 패널 한 칸의 렌더링 내용.
+enum NotchSlotContent {
+    /// 런처 목록 위젯.
+    case launchers(LauncherListSection)
+    /// 스크린샷 선반 위젯.
+    case screenshots([URL])
+}
+
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
 /// 불투명도 프리뷰를 구동할 수 있도록 뷰 외부에서 관찰 가능한 모델로 둔다.
 final class NotchRevealModel: ObservableObject {
@@ -20,7 +28,8 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
-    let sections: [LauncherListSection]
+    /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
+    let slots: [NotchSlotContent]
     let onLaunch: (Int) -> Void
     @ObservedObject var reveal: NotchRevealModel
 
@@ -115,10 +124,10 @@ struct NotchLauncherPanelView: View {
 
     /// 섹션 콘텐츠 본문.
     private var contentBody: some View {
-        // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
+        // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
         HStack(alignment: .top, spacing: DS.spacing) {
-            ForEach(sections, id: \.launchType) { section in
-                sectionView(section)
+            ForEach(Array(slots.enumerated()), id: \.offset) { _, slot in
+                slotView(slot)
                     .frame(width: Self.columnWidth, alignment: .leading)
             }
         }
@@ -129,6 +138,16 @@ struct NotchLauncherPanelView: View {
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
         )
         .frame(minWidth: minWidth)
+    }
+
+    @ViewBuilder
+    private func slotView(_ slot: NotchSlotContent) -> some View {
+        switch slot {
+        case .launchers(let section):
+            sectionView(section)
+        case .screenshots(let urls):
+            NotchScreenshotShelfView(urls: urls)
+        }
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
