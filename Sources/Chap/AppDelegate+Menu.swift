@@ -180,40 +180,32 @@ extension AppDelegate {
     func buildMenu() {
         ChromeLauncher.configureWindowReuse(sites: config.sites)
         let menu = NSMenu()
-        let launchTypeOrder = Dictionary(
-            uniqueKeysWithValues: LaunchType.allCases.enumerated().map { ($1, $0) })
-        let sortedSites = config.sites.enumerated().sorted {
-            launchTypeOrder[$0.element.launchType, default: Int.max]
-                < launchTypeOrder[$1.element.launchType, default: Int.max]
-        }
-        var lastType: LaunchType? = nil
+        // 목록 구성은 ChapCore 정책이 단독 기준이다. 노치 패널도 같은 정책을 쓴다.
+        let sections = LauncherListPolicy.sections(
+            sites: config.sites, hiddenLaunchTypes: config.hiddenMenuLaunchTypes)
         var addedSiteItem = false
-        // 숨긴 섹션은 메뉴에서 제외한다. ⌥ 단축키는 config.sites 기준이라 계속 동작.
-        for (i, site) in sortedSites where !config.hiddenMenuLaunchTypes.contains(site.launchType) {
+        for (sectionIndex, section) in sections.enumerated() {
             // 타입이 바뀌면 구분선 추가
-            if let last = lastType, last != site.launchType {
+            if sectionIndex > 0 {
                 menu.addItem(.separator())
             }
-            lastType = site.launchType
-            let keyEquiv =
-                config.optionShortcutsEnabled ? site.shortcut?.lowercased() ?? "" : ""
-            let item = NSMenuItem(
-                title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
-            if !keyEquiv.isEmpty {
-                item.keyEquivalentModifierMask = .option
+            for entry in section.entries {
+                let site = entry.site
+                let keyEquiv =
+                    config.optionShortcutsEnabled ? site.shortcut?.lowercased() ?? "" : ""
+                let item = NSMenuItem(
+                    title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
+                if !keyEquiv.isEmpty {
+                    item.keyEquivalentModifierMask = .option
+                }
+                item.image = NSImage(
+                    systemSymbolName: LauncherListPolicy.symbolName(for: section.launchType),
+                    accessibilityDescription: nil)
+                item.tag = entry.siteIndex
+                item.target = self
+                menu.addItem(item)
+                addedSiteItem = true
             }
-            let iconName: String
-            switch site.launchType {
-            case .url: iconName = "bolt.fill"
-            case .app: iconName = "app.fill"
-            case .finder: iconName = "folder.fill"
-            case .shell: iconName = "terminal.fill"
-            }
-            item.image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
-            item.tag = i
-            item.target = self
-            menu.addItem(item)
-            addedSiteItem = true
         }
         if addedSiteItem {
             menu.addItem(.separator())
