@@ -2,6 +2,26 @@
 
 All notable changes to Chap are documented in this file.
 
+## [1.3.8] — 2026-09-23
+
+### Added
+
+- **Safe Quit** — Every Quit request now requires confirmation, with Cancel
+  as the default. Confirmed quits release any active Keep Awake session.
+- **Keep Awake status indicator** — Active sessions turn both Default and
+  Lightning status bar icons Chap blue, returning them to normal when the
+  session ends or expires.
+
+### Improved
+
+- **Accessibility readback safety** — Replaced an unsafe generic pointer
+  conversion with typed Accessibility values, eliminating its Release warning.
+- **Settings and documentation consistency** — Hidden menu state is included
+  in manual validation, the settings close flow is simpler, and architecture
+  and user guidance are current.
+
+---
+
 ## [1.3.7] — 2026-09-22
 
 ### Added
