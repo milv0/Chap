@@ -19,17 +19,28 @@ struct NotchSettingsView: View {
         (NSApp.delegate as? AppDelegate)?.notchLauncher
     }
 
-    /// 슬롯 배열의 개별 칸 바인딩. 배열 길이는 모델이 4로 보장한다.
-    private func slotBinding(_ index: Int) -> Binding<NotchWidget> {
-        Binding(
-            get: { vm.notchWidgets.indices.contains(index) ? vm.notchWidgets[index] : .none },
-            set: { newValue in
-                guard vm.notchWidgets.indices.contains(index) else { return }
-                vm.notchWidgets[index] = newValue
-            })
+    /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
+    private static let paletteWidgets: [NotchWidget] = [
+        .sites, .apps, .folders, .scripts, .screenshots,
+    ]
+
+    private func slotWidget(_ index: Int) -> NotchWidget {
+        vm.notchWidgets.indices.contains(index) ? vm.notchWidgets[index] : .none
     }
 
-    private static func widgetName(_ widget: NotchWidget) -> String {
+    /// 위젯을 슬롯에 배치한다. 같은 위젯이 다른 슬롯에 있으면 자리를 맞바꿔
+    /// 중복 배치를 막는다.
+    private func assign(_ widget: NotchWidget, to index: Int) {
+        guard vm.notchWidgets.indices.contains(index) else { return }
+        if widget != .none, let existing = vm.notchWidgets.firstIndex(of: widget),
+            existing != index
+        {
+            vm.notchWidgets[existing] = vm.notchWidgets[index]
+        }
+        vm.notchWidgets[index] = widget
+    }
+
+    static func widgetName(_ widget: NotchWidget) -> String {
         switch widget {
         case .sites: return "Sites"
         case .apps: return "Apps"
@@ -38,6 +49,13 @@ struct NotchSettingsView: View {
         case .screenshots: return "Screenshots"
         case .none: return "Empty"
         }
+    }
+
+    static func widgetSymbol(_ widget: NotchWidget) -> String {
+        if let launchType = widget.launchType {
+            return LauncherListPolicy.symbolName(for: launchType)
+        }
+        return widget == .screenshots ? "camera.viewfinder" : "square.dashed"
     }
 
     var body: some View {
@@ -68,26 +86,34 @@ struct NotchSettingsView: View {
                     // 세부 설정은 활성화 상태에서만 펼쳐진다.
                     if Self.hasNotchScreen && vm.notchLauncherEnabled {
                         Section("Widgets") {
-                            // 4칸 각각에 배치할 위젯을 고른다. 왼쪽 칸부터 순서대로.
-                            ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
-                                Picker(
-                                    "Slot \(index + 1)",
-                                    selection: slotBinding(index)
-                                ) {
-                                    ForEach(NotchWidget.allCases, id: \.self) { widget in
-                                        Text(Self.widgetName(widget)).tag(widget)
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(
+                                    "Drag a widget into a slot. Slots fill the panel from the left."
+                                )
+                                .font(.caption)
+                                .foregroundColor(DS.textSecondary)
+
+                                // 노치 패널의 4칸을 그대로 본뜬 드롭 보드.
+                                HStack(spacing: 8) {
+                                    ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
+                                        WidgetSlotBox(
+                                            index: index,
+                                            widget: slotWidget(index),
+                                            onAssign: { assign($0, to: index) },
+                                            onClear: { assign(.none, to: index) })
                                     }
                                 }
-                                .onChange(of: vm.notchWidgets) { _, _ in onSave() }
-                            }
 
-                            Label(
-                                "Slots fill the panel from the left. Empty slots are "
-                                    + "skipped.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
+                                // 배치 가능한 위젯 팔레트. 이미 배치된 위젯은 흐리게.
+                                HStack(spacing: 8) {
+                                    ForEach(Self.paletteWidgets, id: \.self) { widget in
+                                        WidgetPaletteChip(
+                                            widget: widget,
+                                            isPlaced: vm.notchWidgets.contains(widget))
+                                    }
+                                }
+                            }
+                            .onChange(of: vm.notchWidgets) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {
@@ -141,5 +167,102 @@ struct NotchSettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.surfaceBg)
+    }
+}
+
+/// 노치 패널의 한 칸을 본뜬 드롭 대상. 위젯을 떨어뜨려 배치하고,
+/// 배치된 위젯은 다시 드래그해 다른 칸과 자리를 바꿀 수 있다.
+private struct WidgetSlotBox: View {
+    let index: Int
+    let widget: NotchWidget
+    let onAssign: (NotchWidget) -> Void
+    let onClear: () -> Void
+
+    @State private var isHovered = false
+    @State private var isDropTargeted = false
+
+    private var isEmpty: Bool { widget == .none }
+
+    var body: some View {
+        VStack(spacing: 5) {
+            Image(systemName: NotchSettingsView.widgetSymbol(widget))
+                .font(.system(size: 16))
+                .foregroundColor(isEmpty ? DS.textTertiary : DS.accent)
+            Text(isEmpty ? "Slot \(index + 1)" : NotchSettingsView.widgetName(widget))
+                .font(DS.captionFont)
+                .foregroundColor(isEmpty ? DS.textTertiary : DS.textPrimary)
+                .lineLimit(1)
+        }
+        .frame(width: 92, height: 64)
+        .background(
+            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                .fill(
+                    isDropTargeted
+                        ? DS.accentSurface
+                        : (isEmpty ? Color.clear : DS.accentSoft))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                .strokeBorder(
+                    isDropTargeted ? DS.accent : DS.border,
+                    style: StrokeStyle(lineWidth: 1, dash: isEmpty ? [4, 3] : []))
+        )
+        .overlay(alignment: .topTrailing) {
+            if isHovered && !isEmpty {
+                Button(action: onClear) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(DS.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .padding(3)
+                .accessibilityLabel("Clear slot \(index + 1)")
+            }
+        }
+        .onHover { isHovered = $0 }
+        // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
+        .draggable(widget.rawValue)
+        .dropDestination(for: String.self) { items, _ in
+            guard let raw = items.first, let dropped = NotchWidget(rawValue: raw) else {
+                return false
+            }
+            onAssign(dropped)
+            return true
+        } isTargeted: {
+            isDropTargeted = $0
+        }
+        .accessibilityLabel(
+            "Slot \(index + 1): \(NotchSettingsView.widgetName(widget))")
+    }
+}
+
+/// 배치 가능한 위젯 팔레트 칩. 슬롯으로 드래그해 넣는다.
+private struct WidgetPaletteChip: View {
+    let widget: NotchWidget
+    let isPlaced: Bool
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: NotchSettingsView.widgetSymbol(widget))
+                .font(DS.captionFont)
+                .foregroundColor(DS.accent)
+            Text(NotchSettingsView.widgetName(widget))
+                .font(DS.captionFont)
+                .foregroundColor(DS.textPrimary)
+        }
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(
+            Capsule().fill(DS.cardBg)
+        )
+        .overlay(Capsule().strokeBorder(DS.border, lineWidth: 1))
+        .opacity(isPlaced ? 0.45 : 1)
+        .draggable(widget.rawValue)
+        .help(
+            isPlaced
+                ? "Already placed — drag to move it to another slot."
+                : "Drag into a slot to place this widget."
+        )
+        .accessibilityLabel("\(NotchSettingsView.widgetName(widget)) widget")
     }
 }
