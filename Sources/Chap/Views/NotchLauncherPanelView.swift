@@ -20,29 +20,14 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
-    /// 노치 실폭. 접힌 상태의 가로 스케일을 노치 크기에 맞춰
-    /// "노치에서 자라나는" 실루엣을 만든다.
-    let notchWidth: CGFloat
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
     @ObservedObject var reveal: NotchRevealModel
 
-    /// Dynamic Island 문법의 모션 커브 (DynamicNotchKit과 동일한 구성):
-    /// 펼침은 오버슈트가 있는 bouncy, 접힘은 바운스 없는 smooth.
-    static let openAnimation: Animation = .bouncy(duration: 0.32, extraBounce: 0.05)
-    static let closeAnimation: Animation = .smooth(duration: 0.22)
-
-    /// 콘텐츠는 형태가 거의 다 커진 뒤에 나타나고, 닫힐 때는 즉시 사라진다.
-    /// 등장은 아래에서 떠올라 자리잡는 부드러운 스프링
-    /// (Airbnb 검색바 안무의 stiffness 300 / damping 25 상당), 퇴장은 빠른 페이드.
-    private var contentAnimation: Animation {
-        reveal.revealed
-            ? .interpolatingSpring(stiffness: 420, damping: 27).delay(0.05)
-            : .easeIn(duration: 0.08)
-    }
-
-    /// 콘텐츠의 자연 크기. 숨김 복사본으로 계측해 morph 목표 크기로 쓴다.
-    @State private var contentSize: CGSize = .zero
+    /// 원래의 모션: 패널 전체가 노치 상단 기준으로 스프링 확장하고,
+    /// 접힘은 빠른 페이드로 정리한다.
+    static let openAnimation: Animation = .interpolatingSpring(stiffness: 320, damping: 26)
+    static let closeAnimation: Animation = .smooth(duration: 0.18)
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -106,61 +91,29 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    /// morph 목표 크기. 계측 전에는 최소 폭 기준으로 폴백한다.
-    private var expandedSize: CGSize {
-        contentSize == .zero
-            ? CGSize(width: minWidth, height: topInset + 120) : contentSize
-    }
-
     var body: some View {
-        ZStack(alignment: .top) {
-            // 계측용 숨김 복사본: morph 목표(자연) 크기를 잰다.
-            contentBody
-                .fixedSize()
-                .hidden()
-                .background(
-                    GeometryReader { geo in
-                        Color.clear
-                            .onAppear { contentSize = geo.size }
-                            .onChange(of: geo.size) { _, size in contentSize = size }
-                    }
-                )
-
-            // 실제 morph 컨테이너: 형태의 프레임 자체가 노치 크기에서
-            // 최종 크기로 팽창한다. 콘텐츠는 늘어나지 않고 클리핑된다.
-            ZStack(alignment: .top) {
+        contentBody
+            .background(
                 panelShape
                     .fill(panelFill)
                     // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
                     // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
                     .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
-                contentBody
-                    .opacity(reveal.revealed ? 1 : 0)
-                    .blur(radius: reveal.revealed ? 0 : 10)
-                    // 콘텐츠가 페이드만 하지 않고 살짝 아래에서 떠올라 자리잡는다
-                    // (Airbnb 검색바 안무의 content cross-fade phase).
-                    .offset(y: reveal.revealed ? 0 : 8)
-                    .scaleEffect(reveal.revealed ? 1 : 0.97, anchor: .top)
-                    .animation(contentAnimation, value: reveal.revealed)
-            }
-            .frame(
-                width: reveal.revealed ? expandedSize.width : notchWidth,
-                height: reveal.revealed ? expandedSize.height : topInset,
-                alignment: .top
+                    // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
+                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
-            .clipShape(panelShape)
-            // 접힌 상태(= 노치 위 검정)에서는 그림자도 함께 사라진다.
-            .shadow(color: .black.opacity(reveal.revealed ? 0.22 : 0), radius: 9, y: 4)
-        }
-        // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
-        .padding(.horizontal, Self.shadowPadding)
-        .padding(.bottom, Self.shadowPadding)
-        // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
-        // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
+            .padding(.horizontal, Self.shadowPadding)
+            .padding(.bottom, Self.shadowPadding)
+            // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
+            .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
+            .opacity(reveal.revealed ? 1 : 0)
+            // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
+            // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    /// 섹션 콘텐츠 본문. morph 컨테이너와 계측 복사본이 공유한다.
+    /// 섹션 콘텐츠 본문.
     private var contentBody: some View {
         // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
         HStack(alignment: .top, spacing: DS.spacing) {

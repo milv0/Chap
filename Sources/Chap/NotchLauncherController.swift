@@ -118,7 +118,6 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             style: styleProvider(),
-            notchWidth: notchWidth,
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
@@ -237,7 +236,7 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.24) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             panel.orderOut(nil)
         }
     }
