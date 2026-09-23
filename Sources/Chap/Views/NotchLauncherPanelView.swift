@@ -13,6 +13,8 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
+    /// 본체 하단 불투명도 (0.2~1.0). 상단 노치 구간은 항상 완전 검정이다.
+    let bottomOpacity: Double
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
 
@@ -57,12 +59,14 @@ struct NotchLauncherPanelView: View {
     private var panelFill: AnyShapeStyle {
         switch style {
         case .black:
+            // 중간 지점은 하단 값과 완전 검정 사이를 보간해 자연스럽게 흘러내린다.
+            let midOpacity = bottomOpacity + (1 - bottomOpacity) * 0.8
             return AnyShapeStyle(
                 LinearGradient(
                     stops: [
                         .init(color: .black, location: 0),
-                        .init(color: .black.opacity(0.92), location: 0.35),
-                        .init(color: .black.opacity(0.6), location: 1),
+                        .init(color: .black.opacity(midOpacity), location: 0.35),
+                        .init(color: .black.opacity(bottomOpacity), location: 1),
                     ],
                     startPoint: .top, endPoint: .bottom))
         case .iceberg:

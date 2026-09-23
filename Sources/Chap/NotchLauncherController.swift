@@ -21,6 +21,8 @@ final class NotchLauncherController {
     var sectionsProvider: () -> [LauncherListSection] = { [] }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .black }
+    /// 패널 하단 불투명도 공급자.
+    var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
@@ -108,6 +110,7 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             style: styleProvider(),
+            bottomOpacity: opacityProvider(),
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
