@@ -10,6 +10,7 @@ public struct SettingsPayload {
     public let notchLauncherEnabled: Bool
     public let notchPanelStyle: NotchPanelStyle
     public let notchPanelOpacity: Double
+    public let notchWidgets: [NotchWidget]
 }
 
 public final class SettingsViewModel: ObservableObject {
@@ -22,6 +23,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchLauncherEnabled: Bool
     @Published public var notchPanelStyle: NotchPanelStyle
     @Published public var notchPanelOpacity: Double
+    @Published public var notchWidgets: [NotchWidget]
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
@@ -31,6 +33,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchLauncherEnabled: Bool
     @Published public var originalNotchPanelStyle: NotchPanelStyle
     @Published public var originalNotchPanelOpacity: Double
+    @Published public var originalNotchWidgets: [NotchWidget]
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -44,6 +47,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchLauncherEnabled != originalNotchLauncherEnabled
             || notchPanelStyle != originalNotchPanelStyle
             || notchPanelOpacity != originalNotchPanelOpacity
+            || notchWidgets != originalNotchWidgets
     }
 
     public func markSaved() {
@@ -56,6 +60,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchLauncherEnabled = notchLauncherEnabled
         originalNotchPanelStyle = notchPanelStyle
         originalNotchPanelOpacity = notchPanelOpacity
+        originalNotchWidgets = notchWidgets
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -71,6 +76,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchLauncherEnabled: self.notchLauncherEnabled,
                 notchPanelStyle: self.notchPanelStyle,
                 notchPanelOpacity: self.notchPanelOpacity,
+                notchWidgets: self.notchWidgets,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
@@ -97,7 +103,8 @@ public final class SettingsViewModel: ObservableObject {
                     hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
                     notchLauncherEnabled: notchLauncherEnabled,
                     notchPanelStyle: notchPanelStyle,
-                    notchPanelOpacity: notchPanelOpacity)) ?? true
+                    notchPanelOpacity: notchPanelOpacity,
+                    notchWidgets: notchWidgets)) ?? true
         if saved { markSaved() }
         return saved
     }
@@ -111,6 +118,7 @@ public final class SettingsViewModel: ObservableObject {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
+        notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
         self.sites = sites
@@ -122,6 +130,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
         self.notchPanelOpacity = notchPanelOpacity
+        self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.originalSites = sites
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
@@ -131,6 +140,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchLauncherEnabled = notchLauncherEnabled
         self.originalNotchPanelStyle = notchPanelStyle
         self.originalNotchPanelOpacity = notchPanelOpacity
+        self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.saveDebouncer = saveDebouncer
     }
 }

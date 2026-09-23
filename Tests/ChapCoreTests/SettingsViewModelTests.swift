@@ -91,6 +91,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchWidgetChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchWidgets: NotchWidget.defaultSlots)
+        vm.notchWidgets[0] = .screenshots
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
@@ -122,7 +128,8 @@ struct SettingsViewModelTests {
                 hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: vm.notchLauncherEnabled,
                 notchPanelStyle: vm.notchPanelStyle,
-                notchPanelOpacity: vm.notchPanelOpacity))
+                notchPanelOpacity: vm.notchPanelOpacity,
+                notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
