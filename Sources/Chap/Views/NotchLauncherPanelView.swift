@@ -18,7 +18,15 @@ struct NotchLauncherPanelView: View {
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
+    /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
+    /// 창 가장자리에 그림자 경계선이 생기지 않는다.
     static let shadowPadding: CGFloat = 28
+
+    /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
+    /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
+    private static var panelShape: NotchDockShape {
+        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20)
+    }
 
     var body: some View {
         // 섹션을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
@@ -33,19 +41,12 @@ struct NotchLauncherPanelView: View {
         .padding(.bottom, DS.paddingSmall)
         .frame(minWidth: minWidth)
         .background(
-            UnevenRoundedRectangle(
-                bottomLeadingRadius: 18, bottomTrailingRadius: 18, style: .continuous
-            )
-            .fill(Color.black)
-            // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-            .overlay(
-                UnevenRoundedRectangle(
-                    bottomLeadingRadius: 18, bottomTrailingRadius: 18, style: .continuous
-                )
-                .strokeBorder(Color.white.opacity(0.09), lineWidth: 1)
-            )
-            // 밝은 배경에서 떠 보이게 하는 부드러운 확산 그림자.
-            .shadow(color: .black.opacity(0.45), radius: 16, y: 6)
+            Self.panelShape
+                .fill(Color.black)
+                // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
+                .overlay(Self.panelShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
+                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
         )
         // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
         .padding(.horizontal, Self.shadowPadding)
@@ -119,5 +120,48 @@ private struct NotchLauncherRow: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .accessibilityLabel("Launch \(entry.site.name)")
+    }
+}
+
+/// 노치 도크 실루엣. macOS 노치처럼 상단 모서리가 화면 상단 라인에서
+/// 바깥으로 흐르는 오목 곡선으로 시작해 본체로 이어지고, 하단은 볼록하게 둥글다.
+/// 본체 폭은 rect보다 상단 반경만큼 좁고, 오목 플레어가 rect 전체 폭까지 닿는다.
+struct NotchDockShape: Shape {
+    let topCornerRadius: CGFloat
+    let bottomCornerRadius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let topR = topCornerRadius
+        let bottomR = bottomCornerRadius
+        var path = Path()
+
+        // 상단 왼쪽 끝(화면 상단 라인)에서 시작.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        // 왼쪽 오목 플레어: 상단 라인이 본체 왼쪽 벽으로 흘러내린다.
+        path.addArc(
+            center: CGPoint(x: rect.minX, y: rect.minY + topR), radius: topR,
+            startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
+        // 본체 왼쪽 벽.
+        path.addLine(to: CGPoint(x: rect.minX + topR, y: rect.maxY - bottomR))
+        // 하단 왼쪽 볼록 모서리.
+        path.addArc(
+            center: CGPoint(x: rect.minX + topR + bottomR, y: rect.maxY - bottomR),
+            radius: bottomR,
+            startAngle: .degrees(180), endAngle: .degrees(90), clockwise: true)
+        // 하단 변.
+        path.addLine(to: CGPoint(x: rect.maxX - topR - bottomR, y: rect.maxY))
+        // 하단 오른쪽 볼록 모서리.
+        path.addArc(
+            center: CGPoint(x: rect.maxX - topR - bottomR, y: rect.maxY - bottomR),
+            radius: bottomR,
+            startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
+        // 본체 오른쪽 벽.
+        path.addLine(to: CGPoint(x: rect.maxX - topR, y: rect.minY + topR))
+        // 오른쪽 오목 플레어: 본체 오른쪽 벽이 상단 라인으로 흘러나간다.
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
+            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
     }
 }
