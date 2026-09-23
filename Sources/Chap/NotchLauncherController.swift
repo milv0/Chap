@@ -114,13 +114,20 @@ final class NotchLauncherController {
                 self?.onLaunch(siteIndex)
             })
         let hosting = NSHostingView(rootView: content)
+        // 노치 구간 safe area가 콘텐츠를 아래로 밀지 않게 한다.
+        hosting.safeAreaRegions = []
         // fittingSize에는 노치 감싸기용 top padding이 이미 포함되어 있으므로
         // 정책에는 콘텐츠 높이만 전달해 inset이 두 번 더해지지 않게 한다.
-        let size = hosting.fittingSize
-        let frame = NotchLauncherPolicy.panelFrame(
+        // 소수점 크기는 올림해 상단이 서브픽셀로 내려앉는 틈을 막는다.
+        let fitting = hosting.fittingSize
+        let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
+        var frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: inset,
             contentSize: CGSize(width: size.width, height: size.height - inset))
+        // 픽셀 정렬 후에도 상단 변이 정확히 화면 최상단에 오도록 y를 재고정한다.
+        frame = frame.integral
+        frame.origin.y = screen.frame.maxY - frame.height
 
         let panel = NSPanel(
             contentRect: frame,

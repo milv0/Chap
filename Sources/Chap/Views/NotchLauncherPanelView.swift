@@ -99,6 +99,9 @@ struct NotchLauncherPanelView: View {
         // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
         .scaleEffect(x: 1, y: revealed ? 1 : 0.4, anchor: .top)
         .opacity(revealed ? 1 : 0)
+        // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
+        // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear {
             withAnimation(.interpolatingSpring(stiffness: 320, damping: 26)) {
                 revealed = true
