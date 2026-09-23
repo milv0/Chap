@@ -24,7 +24,7 @@ struct NotchLauncherPanelView: View {
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
     static let shadowPadding: CGFloat = 28
     /// 빙하 스타일의 톱니 최대 깊이. 콘텐츠가 톱니를 침범하지 않게 여백에 더한다.
-    private static let icebergJagDepth: CGFloat = 16
+    private static let icebergJagDepth: CGFloat = 30
 
     /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
@@ -207,7 +207,7 @@ struct IcebergDockShape: Shape {
 
     /// 연속된 톱니 꼭짓점의 상대 깊이. 자연스럽게 보이도록 불규칙하게 섞는다.
     private static let depthPattern: [CGFloat] = [0.85, 0.45, 1.0, 0.55, 0.75, 0.35, 0.9, 0.6]
-    private static let targetToothWidth: CGFloat = 34
+    private static let targetToothWidth: CGFloat = 68
 
     func path(in rect: CGRect) -> Path {
         let topR = topCornerRadius
