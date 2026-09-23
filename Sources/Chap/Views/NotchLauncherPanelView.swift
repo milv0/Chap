@@ -20,14 +20,26 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
+    /// 노치 실폭. 접힌 상태의 가로 스케일을 노치 크기에 맞춰
+    /// "노치에서 자라나는" 실루엣을 만든다.
+    let notchWidth: CGFloat
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
     @ObservedObject var reveal: NotchRevealModel
 
+    @State private var measuredWidth: CGFloat = 0
+
     /// Dynamic Island 문법의 모션 커브 (DynamicNotchKit과 동일한 구성):
     /// 펼침은 오버슈트가 있는 bouncy, 접힘은 바운스 없는 smooth.
-    static let openAnimation: Animation = .bouncy(duration: 0.4)
+    static let openAnimation: Animation = .bouncy(duration: 0.45, extraBounce: 0.06)
     static let closeAnimation: Animation = .smooth(duration: 0.32)
+
+    /// 접힌 상태의 가로 스케일: 패널 실폭 대비 노치 폭 비율.
+    private var collapsedXScale: CGFloat {
+        let width = max(measuredWidth, minWidth)
+        guard width > 0, notchWidth > 0 else { return 0.3 }
+        return min(1, notchWidth / width)
+    }
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -118,10 +130,20 @@ struct NotchLauncherPanelView: View {
         // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
         .padding(.horizontal, Self.shadowPadding)
         .padding(.bottom, Self.shadowPadding)
-        // Dynamic Island 문법의 펼침/접힘: 노치 기준 확장 + 블러 + 페이드.
-        // 커브는 컨트롤러가 withAnimation으로 구동한다 (펼침 bouncy, 접힘 smooth).
-        .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.25, anchor: .top)
-        .blur(radius: reveal.revealed ? 0 : 8)
+        // Dynamic Island 문법의 펼침/접힘: 노치 폭에서 양방향으로 팽창한다.
+        // 가로는 노치 폭 비율에서, 세로는 노치 높이 근처에서 시작해
+        // 블러가 걷히며 펼쳐진다. 커브는 컨트롤러가 withAnimation으로 구동한다.
+        .background(
+            GeometryReader { geo in
+                Color.clear.onAppear { measuredWidth = geo.size.width }
+            }
+        )
+        .scaleEffect(
+            x: reveal.revealed ? 1 : collapsedXScale,
+            y: reveal.revealed ? 1 : 0.06,
+            anchor: .top
+        )
+        .blur(radius: reveal.revealed ? 0 : 12)
         .opacity(reveal.revealed ? 1 : 0)
         // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
         // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.

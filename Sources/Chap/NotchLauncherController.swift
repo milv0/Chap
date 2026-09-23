@@ -118,6 +118,7 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             style: styleProvider(),
+            notchWidth: notchWidth,
             sections: sections,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
