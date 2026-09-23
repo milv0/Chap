@@ -51,12 +51,20 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    /// 스타일별 채움. 빙하는 노치와 만나는 상단은 검정에 가깝게, 아래로 갈수록
-    /// 얼음빛 파랑으로 깊어지는 그라데이션이다.
+    /// 스타일별 채움. black은 노치를 감싸는 상단은 완전 검정으로 유지하고
+    /// 아래로 갈수록 투명해져 배경과 부드럽게 섞인다. iceberg는 노치와
+    /// 만나는 상단은 검정에 가깝게, 아래로 갈수록 얼음빛 파랑으로 깊어진다.
     private var panelFill: AnyShapeStyle {
         switch style {
         case .black:
-            return AnyShapeStyle(Color.black)
+            return AnyShapeStyle(
+                LinearGradient(
+                    stops: [
+                        .init(color: .black, location: 0),
+                        .init(color: .black.opacity(0.92), location: 0.35),
+                        .init(color: .black.opacity(0.6), location: 1),
+                    ],
+                    startPoint: .top, endPoint: .bottom))
         case .iceberg:
             return AnyShapeStyle(
                 LinearGradient(
