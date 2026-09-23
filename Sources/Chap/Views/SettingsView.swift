@@ -231,6 +231,11 @@ struct SettingsView: View {
                                 SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
                                     addSite(type: type)
                                 }
+                            } else if !SiteCountLimitPolicy.canAdd(type, to: vm.sites) {
+                                Text("Limit reached (\(SiteCountLimitPolicy.maxPerLaunchType))")
+                                    .font(DS.captionFont)
+                                    .foregroundColor(DS.textTertiary)
+                                    .padding(.horizontal, 8)
                             }
                             ForEach(indices, id: \.self) { i in
                                 SidebarItem(
@@ -551,6 +556,14 @@ struct SettingsView: View {
             }
             return .url
         }()
+        guard SiteCountLimitPolicy.canAdd(type, to: vm.sites) else {
+            LauncherUtils.showAlert(
+                message: "Launch type limit reached",
+                info:
+                    "Only \(SiteCountLimitPolicy.maxPerLaunchType) \(typeSectionTitle(type)) "
+                    + "launchables are allowed. Remove one before adding another.")
+            return
+        }
         let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
         let defaultSize = windowSize(for: recommendation, on: builtInScreen ?? cursorScreen)
         let newSite = Site(
