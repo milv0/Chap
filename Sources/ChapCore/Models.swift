@@ -255,6 +255,45 @@ public enum NotchPanelStyle: String, Codable, CaseIterable {
     case iceberg = "iceberg"
 }
 
+/// 노치 패널의 한 칸에 배치할 수 있는 위젯.
+public enum NotchWidget: String, Codable, CaseIterable {
+    /// URL 런처 목록.
+    case sites = "sites"
+    /// 앱 런처 목록.
+    case apps = "apps"
+    /// Finder 폴더 런처 목록.
+    case folders = "folders"
+    /// 셸 스크립트 런처 목록.
+    case scripts = "scripts"
+    /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
+    case screenshots = "screenshots"
+    /// 빈 칸.
+    case none = "none"
+
+    /// 위젯이 담당하는 launch type. 런처 위젯이 아니면 nil.
+    public var launchType: LaunchType? {
+        switch self {
+        case .sites: return .url
+        case .apps: return .app
+        case .folders: return .finder
+        case .scripts: return .shell
+        case .screenshots, .none: return nil
+        }
+    }
+
+    /// 노치 패널의 고정 칸 수.
+    public static let slotCount = 4
+
+    /// 기본 배치: 4칸에 런처 섹션 순서대로.
+    public static let defaultSlots: [NotchWidget] = [.sites, .apps, .folders, .scripts]
+
+    /// 임의 길이 입력을 정확히 4칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
+    public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
+        let trimmed = widgets.prefix(slotCount)
+        return Array(trimmed) + Array(repeating: .none, count: slotCount - trimmed.count)
+    }
+}
+
 public struct Config: Codable {
     public var showGuideWindow: Bool
     public var launchAtLogin: Bool
@@ -268,6 +307,8 @@ public struct Config: Codable {
     public var notchPanelStyle: NotchPanelStyle
     /// 노치 패널 본체의 하단 불투명도 (0.2~1.0). 상단은 항상 완전 검정이다.
     public var notchPanelOpacity: Double
+    /// 노치 패널 4칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    public var notchWidgets: [NotchWidget]
     public var sites: [Site]
 
     /// 패널 불투명도의 허용 범위. 하한은 텍스트 가독성 하한선이다.
@@ -277,7 +318,7 @@ public struct Config: Codable {
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
-        case notchPanelOpacity
+        case notchPanelOpacity, notchWidgets
         case sites
     }
 
@@ -290,6 +331,7 @@ public struct Config: Codable {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
+        notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
         self.showGuideWindow = showGuideWindow
@@ -300,6 +342,7 @@ public struct Config: Codable {
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
         self.notchPanelOpacity = notchPanelOpacity
+        self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
 
@@ -334,6 +377,15 @@ public struct Config: Codable {
         notchPanelOpacity = min(
             max(rawOpacity, Config.notchPanelOpacityRange.lowerBound),
             Config.notchPanelOpacityRange.upperBound)
+        // 알 수 없는 위젯 이름은 버리고 항상 4칸으로 정규화한다 (관용 디코딩).
+        if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
+            .flatMap({ $0 })
+        {
+            notchWidgets = NotchWidget.normalizedSlots(
+                rawWidgets.compactMap(NotchWidget.init(rawValue:)))
+        } else {
+            notchWidgets = NotchWidget.defaultSlots
+        }
         sites = try container.decode([Site].self, forKey: .sites)
     }
 
@@ -351,6 +403,7 @@ public struct Config: Codable {
         try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
         try container.encode(notchPanelStyle.rawValue, forKey: .notchPanelStyle)
         try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
+        try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

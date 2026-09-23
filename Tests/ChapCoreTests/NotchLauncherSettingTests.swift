@@ -110,4 +110,47 @@ struct NotchLauncherSettingTests {
 
         #expect(decoded.notchPanelOpacity == 0.35)
     }
+
+    @Test("widgets default to the four launcher sections when the key is missing")
+    func widgetsDefaultToLauncherSections() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .scripts])
+    }
+
+    @Test("decodes explicit widget slots")
+    func decodesExplicitWidgets() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["screenshots", "sites", "apps", "none"], "sites": []}"#)
+
+        #expect(config.notchWidgets == [.screenshots, .sites, .apps, .none])
+    }
+
+    @Test("unknown widget names are dropped and slots padded to four")
+    func unknownWidgetsDroppedAndPadded() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["sites", "hologram", "screenshots"], "sites": []}"#)
+
+        #expect(config.notchWidgets == [.sites, .screenshots, .none, .none])
+    }
+
+    @Test("more than four widgets are capped at four slots")
+    func widgetsCappedAtFour() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["sites", "apps", "folders", "scripts", "screenshots"], "sites": []}"#
+        )
+
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .scripts])
+    }
+
+    @Test("widgets round-trip through encoding")
+    func widgetsRoundTripThroughEncoding() throws {
+        let original = Config(
+            notchWidgets: [.screenshots, .sites, .none, .scripts], sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchWidgets == [.screenshots, .sites, .none, .scripts])
+    }
 }
