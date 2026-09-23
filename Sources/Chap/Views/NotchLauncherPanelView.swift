@@ -38,6 +38,19 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    /// 림 스트로크용 실루엣. 상단 변이 열려 있어 노치 경계에 흰 줄이 생기지 않는다.
+    private var rimShape: AnyShape {
+        switch style {
+        case .black:
+            return AnyShape(
+                NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20, isRim: true))
+        case .iceberg:
+            return AnyShape(
+                IcebergDockShape(
+                    topCornerRadius: 10, jagDepth: Self.icebergJagDepth, isRim: true))
+        }
+    }
+
     /// 스타일별 채움. 빙하는 노치와 만나는 상단은 검정에 가깝게, 아래로 갈수록
     /// 얼음빛 파랑으로 깊어지는 그라데이션이다.
     private var panelFill: AnyShapeStyle {
@@ -75,7 +88,8 @@ struct NotchLauncherPanelView: View {
             panelShape
                 .fill(panelFill)
                 // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-                .overlay(panelShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
+                .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
         )
@@ -171,6 +185,9 @@ private struct NotchLauncherRow: View {
 struct NotchDockShape: Shape {
     let topCornerRadius: CGFloat
     let bottomCornerRadius: CGFloat
+    /// true면 상단 변을 닫지 않는다. 림 스트로크가 노치와 만나는 상단
+    /// 라인에 흰 줄을 긋지 않도록 fill용(닫힘)과 분리한다.
+    var isRim = false
 
     func path(in rect: CGRect) -> Path {
         let topR = topCornerRadius
@@ -203,7 +220,8 @@ struct NotchDockShape: Shape {
         path.addArc(
             center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-        path.closeSubpath()
+        // 림 모드에서는 상단 변을 긋지 않아 노치와의 경계가 검정으로 남는다.
+        if !isRim { path.closeSubpath() }
         return path
     }
 }
@@ -215,6 +233,8 @@ struct IcebergDockShape: Shape {
     let topCornerRadius: CGFloat
     /// 톱니 최대 깊이. 각 꼭짓점은 패턴 비율만큼 이 깊이에 도달한다.
     let jagDepth: CGFloat
+    /// true면 상단 변을 닫지 않는다 (NotchDockShape.isRim과 동일한 역할).
+    var isRim = false
 
     /// 연속된 톱니 꼭짓점의 상대 깊이. 자연스럽게 보이도록 불규칙하게 섞는다.
     private static let depthPattern: [CGFloat] = [0.85, 0.45, 1.0, 0.55, 0.75, 0.35, 0.9, 0.6]
@@ -252,7 +272,8 @@ struct IcebergDockShape: Shape {
         path.addArc(
             center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-        path.closeSubpath()
+        // 림 모드에서는 상단 변을 긋지 않아 노치와의 경계가 검정으로 남는다.
+        if !isRim { path.closeSubpath() }
         return path
     }
 }
