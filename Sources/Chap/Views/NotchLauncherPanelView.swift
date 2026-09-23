@@ -8,6 +8,8 @@ import SwiftUI
 /// 검정 위 텍스트라 라이트/다크 모드와 무관하게 흰색 계열을 고정한다.
 struct NotchLauncherPanelView: View {
     let width: CGFloat
+    /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
+    let topInset: CGFloat
     let sections: [LauncherListSection]
     let onLaunch: (Int) -> Void
 
@@ -20,7 +22,7 @@ struct NotchLauncherPanelView: View {
             }
         }
         .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, 6)
+        .padding(.top, topInset + 6)
         .padding(.bottom, DS.paddingSmall)
         .frame(width: width, alignment: .leading)
         .background(

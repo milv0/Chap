@@ -23,16 +23,16 @@ struct NotchLauncherPolicyTests {
         #expect(NotchLauncherPolicy.shouldPresent(enabled: false, topSafeAreaInset: 0) == false)
     }
 
-    @Test("the panel is centered under the notch on the screen")
-    func panelIsCenteredUnderNotch() {
+    @Test("the panel wraps the notch by reaching the screen top")
+    func panelWrapsNotchToScreenTop() {
         let frame = NotchLauncherPolicy.panelFrame(
             screenFrame: CGRect(x: 0, y: 0, width: 1512, height: 982),
             topSafeAreaInset: 32,
-            panelSize: CGSize(width: 320, height: 240))
+            contentSize: CGSize(width: 320, height: 240))
 
         #expect(frame.midX == 756)
-        #expect(frame.maxY == 950)
-        #expect(frame.size == CGSize(width: 320, height: 240))
+        #expect(frame.maxY == 982)
+        #expect(frame.size == CGSize(width: 320, height: 272))
     }
 
     @Test("the panel frame respects a non-zero screen origin")
@@ -40,9 +40,10 @@ struct NotchLauncherPolicyTests {
         let frame = NotchLauncherPolicy.panelFrame(
             screenFrame: CGRect(x: -1512, y: 200, width: 1512, height: 982),
             topSafeAreaInset: 32,
-            panelSize: CGSize(width: 300, height: 100))
+            contentSize: CGSize(width: 300, height: 100))
 
         #expect(frame.midX == -756)
-        #expect(frame.maxY == 1150)
+        #expect(frame.maxY == 1182)
+        #expect(frame.height == 132)
     }
 }
