@@ -152,7 +152,8 @@ enum SettingsConfigTransfer {
                         statusBarIcon: imported.statusBarIcon,
                         hiddenMenuLaunchTypes: imported.hiddenMenuLaunchTypes,
                         // 노치 토글은 기기(노치 유무) 종속이라 import로 덮지 않는다.
-                        notchLauncherEnabled: vm.notchLauncherEnabled)) ?? false
+                        notchLauncherEnabled: vm.notchLauncherEnabled,
+                        notchPanelStyle: vm.notchPanelStyle)) ?? false
             guard saved else { return false }
 
             vm.sites = imported.sites

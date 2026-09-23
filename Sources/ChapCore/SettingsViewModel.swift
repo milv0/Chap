@@ -8,6 +8,7 @@ public struct SettingsPayload {
     public let statusBarIcon: StatusBarIconChoice
     public let hiddenMenuLaunchTypes: Set<LaunchType>
     public let notchLauncherEnabled: Bool
+    public let notchPanelStyle: NotchPanelStyle
 }
 
 public final class SettingsViewModel: ObservableObject {
@@ -18,6 +19,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var statusBarIcon: StatusBarIconChoice
     @Published public var hiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var notchLauncherEnabled: Bool
+    @Published public var notchPanelStyle: NotchPanelStyle
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
     @Published public var originalLogin: Bool
@@ -25,6 +27,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalStatusBarIcon: StatusBarIconChoice
     @Published public var originalHiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var originalNotchLauncherEnabled: Bool
+    @Published public var originalNotchPanelStyle: NotchPanelStyle
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -36,6 +39,7 @@ public final class SettingsViewModel: ObservableObject {
             || statusBarIcon != originalStatusBarIcon
             || hiddenMenuLaunchTypes != originalHiddenMenuLaunchTypes
             || notchLauncherEnabled != originalNotchLauncherEnabled
+            || notchPanelStyle != originalNotchPanelStyle
     }
 
     public func markSaved() {
@@ -46,6 +50,7 @@ public final class SettingsViewModel: ObservableObject {
         originalStatusBarIcon = statusBarIcon
         originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         originalNotchLauncherEnabled = notchLauncherEnabled
+        originalNotchPanelStyle = notchPanelStyle
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -59,6 +64,7 @@ public final class SettingsViewModel: ObservableObject {
                 statusBarIcon: self.statusBarIcon,
                 hiddenMenuLaunchTypes: self.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: self.notchLauncherEnabled,
+                notchPanelStyle: self.notchPanelStyle,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
@@ -83,7 +89,8 @@ public final class SettingsViewModel: ObservableObject {
                     optionShortcutsEnabled: optionShortcutsEnabled,
                     statusBarIcon: statusBarIcon,
                     hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
-                    notchLauncherEnabled: notchLauncherEnabled)) ?? true
+                    notchLauncherEnabled: notchLauncherEnabled,
+                    notchPanelStyle: notchPanelStyle)) ?? true
         if saved { markSaved() }
         return saved
     }
@@ -95,6 +102,7 @@ public final class SettingsViewModel: ObservableObject {
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
+        notchPanelStyle: NotchPanelStyle = .black,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
         self.sites = sites
@@ -104,6 +112,7 @@ public final class SettingsViewModel: ObservableObject {
         self.statusBarIcon = statusBarIcon
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.notchLauncherEnabled = notchLauncherEnabled
+        self.notchPanelStyle = notchPanelStyle
         self.originalSites = sites
         self.originalGuide = showGuideWindow
         self.originalLogin = launchAtLogin
@@ -111,6 +120,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalStatusBarIcon = statusBarIcon
         self.originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.originalNotchLauncherEnabled = notchLauncherEnabled
+        self.originalNotchPanelStyle = notchPanelStyle
         self.saveDebouncer = saveDebouncer
     }
 }

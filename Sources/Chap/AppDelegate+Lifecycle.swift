@@ -96,7 +96,8 @@ extension AppDelegate {
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             statusBarIcon: config.statusBarIcon,
             hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
-            notchLauncherEnabled: config.notchLauncherEnabled)
+            notchLauncherEnabled: config.notchLauncherEnabled,
+            notchPanelStyle: config.notchPanelStyle)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -107,6 +108,7 @@ extension AppDelegate {
                 statusBarIcon: payload.statusBarIcon,
                 hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: payload.notchLauncherEnabled,
+                notchPanelStyle: payload.notchPanelStyle,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -131,6 +133,7 @@ extension AppDelegate {
             let previousHiddenMenuLaunchTypes = self.config.hiddenMenuLaunchTypes
             let previousStatusBarIcon = self.config.statusBarIcon
             let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
+            let previousNotchPanelStyle = self.config.notchPanelStyle
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -160,8 +163,10 @@ extension AppDelegate {
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
             {
                 DispatchQueue.main.async { self.buildMenu() }
-            } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled {
-                // 메뉴 재구성 없이 토글만 바뀌어도 노치 런처는 즉시 반영한다.
+            } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
+                || previousNotchPanelStyle != newConfig.notchPanelStyle
+            {
+                // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }
             }
             return true

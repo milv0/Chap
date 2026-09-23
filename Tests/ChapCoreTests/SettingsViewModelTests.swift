@@ -79,6 +79,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchPanelStyleChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelStyle: .black)
+        vm.notchPanelStyle = .iceberg
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
@@ -108,7 +114,8 @@ struct SettingsViewModelTests {
                 optionShortcutsEnabled: vm.optionShortcutsEnabled,
                 statusBarIcon: vm.statusBarIcon,
                 hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
-                notchLauncherEnabled: vm.notchLauncherEnabled))
+                notchLauncherEnabled: vm.notchLauncherEnabled,
+                notchPanelStyle: vm.notchPanelStyle))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
