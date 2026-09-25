@@ -8,6 +8,8 @@ struct NotchScreenshotShelfView: View {
     let urls: [URL]
     /// 콘텐츠 박스 배경색. 전경 대비 계산에 쓴다.
     let backgroundHex: String
+    /// Glass 재질에서는 semantic foreground를 쓴다.
+    let usesSemanticForeground: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -15,17 +17,24 @@ struct NotchScreenshotShelfView: View {
                 Image(systemName: "camera.viewfinder")
                     .font(DS.captionFont)
                     .foregroundColor(
-                        NotchContrastPolicy.usesAccentForeground(
-                            backgroundHex: backgroundHex)
-                            ? DS.accent : .white.opacity(0.95))
+                        usesSemanticForeground
+                            ? .primary
+                            : (NotchContrastPolicy.usesAccentForeground(
+                                backgroundHex: backgroundHex)
+                                ? DS.accent : .white.opacity(0.95)))
                 Text("Screenshots")
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(
-                        .white.opacity(
-                            NotchContrastPolicy.secondaryTextOpacity(
-                                backgroundHex: backgroundHex)))
+                        usesSemanticForeground
+                            ? .secondary
+                            : .white.opacity(
+                                NotchContrastPolicy.secondaryTextOpacity(
+                                    backgroundHex: backgroundHex)))
             }
-            .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+            .shadow(
+                color: .black.opacity(usesSemanticForeground ? 0 : 0.75),
+                radius: 1.5, y: 0.5
+            )
             .padding(.horizontal, 6)
             .padding(.bottom, 1)
 

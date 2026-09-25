@@ -231,6 +231,31 @@ struct NotchLauncherPanelView: View {
         style == .glass ? Config.notchPanelColorHexDefault : reveal.colorHex
     }
 
+    /// Glass에서는 시스템 semantic 색이 재질의 vibrancy와 배경에 맞춰
+    /// 자동 적응한다. 비-Glass는 기존 고대비 흰색 체계를 유지한다.
+    private var primaryForeground: Color {
+        style == .glass ? Color.primary : .white.opacity(0.96)
+    }
+
+    private var secondaryForeground: Color {
+        style == .glass
+            ? Color.secondary
+            : .white.opacity(
+                NotchContrastPolicy.secondaryTextOpacity(
+                    backgroundHex: contrastBackgroundHex))
+    }
+
+    private var accentForeground: Color {
+        if style == .glass { return .primary }
+        return NotchContrastPolicy.usesAccentForeground(
+            backgroundHex: contrastBackgroundHex)
+            ? DS.accent : .white.opacity(0.95)
+    }
+
+    /// Glass 재질 위에는 시스템 vibrancy가 대비를 담당하므로 검정 그림자를
+    /// 넣지 않는다. 비-Glass에서만 기존 윤곽 보정을 유지한다.
+    private var textShadowOpacity: Double { style == .glass ? 0 : 0.75 }
+
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
@@ -281,7 +306,9 @@ struct NotchLauncherPanelView: View {
         case .launchers(let section):
             sectionView(section)
         case .screenshots(let urls):
-            NotchScreenshotShelfView(urls: urls, backgroundHex: contrastBackgroundHex)
+            NotchScreenshotShelfView(
+                urls: urls, backgroundHex: contrastBackgroundHex,
+                usesSemanticForeground: style == .glass)
         }
     }
 
@@ -292,18 +319,12 @@ struct NotchLauncherPanelView: View {
             HStack(spacing: 5) {
                 Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
                     .font(DS.captionFont)
-                    .foregroundColor(
-                        NotchContrastPolicy.usesAccentForeground(
-                            backgroundHex: contrastBackgroundHex)
-                            ? DS.accent : .white.opacity(0.95))
+                    .foregroundColor(accentForeground)
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.captionFont.weight(.semibold))
-                    .foregroundColor(
-                        .white.opacity(
-                            NotchContrastPolicy.secondaryTextOpacity(
-                                backgroundHex: contrastBackgroundHex)))
+                    .foregroundColor(secondaryForeground)
             }
-            .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+            .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
             .padding(.bottom, 1)
 
@@ -313,8 +334,13 @@ struct NotchLauncherPanelView: View {
             ) { entry in
                 NotchLauncherRow(
                     entry: entry,
-                    shortcutOpacity: NotchContrastPolicy.tertiaryTextOpacity(
-                        backgroundHex: contrastBackgroundHex)
+                    primaryForeground: primaryForeground,
+                    shortcutForeground: style == .glass
+                        ? Color.secondary
+                        : .white.opacity(
+                            NotchContrastPolicy.tertiaryTextOpacity(
+                                backgroundHex: contrastBackgroundHex)),
+                    textShadowOpacity: textShadowOpacity
                 ) {
                     onLaunch(entry.siteIndex)
                 }
@@ -334,8 +360,9 @@ struct NotchLauncherPanelView: View {
 
 private struct NotchLauncherRow: View {
     let entry: LauncherListEntry
-    /// 배경 대비에 맞춘 단축키 힌트 불투명도.
-    let shortcutOpacity: Double
+    let primaryForeground: Color
+    let shortcutForeground: Color
+    let textShadowOpacity: Double
     let action: () -> Void
 
     @State private var isHovered = false
@@ -345,15 +372,15 @@ private struct NotchLauncherRow: View {
             HStack {
                 Text(entry.site.name)
                     .font(DS.bodyFont.weight(.medium))
-                    .foregroundColor(.white.opacity(0.96))
-                    .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+                    .foregroundColor(primaryForeground)
+                    .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
                 Spacer(minLength: DS.spacingSmall)
                 if let shortcut = entry.site.shortcut, !shortcut.isEmpty {
                     // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
                     Text("⌥\(shortcut.uppercased())")
                         .font(DS.captionFont.weight(.medium))
-                        .foregroundColor(.white.opacity(shortcutOpacity))
+                        .foregroundColor(shortcutForeground)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1.5)
                         .background(
