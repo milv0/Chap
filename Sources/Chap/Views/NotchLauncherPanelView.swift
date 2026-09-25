@@ -16,6 +16,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var revealed = false
     @Published var bottomOpacity: Double = Config.notchPanelOpacityDefault
     @Published var colorHex: String = Config.notchPanelColorHexDefault
+    /// 파일 드래그가 노치에 닿아 "Drop here" 레이어를 덮어야 하는 상태.
+    @Published var isDropTargetActive = false
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -129,6 +131,8 @@ struct NotchLauncherPanelView: View {
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
+            // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
+            .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
             .padding(.bottom, Self.shadowPadding)
@@ -181,6 +185,37 @@ struct NotchLauncherPanelView: View {
             .allowsHitTesting(false)
         }
     #endif
+
+    @State private var dropTargeted = false
+
+    /// 파일 드래그 중 도커를 덮는 반투명 드롭 레이어. 드래그가 노치에
+    /// 닿으면(컨트롤러 플래그) 나타나고, 레이어 위에 드는 동안 유지되며,
+    /// 드롭하면 보관함에 저장하고 사라진다.
+    @ViewBuilder private var dropOverlay: some View {
+        let visible = reveal.isDropTargetActive || dropTargeted
+        ZStack {
+            panelShape.fill(Color.black.opacity(0.55))
+            VStack(spacing: 8) {
+                Image(systemName: "tray.and.arrow.down.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(dropTargeted ? DS.accent : .white.opacity(0.85))
+                Text("Drop here")
+                    .font(DS.headlineFont)
+                    .foregroundColor(.white.opacity(0.95))
+            }
+            .padding(.top, topInset)
+        }
+        .opacity(visible ? 1 : 0)
+        .animation(.easeOut(duration: 0.15), value: visible)
+        .allowsHitTesting(visible)
+        .dropDestination(for: URL.self) { urls, _ in
+            let stored = ChapDrop.store(urls)
+            reveal.isDropTargetActive = false
+            return !stored.isEmpty
+        } isTargeted: {
+            dropTargeted = $0
+        }
+    }
 
     /// 섹션 콘텐츠 본문.
     private var contentBody: some View {

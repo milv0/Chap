@@ -137,7 +137,7 @@ final class NotchLauncherController {
             if self.activeSurface == .mainPanel { self.dismissPanelImmediately() }
             self.showDropPanel()
         }
-        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             ChapDrop.store(urls)
@@ -281,7 +281,7 @@ final class NotchLauncherController {
             guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
             self.showPanel()
         }
-        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
         // 노치 자체에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             ChapDrop.store(urls)
@@ -490,23 +490,12 @@ final class NotchLauncherController {
 
     // MARK: - Drop zone
 
-    /// 파일 드래그가 노치에 닿았을 때 여는 드롭 존.
-    /// Drop 리스트 도커와 같은 크기·앵커를 쓴다.
-    /// 전체 런처 패널이 이미 떠 있으면 그대로 둔다 (Drop 위젯이 받는다).
-    private func showDropZone() {
-        guard panel == nil, let screen = Self.notchScreen() else { return }
-
-        let content = NotchDropZoneView(
-            topInset: screen.safeAreaInsets.top,
-            contentWidth: Self.dropDockContentWidth(on: screen),
-            bottomOpacity: opacityProvider(),
-            colorHex: colorProvider(),
-            stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
-            onDropped: { [weak self] in
-                self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
-                self?.hidePanel()
-            })
-        presentDropDock(content: content, on: screen)
+    /// 파일 드래그가 노치에 닿으면 메인 도커를 열고 그 위에
+    /// 반투명 "Drop here" 레이어를 덮는다.
+    private func presentDropOverlay() {
+        if activeSurface == .dropDock { dismissPanelImmediately() }
+        if panel == nil { showPanel() }
+        revealModel?.isDropTargetActive = true
     }
 
     // MARK: - Opacity preview

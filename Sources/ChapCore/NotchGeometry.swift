@@ -32,11 +32,6 @@ public enum NotchGeometry {
     /// 배지만 본체가 작아 비례상 더 작은 `badgeCornerRadius`를 쓴다.
     public static let dockBottomRadius: CGFloat = 18
 
-    // MARK: Drop 존
-
-    /// 드롭 존 콘텐츠 높이. 드롭만 받는 표면이라 낮게 유지한다.
-    public static let dropZoneContentHeight: CGFloat = 64
-
     // MARK: Iceberg 스타일
 
     /// 빙하 톱니 최대 깊이.

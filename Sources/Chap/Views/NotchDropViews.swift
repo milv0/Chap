@@ -57,72 +57,16 @@ struct NotchDropListView: View {
             isDropTargeted = $0
         }
         .onAppear { files = ChapDrop.recentFiles() }
-    }
-}
-
-/// 파일을 끌고 노치에 댔을 때 뜨는 드롭 존. Drop 리스트 도커와 같은
-/// 폭·패딩·실루엣을 써서 두 도커가 같은 크기로 보인다.
-struct NotchDropZoneView: View {
-    /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
-    let topInset: CGFloat
-    /// 도커 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝 구간에서 계산된다.
-    let contentWidth: CGFloat
-    /// 본체 하단 불투명도. 메인 도커와 같은 설정값을 공유한다.
-    let bottomOpacity: Double
-    /// 콘텐츠 박스 배경색 ("#RRGGBB").
-    let colorHex: String
-    /// 눌린 검정 띠의 plateau 반폭.
-    let stripPlateauHalfWidth: CGFloat
-    /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
-    let onDropped: () -> Void
-
-    @State private var isDropTargeted = false
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "tray.and.arrow.down.fill")
-                .font(.system(size: 20))
-                .foregroundColor(isDropTargeted ? DS.accent : .white.opacity(0.7))
-            Text("Chap Drop")
-                .font(DS.bodyFont.weight(.medium))
-                .foregroundColor(.white.opacity(0.9))
-        }
-        .frame(width: contentWidth, height: NotchDropDock.zoneContentHeight)
-        .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, topInset + 8)
-        .padding(.bottom, DS.paddingSmall)
-        .background(
-            NotchDockStyle.dockBackground(
-                shape: NotchDropDock.shape, topInset: topInset,
-                stripPlateauHalfWidth: stripPlateauHalfWidth,
-                colorHex: colorHex, bottomOpacity: bottomOpacity
-            )
-            .overlay(
-                NotchDropDock.rimShape
-                    .stroke(
-                        isDropTargeted
-                            ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
-                        lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
-        )
-        .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
-        .padding(.bottom, NotchLauncherPanelView.shadowPadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .dropDestination(for: URL.self) { urls, _ in
-            let stored = ChapDrop.store(urls)
-            onDropped()
-            return !stored.isEmpty
-        } isTargeted: {
-            isDropTargeted = $0
+        .onReceive(
+            NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
+        ) { _ in
+            files = ChapDrop.recentFiles()
         }
     }
 }
 
 /// Drop 도커(드롭 존·파일 리스트)가 공유하는 지오메트리와 실루엣.
 enum NotchDropDock {
-    /// 드롭 존 콘텐츠 높이. 드롭만 받는 표면이라 낮게 유지한다.
-    static let zoneContentHeight: CGFloat = NotchGeometry.dropZoneContentHeight
     /// 상단 오목 플레어 반경. 폭 보정 계산이 실루엣과 어긋나지 않게 공유한다.
     static let topCornerRadius: CGFloat = NotchGeometry.dockFlareRadius
 
