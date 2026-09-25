@@ -32,6 +32,8 @@ final class NotchLauncherController {
     var styleProvider: () -> NotchPanelStyle = { .black }
     /// 패널 하단 불투명도 공급자.
     var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
+    /// 콘텐츠 박스 배경색 공급자 ("#RRGGBB").
+    var colorProvider: () -> String = { Config.notchPanelColorHexDefault }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
@@ -230,6 +232,7 @@ final class NotchLauncherController {
 
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
+        reveal.colorHex = colorProvider()
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
@@ -297,6 +300,7 @@ final class NotchLauncherController {
                 minContentWidth: Self.dropDockContentWidth(on: screen),
                 maxContentWidth: mainDockContentWidth(on: screen),
                 bottomOpacity: opacityProvider(),
+                colorHex: colorProvider(),
                 onSizeChange: { [weak self] size in self?.resizeDropDock(to: size) }),
             on: screen)
     }
@@ -390,6 +394,7 @@ final class NotchLauncherController {
             topInset: screen.safeAreaInsets.top,
             contentWidth: Self.dropDockContentWidth(on: screen),
             bottomOpacity: opacityProvider(),
+            colorHex: colorProvider(),
             onDropped: { [weak self] in self?.hidePanel() })
         presentDropDock(content: content, on: screen)
     }

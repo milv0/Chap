@@ -15,6 +15,7 @@ enum NotchSlotContent {
 final class NotchRevealModel: ObservableObject {
     @Published var revealed = false
     @Published var bottomOpacity: Double = Config.notchPanelOpacityDefault
+    @Published var colorHex: String = Config.notchPanelColorHexDefault
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -91,7 +92,10 @@ struct NotchLauncherPanelView: View {
     private var panelFill: AnyShapeStyle {
         switch style {
         case .black:
-            return AnyShapeStyle(NotchDockStyle.blackFade(reveal.bottomOpacity))
+            return AnyShapeStyle(
+                NotchDockStyle.fade(
+                    NotchDockStyle.color(fromHex: reveal.colorHex),
+                    bottomOpacity: reveal.bottomOpacity))
         case .iceberg:
             return AnyShapeStyle(
                 LinearGradient(
@@ -107,13 +111,17 @@ struct NotchLauncherPanelView: View {
     var body: some View {
         contentBody
             .background(
-                panelShape
-                    .fill(panelFill)
-                    // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-                    // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
-                    .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
-                    // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
-                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+                // 상단바 구간은 노치 연장(검정), 그 아래 콘텐츠 박스만 커스텀 색.
+                ZStack(alignment: .top) {
+                    panelShape.fill(panelFill)
+                    Rectangle().fill(Color.black).frame(height: topInset)
+                }
+                .clipShape(panelShape)
+                // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
+                // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
+                .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
+                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
@@ -236,18 +244,51 @@ private struct NotchLauncherRow: View {
 
 /// 모든 노치 도커가 공유하는 채움 스타일.
 enum NotchDockStyle {
-    /// 위는 완전 검정(노치 융합), 아래로 갈수록 사용자 불투명도로 흘러내리는
-    /// 공통 페이드. 메인 패널과 Drop 도커가 같은 설정값을 쓴다.
-    static func blackFade(_ bottomOpacity: Double) -> LinearGradient {
-        // 중간 지점은 하단 값과 완전 검정 사이를 보간해 자연스럽게 흘러내린다.
+    /// 도커 배경 2층 구조: 상단바 구간(topInset)은 노치의 연장이라 항상
+    /// 완전 검정, 노치 하단 경계 아래 콘텐츠 박스는 커스텀 색이 기존
+    /// 페이드(아래로 갈수록 사용자 불투명도)로 흘러내린다.
+    @ViewBuilder
+    static func dockBackground<S: Shape>(
+        shape: S, topInset: CGFloat, colorHex: String, bottomOpacity: Double
+    ) -> some View {
+        ZStack(alignment: .top) {
+            shape.fill(fade(color(fromHex: colorHex), bottomOpacity: bottomOpacity))
+            Rectangle().fill(Color.black).frame(height: topInset)
+        }
+        .clipShape(shape)
+    }
+
+    /// 위는 진하게, 아래로 갈수록 사용자 불투명도로 흘러내리는 공통 페이드.
+    static func fade(_ color: Color, bottomOpacity: Double) -> LinearGradient {
+        // 중간 지점은 하단 값과 완전 불투명 사이를 보간해 자연스럽게 흘러내린다.
         let midOpacity = bottomOpacity + (1 - bottomOpacity) * 0.8
         return LinearGradient(
             stops: [
-                .init(color: .black, location: 0),
-                .init(color: .black.opacity(midOpacity), location: 0.35),
-                .init(color: .black.opacity(bottomOpacity), location: 1),
+                .init(color: color, location: 0),
+                .init(color: color.opacity(midOpacity), location: 0.35),
+                .init(color: color.opacity(bottomOpacity), location: 1),
             ],
             startPoint: .top, endPoint: .bottom)
+    }
+
+    /// "#RRGGBB" → Color. 형식이 어긋나면 검정.
+    static func color(fromHex hex: String) -> Color {
+        guard let valid = Config.validNotchPanelColorHex(hex) else { return .black }
+        let value = UInt32(valid.dropFirst(), radix: 16) ?? 0
+        return Color(
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255)
+    }
+
+    /// Color → "#RRGGBB". 설정 저장용.
+    static func hex(from color: Color) -> String {
+        let ns = NSColor(color).usingColorSpace(.sRGB) ?? .black
+        return String(
+            format: "#%02X%02X%02X",
+            Int(round(ns.redComponent * 255)),
+            Int(round(ns.greenComponent * 255)),
+            Int(round(ns.blueComponent * 255)))
     }
 }
 

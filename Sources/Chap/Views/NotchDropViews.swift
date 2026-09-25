@@ -69,6 +69,8 @@ struct NotchDropZoneView: View {
     let contentWidth: CGFloat
     /// 본체 하단 불투명도. 메인 도커와 같은 설정값을 공유한다.
     let bottomOpacity: Double
+    /// 콘텐츠 박스 배경색 ("#RRGGBB").
+    let colorHex: String
     /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
     let onDropped: () -> Void
 
@@ -88,16 +90,18 @@ struct NotchDropZoneView: View {
         .padding(.top, topInset + 8)
         .padding(.bottom, DS.paddingSmall)
         .background(
-            NotchDropDock.shape
-                .fill(NotchDockStyle.blackFade(bottomOpacity))
-                .overlay(
-                    NotchDropDock.rimShape
-                        .stroke(
-                            isDropTargeted
-                                ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
-                            lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+            NotchDockStyle.dockBackground(
+                shape: NotchDropDock.shape, topInset: topInset,
+                colorHex: colorHex, bottomOpacity: bottomOpacity
+            )
+            .overlay(
+                NotchDropDock.rimShape
+                    .stroke(
+                        isDropTargeted
+                            ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                        lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
         )
         .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
         .padding(.bottom, NotchLauncherPanelView.shadowPadding)
@@ -144,6 +148,8 @@ struct NotchDropPanelView: View {
     let maxContentWidth: CGFloat
     /// 본체 하단 불투명도. 메인 도커와 같은 설정값을 공유한다.
     let bottomOpacity: Double
+    /// 콘텐츠 박스 배경색 ("#RRGGBB").
+    let colorHex: String
     /// 콘텐츠 크기 변화 통지. 열려 있는 동안 파일이 추가·삭제되면
     /// 컨트롤러가 창을 같은 앵커로 리사이즈한다.
     var onSizeChange: ((CGSize) -> Void)?
@@ -193,16 +199,18 @@ struct NotchDropPanelView: View {
             .padding(.top, topInset + 8)
             .padding(.bottom, DS.paddingSmall)
             .background(
-                NotchDropDock.shape
-                    .fill(NotchDockStyle.blackFade(bottomOpacity))
-                    .overlay(
-                        NotchDropDock.rimShape
-                            .stroke(
-                                isDropTargeted
-                                    ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
-                                lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+                NotchDockStyle.dockBackground(
+                    shape: NotchDropDock.shape, topInset: topInset,
+                    colorHex: colorHex, bottomOpacity: bottomOpacity
+                )
+                .overlay(
+                    NotchDropDock.rimShape
+                        .stroke(
+                            isDropTargeted
+                                ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                            lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
             .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
             .padding(.bottom, NotchLauncherPanelView.shadowPadding)
