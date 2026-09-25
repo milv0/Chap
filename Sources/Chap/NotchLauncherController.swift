@@ -95,9 +95,18 @@ final class NotchLauncherController {
             return
         }
 
-        let frame = NotchLauncherPolicy.dropBadgeFrame(
+        // 창은 인식 여유만큼 크게 잡고, 시각(배지 셰이프)은 원래 프레임에
+        // 남도록 콘텐츠를 같은 값으로 인셋한다 (상단은 화면 끝이라 그대로).
+        let margin = NotchGeometry.hoverMargin
+        let visualFrame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: Self.notchRect(on: screen))
-        let hosting = NSHostingView(rootView: NotchDropBadgeView(count: count))
+        let frame = NSRect(
+            x: visualFrame.minX - margin, y: visualFrame.minY - margin,
+            width: visualFrame.width + margin * 2, height: visualFrame.height + margin)
+        let hosting = NSHostingView(
+            rootView: NotchDropBadgeView(count: count)
+                .padding(.horizontal, margin)
+                .padding(.bottom, margin))
         // tracker가 항상 contentView여야 한다. 갱신 때 hosting만 넣으면
         // hover/드래그 콜백이 사라지는 회귀가 있었다 (첫 드롭 직후 재현).
         // hosting이 contentView여야 SwiftUI 좌표가 도커들과 동일하게 선다.
@@ -158,7 +167,12 @@ final class NotchLauncherController {
     private func installHotzone(on screen: NSScreen) {
         hotzoneWindow?.orderOut(nil)
 
-        let frame = Self.notchRect(on: screen)
+        // 인식 범위는 노치보다 hoverMargin만큼 넓다 (상단은 화면 끝이라 그대로).
+        let notch = Self.notchRect(on: screen)
+        let margin = NotchGeometry.hoverMargin
+        let frame = NSRect(
+            x: notch.minX - margin, y: notch.minY - margin,
+            width: notch.width + margin * 2, height: notch.height + margin)
         let window = NSWindow(
             contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         window.level = .statusBar

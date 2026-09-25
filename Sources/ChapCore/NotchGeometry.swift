@@ -46,4 +46,8 @@ public enum NotchGeometry {
     /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여ㄹ백.
     /// 그림자 확산이 이 안에서 완전히 소멸해야 경계선이 생기지 않는다.
     public static let shadowPadding: CGFloat = 28
+
+    /// 도커를 여는 hover/드래그 인식 범위를 시각 경계보다 넓히는 여유.
+    /// 노치·배지 가장자리를 정확히 맞추지 않아도 반응하게 한다.
+    public static let hoverMargin: CGFloat = 3
 }
