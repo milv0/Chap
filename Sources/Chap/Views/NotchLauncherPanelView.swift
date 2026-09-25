@@ -29,8 +29,10 @@ struct NotchLauncherPanelView: View {
     let minWidth: CGFloat
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
-    /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 확장 배지 폭 + 여유).
+    /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 좌우 상태 영역).
     let stripPlateauHalfWidth: CGFloat
+    /// Keep Awake 세션 종료 시각. 활성 중이면 왼쪽 상단 영역에 h:mm으로 표시.
+    let awakeSessionEnd: Date?
     /// 시각 스타일. Custom은 색상·불투명도 도크, Glass는 시스템 재질.
     let style: NotchPanelStyle
     /// Apple 공식 Glass.clear/regular 재질 변형.
@@ -120,6 +122,8 @@ struct NotchLauncherPanelView: View {
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
+            // Keep Awake 상태는 별도 배지 창이 아니라 메인 도커 상단에 통합한다.
+            .overlay(alignment: .top) { awakeStripStatus }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
@@ -131,6 +135,37 @@ struct NotchLauncherPanelView: View {
             // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
             // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    /// 메인 도커 왼쪽 plateau의 Keep Awake 상태. 커피 아이콘은 테마 블루,
+    /// 시간은 고정 h:mm이며 영역 중심에서 오른쪽으로 5pt 이동한다.
+    @ViewBuilder private var awakeStripStatus: some View {
+        if let awakeSessionEnd {
+            let sideWidth = NotchGeometry.stripPlateauSideWidth
+            let notchHalf = stripPlateauHalfWidth - sideWidth
+            GeometryReader { geo in
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    HStack(spacing: 5) {
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.system(size: 12))
+                            .foregroundColor(DS.accent)
+                        Text(
+                            KeepAwakePolicy.remainingClockLabel(
+                                until: awakeSessionEnd, now: context.date)
+                        )
+                        .font(.system(size: 13, weight: .medium))
+                        .monospacedDigit()
+                        .foregroundColor(.white.opacity(0.9))
+                    }
+                    .frame(width: sideWidth, height: topInset)
+                    .position(
+                        x: geo.size.width / 2 - notchHalf - sideWidth / 2
+                            + NotchGeometry.awakeStatusOffsetX,
+                        y: topInset / 2)
+                }
+            }
+            .allowsHitTesting(false)
+        }
     }
 
     @State private var dropTargeted = false
