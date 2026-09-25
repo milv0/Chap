@@ -305,6 +305,9 @@ extension AppDelegate {
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .black
         }
+        notchLauncher.glassAppearanceProvider = { [weak self] in
+            self?.config.notchGlassAppearance ?? .system
+        }
         notchLauncher.opacityProvider = { [weak self] in
             self?.config.notchPanelOpacity ?? Config.notchPanelOpacityDefault
         }

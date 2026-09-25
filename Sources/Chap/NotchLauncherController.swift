@@ -36,6 +36,8 @@ final class NotchLauncherController {
     var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .black }
+    /// Liquid Glass System/Light/Dark appearance 공급자.
+    var glassAppearanceProvider: () -> NotchGlassAppearance = { .system }
     /// 패널 하단 불투명도 공급자.
     var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
     /// 콘텐츠 박스 배경색 공급자 ("#RRGGBB").
@@ -64,6 +66,7 @@ final class NotchLauncherController {
             return
         }
         installHotzone(on: screen)
+        applyGlassAppearance(to: panel)
         installDropObserverIfNeeded()
         updateDropBadge()
         updateAwakeBadge()
@@ -368,6 +371,7 @@ final class NotchLauncherController {
         panel.hasShadow = false
         panel.collectionBehavior = [.canJoinAllSpaces, .transient]
         panel.becomesKeyOnlyIfNeeded = true
+        applyGlassAppearance(to: panel)
         panel.contentView = hosting
 
         // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
@@ -393,6 +397,24 @@ final class NotchLauncherController {
     private func presentDropOverlay() {
         if panel == nil { showPanel() }
         revealModel?.isDropTargetActive = true
+    }
+
+    /// Glass 스타일의 창 appearance를 적용한다. System은 nil로 두어 macOS
+    /// 변경을 실시간으로 따르고, Light/Dark는 이 NSPanel에만 강제한다.
+    private func applyGlassAppearance(to panel: NSPanel?) {
+        guard let panel else { return }
+        guard styleProvider() == .glass else {
+            panel.appearance = nil
+            return
+        }
+        switch glassAppearanceProvider() {
+        case .system:
+            panel.appearance = nil
+        case .light:
+            panel.appearance = NSAppearance(named: .aqua)
+        case .dark:
+            panel.appearance = NSAppearance(named: .darkAqua)
+        }
     }
 
     // MARK: - Opacity preview
