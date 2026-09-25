@@ -275,6 +275,14 @@ public enum NotchGlassAppearance: String, Codable, CaseIterable {
     case dark = "dark"
 }
 
+/// Apple 공식 Liquid Glass 재질 변형. 연속 강도 값은 제공되지 않는다.
+public enum NotchGlassMaterial: String, Codable, CaseIterable {
+    /// 더 투명해 뒤 콘텐츠를 많이 드러내는 Glass.clear.
+    case clear = "clear"
+    /// 대비가 더 강한 표준 Glass.regular.
+    case regular = "regular"
+}
+
 /// 노치 패널의 한 칸에 배치할 수 있는 위젯.
 public enum NotchWidget: String, Codable, CaseIterable {
     /// URL 런처 목록.
@@ -329,6 +337,8 @@ public struct Config: Codable {
     public var notchPanelStyle: NotchPanelStyle
     /// Liquid Glass 패널의 System/Light/Dark appearance.
     public var notchGlassAppearance: NotchGlassAppearance
+    /// Liquid Glass의 Clear/Regular 재질 변형.
+    public var notchGlassMaterial: NotchGlassMaterial
     /// 노치 패널 본체의 하단 불투명도 (0.2~1.0). 상단은 항상 완전 검정이다.
     public var notchPanelOpacity: Double
     /// 노치 패널 콘텐츠 박스(노치 하단 경계 아래)의 배경색. "#RRGGBB".
@@ -354,7 +364,8 @@ public struct Config: Codable {
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
-        case notchGlassAppearance, notchPanelOpacity, notchPanelColorHex, notchWidgets
+        case notchGlassAppearance, notchGlassMaterial
+        case notchPanelOpacity, notchPanelColorHex, notchWidgets
         case sites
     }
 
@@ -367,6 +378,7 @@ public struct Config: Codable {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
+        notchGlassMaterial: NotchGlassMaterial = .clear,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -380,6 +392,7 @@ public struct Config: Codable {
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
         self.notchGlassAppearance = notchGlassAppearance
+        self.notchGlassMaterial = notchGlassMaterial
         self.notchPanelOpacity = notchPanelOpacity
         self.notchPanelColorHex =
             Config.validNotchPanelColorHex(notchPanelColorHex)
@@ -416,6 +429,10 @@ public struct Config: Codable {
         notchGlassAppearance =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassAppearance))
             .flatMap(NotchGlassAppearance.init(rawValue:)) ?? .system
+        // 알 수 없는 재질은 더 투명한 Clear로 취급한다 (관용 디코딩).
+        notchGlassMaterial =
+            (try? container.decodeIfPresent(String.self, forKey: .notchGlassMaterial))
+            .flatMap(NotchGlassMaterial.init(rawValue:)) ?? .clear
         // 범위 밖 값은 클램프, 타입이 어긋나면 기본값으로 취급한다 (관용 디코딩).
         let rawOpacity =
             (try? container.decodeIfPresent(Double.self, forKey: .notchPanelOpacity))
@@ -455,6 +472,7 @@ public struct Config: Codable {
         try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
         try container.encode(notchPanelStyle.rawValue, forKey: .notchPanelStyle)
         try container.encode(notchGlassAppearance.rawValue, forKey: .notchGlassAppearance)
+        try container.encode(notchGlassMaterial.rawValue, forKey: .notchGlassMaterial)
         try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
         try container.encode(notchPanelColorHex, forKey: .notchPanelColorHex)
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)

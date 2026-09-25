@@ -118,6 +118,39 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchGlassAppearance == .dark)
     }
 
+    @Test("Glass material defaults to Clear when the key is missing")
+    func glassMaterialDefaultsToClear() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchGlassMaterial == .clear)
+    }
+
+    @Test("decodes explicit Regular Glass material")
+    func decodesRegularGlassMaterial() throws {
+        let config = try decodeConfig(
+            #"{"notchGlassMaterial": "regular", "sites": []}"#)
+
+        #expect(config.notchGlassMaterial == .regular)
+    }
+
+    @Test("unknown Glass material falls back to Clear")
+    func unknownGlassMaterialFallsBack() throws {
+        let config = try decodeConfig(
+            #"{"notchGlassMaterial": "heavy", "sites": []}"#)
+
+        #expect(config.notchGlassMaterial == .clear)
+    }
+
+    @Test("Glass material round-trips through encoding")
+    func glassMaterialRoundTrips() throws {
+        let original = Config(notchGlassMaterial: .regular, sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchGlassMaterial == .regular)
+    }
+
     @Test("opacity defaults to 0.6 when the key is missing")
     func opacityDefaultsWhenMissing() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
