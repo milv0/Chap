@@ -82,4 +82,15 @@ struct NotchLauncherPolicyTests {
         #expect(expanded.maxX == left.maxX)
         #expect(expanded.width > left.width)
     }
+    @Test("Glass corner bridges touch both top vertices")
+    func glassCornerBridgesTouchTopVertices() {
+        let rect = CGRect(x: 0, y: 0, width: 300, height: 180)
+
+        let bounds = GlassCornerBridgeShape(radius: 10).path(in: rect).boundingRect
+
+        #expect(bounds.minX == rect.minX)
+        #expect(bounds.maxX == rect.maxX)
+        #expect(bounds.minY == rect.minY)
+        #expect(bounds.maxY == 10)
+    }
 }

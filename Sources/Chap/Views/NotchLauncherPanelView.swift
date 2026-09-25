@@ -92,18 +92,24 @@ struct NotchLauncherPanelView: View {
                 // 검정 띠는 노치가 배경을 누른 듯한 곡선 경계로 내려온다.
                 ZStack(alignment: .top) {
                     panelShape.fill(panelFill)
-                    // Glass 스타일: 콘텐츠 박스에 Liquid Glass 재질을 얹는다.
-                    // macOS 26 미만에서는 아무것도 추가되지 않아 black과 같다.
+                    // Glass 스타일: 본체 재질과 좌우 오목 코너 bridge를 함께 그린다.
+                    // bridge가 검정 상단선의 화면 꼭짓점까지 닿아 배경화면 틈을 없앤다.
                     if style == .glass {
                         NotchDockStyle.liquidGlassLayer(
                             shape: panelShape, material: glassMaterial)
+                        NotchDockStyle.liquidGlassLayer(
+                            shape: GlassCornerBridgeShape(
+                                radius: NotchGeometry.dockFlareRadius),
+                            material: glassMaterial)
                     }
+                    // 검정 띠는 기존 도커 외곽 안에만 남아 bridge 위의 상단
+                    // 실루엣을 보존한다.
                     PressedStripShape(
                         plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
                     )
                     .fill(Color.black)
+                    .clipShape(panelShape)
                 }
-                .clipShape(panelShape)
                 // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
                 // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
                 .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
@@ -426,6 +432,37 @@ enum NotchDockStyle {
             Int(round(ns.redComponent * 255)),
             Int(round(ns.greenComponent * 255)),
             Int(round(ns.blueComponent * 255)))
+    }
+}
+
+/// Liquid Glass 전용 상단 코너 bridge. NotchDockShape의 오목 플레어가
+/// 비워두는 좌우 코너를 채워, Glass 재질이 화면 상단의 검정 꼭짓점까지
+/// 이어지게 한다. 검정 PressedStrip은 이 위에 그려져 기존 실루엣을 유지한다.
+struct GlassCornerBridgeShape: Shape {
+    let radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let r = min(radius, rect.width / 2, rect.height)
+        var path = Path()
+
+        // 왼쪽: 상단 가로선 → 본체 벽 → 오목 arc를 거슬러 꼭짓점으로.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX + r, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX + r, y: rect.minY + r))
+        path.addArc(
+            center: CGPoint(x: rect.minX, y: rect.minY + r), radius: r,
+            startAngle: .degrees(0), endAngle: .degrees(-90), clockwise: true)
+        path.closeSubpath()
+
+        // 오른쪽 미러.
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY + r))
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.minY + r), radius: r,
+            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
     }
 }
 
