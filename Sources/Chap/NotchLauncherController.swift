@@ -254,11 +254,15 @@ final class NotchLauncherController {
 
     /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을
     /// 덮는다 (왼쪽 Drop 배지 + 추후 우측 배지 자리). 도커는 노치 중앙 정렬.
+    ///
+    /// NotchDockShape의 상단 오목 플레어가 좌우 topCornerRadius만큼 벽을
+    /// 안쪽으로 들이므로, 보이는 벽이 배지 바깥 변에 오도록 그만큼 더한다.
     private static func dropDockContentWidth(on screen: NSScreen) -> CGFloat {
         let notch = notchRect(on: screen)
         // 배지 한 변 = 노치 높이. 좌우 대칭으로 더한다.
         let badgeExtension = notch.height
-        return notch.width + badgeExtension * 2 - DS.paddingSmall * 2
+        let flareInset = NotchDropDock.topCornerRadius * 2
+        return notch.width + badgeExtension * 2 + flareInset - DS.paddingSmall * 2
     }
 
     /// Drop 도커 공통 표시. 노치 중앙에 정렬하고, 떠 있는 동안 배지를

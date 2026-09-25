@@ -114,13 +114,15 @@ struct NotchDropZoneView: View {
 enum NotchDropDock {
     /// 드롭 존 콘텐츠 높이. 드롭만 받는 표면이라 낮게 유지한다.
     static let zoneContentHeight: CGFloat = 64
+    /// 상단 오목 플레어 반경. 폭 보정 계산이 실루엣과 어긋나지 않게 공유한다.
+    static let topCornerRadius: CGFloat = 10
 
     static var shape: NotchDockShape {
-        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+        NotchDockShape(topCornerRadius: topCornerRadius, bottomCornerRadius: 18)
     }
 
     static var rimShape: NotchDockShape {
-        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18, isRim: true)
+        NotchDockShape(topCornerRadius: topCornerRadius, bottomCornerRadius: 18, isRim: true)
     }
 }
 
