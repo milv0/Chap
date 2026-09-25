@@ -15,6 +15,8 @@ Sources/
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 기반 화면 잠자기 방지 세션
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
+│   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
+│   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
@@ -33,6 +35,10 @@ Sources/
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
 │       ├── SettingsGeneralView.swift ← General 탭 (Behavior/Appearance/Updates)
+│       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
+│       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
+│       ├── NotchDropViews.swift   ← Chap Drop 파일 행·좌우 배지
+│       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── QAView.swift           ← Q&A 페이지
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
@@ -51,6 +57,10 @@ Sources/
 │   ├── EditActivationPolicy.swift ← 저장 상태 패널 탭의 편집 활성화 판정 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
 │   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시 (순수 로직)
+│   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
+│   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
+│   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
+│   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -146,6 +156,11 @@ Config 모델 필드:
   - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
   - hiddenMenuLaunchTypes: Set<LaunchType>  메뉴에서 숨길 launch type 섹션.
     누락 시 빈 집합, 알 수 없는 문자열은 무시. 숨겨도 ⌥ 단축키는 동작
+  - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false
+  - notchPanelStyle: NotchPanelStyle  black | iceberg | glass. Glass는 macOS 26+
+  - notchGlassAppearance: NotchGlassAppearance  system | light | dark. 누락/unknown은 system
+  - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
+  - notchWidgets: [NotchWidget]  노치 패널 4칸 위젯 배치
   - sites: [Site]             사이트 목록
 
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.
@@ -169,8 +184,9 @@ Config 모델 필드:
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
-  Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘
-  설정을 제공하며 General에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
+  Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘,
+  Notch는 노치 런처 on/off·위젯 배치·Black/Iceberg/Glass appearance 설정을 제공한다.
+  General/Notch에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
   ⌥./⌥,/⌥(key) 단축키 상시 안내가 있다. 하단의 앱 아이콘을 클릭하면 About Chap을 연다
   (메뉴바에는 About Chap 항목이 없다).
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
