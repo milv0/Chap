@@ -155,7 +155,6 @@ struct NotchLauncherPanelView: View {
                 + NotchGeometry.dockFlareRadius
             let notchHalf =
                 stripPlateauHalfWidth - NotchGeometry.badgeExpandedBodyWidth
-                - NotchGeometry.stripBadgeClearance
             GeometryReader { geo in
                 // 오른쪽 (직선 변이 왼쪽 = 노치 쪽)
                 NotchBadgeShape(

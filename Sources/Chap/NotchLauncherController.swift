@@ -427,9 +427,9 @@ final class NotchLauncherController {
 
     /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 배지 폭.
     /// 이 구간까지는 검정이 평평하게 깊고, 바깥에서 곡선으로 얇아진다.
+    /// 확장 배지 영역의 바깥 모서리에서 곧바로 상단 띠가 줄기 시작한다.
     private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
         notchRect(on: screen).width / 2 + NotchGeometry.badgeExpandedBodyWidth
-            + NotchGeometry.stripBadgeClearance
     }
 
     /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을

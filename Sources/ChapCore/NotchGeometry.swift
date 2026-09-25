@@ -56,9 +56,6 @@ public enum NotchGeometry {
 
     // MARK: 눌린 상단 띠 (pressed strip)
 
-    /// 배지 코너 뒤에 남기는 평평한 여유. 배지 영역과 색 상승 구간을
-    /// 시각적으로 구분하고, 남은 시간 같은 정보가 앉을 자리를 만든다.
-    public static let stripBadgeClearance: CGFloat = 10
     /// 도커 좌우 끝에서 검정 띠가 남는 최소 깊이.
     public static let stripEdgeDepth: CGFloat = 6
     /// 노치 plateau 바깥에서 검정이 가장자리 깊이로 얇아지는 감쇠 길이.

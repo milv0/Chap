@@ -68,7 +68,6 @@
 | `dropZoneContentHeight` | 64 | 드롭 존 콘텐츠 높이 |
 | `icebergJagDepth` | 46 | Iceberg 스타일 톱니 최대 깊이 |
 | `icebergToothWidth` | 68 | Iceberg 톱니 하나의 목표 폭 |
-| `stripBadgeClearance` | 10 | 배지 코너 뒤 평평한 여유. 영역 구분 + 정보 자리 |
 | `stripEdgeDepth` | 6 | 눌린 검정 띠가 도커 끝에서 남는 최소 깊이 |
 | `stripFalloff` | 90 | plateau 밖에서 곡선으로 얇아지는 감쇠 길이. 최대 깊이는 노치 세로와 동일 |
 | `shadowPadding` | 28 | 그림자 클리핑 방지 투명 여백 |
