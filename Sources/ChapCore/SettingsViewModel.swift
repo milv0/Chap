@@ -10,6 +10,7 @@ public struct SettingsPayload {
     public let notchLauncherEnabled: Bool
     public let notchPanelStyle: NotchPanelStyle
     public let notchGlassAppearance: NotchGlassAppearance
+    public let notchGlassMaterial: NotchGlassMaterial
     public let notchPanelOpacity: Double
     public let notchPanelColorHex: String
     public let notchWidgets: [NotchWidget]
@@ -25,6 +26,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchLauncherEnabled: Bool
     @Published public var notchPanelStyle: NotchPanelStyle
     @Published public var notchGlassAppearance: NotchGlassAppearance
+    @Published public var notchGlassMaterial: NotchGlassMaterial
     @Published public var notchPanelOpacity: Double
     @Published public var notchPanelColorHex: String
     @Published public var notchWidgets: [NotchWidget]
@@ -37,6 +39,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchLauncherEnabled: Bool
     @Published public var originalNotchPanelStyle: NotchPanelStyle
     @Published public var originalNotchGlassAppearance: NotchGlassAppearance
+    @Published public var originalNotchGlassMaterial: NotchGlassMaterial
     @Published public var originalNotchPanelOpacity: Double
     @Published public var originalNotchPanelColorHex: String
     @Published public var originalNotchWidgets: [NotchWidget]
@@ -53,6 +56,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchLauncherEnabled != originalNotchLauncherEnabled
             || notchPanelStyle != originalNotchPanelStyle
             || notchGlassAppearance != originalNotchGlassAppearance
+            || notchGlassMaterial != originalNotchGlassMaterial
             || notchPanelOpacity != originalNotchPanelOpacity
             || notchPanelColorHex != originalNotchPanelColorHex
             || notchWidgets != originalNotchWidgets
@@ -68,6 +72,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchLauncherEnabled = notchLauncherEnabled
         originalNotchPanelStyle = notchPanelStyle
         originalNotchGlassAppearance = notchGlassAppearance
+        originalNotchGlassMaterial = notchGlassMaterial
         originalNotchPanelOpacity = notchPanelOpacity
         originalNotchPanelColorHex = notchPanelColorHex
         originalNotchWidgets = notchWidgets
@@ -86,6 +91,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchLauncherEnabled: self.notchLauncherEnabled,
                 notchPanelStyle: self.notchPanelStyle,
                 notchGlassAppearance: self.notchGlassAppearance,
+                notchGlassMaterial: self.notchGlassMaterial,
                 notchPanelOpacity: self.notchPanelOpacity,
                 notchPanelColorHex: self.notchPanelColorHex,
                 notchWidgets: self.notchWidgets,
@@ -116,6 +122,7 @@ public final class SettingsViewModel: ObservableObject {
                     notchLauncherEnabled: notchLauncherEnabled,
                     notchPanelStyle: notchPanelStyle,
                     notchGlassAppearance: notchGlassAppearance,
+                    notchGlassMaterial: notchGlassMaterial,
                     notchPanelOpacity: notchPanelOpacity,
                     notchPanelColorHex: notchPanelColorHex,
                     notchWidgets: notchWidgets)) ?? true
@@ -132,6 +139,7 @@ public final class SettingsViewModel: ObservableObject {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
+        notchGlassMaterial: NotchGlassMaterial = .clear,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -146,6 +154,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
         self.notchGlassAppearance = notchGlassAppearance
+        self.notchGlassMaterial = notchGlassMaterial
         self.notchPanelOpacity = notchPanelOpacity
         self.notchPanelColorHex = notchPanelColorHex
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
@@ -158,6 +167,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchLauncherEnabled = notchLauncherEnabled
         self.originalNotchPanelStyle = notchPanelStyle
         self.originalNotchGlassAppearance = notchGlassAppearance
+        self.originalNotchGlassMaterial = notchGlassMaterial
         self.originalNotchPanelOpacity = notchPanelOpacity
         self.originalNotchPanelColorHex = notchPanelColorHex
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
