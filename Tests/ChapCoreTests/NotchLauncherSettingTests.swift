@@ -111,6 +111,41 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchPanelOpacity == 0.35)
     }
 
+    @Test("content color defaults to black when the key is missing")
+    func colorDefaultsToBlack() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchPanelColorHex == "#000000")
+    }
+
+    @Test("decodes a custom content color")
+    func decodesCustomColor() throws {
+        let config = try decodeConfig(##"{"notchPanelColorHex": "#1A2B3C", "sites": []}"##)
+
+        #expect(config.notchPanelColorHex == "#1A2B3C")
+    }
+
+    @Test("malformed color strings fall back to black")
+    func malformedColorFallsBack() throws {
+        let noHash = try decodeConfig(#"{"notchPanelColorHex": "123456", "sites": []}"#)
+        let short = try decodeConfig(##"{"notchPanelColorHex": "#12", "sites": []}"##)
+        let junk = try decodeConfig(##"{"notchPanelColorHex": "#GGHHII", "sites": []}"##)
+
+        #expect(noHash.notchPanelColorHex == "#000000")
+        #expect(short.notchPanelColorHex == "#000000")
+        #expect(junk.notchPanelColorHex == "#000000")
+    }
+
+    @Test("content color round-trips through encoding")
+    func colorRoundTripsThroughEncoding() throws {
+        let original = Config(notchPanelColorHex: "#33445A", sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchPanelColorHex == "#33445A")
+    }
+
     @Test("widgets default to the four launcher sections when the key is missing")
     func widgetsDefaultToLauncherSections() throws {
         let config = try decodeConfig(#"{"sites": []}"#)

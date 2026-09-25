@@ -309,6 +309,9 @@ public struct Config: Codable {
     public var notchPanelStyle: NotchPanelStyle
     /// 노치 패널 본체의 하단 불투명도 (0.2~1.0). 상단은 항상 완전 검정이다.
     public var notchPanelOpacity: Double
+    /// 노치 패널 콘텐츠 박스(노치 하단 경계 아래)의 배경색. "#RRGGBB".
+    /// 상단바 구간은 노치 연장이라 항상 검정으로 유지된다.
+    public var notchPanelColorHex: String
     /// 노치 패널 4칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
@@ -316,11 +319,20 @@ public struct Config: Codable {
     /// 패널 불투명도의 허용 범위. 하한은 텍스트 가독성 하한선이다.
     public static let notchPanelOpacityRange: ClosedRange<Double> = 0.2...1.0
     public static let notchPanelOpacityDefault: Double = 0.6
+    public static let notchPanelColorHexDefault = "#000000"
+
+    /// "#RRGGBB" 형식 검증. 형식이 어긋나면 nil.
+    public static func validNotchPanelColorHex(_ raw: String?) -> String? {
+        guard let raw, raw.count == 7, raw.hasPrefix("#"),
+            raw.dropFirst().allSatisfy({ $0.isHexDigit })
+        else { return nil }
+        return raw.uppercased()
+    }
 
     private enum CodingKeys: String, CodingKey {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
-        case notchPanelOpacity, notchWidgets
+        case notchPanelOpacity, notchPanelColorHex, notchWidgets
         case sites
     }
 
@@ -333,6 +345,7 @@ public struct Config: Codable {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
+        notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -344,6 +357,9 @@ public struct Config: Codable {
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
         self.notchPanelOpacity = notchPanelOpacity
+        self.notchPanelColorHex =
+            Config.validNotchPanelColorHex(notchPanelColorHex)
+            ?? Config.notchPanelColorHexDefault
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -379,6 +395,12 @@ public struct Config: Codable {
         notchPanelOpacity = min(
             max(rawOpacity, Config.notchPanelOpacityRange.lowerBound),
             Config.notchPanelOpacityRange.upperBound)
+        // 형식이 어긋난 색은 기본 검정으로 취급한다 (관용 디코딩).
+        notchPanelColorHex =
+            Config.validNotchPanelColorHex(
+                try? container.decodeIfPresent(String.self, forKey: .notchPanelColorHex)
+                    .flatMap { $0 })
+            ?? Config.notchPanelColorHexDefault
         // 알 수 없는 위젯 이름은 버리고 항상 4칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -405,6 +427,7 @@ public struct Config: Codable {
         try container.encode(notchLauncherEnabled, forKey: .notchLauncherEnabled)
         try container.encode(notchPanelStyle.rawValue, forKey: .notchPanelStyle)
         try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
+        try container.encode(notchPanelColorHex, forKey: .notchPanelColorHex)
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
