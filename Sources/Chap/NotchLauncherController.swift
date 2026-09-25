@@ -294,8 +294,27 @@ final class NotchLauncherController {
             content: NotchDropPanelView(
                 topInset: screen.safeAreaInsets.top,
                 minContentWidth: Self.dropDockContentWidth(on: screen),
-                maxContentWidth: mainDockContentWidth(on: screen)),
+                maxContentWidth: mainDockContentWidth(on: screen),
+                bottomOpacity: opacityProvider(),
+                onSizeChange: { [weak self] size in self?.resizeDropDock(to: size) }),
             on: screen)
+    }
+
+    /// 열려 있는 Drop 도커의 창을 콘텐츠 크기에 맞춰 같은 앵커
+    /// (노치 중앙, 상단 밀착)로 리사이즈한다.
+    private func resizeDropDock(to size: CGSize) {
+        guard let panel, activeSurface == .dropDock,
+            let screen = Self.notchScreen()
+        else { return }
+        let notch = Self.notchRect(on: screen)
+        var frame = NSRect(
+            x: notch.midX - ceil(size.width) / 2,
+            y: screen.frame.maxY - ceil(size.height),
+            width: ceil(size.width), height: ceil(size.height)
+        ).integral
+        frame.origin.y = screen.frame.maxY - frame.height
+        guard frame != panel.frame else { return }
+        panel.setFrame(frame, display: true)
     }
 
     /// 메인 런처 도커의 콘텐츠 폭 추정치. Drop 파일 도커의 폭 상한으로 쓴다.
@@ -368,6 +387,7 @@ final class NotchLauncherController {
         let content = NotchDropZoneView(
             topInset: screen.safeAreaInsets.top,
             contentWidth: Self.dropDockContentWidth(on: screen),
+            bottomOpacity: opacityProvider(),
             onDropped: { [weak self] in self?.hidePanel() })
         presentDropDock(content: content, on: screen)
     }
