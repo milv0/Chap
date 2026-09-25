@@ -236,6 +236,7 @@ final class NotchLauncherController {
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
+            stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
             style: styleProvider(),
             slots: slots,
             onLaunch: { [weak self] siteIndex in
@@ -301,6 +302,7 @@ final class NotchLauncherController {
                 maxContentWidth: mainDockContentWidth(on: screen),
                 bottomOpacity: opacityProvider(),
                 colorHex: colorProvider(),
+                stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
                 onSizeChange: { [weak self] size in self?.resizeDropDock(to: size) }),
             on: screen)
     }
@@ -329,6 +331,12 @@ final class NotchLauncherController {
             CGFloat(slotCount) * NotchLauncherPanelView.columnWidth
             + CGFloat(slotCount - 1) * DS.spacing + DS.padding * 2
         return max(black - DS.paddingSmall * 2, Self.dropDockContentWidth(on: screen))
+    }
+
+    /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 배지 폭.
+    /// 이 구간까지는 검정이 평평하게 깊고, 바깥에서 곡선으로 얇아진다.
+    private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
+        notchRect(on: screen).width / 2 + NotchGeometry.badgeBodyWidth
     }
 
     /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을
@@ -395,6 +403,7 @@ final class NotchLauncherController {
             contentWidth: Self.dropDockContentWidth(on: screen),
             bottomOpacity: opacityProvider(),
             colorHex: colorProvider(),
+            stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
             onDropped: { [weak self] in self?.hidePanel() })
         presentDropDock(content: content, on: screen)
     }

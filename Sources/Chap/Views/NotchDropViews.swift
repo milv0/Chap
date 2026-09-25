@@ -71,6 +71,8 @@ struct NotchDropZoneView: View {
     let bottomOpacity: Double
     /// 콘텐츠 박스 배경색 ("#RRGGBB").
     let colorHex: String
+    /// 눌린 검정 띠의 plateau 반폭.
+    let stripPlateauHalfWidth: CGFloat
     /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
     let onDropped: () -> Void
 
@@ -87,11 +89,12 @@ struct NotchDropZoneView: View {
         }
         .frame(width: contentWidth, height: NotchDropDock.zoneContentHeight)
         .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, topInset + 8)
+        .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
         .padding(.bottom, DS.paddingSmall)
         .background(
             NotchDockStyle.dockBackground(
                 shape: NotchDropDock.shape, topInset: topInset,
+                stripPlateauHalfWidth: stripPlateauHalfWidth,
                 colorHex: colorHex, bottomOpacity: bottomOpacity
             )
             .overlay(
@@ -150,6 +153,8 @@ struct NotchDropPanelView: View {
     let bottomOpacity: Double
     /// 콘텐츠 박스 배경색 ("#RRGGBB").
     let colorHex: String
+    /// 눌린 검정 띠의 plateau 반폭.
+    let stripPlateauHalfWidth: CGFloat
     /// 콘텐츠 크기 변화 통지. 열려 있는 동안 파일이 추가·삭제되면
     /// 컨트롤러가 창을 같은 앵커로 리사이즈한다.
     var onSizeChange: ((CGSize) -> Void)?
@@ -196,11 +201,12 @@ struct NotchDropPanelView: View {
             )
             .onChange(of: gridIdeal) { _, _ in onSizeChange?(footprint) }
             .padding(.horizontal, DS.paddingSmall)
-            .padding(.top, topInset + 8)
+            .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
             .padding(.bottom, DS.paddingSmall)
             .background(
                 NotchDockStyle.dockBackground(
                     shape: NotchDropDock.shape, topInset: topInset,
+                    stripPlateauHalfWidth: stripPlateauHalfWidth,
                     colorHex: colorHex, bottomOpacity: bottomOpacity
                 )
                 .overlay(

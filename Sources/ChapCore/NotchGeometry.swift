@@ -50,4 +50,14 @@ public enum NotchGeometry {
     /// 도커를 여는 hover/드래그 인식 범위를 시각 경계보다 넓히는 여유.
     /// 노치·배지 가장자리를 정확히 맞추지 않아도 반응하게 한다.
     public static let hoverMargin: CGFloat = 10
+
+    // MARK: 눌린 상단 띠 (pressed strip)
+
+    /// 도커 좌우 끝에서 검정 띠가 남는 최소 깊이.
+    public static let stripEdgeDepth: CGFloat = 6
+    /// 노치 구간에서 검정이 상단바(topInset)보다 더 눌려 내려오는 깊이.
+    /// 중앙 깊이 = topInset + 이 값.
+    public static let stripPressDepth: CGFloat = 12
+    /// 노치 plateau 바깥에서 검정이 가장자리 깊이로 얇아지는 감쇠 길이.
+    public static let stripFalloff: CGFloat = 90
 }

@@ -29,6 +29,8 @@ struct NotchLauncherPanelView: View {
     let minWidth: CGFloat
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
+    /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 배지 폭).
+    let stripPlateauHalfWidth: CGFloat
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
@@ -112,9 +114,14 @@ struct NotchLauncherPanelView: View {
         contentBody
             .background(
                 // 상단바 구간은 노치 연장(검정), 그 아래 콘텐츠 박스만 커스텀 색.
+                // 검정 띠는 노치가 배경을 누른 듯한 곡선 경계로 내려온다.
                 ZStack(alignment: .top) {
                     panelShape.fill(panelFill)
-                    Rectangle().fill(Color.black).frame(height: topInset)
+                    PressedStripShape(
+                        plateauHalfWidth: stripPlateauHalfWidth,
+                        centerDepth: topInset + NotchGeometry.stripPressDepth
+                    )
+                    .fill(Color.black)
                 }
                 .clipShape(panelShape)
                 // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
@@ -144,7 +151,7 @@ struct NotchLauncherPanelView: View {
             }
         }
         .padding(.horizontal, DS.padding)
-        .padding(.top, topInset + 8)
+        .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
         .padding(
             .bottom,
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
@@ -249,11 +256,16 @@ enum NotchDockStyle {
     /// 페이드(아래로 갈수록 사용자 불투명도)로 흘러내린다.
     @ViewBuilder
     static func dockBackground<S: Shape>(
-        shape: S, topInset: CGFloat, colorHex: String, bottomOpacity: Double
+        shape: S, topInset: CGFloat, stripPlateauHalfWidth: CGFloat,
+        colorHex: String, bottomOpacity: Double
     ) -> some View {
         ZStack(alignment: .top) {
             shape.fill(fade(color(fromHex: colorHex), bottomOpacity: bottomOpacity))
-            Rectangle().fill(Color.black).frame(height: topInset)
+            PressedStripShape(
+                plateauHalfWidth: stripPlateauHalfWidth,
+                centerDepth: topInset + NotchGeometry.stripPressDepth
+            )
+            .fill(Color.black)
         }
         .clipShape(shape)
     }
@@ -387,6 +399,43 @@ struct IcebergDockShape: Shape {
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
         // 림 모드에서는 상단 변을 긋지 않아 노치와의 경계가 검정으로 남는다.
         if !isRim { path.closeSubpath() }
+        return path
+    }
+}
+
+/// 노치가 배경을 눌러 만든 듯한 검정 띠. 노치·배지 plateau 구간은
+/// `centerDepth`로 평평하게 깊고, 바깥으로는 코사인 감쇠로
+/// `stripEdgeDepth`까지 부드럽게 얇아진다. 좁은 도커에서는 감쇠 구간이
+/// 폭을 넘어 사실상 직선이 되고, 넓은 메인 도커에서 곡선이 드러난다.
+struct PressedStripShape: Shape {
+    let plateauHalfWidth: CGFloat
+    let centerDepth: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let edge = NotchGeometry.stripEdgeDepth
+        let falloff = NotchGeometry.stripFalloff
+        let cx = rect.midX
+
+        func depth(at x: CGFloat) -> CGFloat {
+            let distance = abs(x - cx)
+            if distance <= plateauHalfWidth { return centerDepth }
+            let t = min((distance - plateauHalfWidth) / falloff, 1)
+            // 코사인 반파: 1→0으로 부드럽게 감쇠.
+            let factor = 0.5 + 0.5 * cos(t * .pi)
+            return edge + (centerDepth - edge) * factor
+        }
+
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + depth(at: rect.maxX)))
+        // 오른쪽→왼쪽으로 곡선 경계를 샘플링한다.
+        let samples = 96
+        for step in 0...samples {
+            let x = rect.maxX - rect.width * CGFloat(step) / CGFloat(samples)
+            path.addLine(to: CGPoint(x: x, y: rect.minY + depth(at: x)))
+        }
+        path.closeSubpath()
         return path
     }
 }
