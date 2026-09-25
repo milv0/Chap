@@ -254,7 +254,8 @@ final class NotchLauncherController {
         awakeBadgeWindow = nil
         NSAnimationContext.runAnimationGroup(
             { context in
-                context.duration = 0.15
+                // 메인 도커 접힘과 같은 시간으로 시작·종료를 맞춘다.
+                context.duration = NotchLauncherPanelView.closeDuration
                 window.animator().alphaValue = 0
             },
             completionHandler: {
@@ -392,6 +393,9 @@ final class NotchLauncherController {
         self.panel = panel
         self.isMainPanelOpen = true
         self.revealModel = reveal
+        // 메인 도커가 배지 소유권을 가져가므로 시작 피크를 취소한다.
+        isAwakeBadgePeeking = false
+        awakeBadgePeekToken += 1
         updateAwakeBadge()
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
@@ -535,6 +539,8 @@ final class NotchLauncherController {
         guard let panel else { return }
         self.panel = nil
         self.isMainPanelOpen = false
+        // 시간 배지도 메인 도커 접힘과 같은 프레임에 닫기 시작한다.
+        updateAwakeBadge()
         // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
         // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {
@@ -553,7 +559,6 @@ final class NotchLauncherController {
         ) { [weak self] in
             panel.orderOut(nil)
             self?.updateDropBadge()
-            self?.updateAwakeBadge()
         }
     }
 }
