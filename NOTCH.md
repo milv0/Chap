@@ -96,6 +96,12 @@ Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상�
 상단바 띠는 어떤 스타일에서도 순검정이다 — 노치와 융합해야 하므로
 유리·색이 침범하지 않는다.
 
+Glass 재질은 `notchGlassMaterial`로 고른다. Apple 공식 API는 연속 강도를
+제공하지 않고 다음 두 변형을 제공한다:
+
+- `clear` (기본): `Glass.clear` — 더 옅고 뒤 콘텐츠를 많이 드러냄
+- `regular`: `Glass.regular` — 대비가 더 강한 표준 재질
+
 Glass의 appearance는 `notchGlassAppearance`로 고른다:
 
 - `system`: `NSPanel.appearance = nil` — macOS Light/Dark 변경을 자동 추적
@@ -103,7 +109,9 @@ Glass의 appearance는 `notchGlassAppearance`로 고른다:
 - `dark`: `NSAppearance(named: .darkAqua)` — 노치 Glass 패널만 Dark
 
 노치 UI는 Settings와 별도 `NSPanel`이므로 SwiftUI `colorScheme`만 바꾸지 않고
-패널 자체에 appearance를 적용한다. Glass 콘텐츠 텍스트는 semantic
+패널 자체에 appearance를 적용한다. Settings에서 재질 또는 appearance를 바꾸면
+메인 도커를 2.5초 동안 자동으로 펼쳐 새 디자인을 프리뷰한다. 재질 변경은 이미 열린
+SwiftUI 뷰를 새 재질로 재구성한다. Glass 콘텐츠 텍스트는 semantic
 `primary`/`secondary`, 기능 아이콘은 Chap accent, hover 면은 appearance에
 적응하는 `primary.opacity(0.08)`을 쓴다.
 

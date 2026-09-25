@@ -159,6 +159,7 @@ Config 모델 필드:
   - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false
   - notchPanelStyle: NotchPanelStyle  custom | glass. 과거 black/iceberg는 custom으로 마이그레이션. Glass는 macOS 26+
   - notchGlassAppearance: NotchGlassAppearance  system | light | dark. 누락/unknown은 system
+  - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 clear
   - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
   - notchWidgets: [NotchWidget]  노치 패널 4칸 위젯 배치
   - sites: [Site]             사이트 목록
@@ -185,7 +186,9 @@ Config 모델 필드:
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
   Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘,
-  Notch는 노치 런처 on/off·위젯 배치·Custom/Glass 스타일과 Glass appearance 설정을 제공한다.
+  Notch는 노치 런처 on/off·위젯 배치·Custom/Glass 스타일, Glass Clear/Regular 재질,
+  System/Light/Dark appearance 설정을 제공한다. Glass 재질·appearance 변경 시 메인 도커를
+  2.5초 프리뷰로 펼쳐 즉시 확인한다.
   General/Notch에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
   ⌥./⌥,/⌥(key) 단축키 상시 안내가 있다. 하단의 앱 아이콘을 클릭하면 About Chap을 연다
   (메뉴바에는 About Chap 항목이 없다).
