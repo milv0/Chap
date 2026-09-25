@@ -428,8 +428,19 @@ private struct DropRow: View {
 struct NotchBadgeShape: Shape {
     let flareRadius: CGFloat
     let bottomCornerRadius: CGFloat
+    /// true면 좌우 반전: 노치 왼쪽 배지용 (직선 변이 오른쪽, 플레어가 왼쪽).
+    var mirrored = false
 
     func path(in rect: CGRect) -> Path {
+        let base = basePath(in: rect)
+        guard mirrored else { return base }
+        var flip = CGAffineTransform(translationX: rect.maxX + rect.minX, y: 0)
+            .scaledBy(x: -1, y: 1)
+        guard let flipped = base.cgPath.copy(using: &flip) else { return base }
+        return Path(flipped)
+    }
+
+    private func basePath(in rect: CGRect) -> Path {
         let fl = flareRadius
         let br = bottomCornerRadius
         var path = Path()
@@ -449,5 +460,28 @@ struct NotchBadgeShape: Shape {
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
         path.closeSubpath()
         return path
+    }
+}
+
+/// 노치 왼쪽에 붙는 Keep Awake 배지. 세션이 활성일 때만 표시되며
+/// 커피 아이콘으로 상태를 알린다. 순수 표시용이라 마우스를 받지 않는다.
+struct NotchAwakeBadgeView: View {
+    var body: some View {
+        ZStack {
+            NotchBadgeShape(
+                flareRadius: NotchGeometry.dockFlareRadius,
+                bottomCornerRadius: NotchGeometry.badgeCornerRadius,
+                mirrored: true
+            )
+            .fill(Color.black)
+
+            Image(systemName: "cup.and.saucer.fill")
+                .font(.system(size: 12))
+                .foregroundColor(DS.accent)
+                .padding(.leading, NotchGeometry.dockFlareRadius)
+                .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap)
+                .offset(y: 1)
+        }
+        .accessibilityLabel("Keep Awake active")
     }
 }

@@ -15,6 +15,7 @@ final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
+    private var awakeBadgeWindow: NSWindow?
     /// 현재 떠 있는 표면. 배지 z순서와 hover 전환 판단에 쓴다.
     private enum ActiveSurface { case mainPanel, dropDock }
     private var activeSurface: ActiveSurface?
@@ -34,6 +35,8 @@ final class NotchLauncherController {
     var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
     /// 콘텐츠 박스 배경색 공급자 ("#RRGGBB").
     var colorProvider: () -> String = { Config.notchPanelColorHexDefault }
+    /// Keep Awake 활성 여부 공급자. 왼쪽 커피 배지 표시에 쓴다.
+    var awakeActiveProvider: () -> Bool = { false }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
@@ -56,6 +59,7 @@ final class NotchLauncherController {
         installHotzone(on: screen)
         installDropObserverIfNeeded()
         updateDropBadge()
+        updateAwakeBadge()
     }
 
     func tearDown() {
@@ -69,6 +73,8 @@ final class NotchLauncherController {
         hotzoneWindow = nil
         badgeWindow?.orderOut(nil)
         badgeWindow = nil
+        awakeBadgeWindow?.orderOut(nil)
+        awakeBadgeWindow = nil
         if let dropObserver {
             NotificationCenter.default.removeObserver(dropObserver)
             self.dropObserver = nil
@@ -158,6 +164,50 @@ final class NotchLauncherController {
             window.orderFrontRegardless()
         }
         badgeWindow = window
+    }
+
+    /// Keep Awake 활성 여부에 따라 노치 왼쪽 커피 배지를 갱신한다.
+    /// 순수 표시용이라 마우스 이벤트를 받지 않는다.
+    func updateAwakeBadge() {
+        guard awakeActiveProvider(), hotzoneWindow != nil,
+            let screen = Self.notchScreen()
+        else {
+            awakeBadgeWindow?.orderOut(nil)
+            awakeBadgeWindow = nil
+            return
+        }
+
+        let frame = NotchLauncherPolicy.awakeBadgeFrame(
+            notchRect: Self.notchRect(on: screen))
+        let hosting = NSHostingView(rootView: NotchAwakeBadgeView())
+        hosting.frame = NSRect(origin: .zero, size: frame.size)
+
+        if let existing = awakeBadgeWindow {
+            existing.setFrame(frame, display: true)
+            existing.contentView = hosting
+            if let panel {
+                existing.order(.above, relativeTo: panel.windowNumber)
+            } else {
+                existing.orderFrontRegardless()
+            }
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.level = .statusBar
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.ignoresMouseEvents = true
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        window.contentView = hosting
+        if let panel {
+            window.order(.above, relativeTo: panel.windowNumber)
+        } else {
+            window.orderFrontRegardless()
+        }
+        awakeBadgeWindow = window
     }
 
     // MARK: - Hotzone
@@ -279,6 +329,7 @@ final class NotchLauncherController {
         // 메인 패널 위에는 배지를 앞에 둔다. 배지로 마우스를 옮기면
         // Drop 파일 도커로 전환할 수 있어야 하기 때문이다.
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
+        awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.activeSurface = .mainPanel
         self.revealModel = reveal
@@ -385,6 +436,7 @@ final class NotchLauncherController {
         // Drop 도커 위에서도 배지는 앞에 남는다. 도커 상단 띠와 같은 검정이라
         // 겹쳐도 이음새가 없고, 노치 hover로 되돌아가는 왕복 전환의 기준점이 된다.
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
+        awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.activeSurface = .dropDock
         startVisibilityMonitor()
@@ -461,6 +513,9 @@ final class NotchLauncherController {
         var stayRegion = panel.frame.union(hotzoneWindow?.frame ?? panel.frame)
         if let badgeFrame = badgeWindow?.frame {
             stayRegion = stayRegion.union(badgeFrame)
+        }
+        if let awakeFrame = awakeBadgeWindow?.frame {
+            stayRegion = stayRegion.union(awakeFrame)
         }
         stayRegion = stayRegion.insetBy(dx: -Self.dwellMargin, dy: -Self.dwellMargin)
         if stayRegion.contains(location) {

@@ -64,4 +64,17 @@ struct NotchLauncherPolicyTests {
         #expect(NotchLauncherPolicy.shouldShowDropBadge(fileCount: 1))
         #expect(NotchLauncherPolicy.shouldShowDropBadge(fileCount: 0) == false)
     }
+
+    @Test("the awake badge mirrors the drop badge on the notch's left")
+    func awakeBadgeMirrorsLeft() {
+        let notch = CGRect(x: 656, y: 950, width: 200, height: 32)
+
+        let left = NotchLauncherPolicy.awakeBadgeFrame(notchRect: notch)
+        let right = NotchLauncherPolicy.dropBadgeFrame(notchRect: notch)
+
+        // 오른쪽 배지와 같은 크기로, 노치 왼쪽 변 기준 대칭.
+        #expect(left.size == right.size)
+        #expect(left.maxX == 656 + NotchLauncherPolicy.dropBadgeNotchOverlap)
+        #expect(left.minY == 950)
+    }
 }

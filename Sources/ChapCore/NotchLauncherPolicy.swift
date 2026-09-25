@@ -44,6 +44,20 @@ public enum NotchLauncherPolicy {
             height: notchRect.height)
     }
 
+    /// 노치 왼쪽에 붙는 Keep Awake 배지 도커의 프레임.
+    /// 오른쪽 Drop 배지와 같은 크기로 노치 왼쪽 변에 미러링된다:
+    /// 오른쪽 겹침은 노치 밑으로, 왼쪽 플레어는 본체 바깥으로 나간다.
+    public static func awakeBadgeFrame(notchRect: CGRect) -> CGRect {
+        let width =
+            dropBadgeNotchOverlap + NotchGeometry.badgeBodyWidth
+            + NotchGeometry.dockFlareRadius
+        return CGRect(
+            x: notchRect.minX + dropBadgeNotchOverlap - width,
+            y: notchRect.minY,
+            width: width,
+            height: notchRect.height)
+    }
+
     /// Drop 배지는 보관함에 파일이 있을 때만 보인다.
     public static func shouldShowDropBadge(fileCount: Int) -> Bool {
         fileCount > 0

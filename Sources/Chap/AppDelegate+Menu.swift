@@ -308,6 +308,9 @@ extension AppDelegate {
         notchLauncher.colorProvider = { [weak self] in
             self?.config.notchPanelColorHex ?? Config.notchPanelColorHexDefault
         }
+        notchLauncher.awakeActiveProvider = { [weak self] in
+            self?.keepAwake.isActive ?? false
+        }
         notchLauncher.onLaunch = { [weak self] index in
             guard let self, index >= 0, index < self.config.sites.count else { return }
             self.launchSite(self.config.sites[index])
