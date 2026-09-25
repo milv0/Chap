@@ -497,8 +497,8 @@ struct NotchAwakeBadgeView: View {
             HStack(spacing: 5) {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 12))
-                    // 도커 위에서는 흰색, 시작 피크는 활성 색(테마 블루).
-                    .foregroundColor(expanded ? .white.opacity(0.9) : DS.accent)
+                    // Keep Awake 활성 시각 언어와 통일된 테마 블루.
+                    .foregroundColor(DS.accent)
                 if expanded, let sessionEnd {
                     // 분 단위 갱신. 항상 h:mm이라 폭이 흔들리지 않는다.
                     TimelineView(.periodic(from: .now, by: 60)) { context in
