@@ -176,29 +176,25 @@ struct NotchDropBadgeView: View {
 
             // 콘텐츠는 노치 밖으로 보이는 구간(겹침~오른쪽 벽) 안에 정렬.
             // 카운트 칩이 플레어가 깎아낸 투명 모서리로 나가지 않게 한다.
-            ZStack {
-                Image(systemName: "tray.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.85))
-                    // 우상단 숫자 배지의 무게 때문에 기하 중앙이 아니라
-                    // 왼쪽으로 4pt 민 광학 중앙에 둔다.
-                    .offset(x: -4, y: 1)
-
-                // 개수 배지. 정사각형 본체의 우상단 안쪽에 겹친다.
-                Text("\(min(count, 99))")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 3.5)
-                    .padding(.vertical, 1)
-                    .background(Capsule().fill(DS.accent))
-                    .frame(
-                        maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing
-                    )
-                    .padding(.top, 2)
-                    .padding(.trailing, 2)
-            }
-            .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
-            .padding(.trailing, NotchGeometry.dockFlareRadius)
+            // 아이콘과 숫자 배지를 한 덩어리로 묶어 광학 보정도 함께 움직인다.
+            Image(systemName: "tray.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.85))
+                .overlay(alignment: .topTrailing) {
+                    Text("\(min(count, 99))")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 3.5)
+                        .padding(.vertical, 1)
+                        .background(Capsule().fill(DS.accent))
+                        // 아이콘 우상단 모서리에 걸치도록 살짝 바깥으로.
+                        .offset(x: 7, y: -6)
+                }
+                // 우상단 숫자 배지의 무게 때문에 기하 중앙이 아니라
+                // 왼쪽으로 4pt 민 광학 중앙에 둔다.
+                .offset(x: -4, y: 1)
+                .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
+                .padding(.trailing, NotchGeometry.dockFlareRadius)
         }
         .accessibilityLabel("Chap Drop: \(count) files")
     }
