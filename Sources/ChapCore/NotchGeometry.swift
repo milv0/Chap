@@ -25,10 +25,9 @@ public enum NotchGeometry {
     /// 상단 오목 플레어 반경. 도커가 상단바에서 흘러나오는 곡선.
     /// 실루엣과 폭 보정 계산이 함께 쓰므로 반드시 이 값을 공유해야 한다.
     public static let dockFlareRadius: CGFloat = 10
-    /// Drop 도커(드롭 존·파일 리스트)의 하단 볼록 모서리 반경.
-    public static let dropDockBottomRadius: CGFloat = 18
-    /// 메인 런처 패널의 하단 볼록 모서리 반경.
-    public static let panelBottomRadius: CGFloat = 20
+    /// 모든 도커(메인 패널·드롭 존·Drop 리스트)의 하단 볼록 모서리 반경.
+    /// 배지만 본체가 작아 비례상 더 작은 `badgeCornerRadius`를 쓴다.
+    public static let dockBottomRadius: CGFloat = 18
 
     // MARK: Drop 존
 

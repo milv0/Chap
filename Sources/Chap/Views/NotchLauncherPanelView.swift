@@ -57,7 +57,7 @@ struct NotchLauncherPanelView: View {
             return AnyShape(
                 NotchDockShape(
                     topCornerRadius: NotchGeometry.dockFlareRadius,
-                    bottomCornerRadius: NotchGeometry.panelBottomRadius))
+                    bottomCornerRadius: NotchGeometry.dockBottomRadius))
         case .iceberg:
             return AnyShape(
                 IcebergDockShape(
@@ -73,7 +73,7 @@ struct NotchLauncherPanelView: View {
             return AnyShape(
                 NotchDockShape(
                     topCornerRadius: NotchGeometry.dockFlareRadius,
-                    bottomCornerRadius: NotchGeometry.panelBottomRadius, isRim: true))
+                    bottomCornerRadius: NotchGeometry.dockBottomRadius, isRim: true))
         case .iceberg:
             return AnyShape(
                 IcebergDockShape(

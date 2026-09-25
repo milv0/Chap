@@ -22,7 +22,7 @@
               ╭──flare 10                        flare 10──╮
               │ [left span 32][═ notch 185 ═][badge span 32]│
               │                                             │
-              ╰──r 18 (drop) / r 20 (panel)              ───╯
+              ╰──dockBottomRadius 18 (모든 도커 공통)     ───╯
                         └── iceberg: 톱니 깊이 46, 폭 68 ──┘
 ```
 
@@ -54,8 +54,7 @@
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
-| `dropDockBottomRadius` | 18 | Drop 도커(드롭 존·리스트) 하단 라운드 |
-| `panelBottomRadius` | 20 | 메인 런처 패널 하단 라운드 |
+| `dockBottomRadius` | 18 | 모든 도커(메인 패널·드롭 존·리스트) 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
 | `dropZoneContentHeight` | 64 | 드롭 존 콘텐츠 높이 |
 | `icebergJagDepth` | 46 | Iceberg 스타일 톱니 최대 깊이 |
 | `icebergToothWidth` | 68 | Iceberg 톱니 하나의 목표 폭 |
