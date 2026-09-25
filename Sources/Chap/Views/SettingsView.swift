@@ -744,6 +744,7 @@ struct SettingsView: View {
                     notchLauncherEnabled: vm.notchLauncherEnabled,
                     notchPanelStyle: vm.notchPanelStyle,
                     notchPanelOpacity: vm.notchPanelOpacity,
+                    notchPanelColorHex: vm.notchPanelColorHex,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
             vm.originalGuide = vm.showGuideWindow

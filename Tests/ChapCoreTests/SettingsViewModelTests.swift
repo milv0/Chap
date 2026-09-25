@@ -91,6 +91,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchPanelColorChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelColorHex: "#000000")
+        vm.notchPanelColorHex = "#1A2B3C"
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func hasChangesDetectsNotchWidgetChange() {
         let vm = SettingsViewModel(sites: baseSites, notchWidgets: NotchWidget.defaultSlots)
         vm.notchWidgets[0] = .screenshots
@@ -129,6 +135,7 @@ struct SettingsViewModelTests {
                 notchLauncherEnabled: vm.notchLauncherEnabled,
                 notchPanelStyle: vm.notchPanelStyle,
                 notchPanelOpacity: vm.notchPanelOpacity,
+                notchPanelColorHex: vm.notchPanelColorHex,
                 notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)

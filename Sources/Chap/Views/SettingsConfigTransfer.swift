@@ -155,6 +155,7 @@ enum SettingsConfigTransfer {
                         notchLauncherEnabled: vm.notchLauncherEnabled,
                         notchPanelStyle: vm.notchPanelStyle,
                         notchPanelOpacity: vm.notchPanelOpacity,
+                        notchPanelColorHex: vm.notchPanelColorHex,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 

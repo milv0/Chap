@@ -99,6 +99,7 @@ extension AppDelegate {
             notchLauncherEnabled: config.notchLauncherEnabled,
             notchPanelStyle: config.notchPanelStyle,
             notchPanelOpacity: config.notchPanelOpacity,
+            notchPanelColorHex: config.notchPanelColorHex,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -112,6 +113,7 @@ extension AppDelegate {
                 notchLauncherEnabled: payload.notchLauncherEnabled,
                 notchPanelStyle: payload.notchPanelStyle,
                 notchPanelOpacity: payload.notchPanelOpacity,
+                notchPanelColorHex: payload.notchPanelColorHex,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -139,6 +141,7 @@ extension AppDelegate {
             let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
             let previousNotchPanelStyle = self.config.notchPanelStyle
             let previousNotchPanelOpacity = self.config.notchPanelOpacity
+            let previousNotchPanelColorHex = self.config.notchPanelColorHex
             let previousNotchWidgets = self.config.notchWidgets
             do {
                 try self.configStore.save(newConfig)
@@ -172,6 +175,7 @@ extension AppDelegate {
             } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
                 || previousNotchPanelStyle != newConfig.notchPanelStyle
                 || previousNotchPanelOpacity != newConfig.notchPanelOpacity
+                || previousNotchPanelColorHex != newConfig.notchPanelColorHex
                 || previousNotchWidgets != newConfig.notchWidgets
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
