@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .scripts, .screenshots,
+        .sites, .apps, .folders, .scripts, .screenshots, .shelf,
     ]
 
     private func slotWidget(_ index: Int) -> NotchWidget {
@@ -47,6 +47,7 @@ struct NotchSettingsView: View {
         case .folders: return "Folders"
         case .scripts: return "Scripts"
         case .screenshots: return "Screenshots"
+        case .shelf: return "Shelf"
         case .none: return "Empty"
         }
     }
@@ -55,7 +56,11 @@ struct NotchSettingsView: View {
         if let launchType = widget.launchType {
             return LauncherListPolicy.symbolName(for: launchType)
         }
-        return widget == .screenshots ? "camera.viewfinder" : "square.dashed"
+        switch widget {
+        case .screenshots: return "camera.viewfinder"
+        case .shelf: return "tray.and.arrow.down.fill"
+        default: return "square.dashed"
+        }
     }
 
     var body: some View {
