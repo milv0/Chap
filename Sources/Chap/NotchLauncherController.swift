@@ -96,18 +96,20 @@ final class NotchLauncherController {
         let hosting = NSHostingView(rootView: NotchDropBadgeView(count: count))
         // tracker가 항상 contentView여야 한다. 갱신 때 hosting만 넣으면
         // hover/드래그 콜백이 사라지는 회귀가 있었다 (첫 드롭 직후 재현).
+        // hosting이 contentView여야 SwiftUI 좌표가 도커들과 동일하게 선다.
+        // (tracker 안에 subview로 넣으면 셰이프가 상하 반전되어 렌더링됐다.)
+        // tracker는 hosting 위의 투명 오버레이로 hover/드래그만 받는다.
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
         tracker.onEntered = { [weak self] in self?.showDropPanel() }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         tracker.autoresizingMask = [.width, .height]
-        hosting.frame = tracker.bounds
-        hosting.autoresizingMask = [.width, .height]
-        tracker.addSubview(hosting)
+        hosting.frame = NSRect(origin: .zero, size: frame.size)
+        hosting.addSubview(tracker)
 
         if let existing = badgeWindow {
             existing.setFrame(frame, display: true)
-            existing.contentView = tracker
+            existing.contentView = hosting
             // 도커가 떠 있으면 그 뒤에서 갱신만 하고, 없을 때만 앞으로 세운다.
             if let panel {
                 existing.order(.below, relativeTo: panel.windowNumber)
@@ -124,7 +126,7 @@ final class NotchLauncherController {
         window.backgroundColor = .clear
         window.hasShadow = false
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-        window.contentView = tracker
+        window.contentView = hosting
         if let panel {
             window.order(.below, relativeTo: panel.windowNumber)
         } else {
