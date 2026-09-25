@@ -47,20 +47,20 @@ struct NotchLauncherPolicyTests {
         #expect(frame.height == 132)
     }
 
-    @Test("the shelf badge sits square against the notch's left edge")
-    func shelfBadgeSitsLeftOfNotch() {
-        let frame = NotchLauncherPolicy.shelfBadgeFrame(
+    @Test("the drop badge overlaps into the notch to cover its rounded corner")
+    func dropBadgeOverlapsNotch() {
+        let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: CGRect(x: 656, y: 950, width: 200, height: 32))
 
-        #expect(frame.maxX == 656)
+        #expect(frame.minX == 624)
+        #expect(frame.maxX == 656 + NotchLauncherPolicy.dropBadgeNotchOverlap)
         #expect(frame.minY == 950)
-        #expect(frame.width == 32)
         #expect(frame.height == 32)
     }
 
-    @Test("the shelf badge shows only when files exist")
-    func shelfBadgeVisibility() {
-        #expect(NotchLauncherPolicy.shouldShowShelfBadge(fileCount: 1))
-        #expect(NotchLauncherPolicy.shouldShowShelfBadge(fileCount: 0) == false)
+    @Test("the drop badge shows only when files exist")
+    func dropBadgeVisibility() {
+        #expect(NotchLauncherPolicy.shouldShowDropBadge(fileCount: 1))
+        #expect(NotchLauncherPolicy.shouldShowDropBadge(fileCount: 0) == false)
     }
 }

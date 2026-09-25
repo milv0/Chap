@@ -15,7 +15,7 @@ final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
-    private var shelfObserver: NSObjectProtocol?
+    private var dropObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
@@ -49,8 +49,8 @@ final class NotchLauncherController {
             return
         }
         installHotzone(on: screen)
-        installShelfObserverIfNeeded()
-        updateShelfBadge()
+        installDropObserverIfNeeded()
+        updateDropBadge()
     }
 
     func tearDown() {
@@ -63,27 +63,27 @@ final class NotchLauncherController {
         hotzoneWindow = nil
         badgeWindow?.orderOut(nil)
         badgeWindow = nil
-        if let shelfObserver {
-            NotificationCenter.default.removeObserver(shelfObserver)
-            self.shelfObserver = nil
+        if let dropObserver {
+            NotificationCenter.default.removeObserver(dropObserver)
+            self.dropObserver = nil
         }
     }
 
-    // MARK: - Shelf badge
+    // MARK: - Drop badge
 
-    private func installShelfObserverIfNeeded() {
-        guard shelfObserver == nil else { return }
-        shelfObserver = NotificationCenter.default.addObserver(
-            forName: DropShelf.didChangeNotification, object: nil, queue: .main
+    private func installDropObserverIfNeeded() {
+        guard dropObserver == nil else { return }
+        dropObserver = NotificationCenter.default.addObserver(
+            forName: ChapDrop.didChangeNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            self?.updateShelfBadge()
+            self?.updateDropBadge()
         }
     }
 
-    /// 보관함 파일 수에 따라 노치 왼쪽 배지 도커를 갱신한다.
-    private func updateShelfBadge() {
-        let count = DropShelf.fileCount()
-        guard NotchLauncherPolicy.shouldShowShelfBadge(fileCount: count),
+    /// 보관함 파일 수에 따라 노치 왼쪽 Drop 배지 도커를 갱신한다.
+    private func updateDropBadge() {
+        let count = ChapDrop.fileCount()
+        guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
             hotzoneWindow != nil, let screen = Self.notchScreen()
         else {
             badgeWindow?.orderOut(nil)
@@ -91,9 +91,9 @@ final class NotchLauncherController {
             return
         }
 
-        let frame = NotchLauncherPolicy.shelfBadgeFrame(
+        let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: Self.notchRect(on: screen))
-        let hosting = NSHostingView(rootView: NotchShelfBadgeView(count: count))
+        let hosting = NSHostingView(rootView: NotchDropBadgeView(count: count))
         hosting.frame = NSRect(origin: .zero, size: frame.size)
 
         if let existing = badgeWindow {
@@ -112,8 +112,8 @@ final class NotchLauncherController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
 
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
-        // 배지 hover는 Shelf 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
-        tracker.onEntered = { [weak self] in self?.showShelfPanel() }
+        // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
+        tracker.onEntered = { [weak self] in self?.showDropPanel() }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         tracker.autoresizingMask = [.width, .height]
         hosting.autoresizingMask = [.width, .height]
@@ -222,6 +222,8 @@ final class NotchLauncherController {
 
         // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
         panel.orderFrontRegardless()
+        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
+        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
         DispatchQueue.main.async {
@@ -232,15 +234,15 @@ final class NotchLauncherController {
         startVisibilityMonitor()
     }
 
-    // MARK: - Shelf panel
+    // MARK: - Drop panel
 
-    /// Shelf 배지 hover로 여는 파일 리스트 도커. 배지 왼쪽 변에 정렬해
+    /// Drop 배지 hover로 여는 파일 리스트 도커. 배지 왼쪽 변에 정렬해
     /// 배지에서 펼쳐진 것처럼 보이게 한다.
-    private func showShelfPanel() {
+    private func showDropPanel() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
         let inset = screen.safeAreaInsets.top
-        let content = NotchShelfPanelView(topInset: inset)
+        let content = NotchDropPanelView(topInset: inset)
         let hosting = NSHostingView(rootView: content)
         hosting.safeAreaRegions = []
         let fitting = hosting.fittingSize
@@ -249,7 +251,7 @@ final class NotchLauncherController {
         // 배지 왼쪽 변 기준 정렬 (그림자 여백 보정). 상단은 화면 최상단 밀착.
         let badgeMinX =
             badgeWindow?.frame.minX
-            ?? NotchLauncherPolicy.shelfBadgeFrame(notchRect: Self.notchRect(on: screen)).minX
+            ?? NotchLauncherPolicy.dropBadgeFrame(notchRect: Self.notchRect(on: screen)).minX
         var frame = NSRect(
             x: badgeMinX - NotchLauncherPanelView.shadowPadding,
             y: screen.frame.maxY - size.height,
@@ -270,6 +272,8 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
+        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
+        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
         startVisibilityMonitor()
     }
@@ -277,7 +281,7 @@ final class NotchLauncherController {
     // MARK: - Drop zone
 
     /// 파일 드래그가 노치에 닿았을 때 여는 컴팩트 드롭 존.
-    /// 전체 런처 패널이 이미 떠 있으면 그대로 둔다 (Shelf 위젯이 받는다).
+    /// 전체 런처 패널이 이미 떠 있으면 그대로 둔다 (Drop 위젯이 받는다).
     private func showDropZone() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
@@ -309,6 +313,8 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
+        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
+        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
         startVisibilityMonitor()
     }

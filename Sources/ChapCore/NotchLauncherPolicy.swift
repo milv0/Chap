@@ -29,18 +29,21 @@ public enum NotchLauncherPolicy {
             height: height)
     }
 
-    /// 노치 왼쪽에 붙는 Shelf 배지 도커의 프레임. 노치 높이와 같은 변의
-    /// 정사각형이 노치 왼쪽 변에 밀착한다.
-    public static func shelfBadgeFrame(notchRect: CGRect) -> CGRect {
+    /// 노치 왼쪽에 붙는 Drop 배지 도커의 프레임. 노치 높이와 같은 변의 정사각형이
+    /// 노치 왼쪽 변에 밀착하고, 노치의 둥근 왼쪽 아래 모서리를 덮도록
+    /// 오른쪽으로 겹침(overlap)을 더해 노치가 왼쪽으로 길어져 보이게 한다.
+    public static let dropBadgeNotchOverlap: CGFloat = 12
+
+    public static func dropBadgeFrame(notchRect: CGRect) -> CGRect {
         CGRect(
             x: notchRect.minX - notchRect.height,
             y: notchRect.minY,
-            width: notchRect.height,
+            width: notchRect.height + dropBadgeNotchOverlap,
             height: notchRect.height)
     }
 
-    /// Shelf 배지는 보관함에 파일이 있을 때만 보인다.
-    public static func shouldShowShelfBadge(fileCount: Int) -> Bool {
+    /// Drop 배지는 보관함에 파일이 있을 때만 보인다.
+    public static func shouldShowDropBadge(fileCount: Int) -> Bool {
         fileCount > 0
     }
 }
