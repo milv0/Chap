@@ -46,7 +46,7 @@ public enum NotchGeometry {
     public static let shadowPadding: CGFloat = 28
 
     /// 노치 하단 경계와 도커 콘텐츠(섹션 헤더) 사이 세로 간격.
-    public static let contentTopGap: CGFloat = 10
+    public static let contentTopGap: CGFloat = 15
 
     /// 도커를 여는 hover/드래그 인식 범위를 시각 경계보다 넓히는 여유.
     /// 노치·배지 가장자리를 정확히 맞추지 않아도 반응하게 한다.
