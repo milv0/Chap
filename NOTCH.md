@@ -154,7 +154,7 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 | `closeDuration` | 0.18s | 모든 도커 공통 닫힘 시간. 메인 패널은 접힘, Drop 도커는 페이드 |
 | 창 제거 | closeDuration + 0.02s | 닫힘 애니메이션 종료 직후 |
 | `hideDelay` | 0.2s | 마우스가 영역 밖에 머물면 닫힘 판정 |
-| `hoverMargin` | 10 | 노치·배지의 hover/드래그 인식 범위를 시각 경계보다 넓히는 여유 |
+| `hoverMargin` | 0 | 노치·배지의 hover/드래그 인식 범위는 시각 경계와 동일 |
 | `pollInterval` | 0.08s | 마우스 위치 폴링 주기 |
 
 ## 관련 파일

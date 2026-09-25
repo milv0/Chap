@@ -50,7 +50,7 @@ public enum NotchGeometry {
 
     /// 도커를 여는 hover/드래그 인식 범위를 시각 경계보다 넓히는 여유.
     /// 노치·배지 가장자리를 정확히 맞추지 않아도 반응하게 한다.
-    public static let hoverMargin: CGFloat = 10
+    public static let hoverMargin: CGFloat = 0
 
     // MARK: 눌린 상단 띠 (pressed strip)
 
