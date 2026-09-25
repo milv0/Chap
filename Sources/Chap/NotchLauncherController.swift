@@ -245,7 +245,19 @@ final class NotchLauncherController {
     private func showDropPanel() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
         presentDropDock(
-            content: NotchDropPanelView(topInset: screen.safeAreaInsets.top), on: screen)
+            content: NotchDropPanelView(
+                topInset: screen.safeAreaInsets.top,
+                contentWidth: Self.dropDockContentWidth(on: screen)),
+            on: screen)
+    }
+
+    /// Drop 도커의 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝을 덮어
+    /// "배지만큼 왼쪽으로 길어진 노치"가 그대로 내려온 실루엣이 된다.
+    private static func dropDockContentWidth(on screen: NSScreen) -> CGFloat {
+        let notch = notchRect(on: screen)
+        let badgeMinX = NotchLauncherPolicy.dropBadgeFrame(notchRect: notch).minX
+        // 검정 폭 = 배지 왼쪽~노치 오른쪽. 콘텐츠 폭은 좌우 패딩을 뺀 값.
+        return notch.maxX - badgeMinX - DS.paddingSmall * 2
     }
 
     /// Drop 도커 공통 표시. 배지 왼쪽 변에 정렬하고, 떠 있는 동안 배지를
@@ -294,9 +306,9 @@ final class NotchLauncherController {
     private func showDropZone() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
-        let inset = screen.safeAreaInsets.top
         let content = NotchDropZoneView(
-            topInset: inset,
+            topInset: screen.safeAreaInsets.top,
+            contentWidth: Self.dropDockContentWidth(on: screen),
             onDropped: { [weak self] in self?.hidePanel() })
         presentDropDock(content: content, on: screen)
     }

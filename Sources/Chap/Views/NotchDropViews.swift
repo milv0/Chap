@@ -65,6 +65,8 @@ struct NotchDropListView: View {
 struct NotchDropZoneView: View {
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
+    /// 도커 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝 구간에서 계산된다.
+    let contentWidth: CGFloat
     /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
     let onDropped: () -> Void
 
@@ -79,7 +81,7 @@ struct NotchDropZoneView: View {
                 .font(DS.bodyFont.weight(.medium))
                 .foregroundColor(.white.opacity(0.9))
         }
-        .frame(width: NotchDropDock.contentWidth, height: NotchDropDock.zoneContentHeight)
+        .frame(width: contentWidth, height: NotchDropDock.zoneContentHeight)
         .padding(.horizontal, DS.paddingSmall)
         .padding(.top, topInset + 8)
         .padding(.bottom, DS.paddingSmall)
@@ -110,7 +112,6 @@ struct NotchDropZoneView: View {
 
 /// Drop 도커(드롭 존·파일 리스트)가 공유하는 지오메트리와 실루엣.
 enum NotchDropDock {
-    static let contentWidth: CGFloat = 230
     /// 파일 4개가 찬 리스트 도커와 비슷한 높이.
     static let zoneContentHeight: CGFloat = 108
 
@@ -128,10 +129,12 @@ enum NotchDropDock {
 struct NotchDropPanelView: View {
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치·배지를 감싼다.
     let topInset: CGFloat
+    /// 도커 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝 구간에서 계산된다.
+    let contentWidth: CGFloat
 
     var body: some View {
         NotchDropListView()
-            .frame(width: NotchDropDock.contentWidth, alignment: .leading)
+            .frame(width: contentWidth, alignment: .leading)
             .padding(.horizontal, DS.paddingSmall)
             .padding(.top, topInset + 8)
             .padding(.bottom, DS.paddingSmall)
