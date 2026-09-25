@@ -138,17 +138,17 @@ struct NotchLauncherPanelView: View {
             // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
             // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            // 개발용: 오른쪽에 예약된 확장 배지 영역을 흰 선으로 표시한다.
-            // (plateau가 좌우 대칭으로 확보해 둔, 아직 쓰지 않는 자리)
+            // 개발용: 노치 좌우에 예약된 확장 배지 영역을 흰 선으로 표시한다.
+            // (plateau가 좌우 대칭으로 확보해 둔 자리)
             #if DEBUG
-                .overlay(alignment: .top) { reservedRightZoneOutline }
+                .overlay(alignment: .top) { reservedZoneOutlines }
             #endif
     }
 
     #if DEBUG
-        /// 오른쪽 예약 확장 영역 (Debug 전용 시각화). 노치 오른쪽 변에서
-        /// 겹침만큼 안으로 시작해 확장 본체 + 플레어까지.
-        @ViewBuilder private var reservedRightZoneOutline: some View {
+        /// 좌우 예약 확장 영역 (Debug 전용 시각화). 노치 변에서 겹침만큼
+        /// 안으로 시작해 확장 본체 + 플레어까지, 양쪽 대칭.
+        @ViewBuilder private var reservedZoneOutlines: some View {
             let overlap = NotchLauncherPolicy.dropBadgeNotchOverlap
             let total =
                 overlap + NotchGeometry.badgeExpandedBodyWidth
@@ -157,6 +157,7 @@ struct NotchLauncherPanelView: View {
                 stripPlateauHalfWidth - NotchGeometry.badgeExpandedBodyWidth
                 - NotchGeometry.stripBadgeClearance
             GeometryReader { geo in
+                // 오른쪽 (직선 변이 왼쪽 = 노치 쪽)
                 NotchBadgeShape(
                     flareRadius: NotchGeometry.dockFlareRadius,
                     bottomCornerRadius: NotchGeometry.badgeCornerRadius
@@ -165,6 +166,17 @@ struct NotchLauncherPanelView: View {
                 .frame(width: total, height: topInset)
                 .position(
                     x: geo.size.width / 2 + notchHalf - overlap + total / 2,
+                    y: topInset / 2)
+                // 왼쪽 (미러: 직선 변이 오른쪽 = 노치 쪽)
+                NotchBadgeShape(
+                    flareRadius: NotchGeometry.dockFlareRadius,
+                    bottomCornerRadius: NotchGeometry.badgeCornerRadius,
+                    mirrored: true
+                )
+                .stroke(Color.white, lineWidth: 1)
+                .frame(width: total, height: topInset)
+                .position(
+                    x: geo.size.width / 2 - notchHalf + overlap - total / 2,
                     y: topInset / 2)
             }
             .allowsHitTesting(false)

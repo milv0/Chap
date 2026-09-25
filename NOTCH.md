@@ -59,7 +59,7 @@
 
 | 이름 | 값 | 의미 |
 |---|---|---|
-| `badgeExpandedBodyWidth` | 86 | 메인 도커가 열렸을 때 Awake 배지의 확장 본체 폭 |
+| `badgeExpandedBodyWidth` | 110 | 메인 도커가 열렸을 때 Awake 배지의 확장 본체 폭 |
 | `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
