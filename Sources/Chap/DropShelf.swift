@@ -6,6 +6,20 @@ import AppKit
 /// 위치: `~/Library/Application Support/Chap/Shelf/`
 /// 접근은 노치 UI를 통해서만 이뤄지는 앱 내부 보관함 모델이다.
 enum DropShelf {
+    /// 보관함 내용이 바뀔 때마다 게시된다. 배지 갱신 트리거.
+    static let didChangeNotification = Notification.Name("ChapDropShelfDidChange")
+
+    /// 보관함의 전체 파일 수 (표시 상한과 무관한 실제 개수).
+    static func fileCount() -> Int {
+        let folder = directory()
+        let entries =
+            (try? FileManager.default.contentsOfDirectory(
+                at: folder, includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles])) ?? []
+        return entries.filter { DropShelfPolicy.isCandidate(fileName: $0.lastPathComponent) }
+            .count
+    }
+
     /// 보관함 폴더. 없으면 만든다.
     static func directory() -> URL {
         let base = FileManager.default.urls(
@@ -56,12 +70,16 @@ enum DropShelf {
                     "Drop shelf copy failed: \(error.localizedDescription, privacy: .public)")
             }
         }
+        if !stored.isEmpty {
+            NotificationCenter.default.post(name: didChangeNotification, object: nil)
+        }
         return stored
     }
 
     /// 보관함에서 파일을 삭제한다.
     static func remove(_ url: URL) {
         try? FileManager.default.removeItem(at: url)
+        NotificationCenter.default.post(name: didChangeNotification, object: nil)
     }
 
     /// 겹치지 않는 대상 경로를 찾는다.
