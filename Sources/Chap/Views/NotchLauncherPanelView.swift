@@ -31,7 +31,7 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 좌우 상태 영역).
     let stripPlateauHalfWidth: CGFloat
-    /// Keep Awake 세션 종료 시각. 활성 중이면 왼쪽 상단 영역에 h:mm으로 표시.
+    /// Keep Awake 세션 종료 시각. 활성 중이면 왼쪽 상단 영역에 h:mm:ss로 표시.
     let awakeSessionEnd: Date?
     /// 시각 스타일. Custom은 색상·불투명도 도크, Glass는 시스템 재질.
     let style: NotchPanelStyle
@@ -138,13 +138,14 @@ struct NotchLauncherPanelView: View {
     }
 
     /// 메인 도커 왼쪽 plateau의 Keep Awake 상태. 커피 아이콘은 테마 블루,
-    /// 시간은 고정 h:mm이며 영역 중심에서 오른쪽으로 5pt 이동한다.
+    /// 시간은 고정 h:mm:ss이며 1초마다 갱신한다. 넓어진 문자열 때문에
+    /// 아이콘이 왼쪽으로 밀리지 않도록 광학 위치를 오른쪽으로 보정한다.
     @ViewBuilder private var awakeStripStatus: some View {
         if let awakeSessionEnd {
             let sideWidth = NotchGeometry.stripPlateauSideWidth
             let notchHalf = stripPlateauHalfWidth - sideWidth
             GeometryReader { geo in
-                TimelineView(.periodic(from: .now, by: 60)) { context in
+                TimelineView(.periodic(from: .now, by: 1)) { context in
                     HStack(spacing: 5) {
                         Image(systemName: "cup.and.saucer.fill")
                             .font(.system(size: 12))
