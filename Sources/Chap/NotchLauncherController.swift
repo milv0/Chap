@@ -15,6 +15,9 @@ final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
+    /// 현재 떠 있는 표면. 배지 z순서와 hover 전환 판단에 쓴다.
+    private enum ActiveSurface { case mainPanel, dropDock }
+    private var activeSurface: ActiveSurface?
     private var dropObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
@@ -56,6 +59,7 @@ final class NotchLauncherController {
     func tearDown() {
         stopVisibilityMonitor()
         isPreviewPinned = false
+        activeSurface = nil
         revealModel = nil
         panel?.orderOut(nil)
         panel = nil
@@ -101,7 +105,12 @@ final class NotchLauncherController {
         // tracker는 hosting 위의 투명 오버레이로 hover/드래그만 받는다.
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
-        tracker.onEntered = { [weak self] in self?.showDropPanel() }
+        tracker.onEntered = { [weak self] in
+            guard let self else { return }
+            // 메인 패널이 떠 있으면 즉시 내리고 Drop 파일 도커로 전환한다.
+            if self.activeSurface == .mainPanel { self.dismissPanelImmediately() }
+            self.showDropPanel()
+        }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
@@ -115,9 +124,11 @@ final class NotchLauncherController {
         if let existing = badgeWindow {
             existing.setFrame(frame, display: true)
             existing.contentView = hosting
-            // 도커가 떠 있으면 그 뒤에서 갱신만 하고, 없을 때만 앞으로 세운다.
+            // 메인 패널 위에는 앞으로, Drop 도커 뒤에는 뒤로, 없으면 앞으로.
             if let panel {
-                existing.order(.below, relativeTo: panel.windowNumber)
+                existing.order(
+                    activeSurface == .mainPanel ? .above : .below,
+                    relativeTo: panel.windowNumber)
             } else {
                 existing.orderFrontRegardless()
             }
@@ -133,7 +144,9 @@ final class NotchLauncherController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         window.contentView = hosting
         if let panel {
-            window.order(.below, relativeTo: panel.windowNumber)
+            window.order(
+                activeSurface == .mainPanel ? .above : .below,
+                relativeTo: panel.windowNumber)
         } else {
             window.orderFrontRegardless()
         }
@@ -244,10 +257,11 @@ final class NotchLauncherController {
 
         // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
         panel.orderFrontRegardless()
-        // 배지는 숨기지 않고 도커 뒤로 보낸다. 즉시 숨기면 도커가 펼쳐지기
-        // 전에 배지가 먼저 사라지는 깜빡임이 보인다.
-        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
+        // 메인 패널 위에는 배지를 앞에 둔다. 배지로 마우스를 옮기면
+        // Drop 파일 도커로 전환할 수 있어야 하기 때문이다.
+        badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
+        self.activeSurface = .mainPanel
         self.revealModel = reveal
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
@@ -312,10 +326,10 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
-        // 배지는 숨기지 않고 도커 뒤로 보낸다. 즉시 숨기면 도커가 펼쳐지기
-        // 전에 배지가 먼저 사라지는 깜빡임이 보인다.
+        // Drop 도커는 배지 자리를 그대로 덮으므로 배지를 뒤로 보낸다.
         badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
+        self.activeSurface = .dropDock
         startVisibilityMonitor()
     }
 
@@ -395,10 +409,20 @@ final class NotchLauncherController {
         }
     }
 
+    /// 표면 전환용 즉시 정리. 애니메이션 없이 현재 패널을 내린다.
+    private func dismissPanelImmediately() {
+        stopVisibilityMonitor()
+        panel?.orderOut(nil)
+        panel = nil
+        activeSurface = nil
+        revealModel = nil
+    }
+
     private func hidePanel() {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
+        self.activeSurface = nil
         // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
         // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {
