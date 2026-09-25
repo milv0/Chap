@@ -11,11 +11,11 @@
 
 ```
  화면 최상단 ────────────────────────────────────────────────────────
- │  menu bar     [═══════ notch (hardware) ═══════]▓▓[■ 35×32]╮    │
- │                        185 × 32 (runtime)     (12+35+10)×32 │    │
+ │  menu bar     [═══════ notch (hardware) ═══════]▓▓[■ 34×32]╮    │
+ │                        185 × 32 (runtime)     (12+34+10)×32 │    │
  └────────────────────────────────────────────────────────────┴────┘
                      badgeNotchOverlap 12 (노치 밑으로 파고듦 ▓) ↑
-                     보이는 본체 badgeBodyWidth 35 × 32, 플레어 10은 그 바깥  ↑
+                     보이는 본체 badgeBodyWidth 34 × 32, 플레어 10은 그 바깥  ↑
                      하단 바깥: badgeCornerRadius 6 볼록          ↑
 
  도커가 펼쳐지면 (노치 중앙 정렬):
@@ -50,7 +50,7 @@
 
 | 이름 | 값 | 의미 |
 |---|---|---|
-| `badgeBodyWidth` | 35 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
+| `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
@@ -69,7 +69,7 @@
 | 노치 높이 | `safeAreaInsets.top` | 32pt |
 | 노치 폭 | `auxiliaryTopRightArea.minX - auxiliaryTopLeftArea.maxX` (nil이면 200 폴백) | 185pt |
 | 배지 한 변 | 노치 높이 | 32pt |
-| Drop 도커 검정 폭 | 노치 폭 + 배지 한 변 × 2 + 플레어 × 2 | 269pt |
+| Drop 도커 검정 폭 | 노치 폭 + badgeBodyWidth × 2 + 플레어 × 2 | 273pt |
 
 ## 관련 파일
 

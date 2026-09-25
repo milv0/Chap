@@ -47,14 +47,14 @@ struct NotchLauncherPolicyTests {
         #expect(frame.height == 132)
     }
 
-    @Test("the drop badge is a 35pt body with the flare outside it")
+    @Test("the drop badge is a 34pt body with the flare outside it")
     func dropBadgeBodyWithFlare() {
         let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: CGRect(x: 656, y: 950, width: 200, height: 32))
 
-        // 856(노치 오른쪽 끝) 기준: 겹침 12 + 본체 35 + 플레어 10.
+        // 856(노치 오른쪽 끝) 기준: 겹침 12 + 본체 34 + 플레어 10.
         #expect(frame.minX == 856 - NotchLauncherPolicy.dropBadgeNotchOverlap)
-        #expect(frame.maxX == 901)
+        #expect(frame.maxX == 900)
         #expect(frame.minY == 950)
         #expect(frame.height == 32)
     }

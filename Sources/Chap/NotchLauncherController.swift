@@ -266,8 +266,8 @@ final class NotchLauncherController {
     /// 안쪽으로 들이므로, 보이는 벽이 배지 바깥 변에 오도록 그만큼 더한다.
     private static func dropDockContentWidth(on screen: NSScreen) -> CGFloat {
         let notch = notchRect(on: screen)
-        // 배지 한 변 = 노치 높이. 좌우 대칭으로 더한다.
-        let badgeExtension = notch.height
+        // 배지 본체 폭만큼 좌우 대칭으로 더해, 배지 폭이 바뀌면 도커도 따라간다.
+        let badgeExtension = NotchGeometry.badgeBodyWidth
         let flareInset = NotchDropDock.topCornerRadius * 2
         return notch.width + badgeExtension * 2 + flareInset - DS.paddingSmall * 2
     }

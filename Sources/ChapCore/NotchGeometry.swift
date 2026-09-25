@@ -13,8 +13,8 @@ public enum NotchGeometry {
     /// 검정으로 채워 노치가 오른쪽으로 길어져 보이게 한다.
     public static let badgeNotchOverlap: CGFloat = 12
     /// 배지 본체(보이는 검정)의 폭. 높이는 노치 높이(32)를 따르므로
-    /// 35×32의 살짝 가로로 긴 비율이 된다.
-    public static let badgeBodyWidth: CGFloat = 35
+    /// 34×32의 살짝 가로로 긴 비율이 된다.
+    public static let badgeBodyWidth: CGFloat = 34
     /// 배지 하단 바깥 볼록 모서리 반경. 실제 노치의 라운드보다 크면 이질감이
     /// 생기므로 하드웨어 곡률에 가깝게 작게 유지한다. 상단은 도커와 같은
     /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.
@@ -43,7 +43,7 @@ public enum NotchGeometry {
 
     // MARK: 공통
 
-    /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여백.
+    /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여ㄹ백.
     /// 그림자 확산이 이 안에서 완전히 소멸해야 경계선이 생기지 않는다.
     public static let shadowPadding: CGFloat = 28
 }
