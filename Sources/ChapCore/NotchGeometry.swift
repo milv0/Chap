@@ -31,6 +31,9 @@ public enum NotchGeometry {
     /// 모든 도커(메인 패널·드롭 존·Drop 리스트)의 하단 볼록 모서리 반경.
     /// 배지만 본체가 작아 비례상 더 작은 `badgeCornerRadius`를 쓴다.
     public static let dockBottomRadius: CGFloat = 18
+    /// Liquid Glass의 자체 광학 edge inset을 외곽으로 밀어내는 bleed.
+    /// 유리가 오목 플레어 안쪽에서 끊기지 않고 검정 꼭짓점까지 이어지게 한다.
+    public static let glassEdgeBleed: CGFloat = 10
 
     // MARK: 공통
 

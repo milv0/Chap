@@ -392,12 +392,19 @@ enum NotchDockStyle {
         shape: S, material: NotchGlassMaterial
     ) -> some View {
         if #available(macOS 26, *) {
-            switch material {
-            case .clear:
-                Color.clear.glassEffect(.clear, in: shape)
-            case .regular:
-                Color.clear.glassEffect(.regular, in: shape)
+            Group {
+                switch material {
+                case .clear:
+                    Color.clear.glassEffect(.clear, in: Rectangle())
+                case .regular:
+                    Color.clear.glassEffect(.regular, in: Rectangle())
+                }
             }
+            // Glass의 광학 edge를 플레어 밖으로 밀어낸 뒤 원래 도커
+            // 실루엣으로 잘라, 유리가 검정 꼭짓점까지 끊김 없이 닿게 한다.
+            .padding(-NotchGeometry.glassEdgeBleed)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(shape)
         }
     }
 

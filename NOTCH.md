@@ -66,6 +66,7 @@
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
 | `dockBottomRadius` | 18 | 모든 도커(메인 패널·드롭 존·리스트) 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
+| `glassEdgeBleed` | 10 | Glass 광학 edge를 플레어 밖으로 밀어 검정 꼭짓점까지 재질 연결 |
 | `dropZoneContentHeight` | 64 | 드롭 존 콘텐츠 높이 |
 | `contentTopGap` | 15 | 노치 하단 경계와 섹션 콘텐츠 사이 세로 간격 |
 | `stripEdgeDepth` | 6 | 눌린 검정 띠가 도커 끝에서 남는 최소 깊이 |
