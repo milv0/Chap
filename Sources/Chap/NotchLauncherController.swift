@@ -82,11 +82,6 @@ final class NotchLauncherController {
 
     /// 보관함 파일 수에 따라 노치 왼쪽 Drop 배지 도커를 갱신한다.
     private func updateDropBadge() {
-        // 도커가 떠 있는 동안에는 배지를 내려 두어 도커 밖으로 보이지 않게 한다.
-        guard panel == nil else {
-            badgeWindow?.orderOut(nil)
-            return
-        }
         let count = ChapDrop.fileCount()
         guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
             hotzoneWindow != nil, let screen = Self.notchScreen()
@@ -113,7 +108,12 @@ final class NotchLauncherController {
         if let existing = badgeWindow {
             existing.setFrame(frame, display: true)
             existing.contentView = tracker
-            existing.orderFrontRegardless()
+            // 도커가 떠 있으면 그 뒤에서 갱신만 하고, 없을 때만 앞으로 세운다.
+            if let panel {
+                existing.order(.below, relativeTo: panel.windowNumber)
+            } else {
+                existing.orderFrontRegardless()
+            }
             return
         }
 
@@ -125,7 +125,11 @@ final class NotchLauncherController {
         window.hasShadow = false
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         window.contentView = tracker
-        window.orderFrontRegardless()
+        if let panel {
+            window.order(.below, relativeTo: panel.windowNumber)
+        } else {
+            window.orderFrontRegardless()
+        }
         badgeWindow = window
     }
 
@@ -228,8 +232,9 @@ final class NotchLauncherController {
 
         // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
         panel.orderFrontRegardless()
-        // 도커가 떠 있는 동안 배지는 숨긴다. 닫힐 때 updateDropBadge가 복원한다.
-        badgeWindow?.orderOut(nil)
+        // 배지는 숨기지 않고 도커 뒤로 보낸다. 즉시 숨기면 도커가 펼쳐지기
+        // 전에 배지가 먼저 사라지는 깜빡임이 보인다.
+        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
         DispatchQueue.main.async {
@@ -295,8 +300,9 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
-        // 도커가 떠 있는 동안 배지는 숨긴다. 닫힐 때 updateDropBadge가 복원한다.
-        badgeWindow?.orderOut(nil)
+        // 배지는 숨기지 않고 도커 뒤로 보낸다. 즉시 숨기면 도커가 펼쳐지기
+        // 전에 배지가 먼저 사라지는 깜빡임이 보인다.
+        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
         self.panel = panel
         startVisibilityMonitor()
     }
