@@ -124,16 +124,6 @@ struct NotchDropBadgeView: View {
                 .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
                 .padding(.trailing, NotchGeometry.dockFlareRadius)
         }
-        // 개발용: Drop 배지의 현재 영역을 흰 선으로 표시한다 (Debug 전용).
-        #if DEBUG
-            .overlay(
-                NotchBadgeShape(
-                    flareRadius: NotchGeometry.dockFlareRadius,
-                    bottomCornerRadius: NotchGeometry.badgeCornerRadius
-                )
-                .stroke(Color.white, lineWidth: 1)
-            )
-        #endif
         .accessibilityLabel("Chap Drop: \(count) files")
     }
 }
@@ -226,10 +216,6 @@ struct NotchAwakeBadgeView: View {
             .offset(x: expanded ? -5 : 0, y: 1)
         }
         .clipShape(shape)
-        // 개발용: 펼쳐진 배지 영역을 흰 선으로 표시한다 (Debug 빌드 전용).
-        #if DEBUG
-            .overlay(shape.stroke(Color.white, lineWidth: 1).opacity(expanded ? 1 : 0))
-        #endif
         .frame(
             width: NotchLauncherPolicy.dropBadgeNotchOverlap + bodyWidth
                 + NotchGeometry.dockFlareRadius
