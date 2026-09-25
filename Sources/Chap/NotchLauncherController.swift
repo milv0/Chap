@@ -431,7 +431,8 @@ final class NotchLauncherController {
     /// Glass System/Light/Dark 선택 직후 메인 도커를 펼쳐 일정 시간 고정한다.
     /// 연속 선택 시 마지막 토큰만 고정을 해제한다.
     func previewGlassAppearance() {
-        beginTimedGlassPreview(rebuildPanel: false)
+        // Light/Dark 전환은 Clear/Regular 재질도 함께 바꾸므로 패널을 재구성한다.
+        beginTimedGlassPreview(rebuildPanel: true)
         applyGlassAppearance(to: panel)
     }
 

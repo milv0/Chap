@@ -146,21 +146,6 @@ struct NotchSettingsView: View {
 
                             if vm.notchPanelStyle == .glass {
                                 Picker(
-                                    "Glass Material",
-                                    selection: $vm.notchGlassMaterial
-                                ) {
-                                    Text("Clear").tag(NotchGlassMaterial.clear)
-                                    Text("Regular").tag(NotchGlassMaterial.regular)
-                                }
-                                .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassMaterial) { _, _ in
-                                    // 재질 provider를 먼저 갱신한 뒤 새 패널을 열어
-                                    // Clear/Regular 차이를 바로 보여준다.
-                                    onSave()
-                                    notchController?.previewGlassMaterial()
-                                }
-
-                                Picker(
                                     "Glass Appearance",
                                     selection: $vm.notchGlassAppearance
                                 ) {
@@ -169,16 +154,43 @@ struct NotchSettingsView: View {
                                     Text("Dark").tag(NotchGlassAppearance.dark)
                                 }
                                 .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassAppearance) { _, _ in
-                                    // 먼저 저장해 controller provider를 갱신한 뒤,
-                                    // 도커를 펼쳐 선택한 재질 appearance를 보여준다.
+                                .onChange(of: vm.notchGlassAppearance) { _, newValue in
+                                    // Light→Clear, Dark→Regular. System은 마지막 재질 유지.
+                                    vm.notchGlassMaterial = newValue.resolvedMaterial(
+                                        fallback: vm.notchGlassMaterial)
                                     onSave()
                                     notchController?.previewGlassAppearance()
                                 }
 
+                                if vm.notchGlassAppearance == .system {
+                                    Picker(
+                                        "Glass Material",
+                                        selection: $vm.notchGlassMaterial
+                                    ) {
+                                        Text("Clear").tag(NotchGlassMaterial.clear)
+                                        Text("Regular").tag(NotchGlassMaterial.regular)
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .onChange(of: vm.notchGlassMaterial) { _, _ in
+                                        // System에서만 사용자가 재질을 직접 고른다.
+                                        onSave()
+                                        notchController?.previewGlassMaterial()
+                                    }
+                                } else {
+                                    HStack {
+                                        Text("Glass Material")
+                                        Spacer()
+                                        Text(
+                                            vm.notchGlassAppearance == .light
+                                                ? "Clear" : "Regular"
+                                        )
+                                        .foregroundColor(DS.textSecondary)
+                                    }
+                                }
+
                                 Label(
-                                    "System follows macOS automatically. Light and Dark "
-                                        + "apply only to the notch Glass panel.",
+                                    "Light uses Clear. Dark uses Regular. System follows "
+                                        + "macOS and lets you choose the material.",
                                     systemImage: "info.circle"
                                 )
                                 .font(.caption)
