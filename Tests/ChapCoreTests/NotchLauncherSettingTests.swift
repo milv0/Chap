@@ -40,42 +40,46 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchLauncherEnabled)
     }
 
-    @Test("style defaults to black when the key is missing")
-    func styleDefaultsToBlack() throws {
+    @Test("style defaults to Custom when the key is missing")
+    func styleDefaultsToCustom() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
 
-        #expect(config.notchPanelStyle == .black)
+        #expect(config.notchPanelStyle == .custom)
     }
 
-    @Test("decodes the iceberg style")
-    func decodesIcebergStyle() throws {
-        let config = try decodeConfig(#"{"notchPanelStyle": "iceberg", "sites": []}"#)
+    @Test("legacy Black and Iceberg styles migrate to Custom")
+    func legacyStylesMigrateToCustom() throws {
+        let black = try decodeConfig(
+            #"{"notchPanelStyle": "black", "sites": []}"#)
+        let iceberg = try decodeConfig(
+            #"{"notchPanelStyle": "iceberg", "sites": []}"#)
 
-        #expect(config.notchPanelStyle == .iceberg)
+        #expect(black.notchPanelStyle == .custom)
+        #expect(iceberg.notchPanelStyle == .custom)
     }
 
-    @Test("decodes the glass style")
+    @Test("decodes the Glass style")
     func decodesGlassStyle() throws {
         let config = try decodeConfig(#"{"notchPanelStyle": "glass", "sites": []}"#)
 
         #expect(config.notchPanelStyle == .glass)
     }
 
-    @Test("an unknown style string falls back to black instead of failing")
-    func unknownStyleFallsBackToBlack() throws {
+    @Test("an unknown style string falls back to Custom instead of failing")
+    func unknownStyleFallsBackToCustom() throws {
         let config = try decodeConfig(#"{"notchPanelStyle": "lava", "sites": []}"#)
 
-        #expect(config.notchPanelStyle == .black)
+        #expect(config.notchPanelStyle == .custom)
     }
 
-    @Test("style round-trips through encoding")
-    func styleRoundTripsThroughEncoding() throws {
-        let original = Config(notchPanelStyle: .iceberg, sites: [])
+    @Test("Custom style round-trips through encoding")
+    func customStyleRoundTripsThroughEncoding() throws {
+        let original = Config(notchPanelStyle: .custom, sites: [])
 
         let decoded = try JSONDecoder().decode(
             Config.self, from: try JSONEncoder().encode(original))
 
-        #expect(decoded.notchPanelStyle == .iceberg)
+        #expect(decoded.notchPanelStyle == .custom)
     }
 
     @Test("glass appearance defaults to system when the key is missing")

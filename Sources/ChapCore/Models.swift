@@ -249,13 +249,20 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
 
 /// 노치 런처 패널의 시각 스타일.
 public enum NotchPanelStyle: String, Codable, CaseIterable {
-    /// 노치와 이어지는 순수 검정 도크.
-    case black = "black"
-    /// 하단이 빙하 아랫부분처럼 뾰족한 얼음 그라데이션 도크.
-    case iceberg = "iceberg"
+    /// 사용자가 색상·불투명도를 고르는 커스텀 도크.
+    case custom = "custom"
     /// 콘텐츠 박스가 Apple Liquid Glass 재질인 도크 (macOS 26+).
-    /// 그 이하 버전에서는 black과 동일하게 렌더링된다.
+    /// 그 이하 버전에서는 Custom의 기본 검정과 동일하게 렌더링된다.
     case glass = "glass"
+
+    /// 저장된 raw 값의 관용 마이그레이션. 과거 black/iceberg는 Custom으로 합친다.
+    static func fromPersistedRawValue(_ rawValue: String) -> NotchPanelStyle? {
+        switch rawValue {
+        case "custom", "black", "iceberg": return .custom
+        case "glass": return .glass
+        default: return nil
+        }
+    }
 }
 
 /// Liquid Glass 노치 패널의 appearance 선택.
@@ -358,7 +365,7 @@ public struct Config: Codable {
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
-        notchPanelStyle: NotchPanelStyle = .black,
+        notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
@@ -404,7 +411,7 @@ public struct Config: Codable {
         // 알 수 없는 스타일 문자열은 기본 스타일로 취급한다 (관용 디코딩).
         notchPanelStyle =
             (try? container.decodeIfPresent(String.self, forKey: .notchPanelStyle))
-            .flatMap(NotchPanelStyle.init(rawValue:)) ?? .black
+            .flatMap(NotchPanelStyle.fromPersistedRawValue) ?? .custom
         // 알 수 없는 appearance는 시스템 추적으로 취급한다 (관용 디코딩).
         notchGlassAppearance =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassAppearance))
