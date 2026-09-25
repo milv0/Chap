@@ -247,7 +247,7 @@ struct NotchLauncherPanelView: View {
             }
         }
         .padding(.horizontal, DS.padding)
-        .padding(.top, topInset + 8)
+        .padding(.top, topInset + NotchGeometry.contentTopGap)
         .padding(
             .bottom,
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
