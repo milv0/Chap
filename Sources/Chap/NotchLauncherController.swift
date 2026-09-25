@@ -32,7 +32,7 @@ final class NotchLauncherController {
 
     private static let panelMinWidth: CGFloat = 300
     /// 노치·패널 밖에서 이 시간 이상 머물면 닫는다.
-    private static let hideDelay: TimeInterval = 0.4
+    private static let hideDelay: TimeInterval = 0.2
     private static let pollInterval: TimeInterval = 0.08
     /// 경계에서의 미세한 좌표 흔들림으로 닫히지 않도록 주는 여유.
     private static let dwellMargin: CGFloat = 6
