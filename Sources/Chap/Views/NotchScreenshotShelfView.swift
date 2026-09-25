@@ -18,7 +18,7 @@ struct NotchScreenshotShelfView: View {
                     .font(DS.captionFont)
                     .foregroundColor(
                         usesSemanticForeground
-                            ? .primary
+                            ? DS.accent
                             : (NotchContrastPolicy.usesAccentForeground(
                                 backgroundHex: backgroundHex)
                                 ? DS.accent : .white.opacity(0.95)))

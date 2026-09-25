@@ -204,7 +204,9 @@ struct NotchLauncherPanelView: View {
     }
 
     private var accentForeground: Color {
-        if style == .glass { return .primary }
+        // Glass에서도 기능 구분 아이콘은 Chap 액센트 블루를 유지한다.
+        // 의미는 옆 텍스트가 중복 전달하므로 색만으로 정보를 구분하지 않는다.
+        if style == .glass { return DS.accent }
         return NotchContrastPolicy.usesAccentForeground(
             backgroundHex: contrastBackgroundHex)
             ? DS.accent : .white.opacity(0.95)
