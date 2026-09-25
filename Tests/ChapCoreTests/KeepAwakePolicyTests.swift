@@ -78,21 +78,24 @@ struct KeepAwakePolicyTests {
                 == "Are you sure you want to quit Chap?")
     }
 
-    @Test("clock label always stays in h:mm form")
+    @Test("clock label always stays in h:mm:ss form")
     func clockLabelForm() {
         let now = Date(timeIntervalSince1970: 1_000_000)
 
         #expect(
             KeepAwakePolicy.remainingClockLabel(
-                until: now.addingTimeInterval(45 * 60), now: now) == "0:45")
+                until: now.addingTimeInterval(45 * 60), now: now) == "0:45:00")
         #expect(
             KeepAwakePolicy.remainingClockLabel(
-                until: now.addingTimeInterval(67 * 60), now: now) == "1:07")
+                until: now.addingTimeInterval(67 * 60 + 5), now: now) == "1:07:05")
         #expect(
             KeepAwakePolicy.remainingClockLabel(
-                until: now.addingTimeInterval(12 * 60 * 60), now: now) == "12:00")
+                until: now.addingTimeInterval(12 * 60 * 60), now: now) == "12:00:00")
         #expect(
             KeepAwakePolicy.remainingClockLabel(
-                until: now.addingTimeInterval(-5), now: now) == "0:00")
+                until: now.addingTimeInterval(0.1), now: now) == "0:00:01")
+        #expect(
+            KeepAwakePolicy.remainingClockLabel(
+                until: now.addingTimeInterval(-5), now: now) == "0:00:00")
     }
 }

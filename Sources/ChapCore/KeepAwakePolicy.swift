@@ -31,13 +31,17 @@ enum KeepAwakePolicy {
         return "\(hours)h \(minutes)m"
     }
 
-    /// 시계형 남은 시간. 항상 "h:mm" 형식을 벗어나지 않는다:
-    /// "0:45", "1:07", "12:00". 만료·과거면 "0:00".
+    /// 시계형 남은 시간. 항상 "h:mm:ss" 형식을 벗어나지 않는다:
+    /// "0:45:00", "1:07:05", "12:00:00". 만료·과거면 "0:00:00".
+    /// 부분 초는 올림해 세션이 실제보다 먼저 0으로 보이지 않게 한다.
     static func remainingClockLabel(until end: Date, now: Date) -> String {
         let remaining = end.timeIntervalSince(now)
-        guard remaining > 0 else { return "0:00" }
-        let totalMinutes = Int((remaining / 60).rounded(.up))
-        return "\(totalMinutes / 60):" + String(format: "%02d", totalMinutes % 60)
+        guard remaining > 0 else { return "0:00:00" }
+        let totalSeconds = Int(remaining.rounded(.up))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d:%02d", hours, minutes, seconds)
     }
 
     /// 메뉴 항목 제목. 활성 세션이면 남은 시간을 덧붙인다.
