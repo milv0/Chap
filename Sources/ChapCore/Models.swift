@@ -273,6 +273,16 @@ public enum NotchGlassAppearance: String, Codable, CaseIterable {
     case light = "light"
     /// 노치 Glass 패널만 Dark Aqua appearance로 강제한다.
     case dark = "dark"
+
+    /// appearance와 잘 어울리는 재질을 결정한다. Light는 옅은 Clear,
+    /// Dark는 대비가 강한 Regular로 고정하고, System만 사용자 선택을 존중한다.
+    public func resolvedMaterial(fallback: NotchGlassMaterial) -> NotchGlassMaterial {
+        switch self {
+        case .system: return fallback
+        case .light: return .clear
+        case .dark: return .regular
+        }
+    }
 }
 
 /// Apple 공식 Liquid Glass 재질 변형. 연속 강도 값은 제공되지 않는다.

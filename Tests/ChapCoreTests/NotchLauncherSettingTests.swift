@@ -118,6 +118,18 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchGlassAppearance == .dark)
     }
 
+    @Test("Light pairs with Clear and Dark pairs with Regular")
+    func appearancePairsWithMaterial() {
+        #expect(NotchGlassAppearance.light.resolvedMaterial(fallback: .regular) == .clear)
+        #expect(NotchGlassAppearance.dark.resolvedMaterial(fallback: .clear) == .regular)
+    }
+
+    @Test("System preserves the manually selected Glass material")
+    func systemPreservesMaterial() {
+        #expect(NotchGlassAppearance.system.resolvedMaterial(fallback: .clear) == .clear)
+        #expect(NotchGlassAppearance.system.resolvedMaterial(fallback: .regular) == .regular)
+    }
+
     @Test("Glass material defaults to Clear when the key is missing")
     func glassMaterialDefaultsToClear() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
