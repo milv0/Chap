@@ -112,8 +112,8 @@ struct NotchDropZoneView: View {
 
 /// Drop 도커(드롭 존·파일 리스트)가 공유하는 지오메트리와 실루엣.
 enum NotchDropDock {
-    /// 파일 4개가 찬 리스트 도커와 비슷한 높이.
-    static let zoneContentHeight: CGFloat = 108
+    /// 드롭 존 콘텐츠 높이. 드롭만 받는 표면이라 낮게 유지한다.
+    static let zoneContentHeight: CGFloat = 64
 
     static var shape: NotchDockShape {
         NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)

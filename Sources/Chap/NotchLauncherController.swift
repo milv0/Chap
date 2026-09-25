@@ -252,16 +252,16 @@ final class NotchLauncherController {
             on: screen)
     }
 
-    /// Drop 도커의 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝을 덮어
-    /// "배지만큼 왼쪽으로 길어진 노치"가 그대로 내려온 실루엣이 된다.
+    /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을
+    /// 덮는다 (왼쪽 Drop 배지 + 추후 우측 배지 자리). 도커는 노치 중앙 정렬.
     private static func dropDockContentWidth(on screen: NSScreen) -> CGFloat {
         let notch = notchRect(on: screen)
-        let badgeMinX = NotchLauncherPolicy.dropBadgeFrame(notchRect: notch).minX
-        // 검정 폭 = 배지 왼쪽~노치 오른쪽. 콘텐츠 폭은 좌우 패딩을 뺀 값.
-        return notch.maxX - badgeMinX - DS.paddingSmall * 2
+        // 배지 한 변 = 노치 높이. 좌우 대칭으로 더한다.
+        let badgeExtension = notch.height
+        return notch.width + badgeExtension * 2 - DS.paddingSmall * 2
     }
 
-    /// Drop 도커 공통 표시. 배지 왼쪽 변에 정렬하고, 떠 있는 동안 배지를
+    /// Drop 도커 공통 표시. 노치 중앙에 정렬하고, 떠 있는 동안 배지를
     /// 숨겨 도커 밖으로 배지가 튀어나오지 않게 한다.
     private func presentDropDock<Content: View>(content: Content, on screen: NSScreen) {
         let hosting = NSHostingView(rootView: content)
@@ -269,12 +269,10 @@ final class NotchLauncherController {
         let fitting = hosting.fittingSize
         let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
 
-        // 배지 유무와 무관하게 정책 프레임 기준으로 앵커를 고정한다.
-        let badgeMinX = NotchLauncherPolicy.dropBadgeFrame(
-            notchRect: Self.notchRect(on: screen)
-        ).minX
+        // 노치 중앙 정렬. 좌우 배지 확장 폭이 대칭이라 배지도 함께 덮인다.
+        let notch = Self.notchRect(on: screen)
         var frame = NSRect(
-            x: badgeMinX - NotchLauncherPanelView.shadowPadding,
+            x: notch.midX - size.width / 2,
             y: screen.frame.maxY - size.height,
             width: size.width, height: size.height
         ).integral
