@@ -99,11 +99,20 @@ final class NotchLauncherController {
         let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: Self.notchRect(on: screen))
         let hosting = NSHostingView(rootView: NotchDropBadgeView(count: count))
-        hosting.frame = NSRect(origin: .zero, size: frame.size)
+        // tracker가 항상 contentView여야 한다. 갱신 때 hosting만 넣으면
+        // hover/드래그 콜백이 사라지는 회귀가 있었다 (첫 드롭 직후 재현).
+        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
+        tracker.onEntered = { [weak self] in self?.showDropPanel() }
+        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        tracker.autoresizingMask = [.width, .height]
+        hosting.frame = tracker.bounds
+        hosting.autoresizingMask = [.width, .height]
+        tracker.addSubview(hosting)
 
         if let existing = badgeWindow {
             existing.setFrame(frame, display: true)
-            existing.contentView = hosting
+            existing.contentView = tracker
             existing.orderFrontRegardless()
             return
         }
@@ -115,14 +124,6 @@ final class NotchLauncherController {
         window.backgroundColor = .clear
         window.hasShadow = false
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-
-        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
-        // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
-        tracker.onEntered = { [weak self] in self?.showDropPanel() }
-        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
-        tracker.autoresizingMask = [.width, .height]
-        hosting.autoresizingMask = [.width, .height]
-        tracker.addSubview(hosting)
         window.contentView = tracker
         window.orderFrontRegardless()
         badgeWindow = window
