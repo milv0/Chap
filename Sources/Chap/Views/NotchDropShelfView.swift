@@ -109,6 +109,35 @@ struct NotchDropZoneView: View {
     }
 }
 
+/// Shelf 배지에 마우스를 올렸을 때 펼쳐지는 파일 리스트 도커.
+/// 전체 런처 패널 대신 Shelf 내용만 컴팩트하게 보여준다.
+struct NotchShelfPanelView: View {
+    /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치·배지를 감싼다.
+    let topInset: CGFloat
+
+    var body: some View {
+        NotchDropShelfView()
+            .frame(width: 230, alignment: .leading)
+            .padding(.horizontal, DS.paddingSmall)
+            .padding(.top, topInset + 8)
+            .padding(.bottom, DS.paddingSmall)
+            .background(
+                NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+                    .fill(Color.black)
+                    .overlay(
+                        NotchDockShape(
+                            topCornerRadius: 10, bottomCornerRadius: 18, isRim: true
+                        )
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+            )
+            .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
+            .padding(.bottom, NotchLauncherPanelView.shadowPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+}
+
 /// 노치 왼쪽에 붙는 정사각형 Shelf 배지 도커. 보관함에 파일이 있을 때만
 /// 표시되며, 아이콘과 파일 개수 배지를 보여준다.
 struct NotchShelfBadgeView: View {

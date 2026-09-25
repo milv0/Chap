@@ -112,8 +112,8 @@ final class NotchLauncherController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
 
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
-        // 배지 hover는 전체 패널(Shelf 위젯 포함)을, 파일 드래그는 드롭 존을 연다.
-        tracker.onEntered = { [weak self] in self?.showPanel() }
+        // 배지 hover는 Shelf 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
+        tracker.onEntered = { [weak self] in self?.showShelfPanel() }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         tracker.autoresizingMask = [.width, .height]
         hosting.autoresizingMask = [.width, .height]
@@ -229,6 +229,48 @@ final class NotchLauncherController {
                 reveal.revealed = true
             }
         }
+        startVisibilityMonitor()
+    }
+
+    // MARK: - Shelf panel
+
+    /// Shelf 배지 hover로 여는 파일 리스트 도커. 배지 왼쪽 변에 정렬해
+    /// 배지에서 펼쳐진 것처럼 보이게 한다.
+    private func showShelfPanel() {
+        guard panel == nil, let screen = Self.notchScreen() else { return }
+
+        let inset = screen.safeAreaInsets.top
+        let content = NotchShelfPanelView(topInset: inset)
+        let hosting = NSHostingView(rootView: content)
+        hosting.safeAreaRegions = []
+        let fitting = hosting.fittingSize
+        let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
+
+        // 배지 왼쪽 변 기준 정렬 (그림자 여백 보정). 상단은 화면 최상단 밀착.
+        let badgeMinX =
+            badgeWindow?.frame.minX
+            ?? NotchLauncherPolicy.shelfBadgeFrame(notchRect: Self.notchRect(on: screen)).minX
+        var frame = NSRect(
+            x: badgeMinX - NotchLauncherPanelView.shadowPadding,
+            y: screen.frame.maxY - size.height,
+            width: size.width, height: size.height
+        ).integral
+        frame.origin.y = screen.frame.maxY - frame.height
+
+        let panel = NSPanel(
+            contentRect: frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered, defer: false)
+        panel.level = .statusBar
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .transient]
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.contentView = hosting
+
+        panel.orderFrontRegardless()
+        self.panel = panel
         startVisibilityMonitor()
     }
 
