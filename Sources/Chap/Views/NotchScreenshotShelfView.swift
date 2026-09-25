@@ -41,12 +41,26 @@ struct NotchScreenshotShelfView: View {
             if urls.isEmpty {
                 Text("No recent screenshots")
                     .font(DS.captionFont)
-                    .foregroundColor(.white.opacity(0.45))
+                    .foregroundColor(
+                        usesSemanticForeground
+                            ? .secondary
+                            : .white.opacity(
+                                NotchContrastPolicy.tertiaryTextOpacity(
+                                    backgroundHex: backgroundHex))
+                    )
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
                 ForEach(urls, id: \.self) { url in
-                    ScreenshotShelfRow(url: url)
+                    ScreenshotShelfRow(
+                        url: url,
+                        primaryForeground: usesSemanticForeground
+                            ? .primary : .white.opacity(0.9),
+                        secondaryForeground: usesSemanticForeground
+                            ? .secondary : .white.opacity(0.4),
+                        borderForeground: usesSemanticForeground
+                            ? .secondary.opacity(0.45) : .white.opacity(0.15),
+                        textShadowOpacity: usesSemanticForeground ? 0 : 0.75)
                 }
             }
         }
@@ -55,6 +69,10 @@ struct NotchScreenshotShelfView: View {
 
 private struct ScreenshotShelfRow: View {
     let url: URL
+    let primaryForeground: Color
+    let secondaryForeground: Color
+    let borderForeground: Color
+    let textShadowOpacity: Double
 
     @State private var thumbnail: NSImage?
     @State private var isHovered = false
@@ -71,20 +89,22 @@ private struct ScreenshotShelfRow: View {
                             .aspectRatio(contentMode: .fill)
                     } else {
                         Image(systemName: "photo")
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(secondaryForeground)
                     }
                 }
                 .frame(width: 26, height: 20)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+                        .strokeBorder(borderForeground, lineWidth: 0.5)
                 )
 
                 Text(url.lastPathComponent)
                     .font(DS.captionFont)
-                    .foregroundColor(.white.opacity(0.9))
-                    .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+                    .foregroundColor(primaryForeground)
+                    .shadow(
+                        color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                    )
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
