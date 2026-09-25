@@ -32,13 +32,6 @@ public enum NotchGeometry {
     /// 배지만 본체가 작아 비례상 더 작은 `badgeCornerRadius`를 쓴다.
     public static let dockBottomRadius: CGFloat = 18
 
-    // MARK: Iceberg 스타일
-
-    /// 빙하 톱니 최대 깊이.
-    public static let icebergJagDepth: CGFloat = 46
-    /// 빙하 톱니 하나의 목표 폭. 폭에 맞춰 톱니 개수가 정해진다.
-    public static let icebergToothWidth: CGFloat = 68
-
     // MARK: 공통
 
     /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여ㄹ백.

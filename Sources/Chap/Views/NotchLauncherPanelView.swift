@@ -31,7 +31,7 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 확장 배지 폭 + 여유).
     let stripPlateauHalfWidth: CGFloat
-    /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
+    /// 시각 스타일. Custom은 색상·불투명도 도크, Glass는 시스템 재질.
     let style: NotchPanelStyle
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
     let slots: [NotchSlotContent]
@@ -52,64 +52,34 @@ struct NotchLauncherPanelView: View {
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
     static let shadowPadding: CGFloat = NotchGeometry.shadowPadding
-    /// 빙하 스타일의 톱니 최대 깊이. 콘텐츠가 톱니를 침범하지 않게 여백에 더한다.
-    private static let icebergJagDepth: CGFloat = NotchGeometry.icebergJagDepth
-
     /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
     private var panelShape: AnyShape {
-        switch style {
-        case .black, .glass:
-            return AnyShape(
-                NotchDockShape(
-                    topCornerRadius: NotchGeometry.dockFlareRadius,
-                    bottomCornerRadius: NotchGeometry.dockBottomRadius))
-        case .iceberg:
-            return AnyShape(
-                IcebergDockShape(
-                    topCornerRadius: NotchGeometry.dockFlareRadius,
-                    jagDepth: Self.icebergJagDepth))
-        }
+        AnyShape(
+            NotchDockShape(
+                topCornerRadius: NotchGeometry.dockFlareRadius,
+                bottomCornerRadius: NotchGeometry.dockBottomRadius))
     }
 
     /// 림 스트로크용 실루엣. 상단 변이 열려 있어 노치 경계에 흰 줄이 생기지 않는다.
     private var rimShape: AnyShape {
-        switch style {
-        case .black, .glass:
-            return AnyShape(
-                NotchDockShape(
-                    topCornerRadius: NotchGeometry.dockFlareRadius,
-                    bottomCornerRadius: NotchGeometry.dockBottomRadius, isRim: true))
-        case .iceberg:
-            return AnyShape(
-                IcebergDockShape(
-                    topCornerRadius: NotchGeometry.dockFlareRadius,
-                    jagDepth: Self.icebergJagDepth, isRim: true))
-        }
+        AnyShape(
+            NotchDockShape(
+                topCornerRadius: NotchGeometry.dockFlareRadius,
+                bottomCornerRadius: NotchGeometry.dockBottomRadius, isRim: true))
     }
 
-    /// 스타일별 채움. black은 노치를 감싸는 상단은 완전 검정으로 유지하고
-    /// 아래로 갈수록 투명해져 배경과 부드럽게 섞인다. iceberg는 노치와
-    /// 만나는 상단은 검정에 가깝게, 아래로 갈수록 얼음빛 파랑으로 깊어진다.
+    /// 스타일별 채움. Custom은 사용자가 고른 색·불투명도 페이드,
+    /// Glass는 뒤 콘텐츠를 굴절시켜야 하므로 투명한 기반을 쓴다.
     private var panelFill: AnyShapeStyle {
         switch style {
-        case .black:
+        case .custom:
             return AnyShapeStyle(
                 NotchDockStyle.fade(
                     NotchDockStyle.color(fromHex: reveal.colorHex),
                     bottomOpacity: reveal.bottomOpacity))
         case .glass:
-            // 유리가 뒤 콘텐츠를 굴절시켜야 하므로 색을 깔지 않는다.
             return AnyShapeStyle(Color.clear)
-        case .iceberg:
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color.black,
-                        Color(red: 16 / 255, green: 38 / 255, blue: 72 / 255),
-                        Color(red: 62 / 255, green: 122 / 255, blue: 190 / 255),
-                    ],
-                    startPoint: .top, endPoint: .bottom))
         }
     }
 
@@ -260,10 +230,7 @@ struct NotchLauncherPanelView: View {
         }
         .padding(.horizontal, DS.padding)
         .padding(.top, topInset + NotchGeometry.contentTopGap)
-        .padding(
-            .bottom,
-            style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
-        )
+        .padding(.bottom, DS.paddingSmall)
         .frame(minWidth: minWidth)
         .onAppear { dropFiles = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems) }
         .onReceive(
@@ -483,58 +450,6 @@ struct NotchDockShape: Shape {
         // 본체 오른쪽 벽.
         path.addLine(to: CGPoint(x: rect.maxX - topR, y: rect.minY + topR))
         // 오른쪽 오목 플레어: 본체 오른쪽 벽이 상단 라인으로 흘러나간다.
-        path.addArc(
-            center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
-            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-        // 림 모드에서는 상단 변을 긋지 않아 노치와의 경계가 검정으로 남는다.
-        if !isRim { path.closeSubpath() }
-        return path
-    }
-}
-
-/// 빙하 도크 실루엣. 상단 오목 플레어는 NotchDockShape과 같고,
-/// 하단은 빙하 아랫부분처럼 깊이가 불규칙한 톱니로 끝난다.
-/// 톱니 패턴은 결정적이라 열 때마다 모양이 흔들리지 않는다.
-struct IcebergDockShape: Shape {
-    let topCornerRadius: CGFloat
-    /// 톱니 최대 깊이. 각 꼭짓점은 패턴 비율만큼 이 깊이에 도달한다.
-    let jagDepth: CGFloat
-    /// true면 상단 변을 닫지 않는다 (NotchDockShape.isRim과 동일한 역할).
-    var isRim = false
-
-    /// 연속된 톱니 꼭짓점의 상대 깊이. 자연스럽게 보이도록 불규칙하게 섞는다.
-    private static let depthPattern: [CGFloat] = [0.85, 0.45, 1.0, 0.55, 0.75, 0.35, 0.9, 0.6]
-    private static let targetToothWidth: CGFloat = NotchGeometry.icebergToothWidth
-
-    func path(in rect: CGRect) -> Path {
-        let topR = topCornerRadius
-        let baseY = rect.maxY - jagDepth
-        let leftX = rect.minX + topR
-        let rightX = rect.maxX - topR
-        var path = Path()
-
-        // 상단 왼쪽 끝(화면 상단 라인)에서 시작해 오목 플레어로 본체에 진입.
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addArc(
-            center: CGPoint(x: rect.minX, y: rect.minY + topR), radius: topR,
-            startAngle: .degrees(-90), endAngle: .degrees(0), clockwise: false)
-        // 본체 왼쪽 벽은 톱니 기준선까지 내려간다.
-        path.addLine(to: CGPoint(x: leftX, y: baseY))
-
-        // 하단 톱니: 목표 폭에 맞춰 개수를 정하고 패턴 깊이로 꼭짓점을 찍는다.
-        let bodyWidth = rightX - leftX
-        let teeth = max(3, Int((bodyWidth / Self.targetToothWidth).rounded()))
-        let toothWidth = bodyWidth / CGFloat(teeth)
-        for tooth in 0..<teeth {
-            let depth = Self.depthPattern[tooth % Self.depthPattern.count]
-            let tipX = leftX + toothWidth * (CGFloat(tooth) + 0.5)
-            let endX = leftX + toothWidth * CGFloat(tooth + 1)
-            path.addLine(to: CGPoint(x: tipX, y: baseY + jagDepth * depth))
-            path.addLine(to: CGPoint(x: endX, y: baseY))
-        }
-
-        // 본체 오른쪽 벽을 올라가 오목 플레어로 상단 라인에 합류.
-        path.addLine(to: CGPoint(x: rightX, y: rect.minY + topR))
         path.addArc(
             center: CGPoint(x: rect.maxX, y: rect.minY + topR), radius: topR,
             startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
