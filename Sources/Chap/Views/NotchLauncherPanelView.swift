@@ -34,8 +34,9 @@ struct NotchLauncherPanelView: View {
     @ObservedObject var reveal: NotchRevealModel
 
     /// 원래의 모션: 패널 전체가 노치 상단 기준으로 스프링 확장하고,
-    /// 접힘은 빠른 페이드로 정리한다.
-    static let openAnimation: Animation = .interpolatingSpring(stiffness: 320, damping: 26)
+    /// 접힘은 빠른 페이드로 정리한다. stiffness 440은 약 0.3초에 정착하고,
+    /// damping 30은 기존(320/26)과 같은 감쇠 비율이라 바운스 느낌은 유지된다.
+    static let openAnimation: Animation = .interpolatingSpring(stiffness: 440, damping: 30)
     static let closeAnimation: Animation = .smooth(duration: 0.18)
 
     private static let columnWidth: CGFloat = 160
