@@ -59,7 +59,7 @@ struct NotchLauncherPanelView: View {
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
     private var panelShape: AnyShape {
         switch style {
-        case .black:
+        case .black, .glass:
             return AnyShape(
                 NotchDockShape(
                     topCornerRadius: NotchGeometry.dockFlareRadius,
@@ -75,7 +75,7 @@ struct NotchLauncherPanelView: View {
     /// 림 스트로크용 실루엣. 상단 변이 열려 있어 노치 경계에 흰 줄이 생기지 않는다.
     private var rimShape: AnyShape {
         switch style {
-        case .black:
+        case .black, .glass:
             return AnyShape(
                 NotchDockShape(
                     topCornerRadius: NotchGeometry.dockFlareRadius,
@@ -93,7 +93,7 @@ struct NotchLauncherPanelView: View {
     /// 만나는 상단은 검정에 가깝게, 아래로 갈수록 얼음빛 파랑으로 깊어진다.
     private var panelFill: AnyShapeStyle {
         switch style {
-        case .black:
+        case .black, .glass:
             return AnyShapeStyle(
                 NotchDockStyle.fade(
                     NotchDockStyle.color(fromHex: reveal.colorHex),
@@ -117,6 +117,11 @@ struct NotchLauncherPanelView: View {
                 // 검정 띠는 노치가 배경을 누른 듯한 곡선 경계로 내려온다.
                 ZStack(alignment: .top) {
                     panelShape.fill(panelFill)
+                    // Glass 스타일: 콘텐츠 박스에 Liquid Glass 재질을 얹는다.
+                    // macOS 26 미만에서는 아무것도 추가되지 않아 black과 같다.
+                    if style == .glass {
+                        NotchDockStyle.liquidGlassLayer(shape: panelShape)
+                    }
                     PressedStripShape(
                         plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
                     )
@@ -393,6 +398,17 @@ enum NotchDockStyle {
                 .init(color: color.opacity(bottomOpacity), location: 1),
             ],
             startPoint: .top, endPoint: .bottom)
+    }
+
+    /// Liquid Glass 재질 레이어. macOS 26(Tahoe)+ 에서만 실제 유리가 되고,
+    /// 그 이하에서는 빈 뷰라 아래의 색 페이드가 그대로 보인다 (black과 동일).
+    ///
+    /// 참고: https://developer.apple.com/design/human-interface-guidelines/materials
+    @ViewBuilder
+    static func liquidGlassLayer<S: Shape>(shape: S) -> some View {
+        if #available(macOS 26, *) {
+            Color.clear.glassEffect(.regular, in: shape)
+        }
     }
 
     /// "#RRGGBB" → Color. 형식이 어긋나면 검정.

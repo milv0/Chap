@@ -253,6 +253,9 @@ public enum NotchPanelStyle: String, Codable, CaseIterable {
     case black = "black"
     /// 하단이 빙하 아랫부분처럼 뾰족한 얼음 그라데이션 도크.
     case iceberg = "iceberg"
+    /// 콘텐츠 박스가 Apple Liquid Glass 재질인 도크 (macOS 26+).
+    /// 그 이하 버전에서는 black과 동일하게 렌더링된다.
+    case glass = "glass"
 }
 
 /// 노치 패널의 한 칸에 배치할 수 있는 위젯.

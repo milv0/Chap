@@ -54,6 +54,13 @@ struct NotchLauncherSettingTests {
         #expect(config.notchPanelStyle == .iceberg)
     }
 
+    @Test("decodes the glass style")
+    func decodesGlassStyle() throws {
+        let config = try decodeConfig(#"{"notchPanelStyle": "glass", "sites": []}"#)
+
+        #expect(config.notchPanelStyle == .glass)
+    }
+
     @Test("an unknown style string falls back to black instead of failing")
     func unknownStyleFallsBackToBlack() throws {
         let config = try decodeConfig(#"{"notchPanelStyle": "lava", "sites": []}"#)

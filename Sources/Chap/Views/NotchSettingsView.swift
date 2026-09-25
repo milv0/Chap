@@ -24,6 +24,12 @@ struct NotchSettingsView: View {
         .sites, .apps, .folders, .scripts, .screenshots,
     ]
 
+    /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
+    static var supportsLiquidGlass: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
+
     /// 콘텐츠 박스 배경 기본 프리셋. Guide는 GuideWindow 시그니처
     /// 색(DS.accent, DESIGN.md의 #3664FF)이다.
     private static let colorPresets: [(name: String, hex: String)] = [
@@ -132,6 +138,9 @@ struct NotchSettingsView: View {
                             Picker("Style", selection: $vm.notchPanelStyle) {
                                 Text("Black").tag(NotchPanelStyle.black)
                                 Text("Iceberg").tag(NotchPanelStyle.iceberg)
+                                if Self.supportsLiquidGlass {
+                                    Text("Glass").tag(NotchPanelStyle.glass)
+                                }
                             }
                             .pickerStyle(.segmented)
                             .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
