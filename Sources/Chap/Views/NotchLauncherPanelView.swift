@@ -33,6 +33,8 @@ struct NotchLauncherPanelView: View {
     let stripPlateauHalfWidth: CGFloat
     /// 시각 스타일. Custom은 색상·불투명도 도크, Glass는 시스템 재질.
     let style: NotchPanelStyle
+    /// Apple 공식 Glass.clear/regular 재질 변형.
+    let glassMaterial: NotchGlassMaterial
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
     let slots: [NotchSlotContent]
     let onLaunch: (Int) -> Void
@@ -93,7 +95,8 @@ struct NotchLauncherPanelView: View {
                     // Glass 스타일: 콘텐츠 박스에 Liquid Glass 재질을 얹는다.
                     // macOS 26 미만에서는 아무것도 추가되지 않아 black과 같다.
                     if style == .glass {
-                        NotchDockStyle.liquidGlassLayer(shape: panelShape)
+                        NotchDockStyle.liquidGlassLayer(
+                            shape: panelShape, material: glassMaterial)
                     }
                     PressedStripShape(
                         plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
@@ -385,9 +388,16 @@ enum NotchDockStyle {
     ///
     /// 참고: https://developer.apple.com/design/human-interface-guidelines/materials
     @ViewBuilder
-    static func liquidGlassLayer<S: Shape>(shape: S) -> some View {
+    static func liquidGlassLayer<S: Shape>(
+        shape: S, material: NotchGlassMaterial
+    ) -> some View {
         if #available(macOS 26, *) {
-            Color.clear.glassEffect(.regular, in: shape)
+            switch material {
+            case .clear:
+                Color.clear.glassEffect(.clear, in: shape)
+            case .regular:
+                Color.clear.glassEffect(.regular, in: shape)
+            }
         }
     }
 
