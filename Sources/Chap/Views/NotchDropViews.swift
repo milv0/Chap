@@ -510,7 +510,8 @@ struct NotchAwakeBadgeView: View {
             .padding(.leading, NotchGeometry.dockFlareRadius + 4)
             .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap + 5)
             .frame(maxWidth: .infinity, alignment: model.expanded ? .leading : .center)
-            .offset(x: -5, y: 1)
+            // 확장 시에만 5pt 더 왼쪽으로. 컴팩트 배지는 원래 중앙 그대로.
+            .offset(x: model.expanded ? -5 : 0, y: 1)
         }
         .clipShape(shape)
         // 노치 쪽 변(trailing)을 고정한 채 폭만 변해 왼쪽으로 슬라이딩한다.
