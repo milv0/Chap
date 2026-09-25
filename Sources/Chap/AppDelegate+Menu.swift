@@ -22,8 +22,6 @@ extension AppDelegate {
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
                 symbolName: "cup.and.saucer.fill")
-            // 노치 배지를 잠깐 피크해 세션 시작을 알린다.
-            notchLauncher.peekAwakeBadge()
         case .ended:
             NSSound(named: "Pop")?.play()
             KeepAwakeHUD.show(
@@ -318,9 +316,6 @@ extension AppDelegate {
         }
         notchLauncher.colorProvider = { [weak self] in
             self?.config.notchPanelColorHex ?? Config.notchPanelColorHexDefault
-        }
-        notchLauncher.awakeActiveProvider = { [weak self] in
-            self?.keepAwake.isActive ?? false
         }
         notchLauncher.awakeSessionEndProvider = { [weak self] in
             self?.keepAwake.sessionEnd

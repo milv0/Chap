@@ -15,17 +15,11 @@ final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
-    private var awakeBadgeWindow: NSWindow?
-    /// 세션 시작 직후 잠깐 배지를 보여주는 피크 상태.
-    private var isAwakeBadgePeeking = false
-    private var awakeBadgePeekToken = 0
     /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
     /// 순간 tracking이 재개되며 mouseEntered가 곧바로 날아오기 때문이다.
     private var hoverOpenSuppressedUntil = Date.distantPast
     /// Glass appearance 선택 후 메인 도커를 잠깐 고정하는 프리뷰 토큰.
     private var appearancePreviewToken = 0
-    /// 메인 도커 표시 여부. Awake 배지 확장 판단에 쓴다.
-    private var isMainPanelOpen = false
     private var dropObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
@@ -46,8 +40,6 @@ final class NotchLauncherController {
     var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
     /// 콘텐츠 박스 배경색 공급자 ("#RRGGBB").
     var colorProvider: () -> String = { Config.notchPanelColorHexDefault }
-    /// Keep Awake 활성 여부 공급자. 왼쪽 커피 배지 표시에 쓴다.
-    var awakeActiveProvider: () -> Bool = { false }
     /// Keep Awake 세션 종료 시각 공급자. 메인 도커의 남은 시간 표시에 쓴다.
     var awakeSessionEndProvider: () -> Date? = { nil }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
@@ -77,13 +69,11 @@ final class NotchLauncherController {
         applyGlassAppearance(to: panel)
         installDropObserverIfNeeded()
         updateDropBadge()
-        updateAwakeBadge()
     }
 
     func tearDown() {
         stopVisibilityMonitor()
         isPreviewPinned = false
-        isMainPanelOpen = false
         revealModel = nil
         panel?.orderOut(nil)
         panel = nil
@@ -91,9 +81,6 @@ final class NotchLauncherController {
         hotzoneWindow = nil
         badgeWindow?.orderOut(nil)
         badgeWindow = nil
-        awakeBadgeWindow?.orderOut(nil)
-        awakeBadgeWindow = nil
-        isAwakeBadgePeeking = false
         if let dropObserver {
             NotificationCenter.default.removeObserver(dropObserver)
             self.dropObserver = nil
@@ -184,85 +171,6 @@ final class NotchLauncherController {
         badgeWindow = window
     }
 
-    /// Keep Awake 활성 여부에 따라 노치 왼쪽 커피 배지를 갱신한다.
-    /// 순수 표시용이라 마우스 이벤트를 받지 않는다.
-    func updateAwakeBadge() {
-        // 상시 표시는 상단바 아이콘이 담당한다. 배지는 메인 도커 위이거나
-        // 시작 피크 중일 때만 보인다.
-        let expanded = isMainPanelOpen
-        guard awakeActiveProvider(), hotzoneWindow != nil,
-            expanded || isAwakeBadgePeeking,
-            let screen = Self.notchScreen()
-        else {
-            hideAwakeBadge()
-            return
-        }
-
-        let frame = NotchLauncherPolicy.awakeBadgeFrame(
-            notchRect: Self.notchRect(on: screen), expanded: expanded)
-        let hosting = NSHostingView(
-            rootView: NotchAwakeBadgeView(
-                sessionEnd: awakeSessionEndProvider(), expanded: expanded))
-        hosting.frame = NSRect(origin: .zero, size: frame.size)
-
-        if let existing = awakeBadgeWindow {
-            existing.setFrame(frame, display: true)
-            existing.contentView = hosting
-            existing.alphaValue = 1
-            if let panel {
-                existing.order(.above, relativeTo: panel.windowNumber)
-            } else {
-                existing.orderFrontRegardless()
-            }
-            return
-        }
-
-        let window = NSWindow(
-            contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.level = Self.badgeLevel
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.ignoresMouseEvents = true
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-        window.contentView = hosting
-        if let panel {
-            window.order(.above, relativeTo: panel.windowNumber)
-        } else {
-            window.orderFrontRegardless()
-        }
-        awakeBadgeWindow = window
-    }
-
-    /// 세션 시작 알림: 배지를 잠깐 보여줬다가 사라지게 한다.
-    func peekAwakeBadge() {
-        guard awakeActiveProvider(), !isMainPanelOpen else { return }
-        isAwakeBadgePeeking = true
-        awakeBadgePeekToken += 1
-        let token = awakeBadgePeekToken
-        updateAwakeBadge()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
-            guard let self, self.awakeBadgePeekToken == token else { return }
-            self.isAwakeBadgePeeking = false
-            self.updateAwakeBadge()
-        }
-    }
-
-    /// 배지를 짧은 페이드로 내린다.
-    private func hideAwakeBadge() {
-        guard let window = awakeBadgeWindow else { return }
-        awakeBadgeWindow = nil
-        NSAnimationContext.runAnimationGroup(
-            { context in
-                // 메인 도커 접힘과 같은 시간으로 시작·종료를 맞춘다.
-                context.duration = NotchLauncherPanelView.closeDuration
-                window.animator().alphaValue = 0
-            },
-            completionHandler: {
-                window.orderOut(nil)
-            })
-    }
-
     // MARK: - Hotzone
 
     private func installHotzone(on screen: NSScreen) {
@@ -318,10 +226,10 @@ final class NotchLauncherController {
         NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
     }
 
-    /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 확장 배지 폭.
-    /// 확장 배지 영역의 바깥 모서리에서 곧바로 상단 띠가 줄기 시작한다.
+    /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 좌우 상태 영역.
+    /// 상태 영역의 바깥 모서리에서 곧바로 상단 띠가 줄기 시작한다.
     private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
-        notchRect(on: screen).width / 2 + NotchGeometry.badgeExpandedBodyWidth
+        notchRect(on: screen).width / 2 + NotchGeometry.stripPlateauSideWidth
     }
 
     // MARK: - Panel
@@ -345,6 +253,7 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
+            awakeSessionEnd: awakeSessionEndProvider(),
             style: styleProvider(),
             glassMaterial: glassMaterialProvider(),
             slots: slots,
@@ -389,14 +298,8 @@ final class NotchLauncherController {
         // 메인 패널 위에는 배지를 앞에 둔다. 배지로 마우스를 옮기면
         // Drop 파일 도커로 전환할 수 있어야 하기 때문이다.
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
-        awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
-        self.isMainPanelOpen = true
         self.revealModel = reveal
-        // 메인 도커가 배지 소유권을 가져가므로 시작 피크를 취소한다.
-        isAwakeBadgePeeking = false
-        awakeBadgePeekToken += 1
-        updateAwakeBadge()
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -511,9 +414,6 @@ final class NotchLauncherController {
         if let badgeFrame = badgeWindow?.frame {
             stayRegion = stayRegion.union(badgeFrame)
         }
-        if let awakeFrame = awakeBadgeWindow?.frame {
-            stayRegion = stayRegion.union(awakeFrame)
-        }
         stayRegion = stayRegion.insetBy(dx: -Self.dwellMargin, dy: -Self.dwellMargin)
         if stayRegion.contains(location) {
             lastInsideDate = Date()
@@ -529,18 +429,13 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         panel?.orderOut(nil)
         panel = nil
-        isMainPanelOpen = false
         revealModel = nil
-        updateAwakeBadge()
     }
 
     private func hidePanel() {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
-        self.isMainPanelOpen = false
-        // 시간 배지도 메인 도커 접힘과 같은 프레임에 닫기 시작한다.
-        updateAwakeBadge()
         // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
         // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {

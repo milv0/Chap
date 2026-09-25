@@ -65,23 +65,6 @@ struct NotchLauncherPolicyTests {
         #expect(NotchLauncherPolicy.shouldShowDropBadge(fileCount: 0) == false)
     }
 
-    @Test("the awake badge mirrors the drop badge on the notch's left")
-    func awakeBadgeMirrorsLeft() {
-        let notch = CGRect(x: 656, y: 950, width: 200, height: 32)
-
-        let left = NotchLauncherPolicy.awakeBadgeFrame(notchRect: notch)
-        let right = NotchLauncherPolicy.dropBadgeFrame(notchRect: notch)
-
-        // 오른쪽 배지와 같은 크기로, 노치 왼쪽 변 기준 대칭.
-        #expect(left.size == right.size)
-        #expect(left.maxX == 656 + NotchLauncherPolicy.dropBadgeNotchOverlap)
-        #expect(left.minY == 950)
-
-        // 확장 시 노치 쪽 변은 고정된 채 왼쪽으로만 자란다.
-        let expanded = NotchLauncherPolicy.awakeBadgeFrame(notchRect: notch, expanded: true)
-        #expect(expanded.maxX == left.maxX)
-        #expect(expanded.width > left.width)
-    }
     @Test("Glass corner bridges touch both top vertices")
     func glassCornerBridgesTouchTopVertices() {
         let rect = CGRect(x: 0, y: 0, width: 300, height: 180)
