@@ -136,8 +136,7 @@ struct NotchSettingsView: View {
 
                         Section("Appearance") {
                             Picker("Style", selection: $vm.notchPanelStyle) {
-                                Text("Black").tag(NotchPanelStyle.black)
-                                Text("Iceberg").tag(NotchPanelStyle.iceberg)
+                                Text("Custom").tag(NotchPanelStyle.custom)
                                 if Self.supportsLiquidGlass {
                                     Text("Glass").tag(NotchPanelStyle.glass)
                                 }

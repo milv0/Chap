@@ -35,7 +35,7 @@ final class NotchLauncherController {
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 패널 시각 스타일 공급자.
-    var styleProvider: () -> NotchPanelStyle = { .black }
+    var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
     var glassAppearanceProvider: () -> NotchGlassAppearance = { .system }
     /// 패널 하단 불투명도 공급자.

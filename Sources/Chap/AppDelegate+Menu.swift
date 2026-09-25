@@ -303,7 +303,7 @@ extension AppDelegate {
             }
         }
         notchLauncher.styleProvider = { [weak self] in
-            self?.config.notchPanelStyle ?? .black
+            self?.config.notchPanelStyle ?? .custom
         }
         notchLauncher.glassAppearanceProvider = { [weak self] in
             self?.config.notchGlassAppearance ?? .system
