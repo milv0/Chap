@@ -16,6 +16,7 @@ final class NotchLauncherController {
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
     private var awakeBadgeWindow: NSWindow?
+    private var awakeBadgeModel: AwakeBadgeModel?
     /// 현재 떠 있는 표면. 배지 z순서와 hover 전환 판단에 쓴다.
     private enum ActiveSurface { case mainPanel, dropDock }
     private var activeSurface: ActiveSurface?
@@ -77,6 +78,7 @@ final class NotchLauncherController {
         badgeWindow = nil
         awakeBadgeWindow?.orderOut(nil)
         awakeBadgeWindow = nil
+        awakeBadgeModel = nil
         if let dropObserver {
             NotificationCenter.default.removeObserver(dropObserver)
             self.dropObserver = nil
@@ -176,22 +178,18 @@ final class NotchLauncherController {
         else {
             awakeBadgeWindow?.orderOut(nil)
             awakeBadgeWindow = nil
+            awakeBadgeModel = nil
             return
         }
 
-        // 메인 도커 위에서는 왼쪽으로 확장되어 남은 시간을 보여준다.
-        let expanded = activeSurface == .mainPanel
+        // 창은 항상 확장 크기로 고정한다. 슬라이딩은 콘텐츠 애니메이션이
+        // 담당해 도커 펼침·접힘 커브와 정확히 동기화된다.
         let frame = NotchLauncherPolicy.awakeBadgeFrame(
-            notchRect: Self.notchRect(on: screen), expanded: expanded)
-        let hosting = NSHostingView(
-            rootView: NotchAwakeBadgeView(
-                sessionEnd: awakeSessionEndProvider(), expanded: expanded))
-        hosting.frame = NSRect(origin: .zero, size: frame.size)
+            notchRect: Self.notchRect(on: screen), expanded: true)
 
-        if let existing = awakeBadgeWindow {
-            // 프레임 애니메이션이 커피 아이콘의 슬라이딩을 만든다.
-            existing.setFrame(frame, display: true, animate: true)
-            existing.contentView = hosting
+        if let existing = awakeBadgeWindow, let model = awakeBadgeModel {
+            existing.setFrame(frame, display: true)
+            model.sessionEnd = awakeSessionEndProvider()
             if let panel {
                 existing.order(.above, relativeTo: panel.windowNumber)
             } else {
@@ -199,6 +197,12 @@ final class NotchLauncherController {
             }
             return
         }
+
+        let model = AwakeBadgeModel()
+        model.expanded = activeSurface == .mainPanel
+        model.sessionEnd = awakeSessionEndProvider()
+        let hosting = NSHostingView(rootView: NotchAwakeBadgeView(model: model))
+        hosting.frame = NSRect(origin: .zero, size: frame.size)
 
         let window = NSWindow(
             contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
@@ -215,6 +219,17 @@ final class NotchLauncherController {
             window.orderFrontRegardless()
         }
         awakeBadgeWindow = window
+        awakeBadgeModel = model
+    }
+
+    /// Awake 배지의 펼침 상태를 도커와 같은 커브로 바꾼다.
+    private func setAwakeBadgeExpanded(_ expanded: Bool, animation: Animation?) {
+        guard let model = awakeBadgeModel, model.expanded != expanded else { return }
+        if let animation {
+            withAnimation(animation) { model.expanded = expanded }
+        } else {
+            model.expanded = expanded
+        }
     }
 
     // MARK: - Hotzone
@@ -341,6 +356,7 @@ final class NotchLauncherController {
         self.activeSurface = .mainPanel
         self.revealModel = reveal
         updateAwakeBadge()
+        setAwakeBadgeExpanded(true, animation: NotchLauncherPanelView.openAnimation)
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -449,6 +465,7 @@ final class NotchLauncherController {
         self.panel = panel
         self.activeSurface = .dropDock
         updateAwakeBadge()
+        setAwakeBadgeExpanded(false, animation: NotchLauncherPanelView.closeAnimation)
         startVisibilityMonitor()
     }
 
@@ -544,7 +561,7 @@ final class NotchLauncherController {
         panel = nil
         activeSurface = nil
         revealModel = nil
-        updateAwakeBadge()
+        setAwakeBadgeExpanded(false, animation: nil)
     }
 
     /// 마우스가 배지 위로 오면 메인 도커를 Drop 도커로 전환한다.
@@ -570,6 +587,8 @@ final class NotchLauncherController {
         guard let panel else { return }
         self.panel = nil
         self.activeSurface = nil
+        // 배지 슬라이드 복귀는 도커 접힘과 같은 커브·같은 시점에 시작한다.
+        setAwakeBadgeExpanded(false, animation: NotchLauncherPanelView.closeAnimation)
         // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
         // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {

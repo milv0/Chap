@@ -463,45 +463,62 @@ struct NotchBadgeShape: Shape {
     }
 }
 
+/// Awake 배지의 펼침 상태. 컨트롤러가 도커 커브와 같은 애니메이션으로
+/// 상태를 바꿔, 배지 슬라이딩이 도커 펼침·접힘과 정확히 동기화된다.
+final class AwakeBadgeModel: ObservableObject {
+    @Published var expanded = false
+    @Published var sessionEnd: Date?
+}
+
 /// 노치 왼쪽에 붙는 Keep Awake 배지. 세션이 활성일 때만 표시되며
 /// 커피 아이콘으로 상태를 알린다. 순수 표시용이라 마우스를 받지 않는다.
 /// 메인 도커가 열리면 아이콘이 왼쪽으로 밀리고 오른쪽에 h:mm 남은 시간이 붙는다.
+/// 창은 확장 크기로 고정하고 콘텐츠 폭만 애니메이션해 슬라이딩을 만든다.
 struct NotchAwakeBadgeView: View {
-    let sessionEnd: Date?
-    let expanded: Bool
+    @ObservedObject var model: AwakeBadgeModel
 
     var body: some View {
-        ZStack {
-            NotchBadgeShape(
-                flareRadius: NotchGeometry.dockFlareRadius,
-                bottomCornerRadius: NotchGeometry.badgeCornerRadius,
-                mirrored: true
-            )
-            .fill(Color.black)
+        let bodyWidth =
+            model.expanded
+            ? NotchGeometry.badgeExpandedBodyWidth : NotchGeometry.badgeBodyWidth
+        let shape = NotchBadgeShape(
+            flareRadius: NotchGeometry.dockFlareRadius,
+            bottomCornerRadius: NotchGeometry.badgeCornerRadius,
+            mirrored: true)
 
-            HStack(spacing: 6) {
+        ZStack {
+            shape.fill(Color.black)
+
+            HStack(spacing: 5) {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 12))
                     .foregroundColor(DS.accent)
-                if expanded, let sessionEnd {
-                    Spacer(minLength: 2)
+                if let sessionEnd = model.sessionEnd {
                     // 분 단위 갱신. 항상 h:mm이라 폭이 흔들리지 않는다.
                     TimelineView(.periodic(from: .now, by: 60)) { context in
                         Text(
                             KeepAwakePolicy.remainingClockLabel(
                                 until: sessionEnd, now: context.date)
                         )
-                        .font(DS.captionFont.weight(.medium))
+                        .font(.system(size: 13, weight: .medium))
                         .monospacedDigit()
                         .foregroundColor(.white.opacity(0.9))
                     }
+                    .opacity(model.expanded ? 1 : 0)
                 }
             }
-            .padding(.leading, NotchGeometry.dockFlareRadius + (expanded ? 4 : 0))
-            .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap + (expanded ? 6 : 0))
-            .frame(maxWidth: .infinity, alignment: expanded ? .leading : .center)
+            .padding(.leading, NotchGeometry.dockFlareRadius + 4)
+            .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap + 5)
+            .frame(maxWidth: .infinity, alignment: model.expanded ? .leading : .center)
             .offset(y: 1)
         }
+        .clipShape(shape)
+        // 노치 쪽 변(trailing)을 고정한 채 폭만 변해 왼쪽으로 슬라이딩한다.
+        .frame(
+            width: NotchLauncherPolicy.dropBadgeNotchOverlap + bodyWidth
+                + NotchGeometry.dockFlareRadius
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
         .accessibilityLabel("Keep Awake active")
     }
 }
