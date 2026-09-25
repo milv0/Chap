@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .scripts, .screenshots, .drop,
+        .sites, .apps, .folders, .scripts, .screenshots,
     ]
 
     /// 콘텐츠 박스 배경 기본 프리셋. Guide는 GuideWindow 시그니처

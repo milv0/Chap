@@ -293,7 +293,8 @@ extension AppDelegate {
                 case .screenshots:
                     return .screenshots(ScreenshotShelf.recentScreenshots())
                 case .drop:
-                    return .drop
+                    // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
+                    return nil
                 case .sites, .apps, .folders, .scripts:
                     // 해당 타입의 런처가 없으면 칸을 건너뛴다.
                     return sections.first { $0.launchType == widget.launchType }

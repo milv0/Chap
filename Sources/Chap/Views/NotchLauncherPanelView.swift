@@ -6,8 +6,6 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯.
     case screenshots([URL])
-    /// Chap Drop 위젯. 목록은 뷰가 직접 보관함에서 읽는다.
-    case drop
 }
 
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
@@ -217,13 +215,35 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    /// 섹션 콘텐츠 본문.
+    @State private var dropFiles: [URL] = []
+
+    /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
-        // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
-        HStack(alignment: .top, spacing: DS.spacing) {
-            ForEach(Array(slots.enumerated()), id: \.offset) { _, slot in
-                slotView(slot)
-                    .frame(width: Self.columnWidth, alignment: .leading)
+        VStack(alignment: .leading, spacing: DS.spacingSmall) {
+            // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
+            HStack(alignment: .top, spacing: DS.spacing) {
+                ForEach(Array(slots.enumerated()), id: \.offset) { _, slot in
+                    slotView(slot)
+                        .frame(width: Self.columnWidth, alignment: .leading)
+                }
+            }
+
+            // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
+            // 도커는 원래 크기로 돌아간다.
+            if !dropFiles.isEmpty {
+                Rectangle()
+                    .fill(Color.white.opacity(0.10))
+                    .frame(height: 1)
+                    .padding(.top, 2)
+                HStack(alignment: .top, spacing: DS.spacingSmall) {
+                    ForEach(dropFiles, id: \.self) { url in
+                        NotchDropFileItem(url: url) {
+                            ChapDrop.remove(url)
+                            dropFiles = ChapDrop.recentFiles(
+                                limit: DropPolicy.maxDockItems)
+                        }
+                    }
+                }
             }
         }
         .padding(.horizontal, DS.padding)
@@ -233,6 +253,12 @@ struct NotchLauncherPanelView: View {
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
         )
         .frame(minWidth: minWidth)
+        .onAppear { dropFiles = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems) }
+        .onReceive(
+            NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
+        ) { _ in
+            dropFiles = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems)
+        }
     }
 
     @ViewBuilder
@@ -242,8 +268,6 @@ struct NotchLauncherPanelView: View {
             sectionView(section)
         case .screenshots(let urls):
             NotchScreenshotShelfView(urls: urls)
-        case .drop:
-            NotchDropListView()
         }
     }
 

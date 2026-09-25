@@ -22,9 +22,8 @@ final class NotchLauncherController {
     /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
     /// 순간 tracking이 재개되며 mouseEntered가 곧바로 날아오기 때문이다.
     private var hoverOpenSuppressedUntil = Date.distantPast
-    /// 현재 떠 있는 표면. 배지 z순서와 hover 전환 판단에 쓴다.
-    private enum ActiveSurface { case mainPanel, dropDock }
-    private var activeSurface: ActiveSurface?
+    /// 메인 도커 표시 여부. Awake 배지 확장 판단에 쓴다.
+    private var isMainPanelOpen = false
     private var dropObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
@@ -73,7 +72,7 @@ final class NotchLauncherController {
     func tearDown() {
         stopVisibilityMonitor()
         isPreviewPinned = false
-        activeSurface = nil
+        isMainPanelOpen = false
         revealModel = nil
         panel?.orderOut(nil)
         panel = nil
@@ -132,10 +131,8 @@ final class NotchLauncherController {
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
         tracker.onEntered = { [weak self] in
-            guard let self else { return }
-            // 메인 패널이 떠 있으면 즉시 내리고 Drop 파일 도커로 전환한다.
-            if self.activeSurface == .mainPanel { self.dismissPanelImmediately() }
-            self.showDropPanel()
+            guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
+            self.showPanel()
         }
         tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
@@ -181,7 +178,7 @@ final class NotchLauncherController {
     func updateAwakeBadge() {
         // 상시 표시는 상단바 아이콘이 담당한다. 배지는 메인 도커 위이거나
         // 시작 피크 중일 때만 보인다.
-        let expanded = activeSurface == .mainPanel
+        let expanded = isMainPanelOpen
         guard awakeActiveProvider(), hotzoneWindow != nil,
             expanded || isAwakeBadgePeeking,
             let screen = Self.notchScreen()
@@ -228,7 +225,7 @@ final class NotchLauncherController {
 
     /// 세션 시작 알림: 배지를 잠깐 보여줬다가 사라지게 한다.
     func peekAwakeBadge() {
-        guard awakeActiveProvider(), activeSurface == nil else { return }
+        guard awakeActiveProvider(), !isMainPanelOpen else { return }
         isAwakeBadgePeeking = true
         awakeBadgePeekToken += 1
         let token = awakeBadgePeekToken
@@ -309,6 +306,12 @@ final class NotchLauncherController {
         NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
     }
 
+    /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 확장 배지 폭.
+    /// 확장 배지 영역의 바깥 모서리에서 곧바로 상단 띠가 줄기 시작한다.
+    private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
+        notchRect(on: screen).width / 2 + NotchGeometry.badgeExpandedBodyWidth
+    }
+
     // MARK: - Panel
 
     private func showPanel() {
@@ -374,7 +377,7 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
-        self.activeSurface = .mainPanel
+        self.isMainPanelOpen = true
         self.revealModel = reveal
         updateAwakeBadge()
         DispatchQueue.main.async {
@@ -385,115 +388,9 @@ final class NotchLauncherController {
         startVisibilityMonitor()
     }
 
-    // MARK: - Drop panel
-
-    /// Drop 배지 hover로 여는 파일 도커. 배지 span이 최소, 메인 도커 폭이 최대다.
-    private func showDropPanel() {
-        guard panel == nil, let screen = Self.notchScreen() else { return }
-        presentDropDock(
-            content: NotchDropPanelView(
-                topInset: screen.safeAreaInsets.top,
-                minContentWidth: Self.dropDockContentWidth(on: screen),
-                maxContentWidth: mainDockContentWidth(on: screen),
-                bottomOpacity: opacityProvider(),
-                colorHex: colorProvider(),
-                stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
-                onSizeChange: { [weak self] size in self?.resizeDropDock(to: size) }),
-            on: screen)
-    }
-
-    /// 열려 있는 Drop 도커의 창을 콘텐츠 크기에 맞춰 같은 앵커
-    /// (노치 중앙, 상단 밀착)로 리사이즈한다.
-    private func resizeDropDock(to size: CGSize) {
-        guard let panel, activeSurface == .dropDock,
-            let screen = Self.notchScreen()
-        else { return }
-        let notch = Self.notchRect(on: screen)
-        var frame = NSRect(
-            x: notch.midX - ceil(size.width) / 2,
-            y: screen.frame.maxY - ceil(size.height),
-            width: ceil(size.width), height: ceil(size.height)
-        ).integral
-        frame.origin.y = screen.frame.maxY - frame.height
-        guard frame != panel.frame else { return }
-        panel.setFrame(frame, display: true)
-    }
-
-    /// 메인 런처 도커의 콘텐츠 폭 추정치. Drop 파일 도커의 폭 상한으로 쓴다.
-    private func mainDockContentWidth(on screen: NSScreen) -> CGFloat {
-        let slotCount = max(slotsProvider().count, 1)
-        let black =
-            CGFloat(slotCount) * NotchLauncherPanelView.columnWidth
-            + CGFloat(slotCount - 1) * DS.spacing + DS.padding * 2
-        return max(black - DS.paddingSmall * 2, Self.dropDockContentWidth(on: screen))
-    }
-
-    /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 배지 폭.
-    /// 이 구간까지는 검정이 평평하게 깊고, 바깥에서 곡선으로 얇아진다.
-    /// 확장 배지 영역의 바깥 모서리에서 곧바로 상단 띠가 줄기 시작한다.
-    private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
-        notchRect(on: screen).width / 2 + NotchGeometry.badgeExpandedBodyWidth
-    }
-
-    /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을
-    /// 덮는다 (왼쪽 Drop 배지 + 추후 우측 배지 자리). 도커는 노치 중앙 정렬.
-    ///
-    /// NotchDockShape의 상단 오목 플레어가 좌우 topCornerRadius만큼 벽을
-    /// 안쪽으로 들이므로, 보이는 벽이 배지 바깥 변에 오도록 그만큼 더한다.
-    private static func dropDockContentWidth(on screen: NSScreen) -> CGFloat {
-        let notch = notchRect(on: screen)
-        // 배지 본체 폭만큼 좌우 대칭으로 더해, 배지 폭이 바뀌면 도커도 따라간다.
-        let badgeExtension = NotchGeometry.badgeBodyWidth
-        let flareInset = NotchDropDock.topCornerRadius * 2
-        return notch.width + badgeExtension * 2 + flareInset - DS.paddingSmall * 2
-    }
-
-    /// Drop 도커 공통 표시. 노치 중앙에 정렬하고, 떠 있는 동안 배지를
-    /// 숨겨 도커 밖으로 배지가 튀어나오지 않게 한다.
-    private func presentDropDock<Content: View>(content: Content, on screen: NSScreen) {
-        let hosting = NSHostingView(rootView: content)
-        hosting.safeAreaRegions = []
-        let fitting = hosting.fittingSize
-        let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
-
-        // 노치 중앙 정렬. 좌우 배지 확장 폭이 대칭이라 배지도 함께 덮인다.
-        let notch = Self.notchRect(on: screen)
-        var frame = NSRect(
-            x: notch.midX - size.width / 2,
-            y: screen.frame.maxY - size.height,
-            width: size.width, height: size.height
-        ).integral
-        frame.origin.y = screen.frame.maxY - frame.height
-
-        let panel = NSPanel(
-            contentRect: frame,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered, defer: false)
-        panel.level = .statusBar
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = false
-        panel.collectionBehavior = [.canJoinAllSpaces, .transient]
-        panel.becomesKeyOnlyIfNeeded = true
-        panel.contentView = hosting
-
-        panel.orderFrontRegardless()
-        // Drop 도커 위에서도 배지는 앞에 남는다. 도커 상단 띠와 같은 검정이라
-        // 겹쳐도 이음새가 없고, 노치 hover로 되돌아가는 왕복 전환의 기준점이 된다.
-        badgeWindow?.order(.above, relativeTo: panel.windowNumber)
-        awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
-        self.panel = panel
-        self.activeSurface = .dropDock
-        updateAwakeBadge()
-        startVisibilityMonitor()
-    }
-
-    // MARK: - Drop zone
-
     /// 파일 드래그가 노치에 닿으면 메인 도커를 열고 그 위에
     /// 반투명 "Drop here" 레이어를 덮는다.
     private func presentDropOverlay() {
-        if activeSurface == .dropDock { dismissPanelImmediately() }
         if panel == nil { showPanel() }
         revealModel?.isDropTargetActive = true
     }
@@ -545,9 +442,6 @@ final class NotchLauncherController {
             return
         }
         let location = NSEvent.mouseLocation
-        // 표면 전환은 이벤트가 아니라 폴링으로 판정한다. 핫존 창이 도커
-        // 아래에 깔리면 mouseEntered가 가려져 오지 않기 때문이다.
-        if switchSurfaceIfNeeded(at: location) { return }
         var stayRegion = panel.frame.union(hotzoneWindow?.frame ?? panel.frame)
         if let badgeFrame = badgeWindow?.frame {
             stayRegion = stayRegion.union(badgeFrame)
@@ -570,34 +464,16 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         panel?.orderOut(nil)
         panel = nil
-        activeSurface = nil
+        isMainPanelOpen = false
         revealModel = nil
         updateAwakeBadge()
-    }
-
-    /// 마우스가 배지 위로 오면 메인 도커를 Drop 도커로 전환한다.
-    /// 전환했으면 true (현재 폴링 사이클은 종료).
-    /// 역방향(노치 hover로 메인 복귀)은 드롭존과 충돌해 두지 않는다 —
-    /// Drop 도커는 영역을 벗어나 닫은 뒤 노치 hover로 다시 연다.
-    private func switchSurfaceIfNeeded(at location: NSPoint) -> Bool {
-        // 드래그(버튼 눌림) 중에는 전환하지 않는다.
-        guard NSEvent.pressedMouseButtons == 0 else { return false }
-        // 배지 위: 메인 도커 → Drop 도커.
-        if activeSurface == .mainPanel, let badgeZone = badgeWindow?.frame,
-            badgeZone.contains(location)
-        {
-            dismissPanelImmediately()
-            showDropPanel()
-            return true
-        }
-        return false
     }
 
     private func hidePanel() {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
-        self.activeSurface = nil
+        self.isMainPanelOpen = false
         // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
         // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {
