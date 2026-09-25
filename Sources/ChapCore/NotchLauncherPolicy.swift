@@ -29,17 +29,18 @@ public enum NotchLauncherPolicy {
             height: height)
     }
 
-    /// 노치 오른쪽에 붙는 Drop 배지 도커의 프레임. 보이는 본체는 노치 높이의
-    /// 정사각형이고, 왼쪽 겹침(overlap)은 노치 밑으로, 오른쪽 플레어는
-    /// 정사각형 바깥으로 나가 상단바에 합류한다.
-    /// 폭 = 겹침 + 정사각형 한 변 + 플레어.
+    /// 노치 오른쪽에 붙는 Drop 배지 도커의 프레임. 보이는 본체는
+    /// `NotchGeometry.badgeBodyWidth` × 노치 높이이고, 왼쪽 겹침(overlap)은
+    /// 노치 밑으로, 오른쪽 플레어는 본체 바깥으로 나가 상단바에 합류한다.
+    /// 폭 = 겹침 + 본체 폭 + 플레어.
     public static let dropBadgeNotchOverlap: CGFloat = NotchGeometry.badgeNotchOverlap
 
     public static func dropBadgeFrame(notchRect: CGRect) -> CGRect {
         CGRect(
             x: notchRect.maxX - dropBadgeNotchOverlap,
             y: notchRect.minY,
-            width: dropBadgeNotchOverlap + notchRect.height + NotchGeometry.dockFlareRadius,
+            width: dropBadgeNotchOverlap + NotchGeometry.badgeBodyWidth
+                + NotchGeometry.dockFlareRadius,
             height: notchRect.height)
     }
 
