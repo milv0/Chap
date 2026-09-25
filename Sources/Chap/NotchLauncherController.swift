@@ -467,11 +467,12 @@ final class NotchLauncherController {
         revealModel = nil
     }
 
-    /// 마우스 위치에 따라 메인 도커 ↔ Drop 도커를 전환한다.
+    /// 마우스가 배지 위로 오면 메인 도커를 Drop 도커로 전환한다.
     /// 전환했으면 true (현재 폴링 사이클은 종료).
+    /// 역방향(노치 hover로 메인 복귀)은 드롭존과 충돌해 두지 않는다 —
+    /// Drop 도커는 영역을 벗어나 닫은 뒤 노치 hover로 다시 연다.
     private func switchSurfaceIfNeeded(at location: NSPoint) -> Bool {
-        // 드래그(버튼 눌림) 중에는 전환하지 않는다. 파일을 끌고 노치 위에
-        // 머무는 동안 드롭존이 메인 도커로 바뀌어 버리는 것을 막는다.
+        // 드래그(버튼 눌림) 중에는 전환하지 않는다.
         guard NSEvent.pressedMouseButtons == 0 else { return false }
         // 배지 위: 메인 도커 → Drop 도커.
         if activeSurface == .mainPanel, let badgeZone = badgeWindow?.frame,
@@ -480,17 +481,6 @@ final class NotchLauncherController {
             dismissPanelImmediately()
             showDropPanel()
             return true
-        }
-        // 노치 위 (배지 구간 제외): Drop 도커 → 메인 도커.
-        if activeSurface == .dropDock, var notchZone = hotzoneWindow?.frame {
-            if let badgeZone = badgeWindow?.frame {
-                notchZone.size.width = max(0, badgeZone.minX - notchZone.minX)
-            }
-            if notchZone.contains(location) {
-                dismissPanelImmediately()
-                showPanel()
-                return true
-            }
         }
         return false
     }
