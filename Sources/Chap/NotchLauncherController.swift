@@ -37,6 +37,8 @@ final class NotchLauncherController {
     var colorProvider: () -> String = { Config.notchPanelColorHexDefault }
     /// Keep Awake 활성 여부 공급자. 왼쪽 커피 배지 표시에 쓴다.
     var awakeActiveProvider: () -> Bool = { false }
+    /// Keep Awake 세션 종료 시각 공급자. 메인 도커의 남은 시간 표시에 쓴다.
+    var awakeSessionEndProvider: () -> Date? = { nil }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
 
@@ -287,6 +289,7 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
+            awakeSessionEnd: awakeSessionEndProvider(),
             style: styleProvider(),
             slots: slots,
             onLaunch: { [weak self] siteIndex in
@@ -388,6 +391,7 @@ final class NotchLauncherController {
     /// 이 구간까지는 검정이 평평하게 깊고, 바깥에서 곡선으로 얇아진다.
     private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
         notchRect(on: screen).width / 2 + NotchGeometry.badgeBodyWidth
+            + NotchGeometry.stripBadgeClearance
     }
 
     /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을

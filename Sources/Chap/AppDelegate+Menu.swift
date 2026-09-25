@@ -311,6 +311,9 @@ extension AppDelegate {
         notchLauncher.awakeActiveProvider = { [weak self] in
             self?.keepAwake.isActive ?? false
         }
+        notchLauncher.awakeSessionEndProvider = { [weak self] in
+            self?.keepAwake.sessionEnd
+        }
         notchLauncher.onLaunch = { [weak self] index in
             guard let self, index >= 0, index < self.config.sites.count else { return }
             self.launchSite(self.config.sites[index])
