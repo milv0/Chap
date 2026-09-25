@@ -146,6 +146,21 @@ struct NotchSettingsView: View {
 
                             if vm.notchPanelStyle == .glass {
                                 Picker(
+                                    "Glass Material",
+                                    selection: $vm.notchGlassMaterial
+                                ) {
+                                    Text("Clear").tag(NotchGlassMaterial.clear)
+                                    Text("Regular").tag(NotchGlassMaterial.regular)
+                                }
+                                .pickerStyle(.segmented)
+                                .onChange(of: vm.notchGlassMaterial) { _, _ in
+                                    // 재질 provider를 먼저 갱신한 뒤 새 패널을 열어
+                                    // Clear/Regular 차이를 바로 보여준다.
+                                    onSave()
+                                    notchController?.previewGlassMaterial()
+                                }
+
+                                Picker(
                                     "Glass Appearance",
                                     selection: $vm.notchGlassAppearance
                                 ) {
@@ -154,7 +169,12 @@ struct NotchSettingsView: View {
                                     Text("Dark").tag(NotchGlassAppearance.dark)
                                 }
                                 .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassAppearance) { _, _ in onSave() }
+                                .onChange(of: vm.notchGlassAppearance) { _, _ in
+                                    // 먼저 저장해 controller provider를 갱신한 뒤,
+                                    // 도커를 펼쳐 선택한 재질 appearance를 보여준다.
+                                    onSave()
+                                    notchController?.previewGlassAppearance()
+                                }
 
                                 Label(
                                     "System follows macOS automatically. Light and Dark "
