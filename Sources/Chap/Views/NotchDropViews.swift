@@ -150,64 +150,90 @@ struct NotchDropPanelView: View {
 
     @State private var files: [URL] = []
     @State private var isDropTargeted = false
+    /// 그리드의 자연(ideal) 크기. 창 크기에 눌리지 않도록 숨김 복사본으로 잰다.
+    @State private var gridIdeal: CGSize = .zero
+
+    /// 자연 폭을 min~max로 클램프한 실제 콘텐츠 폭.
+    private var contentWidth: CGFloat {
+        min(max(gridIdeal.width, minContentWidth), max(minContentWidth, maxContentWidth))
+    }
+
+    private var contentHeight: CGFloat {
+        max(gridIdeal.height, 74)
+    }
+
+    /// 창이 가져야 할 발자국 (도커 + 그림자 여백). 산술 계산이라
+    /// 창 크기 제약과 무관하게 항상 정확하다.
+    private var footprint: CGSize {
+        CGSize(
+            width: contentWidth + DS.paddingSmall * 2
+                + NotchLauncherPanelView.shadowPadding * 2,
+            height: contentHeight + topInset + 8 + DS.paddingSmall
+                + NotchLauncherPanelView.shadowPadding)
+    }
 
     var body: some View {
-        Group {
-            if files.isEmpty {
-                Text("Drop files here")
-                    .font(DS.captionFont)
-                    .foregroundColor(.white.opacity(0.45))
-            } else {
-                // Finder처럼 아이콘 + 이름의 가로 그리드.
-                HStack(alignment: .top, spacing: DS.spacingSmall) {
-                    ForEach(files, id: \.self) { url in
-                        DropGridItem(url: url) {
-                            ChapDrop.remove(url)
-                            files = ChapDrop.recentFiles()
+        gridContent
+            .frame(width: contentWidth, height: contentHeight, alignment: .leading)
+            // 숨김 복사본이 창 크기와 무관한 자연 크기를 계측한다.
+            .background(
+                gridContent
+                    .fixedSize()
+                    .hidden()
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear
+                                .onAppear { gridIdeal = geo.size }
+                                .onChange(of: geo.size) { _, size in gridIdeal = size }
                         }
+                    )
+            )
+            .onChange(of: gridIdeal) { _, _ in onSizeChange?(footprint) }
+            .padding(.horizontal, DS.paddingSmall)
+            .padding(.top, topInset + 8)
+            .padding(.bottom, DS.paddingSmall)
+            .background(
+                NotchDropDock.shape
+                    .fill(NotchDockStyle.blackFade(bottomOpacity))
+                    .overlay(
+                        NotchDropDock.rimShape
+                            .stroke(
+                                isDropTargeted
+                                    ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                                lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+            )
+            .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
+            .padding(.bottom, NotchLauncherPanelView.shadowPadding)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .dropDestination(for: URL.self) { urls, _ in
+                let stored = ChapDrop.store(urls)
+                files = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems)
+                return !stored.isEmpty
+            } isTargeted: {
+                isDropTargeted = $0
+            }
+            .onAppear { files = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems) }
+    }
+
+    /// 그리드 본문. 실제 표시와 숨김 계측 복사본이 공유한다.
+    @ViewBuilder private var gridContent: some View {
+        if files.isEmpty {
+            Text("Drop files here")
+                .font(DS.captionFont)
+                .foregroundColor(.white.opacity(0.45))
+        } else {
+            // Finder처럼 아이콘 + 이름의 가로 그리드.
+            HStack(alignment: .top, spacing: DS.spacingSmall) {
+                ForEach(files, id: \.self) { url in
+                    DropGridItem(url: url) {
+                        ChapDrop.remove(url)
+                        files = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems)
                     }
                 }
             }
         }
-        .frame(
-            minWidth: minContentWidth, maxWidth: max(minContentWidth, maxContentWidth),
-            minHeight: 74
-        )
-        .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, topInset + 8)
-        .padding(.bottom, DS.paddingSmall)
-        .background(
-            NotchDropDock.shape
-                .fill(NotchDockStyle.blackFade(bottomOpacity))
-                .overlay(
-                    NotchDropDock.rimShape
-                        .stroke(
-                            isDropTargeted
-                                ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
-                            lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
-        )
-        .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
-        .padding(.bottom, NotchLauncherPanelView.shadowPadding)
-        // 도커 발자국(그림자 여백 포함)의 실제 크기를 컨트롤러에 알려
-        // 열려 있는 동안 파일이 늘거나 줄면 창이 함께 리사이즈된다.
-        .background(
-            GeometryReader { geo in
-                Color.clear.onChange(of: geo.size) { _, size in
-                    onSizeChange?(size)
-                }
-            }
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .dropDestination(for: URL.self) { urls, _ in
-            let stored = ChapDrop.store(urls)
-            files = ChapDrop.recentFiles()
-            return !stored.isEmpty
-        } isTargeted: {
-            isDropTargeted = $0
-        }
-        .onAppear { files = ChapDrop.recentFiles() }
     }
 }
 

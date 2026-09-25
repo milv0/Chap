@@ -19,6 +19,20 @@ struct DropPolicyTests {
         #expect(DropPolicy.isCandidate(fileName: ".hidden") == false)
     }
 
+    @Test("the dock limit shows more files than the slot widget")
+    func dockLimitLargerThanSlot() {
+        let base = Date(timeIntervalSince1970: 1_000_000)
+        let files = (0..<20).map { index in
+            (name: "f\(index).pdf", modified: base.addingTimeInterval(Double(index)))
+        }
+
+        let dock = DropPolicy.shelfSelection(files: files, limit: DropPolicy.maxDockItems)
+
+        #expect(DropPolicy.maxDockItems > DropPolicy.maxItems)
+        #expect(dock.count == DropPolicy.maxDockItems)
+        #expect(dock.first == "f19.pdf")
+    }
+
     @Test("selection returns newest first capped at four")
     func selectionNewestFirstCapped() {
         let base = Date(timeIntervalSince1970: 1_000_000)

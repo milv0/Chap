@@ -34,7 +34,7 @@ enum ChapDrop {
     }
 
     /// 폴더를 스캔해 정책이 고른 최신 파일 URL을 최신순으로 돌려준다.
-    static func recentFiles() -> [URL] {
+    static func recentFiles(limit: Int = DropPolicy.maxItems) -> [URL] {
         let folder = directory()
         guard
             let entries = try? FileManager.default.contentsOfDirectory(
@@ -49,7 +49,7 @@ enum ChapDrop {
                     .contentModificationDate ?? .distantPast
             )
         }
-        let selected = DropPolicy.shelfSelection(files: files)
+        let selected = DropPolicy.shelfSelection(files: files, limit: limit)
         return selected.map { folder.appendingPathComponent($0) }
     }
 
