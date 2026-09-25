@@ -103,6 +103,11 @@ final class NotchLauncherController {
         // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
         tracker.onEntered = { [weak self] in self?.showDropPanel() }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
+        tracker.onFilesDropped = { [weak self] urls in
+            ChapDrop.store(urls)
+            self?.hidePanel()
+        }
         tracker.autoresizingMask = [.width, .height]
         hosting.frame = NSRect(origin: .zero, size: frame.size)
         hosting.addSubview(tracker)
@@ -155,6 +160,11 @@ final class NotchLauncherController {
         // 마우스 hover는 전체 패널을, 파일 드래그는 컴팩트 드롭 존을 연다.
         tracker.onEntered = { [weak self] in self?.showPanel() }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        // 노치 자체에 바로 놓아도 드롭이 성사된다.
+        tracker.onFilesDropped = { [weak self] urls in
+            ChapDrop.store(urls)
+            self?.hidePanel()
+        }
         window.contentView = tracker
         window.orderFrontRegardless()
         hotzoneWindow = window
@@ -417,6 +427,9 @@ final class NotchLauncherController {
 private final class HoverView: NSView {
     var onEntered: () -> Void = {}
     var onDragEntered: () -> Void = {}
+    /// 설정 시 이 뷰 자체가 드롭 타깃이 된다. 드롭존 도커가 아직 뜨기 전에
+    /// 배지·노치 위에 바로 놓아도 드롭이 성사되게 한다.
+    var onFilesDropped: (([URL]) -> Void)?
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -443,6 +456,17 @@ private final class HoverView: NSView {
     /// 파일 드래그가 노치 위로 들어오면 컴팩트 드롭 존을 노출한다.
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         onDragEntered()
-        return []
+        return onFilesDropped != nil ? .copy : []
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let onFilesDropped else { return false }
+        let urls =
+            sender.draggingPasteboard.readObjects(
+                forClasses: [NSURL.self],
+                options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
+        guard !urls.isEmpty else { return false }
+        onFilesDropped(urls)
+        return true
     }
 }
