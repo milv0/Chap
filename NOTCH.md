@@ -114,6 +114,16 @@ SwiftUI 뷰를 새 재질로 재구성한다. Glass 콘텐츠 텍스트는 seman
 `primary`/`secondary`, 기능 아이콘은 Chap accent, hover 면은 appearance에
 적응하는 `primary.opacity(0.08)`을 쓴다.
 
+Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으로 물러나
+배경화면 틈이 생기지 않도록 두 장치를 쓴다:
+
+1. `glassEdgeBleed`: Glass 효과의 광학 edge를 외곽으로 밀고 본체 셰이프로 마스킹
+2. `GlassCornerBridgeShape`: 좌우 오목 코너의 빈 wedge를 Glass로 채워 재질이
+   화면 상단의 검정 플레어 꼭짓점까지 직접 닿게 함
+
+검정 `PressedStripShape`은 bridge 위에 별도로 그리되 본체 셰이프로 클립해
+기존 노치 실루엣을 유지한다.
+
 ## 가독성 기준 (Apple HIG)
 
 콘텐츠 박스 색을 사용자가 자유롭게 고르므로 전경색은 배경 휘도에 따라
