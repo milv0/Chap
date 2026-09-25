@@ -60,6 +60,55 @@ struct NotchDropShelfView: View {
     }
 }
 
+/// 파일을 끌고 노치에 댔을 때 뜨는 컴팩트 드롭 존. 전체 런처 패널 대신
+/// 노치 크기 남짓의 검정 도크만 내려와 드롭만 받는다.
+struct NotchDropZoneView: View {
+    /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
+    let topInset: CGFloat
+    /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
+    let onDropped: () -> Void
+
+    @State private var isDropTargeted = false
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: "tray.and.arrow.down.fill")
+                .font(.system(size: 15))
+                .foregroundColor(isDropTargeted ? DS.accent : .white.opacity(0.7))
+            Text("Drop to Shelf")
+                .font(DS.bodyFont.weight(.medium))
+                .foregroundColor(.white.opacity(0.9))
+        }
+        .padding(.horizontal, DS.padding)
+        .padding(.top, topInset + 10)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity)
+        .background(
+            NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+                .fill(Color.black)
+                .overlay(
+                    NotchDockShape(
+                        topCornerRadius: 10, bottomCornerRadius: 18, isRim: true
+                    )
+                    .stroke(
+                        isDropTargeted ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                        lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+        )
+        .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
+        .padding(.bottom, NotchLauncherPanelView.shadowPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .dropDestination(for: URL.self) { urls, _ in
+            let stored = DropShelf.store(urls)
+            onDropped()
+            return !stored.isEmpty
+        } isTargeted: {
+            isDropTargeted = $0
+        }
+    }
+}
+
 private struct DropShelfRow: View {
     let url: URL
     let onRemove: () -> Void

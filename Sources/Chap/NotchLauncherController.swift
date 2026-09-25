@@ -76,7 +76,9 @@ final class NotchLauncherController {
 
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
+        // 마우스 hover는 전체 패널을, 파일 드래그는 컴팩트 드롭 존을 연다.
         tracker.onEntered = { [weak self] in self?.showPanel() }
+        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         window.contentView = tracker
         window.orderFrontRegardless()
         hotzoneWindow = window
@@ -166,6 +168,45 @@ final class NotchLauncherController {
         startVisibilityMonitor()
     }
 
+    // MARK: - Drop zone
+
+    /// 파일 드래그가 노치에 닿았을 때 여는 컴팩트 드롭 존.
+    /// 전체 런처 패널이 이미 떠 있으면 그대로 둔다 (Shelf 위젯이 받는다).
+    private func showDropZone() {
+        guard panel == nil, let screen = Self.notchScreen() else { return }
+
+        let inset = screen.safeAreaInsets.top
+        let notchWidth = Self.notchRect(on: screen).width
+
+        let content = NotchDropZoneView(
+            topInset: inset,
+            onDropped: { [weak self] in self?.hidePanel() })
+        let hosting = NSHostingView(rootView: content)
+        hosting.safeAreaRegions = []
+        let frame = NotchLauncherPolicy.panelFrame(
+            screenFrame: screen.frame,
+            topSafeAreaInset: inset,
+            contentSize: CGSize(
+                width: notchWidth + 80 + NotchLauncherPanelView.shadowPadding * 2,
+                height: 44 + NotchLauncherPanelView.shadowPadding))
+
+        let panel = NSPanel(
+            contentRect: frame.integral,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered, defer: false)
+        panel.level = .statusBar
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .transient]
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.contentView = hosting
+
+        panel.orderFrontRegardless()
+        self.panel = panel
+        startVisibilityMonitor()
+    }
+
     // MARK: - Opacity preview
 
     /// 설정 슬라이더 드래그 시작. 패널을 띄워 고정하고 실시간 값을 보여준다.
@@ -247,6 +288,7 @@ final class NotchLauncherController {
 /// 드롭 존으로 쓰려면 드래그 진입도 패널 열기 신호로 받아야 한다.
 private final class HoverView: NSView {
     var onEntered: () -> Void = {}
+    var onDragEntered: () -> Void = {}
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -270,9 +312,9 @@ private final class HoverView: NSView {
 
     override func mouseEntered(with event: NSEvent) { onEntered() }
 
-    /// 파일 드래그가 노치 위로 들어오면 패널을 펼쳐 드롭 존을 노출한다.
+    /// 파일 드래그가 노치 위로 들어오면 컴팩트 드롭 존을 노출한다.
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        onEntered()
+        onDragEntered()
         return []
     }
 }
