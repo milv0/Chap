@@ -52,11 +52,20 @@ struct NotchDropFileItem: View {
             .overlay(alignment: .topTrailing) {
                 if isHovered {
                     Button(action: onRemove) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.6))
+                        // Glass·색상 배경 모두에서 보이는 파괴적 액션 문법:
+                        // 불투명 danger 원 + 흰색 x. 재질 대비에 의존하지 않는다.
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 15, height: 15)
+                            .background(Circle().fill(DS.danger))
+                            .overlay(
+                                Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
+                            )
+                            .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
                     }
                     .buttonStyle(.plain)
+                    .contentShape(Circle())
                     .accessibilityLabel("Remove \(url.lastPathComponent) from Chap Drop")
                 }
             }
