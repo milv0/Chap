@@ -45,19 +45,24 @@ struct NotchLauncherPanelView: View {
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
-    static let shadowPadding: CGFloat = 28
+    static let shadowPadding: CGFloat = NotchGeometry.shadowPadding
     /// 빙하 스타일의 톱니 최대 깊이. 콘텐츠가 톱니를 침범하지 않게 여백에 더한다.
-    private static let icebergJagDepth: CGFloat = 46
+    private static let icebergJagDepth: CGFloat = NotchGeometry.icebergJagDepth
 
     /// 패널 실루엣. 상단 모서리는 바깥으로 흐르는 오목 곡선이라
     /// 노치 도크가 상단바에서 빠져나온 것처럼 라인이 이어진다.
     private var panelShape: AnyShape {
         switch style {
         case .black:
-            return AnyShape(NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20))
+            return AnyShape(
+                NotchDockShape(
+                    topCornerRadius: NotchGeometry.dockFlareRadius,
+                    bottomCornerRadius: NotchGeometry.panelBottomRadius))
         case .iceberg:
             return AnyShape(
-                IcebergDockShape(topCornerRadius: 10, jagDepth: Self.icebergJagDepth))
+                IcebergDockShape(
+                    topCornerRadius: NotchGeometry.dockFlareRadius,
+                    jagDepth: Self.icebergJagDepth))
         }
     }
 
@@ -66,11 +71,14 @@ struct NotchLauncherPanelView: View {
         switch style {
         case .black:
             return AnyShape(
-                NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 20, isRim: true))
+                NotchDockShape(
+                    topCornerRadius: NotchGeometry.dockFlareRadius,
+                    bottomCornerRadius: NotchGeometry.panelBottomRadius, isRim: true))
         case .iceberg:
             return AnyShape(
                 IcebergDockShape(
-                    topCornerRadius: 10, jagDepth: Self.icebergJagDepth, isRim: true))
+                    topCornerRadius: NotchGeometry.dockFlareRadius,
+                    jagDepth: Self.icebergJagDepth, isRim: true))
         }
     }
 
@@ -292,7 +300,7 @@ struct IcebergDockShape: Shape {
 
     /// 연속된 톱니 꼭짓점의 상대 깊이. 자연스럽게 보이도록 불규칙하게 섞는다.
     private static let depthPattern: [CGFloat] = [0.85, 0.45, 1.0, 0.55, 0.75, 0.35, 0.9, 0.6]
-    private static let targetToothWidth: CGFloat = 68
+    private static let targetToothWidth: CGFloat = NotchGeometry.icebergToothWidth
 
     func path(in rect: CGRect) -> Path {
         let topR = topCornerRadius

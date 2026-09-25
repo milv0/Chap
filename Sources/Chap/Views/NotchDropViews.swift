@@ -113,16 +113,20 @@ struct NotchDropZoneView: View {
 /// Drop 도커(드롭 존·파일 리스트)가 공유하는 지오메트리와 실루엣.
 enum NotchDropDock {
     /// 드롭 존 콘텐츠 높이. 드롭만 받는 표면이라 낮게 유지한다.
-    static let zoneContentHeight: CGFloat = 64
+    static let zoneContentHeight: CGFloat = NotchGeometry.dropZoneContentHeight
     /// 상단 오목 플레어 반경. 폭 보정 계산이 실루엣과 어긋나지 않게 공유한다.
-    static let topCornerRadius: CGFloat = 10
+    static let topCornerRadius: CGFloat = NotchGeometry.dockFlareRadius
 
     static var shape: NotchDockShape {
-        NotchDockShape(topCornerRadius: topCornerRadius, bottomCornerRadius: 18)
+        NotchDockShape(
+            topCornerRadius: topCornerRadius,
+            bottomCornerRadius: NotchGeometry.dropDockBottomRadius)
     }
 
     static var rimShape: NotchDockShape {
-        NotchDockShape(topCornerRadius: topCornerRadius, bottomCornerRadius: 18, isRim: true)
+        NotchDockShape(
+            topCornerRadius: topCornerRadius,
+            bottomCornerRadius: NotchGeometry.dropDockBottomRadius, isRim: true)
     }
 }
 
@@ -162,10 +166,15 @@ struct NotchDropBadgeView: View {
 
     var body: some View {
         ZStack {
-            // 노치와 이어지는 검정. 오른쪽은 겹침만큼 노치의 둥근 왼쪽 아래
-            // 모서리 밑으로 파고들어 노치가 왼쪽으로 길어져 보인다.
-            UnevenRoundedRectangle(bottomLeadingRadius: 8, style: .continuous)
-                .fill(Color.black)
+            // 노치와 이어지는 검정. 왼쪽 상·하 모서리를 노치 라운드값으로
+            // 둥글려 노치의 왼쪽 끝 프로필처럼 보이게 하고, 오른쪽은 겹침만큼
+            // 노치의 둥근 왼쪽 아래 모서리 밑으로 파고든다.
+            UnevenRoundedRectangle(
+                topLeadingRadius: NotchGeometry.badgeCornerRadius,
+                bottomLeadingRadius: NotchGeometry.badgeCornerRadius,
+                style: .continuous
+            )
+            .fill(Color.black)
 
             // 콘텐츠는 노치 밖으로 보이는 정사각형 구간에 중앙 정렬.
             ZStack {
