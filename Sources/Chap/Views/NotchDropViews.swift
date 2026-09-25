@@ -514,6 +514,10 @@ struct NotchAwakeBadgeView: View {
             .offset(x: model.expanded ? -5 : 0, y: 1)
         }
         .clipShape(shape)
+        // 개발용: 펼쳐진 배지 영역을 흰 선으로 표시한다 (Debug 빌드 전용).
+        #if DEBUG
+            .overlay(shape.stroke(Color.white, lineWidth: 1).opacity(model.expanded ? 1 : 0))
+        #endif
         // 노치 쪽 변(trailing)을 고정한 채 폭만 변해 왼쪽으로 슬라이딩한다.
         .frame(
             width: NotchLauncherPolicy.dropBadgeNotchOverlap + bodyWidth
