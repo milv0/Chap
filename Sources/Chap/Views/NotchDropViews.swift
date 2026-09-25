@@ -465,7 +465,11 @@ struct NotchBadgeShape: Shape {
 
 /// 노치 왼쪽에 붙는 Keep Awake 배지. 세션이 활성일 때만 표시되며
 /// 커피 아이콘으로 상태를 알린다. 순수 표시용이라 마우스를 받지 않는다.
+/// 메인 도커가 열리면 아이콘이 왼쪽으로 밀리고 오른쪽에 h:mm 남은 시간이 붙는다.
 struct NotchAwakeBadgeView: View {
+    let sessionEnd: Date?
+    let expanded: Bool
+
     var body: some View {
         ZStack {
             NotchBadgeShape(
@@ -475,12 +479,28 @@ struct NotchAwakeBadgeView: View {
             )
             .fill(Color.black)
 
-            Image(systemName: "cup.and.saucer.fill")
-                .font(.system(size: 12))
-                .foregroundColor(DS.accent)
-                .padding(.leading, NotchGeometry.dockFlareRadius)
-                .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap)
-                .offset(y: 1)
+            HStack(spacing: 6) {
+                Image(systemName: "cup.and.saucer.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(DS.accent)
+                if expanded, let sessionEnd {
+                    Spacer(minLength: 2)
+                    // 분 단위 갱신. 항상 h:mm이라 폭이 흔들리지 않는다.
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        Text(
+                            KeepAwakePolicy.remainingClockLabel(
+                                until: sessionEnd, now: context.date)
+                        )
+                        .font(DS.captionFont.weight(.medium))
+                        .monospacedDigit()
+                        .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+            }
+            .padding(.leading, NotchGeometry.dockFlareRadius + (expanded ? 4 : 0))
+            .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap + (expanded ? 6 : 0))
+            .frame(maxWidth: .infinity, alignment: expanded ? .leading : .center)
+            .offset(y: 1)
         }
         .accessibilityLabel("Keep Awake active")
     }

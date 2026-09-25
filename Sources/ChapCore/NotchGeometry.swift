@@ -15,6 +15,9 @@ public enum NotchGeometry {
     /// 배지 본체(보이는 검정)의 폭. 높이는 노치 높이(32)를 따르므로
     /// 34×32의 살짝 가로로 긴 비율이 된다.
     public static let badgeBodyWidth: CGFloat = 34
+    /// 메인 도커가 열렸을 때 Awake 배지가 확장되는 본체 폭.
+    /// 커피 아이콘이 왼쪽으로 밀리고 오른쪽에 h:mm 시간이 붙는다.
+    public static let badgeExpandedBodyWidth: CGFloat = 86
     /// 배지 하단 바깥 볼록 모서리 반경. 실제 노치의 라운드보다 크면 이질감이
     /// 생기므로 하드웨어 곡률에 가깝게 작게 유지한다. 상단은 도커와 같은
     /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.

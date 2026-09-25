@@ -47,10 +47,10 @@ public enum NotchLauncherPolicy {
     /// 노치 왼쪽에 붙는 Keep Awake 배지 도커의 프레임.
     /// 오른쪽 Drop 배지와 같은 크기로 노치 왼쪽 변에 미러링된다:
     /// 오른쪽 겹침은 노치 밑으로, 왼쪽 플레어는 본체 바깥으로 나간다.
-    public static func awakeBadgeFrame(notchRect: CGRect) -> CGRect {
-        let width =
-            dropBadgeNotchOverlap + NotchGeometry.badgeBodyWidth
-            + NotchGeometry.dockFlareRadius
+    public static func awakeBadgeFrame(notchRect: CGRect, expanded: Bool = false) -> CGRect {
+        let body =
+            expanded ? NotchGeometry.badgeExpandedBodyWidth : NotchGeometry.badgeBodyWidth
+        let width = dropBadgeNotchOverlap + body + NotchGeometry.dockFlareRadius
         return CGRect(
             x: notchRect.minX + dropBadgeNotchOverlap - width,
             y: notchRect.minY,

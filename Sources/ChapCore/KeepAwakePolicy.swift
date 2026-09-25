@@ -31,6 +31,15 @@ enum KeepAwakePolicy {
         return "\(hours)h \(minutes)m"
     }
 
+    /// 시계형 남은 시간. 항상 "h:mm" 형식을 벗어나지 않는다:
+    /// "0:45", "1:07", "12:00". 만료·과거면 "0:00".
+    static func remainingClockLabel(until end: Date, now: Date) -> String {
+        let remaining = end.timeIntervalSince(now)
+        guard remaining > 0 else { return "0:00" }
+        let totalMinutes = Int((remaining / 60).rounded(.up))
+        return "\(totalMinutes / 60):" + String(format: "%02d", totalMinutes % 60)
+    }
+
     /// 메뉴 항목 제목. 활성 세션이면 남은 시간을 덧붙인다.
     static func menuTitle(sessionEnd: Date?, now: Date) -> String {
         guard let sessionEnd, sessionEnd > now else { return "Keep Mac Awake" }

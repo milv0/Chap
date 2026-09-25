@@ -179,13 +179,18 @@ final class NotchLauncherController {
             return
         }
 
+        // 메인 도커 위에서는 왼쪽으로 확장되어 남은 시간을 보여준다.
+        let expanded = activeSurface == .mainPanel
         let frame = NotchLauncherPolicy.awakeBadgeFrame(
-            notchRect: Self.notchRect(on: screen))
-        let hosting = NSHostingView(rootView: NotchAwakeBadgeView())
+            notchRect: Self.notchRect(on: screen), expanded: expanded)
+        let hosting = NSHostingView(
+            rootView: NotchAwakeBadgeView(
+                sessionEnd: awakeSessionEndProvider(), expanded: expanded))
         hosting.frame = NSRect(origin: .zero, size: frame.size)
 
         if let existing = awakeBadgeWindow {
-            existing.setFrame(frame, display: true)
+            // 프레임 애니메이션이 커피 아이콘의 슬라이딩을 만든다.
+            existing.setFrame(frame, display: true, animate: true)
             existing.contentView = hosting
             if let panel {
                 existing.order(.above, relativeTo: panel.windowNumber)
@@ -289,7 +294,6 @@ final class NotchLauncherController {
             minWidth: minWidth,
             topInset: inset,
             stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
-            awakeSessionEnd: awakeSessionEndProvider(),
             style: styleProvider(),
             slots: slots,
             onLaunch: { [weak self] siteIndex in
@@ -336,6 +340,7 @@ final class NotchLauncherController {
         self.panel = panel
         self.activeSurface = .mainPanel
         self.revealModel = reveal
+        updateAwakeBadge()
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -390,7 +395,7 @@ final class NotchLauncherController {
     /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 배지 폭.
     /// 이 구간까지는 검정이 평평하게 깊고, 바깥에서 곡선으로 얇아진다.
     private static func stripPlateauHalfWidth(on screen: NSScreen) -> CGFloat {
-        notchRect(on: screen).width / 2 + NotchGeometry.badgeBodyWidth
+        notchRect(on: screen).width / 2 + NotchGeometry.badgeExpandedBodyWidth
             + NotchGeometry.stripBadgeClearance
     }
 
@@ -443,6 +448,7 @@ final class NotchLauncherController {
         awakeBadgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.activeSurface = .dropDock
+        updateAwakeBadge()
         startVisibilityMonitor()
     }
 
@@ -538,6 +544,7 @@ final class NotchLauncherController {
         panel = nil
         activeSurface = nil
         revealModel = nil
+        updateAwakeBadge()
     }
 
     /// 마우스가 배지 위로 오면 메인 도커를 Drop 도커로 전환한다.
@@ -581,6 +588,7 @@ final class NotchLauncherController {
         ) { [weak self] in
             panel.orderOut(nil)
             self?.updateDropBadge()
+            self?.updateAwakeBadge()
         }
     }
 }

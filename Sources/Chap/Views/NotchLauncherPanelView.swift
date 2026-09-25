@@ -29,10 +29,8 @@ struct NotchLauncherPanelView: View {
     let minWidth: CGFloat
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
-    /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 배지 폭 + 여유).
+    /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 확장 배지 폭 + 여유).
     let stripPlateauHalfWidth: CGFloat
-    /// Keep Awake 세션 종료 시각. 있으면 왼쪽 스트립에 남은 시간을 보여준다.
-    let awakeSessionEnd: Date?
     /// 시각 스타일. black은 노치 확장 도크, iceberg는 뾰족한 얼음 도크.
     let style: NotchPanelStyle
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
@@ -137,34 +135,9 @@ struct NotchLauncherPanelView: View {
             // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
             .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
             .opacity(reveal.revealed ? 1 : 0)
-            // 왼쪽 스트립 영역(Awake 배지 바깥)에 남은 시간을 보여준다.
-            .overlay(alignment: .top) { awakeRemainingLabel }
             // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
             // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    /// Keep Awake 남은 시간. plateau 왼쪽 끝에 오른쪽 정렬로 붙여
-    /// 커피 배지 옆 자리처럼 읽히게 한다. 분 단위로 갱신된다.
-    @ViewBuilder private var awakeRemainingLabel: some View {
-        if let awakeSessionEnd {
-            GeometryReader { geo in
-                let trailingEdge = geo.size.width / 2 - stripPlateauHalfWidth - 8
-                if trailingEdge > 60 {
-                    TimelineView(.periodic(from: .now, by: 60)) { context in
-                        Text(
-                            KeepAwakePolicy.remainingLabel(
-                                until: awakeSessionEnd, now: context.date)
-                        )
-                        .font(DS.captionFont.weight(.medium))
-                        .foregroundColor(.white.opacity(0.75))
-                        .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
-                    }
-                    .frame(width: trailingEdge, height: topInset, alignment: .trailing)
-                }
-            }
-            .allowsHitTesting(false)
-        }
     }
 
     /// 섹션 콘텐츠 본문.
