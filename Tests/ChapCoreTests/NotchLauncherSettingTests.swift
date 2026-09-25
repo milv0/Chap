@@ -78,6 +78,42 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchPanelStyle == .iceberg)
     }
 
+    @Test("glass appearance defaults to system when the key is missing")
+    func glassAppearanceDefaultsToSystem() throws {
+        let config = try decodeConfig(#"{"sites": []}"#)
+
+        #expect(config.notchGlassAppearance == .system)
+    }
+
+    @Test("decodes explicit light and dark Glass appearances")
+    func decodesGlassAppearances() throws {
+        let light = try decodeConfig(
+            #"{"notchGlassAppearance": "light", "sites": []}"#)
+        let dark = try decodeConfig(
+            #"{"notchGlassAppearance": "dark", "sites": []}"#)
+
+        #expect(light.notchGlassAppearance == .light)
+        #expect(dark.notchGlassAppearance == .dark)
+    }
+
+    @Test("unknown Glass appearance falls back to system")
+    func unknownGlassAppearanceFallsBack() throws {
+        let config = try decodeConfig(
+            #"{"notchGlassAppearance": "neon", "sites": []}"#)
+
+        #expect(config.notchGlassAppearance == .system)
+    }
+
+    @Test("Glass appearance round-trips through encoding")
+    func glassAppearanceRoundTrips() throws {
+        let original = Config(notchGlassAppearance: .dark, sites: [])
+
+        let decoded = try JSONDecoder().decode(
+            Config.self, from: try JSONEncoder().encode(original))
+
+        #expect(decoded.notchGlassAppearance == .dark)
+    }
+
     @Test("opacity defaults to 0.6 when the key is missing")
     func opacityDefaultsWhenMissing() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
