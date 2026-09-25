@@ -39,7 +39,10 @@ struct NotchLauncherPanelView: View {
     /// 접힘은 빠른 페이드로 정리한다. stiffness 440은 약 0.3초에 정착하고,
     /// damping 30은 기존(320/26)과 같은 감쇠 비율이라 바운스 느낌은 유지된다.
     static let openAnimation: Animation = .interpolatingSpring(stiffness: 440, damping: 30)
-    static let closeAnimation: Animation = .smooth(duration: 0.18)
+    /// 모든 도커가 공유하는 닫힘 시간. 접힘/페이드 애니메이션과 창 제거가
+    /// 전부 이 값에서 파생되어 표면마다 어긋나지 않는다.
+    static let closeDuration: TimeInterval = 0.18
+    static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     private static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.

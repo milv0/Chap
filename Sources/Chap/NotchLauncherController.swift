@@ -389,14 +389,22 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
-        // 접힘: 노치로 smooth하게 말려 들어간 뒤 창을 내린다.
+        // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
+        // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
         if let reveal = revealModel {
             withAnimation(NotchLauncherPanelView.closeAnimation) {
                 reveal.revealed = false
             }
+        } else {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = NotchLauncherPanelView.closeDuration
+                panel.animator().alphaValue = 0
+            }
         }
         revealModel = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + NotchLauncherPanelView.closeDuration + 0.02
+        ) { [weak self] in
             panel.orderOut(nil)
             self?.updateDropBadge()
         }

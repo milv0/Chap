@@ -71,6 +71,19 @@
 | 배지 한 변 | 노치 높이 | 32pt |
 | Drop 도커 검정 폭 | 노치 폭 + badgeBodyWidth × 2 + 플레어 × 2 | 273pt |
 
+## 모션 기준
+
+모든 노치 표면이 같은 타이밍 기준을 쓴다. 닫힘 관련 값은 전부
+`closeDuration` 하나에서 파생된다.
+
+| 이름 | 값 | 의미 |
+|---|---|---|
+| `openAnimation` | spring 440/30 (~0.3s) | 패널 펼침. 노치 상단 기준 스프링 확장 |
+| `closeDuration` | 0.18s | 모든 도커 공통 닫힘 시간. 메인 패널은 접힘, Drop 도커는 페이드 |
+| 창 제거 | closeDuration + 0.02s | 닫힘 애니메이션 종료 직후 |
+| `hideDelay` | 0.2s | 마우스가 영역 밖에 머물면 닫힘 판정 |
+| `pollInterval` | 0.08s | 마우스 위치 폴링 주기 |
+
 ## 관련 파일
 
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
