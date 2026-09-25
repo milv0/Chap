@@ -113,21 +113,14 @@ struct NotchLauncherPanelView: View {
     var body: some View {
         contentBody
             .background(
-                // 상단바 구간은 노치 연장(검정), 그 아래 콘텐츠 박스만 커스텀 색.
-                // 검정 띠는 노치가 배경을 누른 듯한 곡선 경계로 내려온다.
-                ZStack(alignment: .top) {
-                    panelShape.fill(panelFill)
-                    PressedStripShape(
-                        plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
-                    )
-                    .fill(Color.black)
-                }
-                .clipShape(panelShape)
-                // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
-                // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
-                .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
-                // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
-                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+                // 콘텐츠 박스만 커스텀 색. 검정 띠는 화면 전체 폭 밴드가
+                // 모니터 꼭짓점까지 그린다 (아래 topBand).
+                panelShape.fill(panelFill)
+                    // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
+                    // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
+                    .overlay(rimShape.stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
+                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
@@ -138,6 +131,27 @@ struct NotchLauncherPanelView: View {
             // 창이 콘텐츠보다 커져도(픽셀 정렬 등) 여분은 항상 아래로 가고,
             // 형태 상단은 창 상단 = 화면 최상단에 밀착한다.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            // 화면 전체 폭 상단 밴드: 색이 모니터 좌우 상단 꼭짓점까지 잇고,
+            // 그 위에 눌린 검정 곡선이 배지 코너에서부터 줄어들며 0까지 간다.
+            .overlay(alignment: .top) {
+                ZStack(alignment: .top) {
+                    Rectangle()
+                        .fill(
+                            NotchDockStyle.fade(
+                                NotchDockStyle.color(fromHex: reveal.colorHex),
+                                bottomOpacity: reveal.bottomOpacity))
+                    PressedStripShape(
+                        plateauHalfWidth: stripPlateauHalfWidth,
+                        centerDepth: topInset, edgeDepth: 0
+                    )
+                    .fill(Color.black)
+                }
+                .frame(height: topInset)
+                .frame(maxWidth: .infinity)
+                .allowsHitTesting(false)
+                .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
+                .opacity(reveal.revealed ? 1 : 0)
+            }
     }
 
     /// 섹션 콘텐츠 본문.
@@ -408,9 +422,10 @@ struct IcebergDockShape: Shape {
 struct PressedStripShape: Shape {
     let plateauHalfWidth: CGFloat
     let centerDepth: CGFloat
+    var edgeDepth: CGFloat = NotchGeometry.stripEdgeDepth
 
     func path(in rect: CGRect) -> Path {
-        let edge = NotchGeometry.stripEdgeDepth
+        let edge = edgeDepth
         let falloff = NotchGeometry.stripFalloff
         let cx = rect.midX
 
@@ -418,8 +433,10 @@ struct PressedStripShape: Shape {
             let distance = abs(x - cx)
             if distance <= plateauHalfWidth { return centerDepth }
             let t = min((distance - plateauHalfWidth) / falloff, 1)
-            // 코사인 반파: 1→0으로 부드럽게 감쇠.
-            let factor = 0.5 + 0.5 * cos(t * .pi)
+            // plateau 끝(배지 코너)에서 곧바로 줄기 시작해 가장자리에서
+            // 완만해지는 사인 이징. 코사인 반파는 초입이 평평해 plateau가
+            // 더 길어 보였다.
+            let factor = 1 - sin(t * .pi / 2)
             return edge + (centerDepth - edge) * factor
         }
 

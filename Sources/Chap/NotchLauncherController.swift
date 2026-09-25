@@ -244,7 +244,7 @@ final class NotchLauncherController {
                 self?.onLaunch(siteIndex)
             },
             reveal: reveal)
-        let hosting = NSHostingView(rootView: content)
+        let hosting = BandHostingView(rootView: content)
         // 노치 구간 safe area가 콘텐츠를 아래로 밀지 않게 한다.
         hosting.safeAreaRegions = []
         // fittingSize에는 노치 감싸기용 top padding이 이미 포함되어 있으므로
@@ -252,12 +252,13 @@ final class NotchLauncherController {
         // 소수점 크기는 올림해 상단이 서브픽셀로 내려앉는 틈을 막는다.
         let fitting = hosting.fittingSize
         let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
-        var frame = NotchLauncherPolicy.panelFrame(
-            screenFrame: screen.frame,
-            topSafeAreaInset: inset,
-            contentSize: CGSize(width: size.width, height: size.height - inset))
-        // 픽셀 정렬 후에도 상단 변이 정확히 화면 최상단에 오도록 y를 재고정한다.
-        frame = frame.integral
+        // 창은 화면 전체 폭: 상단 밴드가 모니터 좌우 꼭짓점까지 색을 잇는다.
+        // 도커 밖 밴드 구간은 hitTest를 통과시켜 메뉴바 클릭을 막지 않는다.
+        hosting.interactiveWidth = size.width
+        var frame = NSRect(
+            x: screen.frame.minX, y: screen.frame.maxY - size.height,
+            width: screen.frame.width, height: size.height
+        ).integral
         frame.origin.y = screen.frame.maxY - frame.height
 
         let panel = NSPanel(
@@ -573,5 +574,17 @@ private final class HoverView: NSView {
         guard !urls.isEmpty else { return false }
         onFilesDropped(urls)
         return true
+    }
+}
+
+/// 화면 전체 폭 밴드용 hosting view. 중앙의 도커 폭 밖에서는 클릭을
+/// 통과시켜, 밴드가 메뉴바 아이콘 클릭을 가로채지 않게 한다.
+final class BandHostingView<Content: View>: NSHostingView<Content> {
+    var interactiveWidth: CGFloat = 0
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard interactiveWidth > 0 else { return super.hitTest(point) }
+        guard abs(point.x - bounds.midX) <= interactiveWidth / 2 else { return nil }
+        return super.hitTest(point)
     }
 }
