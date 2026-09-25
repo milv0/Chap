@@ -182,7 +182,7 @@ struct NotchDropBadgeView: View {
                     .foregroundColor(.white.opacity(0.85))
                     .offset(y: 1)
 
-                // 개수 배지. 우상단에 겹친다.
+                // 개수 배지. 정사각형 본체의 우상단 안쪽에 겹친다.
                 Text("\(min(count, 99))")
                     .font(.system(size: 8, weight: .bold))
                     .foregroundColor(.white)
@@ -192,7 +192,8 @@ struct NotchDropBadgeView: View {
                     .frame(
                         maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing
                     )
-                    .padding(.top, 3)
+                    .padding(.top, 2)
+                    .padding(.trailing, 2)
             }
             .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
             .padding(.trailing, NotchGeometry.dockFlareRadius)
