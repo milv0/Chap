@@ -192,7 +192,9 @@ struct NotchLauncherPanelView: View {
     /// Glass에서는 시스템 semantic 색이 재질의 vibrancy와 배경에 맞춰
     /// 자동 적응한다. 비-Glass는 기존 고대비 흰색 체계를 유지한다.
     private var primaryForeground: Color {
-        style == .glass ? Color.primary : .white.opacity(0.96)
+        // Glass의 primary 100%는 밝은 재질 위에서 검정 대비가 지나치게 세다.
+        // semantic 적응은 유지하되 82%로 낮춰 secondary 헤더와 계층을 잇는다.
+        style == .glass ? Color.primary.opacity(0.82) : .white.opacity(0.96)
     }
 
     private var secondaryForeground: Color {
