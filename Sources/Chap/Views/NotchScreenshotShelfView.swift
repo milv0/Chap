@@ -55,7 +55,7 @@ struct NotchScreenshotShelfView: View {
                     ScreenshotShelfRow(
                         url: url,
                         primaryForeground: usesSemanticForeground
-                            ? .primary.opacity(0.82) : .white.opacity(0.9),
+                            ? .primary : .white.opacity(0.9),
                         secondaryForeground: usesSemanticForeground
                             ? .secondary : .white.opacity(0.4),
                         borderForeground: usesSemanticForeground
