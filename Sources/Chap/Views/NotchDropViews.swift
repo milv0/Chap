@@ -367,6 +367,16 @@ struct NotchDropBadgeView: View {
                 .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
                 .padding(.trailing, NotchGeometry.dockFlareRadius)
         }
+        // 개발용: Drop 배지의 현재 영역을 흰 선으로 표시한다 (Debug 전용).
+        #if DEBUG
+            .overlay(
+                NotchBadgeShape(
+                    flareRadius: NotchGeometry.dockFlareRadius,
+                    bottomCornerRadius: NotchGeometry.badgeCornerRadius
+                )
+                .stroke(Color.white, lineWidth: 1)
+            )
+        #endif
         .accessibilityLabel("Chap Drop: \(count) files")
     }
 }
