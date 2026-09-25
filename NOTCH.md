@@ -119,10 +119,13 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 1. `glassEdgeBleed`: Glass 효과의 광학 edge를 외곽으로 밀고 본체 셰이프로 마스킹
 2. `GlassCornerBridgeShape`: 좌우 오목 코너의 빈 wedge를 Glass로 채워 재질이
-   화면 상단의 검정 플레어 꼭짓점까지 직접 닿게 함
+   화면 상단 플레어 꼭짓점까지 직접 닿게 함
+3. Glass의 `PressedStripShape.edgeDepth`는 0: 검정 띠가 외곽 코너에서 완전히
+   사라지므로, 상단 좌우 둥근 꼭짓점에 보이는 재질은 검정이 아니라 Glass다
 
 검정 `PressedStripShape`은 bridge 위에 별도로 그리되 본체 셰이프로 클립해
-기존 노치 실루엣을 유지한다.
+중앙 노치·배지 plateau는 검정으로 유지한다. Custom은 기존 `stripEdgeDepth` 6을
+유지해 검정 상단 띠가 외곽에도 남는다.
 
 ## 가독성 기준 (Apple HIG)
 

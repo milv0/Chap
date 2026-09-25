@@ -105,7 +105,11 @@ struct NotchLauncherPanelView: View {
                     // 검정 띠는 기존 도커 외곽 안에만 남아 bridge 위의 상단
                     // 실루엣을 보존한다.
                     PressedStripShape(
-                        plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
+                        plateauHalfWidth: stripPlateauHalfWidth,
+                        centerDepth: topInset,
+                        // Glass 코너에서는 검정이 0까지 사라져, bridge가
+                        // 화면 상단 꼭짓점의 둥근 면으로 직접 드러난다.
+                        edgeDepth: style == .glass ? 0 : NotchGeometry.stripEdgeDepth
                     )
                     .fill(Color.black)
                     .clipShape(panelShape)
@@ -520,9 +524,12 @@ struct NotchDockShape: Shape {
 struct PressedStripShape: Shape {
     let plateauHalfWidth: CGFloat
     let centerDepth: CGFloat
+    /// 도커 외곽에서 남길 검정 깊이. Custom 기본은 6pt, Glass는 0으로
+    /// 설정해 상단 둥근 코너가 Glass 재질로 보이게 한다.
+    var edgeDepth: CGFloat = NotchGeometry.stripEdgeDepth
 
     func path(in rect: CGRect) -> Path {
-        let edge = NotchGeometry.stripEdgeDepth
+        let edge = edgeDepth
         let falloff = NotchGeometry.stripFalloff
         let cx = rect.midX
 

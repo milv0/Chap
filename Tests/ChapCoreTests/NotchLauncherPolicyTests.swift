@@ -93,4 +93,15 @@ struct NotchLauncherPolicyTests {
         #expect(bounds.minY == rect.minY)
         #expect(bounds.maxY == 10)
     }
+    @Test("Glass strip leaves outer corners to the Glass bridge")
+    func glassStripHasNoBlackAtOuterCorners() {
+        let rect = CGRect(x: 0, y: 0, width: 400, height: 180)
+        let glassStrip = PressedStripShape(
+            plateauHalfWidth: 100, centerDepth: 32, edgeDepth: 0
+        ).path(in: rect)
+
+        // 외곽은 깊이 0이라 Glass bridge가 보이고, 중앙 plateau는 검정 유지.
+        #expect(glassStrip.contains(CGPoint(x: 1, y: 1)) == false)
+        #expect(glassStrip.contains(CGPoint(x: rect.midX, y: 31)))
+    }
 }
