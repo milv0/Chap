@@ -267,20 +267,27 @@ struct NotchLauncherPanelView: View {
         case .launchers(let section):
             sectionView(section)
         case .screenshots(let urls):
-            NotchScreenshotShelfView(urls: urls)
+            NotchScreenshotShelfView(urls: urls, backgroundHex: reveal.colorHex)
         }
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            // 아이콘은 테마 블루로 스캔 앵커 역할, 라벨은 대비를 높인 보조 흰색.
+            // 아이콘은 스캔 앵커. 배경과의 대비가 HIG 비텍스트 최소치에
+            // 미달하면(예: 파란 배경) 액센트 대신 흰색을 쓴다.
             HStack(spacing: 5) {
                 Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
                     .font(DS.captionFont)
-                    .foregroundColor(DS.accent)
+                    .foregroundColor(
+                        NotchContrastPolicy.usesAccentForeground(
+                            backgroundHex: reveal.colorHex)
+                            ? DS.accent : .white.opacity(0.95))
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.captionFont.weight(.semibold))
-                    .foregroundColor(.white.opacity(0.65))
+                    .foregroundColor(
+                        .white.opacity(
+                            NotchContrastPolicy.secondaryTextOpacity(
+                                backgroundHex: reveal.colorHex)))
             }
             .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
@@ -290,7 +297,11 @@ struct NotchLauncherPanelView: View {
                 section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
                 id: \.siteIndex
             ) { entry in
-                NotchLauncherRow(entry: entry) {
+                NotchLauncherRow(
+                    entry: entry,
+                    shortcutOpacity: NotchContrastPolicy.tertiaryTextOpacity(
+                        backgroundHex: reveal.colorHex)
+                ) {
                     onLaunch(entry.siteIndex)
                 }
             }
@@ -309,6 +320,8 @@ struct NotchLauncherPanelView: View {
 
 private struct NotchLauncherRow: View {
     let entry: LauncherListEntry
+    /// 배경 대비에 맞춘 단축키 힌트 불투명도.
+    let shortcutOpacity: Double
     let action: () -> Void
 
     @State private var isHovered = false
@@ -326,7 +339,7 @@ private struct NotchLauncherRow: View {
                     // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
                     Text("⌥\(shortcut.uppercased())")
                         .font(DS.captionFont.weight(.medium))
-                        .foregroundColor(.white.opacity(0.75))
+                        .foregroundColor(.white.opacity(shortcutOpacity))
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1.5)
                         .background(

@@ -198,7 +198,8 @@ struct NotchAwakeBadgeView: View {
             HStack(spacing: 5) {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 12))
-                    // Keep Awake 활성 시각 언어와 통일된 테마 블루.
+                    // 배지는 항상 순검정 위이므로 액센트 대비가 충분하다
+                    // (HIG 비텍스트 3:1 이상). Keep Awake 시각 언어 유지.
                     .foregroundColor(DS.accent)
                 if expanded, let sessionEnd {
                     // 분 단위 갱신. 항상 h:mm이라 폭이 흔들리지 않는다.

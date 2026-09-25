@@ -6,16 +6,24 @@ import UniformTypeIdentifiers
 /// 최신 스크린샷을 세로로 쌓아 보여주고, 클릭으로 열거나 드래그로 꺼낼 수 있다.
 struct NotchScreenshotShelfView: View {
     let urls: [URL]
+    /// 콘텐츠 박스 배경색. 전경 대비 계산에 쓴다.
+    let backgroundHex: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 5) {
                 Image(systemName: "camera.viewfinder")
                     .font(DS.captionFont)
-                    .foregroundColor(DS.accent)
+                    .foregroundColor(
+                        NotchContrastPolicy.usesAccentForeground(
+                            backgroundHex: backgroundHex)
+                            ? DS.accent : .white.opacity(0.95))
                 Text("Screenshots")
                     .font(DS.captionFont.weight(.semibold))
-                    .foregroundColor(.white.opacity(0.65))
+                    .foregroundColor(
+                        .white.opacity(
+                            NotchContrastPolicy.secondaryTextOpacity(
+                                backgroundHex: backgroundHex)))
             }
             .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
