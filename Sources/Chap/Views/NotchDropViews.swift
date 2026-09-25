@@ -473,23 +473,18 @@ struct NotchBadgeShape: Shape {
     }
 }
 
-/// Awake 배지의 펼침 상태. 컨트롤러가 도커 커브와 같은 애니메이션으로
-/// 상태를 바꿔, 배지 슬라이딩이 도커 펼침·접힘과 정확히 동기화된다.
-final class AwakeBadgeModel: ObservableObject {
-    @Published var expanded = false
-    @Published var sessionEnd: Date?
-}
-
-/// 노치 왼쪽에 붙는 Keep Awake 배지. 세션이 활성일 때만 표시되며
-/// 커피 아이콘으로 상태를 알린다. 순수 표시용이라 마우스를 받지 않는다.
-/// 메인 도커가 열리면 아이콘이 왼쪽으로 밀리고 오른쪽에 h:mm 남은 시간이 붙는다.
-/// 창은 확장 크기로 고정하고 콘텐츠 폭만 애니메이션해 슬라이딩을 만든다.
+/// 노치 왼쪽에 붙는 Keep Awake 배지. 상시 표시는 상단바 아이콘 색이
+/// 담당하므로, 이 배지는 세션 시작 시 잠깐 피크했다가 사라지고
+/// 메인 도커가 열려 있는 동안에만 남은 시간(h:mm)과 함께 보인다.
+/// 순수 표시용이라 마우스를 받지 않는다.
 struct NotchAwakeBadgeView: View {
-    @ObservedObject var model: AwakeBadgeModel
+    let sessionEnd: Date?
+    /// 메인 도커 위 확장 형태 여부. 피크는 컴팩트(아이콘만)다.
+    let expanded: Bool
 
     var body: some View {
         let bodyWidth =
-            model.expanded
+            expanded
             ? NotchGeometry.badgeExpandedBodyWidth : NotchGeometry.badgeBodyWidth
         let shape = NotchBadgeShape(
             flareRadius: NotchGeometry.dockFlareRadius,
@@ -502,8 +497,9 @@ struct NotchAwakeBadgeView: View {
             HStack(spacing: 5) {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 12))
-                    .foregroundColor(DS.accent)
-                if let sessionEnd = model.sessionEnd {
+                    // 도커 위에서는 흰색, 시작 피크는 활성 색(테마 블루).
+                    .foregroundColor(expanded ? .white.opacity(0.9) : DS.accent)
+                if expanded, let sessionEnd {
                     // 분 단위 갱신. 항상 h:mm이라 폭이 흔들리지 않는다.
                     TimelineView(.periodic(from: .now, by: 60)) { context in
                         Text(
@@ -514,21 +510,18 @@ struct NotchAwakeBadgeView: View {
                         .monospacedDigit()
                         .foregroundColor(.white.opacity(0.9))
                     }
-                    .opacity(model.expanded ? 1 : 0)
                 }
             }
             .padding(.leading, NotchGeometry.dockFlareRadius + 4)
             .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap + 5)
-            .frame(maxWidth: .infinity, alignment: model.expanded ? .leading : .center)
-            // 확장 시에만 5pt 더 왼쪽으로. 컴팩트 배지는 원래 중앙 그대로.
-            .offset(x: model.expanded ? -5 : 0, y: 1)
+            .frame(maxWidth: .infinity, alignment: expanded ? .leading : .center)
+            .offset(x: expanded ? -5 : 0, y: 1)
         }
         .clipShape(shape)
         // 개발용: 펼쳐진 배지 영역을 흰 선으로 표시한다 (Debug 빌드 전용).
         #if DEBUG
-            .overlay(shape.stroke(Color.white, lineWidth: 1).opacity(model.expanded ? 1 : 0))
+            .overlay(shape.stroke(Color.white, lineWidth: 1).opacity(expanded ? 1 : 0))
         #endif
-        // 노치 쪽 변(trailing)을 고정한 채 폭만 변해 왼쪽으로 슬라이딩한다.
         .frame(
             width: NotchLauncherPolicy.dropBadgeNotchOverlap + bodyWidth
                 + NotchGeometry.dockFlareRadius
