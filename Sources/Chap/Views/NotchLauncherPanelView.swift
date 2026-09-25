@@ -44,7 +44,7 @@ struct NotchLauncherPanelView: View {
     static let closeDuration: TimeInterval = 0.18
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
-    private static let columnWidth: CGFloat = 160
+    static let columnWidth: CGFloat = 160
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.

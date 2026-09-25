@@ -130,32 +130,147 @@ enum NotchDropDock {
     }
 }
 
-/// Drop 배지에 마우스를 올렸을 때 펼쳐지는 파일 리스트 도커.
-/// 전체 런처 패널 대신 Shelf 내용만 컴팩트하게 보여준다.
+/// Drop 배지에 마우스를 올렸을 때 펼쳐지는 파일 도커.
+/// 파일을 Finder처럼 아이콘 그리드로 보여준다. 폭은 배지 span이 최소,
+/// 메인 런처 도커 폭이 최대이며 파일 수에 따라 자연스럽게 늘어난다.
 struct NotchDropPanelView: View {
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치·배지를 감싼다.
     let topInset: CGFloat
-    /// 도커 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝 구간에서 계산된다.
-    let contentWidth: CGFloat
+    /// 최소 콘텐츠 폭 (배지 span 기준).
+    let minContentWidth: CGFloat
+    /// 최대 콘텐츠 폭 (메인 도커 폭 기준).
+    let maxContentWidth: CGFloat
+
+    @State private var files: [URL] = []
+    @State private var isDropTargeted = false
 
     var body: some View {
-        NotchDropListView()
-            .frame(width: contentWidth, alignment: .leading)
-            .padding(.horizontal, DS.paddingSmall)
-            .padding(.top, topInset + 8)
-            .padding(.bottom, DS.paddingSmall)
+        Group {
+            if files.isEmpty {
+                Text("Drop files here")
+                    .font(DS.captionFont)
+                    .foregroundColor(.white.opacity(0.45))
+            } else {
+                // Finder처럼 아이콘 + 이름의 가로 그리드.
+                HStack(alignment: .top, spacing: DS.spacingSmall) {
+                    ForEach(files, id: \.self) { url in
+                        DropGridItem(url: url) {
+                            ChapDrop.remove(url)
+                            files = ChapDrop.recentFiles()
+                        }
+                    }
+                }
+            }
+        }
+        .frame(
+            minWidth: minContentWidth, maxWidth: max(minContentWidth, maxContentWidth),
+            minHeight: 74
+        )
+        .padding(.horizontal, DS.paddingSmall)
+        .padding(.top, topInset + 8)
+        .padding(.bottom, DS.paddingSmall)
+        .background(
+            NotchDropDock.shape
+                .fill(Color.black)
+                .overlay(
+                    NotchDropDock.rimShape
+                        .stroke(
+                            isDropTargeted
+                                ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                            lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+        )
+        .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
+        .padding(.bottom, NotchLauncherPanelView.shadowPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .dropDestination(for: URL.self) { urls, _ in
+            let stored = ChapDrop.store(urls)
+            files = ChapDrop.recentFiles()
+            return !stored.isEmpty
+        } isTargeted: {
+            isDropTargeted = $0
+        }
+        .onAppear { files = ChapDrop.recentFiles() }
+    }
+}
+
+/// Finder식 그리드 한 칸: 위에 아이콘/썸네일, 아래에 파일명.
+/// 클릭으로 열고, 드래그로 꺼내고, hover의 x로 보관함에서 지운다.
+private struct DropGridItem: View {
+    let url: URL
+    let onRemove: () -> Void
+
+    @State private var isHovered = false
+    @State private var thumbnail: NSImage?
+
+    var body: some View {
+        Button {
+            NSWorkspace.shared.open(url)
+        } label: {
+            VStack(spacing: 5) {
+                Group {
+                    if let thumbnail {
+                        Image(nsImage: thumbnail)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } else {
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                            .resizable()
+                    }
+                }
+                .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+
+                Text(url.lastPathComponent)
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.9))
+                    .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .frame(width: 68)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 2)
             .background(
-                NotchDropDock.shape
-                    .fill(Color.black)
-                    .overlay(
-                        NotchDropDock.rimShape
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
             )
-            .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
-            .padding(.bottom, NotchLauncherPanelView.shadowPadding)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .overlay(alignment: .topTrailing) {
+                if isHovered {
+                    Button(action: onRemove) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Remove \(url.lastPathComponent) from Chap Drop")
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        // 드래그로 파일을 다른 앱/Finder에 떨어뜨릴 수 있다.
+        .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+        .accessibilityLabel("Open \(url.lastPathComponent)")
+        .task(id: url) { thumbnail = Self.loadThumbnail(for: url) }
+    }
+
+    /// 이미지 파일은 원본 전체 디코딩 없이 작은 썸네일을 만든다.
+    private static func loadThumbnail(for url: URL) -> NSImage? {
+        let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "heic", "tiff", "gif"]
+        guard imageExtensions.contains(url.pathExtension.lowercased()) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: 72,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+        ]
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+            let cgImage = CGImageSourceCreateThumbnailAtIndex(
+                source, 0, options as CFDictionary)
+        else { return nil }
+        return NSImage(cgImage: cgImage, size: .zero)
     }
 }
 

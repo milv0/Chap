@@ -287,14 +287,24 @@ final class NotchLauncherController {
 
     // MARK: - Drop panel
 
-    /// Drop 배지 hover로 여는 파일 리스트 도커. 드롭 존과 같은 크기·앵커다.
+    /// Drop 배지 hover로 여는 파일 도커. 배지 span이 최소, 메인 도커 폭이 최대다.
     private func showDropPanel() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
         presentDropDock(
             content: NotchDropPanelView(
                 topInset: screen.safeAreaInsets.top,
-                contentWidth: Self.dropDockContentWidth(on: screen)),
+                minContentWidth: Self.dropDockContentWidth(on: screen),
+                maxContentWidth: mainDockContentWidth(on: screen)),
             on: screen)
+    }
+
+    /// 메인 런처 도커의 콘텐츠 폭 추정치. Drop 파일 도커의 폭 상한으로 쓴다.
+    private func mainDockContentWidth(on screen: NSScreen) -> CGFloat {
+        let slotCount = max(slotsProvider().count, 1)
+        let black =
+            CGFloat(slotCount) * NotchLauncherPanelView.columnWidth
+            + CGFloat(slotCount - 1) * DS.spacing + DS.padding * 2
+        return max(black - DS.paddingSmall * 2, Self.dropDockContentWidth(on: screen))
     }
 
     /// Drop 도커의 콘텐츠 폭. 노치 좌우로 배지 폭만큼 대칭 확장한 구간을
