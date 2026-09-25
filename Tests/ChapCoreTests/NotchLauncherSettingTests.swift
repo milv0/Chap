@@ -126,6 +126,14 @@ struct NotchLauncherSettingTests {
         #expect(config.notchWidgets == [.screenshots, .sites, .apps, .none])
     }
 
+    @Test("decodes the drop shelf widget")
+    func decodesShelfWidget() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["shelf", "sites", "none", "none"], "sites": []}"#)
+
+        #expect(config.notchWidgets == [.shelf, .sites, .none, .none])
+    }
+
     @Test("unknown widget names are dropped and slots padded to four")
     func unknownWidgetsDroppedAndPadded() throws {
         let config = try decodeConfig(
