@@ -166,16 +166,16 @@ struct NotchDropBadgeView: View {
 
     var body: some View {
         ZStack {
-            // 도커와 같은 실루엣: 상단은 상단바에서 흘러나오는 오목 플레어,
-            // 하단은 볼록 라운드. 왼쪽은 겹침만큼 노치 밑으로 파고들어
-            // 하드웨어에 가려지므로 오른쪽 프로필만 보인다.
-            NotchDockShape(
-                topCornerRadius: NotchGeometry.dockFlareRadius,
+            // 노치 쪽(왼쪽)은 직선으로 하드웨어와 융합하고, 바깥(오른쪽)만
+            // 도커 문법을 따른다: 상단 오목 플레어 + 하단 볼록 라운드.
+            NotchBadgeShape(
+                flareRadius: NotchGeometry.dockFlareRadius,
                 bottomCornerRadius: NotchGeometry.badgeCornerRadius
             )
             .fill(Color.black)
 
-            // 콘텐츠는 노치 밖으로 보이는 정사각형 구간에 중앙 정렬.
+            // 콘텐츠는 노치 밖으로 보이는 구간(겹침~오른쪽 벽) 안에 정렬.
+            // 카운트 칩이 플레어가 깎아낸 투명 모서리로 나가지 않게 한다.
             ZStack {
                 Image(systemName: "tray.fill")
                     .font(.system(size: 12))
@@ -192,9 +192,10 @@ struct NotchDropBadgeView: View {
                     .frame(
                         maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing
                     )
-                    .padding(3)
+                    .padding(.top, 3)
             }
             .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
+            .padding(.trailing, NotchGeometry.dockFlareRadius)
         }
         .accessibilityLabel("Chap Drop: \(count) files")
     }
@@ -247,5 +248,36 @@ private struct DropRow: View {
         // 드래그로 파일을 다른 앱/Finder에 떨어뜨릴 수 있다.
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
         .accessibilityLabel("Open \(url.lastPathComponent)")
+    }
+}
+
+/// Drop 배지 실루엣. 노치 쪽(왼쪽) 변은 직선이라 하드웨어 노치와 그대로
+/// 융합하고, 바깥(오른쪽)만 상단 오목 플레어와 하단 볼록 라운드를 갖는다.
+/// 대칭인 NotchDockShape을 쓰면 노치 접합부에도 플레어·라운드가 파여
+/// 배지가 분리된 블롭처럼 보인다.
+struct NotchBadgeShape: Shape {
+    let flareRadius: CGFloat
+    let bottomCornerRadius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let fl = flareRadius
+        let br = bottomCornerRadius
+        var path = Path()
+
+        // 상단 왼쪽(노치 밑)에서 시작해 왼쪽 변은 직선으로 내려간다.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        // 하단 변 → 바깥쪽 볼록 라운드.
+        path.addLine(to: CGPoint(x: rect.maxX - fl - br, y: rect.maxY))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - fl - br, y: rect.maxY - br), radius: br,
+            startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
+        // 바깥 벽을 올라가 오목 플레어로 상단 라인에 합류.
+        path.addLine(to: CGPoint(x: rect.maxX - fl, y: rect.minY + fl))
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.minY + fl), radius: fl,
+            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
     }
 }
