@@ -93,11 +93,14 @@ struct NotchLauncherPanelView: View {
     /// 만나는 상단은 검정에 가깝게, 아래로 갈수록 얼음빛 파랑으로 깊어진다.
     private var panelFill: AnyShapeStyle {
         switch style {
-        case .black, .glass:
+        case .black:
             return AnyShapeStyle(
                 NotchDockStyle.fade(
                     NotchDockStyle.color(fromHex: reveal.colorHex),
                     bottomOpacity: reveal.bottomOpacity))
+        case .glass:
+            // 유리가 뒤 콘텐츠를 굴절시켜야 하므로 색을 깔지 않는다.
+            return AnyShapeStyle(Color.clear)
         case .iceberg:
             return AnyShapeStyle(
                 LinearGradient(
@@ -222,6 +225,12 @@ struct NotchLauncherPanelView: View {
 
     @State private var dropFiles: [URL] = []
 
+    /// 전경 대비 계산용 배경색. Glass는 색을 깔지 않으므로 어두운 재질로
+    /// 취급해 검정 기준 전경값을 그대로 쓴다.
+    private var contrastBackgroundHex: String {
+        style == .glass ? Config.notchPanelColorHexDefault : reveal.colorHex
+    }
+
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
@@ -272,7 +281,7 @@ struct NotchLauncherPanelView: View {
         case .launchers(let section):
             sectionView(section)
         case .screenshots(let urls):
-            NotchScreenshotShelfView(urls: urls, backgroundHex: reveal.colorHex)
+            NotchScreenshotShelfView(urls: urls, backgroundHex: contrastBackgroundHex)
         }
     }
 
@@ -285,14 +294,14 @@ struct NotchLauncherPanelView: View {
                     .font(DS.captionFont)
                     .foregroundColor(
                         NotchContrastPolicy.usesAccentForeground(
-                            backgroundHex: reveal.colorHex)
+                            backgroundHex: contrastBackgroundHex)
                             ? DS.accent : .white.opacity(0.95))
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(
                         .white.opacity(
                             NotchContrastPolicy.secondaryTextOpacity(
-                                backgroundHex: reveal.colorHex)))
+                                backgroundHex: contrastBackgroundHex)))
             }
             .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
@@ -305,7 +314,7 @@ struct NotchLauncherPanelView: View {
                 NotchLauncherRow(
                     entry: entry,
                     shortcutOpacity: NotchContrastPolicy.tertiaryTextOpacity(
-                        backgroundHex: reveal.colorHex)
+                        backgroundHex: contrastBackgroundHex)
                 ) {
                     onLaunch(entry.siteIndex)
                 }

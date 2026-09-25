@@ -166,9 +166,20 @@ struct NotchSettingsView: View {
                                     .frame(width: 38, alignment: .trailing)
                                     .monospacedDigit()
                             }
+                            .disabled(vm.notchPanelStyle == .glass)
                             .onChange(of: vm.notchPanelOpacity) { _, newValue in
                                 // 드래그 중 실시간 반영.
                                 notchController?.updateOpacityPreview(newValue)
+                            }
+
+                            if vm.notchPanelStyle == .glass {
+                                Label(
+                                    "Glass uses the system material, so the panel "
+                                        + "color and opacity do not apply.",
+                                    systemImage: "info.circle"
+                                )
+                                .font(.caption)
+                                .foregroundColor(DS.textSecondary)
                             }
 
                             HStack {
@@ -200,6 +211,7 @@ struct NotchSettingsView: View {
                                 )
                                 .labelsHidden()
                             }
+                            .disabled(vm.notchPanelStyle == .glass)
                             .onChange(of: vm.notchPanelColorHex) { _, _ in onSave() }
 
                             Label(
