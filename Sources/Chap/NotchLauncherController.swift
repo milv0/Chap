@@ -14,6 +14,8 @@ import SwiftUI
 final class NotchLauncherController {
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
+    private var badgeWindow: NSWindow?
+    private var shelfObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
@@ -47,6 +49,8 @@ final class NotchLauncherController {
             return
         }
         installHotzone(on: screen)
+        installShelfObserverIfNeeded()
+        updateShelfBadge()
     }
 
     func tearDown() {
@@ -57,6 +61,66 @@ final class NotchLauncherController {
         panel = nil
         hotzoneWindow?.orderOut(nil)
         hotzoneWindow = nil
+        badgeWindow?.orderOut(nil)
+        badgeWindow = nil
+        if let shelfObserver {
+            NotificationCenter.default.removeObserver(shelfObserver)
+            self.shelfObserver = nil
+        }
+    }
+
+    // MARK: - Shelf badge
+
+    private func installShelfObserverIfNeeded() {
+        guard shelfObserver == nil else { return }
+        shelfObserver = NotificationCenter.default.addObserver(
+            forName: DropShelf.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.updateShelfBadge()
+        }
+    }
+
+    /// 보관함 파일 수에 따라 노치 왼쪽 배지 도커를 갱신한다.
+    private func updateShelfBadge() {
+        let count = DropShelf.fileCount()
+        guard NotchLauncherPolicy.shouldShowShelfBadge(fileCount: count),
+            hotzoneWindow != nil, let screen = Self.notchScreen()
+        else {
+            badgeWindow?.orderOut(nil)
+            badgeWindow = nil
+            return
+        }
+
+        let frame = NotchLauncherPolicy.shelfBadgeFrame(
+            notchRect: Self.notchRect(on: screen))
+        let hosting = NSHostingView(rootView: NotchShelfBadgeView(count: count))
+        hosting.frame = NSRect(origin: .zero, size: frame.size)
+
+        if let existing = badgeWindow {
+            existing.setFrame(frame, display: true)
+            existing.contentView = hosting
+            existing.orderFrontRegardless()
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.level = .statusBar
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+
+        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        // 배지 hover는 전체 패널(Shelf 위젯 포함)을, 파일 드래그는 드롭 존을 연다.
+        tracker.onEntered = { [weak self] in self?.showPanel() }
+        tracker.onDragEntered = { [weak self] in self?.showDropZone() }
+        tracker.autoresizingMask = [.width, .height]
+        hosting.autoresizingMask = [.width, .height]
+        tracker.addSubview(hosting)
+        window.contentView = tracker
+        window.orderFrontRegardless()
+        badgeWindow = window
     }
 
     // MARK: - Hotzone
@@ -254,9 +318,11 @@ final class NotchLauncherController {
             return
         }
         let location = NSEvent.mouseLocation
-        let stayRegion = panel.frame
-            .union(hotzoneWindow?.frame ?? panel.frame)
-            .insetBy(dx: -Self.dwellMargin, dy: -Self.dwellMargin)
+        var stayRegion = panel.frame.union(hotzoneWindow?.frame ?? panel.frame)
+        if let badgeFrame = badgeWindow?.frame {
+            stayRegion = stayRegion.union(badgeFrame)
+        }
+        stayRegion = stayRegion.insetBy(dx: -Self.dwellMargin, dy: -Self.dwellMargin)
         if stayRegion.contains(location) {
             lastInsideDate = Date()
             return

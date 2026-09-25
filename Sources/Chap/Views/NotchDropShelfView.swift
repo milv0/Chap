@@ -109,6 +109,36 @@ struct NotchDropZoneView: View {
     }
 }
 
+/// 노치 왼쪽에 붙는 정사각형 Shelf 배지 도커. 보관함에 파일이 있을 때만
+/// 표시되며, 아이콘과 파일 개수 배지를 보여준다.
+struct NotchShelfBadgeView: View {
+    let count: Int
+
+    var body: some View {
+        ZStack {
+            // 노치와 이어지는 검정. 왼쪽 아래 모서리만 둥글려 도커 실루엣을 잇는다.
+            UnevenRoundedRectangle(bottomLeadingRadius: 8, style: .continuous)
+                .fill(Color.black)
+
+            Image(systemName: "tray.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.85))
+                .offset(y: 1)
+
+            // 개수 배지. 우상단에 겹친다.
+            Text("\(min(count, 99))")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 3.5)
+                .padding(.vertical, 1)
+                .background(Capsule().fill(DS.accent))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(3)
+        }
+        .accessibilityLabel("Shelf: \(count) files")
+    }
+}
+
 private struct DropShelfRow: View {
     let url: URL
     let onRemove: () -> Void
