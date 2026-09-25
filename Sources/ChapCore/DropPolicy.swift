@@ -1,8 +1,8 @@
 import Foundation
 
-/// 노치 드롭 존(Shelf)에 보여줄 파일의 선택 규칙.
+/// Chap Drop(드롭 존)에 보여줄 파일의 선택 규칙.
 /// 스크린샷 선반과 달리 모든 파일 종류를 받는다.
-public enum DropShelfPolicy {
+public enum DropPolicy {
     /// 선반에 보여줄 최대 파일 수. 노치 위젯 칸 상한과 통일한다.
     public static let maxItems = 4
 

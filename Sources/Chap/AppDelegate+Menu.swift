@@ -290,8 +290,8 @@ extension AppDelegate {
                     return nil
                 case .screenshots:
                     return .screenshots(ScreenshotShelf.recentScreenshots())
-                case .shelf:
-                    return .dropShelf
+                case .drop:
+                    return .drop
                 case .sites, .apps, .folders, .scripts:
                     // 해당 타입의 런처가 없으면 칸을 건너뛴다.
                     return sections.first { $0.launchType == widget.launchType }

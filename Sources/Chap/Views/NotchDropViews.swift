@@ -2,10 +2,10 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// 노치 패널 한 칸을 차지하는 파일 드롭 존.
-/// 파일을 떨어뜨리면 앱 보관함(Shelf)에 복사되고, 클릭으로 열거나
+/// 노치 패널 한 칸을 차지하는 Chap Drop 목록.
+/// 파일을 떨어뜨리면 보관함에 복사되고, 클릭으로 열거나
 /// 드래그로 꺼내거나 hover의 x로 보관함에서 지울 수 있다.
-struct NotchDropShelfView: View {
+struct NotchDropListView: View {
     @State private var files: [URL] = []
     @State private var isDropTargeted = false
 
@@ -15,7 +15,7 @@ struct NotchDropShelfView: View {
                 Image(systemName: "tray.and.arrow.down.fill")
                     .font(DS.captionFont)
                     .foregroundColor(DS.accent)
-                Text("Shelf")
+                Text("Drop")
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(.white.opacity(0.65))
             }
@@ -31,9 +31,9 @@ struct NotchDropShelfView: View {
                     .padding(.vertical, 4)
             } else {
                 ForEach(files, id: \.self) { url in
-                    DropShelfRow(url: url) {
-                        DropShelf.remove(url)
-                        files = DropShelf.recentFiles()
+                    DropRow(url: url) {
+                        ChapDrop.remove(url)
+                        files = ChapDrop.recentFiles()
                     }
                 }
             }
@@ -50,13 +50,13 @@ struct NotchDropShelfView: View {
                     style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
         )
         .dropDestination(for: URL.self) { urls, _ in
-            let stored = DropShelf.store(urls)
-            files = DropShelf.recentFiles()
+            let stored = ChapDrop.store(urls)
+            files = ChapDrop.recentFiles()
             return !stored.isEmpty
         } isTargeted: {
             isDropTargeted = $0
         }
-        .onAppear { files = DropShelf.recentFiles() }
+        .onAppear { files = ChapDrop.recentFiles() }
     }
 }
 
@@ -75,7 +75,7 @@ struct NotchDropZoneView: View {
             Image(systemName: "tray.and.arrow.down.fill")
                 .font(.system(size: 15))
                 .foregroundColor(isDropTargeted ? DS.accent : .white.opacity(0.7))
-            Text("Drop to Shelf")
+            Text("Chap Drop")
                 .font(DS.bodyFont.weight(.medium))
                 .foregroundColor(.white.opacity(0.9))
         }
@@ -100,7 +100,7 @@ struct NotchDropZoneView: View {
         .padding(.bottom, NotchLauncherPanelView.shadowPadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .dropDestination(for: URL.self) { urls, _ in
-            let stored = DropShelf.store(urls)
+            let stored = ChapDrop.store(urls)
             onDropped()
             return !stored.isEmpty
         } isTargeted: {
@@ -109,14 +109,14 @@ struct NotchDropZoneView: View {
     }
 }
 
-/// Shelf 배지에 마우스를 올렸을 때 펼쳐지는 파일 리스트 도커.
+/// Drop 배지에 마우스를 올렸을 때 펼쳐지는 파일 리스트 도커.
 /// 전체 런처 패널 대신 Shelf 내용만 컴팩트하게 보여준다.
-struct NotchShelfPanelView: View {
+struct NotchDropPanelView: View {
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치·배지를 감싼다.
     let topInset: CGFloat
 
     var body: some View {
-        NotchDropShelfView()
+        NotchDropListView()
             .frame(width: 230, alignment: .leading)
             .padding(.horizontal, DS.paddingSmall)
             .padding(.top, topInset + 8)
@@ -138,37 +138,44 @@ struct NotchShelfPanelView: View {
     }
 }
 
-/// 노치 왼쪽에 붙는 정사각형 Shelf 배지 도커. 보관함에 파일이 있을 때만
+/// 노치 왼쪽에 붙는 정사각형 Drop 배지 도커. 보관함에 파일이 있을 때만
 /// 표시되며, 아이콘과 파일 개수 배지를 보여준다.
-struct NotchShelfBadgeView: View {
+struct NotchDropBadgeView: View {
     let count: Int
 
     var body: some View {
         ZStack {
-            // 노치와 이어지는 검정. 왼쪽 아래 모서리만 둥글려 도커 실루엣을 잇는다.
+            // 노치와 이어지는 검정. 오른쪽은 겹침만큼 노치의 둥근 왼쪽 아래
+            // 모서리 밑으로 파고들어 노치가 왼쪽으로 길어져 보인다.
             UnevenRoundedRectangle(bottomLeadingRadius: 8, style: .continuous)
                 .fill(Color.black)
 
-            Image(systemName: "tray.fill")
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.85))
-                .offset(y: 1)
+            // 콘텐츠는 노치 밖으로 보이는 정사각형 구간에 중앙 정렬.
+            ZStack {
+                Image(systemName: "tray.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.85))
+                    .offset(y: 1)
 
-            // 개수 배지. 우상단에 겹친다.
-            Text("\(min(count, 99))")
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 3.5)
-                .padding(.vertical, 1)
-                .background(Capsule().fill(DS.accent))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(3)
+                // 개수 배지. 우상단에 겹친다.
+                Text("\(min(count, 99))")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 3.5)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(DS.accent))
+                    .frame(
+                        maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing
+                    )
+                    .padding(3)
+            }
+            .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap)
         }
-        .accessibilityLabel("Shelf: \(count) files")
+        .accessibilityLabel("Chap Drop: \(count) files")
     }
 }
 
-private struct DropShelfRow: View {
+private struct DropRow: View {
     let url: URL
     let onRemove: () -> Void
 
@@ -199,7 +206,7 @@ private struct DropShelfRow: View {
                             .foregroundColor(.white.opacity(0.5))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Remove \(url.lastPathComponent) from shelf")
+                    .accessibilityLabel("Remove \(url.lastPathComponent) from Chap Drop")
                 }
             }
             .padding(.horizontal, 6)

@@ -6,8 +6,8 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯.
     case screenshots([URL])
-    /// 파일 드롭 존 위젯. 목록은 뷰가 직접 보관함에서 읽는다.
-    case dropShelf
+    /// Chap Drop 위젯. 목록은 뷰가 직접 보관함에서 읽는다.
+    case drop
 }
 
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
@@ -150,8 +150,8 @@ struct NotchLauncherPanelView: View {
             sectionView(section)
         case .screenshots(let urls):
             NotchScreenshotShelfView(urls: urls)
-        case .dropShelf:
-            NotchDropShelfView()
+        case .drop:
+            NotchDropListView()
         }
     }
 

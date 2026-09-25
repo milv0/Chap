@@ -267,8 +267,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case scripts = "scripts"
     /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
     case screenshots = "screenshots"
-    /// 파일 드롭 존: 떨어뜨린 파일을 앱 보관함(Shelf)에 모아 보여준다.
-    case shelf = "shelf"
+    /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
+    case drop = "drop"
     /// 빈 칸.
     case none = "none"
 
@@ -279,7 +279,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .apps: return .app
         case .folders: return .finder
         case .scripts: return .shell
-        case .screenshots, .shelf, .none: return nil
+        case .screenshots, .drop, .none: return nil
         }
     }
 

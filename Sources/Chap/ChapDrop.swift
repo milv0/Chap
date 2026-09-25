@@ -1,13 +1,13 @@
 import AppKit
 
-/// 파일 드롭 존의 보관함. 떨어뜨린 파일을 Chap 고유 폴더에 복사해 두고,
+/// Chap Drop 보관함. 떨어뜨린 파일을 Chap 고유 폴더에 복사해 두고,
 /// 노치 패널에서 최신 파일을 꺼내 쓸 수 있게 한다.
 ///
-/// 위치: `~/Library/Application Support/Chap/Shelf/`
+/// 위치: `~/Library/Application Support/Chap/Drop/`
 /// 접근은 노치 UI를 통해서만 이뤄지는 앱 내부 보관함 모델이다.
-enum DropShelf {
+enum ChapDrop {
     /// 보관함 내용이 바뀔 때마다 게시된다. 배지 갱신 트리거.
-    static let didChangeNotification = Notification.Name("ChapDropShelfDidChange")
+    static let didChangeNotification = Notification.Name("ChapDropDidChange")
 
     /// 보관함의 전체 파일 수 (표시 상한과 무관한 실제 개수).
     static func fileCount() -> Int {
@@ -16,7 +16,7 @@ enum DropShelf {
             (try? FileManager.default.contentsOfDirectory(
                 at: folder, includingPropertiesForKeys: nil,
                 options: [.skipsHiddenFiles])) ?? []
-        return entries.filter { DropShelfPolicy.isCandidate(fileName: $0.lastPathComponent) }
+        return entries.filter { DropPolicy.isCandidate(fileName: $0.lastPathComponent) }
             .count
     }
 
@@ -27,7 +27,7 @@ enum DropShelf {
         let shelf =
             base
             .appendingPathComponent("Chap", isDirectory: true)
-            .appendingPathComponent("Shelf", isDirectory: true)
+            .appendingPathComponent("Drop", isDirectory: true)
         try? FileManager.default.createDirectory(
             at: shelf, withIntermediateDirectories: true)
         return shelf
@@ -49,7 +49,7 @@ enum DropShelf {
                     .contentModificationDate ?? .distantPast
             )
         }
-        let selected = DropShelfPolicy.shelfSelection(files: files)
+        let selected = DropPolicy.shelfSelection(files: files)
         return selected.map { folder.appendingPathComponent($0) }
     }
 
