@@ -46,4 +46,21 @@ struct NotchLauncherPolicyTests {
         #expect(frame.maxY == 1182)
         #expect(frame.height == 132)
     }
+
+    @Test("the shelf badge sits square against the notch's left edge")
+    func shelfBadgeSitsLeftOfNotch() {
+        let frame = NotchLauncherPolicy.shelfBadgeFrame(
+            notchRect: CGRect(x: 656, y: 950, width: 200, height: 32))
+
+        #expect(frame.maxX == 656)
+        #expect(frame.minY == 950)
+        #expect(frame.width == 32)
+        #expect(frame.height == 32)
+    }
+
+    @Test("the shelf badge shows only when files exist")
+    func shelfBadgeVisibility() {
+        #expect(NotchLauncherPolicy.shouldShowShelfBadge(fileCount: 1))
+        #expect(NotchLauncherPolicy.shouldShowShelfBadge(fileCount: 0) == false)
+    }
 }

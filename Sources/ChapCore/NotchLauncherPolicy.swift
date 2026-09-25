@@ -28,4 +28,19 @@ public enum NotchLauncherPolicy {
             width: contentSize.width,
             height: height)
     }
+
+    /// 노치 왼쪽에 붙는 Shelf 배지 도커의 프레임. 노치 높이와 같은 변의
+    /// 정사각형이 노치 왼쪽 변에 밀착한다.
+    public static func shelfBadgeFrame(notchRect: CGRect) -> CGRect {
+        CGRect(
+            x: notchRect.minX - notchRect.height,
+            y: notchRect.minY,
+            width: notchRect.height,
+            height: notchRect.height)
+    }
+
+    /// Shelf 배지는 보관함에 파일이 있을 때만 보인다.
+    public static func shouldShowShelfBadge(fileCount: Int) -> Bool {
+        fileCount > 0
+    }
 }
