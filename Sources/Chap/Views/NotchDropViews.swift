@@ -89,7 +89,7 @@ struct NotchDropZoneView: View {
         }
         .frame(width: contentWidth, height: NotchDropDock.zoneContentHeight)
         .padding(.horizontal, DS.paddingSmall)
-        .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
+        .padding(.top, topInset + 8)
         .padding(.bottom, DS.paddingSmall)
         .background(
             NotchDockStyle.dockBackground(
@@ -201,7 +201,7 @@ struct NotchDropPanelView: View {
             )
             .onChange(of: gridIdeal) { _, _ in onSizeChange?(footprint) }
             .padding(.horizontal, DS.paddingSmall)
-            .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
+            .padding(.top, topInset + 8)
             .padding(.bottom, DS.paddingSmall)
             .background(
                 NotchDockStyle.dockBackground(

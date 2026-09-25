@@ -55,9 +55,7 @@ public enum NotchGeometry {
 
     /// 도커 좌우 끝에서 검정 띠가 남는 최소 깊이.
     public static let stripEdgeDepth: CGFloat = 6
-    /// 노치 구간에서 검정이 상단바(topInset)보다 더 눌려 내려오는 깊이.
-    /// 중앙 깊이 = topInset + 이 값.
-    public static let stripPressDepth: CGFloat = 12
     /// 노치 plateau 바깥에서 검정이 가장자리 깊이로 얇아지는 감쇠 길이.
+    /// 검정의 최대 깊이는 항상 노치 세로(topInset)와 같다.
     public static let stripFalloff: CGFloat = 90
 }

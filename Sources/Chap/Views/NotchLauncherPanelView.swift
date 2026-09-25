@@ -118,8 +118,7 @@ struct NotchLauncherPanelView: View {
                 ZStack(alignment: .top) {
                     panelShape.fill(panelFill)
                     PressedStripShape(
-                        plateauHalfWidth: stripPlateauHalfWidth,
-                        centerDepth: topInset + NotchGeometry.stripPressDepth
+                        plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
                     )
                     .fill(Color.black)
                 }
@@ -151,7 +150,7 @@ struct NotchLauncherPanelView: View {
             }
         }
         .padding(.horizontal, DS.padding)
-        .padding(.top, topInset + NotchGeometry.stripPressDepth + 8)
+        .padding(.top, topInset + 8)
         .padding(
             .bottom,
             style == .iceberg ? DS.paddingSmall + Self.icebergJagDepth : DS.paddingSmall
@@ -262,8 +261,7 @@ enum NotchDockStyle {
         ZStack(alignment: .top) {
             shape.fill(fade(color(fromHex: colorHex), bottomOpacity: bottomOpacity))
             PressedStripShape(
-                plateauHalfWidth: stripPlateauHalfWidth,
-                centerDepth: topInset + NotchGeometry.stripPressDepth
+                plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
             )
             .fill(Color.black)
         }
