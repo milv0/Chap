@@ -218,6 +218,12 @@ struct NotchLauncherPanelView: View {
     /// 넣지 않는다. 비-Glass에서만 기존 윤곽 보정을 유지한다.
     private var textShadowOpacity: Double { style == .glass ? 0 : 0.75 }
 
+    /// Apple식 hover: Glass에서는 semantic primary의 8% 회색 면이
+    /// appearance에 맞춰 적응하고, 다른 스타일은 기존 흰색 면을 유지한다.
+    private var rowHoverBackground: Color {
+        style == .glass ? Color.primary.opacity(0.08) : .white.opacity(0.16)
+    }
+
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
@@ -241,7 +247,8 @@ struct NotchLauncherPanelView: View {
                         NotchDropFileItem(
                             url: url,
                             primaryForeground: primaryForeground,
-                            textShadowOpacity: textShadowOpacity
+                            textShadowOpacity: textShadowOpacity,
+                            hoverBackground: rowHoverBackground
                         ) {
                             ChapDrop.remove(url)
                             dropFiles = ChapDrop.recentFiles(
@@ -306,7 +313,8 @@ struct NotchLauncherPanelView: View {
                         : .white.opacity(
                             NotchContrastPolicy.tertiaryTextOpacity(
                                 backgroundHex: contrastBackgroundHex)),
-                    textShadowOpacity: textShadowOpacity
+                    textShadowOpacity: textShadowOpacity,
+                    hoverBackground: rowHoverBackground
                 ) {
                     onLaunch(entry.siteIndex)
                 }
@@ -329,6 +337,7 @@ private struct NotchLauncherRow: View {
     let primaryForeground: Color
     let shortcutForeground: Color
     let textShadowOpacity: Double
+    let hoverBackground: Color
     let action: () -> Void
 
     @State private var isHovered = false
@@ -359,7 +368,7 @@ private struct NotchLauncherRow: View {
             .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
+                    .fill(isHovered ? hoverBackground : Color.clear)
             )
             .contentShape(Rectangle())
         }

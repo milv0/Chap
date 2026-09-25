@@ -60,7 +60,9 @@ struct NotchScreenshotShelfView: View {
                             ? .secondary : .white.opacity(0.4),
                         borderForeground: usesSemanticForeground
                             ? .secondary.opacity(0.45) : .white.opacity(0.15),
-                        textShadowOpacity: usesSemanticForeground ? 0 : 0.75)
+                        textShadowOpacity: usesSemanticForeground ? 0 : 0.75,
+                        hoverBackground: usesSemanticForeground
+                            ? .primary.opacity(0.08) : .white.opacity(0.16))
                 }
             }
         }
@@ -73,6 +75,7 @@ private struct ScreenshotShelfRow: View {
     let secondaryForeground: Color
     let borderForeground: Color
     let textShadowOpacity: Double
+    let hoverBackground: Color
 
     @State private var thumbnail: NSImage?
     @State private var isHovered = false
@@ -112,7 +115,7 @@ private struct ScreenshotShelfRow: View {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
+                    .fill(isHovered ? hoverBackground : Color.clear)
             )
             .contentShape(Rectangle())
         }

@@ -10,6 +10,8 @@ struct NotchDropFileItem: View {
     let primaryForeground: Color
     /// Glass에서는 0, 다른 스타일은 기존 윤곽 보정값.
     let textShadowOpacity: Double
+    /// appearance에 적응하는 hover 면.
+    let hoverBackground: Color
     let onRemove: () -> Void
 
     @State private var isHovered = false
@@ -47,7 +49,7 @@ struct NotchDropFileItem: View {
             .padding(.horizontal, 2)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isHovered ? Color.white.opacity(0.16) : Color.clear)
+                    .fill(isHovered ? hoverBackground : Color.clear)
             )
             .overlay(alignment: .topTrailing) {
                 if isHovered {
