@@ -441,6 +441,9 @@ final class NotchLauncherController {
             return
         }
         let location = NSEvent.mouseLocation
+        // 표면 전환은 이벤트가 아니라 폴링으로 판정한다. 핫존 창이 도커
+        // 아래에 깔리면 mouseEntered가 가려져 오지 않기 때문이다.
+        if switchSurfaceIfNeeded(at: location) { return }
         var stayRegion = panel.frame.union(hotzoneWindow?.frame ?? panel.frame)
         if let badgeFrame = badgeWindow?.frame {
             stayRegion = stayRegion.union(badgeFrame)
@@ -462,6 +465,31 @@ final class NotchLauncherController {
         panel = nil
         activeSurface = nil
         revealModel = nil
+    }
+
+    /// 마우스 위치에 따라 메인 도커 ↔ Drop 도커를 전환한다.
+    /// 전환했으면 true (현재 폴링 사이클은 종료).
+    private func switchSurfaceIfNeeded(at location: NSPoint) -> Bool {
+        // 배지 위: 메인 도커 → Drop 도커.
+        if activeSurface == .mainPanel, let badgeZone = badgeWindow?.frame,
+            badgeZone.contains(location)
+        {
+            dismissPanelImmediately()
+            showDropPanel()
+            return true
+        }
+        // 노치 위 (배지 구간 제외): Drop 도커 → 메인 도커.
+        if activeSurface == .dropDock, var notchZone = hotzoneWindow?.frame {
+            if let badgeZone = badgeWindow?.frame {
+                notchZone.size.width = max(0, badgeZone.minX - notchZone.minX)
+            }
+            if notchZone.contains(location) {
+                dismissPanelImmediately()
+                showPanel()
+                return true
+            }
+        }
+        return false
     }
 
     private func hidePanel() {
