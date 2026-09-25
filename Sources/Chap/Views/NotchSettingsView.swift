@@ -155,9 +155,25 @@ struct NotchSettingsView: View {
                                 notchController?.updateOpacityPreview(newValue)
                             }
 
+                            ColorPicker(
+                                "Panel Color",
+                                selection: Binding(
+                                    get: {
+                                        NotchDockStyle.color(
+                                            fromHex: vm.notchPanelColorHex)
+                                    },
+                                    set: {
+                                        vm.notchPanelColorHex = NotchDockStyle.hex(from: $0)
+                                    }
+                                ),
+                                supportsOpacity: false
+                            )
+                            .onChange(of: vm.notchPanelColorHex) { _, _ in onSave() }
+
                             Label(
                                 "Drag the slider to preview the panel opacity live "
-                                    + "under the notch.",
+                                    + "under the notch. The menu bar strip stays black "
+                                    + "as part of the notch.",
                                 systemImage: "info.circle"
                             )
                             .font(.caption)
