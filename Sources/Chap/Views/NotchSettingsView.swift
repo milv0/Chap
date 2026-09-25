@@ -173,9 +173,21 @@ struct NotchSettingsView: View {
                             }
 
                             if vm.notchPanelStyle == .glass {
+                                Picker(
+                                    "Glass Appearance",
+                                    selection: $vm.notchGlassAppearance
+                                ) {
+                                    Text("System").tag(NotchGlassAppearance.system)
+                                    Text("Light").tag(NotchGlassAppearance.light)
+                                    Text("Dark").tag(NotchGlassAppearance.dark)
+                                }
+                                .pickerStyle(.segmented)
+                                .onChange(of: vm.notchGlassAppearance) { _, _ in onSave() }
+
                                 Label(
-                                    "Glass uses the system material, so the panel "
-                                        + "color and opacity do not apply.",
+                                    "System follows macOS automatically. Light and Dark "
+                                        + "apply only to the notch Glass panel. Panel color "
+                                        + "and opacity do not apply to Glass.",
                                     systemImage: "info.circle"
                                 )
                                 .font(.caption)
