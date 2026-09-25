@@ -145,33 +145,6 @@ struct NotchSettingsView: View {
                             .pickerStyle(.segmented)
                             .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
 
-                            HStack {
-                                Text("Panel Opacity")
-                                Slider(
-                                    value: $vm.notchPanelOpacity,
-                                    in: Config.notchPanelOpacityRange
-                                ) { editing in
-                                    // 드래그 시작 시 패널을 띄워 고정하고,
-                                    // 놓는 순간 고정을 풀고 저장한다.
-                                    if editing {
-                                        notchController?.beginOpacityPreview()
-                                    } else {
-                                        notchController?.endOpacityPreview()
-                                        onSave()
-                                    }
-                                }
-                                Text("\(Int(vm.notchPanelOpacity * 100))%")
-                                    .font(.caption)
-                                    .foregroundColor(DS.textSecondary)
-                                    .frame(width: 38, alignment: .trailing)
-                                    .monospacedDigit()
-                            }
-                            .disabled(vm.notchPanelStyle == .glass)
-                            .onChange(of: vm.notchPanelOpacity) { _, newValue in
-                                // 드래그 중 실시간 반영.
-                                notchController?.updateOpacityPreview(newValue)
-                            }
-
                             if vm.notchPanelStyle == .glass {
                                 Picker(
                                     "Glass Appearance",
@@ -186,54 +159,78 @@ struct NotchSettingsView: View {
 
                                 Label(
                                     "System follows macOS automatically. Light and Dark "
-                                        + "apply only to the notch Glass panel. Panel color "
-                                        + "and opacity do not apply to Glass.",
+                                        + "apply only to the notch Glass panel.",
+                                    systemImage: "info.circle"
+                                )
+                                .font(.caption)
+                                .foregroundColor(DS.textSecondary)
+                            } else {
+                                HStack {
+                                    Text("Panel Opacity")
+                                    Slider(
+                                        value: $vm.notchPanelOpacity,
+                                        in: Config.notchPanelOpacityRange
+                                    ) { editing in
+                                        // 드래그 시작 시 패널을 띄워 고정하고,
+                                        // 놓는 순간 고정을 풀고 저장한다.
+                                        if editing {
+                                            notchController?.beginOpacityPreview()
+                                        } else {
+                                            notchController?.endOpacityPreview()
+                                            onSave()
+                                        }
+                                    }
+                                    Text("\(Int(vm.notchPanelOpacity * 100))%")
+                                        .font(.caption)
+                                        .foregroundColor(DS.textSecondary)
+                                        .frame(width: 38, alignment: .trailing)
+                                        .monospacedDigit()
+                                }
+                                .onChange(of: vm.notchPanelOpacity) { _, newValue in
+                                    // 드래그 중 실시간 반영.
+                                    notchController?.updateOpacityPreview(newValue)
+                                }
+
+                                HStack {
+                                    Text("Panel Color")
+                                    Spacer()
+                                    // 기본 프리셋: 검정(노치 연장)과 Chap 테마 블루
+                                    // (GuideWindow 시그니처 색, DS.accent #3664FF).
+                                    ForEach(Self.colorPresets, id: \.hex) { preset in
+                                        ColorPresetSwatch(
+                                            name: preset.name, hex: preset.hex,
+                                            isSelected: vm.notchPanelColorHex == preset.hex
+                                        ) {
+                                            vm.notchPanelColorHex = preset.hex
+                                        }
+                                    }
+                                    ColorPicker(
+                                        "",
+                                        selection: Binding(
+                                            get: {
+                                                NotchDockStyle.color(
+                                                    fromHex: vm.notchPanelColorHex)
+                                            },
+                                            set: {
+                                                vm.notchPanelColorHex = NotchDockStyle.hex(
+                                                    from: $0)
+                                            }
+                                        ),
+                                        supportsOpacity: false
+                                    )
+                                    .labelsHidden()
+                                }
+                                .onChange(of: vm.notchPanelColorHex) { _, _ in onSave() }
+
+                                Label(
+                                    "Drag the slider to preview the panel opacity live "
+                                        + "under the notch. The menu bar strip stays black "
+                                        + "as part of the notch.",
                                     systemImage: "info.circle"
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
                             }
-
-                            HStack {
-                                Text("Panel Color")
-                                Spacer()
-                                // 기본 프리셋: 검정(노치 연장)과 Chap 테마 블루
-                                // (GuideWindow 시그니처 색, DS.accent #3664FF).
-                                ForEach(Self.colorPresets, id: \.hex) { preset in
-                                    ColorPresetSwatch(
-                                        name: preset.name, hex: preset.hex,
-                                        isSelected: vm.notchPanelColorHex == preset.hex
-                                    ) {
-                                        vm.notchPanelColorHex = preset.hex
-                                    }
-                                }
-                                ColorPicker(
-                                    "",
-                                    selection: Binding(
-                                        get: {
-                                            NotchDockStyle.color(
-                                                fromHex: vm.notchPanelColorHex)
-                                        },
-                                        set: {
-                                            vm.notchPanelColorHex = NotchDockStyle.hex(
-                                                from: $0)
-                                        }
-                                    ),
-                                    supportsOpacity: false
-                                )
-                                .labelsHidden()
-                            }
-                            .disabled(vm.notchPanelStyle == .glass)
-                            .onChange(of: vm.notchPanelColorHex) { _, _ in onSave() }
-
-                            Label(
-                                "Drag the slider to preview the panel opacity live "
-                                    + "under the notch. The menu bar strip stays black "
-                                    + "as part of the notch.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
                         }
                     }
                 }
