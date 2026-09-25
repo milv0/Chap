@@ -16,7 +16,7 @@
  └────────────────────────────────────────────────────────────┴────┘
                      badgeNotchOverlap 12 (노치 밑으로 파고듦 ▓) ↑
                      보이는 본체는 정사각형, 플레어 10은 그 바깥  ↑
-                     하단 바깥: badgeCornerRadius 8 볼록          ↑
+                     하단 바깥: badgeCornerRadius 6 볼록          ↑
 
  도커가 펼쳐지면 (노치 중앙 정렬):
               ╭──flare 10                        flare 10──╮
@@ -51,7 +51,7 @@
 | 이름 | 값 | 의미 |
 |---|---|---|
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
-| `badgeCornerRadius` | 8 | 배지 하단 볼록 모서리. 상단은 `dockFlareRadius` 오목 플레어 |
+| `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
 | `dropDockBottomRadius` | 18 | Drop 도커(드롭 존·리스트) 하단 라운드 |
 | `panelBottomRadius` | 20 | 메인 런처 패널 하단 라운드 |

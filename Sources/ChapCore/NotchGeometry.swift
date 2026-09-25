@@ -12,9 +12,10 @@ public enum NotchGeometry {
     /// 배지가 노치 안쪽으로 파고드는 겹침. 노치의 둥근 오른쪽 아래 모서리를
     /// 검정으로 채워 노치가 오른쪽으로 길어져 보이게 한다.
     public static let badgeNotchOverlap: CGFloat = 12
-    /// 배지 왼쪽 아래 볼록 모서리 반경. 상단은 도커와 같은
+    /// 배지 하단 바깥 볼록 모서리 반경. 실제 노치의 라운드보다 크면 이질감이
+    /// 생기므로 하드웨어 곡률에 가깝게 작게 유지한다. 상단은 도커와 같은
     /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.
-    public static let badgeCornerRadius: CGFloat = 8
+    public static let badgeCornerRadius: CGFloat = 6
 
     // MARK: 도커 실루엣
 
