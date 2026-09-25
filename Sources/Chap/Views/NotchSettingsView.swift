@@ -24,6 +24,13 @@ struct NotchSettingsView: View {
         .sites, .apps, .folders, .scripts, .screenshots, .drop,
     ]
 
+    /// 콘텐츠 박스 배경 기본 프리셋. Guide는 GuideWindow 시그니처
+    /// 색(DS.accent, DESIGN.md의 #3664FF)이다.
+    private static let colorPresets: [(name: String, hex: String)] = [
+        (name: "Black", hex: "#000000"),
+        (name: "Guide", hex: "#3664FF"),
+    ]
+
     private func slotWidget(_ index: Int) -> NotchWidget {
         vm.notchWidgets.indices.contains(index) ? vm.notchWidgets[index] : .none
     }
@@ -155,19 +162,35 @@ struct NotchSettingsView: View {
                                 notchController?.updateOpacityPreview(newValue)
                             }
 
-                            ColorPicker(
-                                "Panel Color",
-                                selection: Binding(
-                                    get: {
-                                        NotchDockStyle.color(
-                                            fromHex: vm.notchPanelColorHex)
-                                    },
-                                    set: {
-                                        vm.notchPanelColorHex = NotchDockStyle.hex(from: $0)
+                            HStack {
+                                Text("Panel Color")
+                                Spacer()
+                                // 기본 프리셋: 검정(노치 연장)과 Chap 테마 블루
+                                // (GuideWindow 시그니처 색, DS.accent #3664FF).
+                                ForEach(Self.colorPresets, id: \.hex) { preset in
+                                    ColorPresetSwatch(
+                                        name: preset.name, hex: preset.hex,
+                                        isSelected: vm.notchPanelColorHex == preset.hex
+                                    ) {
+                                        vm.notchPanelColorHex = preset.hex
                                     }
-                                ),
-                                supportsOpacity: false
-                            )
+                                }
+                                ColorPicker(
+                                    "",
+                                    selection: Binding(
+                                        get: {
+                                            NotchDockStyle.color(
+                                                fromHex: vm.notchPanelColorHex)
+                                        },
+                                        set: {
+                                            vm.notchPanelColorHex = NotchDockStyle.hex(
+                                                from: $0)
+                                        }
+                                    ),
+                                    supportsOpacity: false
+                                )
+                                .labelsHidden()
+                            }
                             .onChange(of: vm.notchPanelColorHex) { _, _ in onSave() }
 
                             Label(
@@ -285,5 +308,30 @@ private struct WidgetPaletteChip: View {
                 : "Drag into a slot to place this widget."
         )
         .accessibilityLabel("\(NotchSettingsView.widgetName(widget)) widget")
+    }
+}
+
+/// 콘텐츠 박스 배경 프리셋 스와치. 선택된 프리셋은 액센트 링으로 표시한다.
+private struct ColorPresetSwatch: View {
+    let name: String
+    let hex: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Circle()
+                .fill(NotchDockStyle.color(fromHex: hex))
+                .frame(width: 18, height: 18)
+                .overlay(Circle().strokeBorder(DS.border, lineWidth: 1))
+                .overlay(
+                    Circle()
+                        .strokeBorder(DS.accent, lineWidth: isSelected ? 2 : 0)
+                        .padding(-3)
+                )
+        }
+        .buttonStyle(.plain)
+        .help(name)
+        .accessibilityLabel("\(name) panel color preset")
     }
 }
