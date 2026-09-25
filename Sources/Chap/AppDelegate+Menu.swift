@@ -308,6 +308,9 @@ extension AppDelegate {
         notchLauncher.glassAppearanceProvider = { [weak self] in
             self?.config.notchGlassAppearance ?? .system
         }
+        notchLauncher.glassMaterialProvider = { [weak self] in
+            self?.config.notchGlassMaterial ?? .clear
+        }
         notchLauncher.opacityProvider = { [weak self] in
             self?.config.notchPanelOpacity ?? Config.notchPanelOpacityDefault
         }

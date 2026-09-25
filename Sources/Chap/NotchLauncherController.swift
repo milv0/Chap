@@ -22,6 +22,8 @@ final class NotchLauncherController {
     /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
     /// 순간 tracking이 재개되며 mouseEntered가 곧바로 날아오기 때문이다.
     private var hoverOpenSuppressedUntil = Date.distantPast
+    /// Glass appearance 선택 후 메인 도커를 잠깐 고정하는 프리뷰 토큰.
+    private var appearancePreviewToken = 0
     /// 메인 도커 표시 여부. Awake 배지 확장 판단에 쓴다.
     private var isMainPanelOpen = false
     private var dropObserver: NSObjectProtocol?
@@ -38,6 +40,8 @@ final class NotchLauncherController {
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
     var glassAppearanceProvider: () -> NotchGlassAppearance = { .system }
+    /// Apple 공식 Liquid Glass Clear/Regular 재질 공급자.
+    var glassMaterialProvider: () -> NotchGlassMaterial = { .clear }
     /// 패널 하단 불투명도 공급자.
     var opacityProvider: () -> Double = { Config.notchPanelOpacityDefault }
     /// 콘텐츠 박스 배경색 공급자 ("#RRGGBB").
@@ -341,6 +345,7 @@ final class NotchLauncherController {
             topInset: inset,
             stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
             style: styleProvider(),
+            glassMaterial: glassMaterialProvider(),
             slots: slots,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
@@ -418,6 +423,35 @@ final class NotchLauncherController {
             panel.appearance = NSAppearance(named: .aqua)
         case .dark:
             panel.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
+
+    // MARK: - Settings preview
+
+    /// Glass System/Light/Dark 선택 직후 메인 도커를 펼쳐 일정 시간 고정한다.
+    /// 연속 선택 시 마지막 토큰만 고정을 해제한다.
+    func previewGlassAppearance() {
+        beginTimedGlassPreview(rebuildPanel: false)
+        applyGlassAppearance(to: panel)
+    }
+
+    /// Glass Clear/Regular 선택 직후 메인 도커를 새 재질로 다시 만들어 보여준다.
+    /// 재질은 뷰 생성 값이라 이미 열린 패널은 재구성해야 한다.
+    func previewGlassMaterial() {
+        beginTimedGlassPreview(rebuildPanel: true)
+    }
+
+    private func beginTimedGlassPreview(rebuildPanel: Bool) {
+        isPreviewPinned = true
+        appearancePreviewToken += 1
+        let token = appearancePreviewToken
+        if rebuildPanel, panel != nil { dismissPanelImmediately() }
+        if panel == nil { showPanel() }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+            guard let self, self.appearancePreviewToken == token else { return }
+            self.isPreviewPinned = false
+            self.lastInsideDate = Date()
         }
     }
 
