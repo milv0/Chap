@@ -743,6 +743,7 @@ struct SettingsView: View {
                     hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
                     notchLauncherEnabled: vm.notchLauncherEnabled,
                     notchPanelStyle: vm.notchPanelStyle,
+                    notchGlassAppearance: vm.notchGlassAppearance,
                     notchPanelOpacity: vm.notchPanelOpacity,
                     notchPanelColorHex: vm.notchPanelColorHex,
                     notchWidgets: vm.notchWidgets)) ?? true

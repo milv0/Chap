@@ -9,6 +9,7 @@ public struct SettingsPayload {
     public let hiddenMenuLaunchTypes: Set<LaunchType>
     public let notchLauncherEnabled: Bool
     public let notchPanelStyle: NotchPanelStyle
+    public let notchGlassAppearance: NotchGlassAppearance
     public let notchPanelOpacity: Double
     public let notchPanelColorHex: String
     public let notchWidgets: [NotchWidget]
@@ -23,6 +24,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var hiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var notchLauncherEnabled: Bool
     @Published public var notchPanelStyle: NotchPanelStyle
+    @Published public var notchGlassAppearance: NotchGlassAppearance
     @Published public var notchPanelOpacity: Double
     @Published public var notchPanelColorHex: String
     @Published public var notchWidgets: [NotchWidget]
@@ -34,6 +36,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalHiddenMenuLaunchTypes: Set<LaunchType>
     @Published public var originalNotchLauncherEnabled: Bool
     @Published public var originalNotchPanelStyle: NotchPanelStyle
+    @Published public var originalNotchGlassAppearance: NotchGlassAppearance
     @Published public var originalNotchPanelOpacity: Double
     @Published public var originalNotchPanelColorHex: String
     @Published public var originalNotchWidgets: [NotchWidget]
@@ -49,6 +52,7 @@ public final class SettingsViewModel: ObservableObject {
             || hiddenMenuLaunchTypes != originalHiddenMenuLaunchTypes
             || notchLauncherEnabled != originalNotchLauncherEnabled
             || notchPanelStyle != originalNotchPanelStyle
+            || notchGlassAppearance != originalNotchGlassAppearance
             || notchPanelOpacity != originalNotchPanelOpacity
             || notchPanelColorHex != originalNotchPanelColorHex
             || notchWidgets != originalNotchWidgets
@@ -63,6 +67,7 @@ public final class SettingsViewModel: ObservableObject {
         originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         originalNotchLauncherEnabled = notchLauncherEnabled
         originalNotchPanelStyle = notchPanelStyle
+        originalNotchGlassAppearance = notchGlassAppearance
         originalNotchPanelOpacity = notchPanelOpacity
         originalNotchPanelColorHex = notchPanelColorHex
         originalNotchWidgets = notchWidgets
@@ -80,6 +85,7 @@ public final class SettingsViewModel: ObservableObject {
                 hiddenMenuLaunchTypes: self.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: self.notchLauncherEnabled,
                 notchPanelStyle: self.notchPanelStyle,
+                notchGlassAppearance: self.notchGlassAppearance,
                 notchPanelOpacity: self.notchPanelOpacity,
                 notchPanelColorHex: self.notchPanelColorHex,
                 notchWidgets: self.notchWidgets,
@@ -109,6 +115,7 @@ public final class SettingsViewModel: ObservableObject {
                     hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
                     notchLauncherEnabled: notchLauncherEnabled,
                     notchPanelStyle: notchPanelStyle,
+                    notchGlassAppearance: notchGlassAppearance,
                     notchPanelOpacity: notchPanelOpacity,
                     notchPanelColorHex: notchPanelColorHex,
                     notchWidgets: notchWidgets)) ?? true
@@ -124,6 +131,7 @@ public final class SettingsViewModel: ObservableObject {
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .black,
+        notchGlassAppearance: NotchGlassAppearance = .system,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -137,6 +145,7 @@ public final class SettingsViewModel: ObservableObject {
         self.hiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.notchLauncherEnabled = notchLauncherEnabled
         self.notchPanelStyle = notchPanelStyle
+        self.notchGlassAppearance = notchGlassAppearance
         self.notchPanelOpacity = notchPanelOpacity
         self.notchPanelColorHex = notchPanelColorHex
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
@@ -148,6 +157,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalHiddenMenuLaunchTypes = hiddenMenuLaunchTypes
         self.originalNotchLauncherEnabled = notchLauncherEnabled
         self.originalNotchPanelStyle = notchPanelStyle
+        self.originalNotchGlassAppearance = notchGlassAppearance
         self.originalNotchPanelOpacity = notchPanelOpacity
         self.originalNotchPanelColorHex = notchPanelColorHex
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)

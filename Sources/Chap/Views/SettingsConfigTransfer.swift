@@ -154,6 +154,7 @@ enum SettingsConfigTransfer {
                         // 노치 토글은 기기(노치 유무) 종속이라 import로 덮지 않는다.
                         notchLauncherEnabled: vm.notchLauncherEnabled,
                         notchPanelStyle: vm.notchPanelStyle,
+                        notchGlassAppearance: vm.notchGlassAppearance,
                         notchPanelOpacity: vm.notchPanelOpacity,
                         notchPanelColorHex: vm.notchPanelColorHex,
                         notchWidgets: vm.notchWidgets)) ?? false

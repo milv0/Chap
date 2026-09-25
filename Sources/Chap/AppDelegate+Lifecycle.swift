@@ -98,6 +98,7 @@ extension AppDelegate {
             hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
             notchLauncherEnabled: config.notchLauncherEnabled,
             notchPanelStyle: config.notchPanelStyle,
+            notchGlassAppearance: config.notchGlassAppearance,
             notchPanelOpacity: config.notchPanelOpacity,
             notchPanelColorHex: config.notchPanelColorHex,
             notchWidgets: config.notchWidgets)
@@ -112,6 +113,7 @@ extension AppDelegate {
                 hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: payload.notchLauncherEnabled,
                 notchPanelStyle: payload.notchPanelStyle,
+                notchGlassAppearance: payload.notchGlassAppearance,
                 notchPanelOpacity: payload.notchPanelOpacity,
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchWidgets: payload.notchWidgets,
@@ -140,6 +142,7 @@ extension AppDelegate {
             let previousStatusBarIcon = self.config.statusBarIcon
             let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
             let previousNotchPanelStyle = self.config.notchPanelStyle
+            let previousNotchGlassAppearance = self.config.notchGlassAppearance
             let previousNotchPanelOpacity = self.config.notchPanelOpacity
             let previousNotchPanelColorHex = self.config.notchPanelColorHex
             let previousNotchWidgets = self.config.notchWidgets
@@ -174,6 +177,7 @@ extension AppDelegate {
                 DispatchQueue.main.async { self.buildMenu() }
             } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
                 || previousNotchPanelStyle != newConfig.notchPanelStyle
+                || previousNotchGlassAppearance != newConfig.notchGlassAppearance
                 || previousNotchPanelOpacity != newConfig.notchPanelOpacity
                 || previousNotchPanelColorHex != newConfig.notchPanelColorHex
                 || previousNotchWidgets != newConfig.notchWidgets

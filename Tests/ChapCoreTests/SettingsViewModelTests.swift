@@ -85,6 +85,12 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchGlassAppearanceChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchGlassAppearance: .system)
+        vm.notchGlassAppearance = .dark
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func hasChangesDetectsNotchPanelOpacityChange() {
         let vm = SettingsViewModel(sites: baseSites, notchPanelOpacity: 0.6)
         vm.notchPanelOpacity = 0.9
@@ -134,6 +140,7 @@ struct SettingsViewModelTests {
                 hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
                 notchLauncherEnabled: vm.notchLauncherEnabled,
                 notchPanelStyle: vm.notchPanelStyle,
+                notchGlassAppearance: vm.notchGlassAppearance,
                 notchPanelOpacity: vm.notchPanelOpacity,
                 notchPanelColorHex: vm.notchPanelColorHex,
                 notchWidgets: vm.notchWidgets))
