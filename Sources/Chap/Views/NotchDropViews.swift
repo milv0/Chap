@@ -166,13 +166,12 @@ struct NotchDropBadgeView: View {
 
     var body: some View {
         ZStack {
-            // 노치와 이어지는 검정. 왼쪽 상·하 모서리를 노치 라운드값으로
-            // 둥글려 노치의 왼쪽 끝 프로필처럼 보이게 하고, 오른쪽은 겹침만큼
-            // 노치의 둥근 왼쪽 아래 모서리 밑으로 파고든다.
-            UnevenRoundedRectangle(
-                topLeadingRadius: NotchGeometry.badgeCornerRadius,
-                bottomLeadingRadius: NotchGeometry.badgeCornerRadius,
-                style: .continuous
+            // 도커와 같은 실루엣: 상단은 상단바에서 흘러나오는 오목 플레어,
+            // 하단은 볼록 라운드. 왼쪽은 겹침만큼 노치 밑으로 파고들어
+            // 하드웨어에 가려지므로 오른쪽 프로필만 보인다.
+            NotchDockShape(
+                topCornerRadius: NotchGeometry.dockFlareRadius,
+                bottomCornerRadius: NotchGeometry.badgeCornerRadius
             )
             .fill(Color.black)
 
@@ -195,7 +194,7 @@ struct NotchDropBadgeView: View {
                     )
                     .padding(3)
             }
-            .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap)
+            .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
         }
         .accessibilityLabel("Chap Drop: \(count) files")
     }

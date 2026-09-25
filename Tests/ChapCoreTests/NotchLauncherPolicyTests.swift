@@ -47,13 +47,13 @@ struct NotchLauncherPolicyTests {
         #expect(frame.height == 132)
     }
 
-    @Test("the drop badge overlaps into the notch to cover its rounded corner")
-    func dropBadgeOverlapsNotch() {
+    @Test("the drop badge sits right of the notch, overlapping its rounded corner")
+    func dropBadgeOverlapsNotchRight() {
         let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: CGRect(x: 656, y: 950, width: 200, height: 32))
 
-        #expect(frame.minX == 624)
-        #expect(frame.maxX == 656 + NotchLauncherPolicy.dropBadgeNotchOverlap)
+        #expect(frame.minX == 856 - NotchLauncherPolicy.dropBadgeNotchOverlap)
+        #expect(frame.maxX == 888)
         #expect(frame.minY == 950)
         #expect(frame.height == 32)
     }

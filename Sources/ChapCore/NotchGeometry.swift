@@ -9,12 +9,12 @@ import CoreGraphics
 public enum NotchGeometry {
     // MARK: Drop 배지
 
-    /// 배지가 노치 안쪽으로 파고드는 겹침. 노치의 둥근 왼쪽 아래 모서리를
-    /// 검정으로 채워 노치가 왼쪽으로 길어져 보이게 한다.
+    /// 배지가 노치 안쪽으로 파고드는 겹침. 노치의 둥근 오른쪽 아래 모서리를
+    /// 검정으로 채워 노치가 오른쪽으로 길어져 보이게 한다.
     public static let badgeNotchOverlap: CGFloat = 12
-    /// 배지 왼쪽(상·하) 모서리 반경. 맥북 노치의 라운드와 같은 값을 써서
-    /// 배지가 노치의 왼쪽 끝 프로필처럼 보이게 한다.
-    public static let badgeCornerRadius: CGFloat = 10
+    /// 배지 왼쪽 아래 볼록 모서리 반경. 상단은 도커와 같은
+    /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.
+    public static let badgeCornerRadius: CGFloat = 8
 
     // MARK: 도커 실루엣
 
