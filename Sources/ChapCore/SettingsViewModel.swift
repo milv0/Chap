@@ -130,7 +130,7 @@ public final class SettingsViewModel: ObservableObject {
         statusBarIcon: StatusBarIconChoice = .default,
         hiddenMenuLaunchTypes: Set<LaunchType> = [],
         notchLauncherEnabled: Bool = false,
-        notchPanelStyle: NotchPanelStyle = .black,
+        notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,

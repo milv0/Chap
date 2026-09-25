@@ -80,8 +80,8 @@ struct SettingsViewModelTests {
     }
 
     @Test func hasChangesDetectsNotchPanelStyleChange() {
-        let vm = SettingsViewModel(sites: baseSites, notchPanelStyle: .black)
-        vm.notchPanelStyle = .iceberg
+        let vm = SettingsViewModel(sites: baseSites, notchPanelStyle: .custom)
+        vm.notchPanelStyle = .glass
         #expect(vm.hasChanges == true)
     }
 
