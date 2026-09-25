@@ -133,11 +133,9 @@ final class NotchLauncherController {
         if let existing = badgeWindow {
             existing.setFrame(frame, display: true)
             existing.contentView = hosting
-            // 메인 패널 위에는 앞으로, Drop 도커 뒤에는 뒤로, 없으면 앞으로.
+            // 배지는 어떤 도커 위에서도 앞에 남는다.
             if let panel {
-                existing.order(
-                    activeSurface == .mainPanel ? .above : .below,
-                    relativeTo: panel.windowNumber)
+                existing.order(.above, relativeTo: panel.windowNumber)
             } else {
                 existing.orderFrontRegardless()
             }
@@ -153,9 +151,7 @@ final class NotchLauncherController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         window.contentView = hosting
         if let panel {
-            window.order(
-                activeSurface == .mainPanel ? .above : .below,
-                relativeTo: panel.windowNumber)
+            window.order(.above, relativeTo: panel.windowNumber)
         } else {
             window.orderFrontRegardless()
         }
@@ -185,7 +181,12 @@ final class NotchLauncherController {
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
         // 마우스 hover는 전체 패널을, 파일 드래그는 컴팩트 드롭 존을 연다.
-        tracker.onEntered = { [weak self] in self?.showPanel() }
+        tracker.onEntered = { [weak self] in
+            guard let self else { return }
+            // Drop 도커가 떠 있으면 즉시 내리고 메인 도커로 되돌아간다.
+            if self.activeSurface == .dropDock { self.dismissPanelImmediately() }
+            self.showPanel()
+        }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         // 노치 자체에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
@@ -369,8 +370,9 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
-        // Drop 도커는 배지 자리를 그대로 덮으므로 배지를 뒤로 보낸다.
-        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
+        // Drop 도커 위에서도 배지는 앞에 남는다. 도커 상단 띠와 같은 검정이라
+        // 겹쳐도 이음새가 없고, 노치 hover로 되돌아가는 왕복 전환의 기준점이 된다.
+        badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.activeSurface = .dropDock
         startVisibilityMonitor()
