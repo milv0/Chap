@@ -23,7 +23,6 @@
               │ [left span 32][═ notch 185 ═][badge span 32]│
               │                                             │
               ╰──dockBottomRadius 18 (모든 도커 공통)     ───╯
-                        └── iceberg: 톱니 깊이 46, 폭 68 ──┘
 ```
 
 ## 좌우 배지
@@ -68,8 +67,6 @@
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
 | `dockBottomRadius` | 18 | 모든 도커(메인 패널·드롭 존·리스트) 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
 | `dropZoneContentHeight` | 64 | 드롭 존 콘텐츠 높이 |
-| `icebergJagDepth` | 46 | Iceberg 스타일 톱니 최대 깊이 |
-| `icebergToothWidth` | 68 | Iceberg 톱니 하나의 목표 폭 |
 | `contentTopGap` | 15 | 노치 하단 경계와 섹션 콘텐츠 사이 세로 간격 |
 | `stripEdgeDepth` | 6 | 눌린 검정 띠가 도커 끝에서 남는 최소 깊이 |
 | `stripFalloff` | 90 | plateau 밖에서 곡선으로 얇아지는 감쇠 길이. 최대 깊이는 노치 세로와 동일 |
@@ -88,11 +85,13 @@
 
 ## 스타일
 
+Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상·불투명도
+설정을, Glass는 System/Light/Dark appearance를 노출한다.
+
 | 스타일 | 콘텐츠 박스 | 비고 |
 |---|---|---|
-| Black | 커스텀 색 + 페이드 | 기본 |
-| Iceberg | 얼음 그라데이션 + 톱니 하단 | 자체 색 체계 |
-| Glass | Liquid Glass 재질 (macOS 26+) | 상단 띠는 검정 유지, 26 미만은 Black과 동일 |
+| Custom | 사용자 색 + 불투명도 페이드 | 기본. 과거 Black/Iceberg 설정은 이 스타일로 마이그레이션 |
+| Glass | Liquid Glass 재질 (macOS 26+) | 상단 띠는 검정 유지, 26 미만은 Custom 기본 검정과 동일 |
 
 상단바 띠는 어떤 스타일에서도 순검정이다 — 노치와 융합해야 하므로
 유리·색이 침범하지 않는다.
