@@ -60,8 +60,8 @@ struct NotchDropListView: View {
     }
 }
 
-/// 파일을 끌고 노치에 댔을 때 뜨는 컴팩트 드롭 존. 전체 런처 패널 대신
-/// 노치 크기 남짓의 검정 도크만 내려와 드롭만 받는다.
+/// 파일을 끌고 노치에 댔을 때 뜨는 드롭 존. Drop 리스트 도커와 같은
+/// 폭·패딩·실루엣을 써서 두 도커가 같은 크기로 보인다.
 struct NotchDropZoneView: View {
     /// 상단바(노치) 구간 높이. 이만큼 검정이 위로 연장되어 노치를 감싼다.
     let topInset: CGFloat
@@ -71,28 +71,27 @@ struct NotchDropZoneView: View {
     @State private var isDropTargeted = false
 
     var body: some View {
-        HStack(spacing: 7) {
+        VStack(spacing: 8) {
             Image(systemName: "tray.and.arrow.down.fill")
-                .font(.system(size: 15))
+                .font(.system(size: 20))
                 .foregroundColor(isDropTargeted ? DS.accent : .white.opacity(0.7))
             Text("Chap Drop")
                 .font(DS.bodyFont.weight(.medium))
                 .foregroundColor(.white.opacity(0.9))
         }
-        .padding(.horizontal, DS.padding)
-        .padding(.top, topInset + 10)
-        .padding(.bottom, 14)
-        .frame(maxWidth: .infinity)
+        .frame(width: NotchDropDock.contentWidth, height: NotchDropDock.zoneContentHeight)
+        .padding(.horizontal, DS.paddingSmall)
+        .padding(.top, topInset + 8)
+        .padding(.bottom, DS.paddingSmall)
         .background(
-            NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+            NotchDropDock.shape
                 .fill(Color.black)
                 .overlay(
-                    NotchDockShape(
-                        topCornerRadius: 10, bottomCornerRadius: 18, isRim: true
-                    )
-                    .stroke(
-                        isDropTargeted ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
-                        lineWidth: 1)
+                    NotchDropDock.rimShape
+                        .stroke(
+                            isDropTargeted
+                                ? DS.accent.opacity(0.8) : Color.white.opacity(0.08),
+                            lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
         )
@@ -109,6 +108,21 @@ struct NotchDropZoneView: View {
     }
 }
 
+/// Drop 도커(드롭 존·파일 리스트)가 공유하는 지오메트리와 실루엣.
+enum NotchDropDock {
+    static let contentWidth: CGFloat = 230
+    /// 파일 4개가 찬 리스트 도커와 비슷한 높이.
+    static let zoneContentHeight: CGFloat = 108
+
+    static var shape: NotchDockShape {
+        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+    }
+
+    static var rimShape: NotchDockShape {
+        NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18, isRim: true)
+    }
+}
+
 /// Drop 배지에 마우스를 올렸을 때 펼쳐지는 파일 리스트 도커.
 /// 전체 런처 패널 대신 Shelf 내용만 컴팩트하게 보여준다.
 struct NotchDropPanelView: View {
@@ -117,18 +131,16 @@ struct NotchDropPanelView: View {
 
     var body: some View {
         NotchDropListView()
-            .frame(width: 230, alignment: .leading)
+            .frame(width: NotchDropDock.contentWidth, alignment: .leading)
             .padding(.horizontal, DS.paddingSmall)
             .padding(.top, topInset + 8)
             .padding(.bottom, DS.paddingSmall)
             .background(
-                NotchDockShape(topCornerRadius: 10, bottomCornerRadius: 18)
+                NotchDropDock.shape
                     .fill(Color.black)
                     .overlay(
-                        NotchDockShape(
-                            topCornerRadius: 10, bottomCornerRadius: 18, isRim: true
-                        )
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        NotchDropDock.rimShape
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
                     .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )

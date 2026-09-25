@@ -82,6 +82,11 @@ final class NotchLauncherController {
 
     /// 보관함 파일 수에 따라 노치 왼쪽 Drop 배지 도커를 갱신한다.
     private func updateDropBadge() {
+        // 도커가 떠 있는 동안에는 배지를 내려 두어 도커 밖으로 보이지 않게 한다.
+        guard panel == nil else {
+            badgeWindow?.orderOut(nil)
+            return
+        }
         let count = ChapDrop.fileCount()
         guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
             hotzoneWindow != nil, let screen = Self.notchScreen()
@@ -222,8 +227,8 @@ final class NotchLauncherController {
 
         // 등장: Dynamic Island처럼 노치에서 bouncy 스프링으로 펼친다.
         panel.orderFrontRegardless()
-        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
-        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
+        // 도커가 떠 있는 동안 배지는 숨긴다. 닫힐 때 updateDropBadge가 복원한다.
+        badgeWindow?.orderOut(nil)
         self.panel = panel
         self.revealModel = reveal
         DispatchQueue.main.async {
@@ -236,22 +241,25 @@ final class NotchLauncherController {
 
     // MARK: - Drop panel
 
-    /// Drop 배지 hover로 여는 파일 리스트 도커. 배지 왼쪽 변에 정렬해
-    /// 배지에서 펼쳐진 것처럼 보이게 한다.
+    /// Drop 배지 hover로 여는 파일 리스트 도커. 드롭 존과 같은 크기·앵커다.
     private func showDropPanel() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
+        presentDropDock(
+            content: NotchDropPanelView(topInset: screen.safeAreaInsets.top), on: screen)
+    }
 
-        let inset = screen.safeAreaInsets.top
-        let content = NotchDropPanelView(topInset: inset)
+    /// Drop 도커 공통 표시. 배지 왼쪽 변에 정렬하고, 떠 있는 동안 배지를
+    /// 숨겨 도커 밖으로 배지가 튀어나오지 않게 한다.
+    private func presentDropDock<Content: View>(content: Content, on screen: NSScreen) {
         let hosting = NSHostingView(rootView: content)
         hosting.safeAreaRegions = []
         let fitting = hosting.fittingSize
         let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
 
-        // 배지 왼쪽 변 기준 정렬 (그림자 여백 보정). 상단은 화면 최상단 밀착.
-        let badgeMinX =
-            badgeWindow?.frame.minX
-            ?? NotchLauncherPolicy.dropBadgeFrame(notchRect: Self.notchRect(on: screen)).minX
+        // 배지 유무와 무관하게 정책 프레임 기준으로 앵커를 고정한다.
+        let badgeMinX = NotchLauncherPolicy.dropBadgeFrame(
+            notchRect: Self.notchRect(on: screen)
+        ).minX
         var frame = NSRect(
             x: badgeMinX - NotchLauncherPanelView.shadowPadding,
             y: screen.frame.maxY - size.height,
@@ -272,51 +280,25 @@ final class NotchLauncherController {
         panel.contentView = hosting
 
         panel.orderFrontRegardless()
-        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
-        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
+        // 도커가 떠 있는 동안 배지는 숨긴다. 닫힐 때 updateDropBadge가 복원한다.
+        badgeWindow?.orderOut(nil)
         self.panel = panel
         startVisibilityMonitor()
     }
 
     // MARK: - Drop zone
 
-    /// 파일 드래그가 노치에 닿았을 때 여는 컴팩트 드롭 존.
+    /// 파일 드래그가 노치에 닿았을 때 여는 드롭 존.
+    /// Drop 리스트 도커와 같은 크기·앵커를 쓴다.
     /// 전체 런처 패널이 이미 떠 있으면 그대로 둔다 (Drop 위젯이 받는다).
     private func showDropZone() {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
         let inset = screen.safeAreaInsets.top
-        let notchWidth = Self.notchRect(on: screen).width
-
         let content = NotchDropZoneView(
             topInset: inset,
             onDropped: { [weak self] in self?.hidePanel() })
-        let hosting = NSHostingView(rootView: content)
-        hosting.safeAreaRegions = []
-        let frame = NotchLauncherPolicy.panelFrame(
-            screenFrame: screen.frame,
-            topSafeAreaInset: inset,
-            contentSize: CGSize(
-                width: notchWidth + 80 + NotchLauncherPanelView.shadowPadding * 2,
-                height: 44 + NotchLauncherPanelView.shadowPadding))
-
-        let panel = NSPanel(
-            contentRect: frame.integral,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered, defer: false)
-        panel.level = .statusBar
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = false
-        panel.collectionBehavior = [.canJoinAllSpaces, .transient]
-        panel.becomesKeyOnlyIfNeeded = true
-        panel.contentView = hosting
-
-        panel.orderFrontRegardless()
-        // 드롭존/패널이 배지보다 앞에 서서 배지가 튀어나오지 않게 한다.
-        badgeWindow?.order(.below, relativeTo: panel.windowNumber)
-        self.panel = panel
-        startVisibilityMonitor()
+        presentDropDock(content: content, on: screen)
     }
 
     // MARK: - Opacity preview
@@ -391,8 +373,9 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
             panel.orderOut(nil)
+            self?.updateDropBadge()
         }
     }
 }
