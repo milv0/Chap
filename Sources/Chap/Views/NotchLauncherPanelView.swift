@@ -346,7 +346,9 @@ private struct NotchLauncherRow: View {
         Button(action: action) {
             HStack {
                 Text(entry.site.name)
-                    .font(DS.bodyFont.weight(.medium))
+                    // 목록 본문은 Apple 기본 계층대로 regular. 섹션 헤더만
+                    // semibold를 유지해 Glass에서 글자가 과하게 무거워지지 않는다.
+                    .font(DS.bodyFont)
                     .foregroundColor(primaryForeground)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
