@@ -242,9 +242,21 @@ final class NotchLauncherController {
     }
 }
 
-/// mouseEntered 콜백만 제공하는 추적 뷰.
+/// mouseEntered 콜백과 파일 드래그 진입 콜백을 제공하는 추적 뷰.
+/// 파일을 끌고 있는 동안에는 tracking area가 발화하지 않으므로,
+/// 드롭 존으로 쓰려면 드래그 진입도 패널 열기 신호로 받아야 한다.
 private final class HoverView: NSView {
     var onEntered: () -> Void = {}
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        registerForDraggedTypes([.fileURL])
+    }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -257,4 +269,10 @@ private final class HoverView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) { onEntered() }
+
+    /// 파일 드래그가 노치 위로 들어오면 패널을 펼쳐 드롭 존을 노출한다.
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        onEntered()
+        return []
+    }
 }
