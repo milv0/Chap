@@ -19,6 +19,9 @@ final class NotchLauncherController {
     /// 세션 시작 직후 잠깐 배지를 보여주는 피크 상태.
     private var isAwakeBadgePeeking = false
     private var awakeBadgePeekToken = 0
+    /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
+    /// 순간 tracking이 재개되며 mouseEntered가 곧바로 날아오기 때문이다.
+    private var hoverOpenSuppressedUntil = Date.distantPast
     /// 현재 떠 있는 표면. 배지 z순서와 hover 전환 판단에 쓴다.
     private enum ActiveSurface { case mainPanel, dropDock }
     private var activeSurface: ActiveSurface?
@@ -138,6 +141,7 @@ final class NotchLauncherController {
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             ChapDrop.store(urls)
+            self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
             self?.hidePanel()
         }
         tracker.autoresizingMask = [.width, .height]
@@ -274,15 +278,14 @@ final class NotchLauncherController {
         // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
         // 마우스 hover는 전체 패널을, 파일 드래그는 컴팩트 드롭 존을 연다.
         tracker.onEntered = { [weak self] in
-            guard let self else { return }
-            // Drop 도커가 떠 있으면 즉시 내리고 메인 도커로 되돌아간다.
-            if self.activeSurface == .dropDock { self.dismissPanelImmediately() }
+            guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
             self.showPanel()
         }
         tracker.onDragEntered = { [weak self] in self?.showDropZone() }
         // 노치 자체에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             ChapDrop.store(urls)
+            self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
             self?.hidePanel()
         }
         window.contentView = tracker
@@ -499,7 +502,10 @@ final class NotchLauncherController {
             bottomOpacity: opacityProvider(),
             colorHex: colorProvider(),
             stripPlateauHalfWidth: Self.stripPlateauHalfWidth(on: screen),
-            onDropped: { [weak self] in self?.hidePanel() })
+            onDropped: { [weak self] in
+                self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
+                self?.hidePanel()
+            })
         presentDropDock(content: content, on: screen)
     }
 
