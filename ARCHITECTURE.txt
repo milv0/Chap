@@ -235,6 +235,8 @@ Config 모델 필드:
 - Launch at Login (SMAppService)
 - 상태바 아이콘 선택 (Default/Lightning) — Settings > General > Appearance에서 변경, config에 저장·재시작 유지
   - Default/Lightning 선택 + Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
+  - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
+    메인 노치 도커가 열린 동안에만 왼쪽 plateau에 파란 커피 아이콘 + h:mm 남은 시간 표시
 - Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
 ## 메뉴바 메뉴 구성
