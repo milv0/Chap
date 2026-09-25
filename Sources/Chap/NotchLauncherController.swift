@@ -50,6 +50,10 @@ final class NotchLauncherController {
     var onLaunch: (Int) -> Void = { _ in }
 
     private static let panelMinWidth: CGFloat = 300
+    /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
+    /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
+    private static let badgeLevel = NSWindow.Level(
+        rawValue: NSWindow.Level.statusBar.rawValue + 1)
     /// 노치·패널 밖에서 이 시간 이상 머물면 닫는다.
     private static let hideDelay: TimeInterval = 0.2
     private static let pollInterval: TimeInterval = 0.08
@@ -162,7 +166,7 @@ final class NotchLauncherController {
 
         let window = NSWindow(
             contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.level = .statusBar
+        window.level = Self.badgeLevel
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
@@ -211,7 +215,7 @@ final class NotchLauncherController {
 
         let window = NSWindow(
             contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.level = .statusBar
+        window.level = Self.badgeLevel
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
