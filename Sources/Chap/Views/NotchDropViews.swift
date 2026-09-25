@@ -120,13 +120,13 @@ enum NotchDropDock {
     static var shape: NotchDockShape {
         NotchDockShape(
             topCornerRadius: topCornerRadius,
-            bottomCornerRadius: NotchGeometry.dropDockBottomRadius)
+            bottomCornerRadius: NotchGeometry.dockBottomRadius)
     }
 
     static var rimShape: NotchDockShape {
         NotchDockShape(
             topCornerRadius: topCornerRadius,
-            bottomCornerRadius: NotchGeometry.dropDockBottomRadius, isRim: true)
+            bottomCornerRadius: NotchGeometry.dockBottomRadius, isRim: true)
     }
 }
 
@@ -181,8 +181,8 @@ struct NotchDropBadgeView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.85))
                     // 우상단 숫자 배지의 무게 때문에 기하 중앙이 아니라
-                    // 왼쪽으로 2pt 민 광학 중앙에 둔다.
-                    .offset(x: -2, y: 1)
+                    // 왼쪽으로 4pt 민 광학 중앙에 둔다.
+                    .offset(x: -4, y: 1)
 
                 // 개수 배지. 정사각형 본체의 우상단 안쪽에 겹친다.
                 Text("\(min(count, 99))")
