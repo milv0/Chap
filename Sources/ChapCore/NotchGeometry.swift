@@ -21,7 +21,7 @@ public enum NotchGeometry {
     /// 메인 도커 왼쪽 상태 영역 안의 커피+시간 묶음 광학 보정.
     /// h:mm:ss가 h:mm보다 약 20pt 넓어져 아이콘이 왼쪽으로 밀리는 것을
     /// 반폭(약 10pt)만큼 보상해 기존 아이콘 위치를 유지한다.
-    public static let awakeStatusOffsetX: CGFloat = 0
+    public static let awakeStatusOffsetX: CGFloat = -2
     /// 배지 하단 바깥 볼록 모서리 반경. 실제 노치의 라운드보다 크면 이질감이
     /// 생기므로 하드웨어 곡률에 가깝게 작게 유지한다. 상단은 도커와 같은
     /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.

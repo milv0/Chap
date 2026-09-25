@@ -61,7 +61,7 @@
 | 이름 | 값 | 의미 |
 |---|---|---|
 | `stripPlateauSideWidth` | 110 | 노치 좌우의 평평한 검정 상태 영역 폭 |
-| `awakeStatusOffsetX` | 0 | h:mm:ss 커피+시간 묶음 위치 보정 없음 (상태 영역 정중앙) |
+| `awakeStatusOffsetX` | -2 | 왼쪽 상태 영역 안의 h:mm:ss 커피+시간 묶음 좌측 광학 보정 |
 | `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
