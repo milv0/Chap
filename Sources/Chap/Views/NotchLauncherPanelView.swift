@@ -91,17 +91,7 @@ struct NotchLauncherPanelView: View {
     private var panelFill: AnyShapeStyle {
         switch style {
         case .black:
-            // 중간 지점은 하단 값과 완전 검정 사이를 보간해 자연스럽게 흘러내린다.
-            let bottomOpacity = reveal.bottomOpacity
-            let midOpacity = bottomOpacity + (1 - bottomOpacity) * 0.8
-            return AnyShapeStyle(
-                LinearGradient(
-                    stops: [
-                        .init(color: .black, location: 0),
-                        .init(color: .black.opacity(midOpacity), location: 0.35),
-                        .init(color: .black.opacity(bottomOpacity), location: 1),
-                    ],
-                    startPoint: .top, endPoint: .bottom))
+            return AnyShapeStyle(NotchDockStyle.blackFade(reveal.bottomOpacity))
         case .iceberg:
             return AnyShapeStyle(
                 LinearGradient(
@@ -241,6 +231,23 @@ private struct NotchLauncherRow: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .accessibilityLabel("Launch \(entry.site.name)")
+    }
+}
+
+/// 모든 노치 도커가 공유하는 채움 스타일.
+enum NotchDockStyle {
+    /// 위는 완전 검정(노치 융합), 아래로 갈수록 사용자 불투명도로 흘러내리는
+    /// 공통 페이드. 메인 패널과 Drop 도커가 같은 설정값을 쓴다.
+    static func blackFade(_ bottomOpacity: Double) -> LinearGradient {
+        // 중간 지점은 하단 값과 완전 검정 사이를 보간해 자연스럽게 흘러내린다.
+        let midOpacity = bottomOpacity + (1 - bottomOpacity) * 0.8
+        return LinearGradient(
+            stops: [
+                .init(color: .black, location: 0),
+                .init(color: .black.opacity(midOpacity), location: 0.35),
+                .init(color: .black.opacity(bottomOpacity), location: 1),
+            ],
+            startPoint: .top, endPoint: .bottom)
     }
 }
 

@@ -67,6 +67,8 @@ struct NotchDropZoneView: View {
     let topInset: CGFloat
     /// 도커 콘텐츠 폭. 배지 왼쪽 끝~노치 오른쪽 끝 구간에서 계산된다.
     let contentWidth: CGFloat
+    /// 본체 하단 불투명도. 메인 도커와 같은 설정값을 공유한다.
+    let bottomOpacity: Double
     /// 드롭 완료 콜백. 컨트롤러가 존을 닫는 데 쓴다.
     let onDropped: () -> Void
 
@@ -87,7 +89,7 @@ struct NotchDropZoneView: View {
         .padding(.bottom, DS.paddingSmall)
         .background(
             NotchDropDock.shape
-                .fill(Color.black)
+                .fill(NotchDockStyle.blackFade(bottomOpacity))
                 .overlay(
                     NotchDropDock.rimShape
                         .stroke(
@@ -140,6 +142,11 @@ struct NotchDropPanelView: View {
     let minContentWidth: CGFloat
     /// 최대 콘텐츠 폭 (메인 도커 폭 기준).
     let maxContentWidth: CGFloat
+    /// 본체 하단 불투명도. 메인 도커와 같은 설정값을 공유한다.
+    let bottomOpacity: Double
+    /// 콘텐츠 크기 변화 통지. 열려 있는 동안 파일이 추가·삭제되면
+    /// 컨트롤러가 창을 같은 앵커로 리사이즈한다.
+    var onSizeChange: ((CGSize) -> Void)?
 
     @State private var files: [URL] = []
     @State private var isDropTargeted = false
@@ -171,7 +178,7 @@ struct NotchDropPanelView: View {
         .padding(.bottom, DS.paddingSmall)
         .background(
             NotchDropDock.shape
-                .fill(Color.black)
+                .fill(NotchDockStyle.blackFade(bottomOpacity))
                 .overlay(
                     NotchDropDock.rimShape
                         .stroke(
@@ -183,6 +190,15 @@ struct NotchDropPanelView: View {
         )
         .padding(.horizontal, NotchLauncherPanelView.shadowPadding)
         .padding(.bottom, NotchLauncherPanelView.shadowPadding)
+        // 도커 발자국(그림자 여백 포함)의 실제 크기를 컨트롤러에 알려
+        // 열려 있는 동안 파일이 늘거나 줄면 창이 함께 리사이즈된다.
+        .background(
+            GeometryReader { geo in
+                Color.clear.onChange(of: geo.size) { _, size in
+                    onSizeChange?(size)
+                }
+            }
+        )
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .dropDestination(for: URL.self) { urls, _ in
             let stored = ChapDrop.store(urls)
