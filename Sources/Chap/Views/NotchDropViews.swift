@@ -6,6 +6,10 @@ import UniformTypeIdentifiers
 /// 클릭으로 열고, 드래그로 꺼내고, hover의 x로 보관함에서 지운다.
 struct NotchDropFileItem: View {
     let url: URL
+    /// Glass에서는 semantic primary, 다른 스타일은 고대비 흰색.
+    let primaryForeground: Color
+    /// Glass에서는 0, 다른 스타일은 기존 윤곽 보정값.
+    let textShadowOpacity: Double
     let onRemove: () -> Void
 
     @State private var isHovered = false
@@ -31,8 +35,10 @@ struct NotchDropFileItem: View {
 
                 Text(url.lastPathComponent)
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.9))
-                    .shadow(color: .black.opacity(0.75), radius: 1.5, y: 0.5)
+                    .foregroundColor(primaryForeground)
+                    .shadow(
+                        color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                    )
                     .lineLimit(1)
                     .truncationMode(.middle)
             }

@@ -276,7 +276,11 @@ struct NotchLauncherPanelView: View {
                     .padding(.top, 2)
                 HStack(alignment: .top, spacing: DS.spacingSmall) {
                     ForEach(dropFiles, id: \.self) { url in
-                        NotchDropFileItem(url: url) {
+                        NotchDropFileItem(
+                            url: url,
+                            primaryForeground: primaryForeground,
+                            textShadowOpacity: textShadowOpacity
+                        ) {
                             ChapDrop.remove(url)
                             dropFiles = ChapDrop.recentFiles(
                                 limit: DropPolicy.maxDockItems)
