@@ -15,6 +15,29 @@ struct NotchScreenshotShelfView: View {
     @State private var isRefreshing = false
     private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
+    private var usesDarkCustomForeground: Bool {
+        !usesSemanticForeground
+            && NotchContrastPolicy.usesDarkForeground(backgroundHex: backgroundHex)
+    }
+
+    private var customPrimary: Color {
+        usesDarkCustomForeground ? .black.opacity(0.87) : .white.opacity(0.9)
+    }
+
+    private var customSecondary: Color {
+        usesDarkCustomForeground
+            ? .black.opacity(0.65)
+            : .white.opacity(
+                NotchContrastPolicy.secondaryTextOpacity(backgroundHex: backgroundHex))
+    }
+
+    private var customTertiary: Color {
+        usesDarkCustomForeground
+            ? .black.opacity(0.5)
+            : .white.opacity(
+                NotchContrastPolicy.tertiaryTextOpacity(backgroundHex: backgroundHex))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 5) {
@@ -25,18 +48,18 @@ struct NotchScreenshotShelfView: View {
                             ? DS.accent
                             : (NotchContrastPolicy.usesAccentForeground(
                                 backgroundHex: backgroundHex)
-                                ? DS.accent : .white.opacity(0.95)))
+                                ? DS.accent
+                                : (usesDarkCustomForeground
+                                    ? .black.opacity(0.87) : .white.opacity(0.95))))
                 Text("Screenshots")
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(
-                        usesSemanticForeground
-                            ? .secondary
-                            : .white.opacity(
-                                NotchContrastPolicy.secondaryTextOpacity(
-                                    backgroundHex: backgroundHex)))
+                        usesSemanticForeground ? .secondary : customSecondary
+                    )
             }
             .shadow(
-                color: .black.opacity(usesSemanticForeground ? 0 : 0.75),
+                color: .black.opacity(
+                    usesSemanticForeground || usesDarkCustomForeground ? 0 : 0.75),
                 radius: 1.5, y: 0.5
             )
             .padding(.horizontal, 6)
@@ -46,11 +69,7 @@ struct NotchScreenshotShelfView: View {
                 Text("No recent screenshots")
                     .font(DS.captionFont)
                     .foregroundColor(
-                        usesSemanticForeground
-                            ? .secondary
-                            : .white.opacity(
-                                NotchContrastPolicy.tertiaryTextOpacity(
-                                    backgroundHex: backgroundHex))
+                        usesSemanticForeground ? .secondary : customTertiary
                     )
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
@@ -58,15 +77,19 @@ struct NotchScreenshotShelfView: View {
                 ForEach(urls, id: \.self) { url in
                     ScreenshotShelfRow(
                         url: url,
-                        primaryForeground: usesSemanticForeground
-                            ? .primary : .white.opacity(0.9),
+                        primaryForeground: usesSemanticForeground ? .primary : customPrimary,
                         secondaryForeground: usesSemanticForeground
-                            ? .secondary : .white.opacity(0.4),
+                            ? .secondary : customTertiary,
                         borderForeground: usesSemanticForeground
-                            ? .secondary.opacity(0.45) : .white.opacity(0.15),
-                        textShadowOpacity: usesSemanticForeground ? 0 : 0.75,
+                            ? .secondary.opacity(0.45)
+                            : (usesDarkCustomForeground
+                                ? .black.opacity(0.15) : .white.opacity(0.15)),
+                        textShadowOpacity: usesSemanticForeground || usesDarkCustomForeground
+                            ? 0 : 0.75,
                         hoverBackground: usesSemanticForeground
-                            ? .primary.opacity(0.08) : .white.opacity(0.16))
+                            ? .primary.opacity(0.08)
+                            : (usesDarkCustomForeground
+                                ? .black.opacity(0.08) : .white.opacity(0.16)))
                 }
             }
         }
