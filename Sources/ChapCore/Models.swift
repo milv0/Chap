@@ -329,7 +329,11 @@ public enum NotchWidget: String, Codable, CaseIterable {
 
     /// 임의 길이 입력을 정확히 4칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
-        let trimmed = widgets.prefix(slotCount)
+        var seen: Set<NotchWidget> = []
+        let unique = widgets.filter { widget in
+            widget == .none || seen.insert(widget).inserted
+        }
+        let trimmed = unique.prefix(slotCount)
         return Array(trimmed) + Array(repeating: .none, count: slotCount - trimmed.count)
     }
 }

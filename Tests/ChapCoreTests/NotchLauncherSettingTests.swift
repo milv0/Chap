@@ -277,6 +277,13 @@ struct NotchLauncherSettingTests {
         #expect(config.notchWidgets == NotchWidget.defaultSlots)
     }
 
+    @Test("duplicate non-empty widgets are removed while empty slots remain")
+    func duplicateWidgetsAreNormalized() {
+        let slots = NotchWidget.normalizedSlots([.sites, .sites, .none, .none, .apps])
+
+        #expect(slots == [.sites, .none, .none, .apps])
+    }
+
     @Test("more than four widgets are capped at four slots")
     func widgetsCappedAtFour() throws {
         let config = try decodeConfig(
