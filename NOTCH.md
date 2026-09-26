@@ -47,8 +47,8 @@
 이 구조의 부작용 두 가지를 항상 기억할 것:
 
 1. **벽 인셋** — 본체 벽은 프레임보다 좌우 각 `dockFlareRadius`만큼
-   안쪽에 선다. 눈에 보이는 검정 폭을 맞추려면 프레임 폭에 플레어 × 2를
-   보정해야 한다 (`dropDockContentWidth`가 하는 일).
+   안쪽에 선다. 메인 패널은 `NotchDockShape`과 동일한 geometry를 공유하고,
+   Drop 배지는 별도 `NotchBadgeShape`으로 노치 쪽 직선 변과 바깥 플레어를 만든다.
 2. **림 스트로크** — 림 하이라이트는 상단 변을 긋지 않는 `isRim` 경로를
    써야 노치 경계에 흰 줄이 생기지 않는다.
 
@@ -66,9 +66,8 @@
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
-| `dockBottomRadius` | 18 | 모든 도커(메인 패널·드롭 존·리스트) 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
+| `dockBottomRadius` | 18 | 메인 도커 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
 | `glassEdgeBleed` | 10 | Glass 광학 edge를 플레어 밖으로 밀어 검정 꼭짓점까지 재질 연결 |
-| `dropZoneContentHeight` | 64 | 드롭 존 콘텐츠 높이 |
 | `contentTopGap` | 15 | 노치 하단 경계와 섹션 콘텐츠 사이 세로 간격 |
 | `stripEdgeDepth` | 6 | 눌린 검정 띠가 도커 끝에서 남는 최소 깊이 |
 | `stripFalloff` | 90 | plateau 밖에서 곡선으로 얇아지는 감쇠 길이. 최대 깊이는 노치 세로와 동일 |

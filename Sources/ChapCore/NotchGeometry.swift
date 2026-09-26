@@ -41,7 +41,7 @@ public enum NotchGeometry {
 
     // MARK: 공통
 
-    /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여ㄹ백.
+    /// 그림자가 창 경계에서 잘리지 않도록 형태 주변에 두는 투명 여백.
     /// 그림자 확산이 이 안에서 완전히 소멸해야 경계선이 생기지 않는다.
     public static let shadowPadding: CGFloat = 28
 
