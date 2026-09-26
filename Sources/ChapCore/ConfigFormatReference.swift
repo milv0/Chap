@@ -53,7 +53,11 @@ enum ConfigFormatReference {
         • shell:  name, script, width, height
 
         Optional: shortcut, displayName, windowSizePreset, reuseExistingWindow
-        Global optional: optionShortcutsEnabled
+        Global optional: optionShortcutsEnabled, hiddenMenuLaunchTypes
+
+        Each launch type allows at most four items.
+        Device-specific notch settings are preserved from the destination Mac
+        rather than overwritten by an imported file.
 
         For URL items, reuseExistingWindow reuses only the Chrome app window
         created by that item during the current Chap session.
