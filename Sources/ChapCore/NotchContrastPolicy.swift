@@ -35,21 +35,28 @@ public enum NotchContrastPolicy {
         return (lighter + 0.05) / (darker + 0.05)
     }
 
+    /// 밝은 배경에서 검정 전경을 써야 하는지. 검정/흰색 중 실제 WCAG
+    /// 대비비가 더 높은 쪽을 고른다.
+    public static func usesDarkForeground(backgroundHex: String) -> Bool {
+        let background = relativeLuminance(hex: backgroundHex)
+        return contrastRatio(luminance: 0, against: background)
+            > contrastRatio(luminance: 1, against: background)
+    }
+
     /// 아이콘에 액센트 색을 쓸 수 있는지. 배경과의 대비가 HIG 비텍스트
-    /// 최소치(3:1) 미달이면 흰색으로 대체해야 한다.
+    /// 최소치(3:1) 미달이면 선택된 검정/흰색 전경으로 대체해야 한다.
     public static func usesAccentForeground(backgroundHex: String) -> Bool {
         let background = relativeLuminance(hex: backgroundHex)
         let accent = relativeLuminance(hex: accentHex)
         return contrastRatio(luminance: accent, against: background) >= nonTextMinimumRatio
     }
 
-    /// 보조 텍스트(섹션 라벨 등) 흰색 불투명도. 배경이 밝을수록 흰색의
-    /// 대비가 떨어지므로 불투명도를 올려 4.5:1 쪽으로 끌어올린다.
+    /// 어두운 배경에서 쓸 보조 흰색 텍스트 불투명도.
     public static func secondaryTextOpacity(backgroundHex: String) -> Double {
         interpolatedOpacity(backgroundHex: backgroundHex, dark: 0.65, light: 0.92)
     }
 
-    /// 3차 텍스트(단축키 힌트 등) 흰색 불투명도.
+    /// 어두운 배경에서 쓸 3차 흰색 텍스트 불투명도.
     public static func tertiaryTextOpacity(backgroundHex: String) -> Double {
         interpolatedOpacity(backgroundHex: backgroundHex, dark: 0.45, light: 0.8)
     }

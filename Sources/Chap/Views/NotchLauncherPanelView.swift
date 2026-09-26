@@ -73,8 +73,17 @@ struct NotchLauncherPanelView: View {
                 bottomCornerRadius: NotchGeometry.dockBottomRadius, isRim: true))
     }
 
-    /// 스타일별 채움. Custom은 사용자가 고른 색·불투명도 페이드,
-    /// Glass는 뒤 콘텐츠를 굴절시켜야 하므로 투명한 기반을 쓴다.
+    private var hasNativeLiquidGlass: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
+
+    private var usesSemanticGlass: Bool {
+        style == .glass && hasNativeLiquidGlass
+    }
+
+    /// 스타일별 채움. Custom은 사용자가 고른 색·불투명도 페이드.
+    /// Glass는 macOS 26+에서 투명 기반, 그 이하는 검정 Custom 폴백이다.
     private var panelFill: AnyShapeStyle {
         switch style {
         case .custom:
@@ -83,7 +92,9 @@ struct NotchLauncherPanelView: View {
                     NotchDockStyle.color(fromHex: reveal.colorHex),
                     bottomOpacity: reveal.bottomOpacity))
         case .glass:
-            return AnyShapeStyle(Color.clear)
+            if hasNativeLiquidGlass { return AnyShapeStyle(Color.clear) }
+            return AnyShapeStyle(
+                NotchDockStyle.fade(.black, bottomOpacity: reveal.bottomOpacity))
         }
     }
 
@@ -96,7 +107,7 @@ struct NotchLauncherPanelView: View {
                     panelShape.fill(panelFill)
                     // Glass 스타일: 본체 재질과 좌우 오목 코너 bridge를 함께 그린다.
                     // bridge가 검정 상단선의 화면 꼭짓점까지 닿아 배경화면 틈을 없앤다.
-                    if style == .glass {
+                    if usesSemanticGlass {
                         NotchDockStyle.liquidGlassLayer(
                             shape: panelShape, material: glassMaterial)
                         NotchDockStyle.liquidGlassLayer(
@@ -111,7 +122,7 @@ struct NotchLauncherPanelView: View {
                         centerDepth: topInset,
                         // Glass 코너에서는 검정이 0까지 사라져, bridge가
                         // 화면 상단 꼭짓점의 둥근 면으로 직접 드러난다.
-                        edgeDepth: style == .glass ? 0 : NotchGeometry.stripEdgeDepth
+                        edgeDepth: usesSemanticGlass ? 0 : NotchGeometry.stripEdgeDepth
                     )
                     .fill(Color.black)
                     .clipShape(panelShape)
@@ -215,7 +226,14 @@ struct NotchLauncherPanelView: View {
     /// 전경 대비 계산용 배경색. Glass는 색을 깔지 않으므로 어두운 재질로
     /// 취급해 검정 기준 전경값을 그대로 쓴다.
     private var contrastBackgroundHex: String {
-        style == .glass ? Config.notchPanelColorHexDefault : reveal.colorHex
+        usesSemanticGlass ? Config.notchPanelColorHexDefault : reveal.colorHex
+    }
+
+    private var usesDarkCustomForeground: Bool {
+        !usesSemanticGlass
+            && NotchContrastPolicy.usesDarkForeground(
+                backgroundHex: style == .glass
+                    ? Config.notchPanelColorHexDefault : reveal.colorHex)
     }
 
     /// Glass에서는 시스템 semantic 색이 재질의 vibrancy와 배경에 맞춰
@@ -223,12 +241,14 @@ struct NotchLauncherPanelView: View {
     private var primaryForeground: Color {
         // Apple 기본 계층: 콘텐츠 이름은 semantic primary 그대로 사용한다.
         // 시스템이 Liquid Glass와 활성 appearance에 맞춰 색·vibrancy를 결정한다.
-        style == .glass ? Color.primary : .white.opacity(0.96)
+        if usesSemanticGlass { return .primary }
+        return usesDarkCustomForeground ? .black.opacity(0.87) : .white.opacity(0.96)
     }
 
     private var secondaryForeground: Color {
-        style == .glass
-            ? Color.secondary
+        if usesSemanticGlass { return .secondary }
+        return usesDarkCustomForeground
+            ? .black.opacity(0.65)
             : .white.opacity(
                 NotchContrastPolicy.secondaryTextOpacity(
                     backgroundHex: contrastBackgroundHex))
@@ -237,24 +257,29 @@ struct NotchLauncherPanelView: View {
     private var accentForeground: Color {
         // Glass에서도 기능 구분 아이콘은 Chap 액센트 블루를 유지한다.
         // 의미는 옆 텍스트가 중복 전달하므로 색만으로 정보를 구분하지 않는다.
-        if style == .glass { return DS.accent }
-        return NotchContrastPolicy.usesAccentForeground(
-            backgroundHex: contrastBackgroundHex)
-            ? DS.accent : .white.opacity(0.95)
+        if usesSemanticGlass { return DS.accent }
+        if NotchContrastPolicy.usesAccentForeground(backgroundHex: contrastBackgroundHex) {
+            return DS.accent
+        }
+        return usesDarkCustomForeground ? .black.opacity(0.87) : .white.opacity(0.95)
     }
 
     /// Glass 재질 위에는 시스템 vibrancy가 대비를 담당하므로 검정 그림자를
     /// 넣지 않는다. 비-Glass에서만 기존 윤곽 보정을 유지한다.
-    private var textShadowOpacity: Double { style == .glass ? 0 : 0.75 }
+    private var textShadowOpacity: Double {
+        usesSemanticGlass || usesDarkCustomForeground ? 0 : 0.75
+    }
 
     /// Apple식 hover: Glass에서는 semantic primary의 8% 회색 면이
     /// appearance에 맞춰 적응하고, 다른 스타일은 기존 흰색 면을 유지한다.
     private var rowHoverBackground: Color {
-        style == .glass ? Color.primary.opacity(0.08) : .white.opacity(0.16)
+        if usesSemanticGlass { return Color.primary.opacity(0.08) }
+        return usesDarkCustomForeground ? .black.opacity(0.08) : .white.opacity(0.16)
     }
 
     private var subtleSurface: Color {
-        style == .glass ? Color.primary.opacity(0.10) : .white.opacity(0.10)
+        if usesSemanticGlass { return Color.primary.opacity(0.10) }
+        return usesDarkCustomForeground ? .black.opacity(0.10) : .white.opacity(0.10)
     }
 
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
@@ -333,7 +358,7 @@ struct NotchLauncherPanelView: View {
         case .screenshots:
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
-                usesSemanticForeground: style == .glass)
+                usesSemanticForeground: usesSemanticGlass)
         }
     }
 
@@ -360,11 +385,13 @@ struct NotchLauncherPanelView: View {
                 NotchLauncherRow(
                     entry: entry,
                     primaryForeground: primaryForeground,
-                    shortcutForeground: style == .glass
+                    shortcutForeground: usesSemanticGlass
                         ? Color.secondary
-                        : .white.opacity(
-                            NotchContrastPolicy.tertiaryTextOpacity(
-                                backgroundHex: contrastBackgroundHex)),
+                        : (usesDarkCustomForeground
+                            ? .black.opacity(0.5)
+                            : .white.opacity(
+                                NotchContrastPolicy.tertiaryTextOpacity(
+                                    backgroundHex: contrastBackgroundHex))),
                     textShadowOpacity: textShadowOpacity,
                     hoverBackground: rowHoverBackground,
                     keycapBackground: subtleSurface
@@ -436,24 +463,6 @@ private struct NotchLauncherRow: View {
 
 /// 모든 노치 도커가 공유하는 채움 스타일.
 enum NotchDockStyle {
-    /// 도커 배경 2층 구조: 상단바 구간(topInset)은 노치의 연장이라 항상
-    /// 완전 검정, 노치 하단 경계 아래 콘텐츠 박스는 커스텀 색이 기존
-    /// 페이드(아래로 갈수록 사용자 불투명도)로 흘러내린다.
-    @ViewBuilder
-    static func dockBackground<S: Shape>(
-        shape: S, topInset: CGFloat, stripPlateauHalfWidth: CGFloat,
-        colorHex: String, bottomOpacity: Double
-    ) -> some View {
-        ZStack(alignment: .top) {
-            shape.fill(fade(color(fromHex: colorHex), bottomOpacity: bottomOpacity))
-            PressedStripShape(
-                plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset
-            )
-            .fill(Color.black)
-        }
-        .clipShape(shape)
-    }
-
     /// 위는 진하게, 아래로 갈수록 사용자 불투명도로 흘러내리는 공통 페이드.
     static func fade(_ color: Color, bottomOpacity: Double) -> LinearGradient {
         // 중간 지점은 하단 값과 완전 불투명 사이를 보간해 자연스럽게 흘러내린다.

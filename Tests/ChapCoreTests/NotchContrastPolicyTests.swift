@@ -45,4 +45,11 @@ struct NotchContrastPolicyTests {
         #expect(onBlack >= 0.6)
         #expect(onBlue <= 1)
     }
+    @Test("foreground switches to dark on light custom colors")
+    func foregroundSwitchesForLuminance() {
+        #expect(NotchContrastPolicy.usesDarkForeground(backgroundHex: "#FFFFFF"))
+        #expect(NotchContrastPolicy.usesDarkForeground(backgroundHex: "#F2F2F2"))
+        #expect(NotchContrastPolicy.usesDarkForeground(backgroundHex: "#000000") == false)
+        #expect(NotchContrastPolicy.usesDarkForeground(backgroundHex: "#3664FF") == false)
+    }
 }
