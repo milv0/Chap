@@ -2,6 +2,42 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.0.0] — 2026-09-26
+
+### Added
+
+- **Notch Launcher** — Optional four-slot command surface for Sites, Apps,
+  Folders, Scripts, and recent Screenshots, with drag, context-menu, and
+  VoiceOver configuration.
+- **Chap Drop** — Drag files to the notch, keep local copies in Chap's private
+  Drop folder, and open, drag out, or remove them from the dock's file row.
+- **Liquid Glass** — Apple Clear/Regular Glass with System/Light/Dark appearance
+  on macOS 26+, plus Custom color and opacity on macOS 14+.
+- **Notch Keep Awake status** — Blue coffee icon and live `h:mm:ss` countdown in
+  the open dock.
+
+### Changed
+
+- **Four launchables per type** — URL, App, Finder, and Shell lists are capped at
+  four each to keep the menu and notch predictable.
+- **Dedicated Notch settings** — Widget assignment, Custom appearance, and Glass
+  previews now live in their own Settings tab.
+- **Complete export** — Hidden-menu and notch choices are included in config
+  export; import preserves the destination Mac's device-specific notch values.
+- **Public website** — Rebuilt as a notch-first Chap 2 product experience.
+
+### Improved
+
+- **Responsive notch lifecycle** — Recalculates geometry after display,
+  resolution, arrangement, and clamshell changes.
+- **Non-blocking Drop pipeline** — Copies, folder scans, and thumbnail decoding
+  run off the main thread with failure feedback and thumbnail caching.
+- **Accessibility and contrast** — Keyboard and VoiceOver widget actions,
+  accessible Drop file actions, adaptive Custom colors, semantic Glass text,
+  and reduced-motion website behavior.
+
+---
+
 ## [1.3.8] — 2026-09-23
 
 ### Added

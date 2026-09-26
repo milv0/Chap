@@ -45,20 +45,25 @@ Do not replace these semantic colors with sampled HEX values in the app.
 
 ## Website Mapping
 
-The website uses a light macOS-style neutral base with Chap accent surfaces:
+The Chap 2 website uses a hardware-native dark stage rather than the previous
+light settings-window composition. It keeps the same fixed Chap accent and uses
+an ice-neutral contrast layer for the Mac display and trust sections.
 
 | CSS token | Value |
 |---|---:|
-| `--accent` | `#3664FF` |
-| `--accent-dark` | `#244CDC` |
-| `--accent-surface` | `#EBF0FF` |
-| `--guide-fill` | `rgba(54, 100, 255, 0.05)` |
-| `--guide-border` | `rgba(54, 100, 255, 0.60)` |
-| `--surface` | `#F5F5F7` |
-| `--card` | `#FFFFFF` |
-| `--text` | `#1D1D1F` |
-| `--text-secondary` | `#6E6E73` |
-| `--separator` | `#D9D9DE` |
+| `--blue` | `#3664FF` |
+| `--blue-deep` | `#244CDC` |
+| `--blue-light` | `#89A3FF` |
+| `--night` | `#05070B` |
+| `--night-soft` | `#0B0E15` |
+| `--panel` | `#11151E` |
+| `--ink` | `#F7F8FC` |
+| `--muted` | `#9EA7B7` |
+| `--paper` | `#EEF1F7` |
+| `--paper-ink` | `#141722` |
+| `--line` | `rgba(255, 255, 255, 0.11)` |
 
-The neutral surface and card values are stable web approximations, not
-replacements for AppKit semantic colors.
+The interactive hero is a CSS-rendered Mac display and notch dock; it uses no
+product screenshot or user data. Dark sections make the hardware notch the
+visual anchor, while light Chap Drop and trust sections create contrast without
+changing the app's `#3664FF` brand color.

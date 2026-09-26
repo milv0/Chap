@@ -39,7 +39,7 @@ extension AppDelegate {
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
-    /// Lightning 선택 + Keep Awake 활성 중이면 테마 블루로 색을 바꿔 상태를 표시한다.
+    /// Keep Awake 활성 중이면 선택된 아이콘을 테마 블루로 전환해 상태를 표시한다.
     func statusIconImage(accessible: Bool) -> NSImage? {
         statusIconImage(
             accessible: accessible, choice: config.statusBarIcon,
@@ -47,8 +47,8 @@ extension AppDelegate {
     }
 
     /// `choice`에 따라 상태바 아이콘을 결정한다. 권한이 없으면 항상 경고 심볼.
-    /// `keepAwakeActive`는 Lightning 아이콘에서만 색 전환에 쓰인다 (Default는
-    /// 커스텀 PNG 리소스라 색 전환을 적용하지 않는다).
+    /// `keepAwakeActive`는 두 아이콘 모두에 적용된다: Default는 커스텀 PNG의 알파
+    /// 마스크를 테마 블루로 틴트하고, Lightning은 심볼을 테마 블루로 렌더링한다.
     func statusIconImage(
         accessible: Bool, choice: StatusBarIconChoice, keepAwakeActive: Bool = false
     ) -> NSImage? {
@@ -180,40 +180,32 @@ extension AppDelegate {
     func buildMenu() {
         ChromeLauncher.configureWindowReuse(sites: config.sites)
         let menu = NSMenu()
-        let launchTypeOrder = Dictionary(
-            uniqueKeysWithValues: LaunchType.allCases.enumerated().map { ($1, $0) })
-        let sortedSites = config.sites.enumerated().sorted {
-            launchTypeOrder[$0.element.launchType, default: Int.max]
-                < launchTypeOrder[$1.element.launchType, default: Int.max]
-        }
-        var lastType: LaunchType? = nil
+        // 목록 구성은 ChapCore 정책이 단독 기준이다. 노치 패널도 같은 정책을 쓴다.
+        let sections = LauncherListPolicy.sections(
+            sites: config.sites, hiddenLaunchTypes: config.hiddenMenuLaunchTypes)
         var addedSiteItem = false
-        // 숨긴 섹션은 메뉴에서 제외한다. ⌥ 단축키는 config.sites 기준이라 계속 동작.
-        for (i, site) in sortedSites where !config.hiddenMenuLaunchTypes.contains(site.launchType) {
+        for (sectionIndex, section) in sections.enumerated() {
             // 타입이 바뀌면 구분선 추가
-            if let last = lastType, last != site.launchType {
+            if sectionIndex > 0 {
                 menu.addItem(.separator())
             }
-            lastType = site.launchType
-            let keyEquiv =
-                config.optionShortcutsEnabled ? site.shortcut?.lowercased() ?? "" : ""
-            let item = NSMenuItem(
-                title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
-            if !keyEquiv.isEmpty {
-                item.keyEquivalentModifierMask = .option
+            for entry in section.entries {
+                let site = entry.site
+                let keyEquiv =
+                    config.optionShortcutsEnabled ? site.shortcut?.lowercased() ?? "" : ""
+                let item = NSMenuItem(
+                    title: site.name, action: #selector(openSite(_:)), keyEquivalent: keyEquiv)
+                if !keyEquiv.isEmpty {
+                    item.keyEquivalentModifierMask = .option
+                }
+                item.image = NSImage(
+                    systemSymbolName: LauncherListPolicy.symbolName(for: section.launchType),
+                    accessibilityDescription: nil)
+                item.tag = entry.siteIndex
+                item.target = self
+                menu.addItem(item)
+                addedSiteItem = true
             }
-            let iconName: String
-            switch site.launchType {
-            case .url: iconName = "bolt.fill"
-            case .app: iconName = "app.fill"
-            case .finder: iconName = "folder.fill"
-            case .shell: iconName = "terminal.fill"
-            }
-            item.image = NSImage(systemSymbolName: iconName, accessibilityDescription: nil)
-            item.tag = i
-            item.target = self
-            menu.addItem(item)
-            addedSiteItem = true
         }
         if addedSiteItem {
             menu.addItem(.separator())
@@ -279,6 +271,60 @@ extension AppDelegate {
         menu.delegate = self
         statusItem.menu = menu
         configureGlobalHotKeys()
+        refreshNotchLauncher()
+    }
+
+    /// 노치 런처를 최신 config로 동기화한다. 메뉴와 같은 목록 정책을 쓰므로
+    /// 숨긴 섹션·순서가 항상 일치한다. 테스트에서는 창을 만들지 않는다.
+    func refreshNotchLauncher() {
+        guard !isRunningTests else { return }
+        notchLauncher.slotsProvider = { [weak self] in
+            guard let self else { return [] }
+            // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김
+            // 설정과 무관하게 모든 launch type 섹션에서 고른다.
+            let sections = LauncherListPolicy.sections(
+                sites: self.config.sites, hiddenLaunchTypes: [])
+            return self.config.notchWidgets.compactMap { widget in
+                switch widget {
+                case .none:
+                    return nil
+                case .screenshots:
+                    return .screenshots
+                case .drop:
+                    // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
+                    return nil
+                case .sites, .apps, .folders, .scripts:
+                    // 해당 타입의 런처가 없으면 칸을 건너뛴다.
+                    return sections.first { $0.launchType == widget.launchType }
+                        .map(NotchSlotContent.launchers)
+                }
+            }
+        }
+        notchLauncher.styleProvider = { [weak self] in
+            self?.config.notchPanelStyle ?? .custom
+        }
+        notchLauncher.glassAppearanceProvider = { [weak self] in
+            self?.config.notchGlassAppearance ?? .system
+        }
+        notchLauncher.glassMaterialProvider = { [weak self] in
+            guard let self else { return .clear }
+            return self.config.notchGlassAppearance.resolvedMaterial(
+                fallback: self.config.notchGlassMaterial)
+        }
+        notchLauncher.opacityProvider = { [weak self] in
+            self?.config.notchPanelOpacity ?? Config.notchPanelOpacityDefault
+        }
+        notchLauncher.colorProvider = { [weak self] in
+            self?.config.notchPanelColorHex ?? Config.notchPanelColorHexDefault
+        }
+        notchLauncher.awakeSessionEndProvider = { [weak self] in
+            self?.keepAwake.sessionEnd
+        }
+        notchLauncher.onLaunch = { [weak self] index in
+            guard let self, index >= 0, index < self.config.sites.count else { return }
+            self.launchSite(self.config.sites[index])
+        }
+        notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
 
     private func configureGlobalHotKeys() {

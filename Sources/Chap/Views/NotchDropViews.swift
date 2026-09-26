@@ -1,0 +1,162 @@
+import AppKit
+import SwiftUI
+import UniformTypeIdentifiers
+
+/// Finder식 파일 아이템: 위에 아이콘/썸네일, 아래에 파일명.
+/// 클릭으로 열고, 드래그로 꺼내고, hover의 x로 보관함에서 지운다.
+struct NotchDropFileItem: View {
+    let url: URL
+    /// Glass에서는 semantic primary, 다른 스타일은 고대비 흰색.
+    let primaryForeground: Color
+    /// Glass에서는 0, 다른 스타일은 기존 윤곽 보정값.
+    let textShadowOpacity: Double
+    /// appearance에 적응하는 hover 면.
+    let hoverBackground: Color
+    let onRemove: () -> Void
+
+    @State private var isHovered = false
+    @State private var thumbnail: NSImage?
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Button {
+                NSWorkspace.shared.open(url)
+            } label: {
+                VStack(spacing: 5) {
+                    Group {
+                        if let thumbnail {
+                            Image(nsImage: thumbnail)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } else {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                                .resizable()
+                        }
+                    }
+                    .frame(width: 36, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+
+                    Text(url.lastPathComponent)
+                        .font(.system(size: 10))
+                        .foregroundColor(primaryForeground)
+                        .shadow(
+                            color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                        )
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .frame(width: 68)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                        .fill(isHovered ? hoverBackground : Color.clear)
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // 포인터용 삭제 버튼은 open 버튼의 sibling이라 중첩 control이 아니다.
+            Button(action: onRemove) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 15, height: 15)
+                    .background(Circle().fill(DS.danger))
+                    .overlay(
+                        Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Circle())
+            .opacity(isHovered ? 1 : 0)
+            .allowsHitTesting(isHovered)
+            .accessibilityHidden(true)
+        }
+        .onHover { isHovered = $0 }
+        .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+        // VoiceOver/키보드에는 하나의 파일 요소와 명시적 actions를 제공한다.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(url.lastPathComponent)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { NSWorkspace.shared.open(url) }
+        .accessibilityAction(named: "Remove from Chap Drop", onRemove)
+        .task(id: url) {
+            thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 72)
+        }
+    }
+}
+
+/// 노치 왼쪽에 붙는 정사각형 Drop 배지 도커. 보관함에 파일이 있을 때만
+/// 표시되며, 아이콘과 파일 개수 배지를 보여준다.
+struct NotchDropBadgeView: View {
+    let count: Int
+
+    var body: some View {
+        ZStack {
+            // 노치 쪽(왼쪽)은 직선으로 하드웨어와 융합하고, 바깥(오른쪽)만
+            // 도커 문법을 따른다: 상단 오목 플레어 + 하단 볼록 라운드.
+            NotchBadgeShape(
+                flareRadius: NotchGeometry.dockFlareRadius,
+                bottomCornerRadius: NotchGeometry.badgeCornerRadius
+            )
+            .fill(Color.black)
+
+            // 콘텐츠는 노치 밖으로 보이는 구간(겹침~오른쪽 벽) 안에 정렬.
+            // 카운트 칩이 플레어가 깎아낸 투명 모서리로 나가지 않게 한다.
+            // 아이콘과 숫자 배지를 한 덩어리로 묶어 광학 보정도 함께 움직인다.
+            Image(systemName: "tray.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.85))
+                .overlay(alignment: .topTrailing) {
+                    Text("\(min(count, 99))")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 3.5)
+                        .padding(.vertical, 1)
+                        .background(Capsule().fill(DS.accent))
+                        // 아이콘 우상단 모서리에 걸치도록 살짝 바깥으로.
+                        .offset(x: 7, y: -6)
+                }
+                // 우상단 숫자 배지의 무게 때문에 기하 중앙이 아니라
+                // 왼쪽으로 4pt 민 광학 중앙에 둔다.
+                .offset(x: -4, y: 1)
+                .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
+                .padding(.trailing, NotchGeometry.dockFlareRadius)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            count == 1 ? "Chap Drop: 1 file" : "Chap Drop: \(count) files")
+    }
+}
+
+/// Drop 배지 실루엣. 노치 쪽(왼쪽) 변은 직선이라 하드웨어 노치와 그대로
+/// 융합하고, 바깥(오른쪽)만 상단 오목 플레어와 하단 볼록 라운드를 갖는다.
+/// 대칭인 NotchDockShape을 쓰면 노치 접합부에도 플레어·라운드가 파여
+/// 배지가 분리된 블롭처럼 보인다.
+struct NotchBadgeShape: Shape {
+    let flareRadius: CGFloat
+    let bottomCornerRadius: CGFloat
+    func path(in rect: CGRect) -> Path {
+        let fl = flareRadius
+        let br = bottomCornerRadius
+        var path = Path()
+
+        // 상단 왼쪽(노치 밑)에서 시작해 왼쪽 변은 직선으로 내려간다.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        // 하단 변 → 바깥쪽 볼록 라운드.
+        path.addLine(to: CGPoint(x: rect.maxX - fl - br, y: rect.maxY))
+        path.addArc(
+            center: CGPoint(x: rect.maxX - fl - br, y: rect.maxY - br), radius: br,
+            startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
+        // 바깥 벽을 올라가 오목 플레어로 상단 라인에 합류.
+        path.addLine(to: CGPoint(x: rect.maxX - fl, y: rect.minY + fl))
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.minY + fl), radius: fl,
+            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
+    }
+}

@@ -73,6 +73,48 @@ struct SettingsViewModelTests {
         #expect(vm.hasChanges == true)
     }
 
+    @Test func hasChangesDetectsNotchLauncherToggle() {
+        let vm = SettingsViewModel(sites: baseSites, notchLauncherEnabled: false)
+        vm.notchLauncherEnabled = true
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchPanelStyleChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelStyle: .custom)
+        vm.notchPanelStyle = .glass
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchGlassAppearanceChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchGlassAppearance: .system)
+        vm.notchGlassAppearance = .dark
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchGlassMaterialChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchGlassMaterial: .clear)
+        vm.notchGlassMaterial = .regular
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchPanelOpacityChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelOpacity: 0.6)
+        vm.notchPanelOpacity = 0.9
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchPanelColorChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchPanelColorHex: "#000000")
+        vm.notchPanelColorHex = "#1A2B3C"
+        #expect(vm.hasChanges == true)
+    }
+
+    @Test func hasChangesDetectsNotchWidgetChange() {
+        let vm = SettingsViewModel(sites: baseSites, notchWidgets: NotchWidget.defaultSlots)
+        vm.notchWidgets[0] = .screenshots
+        #expect(vm.hasChanges == true)
+    }
+
     @Test func onSaveCallbackReceivesCurrentState() {
         let vm = SettingsViewModel(sites: baseSites)
         var savedSites: [Site]?
@@ -101,7 +143,14 @@ struct SettingsViewModelTests {
                 launchAtLogin: vm.launchAtLogin,
                 optionShortcutsEnabled: vm.optionShortcutsEnabled,
                 statusBarIcon: vm.statusBarIcon,
-                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes))
+                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+                notchLauncherEnabled: vm.notchLauncherEnabled,
+                notchPanelStyle: vm.notchPanelStyle,
+                notchGlassAppearance: vm.notchGlassAppearance,
+                notchGlassMaterial: vm.notchGlassMaterial,
+                notchPanelOpacity: vm.notchPanelOpacity,
+                notchPanelColorHex: vm.notchPanelColorHex,
+                notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)
@@ -128,6 +177,9 @@ struct SettingsViewModelTests {
         vm.scheduleAutoSave()
 
         #expect(saved.wait(timeout: .now() + 1) == .success)
+        // 세마포어는 onSave 안에서 신호되므로 markSaved 완료를 보장하지 않는다.
+        // 큐를 비워 persist가 끝난 뒤에 검증한다.
+        queue.sync {}
         #expect(savedName == "Latest")
         #expect(!vm.hasChanges)
     }
@@ -147,5 +199,51 @@ struct SettingsViewModelTests {
 
         #expect(unexpectedSave.wait(timeout: .now() + 0.1) == .timedOut)
         #expect(vm.hasChanges)
+    }
+    @Test func exportConfigPreservesHiddenMenuAndNotchSettings() {
+        let vm = SettingsViewModel(
+            sites: baseSites,
+            hiddenMenuLaunchTypes: [.shell],
+            notchLauncherEnabled: true,
+            notchPanelStyle: .glass,
+            notchGlassAppearance: .dark,
+            notchGlassMaterial: .regular,
+            notchPanelOpacity: 0.8,
+            notchPanelColorHex: "#123456",
+            notchWidgets: [.screenshots, .sites, .none, .none])
+
+        let config = SettingsConfigTransfer.exportConfigValue(vm: vm)
+
+        #expect(config.hiddenMenuLaunchTypes == [.shell])
+        #expect(config.notchLauncherEnabled)
+        #expect(config.notchPanelStyle == .glass)
+        #expect(config.notchGlassAppearance == .dark)
+        #expect(config.notchGlassMaterial == .regular)
+        #expect(config.notchPanelOpacity == 0.8)
+        #expect(config.notchPanelColorHex == "#123456")
+        #expect(config.notchWidgets == [.screenshots, .sites, .none, .none])
+    }
+    @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
+        let vm = SettingsViewModel(sites: baseSites)
+        vm.sites[0].name = "Unsaved Site Draft"
+        vm.notchLauncherEnabled = true
+        vm.notchPanelStyle = .glass
+        vm.notchGlassAppearance = .dark
+        vm.notchGlassMaterial = .regular
+        vm.notchPanelOpacity = 0.8
+        vm.notchPanelColorHex = "#123456"
+        vm.notchWidgets = [.screenshots, .sites, .none, .none]
+
+        vm.markGlobalsSaved()
+
+        #expect(vm.originalNotchLauncherEnabled)
+        #expect(vm.originalNotchPanelStyle == .glass)
+        #expect(vm.originalNotchGlassAppearance == .dark)
+        #expect(vm.originalNotchGlassMaterial == .regular)
+        #expect(vm.originalNotchPanelOpacity == 0.8)
+        #expect(vm.originalNotchPanelColorHex == "#123456")
+        #expect(vm.originalNotchWidgets == [.screenshots, .sites, .none, .none])
+        #expect(vm.hasChanges)  // site draft remains unsaved
+        #expect(vm.originalSites[0].name != "Unsaved Site Draft")
     }
 }

@@ -29,6 +29,17 @@ extension AppDelegate {
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         buildMenu()
+        // 해상도·배치·외장 모니터·clamshell 변경 시 노치 창 프레임을 재계산한다.
+        screenParametersObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.pendingScreenRefresh?.cancel()
+            let work = DispatchWorkItem { [weak self] in self?.refreshNotchLauncher() }
+            self.pendingScreenRefresh = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+        }
         accessibilityController.onAccessibleChanged = { [weak self] accessible in
             self?.updateStatusIcon(accessible: accessible)
         }
@@ -44,6 +55,13 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         globalHotKeyManager.stop()
+        pendingScreenRefresh?.cancel()
+        pendingScreenRefresh = nil
+        if let screenParametersObserver {
+            NotificationCenter.default.removeObserver(screenParametersObserver)
+            self.screenParametersObserver = nil
+        }
+        notchLauncher.tearDown()
     }
 
     // MARK: - Welcome window
@@ -94,7 +112,14 @@ extension AppDelegate {
             launchAtLogin: config.launchAtLogin,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             statusBarIcon: config.statusBarIcon,
-            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes)
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: config.notchLauncherEnabled,
+            notchPanelStyle: config.notchPanelStyle,
+            notchGlassAppearance: config.notchGlassAppearance,
+            notchGlassMaterial: config.notchGlassMaterial,
+            notchPanelOpacity: config.notchPanelOpacity,
+            notchPanelColorHex: config.notchPanelColorHex,
+            notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
@@ -104,6 +129,13 @@ extension AppDelegate {
                 optionShortcutsEnabled: payload.optionShortcutsEnabled,
                 statusBarIcon: payload.statusBarIcon,
                 hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
+                notchLauncherEnabled: payload.notchLauncherEnabled,
+                notchPanelStyle: payload.notchPanelStyle,
+                notchGlassAppearance: payload.notchGlassAppearance,
+                notchGlassMaterial: payload.notchGlassMaterial,
+                notchPanelOpacity: payload.notchPanelOpacity,
+                notchPanelColorHex: payload.notchPanelColorHex,
+                notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
             if !result.isValid {
@@ -127,6 +159,13 @@ extension AppDelegate {
             let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled
             let previousHiddenMenuLaunchTypes = self.config.hiddenMenuLaunchTypes
             let previousStatusBarIcon = self.config.statusBarIcon
+            let previousNotchLauncherEnabled = self.config.notchLauncherEnabled
+            let previousNotchPanelStyle = self.config.notchPanelStyle
+            let previousNotchGlassAppearance = self.config.notchGlassAppearance
+            let previousNotchGlassMaterial = self.config.notchGlassMaterial
+            let previousNotchPanelOpacity = self.config.notchPanelOpacity
+            let previousNotchPanelColorHex = self.config.notchPanelColorHex
+            let previousNotchWidgets = self.config.notchWidgets
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -156,6 +195,16 @@ extension AppDelegate {
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
             {
                 DispatchQueue.main.async { self.buildMenu() }
+            } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
+                || previousNotchPanelStyle != newConfig.notchPanelStyle
+                || previousNotchGlassAppearance != newConfig.notchGlassAppearance
+                || previousNotchGlassMaterial != newConfig.notchGlassMaterial
+                || previousNotchPanelOpacity != newConfig.notchPanelOpacity
+                || previousNotchPanelColorHex != newConfig.notchPanelColorHex
+                || previousNotchWidgets != newConfig.notchWidgets
+            {
+                // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
+                DispatchQueue.main.async { self.refreshNotchLauncher() }
             }
             return true
         }

@@ -2,14 +2,18 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-1.3.8-orange)
+![Version](https://img.shields.io/badge/version-2.0.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
-- **Menubar Resident** — Always accessible from the status bar
+- **Notch Launcher** — An optional four-slot command surface that expands from the MacBook notch; the classic status menu always remains available
+- **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
+- **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
+- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals
+- **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
@@ -26,10 +30,13 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and auto-release on expiry or confirmed quit
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
+- **Focused Lists** — URL, App, Finder, and Shell each allow up to four launchables, keeping the menu and notch predictable
 
 ## Requirements
 
 - macOS 14.0+ (Sonoma)
+- A MacBook notch for the optional Notch Launcher; all classic menu and Option-shortcut features work without one
+- macOS 26+ (Tahoe) for Liquid Glass; Custom style works on macOS 14+
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
@@ -85,6 +92,13 @@ Stored at `~/.chap.json`:
   "launchAtLogin": false,
   "statusBarIcon": "default",
   "hiddenMenuLaunchTypes": [],
+  "notchLauncherEnabled": false,
+  "notchPanelStyle": "custom",
+  "notchGlassAppearance": "system",
+  "notchGlassMaterial": "clear",
+  "notchPanelOpacity": 0.6,
+  "notchPanelColorHex": "#000000",
+  "notchWidgets": ["sites", "apps", "folders", "scripts"],
   "sites": [
     {
       "name": "GitHub",
@@ -117,7 +131,15 @@ For URL entries, `reuseExistingWindow: true` enables the per-launchable,
 Chap-created Chrome window behavior described above. It does not reuse arbitrary
 tabs that happen to show the same URL.
 
-> **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch.
+> **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch. Legacy notch styles `black` and `iceberg` migrate to `custom`.
+
+### Notch Launcher and Chap Drop
+
+Enable the feature in **Settings → Notch**. Arrange four slots by dragging Sites, Apps, Folders, Scripts, or Screenshots into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+
+Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Light pairs with Clear, Dark pairs with Regular, and System follows macOS while allowing either material. Glass text uses native semantic foregrounds.
+
+Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 
 ## Direct Distribution (Developer ID)
 
@@ -151,11 +173,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 1.3.8
+Scripts/release.sh 2.0.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 1.3.8 --publish
+Scripts/release.sh 2.0.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

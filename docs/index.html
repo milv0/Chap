@@ -3,377 +3,404 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Launch any site, app, folder, or script with an Option shortcut — centered on the display you choose.">
-  <meta name="theme-color" content="#F5F5F7">
-  <title>Chap — One shortcut. Right where you want it.</title>
+  <meta name="description" content="Chap turns the MacBook notch into a four-slot launcher, file drop surface, and live Keep Awake status — while keeping Option shortcuts and the classic menu bar menu.">
+  <meta name="theme-color" content="#05070b">
+  <title>Chap 2 — Your MacBook notch, now useful.</title>
   <link rel="icon" href="assets/chap-icon-rounded.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --paper: #f5f5f7;
-      --ink: #1d1d1f;
-      --muted: #6e6e73;
-      --line: #d9d9de;
-      --soft: #ececf1;
-      --white: #fff;
+      color-scheme: dark;
+      --night: #05070b;
+      --night-soft: #0b0e15;
+      --panel: #11151e;
+      --panel-light: #181e2a;
+      --ink: #f7f8fc;
+      --muted: #9ea7b7;
+      --muted-strong: #c5cad4;
+      --line: rgb(255 255 255 / .11);
+      --line-strong: rgb(255 255 255 / .2);
       --blue: #3664ff;
-      --blue-dark: #244cdc;
-      --accent-surface: #ebf0ff;
-      --guide-fill: rgb(54 100 255 / .05);
-      --guide-border: rgb(54 100 255 / .6);
-      --radius: 18px;
+      --blue-light: #89a3ff;
+      --blue-deep: #244cdc;
+      --ice: #dfe6ff;
+      --paper: #eef1f7;
+      --paper-ink: #141722;
+      --paper-muted: #60697a;
       --display: "Bricolage Grotesque", sans-serif;
       --body: "DM Sans", sans-serif;
+      --radius-xl: 34px;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --shadow: 0 32px 90px rgb(0 0 0 / .36);
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { background: var(--paper); color: var(--ink); display: flex; flex-direction: column; font-family: var(--body); line-height: 1.5; margin: 0; min-height: 100svh; min-width: 320px; }
-    main { display: block; }
+    body { background: var(--night); color: var(--ink); font-family: var(--body); line-height: 1.55; margin: 0; min-width: 320px; overflow-x: hidden; }
+    body::before { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E"); content: ""; inset: 0; opacity: .035; pointer-events: none; position: fixed; z-index: 100; }
     a { color: inherit; text-decoration: none; }
-    a:focus-visible, button:focus-visible { outline: 3px solid rgb(49 92 255 / .35); outline-offset: 3px; }
-    button { font: inherit; }
-    ::selection { background: rgb(49 92 255 / .18); }
-    .shell { margin: 0 auto; width: min(1120px, calc(100% - 48px)); }
+    button { color: inherit; font: inherit; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--blue-light); outline-offset: 4px; }
+    ::selection { background: rgb(54 100 255 / .4); }
+    .shell { margin: 0 auto; width: min(1200px, calc(100% - 56px)); }
+    .skip-link { background: var(--ink); border-radius: 0 0 10px 10px; color: var(--night); font-size: .8rem; font-weight: 700; left: 16px; padding: .65rem .9rem; position: fixed; top: -60px; transition: top 160ms ease; z-index: 1000; }
+    .skip-link:focus { top: 0; }
+    .eyebrow { color: var(--blue-light); font-size: .72rem; font-weight: 700; letter-spacing: .15em; margin: 0 0 1rem; text-transform: uppercase; }
+    h1, h2, h3 { font-family: var(--display); }
 
-    .site-header { background: rgb(245 245 247 / .9); border-bottom: 1px solid rgb(217 217 222 / .8); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 10; }
-    .nav { align-items: center; display: flex; justify-content: space-between; min-height: 64px; }
-    .brand { align-items: center; display: inline-flex; font-family: var(--display); font-size: 1.08rem; font-weight: 700; gap: .6rem; letter-spacing: -.03em; }
-    .brand-mark { align-items: center; border-radius: 9px; display: inline-flex; height: 30px; justify-content: center; overflow: hidden; width: 30px; }
-    .brand-mark img { display: block; height: 100%; object-fit: cover; width: 100%; }
-    .nav-actions { align-items: center; display: flex; gap: .25rem; }
-    .nav-link { background: transparent; border: 0; border-radius: 9px; color: var(--muted); cursor: pointer; font-size: .82rem; font-weight: 600; min-height: 40px; padding: .55rem .7rem; }
-    .nav-link:hover { background: var(--soft); color: var(--ink); }
+    .site-header { background: rgb(5 7 11 / .72); border-bottom: 1px solid var(--line); backdrop-filter: blur(24px) saturate(150%); position: fixed; top: 0; width: 100%; z-index: 50; }
+    .nav { align-items: center; display: flex; justify-content: space-between; min-height: 68px; }
+    .brand { align-items: center; display: inline-flex; font-family: var(--display); font-size: 1.05rem; font-weight: 700; gap: .65rem; letter-spacing: -.03em; }
+    .brand img { border-radius: 10px; height: 32px; width: 32px; }
+    .brand-version { background: #172141; border: 1px solid #344a88; border-radius: 999px; color: var(--ice); font-family: var(--body); font-size: .64rem; font-weight: 700; letter-spacing: .1em; padding: .28rem .48rem; text-transform: uppercase; }
+    .nav-links { align-items: center; display: flex; gap: .25rem; }
+    .nav-link { border-radius: 10px; color: var(--muted); font-size: .8rem; font-weight: 600; padding: .65rem .78rem; }
+    .nav-link:hover { background: rgb(255 255 255 / .07); color: var(--ink); }
+    .nav-download { background: var(--ink); border-radius: 10px; color: var(--night); margin-left: .5rem; padding: .66rem .9rem; }
+    .nav-download:hover { background: var(--ice); }
 
-    .hero { padding: 7rem 0 7.5rem; width: 100%; }
-    .hero-grid { align-items: center; display: grid; gap: clamp(3rem, 6vw, 5.5rem); grid-template-columns: minmax(0, .85fr) minmax(500px, 1.15fr); }
-    .eyebrow { color: var(--blue); font-size: .74rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 1.1rem; text-transform: uppercase; }
-    h1 { font-family: var(--display); }
-    h1 { font-size: clamp(3.35rem, 6.3vw, 6.2rem); font-weight: 600; letter-spacing: -.075em; line-height: .93; margin: 0; max-width: 670px; }
-    h1 .hero-title-accent { color: var(--blue); }
-    .summary { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.12rem); margin: 1.6rem 0 0; max-width: 560px; }
-    .cta-row { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.8rem; }
-    .primary-button { align-items: center; background: var(--blue); border-radius: 12px; color: var(--white); display: inline-flex; font-size: .9rem; font-weight: 600; gap: .65rem; min-height: 50px; padding: .8rem 1.1rem .8rem 1.25rem; transition: background 180ms ease, transform 180ms ease; }
-    .primary-button:hover { background: var(--blue-dark); transform: translateY(-2px); }
-    .primary-button svg { height: 17px; width: 17px; }
-    .trust { color: var(--blue-dark); font-size: .76rem; font-weight: 600; }
+    .hero { min-height: 940px; overflow: hidden; padding: 10.5rem 0 6rem; position: relative; }
+    .hero::before { background: radial-gradient(circle at 50% 0%, rgb(54 100 255 / .34), transparent 38%), radial-gradient(circle at 85% 42%, rgb(80 116 255 / .12), transparent 30%); content: ""; inset: 0; pointer-events: none; position: absolute; }
+    .hero-copy { margin: 0 auto 4.5rem; max-width: 900px; position: relative; text-align: center; z-index: 1; }
+    h1 { font-size: clamp(3.8rem, 8.4vw, 8.2rem); font-weight: 600; letter-spacing: -.082em; line-height: .88; margin: 0; }
+    .hero-line-muted { color: #8993a6; display: block; }
+    .hero-line-bright { color: var(--ink); display: block; }
+    .hero-summary { color: var(--muted-strong); font-size: clamp(1rem, 1.7vw, 1.2rem); margin: 1.8rem auto 0; max-width: 720px; }
+    .hero-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .85rem; justify-content: center; margin-top: 2rem; }
+    .button-primary, .button-secondary { align-items: center; border: 1px solid transparent; border-radius: 14px; display: inline-flex; font-size: .86rem; font-weight: 700; gap: .6rem; min-height: 50px; padding: .75rem 1.15rem; transition: transform 180ms ease, background 180ms ease, border-color 180ms ease; }
+    .button-primary { background: var(--blue); box-shadow: 0 14px 44px rgb(54 100 255 / .28); color: white; }
+    .button-primary:hover { background: #4772ff; transform: translateY(-2px); }
+    .button-secondary { background: rgb(17 21 30 / .94); border-color: var(--line-strong); color: var(--ink); }
+    .button-secondary:hover { background: rgb(255 255 255 / .09); border-color: var(--line-strong); color: white; }
+    .button-primary svg { height: 17px; width: 17px; }
+    .hero-note { color: #7f899b; font-size: .72rem; margin-top: 1rem; }
 
-    .flow-card { background: var(--white); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 32px 80px rgb(30 30 24 / .12); overflow: hidden; }
-    .flow-header { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; min-height: 48px; padding: 0 1rem; }
-    .window-dots { display: flex; gap: 6px; }
-    .window-dots i { background: #d3d3ce; border-radius: 50%; display: block; height: 8px; width: 8px; }
-    .flow-header strong { font-family: var(--display); font-size: .8rem; letter-spacing: -.02em; }
-    .window-status { color: var(--muted); font-size: .68rem; font-weight: 600; }
-    .settings-layout { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 386px; }
-    .format-row { background: #f2f2ee; border-bottom: 1px solid var(--line); display: grid; gap: 3px; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: .7rem .8rem; }
-    .settings-sidebar-title { color: var(--muted); font-size: .58rem; font-weight: 800; grid-column: 1 / -1; letter-spacing: .1em; margin: 0 0 .2rem; text-transform: uppercase; }
-    .launch-type-tab { align-items: center; background: transparent; border: 0; border-radius: 8px; color: var(--muted); cursor: pointer; display: flex; font-size: .7rem; font-weight: 700; gap: .4rem; justify-content: center; min-height: 34px; padding: .5rem; text-align: center; transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease; }
-    .launch-type-tab::before { background: currentColor; border-radius: 50%; content: ""; height: 6px; opacity: .48; width: 6px; }
-    .launch-type-tab:hover { background: rgb(49 92 255 / .08); color: var(--ink); }
-    .launch-type-tab[aria-selected="true"] { background: var(--white); box-shadow: 0 1px 6px rgb(30 30 24 / .08); color: var(--blue); }
-    .launch-type-tab[aria-selected="true"]::before { opacity: 1; }
-    .flow-viewport { min-width: 0; }
-    .flow-slide { animation: panel-in 220ms ease-out; height: 100%; }
-    .flow-slide[hidden] { display: none; }
-    .settings-panel { display: flex; flex-direction: column; gap: 1rem; padding: 1.15rem 1.45rem 1.25rem; }
-    .settings-panel-header { align-items: flex-start; display: flex; }
-    .settings-eyebrow { color: var(--blue); font-size: .62rem; font-weight: 800; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
-    .settings-panel h2 { font-family: var(--display); font-size: 1.38rem; letter-spacing: -.045em; line-height: 1; margin: 0; }
-    .settings-form { display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) 94px; }
-    .setting-control { min-width: 0; }
-    .setting-control--full { grid-column: 1 / -1; }
-    .setting-control span { color: var(--muted); display: block; font-size: .58rem; font-weight: 800; letter-spacing: .08em; margin-bottom: .32rem; text-transform: uppercase; }
-    .setting-value { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; color: #373735; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .67rem; overflow: hidden; padding: .57rem .65rem; text-overflow: ellipsis; white-space: nowrap; }
-    .setting-value--shortcut { background: #ebf0ff; border-color: rgb(49 92 255 / .55); color: var(--blue); font-family: var(--display); font-size: .82rem; font-weight: 700; text-align: center; }
-    .settings-preview { background: var(--guide-fill); border: 1px solid rgb(54 100 255 / .2); border-radius: 12px; margin-top: auto; padding: .7rem .8rem; }
-    .preview-label { color: var(--muted); font-size: .57rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
-    .display-stage { align-items: center; display: grid; gap: .7rem; grid-template-columns: 1fr 74px; margin-top: .45rem; }
-    .display-summary strong { display: block; font-family: var(--display); font-size: .88rem; letter-spacing: -.025em; }
-    .display-summary span { color: var(--muted); display: block; font-size: .64rem; margin-top: .08rem; }
-    .display-map { background: var(--guide-fill); border: 1px solid var(--guide-border); border-radius: 7px; height: 48px; padding: 7px; position: relative; }
-    .display-map::before { border: 2px solid var(--blue); border-radius: 3px; content: ""; inset: 8px 13px; position: absolute; }
-    .display-map::after { background: var(--blue); border-radius: 2px; content: ""; height: 11px; left: 50%; position: absolute; top: 50%; transform: translate(-50%, -50%); width: 21px; }
-    .panel-symbol { align-items: center; background: var(--blue); border-radius: 12px; color: var(--white); display: flex; font-family: var(--display); font-size: 1.18rem; font-weight: 700; height: 44px; justify-content: center; width: 44px; }
-    .panel-symbol img { border-radius: 11px; display: block; height: 100%; object-fit: cover; width: 100%; }
-    .panel-symbol--folder { background: #e9f2ff; color: #3c82c8; font-size: 1.55rem; }
-    .panel-symbol--script { background: #1c1c1a; color: #b8ffc8; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; width: 72px; }
-    @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .mac-stage { background: linear-gradient(145deg, #cdd4dd, #f4f6f8 54%, #b9c2cd); border: 1px solid rgb(255 255 255 / .58); border-radius: 32px 32px 18px 18px; box-shadow: 0 40px 120px rgb(0 0 0 / .48), inset 0 1px 0 white; height: 470px; margin: 0 auto; max-width: 1120px; overflow: hidden; position: relative; transform: perspective(1400px) rotateX(2deg); transform-origin: bottom; }
+    .mac-stage::after { background: linear-gradient(115deg, transparent 0 40%, rgb(255 255 255 / .23) 50%, transparent 61%); content: ""; inset: 0; pointer-events: none; position: absolute; transform: translateX(-70%); }
+    .menu-strip { align-items: center; color: #151820; display: flex; font-size: .68rem; font-weight: 600; height: 34px; justify-content: space-between; padding: 0 18px; position: relative; z-index: 2; }
+    .menu-left, .menu-right { display: flex; gap: 1rem; }
+    .desktop-copy { color: #4a5361; left: 7%; position: absolute; top: 25%; }
+    .desktop-copy strong { color: #252b35; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
+    .desktop-copy span { display: block; font-size: .8rem; margin-top: .6rem; }
+    .desktop-card { background: rgb(255 255 255 / .48); border: 1px solid rgb(255 255 255 / .75); border-radius: 20px; box-shadow: 0 18px 50px rgb(44 53 64 / .12); height: 220px; position: absolute; right: 7%; top: 30%; width: 36%; }
+    .desktop-card::before, .desktop-card::after { background: rgb(68 79 95 / .1); border-radius: 999px; content: ""; height: 10px; left: 24px; position: absolute; right: 24px; top: 34px; }
+    .desktop-card::after { right: 40%; top: 58px; }
 
-    .origin { background: var(--accent-surface); border-bottom: 1px solid rgb(54 100 255 / .18); border-top: 1px solid rgb(54 100 255 / .18); color: var(--ink); padding: 2.75rem 0; scroll-margin-top: 64px; }
-    .origin-layout { align-items: center; display: grid; gap: 2.5rem; grid-template-columns: 112px minmax(0, 720px); justify-content: center; }
-    .origin-mark { border-radius: 21px; display: block; height: 96px; width: 96px; }
-    .origin-copy .eyebrow { color: var(--blue); }
-    .origin-copy h2 { font-family: var(--display); font-size: 2.5rem; font-weight: 600; letter-spacing: 0; line-height: 1; margin: 0; }
-    .origin-copy p:last-child { color: var(--muted); font-size: 1rem; margin: .8rem 0 0; max-width: 680px; }
+    .notch-unit { left: 50%; position: absolute; top: 0; transform: translateX(-50%); z-index: 8; }
+    .physical-notch { background: #000; border-radius: 0 0 12px 12px; height: 34px; margin: 0 auto; position: relative; width: 188px; z-index: 3; }
+    .physical-notch::after { background: #15171b; border: 1px solid #24272d; border-radius: 50%; content: ""; height: 6px; left: 50%; position: absolute; top: 10px; transform: translateX(-50%); width: 6px; }
+    .drop-badge { align-items: center; background: #000; border-radius: 0 0 8px 0; display: flex; height: 34px; justify-content: center; position: absolute; right: -35px; top: 0; width: 42px; }
+    .drop-badge svg { height: 15px; stroke: white; width: 15px; }
+    .drop-count { align-items: center; background: var(--blue); border-radius: 999px; color: #fff; display: flex; font-size: .55rem; font-weight: 700; height: 15px; justify-content: center; position: absolute; right: 0; top: 1px; width: 15px; }
+    .notch-dock { background: linear-gradient(180deg, #000 0 34px, rgb(12 17 27 / .92) 34px, rgb(24 31 47 / .82) 100%); border: 1px solid rgb(255 255 255 / .12); border-top: 0; border-radius: 0 0 24px 24px; box-shadow: 0 22px 52px rgb(0 0 0 / .32); left: 50%; opacity: 0; overflow: hidden; padding: 52px 22px 18px; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.45); transform-origin: top; transition: opacity 220ms ease, transform 420ms cubic-bezier(.2,.9,.2,1.08); width: min(760px, calc(100vw - 84px)); }
+    .mac-stage:hover .notch-dock, .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); }
+    .dock-columns { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dock-section h3 { align-items: center; color: #c7ceda; display: flex; font-family: var(--body); font-size: .68rem; font-weight: 600; gap: .4rem; margin: 0 0 .55rem; }
+    .dock-section h3 i { background: var(--blue); border-radius: 4px; display: block; height: 9px; width: 9px; }
+    .dock-section ul { list-style: none; margin: 0; padding: 0; }
+    .dock-section li { align-items: center; border-radius: 7px; color: #f4f6fa; display: flex; font-size: .7rem; justify-content: space-between; min-height: 28px; padding: .2rem .35rem; }
+    .dock-section li:hover { background: rgb(255 255 255 / .11); }
+    .key { background: rgb(255 255 255 / .1); border-radius: 5px; color: #b8c0cf; font-size: .55rem; padding: .16rem .28rem; }
+    .drop-row { align-items: center; border-top: 1px solid rgb(255 255 255 / .1); display: flex; gap: .7rem; margin-top: .8rem; padding-top: .75rem; }
+    .drop-file { align-items: center; display: flex; flex-direction: column; gap: .25rem; width: 56px; }
+    .drop-file i { align-items: center; background: linear-gradient(135deg, #f0f3ff, #91a9ff); border-radius: 7px; color: #263d8b; display: flex; font-size: .62rem; font-style: normal; font-weight: 700; height: 32px; justify-content: center; width: 36px; }
+    .drop-file span { color: #bdc5d3; font-size: .5rem; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .demo-control { background: rgb(255 255 255 / .86); border: 1px solid rgb(20 25 34 / .1); border-radius: 999px; bottom: 18px; color: #202630; cursor: pointer; font-size: .7rem; font-weight: 700; left: 50%; min-height: 38px; padding: .55rem .85rem; position: absolute; transform: translateX(-50%); z-index: 12; }
+    .demo-control:hover { background: #fff; }
 
-    .history { background: var(--paper); padding: clamp(3.5rem, 7vw, 6rem) 0; scroll-margin-top: 64px; }
-    .history-layout { display: grid; gap: clamp(2.5rem, 7vw, 6rem); grid-template-columns: minmax(220px, .7fr) minmax(0, 1.3fr); }
-    .history-intro { align-self: start; position: sticky; top: 104px; }
-    .history-intro h2 { font-family: var(--display); font-size: 2rem; font-weight: 600; letter-spacing: 0; line-height: 1.1; margin: 0; }
-    .history-intro p:last-child { color: var(--muted); margin: 1rem 0 0; max-width: 340px; }
-    .history-list { border-top: 1px solid var(--line); }
-    .history-entry { display: grid; gap: 1.25rem; grid-template-columns: 96px minmax(0, 1fr); padding: 1.6rem 0; }
-    .history-entry + .history-entry { border-top: 1px solid var(--line); }
-    .history-version { color: var(--blue); font-family: var(--display); font-size: .94rem; font-weight: 700; }
-    .history-copy h3 { font-family: var(--display); font-size: 1.16rem; letter-spacing: 0; line-height: 1.2; margin: 0; }
-    .history-copy p { color: var(--muted); font-size: .9rem; margin: .45rem 0 0; }
+    .proof-strip { border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); }
+    .proof-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .proof-item { padding: 1.6rem 1.2rem; text-align: center; }
+    .proof-item + .proof-item { border-left: 1px solid var(--line); }
+    .proof-item strong { display: block; font-family: var(--display); font-size: 1.15rem; letter-spacing: -.03em; }
+    .proof-item span { color: var(--muted); font-size: .7rem; }
+
+    .section { padding: clamp(5rem, 9vw, 9rem) 0; }
+    .section-heading { max-width: 760px; }
+    .section-heading h2 { font-size: clamp(2.6rem, 5vw, 5rem); font-weight: 600; letter-spacing: -.065em; line-height: .98; margin: 0; }
+    .section-heading p:last-child { color: var(--muted); font-size: 1rem; margin: 1.25rem 0 0; max-width: 640px; }
+
+    .feature-grid { display: grid; gap: 1rem; grid-template-columns: repeat(12, 1fr); margin-top: 3.5rem; }
+    .feature-card { background: linear-gradient(145deg, rgb(255 255 255 / .075), rgb(255 255 255 / .035)); border: 1px solid var(--line); border-radius: var(--radius-lg); min-height: 300px; overflow: hidden; padding: 1.6rem; position: relative; }
+    .feature-card h3 { font-size: 1.35rem; letter-spacing: -.04em; margin: 0; }
+    .feature-card p { color: var(--muted); font-size: .85rem; margin: .6rem 0 0; max-width: 360px; }
+    .feature-card--wide { grid-column: span 7; }
+    .feature-card--narrow { grid-column: span 5; }
+    .feature-card--half { grid-column: span 6; }
+    .card-number { color: var(--blue-light); font-family: var(--display); font-size: .64rem; font-weight: 700; letter-spacing: .12em; margin-bottom: 1rem; }
+    .shortcut-cloud { bottom: 1.6rem; display: flex; flex-wrap: wrap; gap: .6rem; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .shortcut-chip { background: rgb(255 255 255 / .08); border: 1px solid var(--line); border-radius: 10px; color: #d9deea; font-size: .75rem; padding: .5rem .65rem; }
+    .shortcut-chip b { color: var(--blue-light); font-weight: 700; }
+    .screen-map { border: 1px solid var(--line-strong); border-radius: 15px; bottom: 1.6rem; height: 130px; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .screen-map::before { border: 2px solid var(--blue); border-radius: 6px; content: ""; height: 74px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 116px; }
+    .screen-map::after { background: var(--blue); border-radius: 3px; content: ""; height: 18px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 34px; }
+    .glass-samples { bottom: 1.6rem; display: grid; gap: .75rem; grid-template-columns: repeat(2, 1fr); left: 1.6rem; position: absolute; right: 1.6rem; }
+    .glass-sample { align-items: flex-end; backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgb(255 255 255 / .18); border-radius: 16px; display: flex; font-size: .7rem; font-weight: 700; height: 116px; padding: .8rem; }
+    .glass-sample:first-child { background: rgb(235 240 255 / .16); }
+    .glass-sample:last-child { background: rgb(19 24 34 / .7); }
+    .awake-clock { align-items: center; background: #000; border-radius: 0 0 14px 14px; bottom: 1.6rem; display: flex; font-variant-numeric: tabular-nums; gap: .6rem; height: 58px; justify-content: center; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .awake-clock svg { fill: var(--blue); height: 18px; width: 18px; }
+    .awake-clock span { font-family: var(--display); font-size: 1.2rem; }
+
+    .drop-story { background: var(--paper); color: var(--paper-ink); overflow: hidden; }
+    .drop-layout { align-items: center; display: grid; gap: clamp(3rem, 7vw, 7rem); grid-template-columns: .85fr 1.15fr; }
+    .drop-copy .eyebrow { color: var(--blue-deep); }
+    .drop-copy h2 { font-size: clamp(2.8rem, 5vw, 5.4rem); font-weight: 600; letter-spacing: -.07em; line-height: .96; margin: 0; }
+    .drop-copy p { color: var(--paper-muted); margin: 1.2rem 0 0; max-width: 510px; }
+    .drop-visual { background: #dfe4ec; border: 1px solid #cbd2dc; border-radius: 28px; box-shadow: 0 32px 70px rgb(33 43 58 / .17); min-height: 450px; overflow: hidden; position: relative; }
+    .drop-visual::before { background: linear-gradient(135deg, #fff, #eef1f5); border: 1px solid #d3d8df; border-radius: 17px; content: ""; height: 230px; left: 12%; position: absolute; top: 22%; transform: rotate(-5deg); width: 190px; }
+    .drop-visual::after { background: linear-gradient(135deg, #fff, #e1e7f0); border: 1px solid #ccd3de; border-radius: 17px; content: ""; height: 210px; left: 24%; position: absolute; top: 30%; transform: rotate(7deg); width: 180px; }
+    .drop-target { align-items: center; background: rgb(5 7 11 / .78); border: 1px solid rgb(255 255 255 / .18); border-radius: 24px; backdrop-filter: blur(22px); color: white; display: flex; flex-direction: column; gap: .75rem; height: 210px; justify-content: center; position: absolute; right: 8%; top: 26%; width: 58%; z-index: 3; }
+    .drop-target svg { color: var(--blue-light); height: 34px; width: 34px; }
+    .drop-target strong { font-family: var(--display); font-size: 1.35rem; }
+    .drop-target span { color: #bac3d2; font-size: .72rem; }
+
+    .types { background: #080b11; }
+    .type-list { border-top: 1px solid var(--line); margin-top: 3.5rem; }
+    .type-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 1.5rem; grid-template-columns: 64px 180px 1fr auto; min-height: 120px; padding: 1rem 0; }
+    .type-icon { align-items: center; background: rgb(54 100 255 / .13); border: 1px solid rgb(93 128 255 / .2); border-radius: 16px; color: var(--blue-light); display: flex; font-family: var(--display); font-size: 1rem; font-weight: 700; height: 54px; justify-content: center; width: 54px; }
+    .type-row h3 { font-size: 1.25rem; letter-spacing: -.04em; margin: 0; }
+    .type-row p { color: var(--muted); font-size: .84rem; margin: 0; max-width: 590px; }
+    .type-meta { color: #8e98aa; font-size: .7rem; text-align: right; }
+
+    .trust-section { background: var(--paper); color: var(--paper-ink); }
+    .trust-layout { display: grid; gap: 5rem; grid-template-columns: .8fr 1.2fr; }
+    .trust-layout .eyebrow { color: var(--blue-deep); }
+    .trust-layout h2 { font-size: clamp(2.5rem, 4.5vw, 4.5rem); letter-spacing: -.065em; line-height: .98; margin: 0; }
+    .trust-list { border-top: 1px solid #ccd2dc; }
+    .trust-item { border-bottom: 1px solid #ccd2dc; display: grid; gap: 1rem; grid-template-columns: 36px 1fr; padding: 1.25rem 0; }
+    .trust-item b { color: var(--blue-deep); font-family: var(--display); }
+    .trust-item strong { display: block; font-size: .92rem; }
+    .trust-item p { color: var(--paper-muted); font-size: .8rem; margin: .25rem 0 0; }
+
+    .history { background: var(--night); }
+    .timeline { border-left: 1px solid var(--line); margin: 3.5rem 0 0 7px; padding-left: 2.2rem; }
+    .timeline-item { padding: 0 0 2.4rem; position: relative; }
+    .timeline-item::before { background: var(--night); border: 2px solid var(--blue); border-radius: 50%; content: ""; height: 12px; left: calc(-2.2rem - 7px); position: absolute; top: .25rem; width: 12px; }
+    .timeline-version { color: var(--blue-light); font-family: var(--display); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+    .timeline-item h3 { font-size: 1.25rem; margin: .35rem 0 0; }
+    .timeline-item p { color: var(--muted); font-size: .82rem; margin: .45rem 0 0; max-width: 650px; }
+
+    .final-cta { overflow: hidden; padding: 7rem 0; position: relative; text-align: center; }
+    .final-cta::before { background: radial-gradient(circle, rgb(54 100 255 / .3), transparent 65%); content: ""; height: 600px; left: 50%; position: absolute; top: 0; transform: translate(-50%,-25%); width: 900px; }
+    .final-cta-inner { position: relative; }
+    .final-cta h2 { font-size: clamp(3rem, 7vw, 6.8rem); letter-spacing: -.075em; line-height: .93; margin: 0 auto; max-width: 900px; }
+    .final-cta p { color: var(--muted); margin: 1.2rem auto 2rem; max-width: 560px; }
 
     .footer { border-top: 1px solid var(--line); }
-    .footer-inner { align-items: center; display: flex; font-size: .75rem; justify-content: space-between; min-height: 76px; }
-    .footer-links { color: var(--muted); display: flex; gap: 1.1rem; }
-    .footer-links a:hover { color: var(--blue); }
+    .footer-inner { align-items: center; color: var(--muted); display: flex; font-size: .72rem; justify-content: space-between; min-height: 82px; }
+    .footer-links { display: flex; gap: 1rem; }
+    .footer-links a { border-radius: 7px; display: inline-flex; min-height: 28px; padding: .3rem .2rem; }
+    .footer-links a:hover { color: white; }
 
-    @media (max-width: 860px) {
-      .hero-grid { grid-template-columns: 1fr; }
-      .hero-copy { text-align: center; }
-      .summary { margin-left: auto; margin-right: auto; }
-      .cta-row { justify-content: center; }
-      .flow-card { margin: 0 auto; max-width: 620px; width: 100%; }
-      .origin-layout { gap: 2rem; grid-template-columns: 96px minmax(0, 1fr); }
-      .history-layout { grid-template-columns: 1fr; }
-      .history-intro { position: static; }
+    @media (max-width: 900px) {
+      .shell { width: min(100% - 36px, 760px); }
+      .hero { min-height: auto; padding-top: 9rem; }
+      .mac-stage { height: 430px; }
+      .notch-dock { width: min(680px, calc(100vw - 48px)); }
+      .dock-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .proof-grid { grid-template-columns: repeat(2, 1fr); }
+      .proof-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+      .proof-item:nth-child(4) { border-top: 1px solid var(--line); }
+      .feature-card--wide, .feature-card--narrow, .feature-card--half { grid-column: span 12; }
+      .drop-layout, .trust-layout { grid-template-columns: 1fr; }
+      .drop-copy { max-width: 650px; }
+      .type-row { grid-template-columns: 54px 140px 1fr; }
+      .type-meta { display: none; }
     }
-    @media (max-width: 560px) {
-      .shell { width: min(100% - 28px, 520px); }
-      .nav { min-height: 58px; }
-      .nav-link { display: none; }
-      .hero { padding: 2.75rem 0 3.25rem; }
-      .hero-grid { gap: 1.5rem; }
-      h1 { font-size: clamp(2.8rem, 14vw, 3.65rem); }
-      .summary { font-size: .94rem; margin-top: 1.15rem; }
-      .cta-row { align-items: stretch; flex-direction: column; margin-top: 1.35rem; }
-      .primary-button { justify-content: center; width: 100%; }
-      .trust { text-align: center; }
-      .flow-card { border-radius: 18px; }
-      .settings-layout { grid-template-columns: 1fr; min-height: 0; }
-      .format-row { border-bottom: 1px solid var(--line); border-right: 0; display: grid; gap: 3px; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: .45rem; }
-      .settings-sidebar-title { display: none; }
-      .launch-type-tab { font-size: .55rem; justify-content: center; min-height: 32px; padding: .4rem .15rem; }
-      .launch-type-tab::before { display: none; }
-      .settings-panel { gap: .85rem; padding: 1rem; }
-      .settings-panel h2 { font-size: 1.2rem; }
-      .settings-form { grid-template-columns: minmax(0, 1fr) 72px; }
-      .setting-value { font-size: .58rem; padding: .5rem; }
-      .settings-preview { padding: .6rem .65rem; }
-      .display-stage { grid-template-columns: 1fr 64px; }
-      .display-map { height: 42px; }
-      .flow-header { min-height: 44px; }
-      .flow-header strong { font-size: .74rem; }
-      .format-row { gap: 2px; margin: .55rem .65rem .1rem; padding: 3px; }
-      .launch-type-tab { font-size: .58rem; letter-spacing: .05em; min-height: 38px; padding: .45rem .2rem; }
-      .flow-viewport { min-height: 142px; }
-      .flow { gap: 0; grid-template-columns: 1fr 18px 1fr 18px 1fr; padding: .7rem; }
-      .flow-step { min-height: 118px; padding: .55rem .3rem; }
-      .flow-step small { font-size: .58rem; margin-bottom: .5rem; }
-      .flow-step strong { font-size: .76rem; line-height: 1.25; margin-top: .5rem; }
-      .flow-arrow { font-size: .78rem; }
-      .keycap-group { gap: .22rem; }
-      .keycap-plus { font-size: .67rem; }
-      .keycap { border-radius: 8px; font-size: .95rem; min-width: 36px; padding: .5rem .35rem .4rem; }
-      .keycap--option { min-width: 45px; }
-      .app-icon { border-radius: 10px; font-size: 1.05rem; height: 44px; width: 44px; }
-      .chrome-window { border-radius: 8px; height: 48px; width: 72px; }
-      .chrome-window-bar { height: 14px; }
-      .chrome-window-page { height: 19px; margin: 6px auto; width: 48px; }
-      .finder-folder-icon { height: 46px; width: 54px; }
-      .display-icon { height: 48px; width: 68px; }
-      .display-icon::before { height: 27px; width: 35px; }
-      .origin { padding: 2rem 0; }
-      .origin-layout { gap: 1rem; grid-template-columns: 1fr; text-align: center; }
-      .origin-mark { border-radius: 18px; height: 80px; margin: 0 auto; width: 80px; }
-      .origin-copy .eyebrow { margin-bottom: .6rem; }
-      .origin-copy h2 { font-size: 2rem; }
-      .origin-copy p:last-child { font-size: .94rem; margin-top: .7rem; }
-      .history { padding: 3rem 0; }
-      .history-layout { gap: 2rem; }
-      .history-intro h2 { font-size: 1.75rem; }
-      .history-entry { gap: .55rem; grid-template-columns: 1fr; padding: 1.35rem 0; }
-      .footer-inner { align-items: flex-start; flex-direction: column; gap: .3rem; justify-content: center; min-height: 58px; }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 24px, 520px); }
+      .site-header { position: absolute; }
+      .nav { min-height: 60px; }
+      .nav-links .nav-link:not(.nav-download) { display: none; }
+      .hero { padding: 7.5rem 0 3.5rem; }
+      h1 { font-size: clamp(3rem, 17vw, 4.8rem); }
+      .hero-copy { margin-bottom: 2.5rem; }
+      .hero-actions { align-items: stretch; flex-direction: column; }
+      .button-primary, .button-secondary { justify-content: center; width: 100%; }
+      .mac-stage { border-radius: 20px 20px 12px 12px; height: 410px; }
+      .menu-left span:not(:first-child), .menu-right span:not(:last-child) { display: none; }
+      .physical-notch { width: 134px; }
+      .notch-dock { padding-left: 14px; padding-right: 14px; width: calc(100vw - 34px); }
+      .dock-columns { gap: 12px; }
+      .dock-section:nth-child(n+3) { display: none; }
+      .desktop-card { display: none; }
+      .desktop-copy { left: 9%; right: 9%; text-align: center; top: 33%; }
+      .proof-item { padding: 1.2rem .5rem; }
+      .section { padding: 4.5rem 0; }
+      .section-heading h2 { font-size: 2.75rem; }
+      .feature-grid { margin-top: 2.25rem; }
+      .feature-card { min-height: 270px; }
+      .drop-visual { min-height: 360px; }
+      .drop-target { left: 8%; right: 8%; width: auto; }
+      .type-row { gap: .85rem; grid-template-columns: 48px 1fr; min-height: 108px; }
+      .type-row p { grid-column: 2; }
+      .footer-inner { align-items: flex-start; flex-direction: column; gap: .35rem; justify-content: center; min-height: 72px; }
     }
+
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      *, *::before, *::after { animation-duration: .001ms !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
     }
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="site-header">
-    <nav class="shell nav" data-i18n-aria-label="navLabel" aria-label="Main navigation">
-      <a class="brand" href="/Chap/" data-i18n-aria-label="homeLabel" aria-label="Chap home">
-        <span class="brand-mark" aria-hidden="true"><img src="assets/chap-icon-rounded.png" alt="" width="30" height="30"></span>Chap
+    <nav class="shell nav" aria-label="Main navigation">
+      <a class="brand" href="/Chap/" aria-label="Chap home">
+        <img src="assets/chap-icon-rounded.png" alt="" width="32" height="32">
+        <span>Chap</span><span class="brand-version">2.0</span>
       </a>
-      <div class="nav-actions">
-        <a class="nav-link" href="#why-chap" data-i18n="originNav">Why Chap?</a>
-        <a class="nav-link" href="#history" data-i18n="historyNav">History</a>
+      <div class="nav-links">
+        <a class="nav-link" href="#features">Features</a>
+        <a class="nav-link" href="#launchers">Launchers</a>
+        <a class="nav-link" href="#history">History</a>
+        <a class="nav-link nav-download" href="#download">Download</a>
       </div>
     </nav>
   </header>
 
-  <main>
+  <main id="main-content">
     <section class="hero" aria-labelledby="hero-title">
-      <div class="shell hero-grid">
+      <div class="shell">
         <div class="hero-copy">
-          <p class="eyebrow" data-i18n="eyebrow">The Option-key launcher for macOS</p>
-          <h1 id="hero-title"><span data-i18n="heroTitlePrimary">Press Option.</span><br><span class="hero-title-accent" data-i18n="heroTitleAccent">Open it centered.</span></h1>
-          <p class="summary" data-i18n="summary">Pair Option with a letter. Chap opens your saved site, app, folder, or script at the size and display you chose.</p>
-          <div class="cta-row">
-            <a class="primary-button" href="https://github.com/milv0/Chap/releases/download/v1.3.8/Chap-1.3.8-36.pkg" rel="noreferrer">
-              <span data-i18n="install">Install Chap</span>
+          <p class="eyebrow">Meet Chap 2 · Notch-native for macOS</p>
+          <h1 id="hero-title"><span class="hero-line-muted">Your MacBook notch.</span><span class="hero-line-bright">Now useful.</span></h1>
+          <p class="hero-summary">Your launchers, screenshots, dropped files, and Keep Awake status live where your eyes already are. The classic menu bar menu and Option shortcuts stay exactly where you expect them.</p>
+          <div class="hero-actions">
+            <a class="button-primary" href="https://github.com/milv0/Chap/releases/download/v2.0.0/Chap-2.0.0-37.pkg" rel="noreferrer">
+              Install Chap
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </a>
-            <a class="nav-link" href="https://github.com/milv0/Chap/releases/download/v1.3.8/Chap-1.3.8-36.dmg" rel="noreferrer" data-i18n="dmg">Manual install (DMG)</a>
-            <span class="trust" data-i18n="trust">✓ Apple notarized · macOS 14+</span>
+            <a class="button-secondary" href="https://github.com/milv0/Chap/releases/download/v2.0.0/Chap-2.0.0-37.dmg" rel="noreferrer">Manual install · DMG</a>
           </div>
+          <p class="hero-note">Apple notarized · macOS 14+ · Glass requires macOS 26+</p>
         </div>
 
-        <div class="flow-card" data-carousel role="region" aria-roledescription="carousel" data-i18n-aria-label="carouselLabel" aria-label="Chap settings launch type examples" tabindex="0">
-          <div class="flow-header">
-            <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
-            <strong data-i18n="settingsTitle">Chap Settings</strong>
-            <span class="window-status" data-i18n="settingsStatus">Ready to launch</span>
+        <div class="mac-stage demo-open" data-notch-demo role="region" aria-label="Interactive Chap notch launcher preview">
+          <div class="menu-strip" aria-hidden="true"><div class="menu-left"><span>●</span><span>Finder</span><span>File</span><span>Edit</span></div><div class="menu-right"><span>⌁</span><span>100%</span><span>Sat 9:41</span></div></div>
+          <div class="desktop-copy" aria-hidden="true"><strong>Stay in flow.</strong><span>Bring a file toward the notch.</span></div>
+          <div class="desktop-card" aria-hidden="true"></div>
+          <div class="notch-unit" aria-hidden="true">
+            <div class="physical-notch"></div>
+            <div class="drop-badge"><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h5l2 2h7v8H5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 4v8m0 0 3-3m-3 3-3-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><span class="drop-count">3</span></div>
           </div>
-          <div class="settings-layout">
-            <div class="format-row" role="tablist" data-i18n-aria-label="settingsLaunchTypes" aria-label="Launch types">
-              <p class="settings-sidebar-title" data-i18n="settingsLaunchTypes">Launch types</p>
-              <button class="launch-type-tab" id="launch-tab-url" type="button" role="tab" data-carousel-select="0" aria-controls="launch-panel-url" aria-selected="true" tabindex="0">URL</button>
-              <button class="launch-type-tab" id="launch-tab-app" type="button" role="tab" data-carousel-select="1" aria-controls="launch-panel-app" aria-selected="false" tabindex="-1">APP</button>
-              <button class="launch-type-tab" id="launch-tab-finder" type="button" role="tab" data-carousel-select="2" aria-controls="launch-panel-finder" aria-selected="false" tabindex="-1">FINDER</button>
-              <button class="launch-type-tab" id="launch-tab-script" type="button" role="tab" data-carousel-select="3" aria-controls="launch-panel-script" aria-selected="false" tabindex="-1">SCRIPT</button>
+          <div class="notch-dock" aria-hidden="true">
+            <div class="dock-columns">
+              <section class="dock-section"><h3><i></i>Screenshots</h3><ul><li>Homepage.png</li><li>Reference.png</li></ul></section>
+              <section class="dock-section"><h3><i></i>Apps</h3><ul><li>Notes <span class="key">⌥N</span></li><li>Terminal <span class="key">⌥T</span></li></ul></section>
+              <section class="dock-section"><h3><i></i>Folders</h3><ul><li>Projects</li><li>Downloads</li></ul></section>
+              <section class="dock-section"><h3><i></i>Scripts</h3><ul><li>Build</li><li>Deploy</li></ul></section>
             </div>
-            <div class="flow-viewport">
-              <section class="flow-slide" id="launch-panel-url" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-url">
-                <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">URL</p><h2 data-i18n="urlName">Chap website</h2></div></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="urlName">Chap website</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsAddress">Address</span><div class="setting-value">https://milv0.github.io/Chap</div></div></div>
-                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
-                </div>
-              </section>
-              <section class="flow-slide" id="launch-panel-app" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-app" hidden>
-                <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">APP</p><h2>Chap.app</h2></div></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value">Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsApplication">Application</span><div class="setting-value">/Applications/Chap.app</div></div></div>
-                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
-                </div>
-              </section>
-              <section class="flow-slide" id="launch-panel-finder" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-finder" hidden>
-                <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">FINDER</p><h2 data-i18n="finderName">Project files</h2></div></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="finderName">Project files</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsFolder">Folder</span><div class="setting-value">~/Projects/Chap</div></div></div>
-                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsDisplay">Display</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsScreen">Studio Display</strong><span data-i18n="settingsCentered">Centered at launch</span></div><div class="display-map" aria-hidden="true"></div></div></div>
-                </div>
-              </section>
-              <section class="flow-slide" id="launch-panel-script" data-carousel-slide role="tabpanel" aria-labelledby="launch-tab-script" hidden>
-                <div class="settings-panel">
-                  <div class="settings-panel-header"><div><p class="settings-eyebrow">SCRIPT</p><h2 data-i18n="scriptName">Open Chap</h2></div></div>
-                  <div class="settings-form"><div class="setting-control"><span data-i18n="settingsName">Name</span><div class="setting-value" data-i18n="scriptName">Open Chap</div></div><div class="setting-control"><span data-i18n="settingsShortcut">Shortcut</span><div class="setting-value setting-value--shortcut">⌥ C</div></div><div class="setting-control setting-control--full"><span data-i18n="settingsScript">Script</span><div class="setting-value">open -a Chap</div></div></div>
-                  <div class="settings-preview"><span class="preview-label" data-i18n="settingsRun">Run</span><div class="display-stage"><div class="display-summary"><strong data-i18n="settingsShell">Your shell</strong><span data-i18n="settingsShellDetail">No window placement needed</span></div><div class="panel-symbol panel-symbol--script" aria-hidden="true">$ chap</div></div></div>
-                </div>
-              </section>
-            </div>
+            <div class="drop-row"><div class="drop-file"><i>PNG</i><span>Shot.png</span></div><div class="drop-file"><i>PDF</i><span>Brief.pdf</span></div><div class="drop-file"><i>ZIP</i><span>Assets.zip</span></div></div>
           </div>
+          <button class="demo-control" type="button" data-demo-toggle aria-expanded="true">Close notch demo</button>
         </div>
       </div>
     </section>
 
-    <section class="origin" id="why-chap" aria-labelledby="origin-title">
-      <div class="shell origin-layout">
-        <img class="origin-mark" src="assets/chap-icon-rounded.png" alt="" width="128" height="128">
-        <div class="origin-copy">
-          <p class="eyebrow" data-i18n="originEyebrow">Why Chap?</p>
-          <h2 id="origin-title" data-i18n="originTitle">Chap! Straight to it.</h2>
-          <p data-i18n="originBody">The name comes from a seal's quick chap-chap call. Just as a seal glides swiftly through water, Chap uses one Option shortcut to take you straight to an app, URL, folder, or script.</p>
+    <section class="proof-strip" aria-label="Chap at a glance">
+      <div class="shell proof-grid">
+        <div class="proof-item"><strong>4 slots</strong><span>Drag in the widgets you need</span></div>
+        <div class="proof-item"><strong>4 launch types</strong><span>URL · App · Finder · Shell</span></div>
+        <div class="proof-item"><strong>One gesture</strong><span>Hover the notch or press Option</span></div>
+        <div class="proof-item"><strong>Zero lock-in</strong><span>Plain JSON config, import and export</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="shell">
+        <div class="section-heading">
+          <p class="eyebrow">A quiet command surface</p>
+          <h2 id="features-title">More capability. Less chrome.</h2>
+          <p>Chap 2 treats the notch as hardware, not decoration. It expands only when you ask, preserves the native menu fallback, and adapts to your display setup.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card feature-card--wide">
+            <div class="card-number">01 · NOTCH LAUNCHER</div><h3>Four slots. Your order.</h3><p>Drag Sites, Apps, Folders, Scripts, or Screenshots into the Notch settings board. Each launcher type stays intentionally capped at four.</p>
+            <div class="shortcut-cloud" aria-hidden="true"><span class="shortcut-chip"><b>1</b> Screenshots</span><span class="shortcut-chip"><b>2</b> Apps</span><span class="shortcut-chip"><b>3</b> Folders</span><span class="shortcut-chip"><b>4</b> Scripts</span></div>
+          </article>
+          <article class="feature-card feature-card--narrow">
+            <div class="card-number">02 · EXACT PLACEMENT</div><h3>Every window lands where intended.</h3><p>Choose a display and size preset. Chap centers the window, reads the Accessibility bounds back, and corrects apps that clamp their size.</p><div class="screen-map" aria-hidden="true"></div>
+          </article>
+          <article class="feature-card feature-card--half">
+            <div class="card-number">03 · LIQUID GLASS</div><h3>Clear by day. Regular by night.</h3><p>On macOS 26+, Apple Liquid Glass uses semantic text, Clear/Regular materials, and System/Light/Dark appearances. Custom color remains available everywhere else.</p><div class="glass-samples" aria-hidden="true"><div class="glass-sample">Clear · Light</div><div class="glass-sample">Regular · Dark</div></div>
+          </article>
+          <article class="feature-card feature-card--half">
+            <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the open dock shows a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
+          </article>
         </div>
       </div>
     </section>
 
-    <section class="history" id="history" aria-labelledby="history-title">
-      <div class="shell history-layout">
-        <div class="history-intro">
-          <h2 id="history-title" data-i18n="historyTitle">Product history</h2>
-          <p data-i18n="historySummary">A curated record of releases that changed how Chap works, not every patch.</p>
-        </div>
-        <div class="history-list">
-          <article class="history-entry">
-            <div class="history-version">v1.3.0</div>
-            <div class="history-copy">
-              <h3 data-i18n="history130Title">Keep the display awake on demand</h3>
-              <p data-i18n="history130Body">A new menu bar session (30 minutes to 12 hours) keeps the display awake, and launch-type sections can be hidden from the menu while keeping their shortcuts.</p>
-            </div>
-          </article>
-          <article class="history-entry">
-            <div class="history-version">v1.1.5</div>
-            <div class="history-copy">
-              <h3 data-i18n="history115Title">Reuse only the window Chap created</h3>
-              <p data-i18n="history115Body">Each URL launchable now remembers its own Chrome app window. Chap no longer searches user tabs, focused windows, or frontmost windows.</p>
-            </div>
-          </article>
-          <article class="history-entry">
-            <div class="history-version">v1.1.0</div>
-            <div class="history-copy">
-              <h3 data-i18n="history110Title">Reuse the Chrome window already open</h3>
-              <p data-i18n="history110Body">Each URL can now bring its matching Chrome window forward and place it on the configured display instead of opening another window.</p>
-            </div>
-          </article>
-          <article class="history-entry">
-            <div class="history-version">v1.0.10</div>
-            <div class="history-copy">
-              <h3 data-i18n="history1010Title">Pause Option-key triggers when needed</h3>
-              <p data-i18n="history1010Body">General settings added a trigger switch, status bar icon controls, and focused settings navigation while keeping launchables close at hand.</p>
-            </div>
-          </article>
-          <article class="history-entry">
-            <div class="history-version">v1.0.5</div>
-            <div class="history-copy">
-              <h3 data-i18n="history105Title">Secure updates inside Chap</h3>
-              <p data-i18n="history105Body">Manual update checks arrived with Sparkle 2, signed update verification, and a fail-closed update feed.</p>
-            </div>
-          </article>
-          <article class="history-entry">
-            <div class="history-version">v1.0.2</div>
-            <div class="history-copy">
-              <h3 data-i18n="history102Title">First public release</h3>
-              <p data-i18n="history102Body">Chap launched with URL, app, Finder, and shell shortcuts, multi-display placement, and notarized macOS installers.</p>
-            </div>
-          </article>
+    <section class="section drop-story" aria-labelledby="drop-title">
+      <div class="shell drop-layout">
+        <div class="drop-copy"><p class="eyebrow">Chap Drop</p><h2 id="drop-title">Move files through the notch.</h2><p>Drag a file toward the notch. The launcher becomes a translucent Drop here surface, copies the file into Chap’s private Application Support folder, and adds it to the dock’s Finder-style file row. Drag it out when you need it.</p></div>
+        <div class="drop-visual" aria-hidden="true"><div class="drop-target"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h6l2 2h8v9H4z" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v10m0 0 4-4m-4 4L8 9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><strong>Drop here</strong><span>Files stay local on your Mac</span></div></div>
+      </div>
+    </section>
+
+    <section class="section types" id="launchers" aria-labelledby="types-title">
+      <div class="shell">
+        <div class="section-heading"><p class="eyebrow">Launch anything</p><h2 id="types-title">One launcher. Four jobs.</h2><p>Option shortcuts still work when the notch launcher is off, on a notchless Mac, or when a launch type is hidden from the menu.</p></div>
+        <div class="type-list">
+          <article class="type-row"><div class="type-icon" aria-hidden="true">↗</div><h3>URL</h3><p>Open a clean Chrome app window, optionally reusing only the exact window Chap created for that launchable.</p><span class="type-meta">Chrome · AX</span></article>
+          <article class="type-row"><div class="type-icon" aria-hidden="true">▣</div><h3>App</h3><p>Launch a native macOS app and center its first eligible new window with verified Accessibility readback.</p><span class="type-meta">NSWorkspace · AX</span></article>
+          <article class="type-row"><div class="type-icon" aria-hidden="true">⌑</div><h3>Finder</h3><p>Open the folder you need in Finder and place that window atomically on the selected display.</p><span class="type-meta">Finder automation</span></article>
+          <article class="type-row"><div class="type-icon" aria-hidden="true">›_</div><h3>Shell</h3><p>Run a command through your configured shell from a menu item or one Option shortcut.</p><span class="type-meta">$SHELL -c</span></article>
         </div>
       </div>
+    </section>
+
+    <section class="section trust-section" aria-labelledby="trust-title">
+      <div class="shell trust-layout">
+        <div><p class="eyebrow">Built for your Mac</p><h2 id="trust-title">Native where it matters.</h2></div>
+        <div class="trust-list">
+          <article class="trust-item"><b>01</b><div><strong>Notarized Developer ID distribution</strong><p>The primary PKG and fallback DMG are signed, notarized, and stapled before release.</p></div></article>
+          <article class="trust-item"><b>02</b><div><strong>Fail-closed Sparkle updates</strong><p>Signed update verification, daily checks, no silent download or install, and no updater in test processes.</p></div></article>
+          <article class="trust-item"><b>03</b><div><strong>Local, inspectable configuration</strong><p>Your launchers live in ~/.chap.json. Export is complete; import preserves device-specific notch choices.</p></div></article>
+          <article class="trust-item"><b>04</b><div><strong>No notch required</strong><p>Turn the feature off at any time. The status menu and Option shortcuts remain the dependable core.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section history" id="history" aria-labelledby="history-title">
+      <div class="shell">
+        <div class="section-heading"><p class="eyebrow">Product history</p><h2 id="history-title">The releases that changed Chap.</h2><p>A curated record of meaningful workflow shifts, not every patch.</p></div>
+        <div class="timeline">
+          <article class="timeline-item"><span class="timeline-version">v2.0.0</span><h3>The notch becomes a command surface</h3><p>Configurable launcher slots, Chap Drop, screenshot access, Liquid Glass, Keep Awake status, native accessibility, and a menu fallback that never went away.</p></article>
+          <article class="timeline-item"><span class="timeline-version">v1.3.0</span><h3>Keep the display awake on demand</h3><p>Timed display assertions, active icon feedback, and menu-section curation arrived.</p></article>
+          <article class="timeline-item"><span class="timeline-version">v1.1.5</span><h3>Reuse only the Chrome window Chap created</h3><p>Per-launchable window IDs replaced URL, title, focus, and frontmost-window guessing.</p></article>
+          <article class="timeline-item"><span class="timeline-version">v1.0.2</span><h3>First public release</h3><p>URL, app, Finder, and shell shortcuts with multi-display placement and notarized installers.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-cta" id="download" aria-labelledby="download-title">
+      <div class="shell final-cta-inner"><p class="eyebrow">Chap 2 for macOS</p><h2 id="download-title">Give the notch a job.</h2><p>Fast enough to disappear. Useful enough to become muscle memory.</p><a class="button-primary" href="https://github.com/milv0/Chap/releases/latest" rel="noreferrer">Download the latest release</a></div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="shell footer-inner">
-      <span>Chap 1.3.8 · macOS</span>
-    </div>
-  </footer>
+  <footer class="footer"><div class="shell footer-inner"><span>Chap 2.0.0 · macOS</span><div class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer">GitHub</a><a href="https://github.com/milv0/Chap#license" rel="noreferrer">MIT License</a></div></div></footer>
 
   <script>
     (() => {
-      const carousel = document.querySelector("[data-carousel]");
-      const slides = [...carousel.querySelectorAll("[data-carousel-slide]")];
-      const tabs = [...carousel.querySelectorAll("[role=tab]")];
-      let activeSlide = 0;
-
-      const showSlide = (index, moveFocus = false) => {
-        activeSlide = (index + slides.length) % slides.length;
-        slides.forEach((slide, slideIndex) => { slide.hidden = slideIndex !== activeSlide; });
-        tabs.forEach((tab, tabIndex) => {
-          const isActive = tabIndex === activeSlide;
-          tab.setAttribute("aria-selected", String(isActive));
-          tab.tabIndex = isActive ? 0 : -1;
-        });
-        if (moveFocus) tabs[activeSlide].focus();
+      const stage = document.querySelector("[data-notch-demo]");
+      const button = document.querySelector("[data-demo-toggle]");
+      if (!stage || !button) return;
+      const update = (open) => {
+        stage.classList.toggle("demo-open", open);
+        button.setAttribute("aria-expanded", String(open));
+        button.textContent = open ? "Close notch demo" : "Open notch demo";
       };
-
-      tabs.forEach((tab) => tab.addEventListener("click", () => showSlide(Number(tab.dataset.carouselSelect))));
-      carousel.addEventListener("keydown", (event) => {
-        if (event.key === "ArrowLeft") { event.preventDefault(); showSlide(activeSlide - 1, true); }
-        if (event.key === "ArrowRight") { event.preventDefault(); showSlide(activeSlide + 1, true); }
-        if (event.key === "Home") { event.preventDefault(); showSlide(0, true); }
-        if (event.key === "End") { event.preventDefault(); showSlide(slides.length - 1, true); }
+      button.addEventListener("click", () => update(!stage.classList.contains("demo-open")));
+      button.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") update(false);
       });
-
-      showSlide(0);
     })();
   </script>
 </body>

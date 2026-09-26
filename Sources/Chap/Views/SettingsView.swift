@@ -6,6 +6,7 @@ import os
 private enum SettingsTab: Hashable {
     case launchables
     case general
+    case notch
 }
 
 private struct SettingsTabButton: View {
@@ -79,6 +80,12 @@ struct SettingsView: View {
                         .allowsHitTesting(selectedTab == .general)
                         .disabled(selectedTab != .general)
                         .accessibilityHidden(selectedTab != .general)
+
+                    notchTab
+                        .opacity(selectedTab == .notch ? 1 : 0)
+                        .allowsHitTesting(selectedTab == .notch)
+                        .disabled(selectedTab != .notch)
+                        .accessibilityHidden(selectedTab != .notch)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
@@ -158,6 +165,11 @@ struct SettingsView: View {
                 icon: "gearshape",
                 isSelected: selectedTab == .general,
                 action: { selectedTab = .general })
+            SettingsTabButton(
+                title: "Notch",
+                icon: "macbook",
+                isSelected: selectedTab == .notch,
+                action: { selectedTab = .notch })
         }
         .padding(2)
         .background(DS.border.opacity(0.18))
@@ -170,6 +182,10 @@ struct SettingsView: View {
             updateController: updateController,
             onSave: saveGlobals
         )
+    }
+
+    private var notchTab: some View {
+        NotchSettingsView(vm: vm, onSave: saveGlobals)
     }
 
     // MARK: - Sidebar
@@ -205,12 +221,21 @@ struct SettingsView: View {
                         // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
                         // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
                         if !indices.isEmpty || searchText.isEmpty {
-                            Text(typeSectionTitle(type))
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 8)
-                                .padding(.top, 8)
+                            // 제목 옆 (n/4) 카운트로 타입별 한도를 상시 보여준다.
+                            HStack(spacing: 4) {
+                                Text(typeSectionTitle(type))
+                                    .foregroundColor(DS.textSecondary)
+                                Text(
+                                    "(\(SiteCountLimitPolicy.count(of: type, in: vm.sites))"
+                                        + "/\(SiteCountLimitPolicy.maxPerLaunchType))"
+                                )
+                                .foregroundColor(DS.textTertiary)
+                                .monospacedDigit()
+                            }
+                            .font(DS.captionFont)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                             if indices.isEmpty {
                                 SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
                                     addSite(type: type)
@@ -535,6 +560,14 @@ struct SettingsView: View {
             }
             return .url
         }()
+        guard SiteCountLimitPolicy.canAdd(type, to: vm.sites) else {
+            LauncherUtils.showAlert(
+                message: "Launch type limit reached",
+                info:
+                    "Only \(SiteCountLimitPolicy.maxPerLaunchType) \(typeSectionTitle(type)) "
+                    + "launchables are allowed. Remove one before adding another.")
+            return
+        }
         let recommendation = InitialWindowSizeRecommendations.recommendation(for: type)
         let defaultSize = windowSize(for: recommendation, on: builtInScreen ?? cursorScreen)
         let newSite = Site(
@@ -654,6 +687,7 @@ struct SettingsView: View {
             optionShortcutsEnabled: vm.optionShortcutsEnabled,
             statusBarIcon: vm.statusBarIcon,
             hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: vm.notchLauncherEnabled,
             sites: vm.sites)
         let result = validateConfig(config)
 
@@ -706,13 +740,17 @@ struct SettingsView: View {
                     launchAtLogin: vm.launchAtLogin,
                     optionShortcutsEnabled: vm.optionShortcutsEnabled,
                     statusBarIcon: vm.statusBarIcon,
-                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes)) ?? true
+                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+                    notchLauncherEnabled: vm.notchLauncherEnabled,
+                    notchPanelStyle: vm.notchPanelStyle,
+                    notchGlassAppearance: vm.notchGlassAppearance,
+                    notchGlassMaterial: vm.notchGlassMaterial,
+                    notchPanelOpacity: vm.notchPanelOpacity,
+                    notchPanelColorHex: vm.notchPanelColorHex,
+                    notchWidgets: vm.notchWidgets)) ?? true
         if saved {
-            vm.originalGuide = vm.showGuideWindow
-            vm.originalLogin = vm.launchAtLogin
-            vm.originalOptionShortcutsEnabled = vm.optionShortcutsEnabled
-            vm.originalStatusBarIcon = vm.statusBarIcon
-            vm.originalHiddenMenuLaunchTypes = vm.hiddenMenuLaunchTypes
+            // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.
+            vm.markGlobalsSaved()
         }
     }
 
