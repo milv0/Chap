@@ -146,6 +146,9 @@ final class NotchLauncherController {
             self.showPanel()
         }
         tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
+        tracker.onDragExited = { [weak self] in
+            self?.revealModel?.isDropTargetActive = false
+        }
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             self?.storeDroppedFiles(urls, closePanelWhenDone: true)
@@ -224,6 +227,9 @@ final class NotchLauncherController {
             self.showPanel()
         }
         tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
+        tracker.onDragExited = { [weak self] in
+            self?.revealModel?.isDropTargetActive = false
+        }
         // 노치 자체에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
             self?.storeDroppedFiles(urls, closePanelWhenDone: true)
@@ -365,17 +371,23 @@ final class NotchLauncherController {
     /// 연속 선택 시 마지막 토큰만 고정을 해제한다.
     func previewGlassAppearance() {
         // Light/Dark 전환은 Clear/Regular 재질도 함께 바꾸므로 패널을 재구성한다.
-        beginTimedGlassPreview(rebuildPanel: true)
+        beginTimedPanelPreview(rebuildPanel: true)
         applyGlassAppearance(to: panel)
     }
 
     /// Glass Clear/Regular 선택 직후 메인 도커를 새 재질로 다시 만들어 보여준다.
     /// 재질은 뷰 생성 값이라 이미 열린 패널은 재구성해야 한다.
     func previewGlassMaterial() {
-        beginTimedGlassPreview(rebuildPanel: true)
+        beginTimedPanelPreview(rebuildPanel: true)
     }
 
-    private func beginTimedGlassPreview(rebuildPanel: Bool) {
+    /// Custom 색 변경을 열린 메인 도커에 즉시 반영하고 잠깐 고정한다.
+    func previewCustomColor(_ colorHex: String) {
+        beginTimedPanelPreview(rebuildPanel: false)
+        revealModel?.colorHex = colorHex
+    }
+
+    private func beginTimedPanelPreview(rebuildPanel: Bool) {
         isPreviewPinned = true
         appearancePreviewToken += 1
         let token = appearancePreviewToken
@@ -498,6 +510,7 @@ final class NotchLauncherController {
 private final class HoverView: NSView {
     var onEntered: () -> Void = {}
     var onDragEntered: () -> Void = {}
+    var onDragExited: () -> Void = {}
     /// 설정 시 이 뷰 자체가 드롭 타깃이 된다. 드롭존 도커가 아직 뜨기 전에
     /// 배지·노치 위에 바로 놓아도 드롭이 성사되게 한다.
     var onFilesDropped: (([URL]) -> Void)?
@@ -528,6 +541,10 @@ private final class HoverView: NSView {
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         onDragEntered()
         return onFilesDropped != nil ? .copy : []
+    }
+
+    override func draggingExited(_ sender: NSDraggingInfo?) {
+        onDragExited()
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
