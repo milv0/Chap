@@ -9,15 +9,28 @@ enum SettingsConfigTransfer {
 
     // MARK: - Export
 
-    /// Export current config to a user-chosen JSON file.
-    /// Shows a validation error alert if the config is invalid for export.
-    static func exportConfig(vm: SettingsViewModel) {
-        let config = Config(
+    /// 현재 VM의 모든 설정을 보존한 export 값. UI와 분리해 회귀 테스트한다.
+    static func exportConfigValue(vm: SettingsViewModel) -> Config {
+        Config(
             showGuideWindow: vm.showGuideWindow,
             launchAtLogin: vm.launchAtLogin,
             optionShortcutsEnabled: vm.optionShortcutsEnabled,
             statusBarIcon: vm.statusBarIcon,
+            hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: vm.notchLauncherEnabled,
+            notchPanelStyle: vm.notchPanelStyle,
+            notchGlassAppearance: vm.notchGlassAppearance,
+            notchGlassMaterial: vm.notchGlassMaterial,
+            notchPanelOpacity: vm.notchPanelOpacity,
+            notchPanelColorHex: vm.notchPanelColorHex,
+            notchWidgets: vm.notchWidgets,
             sites: vm.sites)
+    }
+
+    /// Export current config to a user-chosen JSON file.
+    /// Shows a validation error alert if the config is invalid for export.
+    static func exportConfig(vm: SettingsViewModel) {
+        let config = exportConfigValue(vm: vm)
         let validation = validateConfigForExport(config)
         guard validation.isValid else {
             let errorMessages = validation.errors.map { issue in

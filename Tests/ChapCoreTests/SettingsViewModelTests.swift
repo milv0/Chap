@@ -200,4 +200,27 @@ struct SettingsViewModelTests {
         #expect(unexpectedSave.wait(timeout: .now() + 0.1) == .timedOut)
         #expect(vm.hasChanges)
     }
+    @Test func exportConfigPreservesHiddenMenuAndNotchSettings() {
+        let vm = SettingsViewModel(
+            sites: baseSites,
+            hiddenMenuLaunchTypes: [.shell],
+            notchLauncherEnabled: true,
+            notchPanelStyle: .glass,
+            notchGlassAppearance: .dark,
+            notchGlassMaterial: .regular,
+            notchPanelOpacity: 0.8,
+            notchPanelColorHex: "#123456",
+            notchWidgets: [.screenshots, .sites, .none, .none])
+
+        let config = SettingsConfigTransfer.exportConfigValue(vm: vm)
+
+        #expect(config.hiddenMenuLaunchTypes == [.shell])
+        #expect(config.notchLauncherEnabled)
+        #expect(config.notchPanelStyle == .glass)
+        #expect(config.notchGlassAppearance == .dark)
+        #expect(config.notchGlassMaterial == .regular)
+        #expect(config.notchPanelOpacity == 0.8)
+        #expect(config.notchPanelColorHex == "#123456")
+        #expect(config.notchWidgets == [.screenshots, .sites, .none, .none])
+    }
 }

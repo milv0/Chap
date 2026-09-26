@@ -269,6 +269,14 @@ struct NotchLauncherSettingTests {
         #expect(config.notchWidgets == [.sites, .screenshots, .none, .none])
     }
 
+    @Test("all unknown widgets fall back to usable defaults")
+    func allUnknownWidgetsFallBackToDefaults() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["future-one", "future-two"], "sites": []}"#)
+
+        #expect(config.notchWidgets == NotchWidget.defaultSlots)
+    }
+
     @Test("more than four widgets are capped at four slots")
     func widgetsCappedAtFour() throws {
         let config = try decodeConfig(

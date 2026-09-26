@@ -36,6 +36,7 @@ enum ConfigImportProcessor {
             launchAtLogin: config.launchAtLogin,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             statusBarIcon: config.statusBarIcon,
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
             sites: normalized.sites)
         return .success(
             ProcessedConfigImport(

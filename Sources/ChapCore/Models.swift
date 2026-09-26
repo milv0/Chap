@@ -460,8 +460,13 @@ public struct Config: Codable {
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
         {
-            notchWidgets = NotchWidget.normalizedSlots(
-                rawWidgets.compactMap(NotchWidget.init(rawValue:)))
+            let knownWidgets = rawWidgets.compactMap(NotchWidget.init(rawValue:))
+            // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
+            // 현재 버전의 안전한 기본 슬롯으로 폴백한다.
+            notchWidgets =
+                knownWidgets.isEmpty && !rawWidgets.isEmpty
+                ? NotchWidget.defaultSlots
+                : NotchWidget.normalizedSlots(knownWidgets)
         } else {
             notchWidgets = NotchWidget.defaultSlots
         }
