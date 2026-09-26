@@ -133,12 +133,12 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 자동 적응한다. 기준은 Apple HIG의 대비 규칙(텍스트 4.5:1 최소·7:1 권장,
 비텍스트 3:1)이며 규칙은 `NotchContrastPolicy`가 테스트로 고정한다.
 
-| 요소 | 어두운 배경 | 밝은/유채색 배경 |
-|---|---|---|
-| 섹션 아이콘 | 테마 블루 | 흰 95% (액센트 대비 3:1 미달 시) |
-| 섹션 라벨 | 흰 65% | 흰 92%까지 상향 |
-| 단축키 힌트 | 흰 45% | 흰 80%까지 상향 |
-| 본문 텍스트 | 흰 96% + 그림자 | 동일 |
+| 요소 | 어두운 Custom 배경 | 밝은 Custom 배경 | Glass |
+|---|---|---|---|
+| 섹션 아이콘 | 테마 블루 또는 흰색 | 테마 블루 또는 검정 (3:1 기준) | 테마 블루 |
+| 섹션 라벨 | 흰색 계층 | 검정 65% | semantic secondary |
+| 단축키 힌트 | 흰색 계층 | 검정 50% | semantic secondary |
+| 본문 텍스트 | 흰 96% + 그림자 | 검정 87%, 그림자 없음 | semantic primary |
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
 
@@ -150,11 +150,18 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 | 이름 | 값 | 의미 |
 |---|---|---|
 | `openAnimation` | spring 440/30 (~0.3s) | 패널 펼침. 노치 상단 기준 스프링 확장 |
-| `closeDuration` | 0.18s | 모든 도커 공통 닫힘 시간. 메인 패널은 접힘, Drop 도커는 페이드 |
+| `closeDuration` | 0.18s | 메인 패널 접힘 시간 |
 | 창 제거 | closeDuration + 0.02s | 닫힘 애니메이션 종료 직후 |
 | `hideDelay` | 0.2s | 마우스가 영역 밖에 머물면 닫힘 판정 |
 | `hoverMargin` | 0 | 노치·배지의 hover/드래그 인식 범위는 시각 경계와 동일 |
 | `pollInterval` | 0.08s | 마우스 위치 폴링 주기 |
+
+
+## 설정 Import/Export
+
+Export는 hidden menu와 노치 설정을 포함한 현재 Config 전체를 보존한다.
+Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설정은 기기
+하드웨어에 종속되므로 현재 기기의 값을 유지한다.
 
 ## 관련 파일
 

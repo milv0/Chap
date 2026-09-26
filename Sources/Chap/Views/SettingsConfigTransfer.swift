@@ -164,7 +164,7 @@ enum SettingsConfigTransfer {
                         optionShortcutsEnabled: imported.optionShortcutsEnabled,
                         statusBarIcon: imported.statusBarIcon,
                         hiddenMenuLaunchTypes: imported.hiddenMenuLaunchTypes,
-                        // 노치 토글은 기기(노치 유무) 종속이라 import로 덮지 않는다.
+                        // 노치 설정 전체는 기기(노치 유무) 종속이라 import로 덮지 않는다.
                         notchLauncherEnabled: vm.notchLauncherEnabled,
                         notchPanelStyle: vm.notchPanelStyle,
                         notchGlassAppearance: vm.notchGlassAppearance,

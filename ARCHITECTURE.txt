@@ -199,11 +199,15 @@ Config 모델 필드:
   (메뉴바에는 About Chap 항목이 없다).
 - Notch 파일 I/O: Chap Drop 복사·삭제·목록/배지 count와 Desktop 스크린샷 스캔·썸네일 decode는
   utility queue에서 수행하며 UI 갱신·알림만 메인 큐로 복귀
+- Export: hidden menu와 노치 설정을 포함한 현재 Config 전체를 보존
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
+  - 노치 설정은 기기 종속이므로 import 값 대신 현재 기기 값을 유지
   - 차단/실패 알림에 "Show Expected Format" 버튼: 필수 필드 설명 + 예제 JSON 표시 (Copy 가능)
   - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
 - Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
   stale UUID 갱신, ambiguous/disconnected는 재선택 안내
+- 디스플레이 해상도·배치·연결·clamshell 변경 알림을 150ms debounce해 노치 hotzone/배지
+  프레임을 재계산하며 노치 화면이 사라지면 관련 창을 tearDown
 - Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
 - 숫자 width/height는 draft로 편집해 Enter/blur 때 commit하며 실제 변경 때만 Custom 전환
 - Follow Cursor 미니맵은 각 연결 화면의 화면별 size/default size preview를 동시에 표시한다. Follow Cursor에서 화면을 클릭하면 커서 추적을 유지한 채 그 화면을 size/preset 편집 대상으로 삼고, 일반 모드에서 클릭하면 해당 화면을 사이트 target으로 선택한다. 각 preview 창 중앙에 preset 또는 Custom label을 표시한다.
