@@ -81,7 +81,17 @@
     .mac-stage { --notch-width-ratio: 12.235%; --dock-width-ratio: 48.677%; background: linear-gradient(145deg, #cdd4dd, #f4f6f8 54%, #b9c2cd); border: 1px solid rgb(255 255 255 / .58); border-radius: 32px 32px 18px 18px; box-shadow: 0 40px 120px rgb(0 0 0 / .48), inset 0 1px 0 white; height: 470px; margin: 0 auto; max-width: 1120px; overflow: hidden; position: relative; transform: perspective(1400px) rotateX(2deg); transform-origin: bottom; }
     .mac-stage::after { background: linear-gradient(115deg, transparent 0 40%, rgb(255 255 255 / .23) 50%, transparent 61%); content: ""; inset: 0; pointer-events: none; position: absolute; transform: translateX(-70%); }
     .menu-strip { align-items: center; color: #151820; display: flex; font-size: .68rem; font-weight: 600; height: 34px; justify-content: space-between; padding: 0 18px; position: relative; z-index: 2; }
-    .menu-left, .menu-right { display: flex; gap: 1rem; }
+    .menu-left, .menu-right { align-items: center; display: flex; gap: 1rem; }
+    .status-trigger { align-items: center; background: transparent; border: 0; border-radius: 8px; color: #141820; cursor: pointer; display: inline-flex; height: 26px; justify-content: center; padding: 0; width: 26px; }
+    .status-trigger:hover, .status-trigger[aria-expanded="true"] { background: var(--blue); color: white; }
+    .status-trigger svg { height: 15px; width: 15px; }
+    .status-menu { background: rgb(248 249 251 / .96); border: 1px solid rgb(40 47 58 / .16); border-radius: 11px; box-shadow: 0 18px 42px rgb(30 38 49 / .24); color: #171b22; font-size: .62rem; padding: 6px; position: absolute; right: 16px; top: 31px; width: 188px; z-index: 15; }
+    .status-menu[hidden] { display: none; }
+    .status-menu-group + .status-menu-group { border-top: 1px solid rgb(35 43 54 / .12); margin-top: 4px; padding-top: 4px; }
+    .status-menu-row { align-items: center; border-radius: 5px; display: flex; justify-content: space-between; min-height: 23px; padding: 2px 7px; }
+    .status-menu-row:hover { background: var(--blue); color: white; }
+    .status-menu-row small { color: #788190; font-size: .52rem; }
+    .status-menu-row:hover small { color: white; }
     .desktop-copy { color: #4a5361; left: 7%; position: absolute; top: 25%; }
     .desktop-copy strong { color: #252b35; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
     .desktop-copy span { display: block; font-size: .8rem; margin-top: .6rem; }
@@ -92,13 +102,13 @@
     .notch-unit { left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: var(--notch-width-ratio); z-index: 8; }
     .physical-notch { aspect-ratio: 185 / 32; background: #000; border-radius: 0 0 8px 8px; position: relative; width: 100%; z-index: 3; }
     .physical-notch::after { background: #15171b; border: 1px solid #24272d; border-radius: 50%; content: ""; height: 4px; left: 50%; position: absolute; top: 7px; transform: translateX(-50%); width: 4px; }
-    .drop-badge { align-items: center; aspect-ratio: 56 / 32; background: #000; border-radius: 0 0 5px 0; display: flex; height: 100%; justify-content: center; position: absolute; right: -23.78%; top: 0; width: 30.27%; }
+    .drop-badge { align-items: center; aspect-ratio: 56 / 32; background: #000; border-radius: 0 0 5px 0; display: flex; height: 100%; justify-content: center; pointer-events: none; position: absolute; right: -23.78%; top: 0; width: 30.27%; }
     .drop-badge svg { height: 45%; stroke: white; width: 45%; }
     .drop-count { align-items: center; aspect-ratio: 1; background: var(--blue); border-radius: 999px; color: #fff; display: flex; font-size: clamp(.38rem, .48vw, .5rem); font-weight: 700; height: 47%; justify-content: center; position: absolute; right: 0; top: 1px; }
-    .notch-dock { background: linear-gradient(180deg, rgb(242 246 249 / .9), rgb(224 231 236 / .82)); border: 1px solid rgb(255 255 255 / .72); border-radius: 14px 14px 18px 18px; box-shadow: 0 22px 52px rgb(24 32 42 / .3); color: #17202c; left: 50%; opacity: 0; overflow: hidden; padding: 39px 16px 14px; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.45); transform-origin: top; transition: opacity 220ms ease, transform 420ms cubic-bezier(.2,.9,.2,1.08); width: var(--dock-width-ratio); }
+    .notch-dock { background: linear-gradient(180deg, rgb(242 246 249 / .9), rgb(224 231 236 / .82)); border: 1px solid rgb(255 255 255 / .72); border-top: 0; border-radius: 14px 14px 18px 18px; box-shadow: 0 22px 52px rgb(24 32 42 / .3); color: #17202c; left: 50%; opacity: 0; overflow: hidden; padding: 39px 16px 14px; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.45); transform-origin: top; transition: opacity 180ms ease, transform 180ms ease-in-out; width: var(--dock-width-ratio); }
     .dock-top-shape { height: 24px; left: 0; pointer-events: none; position: absolute; top: 0; width: 100%; }
     .dock-top-shape path { fill: #000; }
-    .mac-stage:hover .notch-dock, .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); }
+    .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); transition: opacity 150ms ease, transform 300ms cubic-bezier(.2,.9,.22,1.08); }
     .dock-columns { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .dock-section h3 { align-items: center; color: #596575; display: flex; font-family: var(--body); font-size: .68rem; font-weight: 600; gap: .4rem; margin: 0 0 .55rem; }
     .dock-section h3 i { background: var(--blue); border-radius: 4px; display: block; height: 9px; width: 9px; }
@@ -313,7 +323,14 @@
         </div>
 
         <div class="mac-stage demo-open" data-notch-demo role="region" aria-label="Interactive Chap notch launcher preview">
-          <div class="menu-strip" aria-hidden="true"><div class="menu-left"><span>●</span><span>Finder</span><span>File</span><span>Edit</span></div><div class="menu-right"><span>⌁</span><span>100%</span><span>Sat 9:41</span></div></div>
+          <div class="menu-strip"><div class="menu-left" aria-hidden="true"><span>●</span><span>Finder</span><span>File</span><span>Edit</span></div><div class="menu-right"><button class="status-trigger" type="button" data-status-trigger aria-label="Open Chap status menu demo" aria-controls="status-menu-demo" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m13 2-7 11h6l-1 9 7-12h-6l1-8Z" fill="currentColor"/></svg></button><span aria-hidden="true">100%</span><span aria-hidden="true">Sat 9:41</span></div></div>
+          <div class="status-menu" id="status-menu-demo" data-status-menu role="region" aria-label="Chap status menu preview" hidden>
+            <div class="status-menu-group"><div class="status-menu-row"><span>ϟ Translate</span><small>⌥1</small></div><div class="status-menu-row"><span>ϟ TinyURL</span><small>⌥2</small></div><div class="status-menu-row"><span>ϟ JSON</span><small>⌥3</small></div><div class="status-menu-row"><span>ϟ Case</span><small>⌥4</small></div></div>
+            <div class="status-menu-group"><div class="status-menu-row"><span>■ Note</span><small>⌥N</small></div><div class="status-menu-row"><span>■ Outlook</span><small>⌥O</small></div><div class="status-menu-row"><span>■ Terminal</span><small>⌥T</small></div></div>
+            <div class="status-menu-group"><div class="status-menu-row"><span>▰ Projects</span></div><div class="status-menu-row"><span>▰ Downloads</span></div></div>
+            <div class="status-menu-group"><div class="status-menu-row"><span>☕ Keep Mac Awake</span><small>›</small></div><div class="status-menu-row"><span>Settings…</span><small>⌥,</small></div><div class="status-menu-row"><span>Q&amp;A</span></div></div>
+            <div class="status-menu-group"><div class="status-menu-row"><span>Check for Updates…</span></div><div class="status-menu-row"><span>Quit</span></div></div>
+          </div>
           <div class="desktop-copy" aria-hidden="true"><strong>Stay in flow.</strong><span>Bring a file toward the notch.</span></div>
           <div class="desktop-card" aria-hidden="true"></div>
           <div class="notch-unit" aria-hidden="true">
@@ -438,17 +455,40 @@
   <script>
     (() => {
       const stage = document.querySelector("[data-notch-demo]");
-      const button = document.querySelector("[data-demo-toggle]");
-      if (!stage || !button) return;
-      const update = (open) => {
+      const notch = stage?.querySelector(".notch-unit");
+      const dock = stage?.querySelector(".notch-dock");
+      const dockButton = document.querySelector("[data-demo-toggle]");
+      const statusButton = document.querySelector("[data-status-trigger]");
+      const statusMenu = document.querySelector("[data-status-menu]");
+      if (!stage || !notch || !dock || !dockButton || !statusButton || !statusMenu) return;
+
+      let closeTimer;
+      const setDock = (open) => {
+        clearTimeout(closeTimer);
         stage.classList.toggle("demo-open", open);
-        button.setAttribute("aria-expanded", String(open));
-        button.textContent = open ? "Close notch demo" : "Open notch demo";
+        dockButton.setAttribute("aria-expanded", String(open));
+        dockButton.textContent = open ? "Close notch demo" : "Open notch demo";
       };
-      button.addEventListener("click", () => update(!stage.classList.contains("demo-open")));
-      button.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") update(false);
-      });
+      const scheduleDockClose = () => {
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(() => setDock(false), 200);
+      };
+      const setStatusMenu = (open) => {
+        statusMenu.hidden = !open;
+        statusButton.setAttribute("aria-expanded", String(open));
+        statusButton.setAttribute("aria-label", open ? "Close Chap status menu demo" : "Open Chap status menu demo");
+        if (open) setDock(false);
+      };
+
+      notch.addEventListener("pointerenter", () => { setStatusMenu(false); setDock(true); });
+      notch.addEventListener("pointerleave", scheduleDockClose);
+      dock.addEventListener("pointerenter", () => clearTimeout(closeTimer));
+      dock.addEventListener("pointerleave", scheduleDockClose);
+      dockButton.addEventListener("click", () => { setStatusMenu(false); setDock(!stage.classList.contains("demo-open")); });
+      dockButton.addEventListener("keydown", (event) => { if (event.key === "Escape") setDock(false); });
+      statusButton.addEventListener("click", (event) => { event.stopPropagation(); setStatusMenu(statusMenu.hidden); });
+      statusButton.addEventListener("keydown", (event) => { if (event.key === "Escape") setStatusMenu(false); });
+      document.addEventListener("click", (event) => { if (!statusMenu.contains(event.target) && event.target !== statusButton) setStatusMenu(false); });
     })();
   </script>
 </body>
