@@ -78,7 +78,7 @@
     .button-primary svg { height: 17px; width: 17px; }
     .hero-note { color: #7f899b; font-size: .72rem; margin-top: 1rem; }
 
-    .mac-stage { background: linear-gradient(145deg, #cdd4dd, #f4f6f8 54%, #b9c2cd); border: 1px solid rgb(255 255 255 / .58); border-radius: 32px 32px 18px 18px; box-shadow: 0 40px 120px rgb(0 0 0 / .48), inset 0 1px 0 white; height: 470px; margin: 0 auto; max-width: 1120px; overflow: hidden; position: relative; transform: perspective(1400px) rotateX(2deg); transform-origin: bottom; }
+    .mac-stage { --notch-width-ratio: 12.235%; --dock-width-ratio: 48.677%; background: linear-gradient(145deg, #cdd4dd, #f4f6f8 54%, #b9c2cd); border: 1px solid rgb(255 255 255 / .58); border-radius: 32px 32px 18px 18px; box-shadow: 0 40px 120px rgb(0 0 0 / .48), inset 0 1px 0 white; height: 470px; margin: 0 auto; max-width: 1120px; overflow: hidden; position: relative; transform: perspective(1400px) rotateX(2deg); transform-origin: bottom; }
     .mac-stage::after { background: linear-gradient(115deg, transparent 0 40%, rgb(255 255 255 / .23) 50%, transparent 61%); content: ""; inset: 0; pointer-events: none; position: absolute; transform: translateX(-70%); }
     .menu-strip { align-items: center; color: #151820; display: flex; font-size: .68rem; font-weight: 600; height: 34px; justify-content: space-between; padding: 0 18px; position: relative; z-index: 2; }
     .menu-left, .menu-right { display: flex; gap: 1rem; }
@@ -89,25 +89,27 @@
     .desktop-card::before, .desktop-card::after { background: rgb(68 79 95 / .1); border-radius: 999px; content: ""; height: 10px; left: 24px; position: absolute; right: 24px; top: 34px; }
     .desktop-card::after { right: 40%; top: 58px; }
 
-    .notch-unit { left: 50%; position: absolute; top: 0; transform: translateX(-50%); z-index: 8; }
-    .physical-notch { background: #000; border-radius: 0 0 12px 12px; height: 34px; margin: 0 auto; position: relative; width: 188px; z-index: 3; }
-    .physical-notch::after { background: #15171b; border: 1px solid #24272d; border-radius: 50%; content: ""; height: 6px; left: 50%; position: absolute; top: 10px; transform: translateX(-50%); width: 6px; }
-    .drop-badge { align-items: center; background: #000; border-radius: 0 0 8px 0; display: flex; height: 34px; justify-content: center; position: absolute; right: -35px; top: 0; width: 42px; }
-    .drop-badge svg { height: 15px; stroke: white; width: 15px; }
-    .drop-count { align-items: center; background: var(--blue); border-radius: 999px; color: #fff; display: flex; font-size: .55rem; font-weight: 700; height: 15px; justify-content: center; position: absolute; right: 0; top: 1px; width: 15px; }
-    .notch-dock { background: linear-gradient(180deg, #000 0 34px, rgb(12 17 27 / .92) 34px, rgb(24 31 47 / .82) 100%); border: 1px solid rgb(255 255 255 / .12); border-top: 0; border-radius: 0 0 24px 24px; box-shadow: 0 22px 52px rgb(0 0 0 / .32); left: 50%; opacity: 0; overflow: hidden; padding: 52px 22px 18px; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.45); transform-origin: top; transition: opacity 220ms ease, transform 420ms cubic-bezier(.2,.9,.2,1.08); width: min(760px, calc(100vw - 84px)); }
+    .notch-unit { left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: var(--notch-width-ratio); z-index: 8; }
+    .physical-notch { aspect-ratio: 185 / 32; background: #000; border-radius: 0 0 8px 8px; position: relative; width: 100%; z-index: 3; }
+    .physical-notch::after { background: #15171b; border: 1px solid #24272d; border-radius: 50%; content: ""; height: 4px; left: 50%; position: absolute; top: 7px; transform: translateX(-50%); width: 4px; }
+    .drop-badge { align-items: center; aspect-ratio: 56 / 32; background: #000; border-radius: 0 0 5px 0; display: flex; height: 100%; justify-content: center; position: absolute; right: -23.78%; top: 0; width: 30.27%; }
+    .drop-badge svg { height: 45%; stroke: white; width: 45%; }
+    .drop-count { align-items: center; aspect-ratio: 1; background: var(--blue); border-radius: 999px; color: #fff; display: flex; font-size: clamp(.38rem, .48vw, .5rem); font-weight: 700; height: 47%; justify-content: center; position: absolute; right: 0; top: 1px; }
+    .notch-dock { background: linear-gradient(180deg, rgb(242 246 249 / .9), rgb(224 231 236 / .82)); border: 1px solid rgb(255 255 255 / .72); border-radius: 14px 14px 18px 18px; box-shadow: 0 22px 52px rgb(24 32 42 / .3); color: #17202c; left: 50%; opacity: 0; overflow: hidden; padding: 39px 16px 14px; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.45); transform-origin: top; transition: opacity 220ms ease, transform 420ms cubic-bezier(.2,.9,.2,1.08); width: var(--dock-width-ratio); }
+    .dock-top-shape { height: 24px; left: 0; pointer-events: none; position: absolute; top: 0; width: 100%; }
+    .dock-top-shape path { fill: #000; }
     .mac-stage:hover .notch-dock, .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); }
     .dock-columns { display: grid; gap: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .dock-section h3 { align-items: center; color: #c7ceda; display: flex; font-family: var(--body); font-size: .68rem; font-weight: 600; gap: .4rem; margin: 0 0 .55rem; }
+    .dock-section h3 { align-items: center; color: #596575; display: flex; font-family: var(--body); font-size: .68rem; font-weight: 600; gap: .4rem; margin: 0 0 .55rem; }
     .dock-section h3 i { background: var(--blue); border-radius: 4px; display: block; height: 9px; width: 9px; }
     .dock-section ul { list-style: none; margin: 0; padding: 0; }
-    .dock-section li { align-items: center; border-radius: 7px; color: #f4f6fa; display: flex; font-size: .7rem; justify-content: space-between; min-height: 28px; padding: .2rem .35rem; }
-    .dock-section li:hover { background: rgb(255 255 255 / .11); }
-    .key { background: rgb(255 255 255 / .1); border-radius: 5px; color: #b8c0cf; font-size: .55rem; padding: .16rem .28rem; }
-    .drop-row { align-items: center; border-top: 1px solid rgb(255 255 255 / .1); display: flex; gap: .7rem; margin-top: .8rem; padding-top: .75rem; }
+    .dock-section li { align-items: center; border-radius: 7px; color: #17202c; display: flex; font-size: .7rem; justify-content: space-between; min-height: 28px; padding: .2rem .35rem; }
+    .dock-section li:hover { background: rgb(35 47 63 / .08); }
+    .key { background: rgb(36 48 65 / .1); border-radius: 5px; color: #586476; font-size: .55rem; padding: .16rem .28rem; }
+    .drop-row { align-items: center; border-top: 1px solid rgb(33 45 60 / .12); display: flex; gap: .7rem; margin-top: .8rem; padding-top: .75rem; }
     .drop-file { align-items: center; display: flex; flex-direction: column; gap: .25rem; width: 56px; }
     .drop-file i { align-items: center; background: linear-gradient(135deg, #f0f3ff, #91a9ff); border-radius: 7px; color: #263d8b; display: flex; font-size: .62rem; font-style: normal; font-weight: 700; height: 32px; justify-content: center; width: 36px; }
-    .drop-file span { color: #bdc5d3; font-size: .5rem; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .drop-file span { color: #5f6a79; font-size: .5rem; max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .demo-control { background: rgb(255 255 255 / .86); border: 1px solid rgb(20 25 34 / .1); border-radius: 999px; bottom: 18px; color: #202630; cursor: pointer; font-size: .7rem; font-weight: 700; left: 50%; min-height: 38px; padding: .55rem .85rem; position: absolute; transform: translateX(-50%); z-index: 12; }
     .demo-control:hover { background: #fff; }
 
@@ -144,6 +146,28 @@
     .awake-clock { align-items: center; background: #000; border-radius: 0 0 14px 14px; bottom: 1.6rem; display: flex; font-variant-numeric: tabular-nums; gap: .6rem; height: 58px; justify-content: center; left: 1.6rem; position: absolute; right: 1.6rem; }
     .awake-clock svg { fill: var(--blue); height: 18px; width: 18px; }
     .awake-clock span { font-family: var(--display); font-size: 1.2rem; }
+
+    .settings-story { background: #0a0d14; overflow: hidden; }
+    .settings-stage { margin-top: 3.5rem; min-height: 610px; position: relative; }
+    .settings-window-shot { margin: 0; background: #f8f9fb; border: 1px solid rgb(255 255 255 / .18); border-radius: 24px; box-shadow: 0 42px 110px rgb(0 0 0 / .45); display: block; overflow: hidden; transform: rotate(-1.4deg); width: min(930px, 84%); }
+    .settings-window-shot img { display: block; height: auto; width: 100%; }
+    .notch-settings-card { background: rgb(19 24 35 / .9); border: 1px solid rgb(255 255 255 / .17); border-radius: 22px; bottom: 0; box-shadow: 0 28px 70px rgb(0 0 0 / .42); color: var(--ink); padding: 1.25rem; position: absolute; right: 0; transform: rotate(1.8deg); width: min(430px, 42%); }
+    .settings-card-bar { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin: -1.25rem -1.25rem 1rem; padding: .8rem 1rem; }
+    .settings-card-bar strong { font-family: var(--display); font-size: .82rem; }
+    .settings-card-tabs { background: rgb(255 255 255 / .07); border-radius: 8px; display: flex; gap: 2px; padding: 2px; }
+    .settings-card-tabs span { border-radius: 6px; color: var(--muted); font-size: .55rem; font-weight: 700; padding: .32rem .48rem; }
+    .settings-card-tabs .active { background: var(--blue); color: white; }
+    .settings-row { align-items: center; display: flex; font-size: .72rem; justify-content: space-between; margin-bottom: 1rem; }
+    .settings-row b { font-size: .72rem; }
+    .toggle { background: var(--blue); border-radius: 999px; height: 22px; padding: 3px; width: 39px; }
+    .toggle::after { background: white; border-radius: 50%; content: ""; display: block; height: 16px; margin-left: auto; width: 16px; }
+    .widget-board { display: grid; gap: 7px; grid-template-columns: repeat(4, 1fr); }
+    .widget-slot { align-items: center; background: rgb(54 100 255 / .11); border: 1px solid rgb(101 132 255 / .26); border-radius: 10px; color: #ced6e7; display: flex; flex-direction: column; font-size: .52rem; gap: .35rem; min-height: 62px; justify-content: center; }
+    .widget-slot i { background: var(--blue); border-radius: 4px; height: 12px; width: 12px; }
+    .appearance-preview { background: linear-gradient(135deg, rgb(255 255 255 / .2), rgb(111 138 255 / .1)); border: 1px solid rgb(255 255 255 / .18); border-radius: 12px; display: grid; gap: 6px; grid-template-columns: 1fr 1fr; margin-top: 1rem; padding: 8px; }
+    .appearance-preview span { border-radius: 8px; color: var(--muted-strong); font-size: .55rem; padding: .5rem; text-align: center; }
+    .appearance-preview .selected { background: rgb(255 255 255 / .13); color: white; }
+    .settings-caption { color: var(--muted); font-size: .72rem; margin: 1rem 0 0; }
 
     .drop-story { background: var(--paper); color: var(--paper-ink); overflow: hidden; }
     .drop-layout { align-items: center; display: grid; gap: clamp(3rem, 7vw, 7rem); grid-template-columns: .85fr 1.15fr; }
@@ -207,6 +231,9 @@
       .proof-item:nth-child(4) { border-top: 1px solid var(--line); }
       .feature-card--wide, .feature-card--narrow, .feature-card--half { grid-column: span 12; }
       .drop-layout, .trust-layout { grid-template-columns: 1fr; }
+      .settings-stage { min-height: 540px; }
+      .settings-window-shot { width: 88%; }
+      .notch-settings-card { width: 48%; }
       .drop-copy { max-width: 650px; }
       .type-row { grid-template-columns: 54px 140px 1fr; }
       .type-meta { display: none; }
@@ -224,8 +251,8 @@
       .button-primary, .button-secondary { justify-content: center; width: 100%; }
       .mac-stage { border-radius: 20px 20px 12px 12px; height: 410px; }
       .menu-left span:not(:first-child), .menu-right span:not(:last-child) { display: none; }
-      .physical-notch { width: 134px; }
-      .notch-dock { padding-left: 14px; padding-right: 14px; width: calc(100vw - 34px); }
+      .mac-stage { --notch-width-ratio: 34%; --dock-width-ratio: calc(100% - 10px); }
+      .notch-dock { padding-left: 14px; padding-right: 14px; }
       .dock-columns { gap: 12px; }
       .dock-section:nth-child(n+3) { display: none; }
       .desktop-card { display: none; }
@@ -235,6 +262,10 @@
       .section-heading h2 { font-size: 2.75rem; }
       .feature-grid { margin-top: 2.25rem; }
       .feature-card { min-height: 270px; }
+      .settings-stage { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+      .settings-window-shot, .notch-settings-card { position: static; transform: none; width: 100%; }
+      .notch-settings-card { order: -1; }
+      .widget-board { grid-template-columns: repeat(2, 1fr); }
       .drop-visual { min-height: 360px; }
       .drop-target { left: 8%; right: 8%; width: auto; }
       .type-row { gap: .85rem; grid-template-columns: 48px 1fr; min-height: 108px; }
@@ -257,8 +288,8 @@
       </a>
       <div class="nav-links">
         <a class="nav-link" href="#features">Features</a>
+        <a class="nav-link" href="#settings">Settings</a>
         <a class="nav-link" href="#launchers">Launchers</a>
-        <a class="nav-link" href="#history">History</a>
         <a class="nav-link nav-download" href="#download">Download</a>
       </div>
     </nav>
@@ -290,6 +321,7 @@
             <div class="drop-badge"><svg viewBox="0 0 24 24" fill="none"><path d="M5 8h5l2 2h7v8H5z" stroke="currentColor" stroke-width="1.8"/><path d="M12 4v8m0 0 3-3m-3 3-3-3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><span class="drop-count">3</span></div>
           </div>
           <div class="notch-dock" aria-hidden="true">
+            <svg class="dock-top-shape" viewBox="0 0 736 32" preserveAspectRatio="none" aria-hidden="true"><path d="M75.5 0H660.5C620 0 610 32 570.5 32H165.5C126 32 116 0 75.5 0Z"/></svg>
             <div class="dock-columns">
               <section class="dock-section"><h3><i></i>Screenshots</h3><ul><li>Homepage.png</li><li>Reference.png</li></ul></section>
               <section class="dock-section"><h3><i></i>Apps</h3><ul><li>Notes <span class="key">⌥N</span></li><li>Terminal <span class="key">⌥T</span></li></ul></section>
@@ -333,6 +365,22 @@
           <article class="feature-card feature-card--half">
             <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the open dock shows a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section settings-story" id="settings" aria-labelledby="settings-title">
+      <div class="shell">
+        <div class="section-heading"><p class="eyebrow">Configure once</p><h2 id="settings-title">Everything has a place.</h2><p>The familiar macOS settings window still handles every launchable, display, and size. Chap 2 adds a dedicated Notch tab without hiding the controls that made the original fast.</p></div>
+        <div class="settings-stage">
+          <figure class="settings-window-shot"><img src="assets/screenshots/chap-command-setup.svg" alt="Chap Settings showing a configured app launcher, Option shortcut, target display, size preset, and Guide Window controls." width="1600" height="1000"></figure>
+          <aside class="notch-settings-card" aria-label="Chap Notch settings preview">
+            <div class="settings-card-bar"><strong>Chap Settings</strong><div class="settings-card-tabs" aria-hidden="true"><span>Launchers</span><span>General</span><span class="active">Notch</span></div></div>
+            <div class="settings-row"><b>Show Launchers Under the Notch</b><span class="toggle" aria-hidden="true"></span></div>
+            <div class="widget-board" aria-label="Four configured notch widget slots"><div class="widget-slot"><i></i>Screenshots</div><div class="widget-slot"><i></i>Apps</div><div class="widget-slot"><i></i>Folders</div><div class="widget-slot"><i></i>Scripts</div></div>
+            <div class="appearance-preview" aria-label="Glass appearance options"><span>Custom</span><span class="selected">Glass</span><span>System</span><span class="selected">Clear</span></div>
+            <p class="settings-caption">Drag to arrange. Use context menus or VoiceOver actions when you prefer not to drag.</p>
+          </aside>
         </div>
       </div>
     </section>
