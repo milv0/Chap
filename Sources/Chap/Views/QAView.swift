@@ -169,6 +169,35 @@ struct QAView: View {
             ]
         ),
         (
+            "노치 런처 & Chap Drop",
+            [
+                (
+                    "노치 런처는 어떻게 켜나요?",
+                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
+                ),
+                (
+                    "노치의 네 칸은 어떻게 바꾸나요?",
+                    "Notch 탭의 Widgets 보드에서 Sites, Apps, Folders, Scripts, Screenshots를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                ),
+                (
+                    "Custom과 Glass의 차이는?",
+                    "Custom은 macOS 14 이상에서 색상과 불투명도를 조절합니다. Glass는 macOS 26 이상에서 Apple Liquid Glass를 사용하며, Light는 Clear, Dark는 Regular 재질과 짝을 이루고 System은 macOS 테마를 따릅니다."
+                ),
+                (
+                    "Chap Drop은 어떻게 쓰나요?",
+                    "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. 드롭한 파일은 ~/Library/Application Support/Chap/Drop/에 복사되며 원본은 그대로입니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
+                ),
+                (
+                    "Screenshots 위젯은 파일을 옮기나요?",
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지 네 개를 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다."
+                ),
+                (
+                    "왜 각 URL/App/Finder/Shell 항목은 네 개까지만 추가되나요?",
+                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 launch type별로 최대 네 개를 허용합니다. 각 타입의 한도는 서로 독립적입니다."
+                ),
+            ]
+        ),
+        (
             "Keep Mac Awake & 메뉴",
             [
                 (
@@ -357,6 +386,35 @@ struct QAView: View {
                 (
                     "The app suddenly stopped responding to shortcuts.",
                     "Restart Chap to register its shortcuts again. If the issue continues, check whether another app registered the same Option combination first."
+                ),
+            ]
+        ),
+        (
+            "Notch Launcher & Chap Drop",
+            [
+                (
+                    "How do I enable the Notch Launcher?",
+                    "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
+                ),
+                (
+                    "How do I arrange the four notch slots?",
+                    "Drag Sites, Apps, Folders, Scripts, or Screenshots into the Widgets board. You can also assign or clear a slot with its context menu or VoiceOver actions."
+                ),
+                (
+                    "What is the difference between Custom and Glass?",
+                    "Custom provides color and opacity on macOS 14 or later. Glass uses Apple Liquid Glass on macOS 26 or later: Light pairs with Clear, Dark with Regular, and System follows the macOS appearance."
+                ),
+                (
+                    "How does Chap Drop work?",
+                    "Drag files toward the notch or its right Drop badge. The main dock shows a translucent Drop here layer and copies accepted items into ~/Library/Application Support/Chap/Drop/ without changing the originals. Open, drag out, or remove them from the bottom file row."
+                ),
+                (
+                    "Does the Screenshots widget move my files?",
+                    "No. It only reads the four newest images from the current macOS screenshot folder. It does not move or duplicate the originals."
+                ),
+                (
+                    "Why can I add only four URL, App, Finder, or Shell launchables?",
+                    "Each launch type is capped at four to keep both the status menu and each notch slot short and predictable. The four limits are independent."
                 ),
             ]
         ),
