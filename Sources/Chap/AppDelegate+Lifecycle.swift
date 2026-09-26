@@ -29,6 +29,17 @@ extension AppDelegate {
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         buildMenu()
+        // 해상도·배치·외장 모니터·clamshell 변경 시 노치 창 프레임을 재계산한다.
+        screenParametersObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.pendingScreenRefresh?.cancel()
+            let work = DispatchWorkItem { [weak self] in self?.refreshNotchLauncher() }
+            self.pendingScreenRefresh = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: work)
+        }
         accessibilityController.onAccessibleChanged = { [weak self] accessible in
             self?.updateStatusIcon(accessible: accessible)
         }
@@ -44,6 +55,12 @@ extension AppDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         globalHotKeyManager.stop()
+        pendingScreenRefresh?.cancel()
+        pendingScreenRefresh = nil
+        if let screenParametersObserver {
+            NotificationCenter.default.removeObserver(screenParametersObserver)
+            self.screenParametersObserver = nil
+        }
         notchLauncher.tearDown()
     }
 

@@ -142,7 +142,10 @@ struct NotchSettingsView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
-                            .onChange(of: vm.notchPanelStyle) { _, _ in onSave() }
+                            .onChange(of: vm.notchPanelStyle) { _, _ in
+                                notchController?.endOpacityPreview()
+                                onSave()
+                            }
 
                             if vm.notchPanelStyle == .glass {
                                 Picker(
@@ -325,6 +328,25 @@ private struct WidgetSlotBox: View {
             }
         }
         .onHover { isHovered = $0 }
+        // Drag가 어려운 키보드·VoiceOver 사용자를 위한 동일 기능 메뉴.
+        .contextMenu {
+            Button("Sites") { onAssign(.sites) }
+            Button("Apps") { onAssign(.apps) }
+            Button("Folders") { onAssign(.folders) }
+            Button("Scripts") { onAssign(.scripts) }
+            Button("Screenshots") { onAssign(.screenshots) }
+            if !isEmpty {
+                Divider()
+                Button("Clear Slot", action: onClear)
+            }
+        }
+        // VoiceOver rotor actions: drag/drop 없이 배치·비우기 가능.
+        .accessibilityAction(named: "Place Sites") { onAssign(.sites) }
+        .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
+        .accessibilityAction(named: "Place Folders") { onAssign(.folders) }
+        .accessibilityAction(named: "Place Scripts") { onAssign(.scripts) }
+        .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
+        .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
         .draggable(widget.rawValue)
         .dropDestination(for: String.self) { items, _ in

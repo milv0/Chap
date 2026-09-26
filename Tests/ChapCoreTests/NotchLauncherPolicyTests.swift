@@ -87,4 +87,10 @@ struct NotchLauncherPolicyTests {
         #expect(glassStrip.contains(CGPoint(x: 1, y: 1)) == false)
         #expect(glassStrip.contains(CGPoint(x: rect.midX, y: 31)))
     }
+    @Test("Drop feedback builds a panel even with no widget slots")
+    func dropFeedbackAllowsEmptyPanel() {
+        #expect(NotchLauncherPolicy.shouldBuildPanel(hasSlots: false, forDrop: true))
+        #expect(NotchLauncherPolicy.shouldBuildPanel(hasSlots: false, forDrop: false) == false)
+        #expect(NotchLauncherPolicy.shouldBuildPanel(hasSlots: true, forDrop: false))
+    }
 }

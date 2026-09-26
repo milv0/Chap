@@ -20,6 +20,10 @@ final class NotchLauncherController {
     private var hoverOpenSuppressedUntil = Date.distantPast
     /// Glass appearance 선택 후 메인 도커를 잠깐 고정하는 프리뷰 토큰.
     private var appearancePreviewToken = 0
+    /// 비동기 배지 count 중 오래된 결과를 버리는 generation.
+    private var badgeRefreshToken = 0
+    /// opacity 드래그 pin의 self-healing 토큰.
+    private var opacityPreviewToken = 0
     private var dropObserver: NSObjectProtocol?
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
@@ -73,6 +77,7 @@ final class NotchLauncherController {
 
     func tearDown() {
         stopVisibilityMonitor()
+        badgeRefreshToken += 1
         isPreviewPinned = false
         revealModel = nil
         panel?.orderOut(nil)
@@ -98,9 +103,17 @@ final class NotchLauncherController {
         }
     }
 
-    /// 보관함 파일 수에 따라 노치 왼쪽 Drop 배지 도커를 갱신한다.
+    /// 보관함 파일 수에 따라 노치 오른쪽 Drop 배지 도커를 갱신한다.
     private func updateDropBadge() {
-        let count = ChapDrop.fileCount()
+        badgeRefreshToken += 1
+        let token = badgeRefreshToken
+        ChapDrop.fileCountAsync { [weak self] count in
+            guard let self, self.badgeRefreshToken == token else { return }
+            self.renderDropBadge(count: count)
+        }
+    }
+
+    private func renderDropBadge(count: Int) {
         guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
             hotzoneWindow != nil, let screen = Self.notchScreen()
         else {
@@ -127,7 +140,7 @@ final class NotchLauncherController {
         // (tracker 안에 subview로 넣으면 셰이프가 상하 반전되어 렌더링됐다.)
         // tracker는 hosting 위의 투명 오버레이로 hover/드래그만 받는다.
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
-        // 배지 hover는 Drop 파일 리스트 도커를, 파일 드래그는 드롭 존을 연다.
+        // 배지 hover는 메인 도커를, 파일 드래그는 Drop here overlay를 연다.
         tracker.onEntered = { [weak self] in
             guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
             self.showPanel()
@@ -135,9 +148,7 @@ final class NotchLauncherController {
         tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
         // 드롭존 도커가 뜨기 전에 배지 위에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
-            ChapDrop.store(urls)
-            self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
-            self?.hidePanel()
+            self?.storeDroppedFiles(urls, closePanelWhenDone: true)
         }
         tracker.autoresizingMask = [.width, .height]
         hosting.frame = NSRect(origin: .zero, size: frame.size)
@@ -171,6 +182,20 @@ final class NotchLauncherController {
         badgeWindow = window
     }
 
+    /// 파일 복사는 utility queue에서 수행하고 실패 건수는 사용자에게 알린다.
+    private func storeDroppedFiles(_ urls: [URL], closePanelWhenDone: Bool) {
+        guard !urls.isEmpty else { return }
+        hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
+        ChapDrop.storeAsync(urls) { [weak self] _, failedCount in
+            if failedCount > 0 {
+                LauncherUtils.showAlert(
+                    message: "Some files could not be added",
+                    info: "\(failedCount) item(s) could not be copied to Chap Drop.")
+            }
+            if closePanelWhenDone { self?.hidePanel() }
+        }
+    }
+
     // MARK: - Hotzone
 
     private func installHotzone(on screen: NSScreen) {
@@ -193,7 +218,7 @@ final class NotchLauncherController {
 
         let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
-        // 마우스 hover는 전체 패널을, 파일 드래그는 컴팩트 드롭 존을 연다.
+        // 마우스 hover는 메인 패널을, 파일 드래그는 Drop here overlay를 연다.
         tracker.onEntered = { [weak self] in
             guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
             self.showPanel()
@@ -201,9 +226,7 @@ final class NotchLauncherController {
         tracker.onDragEntered = { [weak self] in self?.presentDropOverlay() }
         // 노치 자체에 바로 놓아도 드롭이 성사된다.
         tracker.onFilesDropped = { [weak self] urls in
-            ChapDrop.store(urls)
-            self?.hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
-            self?.hidePanel()
+            self?.storeDroppedFiles(urls, closePanelWhenDone: true)
         }
         window.contentView = tracker
         window.orderFrontRegardless()
@@ -234,11 +257,14 @@ final class NotchLauncherController {
 
     // MARK: - Panel
 
-    private func showPanel() {
+    private func showPanel(forDrop: Bool = false) {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
         let slots = slotsProvider()
-        guard !slots.isEmpty else { return }
+        guard
+            NotchLauncherPolicy.shouldBuildPanel(
+                hasSlots: !slots.isEmpty, forDrop: forDrop)
+        else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
@@ -311,7 +337,7 @@ final class NotchLauncherController {
     /// 파일 드래그가 노치에 닿으면 메인 도커를 열고 그 위에
     /// 반투명 "Drop here" 레이어를 덮는다.
     private func presentDropOverlay() {
-        if panel == nil { showPanel() }
+        if panel == nil { showPanel(forDrop: true) }
         revealModel?.isDropTargetActive = true
     }
 
@@ -368,8 +394,16 @@ final class NotchLauncherController {
     /// 설정 슬라이더 드래그 시작. 패널을 띄워 고정하고 실시간 값을 보여준다.
     func beginOpacityPreview() {
         isPreviewPinned = true
+        opacityPreviewToken += 1
+        let token = opacityPreviewToken
         if panel == nil { showPanel() }
         revealModel?.bottomOpacity = opacityProvider()
+        // SwiftUI가 slider의 editing=false를 잃어도 영구 pin되지 않게 한다.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+            guard let self, self.opacityPreviewToken == token else { return }
+            self.isPreviewPinned = false
+            self.lastInsideDate = Date()
+        }
     }
 
     /// 드래그 중 값 변경을 즉시 반영한다.
@@ -379,6 +413,7 @@ final class NotchLauncherController {
 
     /// 드래그 종료. 고정을 풀면 일반 규칙(마우스 위치)으로 닫힌다.
     func endOpacityPreview() {
+        opacityPreviewToken += 1
         isPreviewPinned = false
         lastInsideDate = Date()
     }
@@ -387,11 +422,11 @@ final class NotchLauncherController {
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
         lastInsideDate = Date()
-        visibilityTimer = Timer.scheduledTimer(
-            withTimeInterval: Self.pollInterval, repeats: true
-        ) { [weak self] _ in
+        let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
         }
+        RunLoop.main.add(timer, forMode: .common)
+        visibilityTimer = timer
     }
 
     private func stopVisibilityMonitor() {
@@ -436,8 +471,7 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         guard let panel else { return }
         self.panel = nil
-        // 모든 도커가 같은 시간에 사라진다: 메인 패널은 노치로 말려 들어가고,
-        // reveal 모델이 없는 Drop 도커들은 같은 길이의 페이드로 정리한다.
+        // 메인 패널을 노치로 말아 넣고 애니메이션 뒤 창을 정리한다.
         if let reveal = revealModel {
             withAnimation(NotchLauncherPanelView.closeAnimation) {
                 reveal.revealed = false
@@ -490,7 +524,7 @@ private final class HoverView: NSView {
 
     override func mouseEntered(with event: NSEvent) { onEntered() }
 
-    /// 파일 드래그가 노치 위로 들어오면 컴팩트 드롭 존을 노출한다.
+    /// 파일 드래그가 노치 위로 들어오면 메인 패널의 Drop here overlay를 노출한다.
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         onDragEntered()
         return onFilesDropped != nil ? .copy : []

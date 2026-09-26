@@ -15,6 +15,12 @@ public enum NotchLauncherPolicy {
         enabled && hasNotch(topSafeAreaInset: topSafeAreaInset)
     }
 
+    /// 일반 hover는 표시할 슬롯이 있어야 하지만, 파일 드래그는 슬롯이 없어도
+    /// Drop here 피드백을 위해 빈 패널을 만들어야 한다.
+    public static func shouldBuildPanel(hasSlots: Bool, forDrop: Bool) -> Bool {
+        hasSlots || forDrop
+    }
+
     /// 화면 최상단에 붙여 노치를 검정으로 감싼다. 반환 높이는 상단바 구간
     /// (`topSafeAreaInset`)과 콘텐츠 높이의 합이며, 좌표는 AppKit 기준
     /// (원점 좌하단)으로 `screenFrame`의 원점을 보존한다.

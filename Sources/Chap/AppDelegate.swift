@@ -6,6 +6,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var statusItem: NSStatusItem!
     let keepAwake = KeepAwakeController()
     let notchLauncher = NotchLauncherController()
+    var screenParametersObserver: NSObjectProtocol?
+    var pendingScreenRefresh: DispatchWorkItem?
     weak var keepAwakeMenuItem: NSMenuItem?
     var config: Config = Config(sites: [])
     let configPath = Defaults.configPath
