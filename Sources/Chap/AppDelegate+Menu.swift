@@ -289,7 +289,7 @@ extension AppDelegate {
                 case .none:
                     return nil
                 case .screenshots:
-                    return .screenshots(ScreenshotShelf.recentScreenshots())
+                    return .screenshots
                 case .drop:
                     // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
                     return nil

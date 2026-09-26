@@ -4,8 +4,8 @@ import SwiftUI
 enum NotchSlotContent {
     /// 런처 목록 위젯.
     case launchers(LauncherListSection)
-    /// 스크린샷 선반 위젯.
-    case screenshots([URL])
+    /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
+    case screenshots
 }
 
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
@@ -192,15 +192,25 @@ struct NotchLauncherPanelView: View {
         .animation(.easeOut(duration: 0.15), value: visible)
         .allowsHitTesting(visible)
         .dropDestination(for: URL.self) { urls, _ in
-            let stored = ChapDrop.store(urls)
+            guard !urls.isEmpty else { return false }
             reveal.isDropTargetActive = false
-            return !stored.isEmpty
+            dropTargeted = false
+            ChapDrop.storeAsync(urls) { _, failedCount in
+                if failedCount > 0 {
+                    LauncherUtils.showAlert(
+                        message: "Some files could not be added",
+                        info: "\(failedCount) item(s) could not be copied to Chap Drop.")
+                }
+            }
+            return true
         } isTargeted: {
             dropTargeted = $0
         }
     }
 
     @State private var dropFiles: [URL] = []
+    @State private var isRefreshingDropFiles = false
+    @State private var dropRefreshPending = false
 
     /// 전경 대비 계산용 배경색. Glass는 색을 깔지 않으므로 어두운 재질로
     /// 취급해 검정 기준 전경값을 그대로 쓴다.
@@ -243,6 +253,10 @@ struct NotchLauncherPanelView: View {
         style == .glass ? Color.primary.opacity(0.08) : .white.opacity(0.16)
     }
 
+    private var subtleSurface: Color {
+        style == .glass ? Color.primary.opacity(0.10) : .white.opacity(0.10)
+    }
+
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
@@ -258,7 +272,7 @@ struct NotchLauncherPanelView: View {
             // 도커는 원래 크기로 돌아간다.
             if !dropFiles.isEmpty {
                 Rectangle()
-                    .fill(Color.white.opacity(0.10))
+                    .fill(subtleSurface)
                     .frame(height: 1)
                     .padding(.top, 2)
                 HStack(alignment: .top, spacing: DS.spacingSmall) {
@@ -269,9 +283,15 @@ struct NotchLauncherPanelView: View {
                             textShadowOpacity: textShadowOpacity,
                             hoverBackground: rowHoverBackground
                         ) {
-                            ChapDrop.remove(url)
-                            dropFiles = ChapDrop.recentFiles(
-                                limit: DropPolicy.maxDockItems)
+                            ChapDrop.removeAsync(url) { removed in
+                                if !removed {
+                                    LauncherUtils.showAlert(
+                                        message: "File could not be removed",
+                                        info:
+                                            "Chap could not remove \(url.lastPathComponent) from Drop."
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -281,11 +301,27 @@ struct NotchLauncherPanelView: View {
         .padding(.top, topInset + NotchGeometry.contentTopGap)
         .padding(.bottom, DS.paddingSmall)
         .frame(minWidth: minWidth)
-        .onAppear { dropFiles = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems) }
+        .onAppear { refreshDropFiles() }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
         ) { _ in
-            dropFiles = ChapDrop.recentFiles(limit: DropPolicy.maxDockItems)
+            refreshDropFiles()
+        }
+    }
+
+    private func refreshDropFiles() {
+        guard !isRefreshingDropFiles else {
+            dropRefreshPending = true
+            return
+        }
+        isRefreshingDropFiles = true
+        ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) { files in
+            dropFiles = files
+            isRefreshingDropFiles = false
+            if dropRefreshPending {
+                dropRefreshPending = false
+                refreshDropFiles()
+            }
         }
     }
 
@@ -294,9 +330,9 @@ struct NotchLauncherPanelView: View {
         switch slot {
         case .launchers(let section):
             sectionView(section)
-        case .screenshots(let urls):
+        case .screenshots:
             NotchScreenshotShelfView(
-                urls: urls, backgroundHex: contrastBackgroundHex,
+                backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: style == .glass)
         }
     }
@@ -330,7 +366,8 @@ struct NotchLauncherPanelView: View {
                             NotchContrastPolicy.tertiaryTextOpacity(
                                 backgroundHex: contrastBackgroundHex)),
                     textShadowOpacity: textShadowOpacity,
-                    hoverBackground: rowHoverBackground
+                    hoverBackground: rowHoverBackground,
+                    keycapBackground: subtleSurface
                 ) {
                     onLaunch(entry.siteIndex)
                 }
@@ -354,6 +391,7 @@ private struct NotchLauncherRow: View {
     let shortcutForeground: Color
     let textShadowOpacity: Double
     let hoverBackground: Color
+    let keycapBackground: Color
     let action: () -> Void
 
     @State private var isHovered = false
@@ -378,7 +416,7 @@ private struct NotchLauncherRow: View {
                         .padding(.vertical, 1.5)
                         .background(
                             RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(Color.white.opacity(0.10))
+                                .fill(keycapBackground)
                         )
                 }
             }

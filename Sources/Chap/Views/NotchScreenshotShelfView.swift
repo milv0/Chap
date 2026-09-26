@@ -5,11 +5,13 @@ import UniformTypeIdentifiers
 /// 노치 패널 한 칸을 차지하는 스크린샷 선반.
 /// 최신 스크린샷을 세로로 쌓아 보여주고, 클릭으로 열거나 드래그로 꺼낼 수 있다.
 struct NotchScreenshotShelfView: View {
-    let urls: [URL]
     /// 콘텐츠 박스 배경색. 전경 대비 계산에 쓴다.
     let backgroundHex: String
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
+
+    @State private var urls: [URL] = []
+    @State private var isRefreshing = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -65,6 +67,20 @@ struct NotchScreenshotShelfView: View {
                             ? .primary.opacity(0.08) : .white.opacity(0.16))
                 }
             }
+        }
+        .onAppear { refresh() }
+        // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
+        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
+            refresh()
+        }
+    }
+
+    private func refresh() {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        ScreenshotShelf.recentScreenshotsAsync { screenshots in
+            urls = screenshots
+            isRefreshing = false
         }
     }
 }
@@ -125,21 +141,7 @@ private struct ScreenshotShelfRow: View {
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
         .accessibilityLabel("Open screenshot \(url.lastPathComponent)")
         .task(id: url) {
-            thumbnail = Self.loadThumbnail(for: url)
+            thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 64)
         }
-    }
-
-    /// 원본 전체 디코딩 없이 작은 썸네일만 만든다.
-    private static func loadThumbnail(for url: URL) -> NSImage? {
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: 64,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-        ]
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            let cgImage = CGImageSourceCreateThumbnailAtIndex(
-                source, 0, options as CFDictionary)
-        else { return nil }
-        return NSImage(cgImage: cgImage, size: .zero)
     }
 }

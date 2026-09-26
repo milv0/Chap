@@ -18,83 +18,72 @@ struct NotchDropFileItem: View {
     @State private var thumbnail: NSImage?
 
     var body: some View {
-        Button {
-            NSWorkspace.shared.open(url)
-        } label: {
-            VStack(spacing: 5) {
-                Group {
-                    if let thumbnail {
-                        Image(nsImage: thumbnail)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } else {
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                            .resizable()
+        ZStack(alignment: .topTrailing) {
+            Button {
+                NSWorkspace.shared.open(url)
+            } label: {
+                VStack(spacing: 5) {
+                    Group {
+                        if let thumbnail {
+                            Image(nsImage: thumbnail)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        } else {
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                                .resizable()
+                        }
                     }
-                }
-                .frame(width: 36, height: 36)
-                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .frame(width: 36, height: 36)
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
 
-                Text(url.lastPathComponent)
-                    .font(.system(size: 10))
-                    .foregroundColor(primaryForeground)
-                    .shadow(
-                        color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                    Text(url.lastPathComponent)
+                        .font(.system(size: 10))
+                        .foregroundColor(primaryForeground)
+                        .shadow(
+                            color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                        )
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .frame(width: 68)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                        .fill(isHovered ? hoverBackground : Color.clear)
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            // 포인터용 삭제 버튼은 open 버튼의 sibling이라 중첩 control이 아니다.
+            Button(action: onRemove) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 15, height: 15)
+                    .background(Circle().fill(DS.danger))
+                    .overlay(
+                        Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
                     )
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                    .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
             }
-            .frame(width: 68)
-            .padding(.vertical, 6)
-            .padding(.horizontal, 2)
-            .background(
-                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isHovered ? hoverBackground : Color.clear)
-            )
-            .overlay(alignment: .topTrailing) {
-                if isHovered {
-                    Button(action: onRemove) {
-                        // Glass·색상 배경 모두에서 보이는 파괴적 액션 문법:
-                        // 불투명 danger 원 + 흰색 x. 재질 대비에 의존하지 않는다.
-                        Image(systemName: "xmark")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 15, height: 15)
-                            .background(Circle().fill(DS.danger))
-                            .overlay(
-                                Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
-                            )
-                            .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
-                    }
-                    .buttonStyle(.plain)
-                    .contentShape(Circle())
-                    .accessibilityLabel("Remove \(url.lastPathComponent) from Chap Drop")
-                }
-            }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .contentShape(Circle())
+            .opacity(isHovered ? 1 : 0)
+            .allowsHitTesting(isHovered)
+            .accessibilityHidden(true)
         }
-        .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        // 드래그로 파일을 다른 앱/Finder에 떨어뜨릴 수 있다.
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
-        .accessibilityLabel("Open \(url.lastPathComponent)")
-        .task(id: url) { thumbnail = Self.loadThumbnail(for: url) }
-    }
-
-    /// 이미지 파일은 원본 전체 디코딩 없이 작은 썸네일을 만든다.
-    private static func loadThumbnail(for url: URL) -> NSImage? {
-        let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "heic", "tiff", "gif"]
-        guard imageExtensions.contains(url.pathExtension.lowercased()) else { return nil }
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: 72,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-        ]
-        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            let cgImage = CGImageSourceCreateThumbnailAtIndex(
-                source, 0, options as CFDictionary)
-        else { return nil }
-        return NSImage(cgImage: cgImage, size: .zero)
+        // VoiceOver/키보드에는 하나의 파일 요소와 명시적 actions를 제공한다.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(url.lastPathComponent)
+        .accessibilityAction(named: "Open") { NSWorkspace.shared.open(url) }
+        .accessibilityAction(named: "Remove from Chap Drop", onRemove)
+        .task(id: url) {
+            thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 72)
+        }
     }
 }
 
