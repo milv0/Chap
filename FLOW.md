@@ -41,6 +41,9 @@
 | I12 | 관리 창(Settings/QA/Welcome) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
 | I13 | 글로벌 단축키는 `RegisterEventHotKey`로 **정확한 Option 조합만** 등록. 전체 keyDown event tap 금지 | Chap 메인 스레드 정체가 일반 키 입력 전달을 막는다 |
 | I14 | URL 창 재사용은 해당 launchable이 **현재 Chap/Chrome 세션에서 직접 만든 window ID 1개**만 활성화·리사이즈. 사용자 탭 URL 검색과 focused 창 폴백은 금지 | 다른 Chrome 작업 창이 이동된다 |
+| I15 | 노치 런처는 상태바 NSMenu를 대체하지 않는 opt-in 표면. 노치 없음/토글 off에서도 메뉴·Option 단축키 유지 | 노치 없는 Mac에서 핵심 기능을 잃는다 |
+| I16 | Chap Drop 복사·삭제·폴더 스캔·썸네일 디코딩은 메인 스레드에서 실행하지 않는다 | 큰 파일/복잡한 Desktop에서 UI가 멈춘다 |
+| I17 | Glass 상단 띠는 하드웨어 노치와 합쳐지는 순검정, 콘텐츠만 Liquid Glass. macOS 26 미만은 Custom 검정 폴백 | 노치 실루엣이 끊기거나 콘텐츠가 투명해진다 |
 
 ---
 
@@ -63,9 +66,10 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 5. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
 6. NSApp.setActivationPolicy(.accessory)
 7. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
-8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 전체 재등록
-9. initializeAccessibilityHandling()   권한 확인 + 옵저버 등록 (+ 최초 시스템 프롬프트)
-10. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
+8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 재등록 + 노치 hotzone/Drop 배지 동기화
+9. didChangeScreenParameters observer  150ms debounce 후 노치 화면·프레임 재계산
+10. initializeAccessibilityHandling()  권한 확인 + 옵저버 등록 (+ 최초 시스템 프롬프트)
+11. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
 ```
 
 - 2가 3보다 먼저여야 첫 실행에서 빈 config로 로드되지 않는다.
@@ -434,10 +438,10 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
-Settings는 하단의 `Launchers`와 `General` 두 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
-사이드바는 두 탭에서 유지되며, General에서 사이트를 선택하면 Launchers로 복귀한다.
+Settings는 하단의 `Launchers`·`General`·`Notch` 세 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
+사이드바는 모든 탭에서 유지되며, General/Notch에서 사이트를 선택하면 Launchers로 복귀한다.
 Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
-상태바 아이콘과 메뉴 섹션 표시 여부(launch type별 숨김)를 관리한다.
+상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·4칸 위젯·Custom/Glass를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -499,7 +503,38 @@ VM 갱신 → `markSaved()` → fixes/warnings 요약 alert로 이어진다.
 ### 9.4 Export
 
 디스크 파일이 아니라 **현재 편집 상태**(저장 안 된 변경 포함)를 pretty-printed JSON으로 내보낸다.
-기본 위치 `~/Downloads`.
+hidden menu와 노치 설정도 모두 포함한다. 기본 위치 `~/Downloads`.
+
+### 9.5 Notch 런처·Chap Drop
+
+```
+Settings → Notch Launcher on
+  └ NotchLauncherController.update
+      ├ safeAreaInsets.top > 0 화면 탐색
+      ├ 투명 hotzone을 하드웨어 노치에 배치
+      └ Chap Drop 파일이 있으면 우측 count 배지 표시
+
+노치 hover
+  → showPanel(forDrop:false)
+  → LauncherListPolicy 기반 위젯 4칸 + 조건부 Drop 파일 행
+  → 80ms common-mode mouse polling
+  → 노치·패널·배지 영역 밖 200ms → 180ms 접힘 후 orderOut
+
+파일 drag enter (노치/Drop 배지)
+  → showPanel(forDrop:true)       빈 위젯이어도 패널 생성
+  → revealModel.isDropTargetActive = true
+  → 메인 도커 위 반투명 "Drop here" overlay
+  → ChapDrop.storeAsync           utility serial queue에서 collision-safe copy
+  → main에서 didChangeNotification → Drop 행·count 배지 비동기 갱신
+```
+
+- 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
+- URL/App/Finder/Shell은 타입별 최대 4개. 노치 한 칸도 최대 4개를 표시한다.
+- Screenshots 위젯은 시스템 스크린샷 위치를 2초마다 background scan하며 원본을 이동하지 않는다.
+- Chap Drop 위치는 `~/Library/Application Support/Chap/Drop/`; 사용자가 제거하기 전까지 유지한다.
+- Custom은 색·불투명도 페이드, Glass는 macOS 26+의 public `glassEffect` API.
+  Light→Clear, Dark→Regular, System은 macOS appearance를 따르며 재질을 직접 선택한다.
+- 디스플레이 파라미터 변경 알림은 150ms debounce 후 hotzone/배지를 재배치하거나 tearDown한다.
 
 ---
 
@@ -515,6 +550,10 @@ VM 갱신 → `markSaved()` → fixes/warnings 요약 alert로 이어진다.
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
+| Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
+| Chap Drop copy/delete/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |
+| Screenshot folder scan | concurrent utility queue | 패널 표시 중 2초 주기, 중복 scan 방지 |
+| Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
 
 `AppDelegate › quitApp()`은 항상 Cancel을 기본 버튼으로 한 종료 확인창을 띄우고, 사용자가 Quit을
 명시적으로 선택한 경우에만 종료한다. Keep Awake가 활성 중이면 어써션을 명시적으로 해제한 뒤

@@ -37,7 +37,7 @@ Sources/
 │       ├── SettingsGeneralView.swift ← General 탭 (Behavior/Appearance/Updates)
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
-│       ├── NotchDropViews.swift   ← Chap Drop 파일 행·좌우 배지
+│       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── QAView.swift           ← Q&A 페이지
