@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -12,6 +13,7 @@ struct NotchScreenshotShelfView: View {
 
     @State private var urls: [URL] = []
     @State private var isRefreshing = false
+    private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -70,7 +72,7 @@ struct NotchScreenshotShelfView: View {
         }
         .onAppear { refresh() }
         // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
-        .onReceive(Timer.publish(every: 2, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(refreshTimer) { _ in
             refresh()
         }
     }

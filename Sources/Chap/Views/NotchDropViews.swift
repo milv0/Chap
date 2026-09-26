@@ -79,7 +79,8 @@ struct NotchDropFileItem: View {
         // VoiceOver/키보드에는 하나의 파일 요소와 명시적 actions를 제공한다.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(url.lastPathComponent)
-        .accessibilityAction(named: "Open") { NSWorkspace.shared.open(url) }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { NSWorkspace.shared.open(url) }
         .accessibilityAction(named: "Remove from Chap Drop", onRemove)
         .task(id: url) {
             thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 72)
@@ -124,7 +125,9 @@ struct NotchDropBadgeView: View {
                 .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
                 .padding(.trailing, NotchGeometry.dockFlareRadius)
         }
-        .accessibilityLabel("Chap Drop: \(count) files")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            count == 1 ? "Chap Drop: 1 file" : "Chap Drop: \(count) files")
     }
 }
 
