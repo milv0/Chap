@@ -64,6 +64,12 @@ public final class SettingsViewModel: ObservableObject {
 
     public func markSaved() {
         originalSites = sites
+        markGlobalsSaved()
+    }
+
+    /// General/Notch 즉시 저장 성공 후 global baseline만 갱신한다.
+    /// 편집 중인 site draft는 `originalSites`와 분리해 unsaved 상태를 보존한다.
+    public func markGlobalsSaved() {
         originalGuide = showGuideWindow
         originalLogin = launchAtLogin
         originalOptionShortcutsEnabled = optionShortcutsEnabled

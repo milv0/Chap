@@ -749,11 +749,8 @@ struct SettingsView: View {
                     notchPanelColorHex: vm.notchPanelColorHex,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
-            vm.originalGuide = vm.showGuideWindow
-            vm.originalLogin = vm.launchAtLogin
-            vm.originalOptionShortcutsEnabled = vm.optionShortcutsEnabled
-            vm.originalStatusBarIcon = vm.statusBarIcon
-            vm.originalHiddenMenuLaunchTypes = vm.hiddenMenuLaunchTypes
+            // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.
+            vm.markGlobalsSaved()
         }
     }
 

@@ -223,4 +223,27 @@ struct SettingsViewModelTests {
         #expect(config.notchPanelColorHex == "#123456")
         #expect(config.notchWidgets == [.screenshots, .sites, .none, .none])
     }
+    @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
+        let vm = SettingsViewModel(sites: baseSites)
+        vm.sites[0].name = "Unsaved Site Draft"
+        vm.notchLauncherEnabled = true
+        vm.notchPanelStyle = .glass
+        vm.notchGlassAppearance = .dark
+        vm.notchGlassMaterial = .regular
+        vm.notchPanelOpacity = 0.8
+        vm.notchPanelColorHex = "#123456"
+        vm.notchWidgets = [.screenshots, .sites, .none, .none]
+
+        vm.markGlobalsSaved()
+
+        #expect(vm.originalNotchLauncherEnabled)
+        #expect(vm.originalNotchPanelStyle == .glass)
+        #expect(vm.originalNotchGlassAppearance == .dark)
+        #expect(vm.originalNotchGlassMaterial == .regular)
+        #expect(vm.originalNotchPanelOpacity == 0.8)
+        #expect(vm.originalNotchPanelColorHex == "#123456")
+        #expect(vm.originalNotchWidgets == [.screenshots, .sites, .none, .none])
+        #expect(vm.hasChanges)  // site draft remains unsaved
+        #expect(vm.originalSites[0].name != "Unsaved Site Draft")
+    }
 }
