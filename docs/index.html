@@ -116,25 +116,25 @@
     .drop-badge-icon svg { display: block; height: 100%; width: 100%; }
     .drop-count { background: var(--blue); border-radius: 999px; color: white; font-size: max(7px, calc(8 * var(--pt))); font-weight: 700; left: 100%; line-height: 1.25; padding: 0 calc(3.5 * var(--pt)); position: absolute; top: 0; transform: translate(-40%, -45%); }
 
-    .notch-dock { color: var(--mac-primary); left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.4); transform-origin: top center; transition: opacity 180ms ease, transform 180ms ease; min-width: calc(625 * var(--pt)); width: max-content; z-index: 10; }
+    .notch-dock { color: var(--mac-primary); left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.4); transform-origin: top center; transition: opacity 180ms ease, transform 180ms ease; width: calc(728 * var(--pt)); z-index: 10; }
     .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); transition: opacity 120ms ease, transform 300ms cubic-bezier(.2,.9,.22,1.08); }
     .notch-dock::before, .notch-dock::after { backdrop-filter: blur(22px) saturate(180%); background: var(--glass); content: ""; height: calc(10 * var(--pt)); position: absolute; top: 0; width: calc(10 * var(--pt)); }
     .notch-dock::before { left: 0; -webkit-mask: radial-gradient(circle calc(10 * var(--pt)) at 0 100%, transparent 97%, #000 100%); mask: radial-gradient(circle calc(10 * var(--pt)) at 0 100%, transparent 97%, #000 100%); }
     .notch-dock::after { right: 0; -webkit-mask: radial-gradient(circle calc(10 * var(--pt)) at 100% 100%, transparent 97%, #000 100%); mask: radial-gradient(circle calc(10 * var(--pt)) at 100% 100%, transparent 97%, #000 100%); }
     .dock-body { backdrop-filter: blur(22px) saturate(180%); background: var(--glass); border-radius: 0 0 calc(18 * var(--pt)) calc(18 * var(--pt)); box-shadow: 0 calc(4 * var(--pt)) calc(9 * var(--pt)) rgb(0 0 0 / .22), inset 0 -1px 0 rgb(255 255 255 / .5); margin: 0 calc(10 * var(--pt)); padding: calc(47 * var(--pt)) calc(10 * var(--pt)) calc(12 * var(--pt)); position: relative; }
-    .dock-cap { display: block; height: calc(32 * var(--pt)); left: 50%; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%); width: calc(585 * var(--pt)); z-index: 2; }
+    .dock-cap { display: block; height: calc(32 * var(--pt)); left: 0; pointer-events: none; position: absolute; top: 0; width: 100%; z-index: 2; }
     .dock-cap path { fill: #000; }
-    .dock-awake { align-items: center; color: rgb(255 255 255 / .9); display: flex; font-size: max(9px, calc(13 * var(--pt))); font-variant-numeric: tabular-nums; font-weight: 500; gap: calc(5 * var(--pt)); height: calc(32 * var(--pt)); justify-content: center; left: calc(50% - 149.5 * var(--pt)); position: absolute; top: 0; transform: translateX(-50%); width: calc(110 * var(--pt)); z-index: 3; }
+    .dock-awake { align-items: center; color: rgb(255 255 255 / .9); display: flex; font-size: max(9px, calc(13 * var(--pt))); font-variant-numeric: tabular-nums; font-weight: 500; gap: calc(5 * var(--pt)); height: calc(32 * var(--pt)); justify-content: center; left: calc(204.5 * var(--pt)); position: absolute; top: 0; transform: translateX(-50%); width: calc(110 * var(--pt)); z-index: 3; }
     .dock-awake svg { color: var(--blue); flex: none; height: max(8px, calc(12 * var(--pt))); width: max(8px, calc(12 * var(--pt))); }
     .mac-stage:not(.awake-on) .dock-awake { display: none; }
-    .dock-columns { display: grid; gap: calc(16 * var(--pt)); grid-template-columns: repeat(var(--cols, 4), calc(160 * var(--pt))); justify-content: center; }
+    .dock-columns { display: grid; gap: calc(16 * var(--pt)); grid-template-columns: repeat(4, calc(160 * var(--pt))); }
     .dock-section { display: flex; flex-direction: column; gap: calc(3 * var(--pt)); min-width: 0; }
     .dock-heading { align-items: center; color: var(--mac-secondary); display: flex; font-size: max(9px, calc(11 * var(--pt))); font-weight: 600; gap: calc(5 * var(--pt)); line-height: 1.25; padding: 0 calc(6 * var(--pt)) calc(1 * var(--pt)); white-space: nowrap; }
     .dock-heading svg { color: var(--blue); flex: none; height: 1em; width: 1em; }
     .dock-row { align-items: center; background: transparent; border: 0; border-radius: calc(8 * var(--pt)); color: inherit; cursor: pointer; display: flex; font-size: max(10px, calc(13 * var(--pt))); gap: calc(8 * var(--pt)); line-height: 1.2; min-width: 0; padding: calc(5 * var(--pt)) calc(6 * var(--pt)); text-align: left; width: 100%; }
     .dock-row:hover, .dock-row:focus-visible { background: var(--mac-fill); }
     .dock-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .dock-key { background: var(--mac-key, rgb(0 0 0 / .1)); border-radius: calc(4 * var(--pt)); color: var(--mac-secondary); flex: none; font: 500 max(9px, calc(11 * var(--pt)))/1.2 var(--mac-font); margin-left: auto; padding: calc(1.5 * var(--pt)) calc(5 * var(--pt)); }
+    .dock-key { background: rgb(0 0 0 / .1); border-radius: calc(4 * var(--pt)); color: var(--mac-secondary); flex: none; font: 500 max(9px, calc(11 * var(--pt)))/1.2 var(--mac-font); margin-left: auto; padding: calc(1.5 * var(--pt)) calc(5 * var(--pt)); }
     .shot-row { font-size: max(9px, calc(11 * var(--pt))); gap: calc(6 * var(--pt)); padding-bottom: calc(3 * var(--pt)); padding-top: calc(3 * var(--pt)); }
     .shot-thumb { border: .5px solid rgb(60 60 67 / .3); border-radius: calc(4 * var(--pt)); flex: none; height: calc(20 * var(--pt)); width: calc(26 * var(--pt)); }
     .shot-a { background: linear-gradient(#1b1d22 0 30%, #f4f5f7 31%); }
@@ -142,10 +142,10 @@
     .shot-c { background: linear-gradient(135deg, #bcd4d7, #efe9d9 55%, #c99a64); }
     .shot-d { background: linear-gradient(#e9edf2 0 26%, #fbfbfb 27% 62%, #2f3540 63%); }
 
-    .drop-section { display: flex; flex-direction: column; gap: calc(8 * var(--pt)); margin-top: calc(8 * var(--pt)); min-width: 100%; width: 0; }
+    .drop-section { display: flex; flex-direction: column; gap: calc(8 * var(--pt)); margin-top: calc(8 * var(--pt)); }
     .drop-section[hidden] { display: none; }
     .drop-sep { background: rgb(0 0 0 / .1); height: 1px; margin-top: calc(2 * var(--pt)); }
-    .drop-row { display: flex; flex-wrap: wrap; gap: calc(8 * var(--pt)); }
+    .drop-row { display: flex; gap: calc(8 * var(--pt)); }
     .drop-item { flex: none; position: relative; width: calc(72 * var(--pt)); }
     .drop-open { align-items: center; background: transparent; border: 0; border-radius: calc(8 * var(--pt)); color: inherit; cursor: pointer; display: flex; flex-direction: column; font-size: max(8px, calc(10 * var(--pt))); gap: calc(5 * var(--pt)); padding: calc(6 * var(--pt)) calc(2 * var(--pt)); width: 100%; }
     .drop-open:hover, .drop-open:focus-visible { background: var(--mac-fill); }
@@ -225,160 +225,6 @@
     .f-grid em { aspect-ratio: 1.3; background: linear-gradient(#74b7ff, #3d8ef3); border-radius: 4px; width: 70%; }
     .f-grid u { background: rgb(0 0 0 / .12); border-radius: 3px; height: 5px; width: 80%; }
     .sr-only { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
-    /* Live dock appearance driven by Settings → Notch. */
-    .mac-stage[data-dock-style="light"][data-material="regular"] { --glass: rgb(246 247 250 / .86); }
-    .mac-stage[data-dock-style="dark"] { --glass: rgb(38 39 44 / .62); --mac-primary: rgb(255 255 255 / .94); --mac-secondary: rgb(235 235 245 / .62); --mac-fill: rgb(255 255 255 / .12); --mac-key: rgb(255 255 255 / .14); }
-    .mac-stage[data-dock-style="dark"][data-material="clear"] { --glass: rgb(38 39 44 / .42); }
-    .mac-stage[data-dock-style="custom"] { --mac-primary: rgb(255 255 255 / .96); --mac-secondary: rgb(255 255 255 / .62); --mac-fill: rgb(255 255 255 / .16); --mac-key: rgb(255 255 255 / .12); }
-    .mac-stage[data-dock-style="custom"] .dock-body { backdrop-filter: none; background: linear-gradient(#000, rgb(0 0 0 / .92) 35%, rgb(0 0 0 / .6)); }
-    .mac-stage[data-dock-style="custom"] .notch-dock::before, .mac-stage[data-dock-style="custom"] .notch-dock::after { backdrop-filter: none; background: #000; }
-    .mac-stage[data-dock-style="custom"] .dock-body { box-shadow: 0 calc(4 * var(--pt)) calc(9 * var(--pt)) rgb(0 0 0 / .22), inset 0 0 0 1px rgb(255 255 255 / .08); }
-    .status-trigger .icon-seal { display: none; height: 1.35em; width: 1.35em; }
-    .mac-stage[data-status-icon="seal"] .status-trigger .icon-bolt { display: none; }
-    .mac-stage[data-status-icon="seal"] .status-trigger .icon-seal { display: block; }
-    .mac-stage.notch-off .hw-notch { cursor: default; }
-    .dock-empty { color: var(--mac-secondary); font-size: max(9px, calc(11 * var(--pt))); padding: calc(4 * var(--pt)) calc(6 * var(--pt)); }
-
-    /* Chap Settings window (Launchers · General · Notch), a 760×600 macOS window scaled to the demo screen. */
-    .mac-stage, .settings-win { color-scheme: light; }
-    .settings-win { background: #fff; border-radius: 12px; box-shadow: 0 22px 60px rgb(0 0 0 / .32), 0 0 0 .5px rgb(0 0 0 / .25); color: #1d1d1f; display: flex; flex-direction: column; font: 13px/1.35 var(--mac-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif); height: 600px; left: 0; overflow: hidden; pointer-events: auto; position: absolute; text-align: left; top: 0; transform-origin: top left; width: 760px; }
-    .settings-win[hidden] { display: none; }
-    .settings-win button, .settings-win input, .settings-win select, .settings-win textarea { font-family: inherit; }
-    .settings-win :focus-visible { outline: 2px solid #3664ff; outline-offset: 2px; }
-    .sw-titlebar { align-items: center; border-bottom: 1px solid #e5e5ea; cursor: grab; display: flex; flex: none; gap: 8px; height: 40px; padding: 0 14px; touch-action: none; user-select: none; }
-    .settings-win.dragging .sw-titlebar { cursor: grabbing; }
-    .sw-titlebar .win-close, .sw-titlebar .win-dot { width: 12px; }
-    .sw-titlebar strong { font-size: 14px; margin-left: 10px; }
-    .sw-body { display: grid; flex: 1; grid-template-columns: 196px 1fr; min-height: 0; }
-    .sw-sidebar { background: #f7f7f9; border-right: 1px solid #e5e5ea; display: flex; flex-direction: column; min-height: 0; }
-    .sw-search { align-items: center; border-radius: 7px; color: #8e8e93; display: flex; gap: 6px; margin: 10px 12px 4px; padding: 5px 8px; }
-    .sw-search svg { flex: none; height: 13px; width: 13px; }
-    .sw-search input { background: transparent; border: 0; color: #1d1d1f; font-size: 13px; outline: none; width: 100%; }
-    .sw-search:focus-within { background: #fff; box-shadow: 0 0 0 2px rgb(54 100 255 / .35); }
-    .sw-list { flex: 1; overflow: auto; padding: 0 8px 8px; }
-    .sw-group-title { color: #6e6e73; font-size: 12px; padding: 10px 8px 4px; }
-    .sw-group-title span { color: #aeaeb2; }
-    .sw-item { align-items: center; background: transparent; border: 0; border-radius: 8px; color: inherit; cursor: pointer; display: flex; font-size: 13px; gap: 9px; padding: 6px 8px; text-align: left; width: 100%; }
-    .sw-item:hover { background: rgb(0 0 0 / .04); }
-    .sw-item[aria-current="true"] { background: rgb(54 100 255 / .1); }
-    .sw-item > svg { color: #8e8e93; flex: none; height: 14px; width: 14px; }
-    .sw-item[aria-current="true"] > svg { color: #3664ff; }
-    .sw-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .sw-item kbd { background: rgb(54 100 255 / .1); border-radius: 5px; color: #3664ff; font: 600 11px/1.3 inherit; padding: 2px 6px; white-space: nowrap; }
-    .sw-monitor { border: 1.6px solid #8e8e93; border-radius: 2px; flex: none; height: 10px; margin-bottom: 3px; position: relative; width: 14px; }
-    .sw-monitor::after { background: #8e8e93; bottom: -4px; content: ""; height: 2px; left: 3px; position: absolute; right: 3px; }
-    .sw-item[aria-current="true"] .sw-monitor, .sw-item[aria-current="true"] .sw-monitor::after { border-color: #3664ff; }
-    .sw-list-actions { align-items: center; border-top: 1px solid #e5e5ea; display: flex; gap: 2px; padding: 6px 8px; }
-    .sw-list-actions span { flex: 1; }
-    .sw-list-actions button { background: transparent; border: 0; border-radius: 6px; color: #3a3a3c; cursor: pointer; font-size: 16px; height: 26px; width: 28px; }
-    .sw-list-actions button:hover { background: rgb(0 0 0 / .05); }
-    .sw-list-actions .sw-minus { color: #eb4444; }
-    .sw-list-actions button:disabled { cursor: default; opacity: .35; }
-    .sw-content { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
-    .sw-main { flex: 1; overflow: auto; padding: 18px 26px 16px; }
-    .sw-tabbar { align-items: center; border-top: 1px solid #e5e5ea; display: flex; flex: none; gap: 10px; padding: 8px 14px; }
-    .sw-tabs { background: #f2f2f5; border-radius: 10px; display: flex; gap: 2px; margin-left: auto; padding: 3px; }
-    .sw-tabs button { align-items: center; background: transparent; border: 0; border-radius: 8px; color: #6e6e73; cursor: pointer; display: flex; font-size: 13px; font-weight: 500; gap: 6px; padding: 6px 16px; }
-    .sw-tabs button svg { height: 15px; width: 15px; }
-    .sw-tabs [aria-selected="true"] { background: #3664ff; color: #fff; }
-    .sw-round { background: transparent; border: 1.5px solid #8e8e93; border-radius: 50%; color: #6e6e73; cursor: pointer; font-size: 10px; font-weight: 700; height: 20px; line-height: 1; padding: 0; width: 20px; }
-    .sw-tabbar > .sw-round:first-of-type { margin-left: auto; }
-    .sw-label { color: #6e6e73; display: block; font-size: 12px; margin-bottom: 6px; }
-    .sw-field { display: block; margin-bottom: 12px; min-width: 0; }
-    .sw-row2 { display: flex; gap: 14px; }
-    .sw-grow { flex: 1; }
-    .sw-key { flex: none; width: 110px; }
-    .sw-input, .sw-select { background: #fff; border: 1px solid #d9d9de; border-radius: 9px; box-sizing: border-box; color: #1d1d1f; font-size: 13px; padding: 8px 11px; width: 100%; }
-    .sw-input:focus, .sw-select:focus { border-color: #3664ff; box-shadow: 0 0 0 3px rgb(54 100 255 / .18); outline: none; }
-    .sw-keycap { background: rgb(54 100 255 / .08); border-color: rgb(54 100 255 / .45); font-weight: 600; text-align: center; text-transform: uppercase; }
-    .sw-script { font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 64px; resize: vertical; }
-    .sw-path { display: flex; gap: 8px; }
-    .sw-icon-btn { background: #f2f2f5; border: 0; border-radius: 8px; color: #3a3a3c; cursor: pointer; flex: none; width: 40px; }
-    .sw-icon-btn svg { height: 16px; width: 16px; }
-    .sw-note { color: #8e8e93; font-size: 11px; margin: -6px 0 12px; }
-    .sw-note.sw-error { color: #d70015; }
-    .sw-seg { background: #f2f2f5; border-radius: 12px; display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; }
-    .sw-seg button { align-items: center; background: transparent; border: 0; border-radius: 9px; color: #3a3a3c; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 500; gap: 6px; padding: 6px 14px; }
-    .sw-seg button svg { height: 13px; width: 12px; }
-    .sw-seg [aria-checked="true"] { background: #3664ff; color: #fff; }
-    .sw-seg button:disabled { color: #aeaeb2; cursor: default; }
-    .sw-select-wrap { position: relative; }
-    .sw-select-wrap::after { border-bottom: 1.6px solid #6e6e73; border-right: 1.6px solid #6e6e73; content: ""; height: 6px; pointer-events: none; position: absolute; right: 13px; top: 42%; transform: translateY(-50%) rotate(45deg); width: 6px; }
-    .sw-select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 30px; }
-    .sw-follow { align-items: center; background: #fff; border: 1.5px solid #d9d9de; border-radius: 9px; color: #6e6e73; cursor: pointer; display: flex; font-size: 13px; font-weight: 500; gap: 8px; margin-top: 7px; padding: 6px 12px; width: 100%; }
-    .sw-follow svg { height: 13px; width: 10px; }
-    .sw-follow[aria-pressed="true"] { background: rgb(54 100 255 / .06); border-color: #3664ff; color: #3664ff; }
-    .sw-pt { color: #aeaeb2; display: block; font-size: 12px; margin-top: 7px; }
-    .sw-preview { display: grid; gap: 12px; grid-template-columns: 1.4fr 1fr; }
-    .sw-preview-box { border: 1px solid #e5e5ea; border-radius: 12px; padding: 10px; }
-    .sw-preview-caption { align-items: center; color: #6e6e73; display: flex; font-size: 11px; gap: 4px; margin-bottom: 8px; }
-    .sw-cursor { color: #3664ff; height: 11px; width: 9px; }
-    .sw-screen { align-items: center; aspect-ratio: 1512 / 982; background: rgb(54 100 255 / .06); border: 2px solid #3664ff; border-radius: 8px; display: flex; justify-content: center; position: relative; }
-    .sw-screen > span { color: #3664ff; font-size: 9px; left: 6px; position: absolute; top: 3px; }
-    .sw-land { align-items: center; background: rgb(54 100 255 / .18); border: 1.5px solid #3664ff; border-radius: 4px; color: #3664ff; display: flex; font-size: 10px; font-weight: 600; justify-content: center; transition: width 250ms ease, height 250ms ease; }
-    .sw-mini { align-items: center; aspect-ratio: 1512 / 982; background: rgb(54 100 255 / .05); border: 1.5px solid #3664ff; border-radius: 6px; display: flex; justify-content: center; }
-    .sw-mini span { align-items: center; background: #fff; border-radius: 50%; color: #3664ff; display: flex; font-size: 10px; font-weight: 700; height: 18px; justify-content: center; width: 18px; }
-    .sw-try { background: #3664ff; border: 0; border-radius: 9px; color: #fff; cursor: pointer; font-size: 13px; font-weight: 600; margin-top: 4px; padding: 9px 16px; }
-    .sw-try:hover { background: #4772ff; }
-    .sw-h { font-size: 14px; font-weight: 600; margin: 6px 0 8px; }
-    .sw-card { background: #f7f7f9; border-radius: 12px; margin-bottom: 16px; padding: 4px 14px; }
-    .sw-line { align-items: center; display: flex; gap: 12px; justify-content: space-between; min-height: 40px; }
-    .sw-line + .sw-line { border-top: 1px solid #e9e9ee; }
-    .sw-switch { background: #d1d1d6; border: 0; border-radius: 999px; cursor: pointer; flex: none; height: 22px; padding: 2px; transition: background 150ms ease; width: 38px; }
-    .sw-switch span { background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgb(0 0 0 / .25); display: block; height: 18px; transition: transform 150ms ease; width: 18px; }
-    .sw-switch[aria-checked="true"] { background: #3664ff; }
-    .sw-switch[aria-checked="true"] span { transform: translateX(16px); }
-    .sw-info { align-items: flex-start; border-top: 1px solid #e9e9ee; color: #6e6e73; display: flex; font-size: 11.5px; gap: 8px; margin: 0; padding: 9px 0; }
-    .sw-info svg { flex: none; height: 13px; margin-top: 1px; width: 13px; }
-    .sw-keys { border-top: 1px solid #e9e9ee; color: #3a3a3c; display: flex; flex-wrap: wrap; font-size: 12px; gap: 14px; padding: 9px 0; }
-    .sw-keys kbd { background: #ececf0; border-radius: 5px; color: #3a3a3c; font: 600 11px/1.3 inherit; margin-right: 4px; padding: 2px 6px; }
-    .sw-icon-choice { display: flex; gap: 8px; }
-    .sw-icon-choice button { align-items: center; background: #fff; border: 1px solid #d9d9de; border-radius: 9px; color: #3a3a3c; cursor: pointer; display: flex; height: 36px; justify-content: center; width: 72px; }
-    .sw-icon-choice svg { height: 18px; width: 18px; }
-    .sw-icon-choice [aria-checked="true"] { background: rgb(54 100 255 / .1); border-color: #3664ff; color: #3664ff; }
-    .sw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .sw-chips button { align-items: center; background: #fff; border: 1px solid #d9d9de; border-radius: 9px; color: #aeaeb2; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 600; gap: 6px; padding: 5px 12px; }
-    .sw-chips button svg { height: 13px; width: 13px; }
-    .sw-chips [aria-pressed="true"] { background: rgb(54 100 255 / .08); border-color: rgb(54 100 255 / .5); color: #3664ff; }
-    .sw-widget-chips button { color: #1d1d1f; }
-    .sw-widget-chips button svg { color: #3664ff; }
-    .sw-widget-chips [aria-pressed="true"] { background: #fff; border-color: #e5e5ea; color: #aeaeb2; }
-    .sw-widget-chips [aria-pressed="true"] svg { color: #aeaeb2; }
-    .sw-about { align-items: center; color: #6e6e73; display: flex; gap: 14px; justify-content: center; padding: 4px 0 8px; }
-    .sw-about img { border-radius: 12px; height: 48px; width: 48px; }
-    .sw-hint { color: #6e6e73; font-size: 12px; margin: 10px 0; }
-    .sw-slots { display: grid; gap: 10px; grid-template-columns: repeat(4, 1fr); margin-bottom: 10px; }
-    .sw-slot { align-items: center; border: 1.5px dashed #c7c7cc; border-radius: 12px; color: #aeaeb2; display: flex; flex-direction: column; font-size: 12px; gap: 6px; height: 84px; justify-content: center; position: relative; }
-    .sw-slot.filled { background: rgb(54 100 255 / .08); border: 1.5px solid rgb(54 100 255 / .3); color: #1d1d1f; cursor: grab; }
-    .sw-slot.filled svg { color: #3664ff; height: 22px; width: 22px; }
-    .sw-slot.over { background: rgb(54 100 255 / .14); border-color: #3664ff; }
-    .sw-slot-clear { background: #fff; border: 1px solid #d9d9de; border-radius: 50%; color: #6e6e73; cursor: pointer; font-size: 12px; height: 18px; line-height: 1; opacity: 0; padding: 0; position: absolute; right: 5px; top: 5px; width: 18px; }
-    .sw-slot:hover .sw-slot-clear, .sw-slot:focus-within .sw-slot-clear { opacity: 1; }
-    .sw-disabled { opacity: .5; }
-    .sw-value { align-items: center; color: #6e6e73; display: inline-flex; gap: 6px; }
-    .sw-swatch { background: #000; border-radius: 4px; height: 14px; width: 14px; }
-    .sw-empty { color: #8e8e93; font-size: 12px; padding: 12px; }
-    .settings-win.sw-sheet { border-radius: 0; height: 100%; inset: 0; position: fixed; transform: none !important; width: 100%; }
-    .sw-sheet .sw-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 32%) 1fr; }
-    .sw-sheet .sw-sidebar { border-bottom: 1px solid #e5e5ea; border-right: 0; }
-    .sw-sheet .sw-main { padding: 14px 16px; }
-    .sw-sheet .sw-tabs { margin: 0 auto; }
-    .sw-sheet .sw-tabs button { padding: 7px 11px; }
-    .sw-sheet .sw-round { display: none; }
-    .sw-sheet .sw-row2, .sw-sheet .sw-line { flex-wrap: wrap; }
-    .sw-sheet .sw-line { padding: 6px 0; }
-    .sw-sheet .sw-preview, .sw-sheet .sw-slots { grid-template-columns: repeat(2, 1fr); }
-    .sw-sheet .sw-titlebar .win-close { width: 18px; }
-    @media (hover: none) { .sw-slot-clear { opacity: 1; } }
-
-    .settings-launch { display: grid; gap: 1rem; grid-template-columns: repeat(3, 1fr); margin-top: 3rem; }
-    .settings-card { background: linear-gradient(145deg, rgb(255 255 255 / .075), rgb(255 255 255 / .03)); border: 1px solid var(--line); border-radius: var(--radius-lg); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; font: inherit; gap: .5rem; min-height: 220px; padding: 1.5rem; text-align: left; transition: border-color 180ms ease, transform 180ms ease; }
-    .settings-card:hover { border-color: rgb(137 163 255 / .55); transform: translateY(-3px); }
-    .settings-card-kicker { color: var(--blue-light); font-family: var(--display); font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    .settings-card strong { font-family: var(--display); font-size: 1.3rem; letter-spacing: -.035em; line-height: 1.15; }
-    .settings-card-desc { color: var(--muted); font-size: .84rem; }
-    .settings-card-cta { color: var(--blue-light); font-size: .78rem; font-weight: 700; margin-top: auto; }
-    .settings-caption { color: var(--muted); font-size: .76rem; margin: 1.2rem 0 0; }
     .desktop-copy { bottom: 22%; color: #4a5361; left: 6%; position: absolute; }
     .desktop-copy strong { color: #252b35; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
     .desktop-copy span { display: block; font-size: .8rem; margin-top: .6rem; }
@@ -432,6 +278,26 @@
     .awake-clock span { font-family: var(--display); font-size: 1.2rem; }
 
     .settings-story { background: #0a0d14; overflow: hidden; }
+    .settings-stage { margin-top: 3.5rem; min-height: 610px; position: relative; }
+    .settings-window-shot { margin: 0; background: #f8f9fb; border: 1px solid rgb(255 255 255 / .18); border-radius: 24px; box-shadow: 0 42px 110px rgb(0 0 0 / .45); display: block; overflow: hidden; transform: rotate(-1.4deg); width: min(930px, 84%); }
+    .settings-window-shot img { display: block; height: auto; width: 100%; }
+    .notch-settings-card { background: rgb(19 24 35 / .9); border: 1px solid rgb(255 255 255 / .17); border-radius: 22px; bottom: 0; box-shadow: 0 28px 70px rgb(0 0 0 / .42); color: var(--ink); padding: 1.25rem; position: absolute; right: 0; transform: rotate(1.8deg); width: min(430px, 42%); }
+    .settings-card-bar { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin: -1.25rem -1.25rem 1rem; padding: .8rem 1rem; }
+    .settings-card-bar strong { font-family: var(--display); font-size: .82rem; }
+    .settings-card-tabs { background: rgb(255 255 255 / .07); border-radius: 8px; display: flex; gap: 2px; padding: 2px; }
+    .settings-card-tabs span { border-radius: 6px; color: var(--muted); font-size: .55rem; font-weight: 700; padding: .32rem .48rem; }
+    .settings-card-tabs .active { background: var(--blue); color: white; }
+    .settings-row { align-items: center; display: flex; font-size: .72rem; justify-content: space-between; margin-bottom: 1rem; }
+    .settings-row b { font-size: .72rem; }
+    .toggle { background: var(--blue); border-radius: 999px; height: 22px; padding: 3px; width: 39px; }
+    .toggle::after { background: white; border-radius: 50%; content: ""; display: block; height: 16px; margin-left: auto; width: 16px; }
+    .widget-board { display: grid; gap: 7px; grid-template-columns: repeat(4, 1fr); }
+    .widget-slot { align-items: center; background: rgb(54 100 255 / .11); border: 1px solid rgb(101 132 255 / .26); border-radius: 10px; color: #ced6e7; display: flex; flex-direction: column; font-size: .52rem; gap: .35rem; min-height: 62px; justify-content: center; }
+    .widget-slot i { background: var(--blue); border-radius: 4px; height: 12px; width: 12px; }
+    .appearance-preview { background: linear-gradient(135deg, rgb(255 255 255 / .2), rgb(111 138 255 / .1)); border: 1px solid rgb(255 255 255 / .18); border-radius: 12px; display: grid; gap: 6px; grid-template-columns: 1fr 1fr; margin-top: 1rem; padding: 8px; }
+    .appearance-preview span { border-radius: 8px; color: var(--muted-strong); font-size: .55rem; padding: .5rem; text-align: center; }
+    .appearance-preview .selected { background: rgb(255 255 255 / .13); color: white; }
+    .settings-caption { color: var(--muted); font-size: .72rem; margin: 1rem 0 0; }
 
     .drop-story { background: var(--paper); color: var(--paper-ink); overflow: hidden; }
     .drop-layout { align-items: center; display: grid; gap: clamp(3rem, 7vw, 7rem); grid-template-columns: .85fr 1.15fr; }
@@ -489,14 +355,15 @@
       .hero { min-height: auto; padding-top: 9rem; }
       .mac-stage { --pt: calc((100cqw - 90px) / 728); aspect-ratio: auto; height: 460px; }
       .menu-extra, [data-demo-clock] { display: none; }
-      .settings-launch { grid-template-columns: 1fr; }
-      .settings-card { min-height: 0; }
       .proof-grid { grid-template-columns: repeat(2, 1fr); }
       .proof-item:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
       .proof-item:nth-child(4) { border-top: 1px solid var(--line); }
       .feature-card--wide, .feature-card--narrow, .feature-card--half { grid-column: span 12; }
       .drop-layout, .trust-layout { grid-template-columns: 1fr; }
-            .drop-copy { max-width: 650px; }
+      .settings-stage { min-height: 540px; }
+      .settings-window-shot { width: 88%; }
+      .notch-settings-card { width: 48%; }
+      .drop-copy { max-width: 650px; }
       .type-row { grid-template-columns: 54px 140px 1fr; }
       .type-meta { display: none; }
     }
@@ -531,7 +398,11 @@
       .section-heading h2 { font-size: 2.75rem; }
       .feature-grid { margin-top: 2.25rem; }
       .feature-card { min-height: 270px; }
-            .drop-visual { min-height: 360px; }
+      .settings-stage { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+      .settings-window-shot, .notch-settings-card { position: static; transform: none; width: 100%; }
+      .notch-settings-card { order: -1; }
+      .widget-board { grid-template-columns: repeat(2, 1fr); }
+      .drop-visual { min-height: 360px; }
       .drop-target { left: 8%; right: 8%; width: auto; }
       .type-row { gap: .85rem; grid-template-columns: 48px 1fr; min-height: 108px; }
       .type-row p { grid-column: 2; }
@@ -584,7 +455,7 @@
               <b data-front-app>Finder</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span>
             </div>
             <div class="menu-right">
-              <button class="status-trigger" type="button" data-status-trigger aria-label="Chap menu" aria-controls="status-menu-demo" aria-expanded="false"><svg class="icon-bolt" viewBox="0 0 16 24" aria-hidden="true"><path fill="currentColor" d="M10 0 1.5 13.5h5.3L5.6 24l8.9-14.4H9L10 0Z"/></svg><svg class="icon-seal" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 17.5c0-4.6 3.9-8.3 8.8-8.3 2.4 0 4.3.8 5.6 2.2.7-.5 1.5-.7 2.4-.7 1.8 0 3.2 1.3 3.2 3 0 1.9-1.6 3.1-3.6 3.1H4.6c-.9 0-1.6.2-1.6.7Z"/></svg></button>
+              <button class="status-trigger" type="button" data-status-trigger aria-label="Chap menu" aria-controls="status-menu-demo" aria-expanded="false"><svg viewBox="0 0 16 24" aria-hidden="true"><path fill="currentColor" d="M10 0 1.5 13.5h5.3L5.6 24l8.9-14.4H9L10 0Z"/></svg></button>
               <svg class="menu-glyph menu-extra" viewBox="0 0 28 14" aria-hidden="true"><rect x=".75" y=".75" width="23.5" height="12.5" rx="3.5" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".55"/><rect x="2.5" y="2.5" width="17" height="9" rx="2" fill="currentColor"/><path d="M26 5v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".55"/></svg>
               <svg class="menu-glyph menu-extra" viewBox="0 0 20 15" aria-hidden="true"><path fill="currentColor" d="M10 13.8 7.4 11a3.7 3.7 0 0 1 5.2 0L10 13.8Zm-4.3-4.6L4 7.4a8.5 8.5 0 0 1 12 0l-1.7 1.8a6 6 0 0 0-8.6 0ZM2.3 5.6.6 3.8a13.4 13.4 0 0 1 18.8 0l-1.7 1.8a11 11 0 0 0-15.4 0Z"/></svg>
               <span data-demo-clock aria-hidden="true">Sat 9:41 AM</span>
@@ -592,7 +463,22 @@
           </div>
 
           <div class="status-menu" id="status-menu-demo" data-status-menu role="group" aria-label="Chap menu" hidden>
-            <div data-menu-launchers></div>
+            <button class="menu-item" type="button" data-launch="GitHub" data-kind="url"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 10h15M10 2.5c2.3 2.2 2.3 12.8 0 15M10 2.5c-2.3 2.2-2.3 12.8 0 15" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>GitHub<span class="menu-key">⌥G</span></button>
+            <button class="menu-item" type="button" data-launch="Docs" data-kind="url"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 10h15M10 2.5c2.3 2.2 2.3 12.8 0 15M10 2.5c-2.3 2.2-2.3 12.8 0 15" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>Docs<span class="menu-key">⌥D</span></button>
+            <div class="menu-sep" role="separator"></div>
+            <button class="menu-item" type="button" data-launch="Notes" data-kind="app"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Notes<span class="menu-key">⌥N</span></button>
+            <button class="menu-item" type="button" data-launch="Calendar" data-kind="app"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Calendar<span class="menu-key">⌥C</span></button>
+            <button class="menu-item" type="button" data-launch="Music" data-kind="app"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Music<span class="menu-key">⌥M</span></button>
+            <div class="menu-sep" role="separator"></div>
+            <button class="menu-item" type="button" data-launch="Projects" data-kind="folder"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>Projects</button>
+            <button class="menu-item" type="button" data-launch="Documents" data-kind="folder"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>Documents</button>
+            <button class="menu-item" type="button" data-launch="Desktop" data-kind="folder"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>Desktop</button>
+            <div class="menu-sep" role="separator"></div>
+            <button class="menu-item" type="button" data-launch="Deploy Site" data-kind="script"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/></svg>Deploy Site</button>
+            <button class="menu-item" type="button" data-launch="Backup Photos" data-kind="script"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/></svg>Backup Photos</button>
+            <button class="menu-item" type="button" data-launch="Clean Caches" data-kind="script"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/></svg>Clean Caches</button>
+            <button class="menu-item" type="button" data-launch="Sync Dotfiles" data-kind="script"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/></svg>Sync Dotfiles</button>
+            <div class="menu-sep" role="separator"></div>
             <div class="menu-sub">
               <button class="menu-item" type="button" data-awake-toggle aria-expanded="false" aria-controls="awake-menu-demo"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M3 5h11v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V5Zm11 1.5h1.2a2.6 2.6 0 0 1 0 5.2H13.6ZM2 16.5h13v1.4H2Z"/></svg><span data-awake-title>Keep Mac Awake</span><span class="menu-key">›</span></button>
               <div class="status-menu submenu" id="awake-menu-demo" data-awake-menu role="group" aria-label="Keep Mac Awake" hidden>
@@ -629,15 +515,42 @@
 
           <div class="notch-dock" id="notch-dock-demo" data-dock role="group" aria-label="Chap notch launcher" inert>
             <div class="dock-body">
-              <svg class="dock-cap" viewBox="0 0 585 32" preserveAspectRatio="none" aria-hidden="true"><path d="M0 0H585C544.5 0 534.5 32 495 32H90C50.5 32 40.5 0 0 0Z"/></svg>
+              <svg class="dock-cap" viewBox="0 0 708 32" preserveAspectRatio="none" aria-hidden="true"><path d="M61.5 0H646.5C606 0 596 32 556.5 32H151.5C112 32 102 0 61.5 0Z"/></svg>
               <div class="dock-awake" data-dock-awake><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M3 5h11v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V5Zm11 1.5h1.2a2.6 2.6 0 0 1 0 5.2H13.6ZM2 16.5h13v1.4H2Z"/></svg><span data-awake-clock>3:59:59</span></div>
-              <div class="dock-columns" data-dock-columns></div>
+              <div class="dock-columns">
+                <div class="dock-section" role="group" aria-label="Screenshots">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7m6 0h2.5A1.5 1.5 0 0 1 17 4.5V7m0 6v2.5a1.5 1.5 0 0 1-1.5 1.5H13m-6 0H4.5A1.5 1.5 0 0 1 3 15.5V13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="10" r="3" fill="currentColor"/></svg>Screenshots</div>
+                  <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.41.02 AM.png" data-kind="screenshot"><span class="shot-thumb shot-a" aria-hidden="true"></span><span class="dock-label">Screensh…02 AM.png</span></button>
+                  <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.38.17 AM.png" data-kind="screenshot"><span class="shot-thumb shot-b" aria-hidden="true"></span><span class="dock-label">Screensh…17 AM.png</span></button>
+                  <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.30.44 AM.png" data-kind="screenshot"><span class="shot-thumb shot-c" aria-hidden="true"></span><span class="dock-label">Screensh…44 AM.png</span></button>
+                  <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.12.09 AM.png" data-kind="screenshot"><span class="shot-thumb shot-d" aria-hidden="true"></span><span class="dock-label">Screensh…09 AM.png</span></button>
+                </div>
+                <div class="dock-section" role="group" aria-label="Apps">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Apps</div>
+                  <button class="dock-row" type="button" data-launch="Notes" data-kind="app"><span class="dock-label">Notes</span><span class="dock-key">⌥N</span></button>
+                  <button class="dock-row" type="button" data-launch="Calendar" data-kind="app"><span class="dock-label">Calendar</span><span class="dock-key">⌥C</span></button>
+                  <button class="dock-row" type="button" data-launch="Music" data-kind="app"><span class="dock-label">Music</span><span class="dock-key">⌥M</span></button>
+                </div>
+                <div class="dock-section" role="group" aria-label="Folders">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>Folders</div>
+                  <button class="dock-row" type="button" data-launch="Projects" data-kind="folder"><span class="dock-label">Projects</span></button>
+                  <button class="dock-row" type="button" data-launch="Documents" data-kind="folder"><span class="dock-label">Documents</span></button>
+                  <button class="dock-row" type="button" data-launch="Desktop" data-kind="folder"><span class="dock-label">Desktop</span></button>
+                </div>
+                <div class="dock-section" role="group" aria-label="Scripts">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/><path d="m6 8 2 2-2 2m4 0h4" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Scripts</div>
+                  <button class="dock-row" type="button" data-launch="Deploy Site" data-kind="script"><span class="dock-label">Deploy Site</span></button>
+                  <button class="dock-row" type="button" data-launch="Backup Photos" data-kind="script"><span class="dock-label">Backup Photos</span></button>
+                  <button class="dock-row" type="button" data-launch="Clean Caches" data-kind="script"><span class="dock-label">Clean Caches</span></button>
+                  <button class="dock-row" type="button" data-launch="Sync Dotfiles" data-kind="script"><span class="dock-label">Sync Dotfiles</span></button>
+                </div>
+              </div>
               <div class="drop-section" data-drop-section role="group" aria-label="Chap Drop files" hidden><div class="drop-sep"></div><div class="drop-row" data-drop-row></div></div>
             </div>
             <div class="drop-overlay" data-drop-overlay aria-hidden="true"><svg viewBox="0 0 20 18"><path fill="currentColor" d="M3.4 0h13.2L20 9v7a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9L3.4 0Zm1.3 2L2.2 8.5H7a3 3 0 0 0 6 0h4.8L15.3 2H4.7Z"/></svg><strong>Drop here</strong></div>
           </div>
 
-          <p class="demo-hint" aria-hidden="true"><span class="hint-hover">Hover the notch ↑ · Press ⌥G or ⌥N · ⌥, opens Settings</span><span class="hint-touch">Tap the notch ↑ · Open an app · Tap a file to drop it</span></p>
+          <p class="demo-hint" aria-hidden="true"><span class="hint-hover">Hover the notch ↑ · Press ⌥G or ⌥N · Drag a file onto it</span><span class="hint-touch">Tap the notch ↑ · Open an app · Tap a file to drop it</span></p>
           <div class="demo-toast" data-demo-toast role="status" aria-live="polite"></div>
           <span class="sr-only" data-sr-status role="status" aria-live="polite"></span>
         </div>
@@ -680,13 +593,17 @@
 
     <section class="section settings-story" id="settings" aria-labelledby="settings-title">
       <div class="shell">
-        <div class="section-heading"><p class="eyebrow">Configure once</p><h2 id="settings-title">Everything has a place.</h2><p>The familiar macOS Settings window handles every launchable, display, and size, and Chap 2 adds a Notch tab. It runs live in the demo above: press ⌥, or pick a tab below.</p></div>
-        <div class="settings-launch">
-          <button class="settings-card" type="button" data-open-settings="launchers"><span class="settings-card-kicker">Launchers</span><strong>Give it a key. Pick a size.</strong><span class="settings-card-desc">Rename a launcher, assign an Option shortcut, choose Compact through Max, then press the key and watch the window land.</span><span class="settings-card-cta">Open Launchers ↑</span></button>
-          <button class="settings-card" type="button" data-open-settings="general"><span class="settings-card-kicker">General</span><strong>Tune the behavior.</strong><span class="settings-card-desc">Turn the Guide Window or Option-key triggers off, swap the status bar icon, or hide menu sections while their shortcuts keep working.</span><span class="settings-card-cta">Open General ↑</span></button>
-          <button class="settings-card" type="button" data-open-settings="notch"><span class="settings-card-kicker">Notch</span><strong>Arrange the dock.</strong><span class="settings-card-desc">Drag widgets into the four slots, switch between Custom and Glass, and choose System, Light, or Dark.</span><span class="settings-card-cta">Open Notch ↑</span></button>
+        <div class="section-heading"><p class="eyebrow">Configure once</p><h2 id="settings-title">Everything has a place.</h2><p>The familiar macOS settings window still handles every launchable, display, and size. Chap 2 adds a dedicated Notch tab without hiding the controls that made the original fast.</p></div>
+        <div class="settings-stage">
+          <figure class="settings-window-shot"><img src="assets/screenshots/chap-command-setup.svg" alt="Chap Settings showing a configured app launcher, Option shortcut, target display, size preset, and Guide Window controls." width="1600" height="1000"></figure>
+          <aside class="notch-settings-card" aria-label="Chap Notch settings preview">
+            <div class="settings-card-bar"><strong>Chap Settings</strong><div class="settings-card-tabs" aria-hidden="true"><span>Launchers</span><span>General</span><span class="active">Notch</span></div></div>
+            <div class="settings-row"><b>Show Launchers Under the Notch</b><span class="toggle" aria-hidden="true"></span></div>
+            <div class="widget-board" aria-label="Four configured notch widget slots"><div class="widget-slot"><i></i>Screenshots</div><div class="widget-slot"><i></i>Apps</div><div class="widget-slot"><i></i>Folders</div><div class="widget-slot"><i></i>Scripts</div></div>
+            <div class="appearance-preview" aria-label="Glass appearance options"><span>Custom</span><span class="selected">Glass</span><span>System</span><span class="selected">Clear</span></div>
+            <p class="settings-caption">Drag to arrange. Use context menus or VoiceOver actions when you prefer not to drag.</p>
+          </aside>
         </div>
-        <p class="settings-caption">Every change applies to the demo above instantly. In Chap, the same settings live in <code>~/.chap.json</code>.</p>
       </div>
     </section>
 
@@ -747,12 +664,10 @@
       const $ = (selector) => stage.querySelector(selector);
       const notch = $("[data-notch]");
       const dock = $("[data-dock]");
-      const dockColumns = $("[data-dock-columns]");
       const badge = $("[data-drop-badge]");
       const badgeCount = $("[data-drop-count]");
       const statusButton = $("[data-status-trigger]");
       const statusMenu = $("[data-status-menu]");
-      const menuLaunchers = $("[data-menu-launchers]");
       const awakeToggle = $("[data-awake-toggle]");
       const awakeMenu = $("[data-awake-menu]");
       const awakeOff = $("[data-awake-off]");
@@ -764,94 +679,10 @@
       const dropOverlay = $("[data-drop-overlay]");
       const toast = $("[data-demo-toast]");
       const menuClock = $("[data-demo-clock]");
-      const layer = $("[data-window-layer]");
-      const frontApp = $("[data-front-app]");
-      const srStatus = $("[data-sr-status]");
       const DEMO_TYPE = "application/x-chap-demo-file";
-      const WIDGET_TYPE = "application/x-chap-widget";
       const MAX_DOCK_ITEMS = 12; // DropPolicy.maxDockItems
-      const MAX_PER_TYPE = 4; // SiteCountLimitPolicy.maxPerLaunchType
       const OPEN_DWELL_MS = 200; // matches the app's leave dwell before the 180ms close
-      const MENU_BAR = 32;
-      const REFERENCE = { width: 1512, height: 907 }; // 14-inch built-in display visible frame
-      const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-
-      // ---- Shared config: every surface (menu, notch dock, shortcuts, windows, Settings) renders from this. ----
-      const svg = {
-        url: '<svg viewBox="0 0 16 24" aria-hidden="true"><path fill="currentColor" d="M10 0 1.5 13.5h5.3L5.6 24l8.9-14.4H9L10 0Z"/></svg>',
-        app: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>',
-        finder: '<svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>',
-        shell: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3" width="15" height="14" rx="2.5" fill="currentColor"/><path d="m6 8 2 2-2 2m4 0h4" fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-        screenshots: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V4.5A1.5 1.5 0 0 1 4.5 3H7m6 0h2.5A1.5 1.5 0 0 1 17 4.5V7m0 6v2.5a1.5 1.5 0 0 1-1.5 1.5H13m-6 0H4.5A1.5 1.5 0 0 1 3 15.5V13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="10" r="3" fill="currentColor"/></svg>',
-        search: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m13 13 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
-        info: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6.2v.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
-        seal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 17.5c0-4.6 3.9-8.3 8.8-8.3 2.4 0 4.3.8 5.6 2.2.7-.5 1.5-.7 2.4-.7 1.8 0 3.2 1.3 3.2 3 0 1.9-1.6 3.1-3.6 3.1H4.6c-.9 0-1.6.2-1.6.7Z"/><circle cx="19" cy="12.9" r=".9" fill="white"/></svg>',
-        grid: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="3" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="11" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="11" y="11" width="6" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
-        gear: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
-        laptop: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="4" y="4.5" width="12" height="8.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2 15.5h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-      };
-      const types = {
-        url: { label: "URL", widget: "sites", heading: "Sites", window: "Google Chrome" },
-        app: { label: "App", widget: "apps", heading: "Apps" },
-        finder: { label: "Finder", widget: "folders", heading: "Folders", window: "Finder" },
-        shell: { label: "Shell", widget: "scripts", heading: "Scripts" },
-      };
-      const typeOrder = ["url", "app", "finder", "shell"];
-      const widgetInfo = {
-        sites: { label: "Sites", icon: svg.url, type: "url" },
-        apps: { label: "Apps", icon: svg.app, type: "app" },
-        folders: { label: "Folders", icon: svg.finder, type: "finder" },
-        scripts: { label: "Scripts", icon: svg.shell, type: "shell" },
-        screenshots: { label: "Screenshots", icon: svg.screenshots },
-      };
-      const presets = {
-        compact: { label: "Compact", w: .42, h: .46 },
-        focus: { label: "Focus", w: .55, h: .58 },
-        standard: { label: "Standard", w: .66, h: .66, aspect: 1.6 },
-        comfortable: { label: "Comfortable", w: .74, h: .76 },
-        wide: { label: "Wide", w: .69, h: .59 },
-        tall: { label: "Tall", w: .38, h: .80 },
-        workspace: { label: "Workspace", w: .86, h: .86 },
-        max: { label: "Max", w: .94, h: .92 },
-      };
-      const screenshots = [
-        { name: "Screenshot 9.41.02 AM.png", short: "Screensh…02 AM.png", thumb: "shot-a" },
-        { name: "Screenshot 9.38.17 AM.png", short: "Screensh…17 AM.png", thumb: "shot-b" },
-        { name: "Screenshot 9.30.44 AM.png", short: "Screensh…44 AM.png", thumb: "shot-c" },
-        { name: "Screenshot 9.12.09 AM.png", short: "Screensh…09 AM.png", thumb: "shot-d" },
-      ];
-      let nextId = 1;
-      const site = (fields) => ({ id: `s${nextId++}`, key: "", preset: "standard", follow: false, ...fields });
-      const config = {
-        guideWindow: true,
-        openAtLogin: true,
-        optionShortcuts: true,
-        autoUpdates: true,
-        statusIcon: "bolt",
-        hidden: new Set(),
-        notchEnabled: true,
-        widgets: ["screenshots", "apps", "folders", "scripts"],
-        style: "glass",
-        glassAppearance: "light",
-        glassMaterial: "clear",
-        sites: [
-          site({ type: "url", name: "GitHub", key: "G", url: "https://github.com", preset: "standard", body: "web" }),
-          site({ type: "url", name: "Docs", key: "D", url: "https://developer.apple.com/documentation", preset: "tall", body: "docs" }),
-          site({ type: "app", name: "Notes", key: "N", path: "/System/Applications/Notes.app", preset: "focus", body: "notes" }),
-          site({ type: "app", name: "Calendar", key: "C", path: "/System/Applications/Calendar.app", preset: "standard", body: "calendar" }),
-          site({ type: "app", name: "Music", key: "M", path: "/System/Applications/Music.app", preset: "compact", body: "music" }),
-          site({ type: "finder", name: "Projects", path: "~/Projects", preset: "wide" }),
-          site({ type: "finder", name: "Documents", path: "~/Documents", preset: "comfortable" }),
-          site({ type: "finder", name: "Desktop", path: "~/Desktop", preset: "compact" }),
-          site({ type: "shell", name: "Deploy Site", script: "npm run deploy" }),
-          site({ type: "shell", name: "Backup Photos", script: "rsync -a ~/Pictures /Volumes/Backup" }),
-          site({ type: "shell", name: "Clean Caches", script: "brew cleanup" }),
-          site({ type: "shell", name: "Sync Dotfiles", script: "cd ~/dotfiles && git pull" }),
-        ],
-      };
-      const sitesOf = (type) => config.sites.filter((entry) => entry.type === type);
-      const siteById = (id) => config.sites.find((entry) => entry.id === id);
-      const keyLabel = (entry) => (entry.key ? `⌥${entry.key}` : "");
+      const icons = { remove: '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="m2 2 6 6M8 2 2 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' };
 
       let closeTimer;
       let toastTimer;
@@ -870,7 +701,6 @@
       const isOpen = () => stage.classList.contains("demo-open");
       const setDock = (open) => {
         clearTimeout(closeTimer);
-        if (open && !config.notchEnabled) return;
         if (!open && dock.contains(document.activeElement)) notch.focus({ preventScroll: true });
         stage.classList.toggle("demo-open", open);
         dock.inert = !open;
@@ -897,43 +727,6 @@
         updateAwakeMenu();
       };
 
-      // ---- Rendering from config ----
-      const renderMenu = () => {
-        const groups = typeOrder.filter((type) => !config.hidden.has(type) && sitesOf(type).length);
-        menuLaunchers.innerHTML = groups.map((type) => sitesOf(type).map((entry) =>
-          `<button class="menu-item" type="button" data-site="${entry.id}">${svg[type]}${escapeHTML(entry.name)}${config.optionShortcuts && entry.key ? `<span class="menu-key">${keyLabel(entry)}</span>` : ""}</button>`
-        ).join("")).join('<div class="menu-sep" role="separator"></div>') + (groups.length ? '<div class="menu-sep" role="separator"></div>' : "");
-        const settingsKey = stage.querySelector('[data-menu-action="settings"] .menu-key');
-        if (settingsKey) settingsKey.hidden = !config.optionShortcuts;
-      };
-      const renderDock = () => {
-        const slots = config.widgets.filter(Boolean);
-        dockColumns.style.setProperty("--cols", String(Math.max(1, slots.length)));
-        dockColumns.innerHTML = slots.map((widget) => {
-          const info = widgetInfo[widget];
-          const heading = `<div class="dock-heading" aria-hidden="true">${info.icon}${info.label}</div>`;
-          if (widget === "screenshots") {
-            return `<div class="dock-section" role="group" aria-label="Screenshots">${heading}${screenshots.map((shot) =>
-              `<button class="dock-row shot-row" type="button" data-launch="${shot.name}" data-kind="screenshot"><span class="shot-thumb ${shot.thumb}" aria-hidden="true"></span><span class="dock-label">${shot.short}</span></button>`).join("")}</div>`;
-          }
-          const entries = sitesOf(info.type).slice(0, 4);
-          const rows = entries.length ? entries.map((entry) =>
-            `<button class="dock-row" type="button" data-site="${entry.id}"><span class="dock-label">${escapeHTML(entry.name)}</span>${config.optionShortcuts && entry.key ? `<span class="dock-key">${keyLabel(entry)}</span>` : ""}</button>`).join("")
-            : '<span class="dock-empty">No launchers yet</span>';
-          return `<div class="dock-section" role="group" aria-label="${info.label}">${heading}${rows}</div>`;
-        }).join("") || '<span class="dock-empty">Drag widgets into the Notch settings to fill the dock</span>';
-      };
-      const applyAppearance = () => {
-        stage.classList.toggle("notch-off", !config.notchEnabled);
-        if (!config.notchEnabled) setDock(false);
-        const dark = config.glassAppearance === "dark" || (config.glassAppearance === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-        stage.dataset.dockStyle = config.style === "custom" ? "custom" : dark ? "dark" : "light";
-        stage.dataset.material = config.glassAppearance === "system" ? config.glassMaterial : dark ? "regular" : "clear";
-        stage.dataset.statusIcon = config.statusIcon;
-        renderDrop();
-      };
-      const refreshAll = () => { renderMenu(); renderDock(); applyAppearance(); renderSettings(); };
-
       // Keep Awake mirrors KeepAwakePolicy: blue status icon, h:mm:ss in the open dock.
       const pad = (value) => String(value).padStart(2, "0");
       const remaining = () => Math.max(0, Math.ceil((awakeEnd - Date.now()) / 1000));
@@ -957,7 +750,36 @@
         if (!statusMenu.hidden) updateAwakeMenu();
       };
 
-      // ---- Windows: launches land at Chap's real size presets, centered in the visible frame. ----
+      const launchMessage = (name, kind) => ({
+        app: `Opening ${name}, centered on this display`,
+        folder: `Opening ${name} in Finder`,
+        script: `Running ${name} in your shell`,
+        screenshot: `Opening ${name} in Preview`,
+      }[kind] || `Opening ${name}`);
+      // Option shortcuts launch windows at Chap's real size presets, centered in the visible frame.
+      const layer = $("[data-window-layer]");
+      const frontApp = $("[data-front-app]");
+      const srStatus = $("[data-sr-status]");
+      const MENU_BAR = 32;
+      const REFERENCE = { width: 1512, height: 950 }; // 14-inch built-in display visible frame
+      const presets = {
+        compact: { label: "Compact", w: .42, h: .46 },
+        focus: { label: "Focus", w: .55, h: .58 },
+        standard: { label: "Standard", w: .66, h: .66, aspect: 1.6 },
+        comfortable: { label: "Comfortable", w: .74, h: .76 },
+        wide: { label: "Wide", w: .69, h: .59 },
+        tall: { label: "Tall", w: .38, h: .80 },
+      };
+      const windowSpecs = {
+        GitHub: { app: "Google Chrome", preset: "standard", key: "⌥G", body: "web", guide: true },
+        Docs: { app: "Google Chrome", preset: "tall", key: "⌥D", body: "docs", guide: true },
+        Notes: { app: "Notes", preset: "focus", key: "⌥N", body: "notes" },
+        Calendar: { app: "Calendar", preset: "standard", key: "⌥C", body: "calendar" },
+        Music: { app: "Music", preset: "compact", key: "⌥M", body: "music" },
+        Projects: { app: "Finder", preset: "wide", body: "finder" },
+        Documents: { app: "Finder", preset: "comfortable", body: "finder" },
+        Desktop: { app: "Finder", preset: "compact", body: "finder" },
+      };
       const windows = new Map();
       let zCounter = 1;
       let dragTipShown = false;
@@ -970,9 +792,9 @@
       };
       const ptPx = () => notch.offsetWidth / 185;
       const screenPt = () => ({ width: stage.clientWidth / ptPx(), height: stage.clientHeight / ptPx() - MENU_BAR });
-      const centeredRect = (preset) => {
+      const centeredRect = (spec) => {
         const screen = screenPt();
-        const [w, h] = sizeFor(preset, screen.width, screen.height);
+        const [w, h] = sizeFor(spec.preset, screen.width, screen.height);
         return { x: (screen.width - w) / 2, y: MENU_BAR + (screen.height - h) / 2, w, h };
       };
       const render = (win) => {
@@ -988,74 +810,62 @@
           return `<div class="win-content win-cal"><div class="c-head"><b></b><i></i></div><div class="c-grid">${cells}</div></div>`;
         },
         music: () => '<div class="win-content win-music"><div class="m-art"></div><div class="m-list"><b></b><i></i><i></i><i></i><i></i><i></i><i></i></div></div>',
-        web: () => '<div class="win-content win-web"><div class="w-nav"><i></i><b></b></div><div class="w-page"><b></b><i></i><i></i><i></i><i></i><em></em><i></i><i></i><i></i></div></div>',
+        web: () => `<div class="win-content win-web"><div class="w-nav"><i></i><b></b></div><div class="w-page"><b></b><i></i><i></i><i></i><i></i><em></em><i></i><i></i><i></i></div></div>`,
         docs: () => `<div class="win-content win-web win-docs"><div class="w-nav"><i></i><b></b></div><div class="w-page"><b></b>${"<i></i>".repeat(14)}</div></div>`,
         finder: () => `<div class="win-content win-finder"><div class="f-side"><i></i><i></i><i></i><i></i><i></i></div><div class="f-grid">${"<span><em></em><u></u></span>".repeat(8)}</div></div>`,
       };
-      const bodyFor = (entry) => ({
-        url: ["web", "docs"].includes(entry.body) ? entry.body : "web",
-        app: ["notes", "calendar", "music"].includes(entry.body) ? entry.body : "notes",
-        finder: "finder",
-      }[entry.type]);
-      const frontWindows = () => [...windows.values(), ...(settingsOpen() ? [settingsWin] : [])];
       const setFrontApp = () => {
-        const front = frontWindows().sort((a, b) => Number(b.style.zIndex) - Number(a.style.zIndex))[0];
-        frontApp.textContent = front ? front.appName : "Finder";
+        const front = [...windows.values()].sort((a, b) => b.style.zIndex - a.style.zIndex)[0];
+        frontApp.textContent = front ? front.spec.app : "Finder";
       };
-      const makeDraggable = (win, bar, onMove, onEnd) => {
+      const closeWindow = (name) => {
+        const win = windows.get(name);
+        if (!win) return;
+        win.remove();
+        windows.delete(name);
+        setFrontApp();
+        srStatus.textContent = `${name} window closed`;
+      };
+      const buildWindow = (name, spec) => {
+        const win = document.createElement("div");
+        win.className = "mac-window";
+        win.setAttribute("role", "group");
+        win.setAttribute("aria-label", `${name} window`);
+        win.spec = spec;
+        win.innerHTML = `<div class="win-titlebar"><button class="win-close" type="button" aria-label="Close ${name} window"></button><span class="win-dot" aria-hidden="true"></span><span class="win-dot" aria-hidden="true"></span><span class="win-title">${name}</span></div>${bodies[spec.body]()}<span class="win-readout" aria-hidden="true"></span>`;
+        win.querySelector(".win-content").setAttribute("aria-hidden", "true");
+        win.querySelector(".win-close").addEventListener("click", () => closeWindow(name));
+        win.addEventListener("pointerdown", () => { win.style.zIndex = String(++zCounter); setFrontApp(); });
+        const bar = win.querySelector(".win-titlebar");
         let drag = null;
         bar.addEventListener("pointerdown", (event) => {
-          if (event.target.closest("button")) return;
-          drag = { x: event.clientX, y: event.clientY, moved: false, start: onMove(null) };
+          if (event.target.closest(".win-close")) return;
+          drag = { x: event.clientX, y: event.clientY, rect: { ...win.rectPt }, moved: false };
           bar.setPointerCapture(event.pointerId);
           win.classList.add("dragging");
         });
         bar.addEventListener("pointermove", (event) => {
           if (!drag) return;
-          const dx = event.clientX - drag.x;
-          const dy = event.clientY - drag.y;
+          const px = ptPx();
+          const dx = (event.clientX - drag.x) / px;
+          const dy = (event.clientY - drag.y) / px;
           if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
-          onMove({ dx, dy, start: drag.start });
+          win.classList.remove("landed", "placing");
+          win.rectPt = { ...drag.rect, x: drag.rect.x + dx, y: Math.max(MENU_BAR, drag.rect.y + dy) };
+          render(win);
         });
-        const finish = () => {
+        const endDrag = () => {
           if (!drag) return;
           const moved = drag.moved;
           drag = null;
           win.classList.remove("dragging");
-          if (moved && onEnd) onEnd();
+          if (moved && !dragTipShown) {
+            dragTipShown = true;
+            showToast(spec.key ? `Moved it? Press ${spec.key} — Chap puts it back in the center` : `Moved it? Launch ${name} again — Chap puts it back in the center`);
+          }
         };
-        bar.addEventListener("pointerup", finish);
-        bar.addEventListener("pointercancel", finish);
-      };
-      const closeWindow = (id) => {
-        const win = windows.get(id);
-        if (!win) return;
-        win.remove();
-        windows.delete(id);
-        setFrontApp();
-        srStatus.textContent = `${win.titleText} window closed`;
-      };
-      const buildWindow = (entry) => {
-        const win = document.createElement("div");
-        win.className = "mac-window";
-        win.setAttribute("role", "group");
-        win.innerHTML = `<div class="win-titlebar"><button class="win-close" type="button"></button><span class="win-dot" aria-hidden="true"></span><span class="win-dot" aria-hidden="true"></span><span class="win-title"></span></div>${bodies[bodyFor(entry)]()}<span class="win-readout" aria-hidden="true"></span>`;
-        win.querySelector(".win-content").setAttribute("aria-hidden", "true");
-        win.querySelector(".win-close").addEventListener("click", () => closeWindow(entry.id));
-        win.addEventListener("pointerdown", () => { win.style.zIndex = String(++zCounter); setFrontApp(); });
-        makeDraggable(win, win.querySelector(".win-titlebar"), (delta) => {
-          if (!delta) return { ...win.rectPt };
-          const px = ptPx();
-          win.classList.remove("landed", "placing");
-          win.rectPt = { ...delta.start, x: delta.start.x + delta.dx / px, y: Math.max(MENU_BAR, delta.start.y + delta.dy / px) };
-          render(win);
-          return null;
-        }, () => {
-          if (dragTipShown) return;
-          dragTipShown = true;
-          const current = siteById(entry.id);
-          showToast(current && config.optionShortcuts && current.key ? `Moved it? Press ${keyLabel(current)} — Chap puts it back in the center` : `Moved it? Launch ${current ? current.name : "it"} again — Chap puts it back in the center`);
-        });
+        bar.addEventListener("pointerup", endDrag);
+        bar.addEventListener("pointercancel", endDrag);
         return win;
       };
       const guide = document.createElement("div");
@@ -1075,24 +885,24 @@
       const dismissGuide = (token) => { if (token === guideToken) guide.classList.remove("shown"); };
       const CHROME_LAUNCH_MS = 420; // the guide holds the landing spot while Chrome opens the --app window
 
-      const placeWindow = (entry) => {
-        const target = centeredRect(entry.preset);
-        // AppDelegate.launchSite shows the Guide Window only for URL launches when it is enabled.
-        if (entry.type === "url" && config.guideWindow) {
+      const placeWindow = (name) => {
+        const spec = windowSpecs[name];
+        const target = centeredRect(spec);
+        if (spec.guide) {
           const token = showGuide(target);
-          setTimeout(() => openAndPlace(entry, target, token), CHROME_LAUNCH_MS);
+          setTimeout(() => openAndPlace(name, spec, target, token), CHROME_LAUNCH_MS);
         } else {
-          openAndPlace(entry, target, null);
+          openAndPlace(name, spec, target, null);
         }
-        const [refW, refH] = sizeFor(entry.preset, REFERENCE.width, REFERENCE.height);
-        srStatus.textContent = `${entry.name} opened and centered at the ${presets[entry.preset].label} size, ${refW} by ${refH} points`;
+        const [refW, refH] = sizeFor(spec.preset, REFERENCE.width, REFERENCE.height);
+        srStatus.textContent = `${name} opened and centered at the ${presets[spec.preset].label} size, ${refW} by ${refH} points`;
       };
-      const openAndPlace = (entry, target, token) => {
-        let win = windows.get(entry.id);
+      const openAndPlace = (name, spec, target, token) => {
+        let win = windows.get(name);
         const isNew = !win;
         if (isNew) {
-          win = buildWindow(entry);
-          windows.set(entry.id, win);
+          win = buildWindow(name, spec);
+          windows.set(name, win);
           // Apps open at their own default spot first; Chap then resizes and centers the new window.
           const offset = (windows.size - 1) * 22;
           win.rectPt = { x: 60 + offset, y: MENU_BAR + 48 + offset, w: target.w * .7, h: target.h * .7 };
@@ -1100,17 +910,12 @@
           layer.append(win);
           if (windows.size > 3) closeWindow([...windows.keys()][0]);
         }
-        win.appName = types[entry.type].window || entry.name;
-        win.titleText = entry.name;
-        win.setAttribute("aria-label", `${entry.name} window`);
-        win.querySelector(".win-title").textContent = entry.name;
-        win.querySelector(".win-close").setAttribute("aria-label", `Close ${entry.name} window`);
         win.style.zIndex = String(++zCounter);
         setFrontApp();
         win.classList.remove("landed");
-        const [refW, refH] = sizeFor(entry.preset, REFERENCE.width, REFERENCE.height);
-        const shortcut = config.optionShortcuts && entry.key ? `${keyLabel(entry)} · ` : "";
-        win.querySelector(".win-readout").textContent = `${shortcut}${presets[entry.preset].label} · ${refW} × ${refH} pt · centered ✓`;
+        const [refW, refH] = sizeFor(spec.preset, REFERENCE.width, REFERENCE.height);
+        const readout = `${spec.key ? `${spec.key} · ` : ""}${presets[spec.preset].label} · ${refW} × ${refH} pt · centered ✓`;
+        win.querySelector(".win-readout").textContent = readout;
         requestAnimationFrame(() => {
           win.classList.add("shown");
           setTimeout(() => {
@@ -1127,22 +932,16 @@
           }, isNew ? 240 : 0);
         });
       };
+      window.addEventListener("resize", () => windows.forEach((win) => render(win)));
 
-      const launchSite = (id) => {
-        const entry = siteById(id);
-        if (!entry) return;
+      const launch = (name, kind) => {
         setStatusMenu(false);
         setDock(false);
-        if (entry.type === "shell") { showToast(`Running ${entry.name} in your shell · demo`); srStatus.textContent = `Ran ${entry.name}`; return; }
-        placeWindow(entry);
-      };
-      const launchOther = (name, kind) => {
-        setStatusMenu(false);
-        setDock(false);
-        showToast(`${kind === "screenshot" ? `Opening ${name} in Preview` : `Opening ${name}`} · demo`);
+        if (windowSpecs[name]) { placeWindow(name); return; }
+        showToast(`${launchMessage(name, kind)} · demo`);
       };
 
-      // ---- Chap Drop: copies stay in this tab only; nothing is uploaded. ----
+      // Chap Drop: copies stay in this tab only; nothing is uploaded.
       const kindFor = (name, type = "") => {
         if (type.startsWith("image/") || /\.(png|jpe?g|gif|heic|webp)$/i.test(name)) return "image";
         if (/\.pdf$/i.test(name) || type === "application/pdf") return "pdf";
@@ -1157,10 +956,9 @@
         if (labels[kind]) { const b = document.createElement("b"); b.textContent = labels[kind]; span.append(b); }
         return span;
       };
-      const removeIcon = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="m2 2 6 6M8 2 2 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
       const renderDrop = () => {
         const count = dropFiles.length;
-        badge.hidden = count === 0 || !config.notchEnabled;
+        badge.hidden = count === 0;
         badgeCount.textContent = String(Math.min(count, 99));
         badge.setAttribute("aria-label", count === 1 ? "Chap Drop: 1 file" : `Chap Drop: ${count} files`);
         dropSection.hidden = count === 0;
@@ -1179,12 +977,12 @@
           const label = document.createElement("span");
           label.textContent = file.name;
           open.append(icon, label);
-          open.addEventListener("click", () => launchOther(file.name, "file"));
+          open.addEventListener("click", () => launch(file.name, "file"));
           const remove = document.createElement("button");
           remove.type = "button";
           remove.className = "drop-remove";
           remove.setAttribute("aria-label", `Remove ${file.name} from Chap Drop`);
-          remove.innerHTML = removeIcon;
+          remove.innerHTML = icons.remove;
           remove.addEventListener("click", () => {
             const index = dropFiles.indexOf(file);
             if (index >= 0) dropFiles.splice(index, 1);
@@ -1199,7 +997,6 @@
       };
       const addFiles = (files) => {
         if (!files.length) return;
-        if (!config.notchEnabled) { showToast("Turn on Show Launchers Under the Notch to use Chap Drop"); return; }
         dropFiles.unshift(...files);
         renderDrop();
         setDock(true);
@@ -1222,7 +1019,7 @@
       stage.addEventListener("dragover", (event) => {
         if (!isFileDrag(event)) return;
         event.preventDefault();
-        const overTarget = config.notchEnabled && Boolean(event.target.closest("[data-dock], [data-notch], [data-drop-badge]"));
+        const overTarget = Boolean(event.target.closest("[data-dock], [data-notch], [data-drop-badge]"));
         event.dataTransfer.dropEffect = overTarget ? "copy" : "none";
         dropOverlay.classList.toggle("targeted", overTarget);
         if (overTarget) {
@@ -1247,7 +1044,7 @@
       stage.addEventListener("drop", (event) => {
         if (!isFileDrag(event)) return;
         event.preventDefault();
-        const onTarget = config.notchEnabled && event.target.closest("[data-dock], [data-notch], [data-drop-badge]");
+        const onTarget = event.target.closest("[data-dock], [data-notch], [data-drop-badge]");
         endDrag();
         if (!onTarget) { setDock(false); return; }
         const demoFile = event.dataTransfer.getData(DEMO_TYPE);
@@ -1273,340 +1070,7 @@
         file.addEventListener("click", () => addFiles([{ name: file.dataset.desktopFile, kind: file.dataset.kind }]));
       });
 
-      // ---- Settings window: Launchers / General / Notch, applied live to the demo. ----
-      let settingsWin = null;
-      let settingsTab = "launchers";
-      let selectedId = config.sites[0].id;
-      let searchText = "";
-      let settingsOpener = null;
-      const settingsOpen = () => Boolean(settingsWin && !settingsWin.hidden);
-      const isSheet = () => matchMedia("(max-width: 620px)").matches;
-      const toggle = (name, on, label) => `<button class="sw-switch" type="button" role="switch" aria-checked="${on}" data-toggle="${name}" aria-label="${label}"><span></span></button>`;
-      const segmented = (name, value, options, label) => `<div class="sw-seg" role="radiogroup" aria-label="${label}">${options.map(([id, text, disabled]) =>
-        `<button type="button" role="radio" aria-checked="${value === id}" data-seg="${name}" data-value="${id}"${disabled ? " disabled" : ""}>${text}</button>`).join("")}</div>`;
-      const typeIcon = (type) => (type === "url" ? '<span class="sw-monitor" aria-hidden="true"></span>' : svg[type]);
-
-      const sidebarHTML = () => {
-        const q = searchText.trim().toLowerCase();
-        return typeOrder.map((type) => {
-          const entries = sitesOf(type).filter((entry) => !q || entry.name.toLowerCase().includes(q));
-          if (q && !entries.length) return "";
-          return `<div class="sw-group"><div class="sw-group-title">${types[type].label} <span>(${sitesOf(type).length}/${MAX_PER_TYPE})</span></div>${entries.map((entry) =>
-            `<button class="sw-item" type="button" data-select="${entry.id}" aria-current="${entry.id === selectedId && settingsTab === "launchers"}">${typeIcon(type)}<span class="sw-item-name">${escapeHTML(entry.name || "Untitled")}</span>${entry.key ? `<kbd>⌥ ${escapeHTML(entry.key)}</kbd>` : ""}</button>`).join("")}</div>`;
-        }).join("") || '<p class="sw-empty">No launchers match</p>';
-      };
-      const previewHTML = (entry) => {
-        const [w, h] = sizeFor(entry.preset, REFERENCE.width, REFERENCE.height);
-        return `<div class="sw-preview"><div class="sw-preview-box"><span class="sw-preview-caption">Focused Display</span><div class="sw-screen"><span>Built-in Retina Display</span><div class="sw-land" style="width:${(w / REFERENCE.width * 100).toFixed(2)}%;height:${(h / REFERENCE.height * 100).toFixed(2)}%">${presets[entry.preset].label}</div></div></div>
-          <div class="sw-preview-box sw-all"><span class="sw-preview-caption">All Displays ${entry.follow ? svg.url.replace('viewBox="0 0 16 24"', 'viewBox="0 0 16 24" class="sw-cursor"') : ""}</span><div class="sw-mini"><span>1</span></div></div></div>`;
-      };
-      const launchersHTML = () => {
-        const entry = siteById(selectedId);
-        if (!entry) return '<p class="sw-empty">Add a launcher with +</p>';
-        const typeField = {
-          url: ["URL", `<input class="sw-input" data-field="url" value="${escapeHTML(entry.url || "")}" spellcheck="false" aria-label="URL">`],
-          app: ["Application", `<div class="sw-path"><input class="sw-input" data-field="path" value="${escapeHTML(entry.path || "")}" spellcheck="false" aria-label="Application path"><button class="sw-icon-btn" type="button" data-action="browse" aria-label="Choose application">${svg.finder}</button></div>`],
-          finder: ["Folder", `<div class="sw-path"><input class="sw-input" data-field="path" value="${escapeHTML(entry.path || "")}" spellcheck="false" aria-label="Folder path"><button class="sw-icon-btn" type="button" data-action="browse" aria-label="Choose folder">${svg.finder}</button></div>`],
-          shell: ["Script", `<textarea class="sw-input sw-script" data-field="script" spellcheck="false" aria-label="Script">${escapeHTML(entry.script || "")}</textarea>`],
-        }[entry.type];
-        const [w, h] = entry.type === "shell" ? [0, 0] : sizeFor(entry.preset, REFERENCE.width, REFERENCE.height);
-        const conflict = entry.key && config.sites.find((other) => other !== entry && other.key === entry.key);
-        return `<div class="sw-field"><span class="sw-label">Launch Type</span>${segmented("type", entry.type, [["url", `${svg.url} URL`], ["app", `${svg.app} App`], ["finder", `${svg.finder} Finder`], ["shell", `${svg.shell} Shell`], ["soon", "Soon", true]], "Launch type")}</div>
-          <div class="sw-row2"><label class="sw-field sw-grow"><span class="sw-label">Name</span><input class="sw-input" data-field="name" value="${escapeHTML(entry.name)}" aria-label="Name"></label>
-          <label class="sw-field sw-key"><span class="sw-label">Shortcut (⌥)</span><input class="sw-input sw-keycap" data-field="key" value="${escapeHTML(entry.key)}" maxlength="1" autocomplete="off" aria-label="Option shortcut key" aria-describedby="sw-key-note"></label></div>
-          <p class="sw-note${conflict ? " sw-error" : ""}" id="sw-key-note">${conflict ? `⌥${escapeHTML(entry.key)} is already used by ${escapeHTML(conflict.name)}.` : config.optionShortcuts ? (entry.key ? `Press ⌥${escapeHTML(entry.key)} anywhere in the demo.` : "Optional: one letter or number.") : "Option-key triggers are off in General."}</p>
-          <div class="sw-field"><span class="sw-label">${typeField[0]}</span>${typeField[1]}</div>
-          ${entry.type === "shell" ? '<p class="sw-note">Shell scripts run through your $SHELL and don’t open a window, so there’s no display or size to set.</p>' : `
-          <div class="sw-row2"><div class="sw-field sw-grow"><span class="sw-label">Display</span><div class="sw-select-wrap"><select class="sw-select" aria-label="Display"><option>Built-in Retina Display</option></select></div>
-            <button class="sw-follow" type="button" data-action="follow" aria-pressed="${entry.follow}">${svg.url} Follow Cursor</button></div>
-          <label class="sw-field sw-grow"><span class="sw-label">Size Preset</span><div class="sw-select-wrap"><select class="sw-select" data-field="preset" aria-label="Size preset">${Object.entries(presets).map(([id, preset]) => `<option value="${id}"${id === entry.preset ? " selected" : ""}>${preset.label}</option>`).join("")}</select></div><span class="sw-pt">${w}x${h} pt</span></label></div>
-          <div class="sw-field"><span class="sw-label">Display Preview</span>${previewHTML(entry)}</div>
-          <button class="sw-try" type="button" data-action="try">Launch ${escapeHTML(entry.name)}${config.optionShortcuts && entry.key ? ` · ⌥${escapeHTML(entry.key)}` : ""}</button>`}`;
-      };
-      const generalHTML = () => `<div class="sw-h">Behavior</div><div class="sw-card">
-          <div class="sw-line"><span>Guide Window</span>${toggle("guideWindow", config.guideWindow, "Guide Window")}</div>
-          <div class="sw-line"><span>Open at Login</span>${toggle("openAtLogin", config.openAtLogin, "Open at Login")}</div>
-          <div class="sw-line"><span>Enable Chap Option-Key Triggers</span>${toggle("optionShortcuts", config.optionShortcuts, "Enable Chap Option-Key Triggers")}</div>
-          <p class="sw-info">${svg.info}Turn this off temporarily when another app or workflow needs Option-key combinations.</p>
-          <div class="sw-keys"><span><kbd>⌥ .</kbd> Open menu</span><span><kbd>⌥ ,</kbd> Open Settings</span><span><kbd>⌥ (key)</kbd> Launch site</span></div></div>
-        <div class="sw-h">Appearance</div><div class="sw-card"><div class="sw-line"><span>Status Bar Icon</span><div class="sw-icon-choice" role="radiogroup" aria-label="Status bar icon">
-          <button type="button" role="radio" aria-checked="${config.statusIcon === "seal"}" data-seg="statusIcon" data-value="seal" aria-label="Seal">${svg.seal}</button>
-          <button type="button" role="radio" aria-checked="${config.statusIcon === "bolt"}" data-seg="statusIcon" data-value="bolt" aria-label="Lightning bolt">${svg.url}</button></div></div></div>
-        <div class="sw-h">Menu</div><div class="sw-card"><div class="sw-line"><span>Sections</span><div class="sw-chips">${typeOrder.map((type) =>
-          `<button type="button" aria-pressed="${!config.hidden.has(type)}" data-section="${type}">${types[type].label}</button>`).join("")}</div></div>
-          <p class="sw-info">${svg.info}Hidden sections stay launchable with their Option shortcuts.</p></div>
-        <div class="sw-h">Updates</div><div class="sw-card"><div class="sw-line"><span>Check for Updates Automatically</span>${toggle("autoUpdates", config.autoUpdates, "Check for Updates Automatically")}</div></div>
-        <div class="sw-about"><img src="assets/chap-icon-rounded.png" alt="" width="56" height="56"><span>Chap 2.0.0</span></div>`;
-      const notchHTML = () => {
-        const placed = new Set(config.widgets.filter(Boolean));
-        const material = config.glassAppearance === "system"
-          ? segmented("glassMaterial", config.glassMaterial, [["clear", "Clear"], ["regular", "Regular"]], "Glass material")
-          : `<span class="sw-value">${config.glassAppearance === "light" ? "Clear" : "Regular"}</span>`;
-        return `<div class="sw-h">Notch Launcher</div><div class="sw-card"><div class="sw-line"><span>Show Launchers Under the Notch</span>${toggle("notchEnabled", config.notchEnabled, "Show Launchers Under the Notch")}</div></div>
-          <div class="sw-h">Widgets</div><div class="sw-card${config.notchEnabled ? "" : " sw-disabled"}"><p class="sw-hint">Drag a widget into a slot. Slots fill the panel from the left.</p>
-            <div class="sw-slots">${config.widgets.map((widget, index) => widget
-              ? `<div class="sw-slot filled" draggable="true" data-slot="${index}" data-widget="${widget}" role="group" aria-label="Slot ${index + 1}: ${widgetInfo[widget].label}">${widgetInfo[widget].icon}<span>${widgetInfo[widget].label}</span><button type="button" class="sw-slot-clear" data-clear="${index}" aria-label="Clear slot ${index + 1}">×</button></div>`
-              : `<div class="sw-slot" data-slot="${index}" role="group" aria-label="Slot ${index + 1}: empty"><span>Empty</span></div>`).join("")}</div>
-            <div class="sw-chips sw-widget-chips">${Object.entries(widgetInfo).map(([id, info]) =>
-              `<button type="button" draggable="true" data-add-widget="${id}" aria-pressed="${placed.has(id)}" aria-label="${info.label}${placed.has(id) ? ", placed" : ", add to the first empty slot"}">${info.icon}${info.label}</button>`).join("")}</div></div>
-          <div class="sw-h">Appearance</div><div class="sw-card">
-            <div class="sw-line"><span>Style</span>${segmented("style", config.style, [["custom", "Custom"], ["glass", "Glass"]], "Style")}</div>
-            ${config.style === "glass" ? `<div class="sw-line"><span>Glass Appearance</span>${segmented("glassAppearance", config.glassAppearance, [["system", "System"], ["light", "Light"], ["dark", "Dark"]], "Glass appearance")}</div>
-            <div class="sw-line"><span>Glass Material</span>${material}</div>
-            <p class="sw-info">${svg.info}Light uses Clear. Dark uses Regular. System follows macOS and lets you choose the material.</p>`
-            : `<div class="sw-line"><span>Background</span><span class="sw-value"><i class="sw-swatch" aria-hidden="true"></i>Black · 60%</span></div>`}</div>`;
-      };
-      const renderSettings = () => {
-        if (!settingsWin) return;
-        const active = document.activeElement;
-        const focusKey = active && settingsWin.contains(active) ? (active.dataset.field || active.dataset.toggle || active.dataset.seg && `${active.dataset.seg}:${active.dataset.value}` || active.dataset.select || active.dataset.section || active.dataset.addWidget || active.dataset.tab || active.dataset.action) : null;
-        const caret = active && active.dataset && active.dataset.field && typeof active.selectionStart === "number" ? active.selectionStart : null;
-        settingsWin.querySelector("[data-sw-list]").innerHTML = sidebarHTML();
-        const main = settingsWin.querySelector("[data-sw-main]");
-        main.innerHTML = settingsTab === "launchers" ? launchersHTML() : settingsTab === "general" ? generalHTML() : notchHTML();
-        main.setAttribute("aria-labelledby", `sw-tab-${settingsTab}`);
-        settingsWin.querySelectorAll("[data-tab]").forEach((tab) => tab.setAttribute("aria-selected", String(tab.dataset.tab === settingsTab)));
-        const entry = siteById(selectedId);
-        settingsWin.querySelector('[data-list-action="remove"]').disabled = !entry;
-        settingsWin.querySelector('[data-list-action="add"]').disabled = entry ? sitesOf(entry.type).length >= MAX_PER_TYPE : false;
-        if (focusKey) {
-          const selector = [`[data-field="${focusKey}"]`, `[data-toggle="${focusKey}"]`, `[data-select="${focusKey}"]`, `[data-section="${focusKey}"]`, `[data-add-widget="${focusKey}"]`, `[data-tab="${focusKey}"]`, `[data-action="${focusKey}"]`];
-          if (focusKey.includes(":")) { const [seg, value] = focusKey.split(":"); selector.unshift(`[data-seg="${seg}"][data-value="${value}"]`); }
-          const next = settingsWin.querySelector(selector.join(","));
-          if (next) {
-            next.focus({ preventScroll: true });
-            if (caret !== null && typeof next.setSelectionRange === "function") next.setSelectionRange(caret, caret);
-          }
-        }
-      };
-      const layoutSettings = () => {
-        if (!settingsOpen()) return;
-        if (isSheet()) { settingsWin.style.transform = ""; return; }
-        const menuPx = MENU_BAR * ptPx();
-        const scale = Math.min(1, (stage.clientWidth - 24) / 760, (stage.clientHeight - menuPx - 20) / 600);
-        settingsWin.style.transform = `scale(${scale})`;
-        if (!settingsWin.moved) {
-          settingsWin.style.left = `${(stage.clientWidth - 760 * scale) / 2}px`;
-          settingsWin.style.top = `${menuPx + (stage.clientHeight - menuPx - 600 * scale) / 2}px`;
-        }
-      };
-      const buildSettings = () => {
-        settingsWin = document.createElement("div");
-        settingsWin.className = "settings-win";
-        settingsWin.appName = "Chap";
-        settingsWin.setAttribute("role", "dialog");
-        settingsWin.setAttribute("aria-labelledby", "sw-title");
-        settingsWin.innerHTML = `<div class="sw-titlebar"><button class="win-close" type="button" data-sw-close aria-label="Close Chap Settings"></button><span class="win-dot" aria-hidden="true"></span><span class="win-dot" aria-hidden="true"></span><strong id="sw-title">Chap Settings</strong></div>
-          <div class="sw-body"><div class="sw-sidebar"><label class="sw-search">${svg.search}<input type="search" placeholder="Search" aria-label="Search launchers" data-sw-search></label>
-            <div class="sw-list" data-sw-list></div>
-            <div class="sw-list-actions"><button type="button" data-list-action="add" aria-label="Add launcher">+</button><button type="button" class="sw-minus" data-list-action="remove" aria-label="Remove selected launcher">−</button><span></span><button type="button" data-list-action="up" aria-label="Move up">⌃</button><button type="button" data-list-action="down" aria-label="Move down">⌄</button></div></div>
-            <div class="sw-content"><div class="sw-main" data-sw-main role="tabpanel"></div>
-              <div class="sw-tabbar"><div class="sw-tabs" role="tablist" aria-label="Settings sections">
-                <button type="button" role="tab" id="sw-tab-launchers" data-tab="launchers">${svg.grid}Launchers</button>
-                <button type="button" role="tab" id="sw-tab-general" data-tab="general">${svg.gear}General</button>
-                <button type="button" role="tab" id="sw-tab-notch" data-tab="notch">${svg.laptop}Notch</button></div>
-                <button type="button" class="sw-round" data-action="help" aria-label="Q&amp;A">?</button><button type="button" class="sw-round" data-action="more" aria-label="More">···</button></div></div></div>`;
-        makeDraggable(settingsWin, settingsWin.querySelector(".sw-titlebar"), (delta) => {
-          if (isSheet()) return null;
-          if (!delta) return { left: parseFloat(settingsWin.style.left) || 0, top: parseFloat(settingsWin.style.top) || 0 };
-          settingsWin.moved = true;
-          settingsWin.style.left = `${delta.start.left + delta.dx}px`;
-          settingsWin.style.top = `${Math.max(MENU_BAR * ptPx(), delta.start.top + delta.dy)}px`;
-          return null;
-        });
-        settingsWin.addEventListener("pointerdown", () => { settingsWin.style.zIndex = String(++zCounter); setFrontApp(); });
-        bindSettings();
-      };
-      const openSettings = (tab) => {
-        if (!settingsWin) buildSettings();
-        if (tab) settingsTab = tab;
-        settingsOpener = document.activeElement;
-        setStatusMenu(false);
-        setDock(false);
-        const host = isSheet() ? document.body : layer;
-        settingsWin.classList.toggle("sw-sheet", isSheet());
-        if (settingsWin.parentElement !== host) host.append(settingsWin);
-        settingsWin.hidden = false;
-        settingsWin.style.zIndex = String(++zCounter + (isSheet() ? 1000 : 0));
-        renderSettings();
-        layoutSettings();
-        setFrontApp();
-        settingsWin.querySelector(`[data-tab="${settingsTab}"]`).focus({ preventScroll: true });
-        srStatus.textContent = "Chap Settings opened";
-      };
-      const closeSettings = () => {
-        if (!settingsOpen()) return;
-        settingsWin.hidden = true;
-        setFrontApp();
-        if (settingsOpener && settingsOpener !== document.body && document.contains(settingsOpener) && !settingsOpener.closest("[inert]")) settingsOpener.focus({ preventScroll: true });
-        else statusButton.focus({ preventScroll: true });
-      };
-      const moveEntry = (entry, direction) => {
-        const peers = sitesOf(entry.type);
-        const index = peers.indexOf(entry);
-        const swap = peers[index + direction];
-        if (!swap) return;
-        const a = config.sites.indexOf(entry);
-        const b = config.sites.indexOf(swap);
-        [config.sites[a], config.sites[b]] = [config.sites[b], config.sites[a]];
-      };
-      const placeWidget = (widget, slot) => {
-        const from = config.widgets.indexOf(widget);
-        if (slot === undefined) {
-          if (from >= 0) { showToast(`${widgetInfo[widget].label} is already placed`); return; }
-          slot = config.widgets.indexOf(null);
-          if (slot < 0) { showToast("All four slots are full — clear one first"); return; }
-        }
-        if (from >= 0) config.widgets[from] = config.widgets[slot];
-        config.widgets[slot] = widget;
-        // Slots fill the panel from the left: pack the placed widgets forward.
-        const packed = config.widgets.filter(Boolean);
-        config.widgets = [...packed, ...Array(4 - packed.length).fill(null)];
-      };
-      const bindSettings = () => {
-        const w = settingsWin;
-        w.addEventListener("click", (event) => {
-          const target = event.target.closest("button");
-          if (!target || !w.contains(target)) return;
-          const entry = siteById(selectedId);
-          if (target.matches("[data-sw-close]")) { closeSettings(); return; }
-          if (target.dataset.tab) { settingsTab = target.dataset.tab; renderSettings(); return; }
-          if (target.dataset.select) { selectedId = target.dataset.select; settingsTab = "launchers"; renderSettings(); return; }
-          if (target.dataset.toggle) {
-            config[target.dataset.toggle] = !config[target.dataset.toggle];
-            const labels = { guideWindow: "Guide Window", optionShortcuts: "Option-key triggers", notchEnabled: "Notch launcher", openAtLogin: "Open at Login", autoUpdates: "Automatic update checks" };
-            srStatus.textContent = `${labels[target.dataset.toggle]} ${config[target.dataset.toggle] ? "on" : "off"}`;
-            refreshAll();
-            return;
-          }
-          if (target.dataset.seg) {
-            const { seg, value } = target.dataset;
-            if (seg === "type" && entry) {
-              if (value === entry.type) return;
-              if (sitesOf(value).length >= MAX_PER_TYPE) { showToast(`${types[value].label} already has ${MAX_PER_TYPE} launchers`); return; }
-              entry.type = value;
-              if (value === "shell") entry.script = entry.script || "echo Hello from Chap";
-              if (value === "url") entry.url = entry.url || "https://example.com";
-              config.sites = [...config.sites.filter((other) => other !== entry), entry];
-            } else {
-              config[seg] = value;
-            }
-            refreshAll();
-            return;
-          }
-          if (target.dataset.section) {
-            const type = target.dataset.section;
-            if (config.hidden.has(type)) config.hidden.delete(type); else config.hidden.add(type);
-            refreshAll();
-            return;
-          }
-          if (target.dataset.addWidget) { placeWidget(target.dataset.addWidget); refreshAll(); return; }
-          if (target.dataset.clear !== undefined) {
-            config.widgets[Number(target.dataset.clear)] = null;
-            const packed = config.widgets.filter(Boolean);
-            config.widgets = [...packed, ...Array(4 - packed.length).fill(null)];
-            refreshAll();
-            return;
-          }
-          if (target.dataset.listAction) {
-            const action = target.dataset.listAction;
-            if (action === "add") {
-              const type = entry ? entry.type : "url";
-              if (sitesOf(type).length >= MAX_PER_TYPE) { showToast(`${types[type].label} already has ${MAX_PER_TYPE} launchers`); return; }
-              const created = site({ type, name: `New ${types[type].label === "URL" ? "Site" : types[type].label}`, url: "https://example.com", path: type === "app" ? "/Applications/" : "~/", script: "echo Hello from Chap", preset: "standard" });
-              const lastIndex = config.sites.lastIndexOf(sitesOf(type).pop());
-              config.sites.splice(lastIndex + 1, 0, created);
-              selectedId = created.id;
-              settingsTab = "launchers";
-            } else if (action === "remove" && entry) {
-              const peers = config.sites;
-              const index = peers.indexOf(entry);
-              config.sites.splice(index, 1);
-              closeWindow(entry.id);
-              selectedId = (config.sites[index] || config.sites[index - 1] || {}).id;
-              showToast(`Removed ${entry.name}`);
-            } else if ((action === "up" || action === "down") && entry) {
-              moveEntry(entry, action === "up" ? -1 : 1);
-            }
-            refreshAll();
-            return;
-          }
-          if (target.dataset.action === "follow" && entry) { entry.follow = !entry.follow; refreshAll(); return; }
-          if (target.dataset.action === "try" && entry) { if (isSheet()) closeSettings(); launchSite(entry.id); return; }
-          if (target.dataset.action === "browse") { showToast("In Chap this opens a macOS file picker"); return; }
-          if (target.dataset.action === "help") { showToast("Q&A opens the built-in guide window"); return; }
-          if (target.dataset.action === "more") { showToast("Import and export ~/.chap.json from here in Chap"); }
-        });
-        w.addEventListener("input", (event) => {
-          const field = event.target.dataset.field;
-          if (event.target.matches("[data-sw-search]")) { searchText = event.target.value; w.querySelector("[data-sw-list]").innerHTML = sidebarHTML(); return; }
-          const entry = siteById(selectedId);
-          if (!field || !entry) return;
-          let value = event.target.value;
-          if (field === "key") {
-            value = value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 1);
-            event.target.value = value;
-          }
-          entry[field] = value;
-          if (field === "preset") { refreshAll(); return; }
-          renderMenu();
-          renderDock();
-          // Keep typing smooth: only refresh the sidebar and dependent notes, not the focused field.
-          w.querySelector("[data-sw-list]").innerHTML = sidebarHTML();
-          if (field === "key" || field === "name") {
-            const conflict = entry.key && config.sites.find((other) => other !== entry && other.key === entry.key);
-            const note = w.querySelector("#sw-key-note");
-            if (note) {
-              note.classList.toggle("sw-error", Boolean(conflict));
-              note.textContent = conflict ? `⌥${entry.key} is already used by ${conflict.name}.` : config.optionShortcuts ? (entry.key ? `Press ⌥${entry.key} anywhere in the demo.` : "Optional: one letter or number.") : "Option-key triggers are off in General.";
-            }
-            const tryButton = w.querySelector('[data-action="try"]');
-            if (tryButton) tryButton.textContent = `Launch ${entry.name}${config.optionShortcuts && entry.key ? ` · ⌥${entry.key}` : ""}`;
-          }
-        });
-        w.addEventListener("change", (event) => { if (event.target.dataset.field === "preset") refreshAll(); });
-        w.addEventListener("keydown", (event) => {
-          if (event.key === "Escape") { event.stopPropagation(); closeSettings(); return; }
-          const tab = event.target.closest('[role="tab"]');
-          if (tab && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
-            const order = ["launchers", "general", "notch"];
-            settingsTab = order[(order.indexOf(tab.dataset.tab) + (event.key === "ArrowRight" ? 1 : 2)) % 3];
-            renderSettings();
-            w.querySelector(`[data-tab="${settingsTab}"]`).focus();
-          }
-        });
-        // Widget board drag and drop (click and keyboard alternatives use the same placeWidget rule).
-        w.addEventListener("dragstart", (event) => {
-          const source = event.target.closest("[data-add-widget], .sw-slot.filled");
-          if (!source) return;
-          event.dataTransfer.setData(WIDGET_TYPE, source.dataset.addWidget || source.dataset.widget);
-          event.dataTransfer.effectAllowed = "move";
-        });
-        w.addEventListener("dragover", (event) => {
-          const slot = event.target.closest("[data-slot]");
-          if (!slot || ![...event.dataTransfer.types].includes(WIDGET_TYPE)) return;
-          event.preventDefault();
-          w.querySelectorAll(".sw-slot.over").forEach((other) => other.classList.remove("over"));
-          slot.classList.add("over");
-        });
-        w.addEventListener("dragleave", (event) => { const slot = event.target.closest("[data-slot]"); if (slot) slot.classList.remove("over"); });
-        w.addEventListener("drop", (event) => {
-          const slot = event.target.closest("[data-slot]");
-          const widget = event.dataTransfer.getData(WIDGET_TYPE);
-          if (!slot || !widget) return;
-          event.preventDefault();
-          placeWidget(widget, Number(slot.dataset.slot));
-          refreshAll();
-        });
-      };
-      document.querySelectorAll("[data-open-settings]").forEach((button) => {
-        button.addEventListener("click", () => {
-          stage.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
-          setTimeout(() => openSettings(button.dataset.openSettings), 350);
-        });
-      });
-
-      // ---- Hover, touch, and keyboard entry points mirror the app: immediate open, 200ms leave dwell. ----
+      // Hover, touch, and keyboard entry points mirror the app: immediate open, 200ms leave dwell.
       let pointerOverNotch = false;
       notch.addEventListener("pointerenter", (event) => { if (event.pointerType !== "touch") pointerOverNotch = true; });
       notch.addEventListener("pointerleave", () => { pointerOverNotch = false; });
@@ -1621,7 +1085,6 @@
         });
       });
       notch.addEventListener("click", () => {
-        if (!config.notchEnabled) { showToast("The notch launcher is off — the status menu still has everything"); return; }
         // A mouse hover has already opened the dock; clicking the notch must not toggle it shut.
         if (pointerOverNotch && isOpen()) return;
         setDock(!isOpen());
@@ -1630,11 +1093,8 @@
       stage.addEventListener("focusout", (event) => {
         if (isOpen() && !stage.contains(event.relatedTarget)) setDock(false);
       });
-      stage.addEventListener("click", (event) => {
-        const siteButton = event.target.closest("[data-site]");
-        if (siteButton && stage.contains(siteButton)) { launchSite(siteButton.dataset.site); return; }
-        const other = event.target.closest("[data-launch]");
-        if (other && stage.contains(other)) launchOther(other.dataset.launch, other.dataset.kind);
+      stage.querySelectorAll("[data-launch]").forEach((row) => {
+        row.addEventListener("click", () => launch(row.dataset.launch, row.dataset.kind));
       });
 
       statusButton.addEventListener("click", (event) => { event.stopPropagation(); setStatusMenu(statusMenu.hidden); });
@@ -1658,7 +1118,7 @@
         statusButton.focus({ preventScroll: true });
       });
       const menuActions = {
-        settings: () => openSettings(),
+        settings: () => document.getElementById("settings")?.scrollIntoView({ behavior: "smooth" }),
         qa: () => showToast("Q&A opens the built-in guide window"),
         updates: () => showToast("You’re up to date — Chap 2.0.0 is the latest version"),
         quit: () => showToast("Chap always asks before quitting — the demo keeps running"),
@@ -1676,41 +1136,22 @@
 
       // Option shortcuts work while the pointer or focus is inside the demo, like Chap's global hotkeys.
       let pointerInside = false;
-      let offTipAt = 0;
       stage.addEventListener("pointerenter", () => { pointerInside = true; });
       stage.addEventListener("pointerleave", () => { pointerInside = false; });
+      const shortcuts = { KeyG: ["GitHub", "url"], KeyD: ["Docs", "url"], KeyN: ["Notes", "app"], KeyC: ["Calendar", "app"], KeyM: ["Music", "app"] };
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
           const inside = stage.contains(document.activeElement);
           if (!statusMenu.hidden) { setStatusMenu(false); if (inside) statusButton.focus({ preventScroll: true }); return; }
           if (isOpen()) { setDock(false); if (inside) notch.focus({ preventScroll: true }); return; }
         }
-        const inDemo = pointerInside || stage.matches(":focus-within") || (settingsWin && settingsWin.contains(document.activeElement));
-        if (!event.altKey || event.metaKey || event.ctrlKey || !inDemo) return;
-        if (event.target.matches && event.target.matches("input, textarea, select")) return;
-        const match = /^(Key|Digit)([A-Z0-9])$/.exec(event.code);
-        const isFixed = event.code === "Period" || event.code === "Comma";
-        if (!isFixed && !match) return;
-        if (!config.optionShortcuts) {
-          if (Date.now() - offTipAt > 3000) { offTipAt = Date.now(); showToast("Option-key triggers are off — turn them on in Settings → General"); }
-          return;
-        }
+        if (!event.altKey || event.metaKey || event.ctrlKey || !(pointerInside || stage.matches(":focus-within"))) return;
         if (event.code === "Period") { event.preventDefault(); setStatusMenu(statusMenu.hidden); if (!statusMenu.hidden) statusMenu.querySelector(".menu-item")?.focus({ preventScroll: true }); return; }
-        if (event.code === "Comma") { event.preventDefault(); if (settingsOpen()) closeSettings(); else openSettings(); return; }
-        const entry = config.sites.find((candidate) => candidate.key === match[2]);
-        if (entry) { event.preventDefault(); launchSite(entry.id); }
+        const target = shortcuts[event.code];
+        if (target) { event.preventDefault(); launch(...target); }
       });
-      window.addEventListener("resize", () => {
-        windows.forEach((win) => render(win));
-        if (settingsOpen()) {
-          const host = isSheet() ? document.body : layer;
-          if (settingsWin.parentElement !== host) { host.append(settingsWin); settingsWin.classList.toggle("sw-sheet", isSheet()); settingsWin.moved = false; }
-          layoutSettings();
-        }
-      });
-      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyAppearance);
 
-      refreshAll();
+      renderDrop();
       tick();
       setInterval(tick, 1000);
     })();
