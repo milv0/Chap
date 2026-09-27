@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Chap turns the MacBook notch into a four-slot launcher, file drop surface, and live Keep Awake status — while keeping Option shortcuts and the classic menu bar menu.">
+  <meta name="description" content="Chap opens your sites, apps, folders, and scripts with one Option shortcut or a hover on the MacBook notch, and — chap — every window snaps to the center at the size you chose.">
   <meta name="theme-color" content="#05070b">
-  <title>Chap 2 — Your MacBook notch, now useful.</title>
+  <title>Chap 2 — Open anything. Chap. Centered.</title>
   <link rel="icon" href="assets/chap-icon-rounded.png" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,8 +225,19 @@
     .f-grid em { aspect-ratio: 1.3; background: linear-gradient(#74b7ff, #3d8ef3); border-radius: 4px; width: 70%; }
     .f-grid u { background: rgb(0 0 0 / .12); border-radius: 3px; height: 5px; width: 80%; }
     .sr-only { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+    .eyebrow-soft { color: #7f8aa0; font-weight: 600; letter-spacing: .06em; text-transform: none; }
+    .hero-summary em { color: var(--blue); font-style: normal; font-weight: 700; }
+    /* "Chap." lands like a window: the guide outline appears, then the word snaps into it. */
+    .chap-word { color: var(--blue); display: inline-block; position: relative; text-shadow: 0 0 .5em rgb(54 100 255 / .35); }
+    .chap-word::before { background: rgb(54 100 255 / .05); border: 3px solid rgb(54 100 255 / .6); border-radius: .14em; content: ""; inset: -.04em -.1em -.08em; opacity: 0; position: absolute; animation: chap-guide 1.3s ease .35s both; }
+    .chap-word { animation: chap-snap 620ms cubic-bezier(.2,.9,.22,1.25) .75s both; }
+    @keyframes chap-guide { 0% { opacity: 0; } 18% { opacity: 1; } 62% { opacity: 1; } 100% { opacity: 0; } }
+    @keyframes chap-snap { 0% { opacity: 0; transform: translate(-.35em, -.22em) scale(.72) rotate(-6deg); } 70% { opacity: 1; transform: translate(.02em, .01em) scale(1.04); } 100% { opacity: 1; transform: none; } }
+    .chap-sfx { color: var(--blue); font-family: var(--display); font-size: max(18px, calc(40 * var(--pt))); font-weight: 700; letter-spacing: -.04em; pointer-events: none; position: absolute; text-shadow: 0 2px 0 white, 0 6px 18px rgb(54 100 255 / .35); transform: rotate(-9deg) scale(0); white-space: nowrap; z-index: 30; animation: chap-pop 820ms cubic-bezier(.2,.9,.25,1.3) forwards; }
+    .chap-sfx.small { font-size: max(13px, calc(26 * var(--pt))); }
+    @keyframes chap-pop { 0% { opacity: 0; transform: rotate(-9deg) scale(.2); } 32% { opacity: 1; transform: rotate(-9deg) scale(1.15); } 55% { transform: rotate(-9deg) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: rotate(-9deg) translateY(-.35em) scale(1); } }
     .desktop-copy { bottom: 22%; color: #4a5361; left: 6%; position: absolute; }
-    .desktop-copy strong { color: #252b35; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
+    .desktop-copy strong { color: var(--blue); letter-spacing: -.07em; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
     .desktop-copy span { display: block; font-size: .8rem; margin-top: .6rem; }
     .desktop-files { display: flex; flex-direction: column; gap: 8px; position: absolute; right: 3%; top: calc(32 * var(--pt) + 26px); z-index: 2; }
     .desktop-file { align-items: center; background: transparent; border: 0; border-radius: 8px; color: #1f232b; cursor: grab; display: flex; flex-direction: column; font-size: 11px; font-weight: 500; gap: 5px; padding: 6px 4px; text-shadow: 0 1px 1px rgb(255 255 255 / .7); width: 82px; }
@@ -382,6 +393,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .chap-word, .chap-word::before { animation: none; }
       *, *::before, *::after { animation-duration: .001ms !important; scroll-behavior: auto !important; transition-duration: .001ms !important; }
     }
   </style>
@@ -406,9 +418,9 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="shell">
         <div class="hero-copy">
-          <p class="eyebrow">Meet Chap 2 · Notch-native for macOS</p>
-          <h1 id="hero-title"><span class="hero-line-muted">Your MacBook notch.</span><span class="hero-line-bright">Now useful.</span></h1>
-          <p class="hero-summary">Your launchers, screenshots, dropped files, and Keep Awake status live where your eyes already are. The classic menu bar menu and Option shortcuts stay exactly where you expect them.</p>
+          <p class="eyebrow">chap <span class="eyebrow-soft">/tʃæp/ · the snap of a window landing right where it belongs</span></p>
+          <h1 id="hero-title"><span class="hero-line-muted">Open anything.</span><span class="hero-line-bright"><span class="chap-word">Chap.</span> Centered.</span></h1>
+          <p class="hero-summary">Press an Option shortcut or hover the notch. Your site, app, folder, or script opens — and <em>chap</em>, the window snaps to the center of your display at exactly the size you chose. Screenshots, dropped files, and Keep Awake live one hover away.</p>
           <div class="hero-actions">
             <a class="button-primary" href="https://github.com/milv0/Chap/releases/download/v2.0.0/Chap-2.0.0-37.pkg" rel="noreferrer">
               Install Chap
@@ -471,7 +483,7 @@
             <button class="menu-item" type="button" data-menu-action="quit">Quit</button>
           </div>
 
-          <div class="desktop-copy" aria-hidden="true"><strong>Stay in flow.</strong><span>Everything is one hover away.</span></div>
+          <div class="desktop-copy" aria-hidden="true"><strong>chap.</strong><span>Press ⌥N and watch it land.</span></div>
           <div class="desktop-files" role="group" aria-label="Desktop files">
             <button class="desktop-file" type="button" draggable="true" data-desktop-file="Brief.pdf" data-kind="pdf" aria-label="Brief.pdf — drag onto the notch, or press to add it to Chap Drop"><span class="file-glyph" data-kind="pdf" aria-hidden="true"><b>PDF</b></span><span>Brief.pdf</span></button>
             <button class="desktop-file" type="button" draggable="true" data-desktop-file="Mockup.png" data-kind="image" aria-label="Mockup.png — drag onto the notch, or press to add it to Chap Drop"><span class="file-glyph" data-kind="image" aria-hidden="true"></span><span>Mockup.png</span></button>
@@ -607,7 +619,7 @@
     </section>
 
     <section class="final-cta" id="download" aria-labelledby="download-title">
-      <div class="shell final-cta-inner"><p class="eyebrow">Chap 2 for macOS</p><h2 id="download-title">Give the notch a job.</h2><p>Fast enough to disappear. Useful enough to become muscle memory.</p><a class="button-primary" href="https://github.com/milv0/Chap/releases/latest" rel="noreferrer">Download the latest release</a></div>
+      <div class="shell final-cta-inner"><p class="eyebrow">Chap 2 for macOS</p><h2 id="download-title">Press. Chap. Done.</h2><p>Fast enough to disappear. Useful enough to become muscle memory.</p><a class="button-primary" href="https://github.com/milv0/Chap/releases/latest" rel="noreferrer">Download the latest release</a></div>
     </section>
   </main>
 
@@ -654,12 +666,33 @@
         toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
       };
 
+      // The name is the sound: a small "chap!" pops when the dock opens and when a window lands.
+      const quiet = matchMedia("(prefers-reduced-motion: reduce)");
+      let lastDockPop = 0;
+      const chapPop = (x, y, small) => {
+        if (quiet.matches) return;
+        const pop = document.createElement("span");
+        pop.className = `chap-sfx${small ? " small" : ""}`;
+        pop.setAttribute("aria-hidden", "true");
+        pop.textContent = "chap!";
+        pop.style.left = `${x}px`;
+        pop.style.top = `${y}px`;
+        stage.append(pop);
+        pop.addEventListener("animationend", () => pop.remove());
+      };
       const isOpen = () => stage.classList.contains("demo-open");
       const setDock = (open) => {
         clearTimeout(closeTimer);
         if (!open && dock.contains(document.activeElement)) notch.focus({ preventScroll: true });
+        const wasOpen = isOpen();
         stage.classList.toggle("demo-open", open);
         dock.inert = !open;
+        if (open && !wasOpen && Date.now() - lastDockPop > 1500) {
+          lastDockPop = Date.now();
+          const stageBox = stage.getBoundingClientRect();
+          const notchBox = notch.getBoundingClientRect();
+          chapPop(notchBox.right - stageBox.left + notchBox.width * .35, notchBox.bottom - stageBox.top + 4, true);
+        }
         notch.setAttribute("aria-expanded", String(open));
         if (open) setStatusMenu(false);
       };
@@ -881,6 +914,7 @@
             setTimeout(() => {
               win.classList.remove("placing");
               win.classList.add("landed");
+              chapPop(win.offsetLeft + win.offsetWidth - 18, win.offsetTop - 14, false);
               if (token !== null) dismissGuide(token);
               clearTimeout(win.readoutTimer);
               win.readoutTimer = setTimeout(() => win.classList.remove("landed"), 2800);
