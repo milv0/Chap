@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **Keep Awake after sleep** — A session that ends while the Mac is asleep, for
+  example with the lid closed overnight, now ends as soon as the Mac wakes, so
+  the status icon returns to its normal color instead of staying blue.
+
 ## [2.0.0] — 2026-09-26
 
 ### Added

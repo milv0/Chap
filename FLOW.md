@@ -549,7 +549,7 @@ Settings → Notch Launcher on
 | Finder / Shell `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
-| Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
+| Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 | Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
 | Chap Drop copy/delete/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |
 | Screenshot folder scan | concurrent utility queue | 패널 표시 중 2초 주기, 중복 scan 방지 |

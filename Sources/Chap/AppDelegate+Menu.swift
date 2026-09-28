@@ -27,6 +27,9 @@ extension AppDelegate {
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessageEnded,
                 symbolName: "cup.and.saucer")
+        case .expiredWhileAsleep:
+            // 깨어난 직후라 사운드·HUD 없이 메뉴와 상태 아이콘만 되돌린다.
+            break
         }
         buildMenu()
         updateStatusIcon(accessible: accessibilityController.isAccessible)
@@ -34,6 +37,7 @@ extension AppDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         accessibilityController.refresh(reason: "menu", showAlert: false)
+        keepAwake.expireIfNeeded()
         keepAwakeMenuItem?.title = KeepAwakePolicy.menuTitle(
             sessionEnd: keepAwake.sessionEnd, now: Date())
     }

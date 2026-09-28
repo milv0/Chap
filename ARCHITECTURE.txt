@@ -13,7 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
-│   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 기반 화면 잠자기 방지 세션
+│   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 기반 화면 잠자기 방지 세션 (벽시계 만료·wake 재확인)
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함

@@ -50,6 +50,21 @@ enum KeepAwakePolicy {
         return "Keep Mac Awake — \(remainingLabel(until: sessionEnd, now: now)) left"
     }
 
+    /// 만료 시각 이후로 이만큼 늦게 확인되면 잠든 사이 끝난 세션으로 본다.
+    static let lateExpiryTolerance: TimeInterval = 5
+
+    /// 세션이 벽시계 기준으로 끝났는지. 잠든(뚜껑 닫힘) 동안 흐른 시간도 포함한다.
+    static func isExpired(sessionEnd: Date?, now: Date) -> Bool {
+        guard let sessionEnd else { return false }
+        return sessionEnd <= now
+    }
+
+    /// 만료가 예정 시각보다 한참 늦게 확인됐는지. 잠자기에서 깨어난 뒤 정리되는
+    /// 세션은 사운드·HUD 없이 조용히 끝내기 위해 쓴다.
+    static func isLateExpiry(sessionEnd: Date, now: Date) -> Bool {
+        now.timeIntervalSince(sessionEnd) > lateExpiryTolerance
+    }
+
     /// 세션 시작 HUD 문구.
     static func hudMessage(startedPresetTitle title: String) -> String {
         "Keep Awake · \(title)"
