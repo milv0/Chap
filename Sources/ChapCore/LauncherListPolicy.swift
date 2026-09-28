@@ -53,7 +53,6 @@ public enum LauncherListPolicy {
         case .url: return "bolt.fill"
         case .app: return "app.fill"
         case .finder: return "folder.fill"
-        case .shell: return "terminal.fill"
         }
     }
 }

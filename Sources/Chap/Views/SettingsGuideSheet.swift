@@ -61,8 +61,8 @@ struct SettingsGuideSheet: View {
                         guideRow(
                             icon: "plus.circle",
                             text: isGuideEnglish
-                                ? "Add URL, App, Finder, or Shell items"
-                                : "URL, App, Finder, Shell 항목 추가")
+                                ? "Add URL, App, or Finder items"
+                                : "URL, App, Finder 항목 추가")
                         guideRow(
                             icon: "display",
                             text: isGuideEnglish

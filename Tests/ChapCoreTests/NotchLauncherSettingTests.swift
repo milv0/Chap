@@ -118,16 +118,18 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchGlassAppearance == .dark)
     }
 
-    @Test("Light pairs with Clear and Dark pairs with Regular")
-    func appearancePairsWithMaterial() {
-        #expect(NotchGlassAppearance.light.resolvedMaterial(fallback: .regular) == .clear)
-        #expect(NotchGlassAppearance.dark.resolvedMaterial(fallback: .clear) == .regular)
-    }
-
-    @Test("System preserves the manually selected Glass material")
-    func systemPreservesMaterial() {
-        #expect(NotchGlassAppearance.system.resolvedMaterial(fallback: .clear) == .clear)
-        #expect(NotchGlassAppearance.system.resolvedMaterial(fallback: .regular) == .regular)
+    @Test(
+        "Glass material is independent of appearance",
+        arguments: NotchGlassAppearance.allCases)
+    func materialIndependentOfAppearance(appearance: NotchGlassAppearance) throws {
+        for material in NotchGlassMaterial.allCases {
+            let original = Config(
+                notchGlassAppearance: appearance, notchGlassMaterial: material, sites: [])
+            let decoded = try JSONDecoder().decode(
+                Config.self, from: try JSONEncoder().encode(original))
+            #expect(decoded.notchGlassAppearance == appearance)
+            #expect(decoded.notchGlassMaterial == material)
+        }
     }
 
     @Test("Glass material defaults to Clear when the key is missing")
@@ -238,11 +240,31 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchPanelColorHex == "#33445A")
     }
 
-    @Test("widgets default to the four launcher sections when the key is missing")
+    @Test("widgets default to the three launcher sections plus Screenshots")
     func widgetsDefaultToLauncherSections() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
 
-        #expect(config.notchWidgets == [.sites, .apps, .folders, .scripts])
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .screenshots])
+        #expect(!config.didMigrateScriptsWidget)
+    }
+
+    @Test("a removed Scripts slot becomes Screenshots")
+    func scriptsSlotMigratesToScreenshots() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["sites", "apps", "folders", "scripts"], "sites": []}"#)
+
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .screenshots])
+        #expect(config.didMigrateScriptsWidget)
+        #expect(config.needsShellRemovalMigration)
+    }
+
+    @Test("a removed Scripts slot becomes empty when Screenshots is already placed")
+    func scriptsSlotMigratesToEmptyWhenScreenshotsPlaced() throws {
+        let config = try decodeConfig(
+            #"{"notchWidgets": ["scripts", "screenshots", "sites", "apps"], "sites": []}"#)
+
+        #expect(config.notchWidgets == [.none, .screenshots, .sites, .apps])
+        #expect(config.didMigrateScriptsWidget)
     }
 
     @Test("decodes explicit widget slots")
@@ -287,20 +309,20 @@ struct NotchLauncherSettingTests {
     @Test("more than four widgets are capped at four slots")
     func widgetsCappedAtFour() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["sites", "apps", "folders", "scripts", "screenshots"], "sites": []}"#
+            #"{"notchWidgets": ["sites", "apps", "folders", "screenshots", "drop"], "sites": []}"#
         )
 
-        #expect(config.notchWidgets == [.sites, .apps, .folders, .scripts])
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .screenshots])
     }
 
     @Test("widgets round-trip through encoding")
     func widgetsRoundTripThroughEncoding() throws {
         let original = Config(
-            notchWidgets: [.screenshots, .sites, .none, .scripts], sites: [])
+            notchWidgets: [.screenshots, .sites, .none, .folders], sites: [])
 
         let decoded = try JSONDecoder().decode(
             Config.self, from: try JSONEncoder().encode(original))
 
-        #expect(decoded.notchWidgets == [.screenshots, .sites, .none, .scripts])
+        #expect(decoded.notchWidgets == [.screenshots, .sites, .none, .folders])
     }
 }

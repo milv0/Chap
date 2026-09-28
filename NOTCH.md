@@ -87,7 +87,7 @@
 ## 스타일
 
 Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상·불투명도
-설정을, Glass는 System/Light/Dark appearance를 노출한다.
+설정을, Glass는 System/Light/Dark appearance와 Clear/Regular 재질을 각각 노출한다.
 
 | 스타일 | 콘텐츠 박스 | 비고 |
 |---|---|---|
@@ -98,14 +98,17 @@ Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상�
 유리·색이 침범하지 않는다.
 
 Apple 공식 API는 연속 강도를 제공하지 않고 `Glass.clear`와
-`Glass.regular` 두 재질 변형을 제공한다. appearance와의 조합은 정책으로 고정한다:
+`Glass.regular` 두 재질 변형을 제공한다. appearance와 재질은 서로 독립적으로 고른다:
 
-- `system`: `NSPanel.appearance = nil` — macOS Light/Dark 변경을 자동 추적하며,
-  사용자가 Clear/Regular를 직접 고른다
-- `light`: `NSAppearance(named: .aqua)` + **Clear** 고정 — 더 옅은 라이트 유리
-- `dark`: `NSAppearance(named: .darkAqua)` + **Regular** 고정 — 대비가 강한 다크 유리
+- appearance는 패널의 `NSAppearance`만 정한다 — `system`은 `NSPanel.appearance = nil`
+  (macOS Light/Dark 자동 추적), `light`은 `NSAppearance(named: .aqua)`,
+  `dark`는 `NSAppearance(named: .darkAqua)`
+- 재질은 appearance와 무관하게 `config.notchGlassMaterial` 값을 그대로 쓴다.
+  어떤 appearance에서도 Clear·Regular를 자유롭게 조합할 수 있다
 
-렌더러도 `resolvedMaterial` 정책을 적용해 config를 수동 편집해도 이 페어가 유지된다.
+`resolvedMaterial` 정책은 더 이상 없다. 렌더러(`glassMaterialProvider`)는
+`config.notchGlassMaterial`을 직접 전달하고, Settings의 Glass Material 피커는
+Glass 스타일일 때 항상 노출된다.
 
 노치 UI는 Settings와 별도 `NSPanel`이므로 SwiftUI `colorScheme`만 바꾸지 않고
 패널 자체에 appearance를 적용한다. Settings에서 재질 또는 appearance를 바꾸면

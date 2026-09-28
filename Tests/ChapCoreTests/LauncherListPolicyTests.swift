@@ -15,28 +15,27 @@ struct LauncherListPolicyTests {
     @Test("groups sites into launch type order regardless of stored order")
     func groupsIntoLaunchTypeOrder() {
         let sites = [
-            site("Script", .shell), site("Docs", .finder), site("Mail", .app),
-            site("Site", .url),
+            site("Docs", .finder), site("Mail", .app), site("Site", .url),
         ]
 
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
 
-        #expect(sections.map(\.launchType) == [.url, .app, .finder, .shell])
+        #expect(sections.map(\.launchType) == [.url, .app, .finder])
         #expect(
             sections.map { $0.entries.map(\.site.name) } == [
-                ["Site"], ["Mail"], ["Docs"], ["Script"],
+                ["Site"], ["Mail"], ["Docs"],
             ])
     }
 
     @Test("preserves original indices so launching stays correct")
     func preservesOriginalIndices() {
-        let sites = [site("Script", .shell), site("Site", .url), site("Mail", .app)]
+        let sites = [site("Docs", .finder), site("Site", .url), site("Mail", .app)]
 
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
 
         let flattened = sections.flatMap(\.entries)
         #expect(flattened.map(\.siteIndex) == [1, 2, 0])
-        #expect(flattened.map(\.site.name) == ["Site", "Mail", "Script"])
+        #expect(flattened.map(\.site.name) == ["Site", "Mail", "Docs"])
     }
 
     @Test("keeps stored order within one launch type")
@@ -52,10 +51,10 @@ struct LauncherListPolicyTests {
 
     @Test("hidden launch types are excluded entirely")
     func hiddenTypesExcluded() {
-        let sites = [site("Site", .url), site("Script", .shell), site("Docs", .finder)]
+        let sites = [site("Site", .url), site("Mail", .app), site("Docs", .finder)]
 
         let sections = LauncherListPolicy.sections(
-            sites: sites, hiddenLaunchTypes: [.shell, .finder])
+            sites: sites, hiddenLaunchTypes: [.app, .finder])
 
         #expect(sections.map(\.launchType) == [.url])
         #expect(sections.flatMap(\.entries).map(\.siteIndex) == [0])
@@ -75,7 +74,6 @@ struct LauncherListPolicyTests {
         #expect(LauncherListPolicy.symbolName(for: .url) == "bolt.fill")
         #expect(LauncherListPolicy.symbolName(for: .app) == "app.fill")
         #expect(LauncherListPolicy.symbolName(for: .finder) == "folder.fill")
-        #expect(LauncherListPolicy.symbolName(for: .shell) == "terminal.fill")
     }
 
     @Test("notch slot entries are capped at four regardless of section size")

@@ -6,7 +6,7 @@ This file is loaded by Claude Code for this repository. Keep it aligned with
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
-launches URLs, macOS apps, Finder folders, and shell scripts (up to four items
+launches URLs, macOS apps, and Finder folders (up to four items
 per launch type), then centers resizable windows on the selected display.
 
 Beyond the always-present status menu it also offers an optional Notch Launcher
@@ -56,7 +56,7 @@ Chap/
 │   │   ├── KeepAwakeController.swift  # IOKit Keep Mac Awake session (wall-clock timer)
 │   │   ├── KeepAwakeHUD.swift        # Keep Awake start/stop HUD
 │   │   ├── UpdateController.swift    # Sparkle updater (fail-closed)
-│   │   ├── Launchers/                # URL/App/Finder/Shell launch behavior
+│   │   ├── Launchers/                # URL/App/Finder launch behavior
 │   │   └── Views/                    # SwiftUI settings, notch, QA, onboarding UI
 │   └── ChapCore/                     # Models, validation, policies, view model, logging
 ├── Tests/ChapCoreTests/              # Swift Testing unit tests
@@ -90,18 +90,21 @@ Launch types:
 | `url` | Chrome `--app` mode via `/usr/bin/open` | AX API detects the new Chrome window; optional reuse targets only that launchable's remembered window ID | Required for resize; Automation required for reuse |
 | `app` | `NSWorkspace.openApplication` | AXObserver plus polling fallback applies bounds to standard windows, plus resizable non-standard Office windows | Required for resize |
 | `finder` | Finder AppleScript opens folder and sets bounds atomically | Finder AppleScript | Automation permission |
-| `shell` | User shell runs script with `$SHELL -c` | None | Not required |
 
 Configuration is stored in `~/.chap.json`; `~/.chap.json.bak` is used as the
 backup path. Legacy fields are decoded for compatibility and stripped on app
 launch where applicable.
+
+The Shell launch type was removed in 2.1. Config decoding drops legacy `shell`
+sites and the `scripts` notch widget; the original file is backed up once to
+`~/.chap.json.shell-scripts.bak`. Never reintroduce arbitrary command execution.
 
 URL window reuse is session-scoped ownership, not URL matching. It must never
 search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-four slots (Sites, Apps, Folders, Scripts, or Screenshots). It is an additive
+four slots (Sites, Apps, Folders, or Screenshots). It is an additive
 surface — the status-bar `NSMenu` is always available, including on notchless
 Macs. Chap Drop copies dropped files into
 `~/Library/Application Support/Chap/Drop/` (originals untouched) and the

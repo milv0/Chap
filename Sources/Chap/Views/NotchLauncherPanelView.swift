@@ -407,7 +407,6 @@ struct NotchLauncherPanelView: View {
         case .url: return "Sites"
         case .app: return "Apps"
         case .finder: return "Folders"
-        case .shell: return "Scripts"
         }
     }
 }

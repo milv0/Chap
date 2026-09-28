@@ -19,17 +19,17 @@ struct HiddenMenuLaunchTypesTests {
     @Test("decodes known launch types")
     func decodesKnownTypes() throws {
         let config = try decodeConfig(
-            #"{"hiddenMenuLaunchTypes": ["shell", "finder"], "sites": []}"#)
+            #"{"hiddenMenuLaunchTypes": ["app", "finder"], "sites": []}"#)
 
-        #expect(config.hiddenMenuLaunchTypes == [.shell, .finder])
+        #expect(config.hiddenMenuLaunchTypes == [.app, .finder])
     }
 
     @Test("unknown type strings are ignored")
     func unknownTypesAreIgnored() throws {
         let config = try decodeConfig(
-            #"{"hiddenMenuLaunchTypes": ["shell", "hologram"], "sites": []}"#)
+            #"{"hiddenMenuLaunchTypes": ["finder", "hologram", "shell"], "sites": []}"#)
 
-        #expect(config.hiddenMenuLaunchTypes == [.shell])
+        #expect(config.hiddenMenuLaunchTypes == [.finder])
     }
 
     @Test("round-trips through encoding")
@@ -45,10 +45,10 @@ struct HiddenMenuLaunchTypesTests {
     @Test("encodes hidden types in stable declaration order")
     func encodesInStableOrder() throws {
         let data = try JSONEncoder().encode(
-            Config(hiddenMenuLaunchTypes: [.shell, .url], sites: []))
+            Config(hiddenMenuLaunchTypes: [.finder, .url], sites: []))
         let json = String(decoding: data, as: UTF8.self)
 
-        #expect(json.contains(#""hiddenMenuLaunchTypes":["url","shell"]"#))
+        #expect(json.contains(#""hiddenMenuLaunchTypes":["url","finder"]"#))
     }
 
     @Test("view model detects hidden menu type changes")
@@ -57,7 +57,7 @@ struct HiddenMenuLaunchTypesTests {
             Site(name: "GitHub", url: "https://github.com/", width: 800, height: 600)
         ])
 
-        vm.hiddenMenuLaunchTypes.insert(.shell)
+        vm.hiddenMenuLaunchTypes.insert(.finder)
 
         #expect(vm.hasChanges == true)
     }

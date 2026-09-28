@@ -5,7 +5,7 @@ Follow these instructions when working in this repository.
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
-launches URLs, macOS apps, Finder folders, and shell scripts (up to four items
+launches URLs, macOS apps, and Finder folders (up to four items
 per launch type), then centers resizable windows on the selected display.
 
 Alongside the always-present status menu it offers an optional Notch Launcher (a
@@ -40,7 +40,7 @@ with `Scripts/release.sh` (see "Release flow" below).
   Chap Drop store, Screenshot Shelf source, and async thumbnails.
 - `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Mac Awake session and HUD.
 - `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).
-- `Sources/Chap/Launchers/`: Chrome, app, Finder, shell launchers.
+- `Sources/Chap/Launchers/`: Chrome, app, Finder launchers.
 - `Sources/Chap/Views/`: SwiftUI UI (settings, notch panel/settings, QA, onboarding).
 - `Tests/ChapCoreTests/`: Swift Testing tests.
 - `.harness/shared/rules/`: shared rules for assistants.
@@ -66,15 +66,18 @@ Launch types:
 - `app`: `NSWorkspace.openApplication`; AXObserver plus polling fallback resizes
   standard windows, and resizable non-standard Office windows.
 - `finder`: Finder AppleScript opens the folder and sets bounds atomically.
-- `shell`: runs the configured script through `$SHELL -c`; no resize.
 
 Config lives at `~/.chap.json`; backup path is `~/.chap.json.bak`.
+
+The Shell launch type was removed in 2.1. Config decoding drops legacy `shell`
+sites and the `scripts` notch widget; the original file is backed up once to
+`~/.chap.json.shell-scripts.bak`. Never reintroduce arbitrary command execution.
 
 Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  four slots (Sites, Apps, Folders, Scripts, or Screenshots). It is additive —
+  four slots (Sites, Apps, Folders, or Screenshots). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
   untouched); the Screenshot Shelf reads the system screenshot folder in place.

@@ -24,7 +24,6 @@ struct GeneralSettingsView: View {
         case .url: return "URL"
         case .app: return "App"
         case .finder: return "Finder"
-        case .shell: return "Shell"
         }
     }
 

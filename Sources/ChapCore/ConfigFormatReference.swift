@@ -31,14 +31,6 @@ enum ConfigFormatReference {
               "folderPath": "~/Downloads",
               "width": 1000,
               "height": 400
-            },
-            {
-              "name": "Build",
-              "url": "",
-              "launchType": "shell",
-              "script": "echo hello",
-              "width": 800,
-              "height": 600
             }
           ]
         }
@@ -50,7 +42,6 @@ enum ConfigFormatReference {
         • url:    name, url (https://…), width, height
         • app:    name, appPath, width, height
         • finder: name, folderPath, width, height
-        • shell:  name, script, width, height
 
         Optional: shortcut, displayName, windowSizePreset, reuseExistingWindow
         Global optional: optionShortcutsEnabled, hiddenMenuLaunchTypes

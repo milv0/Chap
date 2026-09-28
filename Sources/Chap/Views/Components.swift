@@ -56,7 +56,7 @@ struct SidebarItem: View {
 // MARK: - Sidebar Add Row
 
 /// 비어 있는 타입 섹션에 표시되는 placeholder 행.
-/// 항목이 하나도 없는 타입(예: Shell)도 사이드바에서 바로 추가할 수 있게 한다.
+/// 항목이 하나도 없는 타입(예: Finder)도 사이드바에서 바로 추가할 수 있게 한다.
 struct SidebarAddRow: View {
     let label: String
     let action: () -> Void
@@ -199,7 +199,6 @@ struct PillPicker: View {
         (.url, "bolt.fill", "URL"),
         (.app, "app.fill", "App"),
         (.finder, "folder.fill", "Finder"),
-        (.shell, "terminal.fill", "Shell"),
     ]
 
     var body: some View {

@@ -9,6 +9,21 @@ All notable changes to Chap are documented in this file.
 - **Open the screenshot folder** — Click the Screenshots title in the notch to
   open the folder where macOS saves screenshots.
 
+### Changed
+
+- **Glass material for any appearance** — Clear and Regular Liquid Glass can now
+  be chosen with System, Light, or Dark appearance instead of being paired.
+- **Notch defaults** — New configurations place Sites, Apps, Folders, and
+  Screenshots in the four notch slots.
+
+### Removed
+
+- **Shell launch type** — Chap now focuses on opening windows. On first launch,
+  Shell launchables are removed after the original configuration is saved to
+  `~/.chap.json.shell-scripts.bak`, and a one-time notice lists them. A Scripts
+  notch slot becomes Screenshots (or Empty if Screenshots is already placed).
+  Importing a file that contains Shell launchables is rejected unchanged.
+
 ## [2.0.1] — 2026-09-28
 
 ### Fixed

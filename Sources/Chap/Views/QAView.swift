@@ -23,7 +23,7 @@ struct QAView: View {
                 ),
                 (
                     "Chrome이 없으면 사용 못 하나요?",
-                    "URL 타입만 Chrome이 필요합니다. App, Finder, Shell 타입은 Chrome 없이도 사용 가능합니다."
+                    "URL 타입만 Chrome이 필요합니다. App, Finder 타입은 Chrome 없이도 사용 가능합니다."
                 ),
                 (
                     "Chrome 또는 Finder 권한 요청이 뜨는 이유는?",
@@ -87,10 +87,6 @@ struct QAView: View {
                     "같은 URL/앱을 두 번 등록하면?",
                     "중복 경고가 뜨고 저장되지 않습니다."
                 ),
-                (
-                    "Shell 타입은 뭔가요?",
-                    "터미널 명령어나 스크립트를 실행합니다. 윈도우 리사이즈 없이 명령만 실행됩니다."
-                ),
             ]
         ),
         (
@@ -135,7 +131,7 @@ struct QAView: View {
                 ),
                 (
                     "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
-                    "URL과 Shell은 Standard, App은 Comfortable, Finder는 Compact로 시작합니다. 이후 사용자가 바꿔 저장한 프리셋은 앱을 재시작해도 그대로 유지됩니다."
+                    "URL은 Standard, App은 Comfortable, Finder는 Compact로 시작합니다. 이후 사용자가 바꿔 저장한 프리셋은 앱을 재시작해도 그대로 유지됩니다."
                 ),
                 (
                     "Guide Window가 뭔가요?",
@@ -177,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치의 네 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에서 Sites, Apps, Folders, Scripts, Screenshots를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭의 Widgets 보드에서 Sites, Apps, Folders, Screenshots를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -192,7 +188,7 @@ struct QAView: View {
                     "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지 네 개를 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다."
                 ),
                 (
-                    "왜 각 URL/App/Finder/Shell 항목은 네 개까지만 추가되나요?",
+                    "왜 각 URL/App/Finder 항목은 네 개까지만 추가되나요?",
                     "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 launch type별로 최대 네 개를 허용합니다. 각 타입의 한도는 서로 독립적입니다."
                 ),
             ]
@@ -218,7 +214,7 @@ struct QAView: View {
                 ),
                 (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
-                    "Settings → General → Menu에서 URL/App/Finder/Shell 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
+                    "Settings → General → Menu에서 URL/App/Finder 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
                 ),
                 (
                     "섹션을 숨기면 그 사이트들은 단축키로도 실행 안 되나요?",
@@ -244,7 +240,7 @@ struct QAView: View {
                 ),
                 (
                     "Do I need Chrome to use Chap?",
-                    "Only the URL type requires Chrome. App, Finder, and Shell types work without Chrome."
+                    "Only the URL type requires Chrome. App and Finder types work without Chrome."
                 ),
                 (
                     "Why does Chrome or Finder ask for permission?",
@@ -308,10 +304,6 @@ struct QAView: View {
                     "What if I register the same URL/app twice?",
                     "A duplicate warning appears and it won't be saved."
                 ),
-                (
-                    "What is the Shell type?",
-                    "It executes terminal commands or scripts. No window resizing is performed."
-                ),
             ]
         ),
         (
@@ -356,7 +348,7 @@ struct QAView: View {
                 ),
                 (
                     "Which preset is used for new items?",
-                    "URL and Shell start with Standard, App starts with Comfortable, and Finder starts with Compact. After you save a different preset, it stays with that item across app restarts."
+                    "URL starts with Standard, App starts with Comfortable, and Finder starts with Compact. After you save a different preset, it stays with that item across app restarts."
                 ),
                 (
                     "What is the Guide Window?",
@@ -398,7 +390,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the four notch slots?",
-                    "Drag Sites, Apps, Folders, Scripts, or Screenshots into the Widgets board. You can also assign or clear a slot with its context menu or VoiceOver actions."
+                    "Drag Sites, Apps, Folders, or Screenshots into the Widgets board. You can also assign or clear a slot with its context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
@@ -413,7 +405,7 @@ struct QAView: View {
                     "No. It only reads the four newest images from the current macOS screenshot folder. It does not move or duplicate the originals."
                 ),
                 (
-                    "Why can I add only four URL, App, Finder, or Shell launchables?",
+                    "Why can I add only four URL, App, or Finder launchables?",
                     "Each launch type is capped at four to keep both the status menu and each notch slot short and predictable. The four limits are independent."
                 ),
             ]
@@ -439,7 +431,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I shorten the menu's site list?",
-                    "In Settings → General → Menu, click the URL/App/Finder/Shell chips to hide that launch type's section from the menu."
+                    "In Settings → General → Menu, click the URL/App/Finder chips to hide that launch type's section from the menu."
                 ),
                 (
                     "If I hide a section, do those sites lose their shortcuts too?",

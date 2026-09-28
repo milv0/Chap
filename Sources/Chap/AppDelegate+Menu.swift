@@ -297,7 +297,7 @@ extension AppDelegate {
                 case .drop:
                     // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
                     return nil
-                case .sites, .apps, .folders, .scripts:
+                case .sites, .apps, .folders:
                     // 해당 타입의 런처가 없으면 칸을 건너뛴다.
                     return sections.first { $0.launchType == widget.launchType }
                         .map(NotchSlotContent.launchers)
@@ -311,9 +311,7 @@ extension AppDelegate {
             self?.config.notchGlassAppearance ?? .system
         }
         notchLauncher.glassMaterialProvider = { [weak self] in
-            guard let self else { return .clear }
-            return self.config.notchGlassAppearance.resolvedMaterial(
-                fallback: self.config.notchGlassMaterial)
+            self?.config.notchGlassMaterial ?? .clear
         }
         notchLauncher.opacityProvider = { [weak self] in
             self?.config.notchPanelOpacity ?? Config.notchPanelOpacityDefault

@@ -37,8 +37,8 @@ struct SiteCountLimitPolicyTests {
 
     @Test("remaining slots reports how many more can be added")
     func remainingSlots() {
-        let sites = Array(repeating: site(.shell), count: 2)
-        #expect(SiteCountLimitPolicy.remainingSlots(for: .shell, in: sites) == 2)
+        let sites = Array(repeating: site(.finder), count: 2)
+        #expect(SiteCountLimitPolicy.remainingSlots(for: .finder, in: sites) == 2)
         #expect(SiteCountLimitPolicy.remainingSlots(for: .url, in: sites) == 4)
     }
 }
