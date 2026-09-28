@@ -13,6 +13,7 @@ struct NotchScreenshotShelfView: View {
 
     @State private var urls: [URL] = []
     @State private var isRefreshing = false
+    @State private var isHeaderHovered = false
     private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     private var usesDarkCustomForeground: Bool {
@@ -38,31 +39,27 @@ struct NotchScreenshotShelfView: View {
                 NotchContrastPolicy.tertiaryTextOpacity(backgroundHex: backgroundHex))
     }
 
+    private var rowHoverBackground: Color {
+        usesSemanticForeground
+            ? .primary.opacity(0.08)
+            : (usesDarkCustomForeground ? .black.opacity(0.08) : .white.opacity(0.16))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 5) {
-                Image(systemName: "camera.viewfinder")
-                    .font(DS.captionFont)
-                    .foregroundColor(
-                        usesSemanticForeground
-                            ? DS.accent
-                            : (NotchContrastPolicy.usesAccentForeground(
-                                backgroundHex: backgroundHex)
-                                ? DS.accent
-                                : (usesDarkCustomForeground
-                                    ? .black.opacity(0.87) : .white.opacity(0.95))))
-                Text("Screenshots")
-                    .font(DS.captionFont.weight(.semibold))
-                    .foregroundColor(
-                        usesSemanticForeground ? .secondary : customSecondary
-                    )
+            // 제목을 누르면 시스템 스크린샷 저장 폴더를 Finder로 연다.
+            // 경로는 `com.apple.screencapture location` 설정에서 오므로
+            // 스크린샷을 한 장도 찍기 전에도 동작한다.
+            Button {
+                NSWorkspace.shared.open(ScreenshotShelf.directory())
+            } label: {
+                header
             }
-            .shadow(
-                color: .black.opacity(
-                    usesSemanticForeground || usesDarkCustomForeground ? 0 : 0.75),
-                radius: 1.5, y: 0.5
-            )
-            .padding(.horizontal, 6)
+            .buttonStyle(.plain)
+            .onHover { isHeaderHovered = $0 }
+            .help("Open the screenshot folder in Finder")
+            .accessibilityLabel("Screenshots")
+            .accessibilityHint("Opens the screenshot folder in Finder")
             .padding(.bottom, 1)
 
             if urls.isEmpty {
@@ -74,29 +71,67 @@ struct NotchScreenshotShelfView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
-                ForEach(urls, id: \.self) { url in
-                    ScreenshotShelfRow(
-                        url: url,
-                        primaryForeground: usesSemanticForeground ? .primary : customPrimary,
-                        secondaryForeground: usesSemanticForeground
-                            ? .secondary : customTertiary,
-                        borderForeground: usesSemanticForeground
-                            ? .secondary.opacity(0.45)
-                            : (usesDarkCustomForeground
-                                ? .black.opacity(0.15) : .white.opacity(0.15)),
-                        textShadowOpacity: usesSemanticForeground || usesDarkCustomForeground
-                            ? 0 : 0.75,
-                        hoverBackground: usesSemanticForeground
-                            ? .primary.opacity(0.08)
-                            : (usesDarkCustomForeground
-                                ? .black.opacity(0.08) : .white.opacity(0.16)))
-                }
+                rows
             }
         }
         .onAppear { refresh() }
         // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
         .onReceive(refreshTimer) { _ in
             refresh()
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "camera.viewfinder")
+                .font(DS.captionFont)
+                .foregroundColor(
+                    usesSemanticForeground
+                        ? DS.accent
+                        : (NotchContrastPolicy.usesAccentForeground(
+                            backgroundHex: backgroundHex)
+                            ? DS.accent
+                            : (usesDarkCustomForeground
+                                ? .black.opacity(0.87) : .white.opacity(0.95))))
+            Text("Screenshots")
+                .font(DS.captionFont.weight(.semibold))
+                .foregroundColor(
+                    usesSemanticForeground ? .secondary : customSecondary
+                )
+            // 호버 시에만 Finder로 이동한다는 단서를 보여준다.
+            Image(systemName: "chevron.right")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(usesSemanticForeground ? .secondary : customSecondary)
+                .opacity(isHeaderHovered ? 1 : 0)
+        }
+        .shadow(
+            color: .black.opacity(
+                usesSemanticForeground || usesDarkCustomForeground ? 0 : 0.75),
+            radius: 1.5, y: 0.5
+        )
+        .padding(.horizontal, 6)
+        .padding(.vertical, 1)
+        .background(
+            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                .fill(isHeaderHovered ? rowHoverBackground : Color.clear)
+        )
+        .contentShape(Rectangle())
+    }
+
+    private var rows: some View {
+        ForEach(urls, id: \.self) { url in
+            ScreenshotShelfRow(
+                url: url,
+                primaryForeground: usesSemanticForeground ? .primary : customPrimary,
+                secondaryForeground: usesSemanticForeground
+                    ? .secondary : customTertiary,
+                borderForeground: usesSemanticForeground
+                    ? .secondary.opacity(0.45)
+                    : (usesDarkCustomForeground
+                        ? .black.opacity(0.15) : .white.opacity(0.15)),
+                textShadowOpacity: usesSemanticForeground || usesDarkCustomForeground
+                    ? 0 : 0.75,
+                hoverBackground: rowHoverBackground)
         }
     }
 

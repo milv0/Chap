@@ -2,6 +2,13 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Open the screenshot folder** — Click the Screenshots title in the notch to
+  open the folder where macOS saves screenshots.
+
 ## [2.0.1] — 2026-09-28
 
 ### Fixed

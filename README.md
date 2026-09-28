@@ -12,7 +12,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Notch Launcher** — An optional four-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals
+- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
