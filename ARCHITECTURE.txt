@@ -10,24 +10,35 @@ Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하�
 
 Sources/
 ├── Chap/                          ← 앱 타겟
-│   ├── AppDelegate.swift          ← 라이프사이클, 메뉴, 창 orchestration
+│   ├── AppDelegate.swift          ← AppDelegate 코어 클래스·상태·관리 창 생성
+│   ├── AppDelegate+Lifecycle.swift ← 라이프사이클·관리 창·종료·재실행·제거·Login Item
+│   ├── AppDelegate+Menu.swift     ← 메뉴·핫키·상태바 아이콘·Keep Awake 액션·노치 동기화
+│   ├── AppDelegate+Config.swift   ← config 마이그레이션·로드·레거시 필드 정리
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
+│   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
-│   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 기반 화면 잠자기 방지 세션
+│   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
+│   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
+│   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 (utility queue)
+│   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
+│   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
 │   ├── Info.plist                 ← 앱 Info.plist 소스 (project.yml에서 사용)
 │   ├── Launchers/                 ← 런처별 실행 로직
 │   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
+│   │   ├── ChromeObservationPolicy.swift ← Chrome 프로세스 후보 중 현재 프로세스 선택 (relaunch overlap, 순수 로직)
 │   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
 │   │   ├── AppLauncher+Observation.swift ← AX 관찰 루프, fallback, eligibility 판정
 │   │   ├── AppLauncherSupport.swift      ← 관찰 정책/결과/레지스트리/컨텍스트 타입
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
 │   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert
+│   │   ├── AXResizePolicy.swift   ← Rectangle 기반 AX 리사이즈 순수 정책 (size→position→size·timeout·재중앙)
+│   │   ├── AXWindowIntrospection.swift ← AX 요소 메타데이터·settable 검사·창 상태 스냅샷·public CGWindowID 매칭
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용, 14일 초과분 자동 정리)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
 │   └── Views/                     ← UI
@@ -35,19 +46,27 @@ Sources/
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
 │       ├── SettingsGeneralView.swift ← General 탭 (Behavior/Appearance/Updates)
+│       ├── SettingsConfigTransfer.swift ← Settings config import/export/apply 로직
+│       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
+│       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯
 │       ├── SiteConfigView.swift   ← 사이트별 설정
+│       ├── SiteLaunchFields.swift ← launch type별 입력 필드 + Ctrl-Z 스크립트 편집기(UndoableScriptTextView)
+│       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)
 │       ├── QAView.swift           ← Q&A 페이지
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
 ├── ChapCore/                      ← 코어 로직 (테스트 대상)
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
 │   ├── ConfigStore.swift          ← config 파일 읽기/쓰기/백업/레거시 정리·파일 마이그레이션
+│   ├── ConfigImportProcessor.swift ← JSON decode + 안전 import normalization 순수 처리기
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
-│   ├── Validation.swift           ← 도메인 검증, 좌표 계산(순수 코어+NSScreen 래퍼),
-│   │                                단축키 정규화, UUID 우선·이름 unique 디스플레이 매칭
+│   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
+│   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
+│   ├── WindowGeometry.swift       ← 크기 fitting·화면별 override·centeredBounds·좌표 변환 (순수 코어+NSScreen 래퍼)
+│   ├── DisplayMatching.swift      ← 커서/내장 화면 결정·명시 디스플레이 판정·UUID 우선 매칭(resolvedDisplayIndex)
 │   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
@@ -56,7 +75,9 @@ Sources/
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   ├── EditActivationPolicy.swift ← 저장 상태 패널 탭의 편집 활성화 판정 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
-│   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시 (순수 로직)
+│   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료 판정 (순수 로직)
+│   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
+│   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
@@ -94,6 +115,14 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ChromeReuseRetryPolicyTests.swift
     ├── KeepAwakePolicyTests.swift
     ├── HiddenMenuLaunchTypesTests.swift
+    ├── LauncherListPolicyTests.swift
+    ├── SiteCountLimitPolicyTests.swift
+    ├── DropPolicyTests.swift
+    ├── ScreenshotShelfPolicyTests.swift
+    ├── NotchLauncherPolicyTests.swift
+    ├── NotchLauncherSettingTests.swift
+    ├── NotchContrastPolicyTests.swift
+    ├── StatusBarSymbolImageTests.swift
     └── ScriptEditorUndoTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
@@ -197,7 +226,7 @@ Config 모델 필드:
   General/Notch에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
   ⌥./⌥,/⌥(key) 단축키 상시 안내가 있다. 하단의 앱 아이콘을 클릭하면 About Chap을 연다
   (메뉴바에는 About Chap 항목이 없다).
-- Notch 파일 I/O: Chap Drop 복사·삭제·목록/배지 count와 Desktop 스크린샷 스캔·썸네일 decode는
+- Notch 파일 I/O: Chap Drop 복사·삭제·목록/배지 count와 시스템 스크린샷 위치 스캔·썸네일 decode는
   utility queue에서 수행하며 UI 갱신·알림만 메인 큐로 복귀
 - Export: hidden menu와 노치 설정을 포함한 현재 Config 전체를 보존
 - Import: 안전 정규화 후 전체 validation, 차단 이슈 시 파일/VM 무변경, fixes/warnings 표시
@@ -425,7 +454,11 @@ App 윈도우 감지 방식 (AXObserver):
   - 앱 종료 시 프로세스 소유 어써션은 IOKit이 자동 해제
   - Quit은 상태와 관계없이 항상 Cancel 기본 확인창을 띄우고, 확인된 종료 시 활성 세션도 해제
   - 상태는 메모리에만 있고 config에 저장하지 않는다
-  - 시작/종료 시 사운드(Purr/Pop)와 중앙 커피 HUD로 피드백한다
+  - 만료는 벽시계 기준이다: DispatchSourceTimer를 wallDeadline으로 걸어 잠든 시간도 세며,
+    시스템/화면 wake 알림과 상태바 메뉴 열림 때 expireIfNeeded()로 다시 확인한다
+  - 시작/종료 시 사운드(Purr/Pop)와 중앙 커피 HUD로 피드백한다. 다만 잠든 사이 만료돼
+    깨어난 뒤 정리되는 세션(expiredWhileAsleep, lateExpiryTolerance 초과)은 사운드·HUD 없이
+    메뉴와 상태 아이콘만 조용히 되돌린다
 
 ### ServiceManagement
   용도: Login Item 등록/해제
@@ -444,6 +477,26 @@ App 윈도우 감지 방식 (AXObserver):
 
 ### Config 파일 마이그레이션
   - ~/.quickaccess.json → ~/.chap.json (앱 이름 변경)
+
+
+## Keep Awake 벽시계 만료 개선 이력 (2.0.1 예정)
+
+### 변경 배경
+  기존 만료 타이머가 깨어 있는 시간만 세는 방식이라, 뚜껑을 닫아 시스템이 잠들면
+  타이머가 멈췄다가 깨어난 뒤 남은 시간만큼 다시 기다렸다. 그 결과 다음 날 열어도
+  Keep Awake 세션과 파란 상태 아이콘이 남아 있었다.
+
+### 변경 후
+  - `KeepAwakeController`의 만료 타이머를 `DispatchSourceTimer` `wallDeadline`으로 전환.
+    잠든 시간도 포함해 세므로 깨어났을 때 이미 지났으면 즉시 만료된다.
+  - `NSWorkspace.didWakeNotification`·`screensDidWakeNotification`과 상태바 메뉴 열림
+    (`menuWillOpen`)에서 `expireIfNeeded()`로 벽시계 기준 재확인 후 지난 세션을 정리한다.
+  - 잠든 사이 만료된 세션은 `KeepAwakePolicy.isLateExpiry`(lateExpiryTolerance 5초 초과)로
+    구분해 `expiredWhileAsleep` 이벤트로 끝내며, 사운드·HUD 없이 메뉴와 상태 아이콘만 되돌린다.
+  - 순수 판정(`isExpired`, `isLateExpiry`)은 `KeepAwakePolicy`로 분리해
+    `KeepAwakePolicyTests`로 고정한다.
+  - 관련 파일: `Chap/KeepAwakeController.swift`, `ChapCore/KeepAwakePolicy.swift`,
+    `Chap/AppDelegate+Menu.swift`, `Tests/ChapCoreTests/KeepAwakePolicyTests.swift`.
 
 
 ## 글로벌 단축키 안정성 개선 이력 (2026-08-06)

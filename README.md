@@ -2,7 +2,7 @@
 
 A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-2.0.0-orange)
+![Version](https://img.shields.io/badge/version-2.0.1-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -27,7 +27,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
-- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and auto-release on expiry or confirmed quit
+- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL, App, Finder, and Shell each allow up to four launchables, keeping the menu and notch predictable
@@ -90,6 +90,7 @@ Stored at `~/.chap.json`:
 {
   "showGuideWindow": true,
   "launchAtLogin": false,
+  "optionShortcutsEnabled": true,
   "statusBarIcon": "default",
   "hiddenMenuLaunchTypes": [],
   "notchLauncherEnabled": false,
@@ -173,11 +174,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.0.0
+Scripts/release.sh 2.0.1
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.0.0 --publish
+Scripts/release.sh 2.0.1 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

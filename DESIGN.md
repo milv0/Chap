@@ -9,7 +9,7 @@ counterparts. App source remains authoritative.
 |---|---:|---|---|
 | Accent | `#3664FF` | `DS.accent` | Selection, primary actions, active controls |
 | Accent soft | `rgba(54, 100, 255, 0.08)` | `DS.accentSoft` | Selected and hover backgrounds |
-| Accent surface | `#EBF0FF` | `DS.accentSurface` | Emphasized fields and soft feature surfaces |
+| Accent surface | `rgba(54, 100, 255, 0.12)` | `DS.accentSurface` | Emphasized fields and soft feature surfaces |
 | Danger | `#EB4444` | `DS.danger` | Destructive and error states |
 | On-accent text | `#FFFFFF` | Primary button styling | Text and symbols on the accent color |
 
@@ -54,14 +54,22 @@ an ice-neutral contrast layer for the Mac display and trust sections.
 | `--blue` | `#3664FF` |
 | `--blue-deep` | `#244CDC` |
 | `--blue-light` | `#89A3FF` |
+| `--ice` | `#DFE6FF` |
 | `--night` | `#05070B` |
 | `--night-soft` | `#0B0E15` |
 | `--panel` | `#11151E` |
+| `--panel-light` | `#181E2A` |
 | `--ink` | `#F7F8FC` |
 | `--muted` | `#9EA7B7` |
+| `--muted-strong` | `#C5CAD4` |
 | `--paper` | `#EEF1F7` |
 | `--paper-ink` | `#141722` |
+| `--paper-muted` | `#60697A` |
 | `--line` | `rgba(255, 255, 255, 0.11)` |
+| `--line-strong` | `rgba(255, 255, 255, 0.20)` |
+
+The guided-tour coachmark tip and the `nudge` pulse reuse the fixed Chap
+accent (`--blue` / `#3664FF`) rather than a dedicated token.
 
 The interactive hero is a CSS-rendered Mac display and notch dock; it uses no
 product screenshot or user data. Dark sections make the hardware notch the

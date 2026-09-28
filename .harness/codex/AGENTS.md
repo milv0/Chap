@@ -5,8 +5,12 @@ Follow these instructions when working in this repository.
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
-launches URLs, macOS apps, Finder folders, and shell scripts, then centers
-resizable windows on the selected display.
+launches URLs, macOS apps, Finder folders, and shell scripts (up to four items
+per launch type), then centers resizable windows on the selected display.
+
+Alongside the always-present status menu it offers an optional Notch Launcher (a
+four-slot panel that expands from the MacBook notch, with Chap Drop and a
+Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
 This is an XcodeGen project:
 
@@ -16,21 +20,34 @@ xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" build
 xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" test
 ```
 
-There is no `Package.swift`; do not use `swift test`.
+There is no `Package.swift`; do not use `swift test`. Releases are cut locally
+with `Scripts/release.sh` (see "Release flow" below).
 
 ## Structure
 
 - `project.yml`: XcodeGen source of truth.
 - `Chap.xcodeproj/`: generated Xcode project.
-- `Sources/ChapCore/`: models, validation, settings view model, logging.
-- `Sources/Chap/AppDelegate.swift`: app lifecycle, menu, config I/O, global shortcuts.
+- `Scripts/`: release, notarization, appcast, and DMG/PKG build scripts.
+- `docs/`: GitHub Pages website (`index.html`) and the signed `appcast.xml`.
+- `Sources/ChapCore/`: models, validation, policies (notch/drop/screenshot/keep-awake),
+  settings view model, logging.
+- `Sources/Chap/AppDelegate.swift`: status item, site launching, managed windows.
+  Split across `AppDelegate+Config.swift` (config migration/load/strip),
+  `AppDelegate+Lifecycle.swift` (launch/terminate, windows, login item), and
+  `AppDelegate+Menu.swift` (menu build, hotkeys, status icon, Keep Awake events).
+- `Sources/Chap/NotchLauncherController.swift`: notch hotzone/panel/badge orchestration.
+- `Sources/Chap/ChapDrop.swift`, `ScreenshotShelf.swift`, `ThumbnailLoader.swift`:
+  Chap Drop store, Screenshot Shelf source, and async thumbnails.
+- `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Mac Awake session and HUD.
+- `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).
 - `Sources/Chap/Launchers/`: Chrome, app, Finder, shell launchers.
-- `Sources/Chap/Views/`: SwiftUI UI.
+- `Sources/Chap/Views/`: SwiftUI UI (settings, notch panel/settings, QA, onboarding).
 - `Tests/ChapCoreTests/`: Swift Testing tests.
 - `.harness/shared/rules/`: shared rules for assistants.
 - `ARCHITECTURE.txt`: structure, features, APIs, change history.
 - `FLOW.md`: runtime flow — startup order, permission state machine, per-launcher
   sequences with timeouts, thread map, invariants, known issues.
+- `NOTCH.md`: notch surface geometry spec. `DESIGN.md`: color tokens.
 
 ## Behavior
 
@@ -52,6 +69,32 @@ Launch types:
 - `shell`: runs the configured script through `$SHELL -c`; no resize.
 
 Config lives at `~/.chap.json`; backup path is `~/.chap.json.bak`.
+
+Other surfaces:
+
+- Notch Launcher (optional, off by default): `NotchLauncherController` shows a
+  `.nonactivatingPanel` under the hardware notch that expands on hover and holds
+  four slots (Sites, Apps, Folders, Scripts, or Screenshots). It is additive —
+  the status-bar menu is always available, including on notchless Macs. Chap Drop
+  copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
+  untouched); the Screenshot Shelf reads the system screenshot folder in place.
+  Notch geometry lives in `ChapCore/NotchGeometry.swift` (see `NOTCH.md`).
+- Keep Mac Awake: `KeepAwakeController` holds an IOKit assertion for a
+  `KeepAwakePolicy` preset (30m–12h). Expiry is wall-clock based via a
+  `DispatchSourceTimer` with `wallDeadline`, re-checked on system/screen wake and
+  when the status menu opens; a session that expired during sleep ends quietly.
+  State is in memory only, never persisted.
+- Updates: `UpdateController` wraps Sparkle fail-closed — it starts only with a
+  valid `SUFeedURL` and `SUPublicEDKey`, and never during tests.
+
+## Release flow
+
+Daily work stays on `dev`; commit and push only that branch. Releases are cut
+locally with `Scripts/release.sh <version>` (read-only until `--publish`).
+`--publish` bumps version metadata, validates, promotes `dev` → `main`, tags,
+builds/notarizes the signed PKG and DMG, publishes the GitHub Release, and
+verifies the Pages appcast. Do not bump version numbers by hand — the release
+script owns `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`.
 
 ## Rules
 

@@ -6,8 +6,12 @@ This file is loaded by Claude Code for this repository. Keep it aligned with
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
-launches URLs, macOS apps, Finder folders, and shell scripts, then centers
-resizable windows on the selected display.
+launches URLs, macOS apps, Finder folders, and shell scripts (up to four items
+per launch type), then centers resizable windows on the selected display.
+
+Beyond the always-present status menu it also offers an optional Notch Launcher
+(a four-slot panel that expands from the MacBook notch, with Chap Drop and a
+Screenshot Shelf), Keep Mac Awake sessions, and Sparkle-based update checks.
 
 The project is XcodeGen-based:
 
@@ -17,8 +21,9 @@ xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" build
 xcodebuild -scheme Chap -configuration Debug -destination "platform=macOS" test
 ```
 
-There is no `Package.swift` and no checked-in GitHub Actions release workflow at
-the moment. Use Xcode or `xcodebuild`, not `swift test`.
+There is no `Package.swift`; use Xcode or `xcodebuild`, not `swift test`.
+Releases are cut locally with `Scripts/release.sh` (see "Release flow" below),
+not a checked-in GitHub Actions workflow.
 
 ## Repository Structure
 
@@ -35,23 +40,38 @@ Chap/
 ├── AGENTS.md -> .harness/codex/AGENTS.md
 ├── project.yml                       # XcodeGen project definition
 ├── Chap.xcodeproj/                   # Generated Xcode project
+├── Scripts/                          # Release, notarize, appcast, DMG/PKG build
+├── docs/                             # GitHub Pages website (index.html) + appcast.xml
 ├── Sources/
 │   ├── Chap/                         # App target
 │   │   ├── main.swift                # NSApplication entry point
-│   │   ├── AppDelegate.swift         # Lifecycle, menu, config I/O, hotkeys
+│   │   ├── AppDelegate.swift         # Status item, site launching, managed windows
+│   │   ├── AppDelegate+Config.swift  # Config migration, load, legacy-field strip
+│   │   ├── AppDelegate+Lifecycle.swift # Launch/terminate, windows, login item
+│   │   ├── AppDelegate+Menu.swift    # Menu build, hotkeys, status icon, Keep Awake
+│   │   ├── NotchLauncherController.swift # Notch hotzone/panel/badge orchestration
+│   │   ├── ChapDrop.swift            # Chap Drop store (~/Library/Application Support/Chap/Drop/)
+│   │   ├── ScreenshotShelf.swift     # Reads the system screenshot folder
+│   │   ├── ThumbnailLoader.swift     # Async thumbnails for Drop/Screenshot rows
+│   │   ├── KeepAwakeController.swift  # IOKit Keep Mac Awake session (wall-clock timer)
+│   │   ├── KeepAwakeHUD.swift        # Keep Awake start/stop HUD
+│   │   ├── UpdateController.swift    # Sparkle updater (fail-closed)
 │   │   ├── Launchers/                # URL/App/Finder/Shell launch behavior
-│   │   └── Views/                    # SwiftUI settings, QA, onboarding UI
-│   └── ChapCore/                     # Models, validation, view model, logging
+│   │   └── Views/                    # SwiftUI settings, notch, QA, onboarding UI
+│   └── ChapCore/                     # Models, validation, policies, view model, logging
 ├── Tests/ChapCoreTests/              # Swift Testing unit tests
 ├── Resources/                        # App and status bar icons
 ├── assets/icons/                     # Source SVG icon assets
 ├── ARCHITECTURE.txt                  # Structure, features, APIs, change history
-└── FLOW.md                           # Runtime flow, invariants, known issues
+├── FLOW.md                           # Runtime flow, invariants, known issues
+├── NOTCH.md                          # Notch surface geometry spec
+└── DESIGN.md                         # App, Guide Window, and website color tokens
 ```
 
 Where to look first: `ARCHITECTURE.txt` answers "what exists"; `FLOW.md` answers
 "what runs in what order" (startup sequence, permission state machine, per-launcher
-timeouts, thread map, invariants, known issues).
+timeouts, thread map, invariants, known issues). `NOTCH.md` is the single source
+for notch-surface geometry; `DESIGN.md` records the color tokens.
 
 ## Current Behavior
 
@@ -78,6 +98,36 @@ launch where applicable.
 
 URL window reuse is session-scoped ownership, not URL matching. It must never
 search user tabs or fall back to the focused/frontmost Chrome window.
+
+Notch Launcher (optional, off by default): `NotchLauncherController` renders a
+`.nonactivatingPanel` under the hardware notch that expands on hover and holds
+four slots (Sites, Apps, Folders, Scripts, or Screenshots). It is an additive
+surface — the status-bar `NSMenu` is always available, including on notchless
+Macs. Chap Drop copies dropped files into
+`~/Library/Application Support/Chap/Drop/` (originals untouched) and the
+Screenshot Shelf reads the system screenshot folder in place. Notch geometry is
+computed in `ChapCore/NotchGeometry.swift` (see `NOTCH.md`).
+
+Keep Mac Awake: `KeepAwakeController` holds an IOKit
+`PreventUserIdleDisplaySleep` assertion for a `KeepAwakePolicy` preset (30m to
+12h). Expiry is wall-clock based via a `DispatchSourceTimer` scheduled with
+`wallDeadline`, so sleep time counts; expiry is re-checked on system/screen wake
+and when the status menu opens, and a session that expired during sleep ends
+quietly (no sound/HUD). State is in memory only, never persisted to config.
+
+Updates: `UpdateController` wraps Sparkle with a fail-closed posture — it starts
+only when both `SUFeedURL` and `SUPublicEDKey` are valid in Info.plist, and never
+during tests. Daily automatic checks are enabled; automatic download/install is
+not.
+
+## Release flow
+
+Daily work stays on `dev`; commit and push only that branch. Releases are cut
+locally with `Scripts/release.sh <version>`, which is read-only until `--publish`
+is passed. `--publish` bumps version metadata, validates, promotes `dev` → `main`,
+tags, builds/notarizes the signed PKG and DMG, publishes the GitHub Release, and
+verifies the Pages appcast. Do not bump version numbers by hand — the release
+script owns `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`.
 
 ## Rules
 

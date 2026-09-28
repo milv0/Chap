@@ -98,4 +98,54 @@ struct KeepAwakePolicyTests {
             KeepAwakePolicy.remainingClockLabel(
                 until: now.addingTimeInterval(-5), now: now) == "0:00:00")
     }
+
+    @Test("no session is never expired")
+    func missingSessionIsNotExpired() {
+        #expect(!KeepAwakePolicy.isExpired(sessionEnd: nil, now: Date()))
+    }
+
+    @Test(
+        "session expires at or after its wall-clock end",
+        arguments: [
+            (-1.0, true),
+            (0.0, true),
+            (1.0, false),
+            (3600.0, false),
+        ] as [(TimeInterval, Bool)])
+    func expiryFollowsWallClock(secondsUntilEnd: TimeInterval, expired: Bool) {
+        let now = Date(timeIntervalSinceReferenceDate: 1_000_000)
+
+        let result = KeepAwakePolicy.isExpired(
+            sessionEnd: now.addingTimeInterval(secondsUntilEnd), now: now)
+
+        #expect(result == expired)
+    }
+
+    @Test("a 1 hour session is expired after an overnight lid close")
+    func overnightSleepExpiresSession() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        let end = start.addingTimeInterval(3600)
+        let nextMorning = start.addingTimeInterval(10 * 3600)
+
+        #expect(KeepAwakePolicy.isExpired(sessionEnd: end, now: nextMorning))
+        #expect(KeepAwakePolicy.isLateExpiry(sessionEnd: end, now: nextMorning))
+    }
+
+    @Test(
+        "only expiries noticed well after the end count as late",
+        arguments: [
+            (0.0, false),
+            (1.0, false),
+            (5.0, false),
+            (6.0, true),
+            (8 * 3600.0, true),
+        ] as [(TimeInterval, Bool)])
+    func lateExpiryUsesTolerance(secondsLate: TimeInterval, late: Bool) {
+        let end = Date(timeIntervalSinceReferenceDate: 1_000_000)
+
+        let result = KeepAwakePolicy.isLateExpiry(
+            sessionEnd: end, now: end.addingTimeInterval(secondsLate))
+
+        #expect(result == late)
+    }
 }
