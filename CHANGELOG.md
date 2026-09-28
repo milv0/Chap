@@ -6,6 +6,10 @@ All notable changes to Chap are documented in this file.
 
 ### Added
 
+- **Notch pages** — The notch now has twelve widget slots on three pages of
+  four. When more than one page has widgets, dots between the notch and the
+  widgets switch pages, and a horizontal trackpad swipe over the dock moves
+  left or right. Existing four-slot layouts become the first page.
 - **Open the screenshot folder** — Click the Screenshots title in the notch to
   open the folder where macOS saves screenshots.
 
@@ -14,7 +18,7 @@ All notable changes to Chap are documented in this file.
 - **Glass material for any appearance** — Clear and Regular Liquid Glass can now
   be chosen with System, Light, or Dark appearance instead of being paired.
 - **Notch defaults** — New configurations place Sites, Apps, Folders, and
-  Screenshots in the four notch slots.
+  Screenshots on the first notch page.
 
 ### Removed
 

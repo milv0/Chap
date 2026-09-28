@@ -435,7 +435,7 @@ posErr=0 sizeErr=0
 Settings는 하단의 `Launchers`·`General`·`Notch` 세 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
 사이드바는 모든 탭에서 유지되며, General/Notch에서 사이트를 선택하면 Launchers로 복귀한다.
 Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
-상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·4칸 위젯·Custom/Glass를 관리한다.
+상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·12칸(4칸 × 3페이지) 위젯·Custom/Glass를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -519,7 +519,10 @@ Settings → Notch Launcher on
 
 노치 hover
   → showPanel(forDrop:false)
-  → LauncherListPolicy 기반 위젯 4칸 + 조건부 Drop 파일 행
+  → LauncherListPolicy 기반 위젯 페이지(4칸씩, 칸이 있는 페이지만) + 조건부 Drop 파일 행
+  → 페이지가 둘 이상이면 상단바와 위젯 사이에 페이지 점. 점 클릭 또는 도커 위
+    가로 트랙패드 스와이프(로컬 scrollWheel 모니터, 관성 무시, 제스처당 1페이지)로
+    좌·중·우 이동. 모든 페이지를 겹쳐 두어 창 크기는 가장 큰 페이지에 고정된다
   → 80ms common-mode mouse polling
   → 노치·패널·배지 영역 밖 200ms → 180ms 접힘 후 orderOut
 

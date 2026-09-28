@@ -8,6 +8,27 @@ enum NotchSlotContent {
     case screenshots
 }
 
+/// 열린 도커의 현재 페이지. 컨트롤러의 스와이프 모니터와 페이지 점이 함께 바꾼다.
+final class NotchPageModel: ObservableObject {
+    /// 위젯이 있는 페이지 수 (1~3).
+    let pageCount: Int
+    /// 현재 페이지 (0부터).
+    @Published private(set) var current = 0
+
+    init(pageCount: Int) {
+        self.pageCount = pageCount
+    }
+
+    func move(by step: Int) {
+        select(NotchPagePolicy.position(from: current, step: step, count: pageCount))
+    }
+
+    func select(_ page: Int) {
+        let clamped = NotchPagePolicy.position(from: page, step: 0, count: pageCount)
+        if clamped != current { current = clamped }
+    }
+}
+
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
 /// 불투명도 프리뷰를 구동할 수 있도록 뷰 외부에서 관찰 가능한 모델로 둔다.
 final class NotchRevealModel: ObservableObject {
@@ -37,8 +58,9 @@ struct NotchLauncherPanelView: View {
     let style: NotchPanelStyle
     /// Apple 공식 Glass.clear/regular 재질 변형.
     let glassMaterial: NotchGlassMaterial
-    /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
-    let slots: [NotchSlotContent]
+    /// 위젯이 있는 페이지들 (좌→우). 각 페이지는 빈 칸을 뺀 최대 4칸이다.
+    let pages: [[NotchSlotContent]]
+    @ObservedObject var pageModel: NotchPageModel
     let onLaunch: (Int) -> Void
     @ObservedObject var reveal: NotchRevealModel
 
@@ -219,6 +241,7 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dropFiles: [URL] = []
     @State private var isRefreshingDropFiles = false
     @State private var dropRefreshPending = false
@@ -285,13 +308,21 @@ struct NotchLauncherPanelView: View {
     /// 섹션 콘텐츠 본문. 하단에 Chap Drop 파일 행이 조건부로 붙는다.
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
-            // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
-            HStack(alignment: .top, spacing: DS.spacing) {
-                ForEach(Array(slots.enumerated()), id: \.offset) { _, slot in
-                    slotView(slot)
-                        .frame(width: Self.columnWidth, alignment: .leading)
-                }
+            // 상단바와 위젯 칸 사이의 좌·중·우 이동 점. 페이지가 하나면 숨긴다.
+            if NotchPagePolicy.showsPageIndicator(visiblePageCount: pages.count) {
+                NotchPageIndicator(
+                    count: pages.count,
+                    current: pageModel.current,
+                    activeColor: primaryForeground,
+                    inactiveColor: primaryForeground.opacity(0.32),
+                    onSelect: { page in
+                        withAnimation(pageAnimation) { pageModel.select(page) }
+                    }
+                )
+                .frame(maxWidth: .infinity)
             }
+
+            pager
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.
@@ -332,6 +363,44 @@ struct NotchLauncherPanelView: View {
         ) { _ in
             refreshDropFiles()
         }
+    }
+
+    /// 페이지 전환 애니메이션. 동작 줄이기 설정에서는 즉시 바꾼다.
+    private var pageAnimation: Animation? {
+        reduceMotion ? nil : .smooth(duration: 0.28)
+    }
+
+    /// 가장 많은 칸을 가진 페이지 기준 폭. 모든 페이지가 같은 틀을 써서
+    /// 페이지를 넘겨도 창 크기가 바뀌지 않는다.
+    private var pageWidth: CGFloat {
+        let columns = CGFloat(max(pages.map(\.count).max() ?? 0, 1))
+        return columns * Self.columnWidth + (columns - 1) * DS.spacing
+    }
+
+    /// 페이지들을 겹쳐 두고 현재 페이지만 보이게 좌우로 민다. 겹쳐 두므로
+    /// 도커 높이는 가장 긴 페이지에 맞춰 고정된다.
+    private var pager: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
+                let isCurrent = index == pageModel.current
+                HStack(alignment: .top, spacing: DS.spacing) {
+                    ForEach(Array(page.enumerated()), id: \.offset) { _, slot in
+                        slotView(slot)
+                            .frame(width: Self.columnWidth, alignment: .leading)
+                    }
+                }
+                .frame(width: pageWidth, alignment: .topLeading)
+                .offset(
+                    x: CGFloat(index - pageModel.current) * (pageWidth + DS.padding)
+                )
+                .opacity(isCurrent ? 1 : 0)
+                .allowsHitTesting(isCurrent)
+                .accessibilityHidden(!isCurrent)
+            }
+        }
+        .frame(width: pageWidth, alignment: .topLeading)
+        .clipped()
+        .animation(pageAnimation, value: pageModel.current)
     }
 
     private func refreshDropFiles() {
@@ -636,5 +705,36 @@ struct PressedStripShape: Shape {
         }
         path.closeSubpath()
         return path
+    }
+}
+
+/// 좌·중·우 페이지 점. 점을 누르면 해당 페이지로 이동한다.
+private struct NotchPageIndicator: View {
+    let count: Int
+    let current: Int
+    let activeColor: Color
+    let inactiveColor: Color
+    let onSelect: (Int) -> Void
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<count, id: \.self) { page in
+                Button {
+                    onSelect(page)
+                } label: {
+                    Circle()
+                        .fill(page == current ? activeColor : inactiveColor)
+                        .frame(width: 6, height: 6)
+                        // 점은 작아도 누르기 쉽게 주변까지 누름 영역으로 쓴다.
+                        .frame(width: 16, height: 12)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Page \(page + 1) of \(count)")
+                .accessibilityAddTraits(page == current ? .isSelected : [])
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Widget pages")
     }
 }

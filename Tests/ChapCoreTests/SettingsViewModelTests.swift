@@ -221,7 +221,9 @@ struct SettingsViewModelTests {
         #expect(config.notchGlassMaterial == .regular)
         #expect(config.notchPanelOpacity == 0.8)
         #expect(config.notchPanelColorHex == "#123456")
-        #expect(config.notchWidgets == [.screenshots, .sites, .none, .none])
+        #expect(
+            config.notchWidgets
+                == NotchWidget.normalizedSlots([.screenshots, .sites, .none, .none]))
     }
     @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
         let vm = SettingsViewModel(sites: baseSites)
