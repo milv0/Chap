@@ -267,24 +267,24 @@
     .section-heading p:last-child { color: var(--muted); font-size: 1rem; margin: 1.25rem 0 0; max-width: 640px; }
 
     .feature-grid { display: grid; gap: 1rem; grid-template-columns: repeat(12, 1fr); margin-top: 3.5rem; }
-    .feature-card { background: linear-gradient(145deg, rgb(255 255 255 / .075), rgb(255 255 255 / .035)); border: 1px solid var(--line); border-radius: var(--radius-lg); min-height: 300px; overflow: hidden; padding: 1.6rem; position: relative; }
+    .feature-card { background: linear-gradient(145deg, rgb(255 255 255 / .075), rgb(255 255 255 / .035)); border: 1px solid var(--line); border-radius: var(--radius-lg); display: flex; flex-direction: column; min-height: 300px; overflow: hidden; padding: 1.6rem; position: relative; }
     .feature-card h3 { font-size: 1.35rem; letter-spacing: -.04em; margin: 0; }
-    .feature-card p { color: var(--muted); font-size: .85rem; margin: .6rem 0 0; max-width: 360px; }
+    .feature-card p { color: var(--muted); font-size: .85rem; margin: .6rem 0 1.5rem; max-width: 360px; }
     .feature-card--wide { grid-column: span 7; }
     .feature-card--narrow { grid-column: span 5; }
     .feature-card--half { grid-column: span 6; }
     .card-number { color: var(--blue-light); font-family: var(--display); font-size: .64rem; font-weight: 700; letter-spacing: .12em; margin-bottom: 1rem; }
-    .shortcut-cloud { bottom: 1.6rem; display: flex; flex-wrap: wrap; gap: .6rem; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .shortcut-cloud { display: flex; flex-wrap: wrap; gap: .6rem; flex: none; margin-top: auto; }
     .shortcut-chip { background: rgb(255 255 255 / .08); border: 1px solid var(--line); border-radius: 10px; color: #d9deea; font-size: .75rem; padding: .5rem .65rem; }
     .shortcut-chip b { color: var(--blue-light); font-weight: 700; }
-    .screen-map { border: 1px solid var(--line-strong); border-radius: 15px; bottom: 1.6rem; height: 130px; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .screen-map { border: 1px solid var(--line-strong); border-radius: 15px; height: 130px; position: relative; flex: none; margin-top: auto; }
     .screen-map::before { border: 2px solid var(--blue); border-radius: 6px; content: ""; height: 74px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 116px; }
     .screen-map::after { background: var(--blue); border-radius: 3px; content: ""; height: 18px; left: 50%; position: absolute; top: 50%; transform: translate(-50%,-50%); width: 34px; }
-    .glass-samples { bottom: 1.6rem; display: grid; gap: .75rem; grid-template-columns: repeat(2, 1fr); left: 1.6rem; position: absolute; right: 1.6rem; }
+    .glass-samples { display: grid; gap: .75rem; grid-template-columns: repeat(2, 1fr); flex: none; margin-top: auto; }
     .glass-sample { align-items: flex-end; backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgb(255 255 255 / .18); border-radius: 16px; display: flex; font-size: .7rem; font-weight: 700; height: 116px; padding: .8rem; }
     .glass-sample:first-child { background: rgb(235 240 255 / .16); }
     .glass-sample:last-child { background: rgb(19 24 34 / .7); }
-    .awake-clock { align-items: center; background: #000; border-radius: 0 0 14px 14px; bottom: 1.6rem; display: flex; font-variant-numeric: tabular-nums; gap: .6rem; height: 58px; justify-content: center; left: 1.6rem; position: absolute; right: 1.6rem; }
+    .awake-clock { align-items: center; background: #000; border-radius: 0 0 14px 14px; display: flex; font-variant-numeric: tabular-nums; gap: .6rem; height: 58px; justify-content: center; flex: none; margin-top: auto; }
     .awake-clock svg { fill: var(--blue); height: 18px; width: 18px; }
     .awake-clock span { font-family: var(--display); font-size: 1.2rem; }
 
