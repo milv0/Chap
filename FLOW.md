@@ -68,7 +68,7 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 7. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
 8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 재등록 + 노치 hotzone/Drop 배지 동기화
 9. didChangeScreenParameters observer  150ms debounce 후 노치 화면·프레임 재계산
-10. initializeAccessibilityHandling()  권한 확인 + 옵저버 등록 (+ 최초 시스템 프롬프트)
+10. accessibilityController.start()     권한 확인 + 옵저버 등록 + 최초 시스템 프롬프트 예약
 11. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
 ```
 
@@ -80,9 +80,9 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 
 ## 3. 접근성 권한 상태 머신
 
-상태: `unknown` → `granted` / `denied` (`AppDelegate › AccessibilityState`).
+상태: `unknown` → `granted` / `denied` (`AccessibilityStateController`).
 
-모든 전이는 `refreshAccessibilityState(reason:showAlert:requestSystemPrompt:)` 한 곳을 지난다.
+모든 전이는 `AccessibilityStateController › refresh(reason:showAlert:requestSystemPrompt:)` 한 곳을 지난다.
 메인 스레드가 아니면 스스로 메인으로 hop 한다.
 
 | 트리거 | reason | showAlert | 시스템 프롬프트 |
@@ -99,9 +99,9 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 
 - **granted**: 폴링 중단, alert 플래그 리셋
 - **denied**: (프롬프트 요청 시) 프롬프트 + 30초 폴링 시작, 상태바 아이콘을 경고 심볼로 교체
-- **granted → denied (revoke)**: error 로그 + alert 1회 (`didShowAccessibilityAlert`로 중복 차단)
+- **granted → denied (revoke)**: error 로그 + alert 1회 (`didShowAlert`로 중복 차단)
 
-> 리사이즈 실패는 권한 알림을 **오발**하지 않는다. `refreshAccessibilityState`가 `AXIsProcessTrusted()`를 다시 확인하고 trusted면 즉시 return 하기 때문.
+> 리사이즈 실패는 권한 알림을 **오발**하지 않는다. `AccessibilityStateController › refresh`가 `AXIsProcessTrusted()`를 다시 확인하고 trusted면 즉시 return 하기 때문.
 > 글로벌 단축키는 접근성 상태 머신과 독립이다. 권한이 없어도 단축키와 Finder/Shell 실행은 동작하고,
 > URL/App은 실행되지만 AX 리사이즈만 생략한다.
 
@@ -147,7 +147,7 @@ configure()
 
 ```
 launchSite(site)
-├─ refreshAccessibilityState(reason:"launch", showAlert: type ∈ {url, app})
+├─ accessibilityController.refresh(reason:"launch", showAlert: type ∈ {url, app})
 ├─ config.showGuideWindow && type == .url && targetScreen != nil
 │     → GuideWindow.show(centeredBounds) → guideToken 보관
 └─ switch site.launchType
@@ -165,7 +165,7 @@ app/shell 타입의 필수값 검증은 각 런처 진입부에서 한다.
 
 ## 6. 크기·위치 결정 파이프라인
 
-모든 런처가 공유한다. 전부 `ChapCore/Validation.swift`의 순수 함수 + NSScreen 래퍼.
+모든 런처가 공유한다. 전부 `ChapCore/WindowGeometry.swift`(크기·좌표)와 `DisplayMatching.swift`(디스플레이 매칭)의 순수 함수 + NSScreen 래퍼.
 
 ### 6.1 대상 화면 — `targetScreen(for:)`
 
@@ -695,8 +695,8 @@ Office 정책의 `postResizeGrace: 20.0`이 정확히 이 상황을 위한 것(�
 | bounds 적용·판정·진단 문자열 | `Chap/Launchers/LauncherUtils.swift` | 순수 함수로 유지 → 테스트 추가 |
 | CSV 열 | `Chap/Launchers/ResizeLogger.swift` | 열은 **끝에만** 추가. 기존 위치 유지 + `ARCHITECTURE.txt`·§11.2 갱신 |
 | 단축키 등록·키보드 배열 변경 | `Chap/GlobalHotKeyManager.swift` | I13 + §4 유지, `GlobalHotKeyManagerTests` |
-| 메뉴·권한·창 관리 | `Chap/AppDelegate.swift` | §3·§4 갱신 |
-| 크기/좌표 계산, 디스플레이 매칭 | `ChapCore/Validation.swift` | 순수 코어로 분리 → `ValidationTests`/`GeometryTests` |
+| 메뉴·권한·창 관리 | `Chap/AppDelegate+Menu.swift`·`+Lifecycle.swift`, `AccessibilityStateController.swift` | §3·§4 갱신 |
+| 크기/좌표 계산, 디스플레이 매칭 | `ChapCore/WindowGeometry.swift`·`DisplayMatching.swift` | 순수 코어로 분리 → `ValidationTests`/`GeometryTests` |
 | config 스키마 | `ChapCore/Models.swift` | decode 폴백 유지 + `ModelTests` round-trip + `ARCHITECTURE.txt` |
 | 저장/백업/마이그레이션 | `ChapCore/ConfigStore.swift` | `ConfigStoreTests` |
 | 검증 규칙 | `ChapCore/ConfigValidation.swift` | `ConfigValidationTests`. UI·AppDelegate 두 경로가 같은 함수를 쓰는지 확인 |

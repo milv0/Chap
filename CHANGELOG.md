@@ -2,13 +2,21 @@
 
 All notable changes to Chap are documented in this file.
 
-## [Unreleased]
+## [2.0.1] — 2026-09-28
 
 ### Fixed
 
 - **Keep Awake after sleep** — A session that ends while the Mac is asleep, for
   example with the lid closed overnight, now ends as soon as the Mac wakes, so
-  the status icon returns to its normal color instead of staying blue.
+  the status icon returns to its normal color instead of staying blue. Sessions
+  use wall-clock timing and an expired session ends quietly, without the sound
+  or HUD.
+
+### Changed
+
+- **Interactive website demo** — The notch demo on the Chap site now opens on
+  hover or tap, launches Option-shortcut windows that land centered, accepts
+  files for Chap Drop, and offers a skippable four-step guided tour.
 
 ## [2.0.0] — 2026-09-26
 
