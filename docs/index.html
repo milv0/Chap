@@ -233,9 +233,19 @@
     .chap-word { animation: chap-snap 620ms cubic-bezier(.2,.9,.22,1.25) .75s both; }
     @keyframes chap-guide { 0% { opacity: 0; } 18% { opacity: 1; } 62% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes chap-snap { 0% { opacity: 0; transform: translate(-.35em, -.22em) scale(.72) rotate(-6deg); } 70% { opacity: 1; transform: translate(.02em, .01em) scale(1.04); } 100% { opacity: 1; transform: none; } }
-    .chap-sfx { color: var(--blue); font-family: var(--display); font-size: max(18px, calc(40 * var(--pt))); font-weight: 700; letter-spacing: -.04em; pointer-events: none; position: absolute; text-shadow: 0 2px 0 white, 0 6px 18px rgb(54 100 255 / .35); transform: rotate(-9deg) scale(0); white-space: nowrap; z-index: 30; animation: chap-pop 820ms cubic-bezier(.2,.9,.25,1.3) forwards; }
-    .chap-sfx.small { font-size: max(13px, calc(26 * var(--pt))); }
-    @keyframes chap-pop { 0% { opacity: 0; transform: rotate(-9deg) scale(.2); } 32% { opacity: 1; transform: rotate(-9deg) scale(1.15); } 55% { transform: rotate(-9deg) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: rotate(-9deg) translateY(-.35em) scale(1); } }
+    /* Guided tour: one blue coachmark at a time, plus a pulse on the thing to try. */
+    .nudge { animation: nudge-pulse 1.6s ease-out infinite; }
+    @keyframes nudge-pulse { 0% { box-shadow: 0 0 0 0 rgb(54 100 255 / .6); } 70% { box-shadow: 0 0 0 10px rgb(54 100 255 / 0); } 100% { box-shadow: 0 0 0 0 rgb(54 100 255 / 0); } }
+    .demo-tip { align-items: center; background: var(--blue); border: 0; border-radius: 12px; box-shadow: 0 10px 28px rgb(54 100 255 / .38); color: white; cursor: pointer; display: flex; font: 600 12px/1.35 var(--mac-font); gap: 8px; max-width: min(260px, calc(100% - 16px)); opacity: 0; padding: 9px 10px 9px 12px; pointer-events: none; position: absolute; text-align: left; transform: translateY(-4px); transition: opacity 200ms ease, transform 200ms ease; z-index: 21; }
+    .demo-tip.show { opacity: 1; pointer-events: auto; transform: none; }
+    .demo-tip::before { background: var(--blue); border-radius: 2px; content: ""; height: 10px; position: absolute; transform: rotate(45deg); width: 10px; }
+    .demo-tip[data-place="below"]::before { left: var(--arrow, 50%); margin-left: -5px; top: -4px; }
+    .demo-tip[data-place="left"]::before { margin-top: -5px; right: -4px; top: var(--arrow, 50%); }
+    .demo-tip b { font-weight: 800; }
+    .tip-step { background: rgb(255 255 255 / .2); border-radius: 999px; flex: none; font-size: 10px; font-weight: 700; padding: 2px 6px; }
+    .tip-close { align-items: center; background: rgb(255 255 255 / .2); border-radius: 50%; display: inline-flex; flex: none; font-size: 12px; height: 18px; justify-content: center; line-height: 1; width: 18px; }
+    .demo-tip:hover .tip-close { background: rgb(255 255 255 / .32); }
+    @media (prefers-reduced-motion: reduce) { .nudge { animation: none; box-shadow: 0 0 0 2px rgb(54 100 255 / .75); } }
     .desktop-copy { bottom: 22%; color: #4a5361; left: 6%; position: absolute; }
     .desktop-copy strong { color: var(--blue); letter-spacing: -.07em; display: block; font-family: var(--display); font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -.06em; line-height: 1; }
     .desktop-copy span { display: block; font-size: .8rem; margin-top: .6rem; }
@@ -418,7 +428,7 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="shell">
         <div class="hero-copy">
-          <p class="eyebrow">chap <span class="eyebrow-soft">/tʃæp/ · the snap of a window landing right where it belongs</span></p>
+          <p class="eyebrow">chap <span class="eyebrow-soft">(n.) · the snap of a window landing right where it belongs</span></p>
           <h1 id="hero-title"><span class="hero-line-muted">Open anything.</span><span class="hero-line-bright"><span class="chap-word">Chap.</span> Centered.</span></h1>
           <p class="hero-summary">Press an Option shortcut or hover the notch. Your site, app, folder, or script opens — and <em>chap</em>, the window snaps to the center of your display at exactly the size you chose. Screenshots, dropped files, and Keep Awake live one hover away.</p>
           <div class="hero-actions">
@@ -534,6 +544,7 @@
           </div>
 
           <p class="demo-hint" aria-hidden="true"><span class="hint-hover">Hover the notch ↑ · Press ⌥G or ⌥N · Drag a file onto it</span><span class="hint-touch">Tap the notch ↑ · Open an app · Tap a file to drop it</span></p>
+          <button class="demo-tip" type="button" data-demo-tip hidden><span class="tip-step" data-tip-step></span><span data-tip-text></span><span class="tip-close" data-tip-close role="img" aria-label="Skip the tour">×</span></button>
           <div class="demo-toast" data-demo-toast role="status" aria-live="polite"></div>
           <span class="sr-only" data-sr-status role="status" aria-live="polite"></span>
         </div>
@@ -666,20 +677,6 @@
         toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
       };
 
-      // The name is the sound: a small "chap!" pops when the dock opens and when a window lands.
-      const quiet = matchMedia("(prefers-reduced-motion: reduce)");
-      let lastDockPop = 0;
-      const chapPop = (x, y, small) => {
-        if (quiet.matches) return;
-        const pop = document.createElement("span");
-        pop.className = `chap-sfx${small ? " small" : ""}`;
-        pop.setAttribute("aria-hidden", "true");
-        pop.textContent = "chap!";
-        pop.style.left = `${x}px`;
-        pop.style.top = `${y}px`;
-        stage.append(pop);
-        pop.addEventListener("animationend", () => pop.remove());
-      };
       const isOpen = () => stage.classList.contains("demo-open");
       const setDock = (open) => {
         clearTimeout(closeTimer);
@@ -687,12 +684,7 @@
         const wasOpen = isOpen();
         stage.classList.toggle("demo-open", open);
         dock.inert = !open;
-        if (open && !wasOpen && Date.now() - lastDockPop > 1500) {
-          lastDockPop = Date.now();
-          const stageBox = stage.getBoundingClientRect();
-          const notchBox = notch.getBoundingClientRect();
-          chapPop(notchBox.right - stageBox.left + notchBox.width * .35, notchBox.bottom - stageBox.top + 4, true);
-        }
+        if (open && !wasOpen) tourAdvance("notch");
         notch.setAttribute("aria-expanded", String(open));
         if (open) setStatusMenu(false);
       };
@@ -709,6 +701,7 @@
         statusMenu.hidden = !open;
         statusButton.setAttribute("aria-expanded", String(open));
         if (!open) { setAwakeMenu(false); return; }
+        tourAdvance("menu");
         setDock(false);
         const stageBox = stage.getBoundingClientRect();
         const buttonBox = statusButton.getBoundingClientRect();
@@ -875,6 +868,7 @@
       const CHROME_LAUNCH_MS = 420; // the guide holds the landing spot while Chrome opens the --app window
 
       const placeWindow = (name) => {
+        tourAdvance("shortcut");
         const spec = windowSpecs[name];
         const target = centeredRect(spec);
         if (spec.guide) {
@@ -914,7 +908,6 @@
             setTimeout(() => {
               win.classList.remove("placing");
               win.classList.add("landed");
-              chapPop(win.offsetLeft + win.offsetWidth - 18, win.offsetTop - 14, false);
               if (token !== null) dismissGuide(token);
               clearTimeout(win.readoutTimer);
               win.readoutTimer = setTimeout(() => win.classList.remove("landed"), 2800);
@@ -988,6 +981,7 @@
       const addFiles = (files) => {
         if (!files.length) return;
         dropFiles.unshift(...files);
+        tourAdvance("drop");
         renderDrop();
         setDock(true);
         showToast(files.length === 1 ? `${files[0].name} added to Chap Drop — kept in this tab only` : `${files.length} files added to Chap Drop — kept in this tab only`);
@@ -1140,6 +1134,121 @@
         const target = shortcuts[event.code];
         if (target) { event.preventDefault(); launch(...target); }
       });
+
+      // Guided tour: notch → Option shortcut → Chap Drop → menu bar. Doing the thing advances it.
+      const tip = $("[data-demo-tip]");
+      const tipStep = $("[data-tip-step]");
+      const tipText = $("[data-tip-text]");
+      const TOUR_KEY = "chapDemoTour";
+      const touch = matchMedia("(hover: none)").matches;
+      const firstFile = $("[data-desktop-file]");
+      const steps = [
+        { id: "notch", target: () => notch, place: "below", align: .5,
+          text: touch ? "Tap the notch to open Chap." : "Hover the notch to open Chap. <b>Try it ↑</b>",
+          run: () => setDock(true) },
+        { id: "shortcut", target: () => notch, place: "below", align: .5,
+          text: touch ? "Tap <b>Notes</b> in the dock. It lands dead center." : "Now press <b>⌥N</b>. Notes opens and lands dead center.",
+          run: () => launch("Notes", "app") },
+        { id: "drop", target: () => firstFile, place: "left",
+          text: touch ? "Tap a file to keep it in <b>Chap Drop</b>." : "Drag a file onto the notch to keep it in <b>Chap Drop</b>.",
+          run: () => firstFile.click() },
+        { id: "menu", target: () => statusButton, place: "below", align: .88,
+          text: "Chap lives in the menu bar too. <b>Click ⚡</b> to open its menu.",
+          run: () => { setStatusMenu(true); statusMenu.querySelector(".menu-item")?.focus({ preventScroll: true }); } },
+      ];
+      const loadTour = () => {
+        try {
+          const saved = JSON.parse(localStorage.getItem(TOUR_KEY) || "{}");
+          if (localStorage.getItem("chapDemoMenuSeen") === "1") saved.menu = true;
+          return saved;
+        } catch { return {}; }
+      };
+      const tourDone = loadTour();
+      let tourSkipped = tourDone.skipped === true;
+      let tourTimer;
+      let stageVisible = false;
+      let nudged = null;
+      const saveTour = () => {
+        try { localStorage.setItem(TOUR_KEY, JSON.stringify({ ...tourDone, skipped: tourSkipped })); } catch { /* storage unavailable: the tour restarts next visit */ }
+      };
+      const currentStep = () => (tourSkipped ? null : steps.find((step) => !tourDone[step.id]) || null);
+      const hideTip = () => {
+        // Hiding a focused button fires a stage focusout with no relatedTarget, which closes the dock.
+        // Hand focus to the notch while the dock is open so a tip-run step keeps it open.
+        if (tip.contains(document.activeElement)) {
+          if (isOpen()) notch.focus({ preventScroll: true });
+          else tip.blur();
+        }
+        tip.classList.remove("show");
+        if (nudged) nudged.classList.remove("nudge");
+        nudged = null;
+        setTimeout(() => { if (!tip.classList.contains("show")) tip.hidden = true; }, 220);
+      };
+      const placeTip = (step) => {
+        const stageBox = stage.getBoundingClientRect();
+        const box = step.target().getBoundingClientRect();
+        const width = tip.offsetWidth;
+        const height = tip.offsetHeight;
+        tip.dataset.place = step.place;
+        if (step.place === "left") {
+          const top = Math.max(8, box.top + box.height / 2 - stageBox.top - height / 2);
+          tip.style.left = `${Math.max(8, box.left - stageBox.left - width - 14)}px`;
+          tip.style.top = `${top}px`;
+          tip.style.setProperty("--arrow", `${box.top + box.height / 2 - stageBox.top - top}px`);
+          return;
+        }
+        const center = box.left + box.width / 2 - stageBox.left;
+        const left = Math.max(8, Math.min(stage.clientWidth - width - 8, center - width * step.align));
+        tip.style.left = `${left}px`;
+        tip.style.top = `${box.bottom - stageBox.top + 12}px`;
+        tip.style.setProperty("--arrow", `${Math.max(12, Math.min(width - 12, center - left))}px`);
+      };
+      const busy = () => isOpen() || !statusMenu.hidden || stage.classList.contains("drop-active");
+      const showTip = () => {
+        clearTimeout(tourTimer);
+        const step = currentStep();
+        if (!step || !stageVisible) return;
+        if (busy()) { tourTimer = setTimeout(showTip, 1000); return; }
+        const index = steps.indexOf(step) + 1;
+        tipStep.textContent = `${index}/${steps.length}`;
+        tipText.innerHTML = step.text;
+        tip.setAttribute("aria-label", `Tour step ${index} of ${steps.length}: ${tipText.textContent}`);
+        tip.hidden = false;
+        placeTip(step);
+        if (nudged) nudged.classList.remove("nudge");
+        nudged = step.target();
+        nudged.classList.add("nudge");
+        requestAnimationFrame(() => tip.classList.add("show"));
+      };
+      const tourAdvance = (id) => {
+        if (tourDone[id]) return;
+        tourDone[id] = true;
+        saveTour();
+        if (tourSkipped) return;
+        hideTip();
+        clearTimeout(tourTimer);
+        if (currentStep()) tourTimer = setTimeout(showTip, 1400);
+      };
+      tip.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (event.target.closest("[data-tip-close]")) {
+          tourSkipped = true;
+          saveTour();
+          clearTimeout(tourTimer);
+          hideTip();
+          return;
+        }
+        const step = currentStep();
+        if (step) step.run();
+      });
+      if (currentStep() && "IntersectionObserver" in window) {
+        new IntersectionObserver((entries) => {
+          stageVisible = entries.some((entry) => entry.isIntersecting);
+          if (stageVisible && tip.hidden) { clearTimeout(tourTimer); tourTimer = setTimeout(showTip, 1500); }
+          if (!stageVisible) { clearTimeout(tourTimer); hideTip(); }
+        }, { threshold: .5 }).observe(stage);
+      }
+      window.addEventListener("resize", () => { const step = currentStep(); if (step && !tip.hidden) placeTip(step); });
 
       renderDrop();
       tick();
