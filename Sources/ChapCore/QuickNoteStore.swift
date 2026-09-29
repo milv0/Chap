@@ -27,6 +27,22 @@ public struct QuickNoteStore: Sendable {
         (try? String(contentsOf: fileURL, encoding: .utf8)) ?? ""
     }
 
+    /// 마지막 저장 시각. 파일이 없으면 nil.
+    public func lastSavedDate() -> Date? {
+        (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate
+    }
+
+    /// "Saved just now" / "Saved 10 min. ago" 같은 짧은 상대 시각 문구.
+    public static func savedLabel(for date: Date?, now: Date = Date()) -> String? {
+        guard let date else { return nil }
+        if now.timeIntervalSince(date) < 60 { return "Saved just now" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return "Saved " + formatter.localizedString(for: date, relativeTo: now)
+    }
+
     /// 상한을 넘는 부분은 잘라 저장하고, 실제로 저장한 내용을 돌려준다.
     @discardableResult
     public func save(_ text: String) throws -> String {

@@ -141,9 +141,9 @@ Enable the feature in **Settings → Notch**. Arrange up to twelve slots, four p
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
-**Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. The camera runs only while the dock is open on the Mirror's page, and the green camera light shows when it does; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
+**Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you switch pages, close the dock, or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
 
-**Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type to `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
+**Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 

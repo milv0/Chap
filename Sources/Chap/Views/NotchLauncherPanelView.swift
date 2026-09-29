@@ -388,9 +388,20 @@ struct NotchLauncherPanelView: View {
             ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
                 let isCurrent = index == pageModel.current
                 HStack(alignment: .top, spacing: DS.spacing) {
-                    ForEach(Array(page.enumerated()), id: \.offset) { _, slot in
+                    ForEach(Array(page.enumerated()), id: \.offset) { column, slot in
                         slotView(slot, isActive: isCurrent)
                             .frame(width: Self.columnWidth, alignment: .leading)
+                            // 섹션 사이 얇은 세로 구분선. 폭 계산에 영향이 없도록 간격 중앙에 겹쳐 그린다.
+                            .overlay(alignment: .leading) {
+                                if column > 0 {
+                                    Rectangle()
+                                        .fill(subtleSurface)
+                                        .frame(width: 1)
+                                        .padding(.vertical, 2)
+                                        .offset(x: -DS.spacing / 2)
+                                        .accessibilityHidden(true)
+                                }
+                            }
                     }
                 }
                 .frame(width: pageWidth, alignment: .topLeading)

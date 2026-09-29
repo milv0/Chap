@@ -45,6 +45,8 @@ struct NotchMirrorView: View {
     let palette: NotchWidgetPalette
 
     @State private var state = MirrorCamera.displayState
+    /// 도커를 열 때마다 꺼진 상태로 시작한다. 켜기 전에는 카메라를 쓰지 않는다.
+    @State private var isTurnedOn = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -63,9 +65,26 @@ struct NotchMirrorView: View {
     @ViewBuilder
     private var content: some View {
         switch state {
-        case .live:
+        case .live where isTurnedOn:
             MirrorPreview(session: MirrorCamera.shared.session)
                 .accessibilityLabel("Camera mirror preview")
+                .overlay(alignment: .topTrailing) {
+                    Button {
+                        isTurnedOn = false
+                        refresh()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 16, height: 16)
+                            .background(Circle().fill(.black.opacity(0.45)))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(4)
+                    .accessibilityLabel("Turn off Mirror")
+                }
+        case .live:
+            restingButton
         case .needsPermission:
             message(
                 "See yourself before a call.", button: "Turn On Mirror",
@@ -80,6 +99,31 @@ struct NotchMirrorView: View {
             message("No camera is connected.", button: nil, action: {})
         }
     }
+
+    /// 꺼진 거울: 큰 웹캠 아이콘과 이름. 누르면 카메라를 켠다.
+    private var restingButton: some View {
+        Button {
+            isTurnedOn = true
+            refresh()
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "web.camera")
+                    .font(.system(size: 26, weight: .regular))
+                    .foregroundColor(palette.primary)
+                Text("Mirror")
+                    .font(DS.captionFont)
+                    .foregroundColor(palette.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(isRestingHovered ? palette.hoverBackground : Color.clear)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isRestingHovered = $0 }
+        .accessibilityLabel("Turn on Mirror")
+    }
+
+    @State private var isRestingHovered = false
 
     private func message(_ text: String, button: String?, action: @escaping () -> Void)
         -> some View
@@ -104,7 +148,9 @@ struct NotchMirrorView: View {
 
     private func refresh() {
         state = MirrorCamera.displayState
-        if MirrorPolicy.shouldCapture(state: state, isPageActive: isActive, isPanelOpen: true) {
+        if MirrorPolicy.shouldCapture(
+            state: state, isTurnedOn: isTurnedOn, isPageActive: isActive, isPanelOpen: true)
+        {
             MirrorCamera.shared.start()
         } else {
             MirrorCamera.shared.stop()
@@ -112,7 +158,11 @@ struct NotchMirrorView: View {
     }
 
     private func requestAccess() {
-        MirrorCamera.requestAccess { _ in refresh() }
+        // 권한을 허용하면 누른 김에 바로 거울을 켠다.
+        MirrorCamera.requestAccess { granted in
+            isTurnedOn = granted
+            refresh()
+        }
     }
 
     private func openCameraSettings() {
@@ -154,6 +204,7 @@ struct NotchQuickNoteView: View {
 
     @State private var text = ""
     @State private var didLoad = false
+    @State private var lastSaved: Date?
     @FocusState private var isFocused: Bool
     private let store = QuickNoteStore()
     /// @State로 보관해 뷰 구조체가 다시 만들어져도 대기 중인 저장이 취소되지 않는다.
@@ -167,7 +218,7 @@ struct NotchQuickNoteView: View {
             NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
-                    Text("Jot something down…")
+                    Text("What's on your mind?")
                         .font(DS.captionFont)
                         .foregroundColor(palette.secondary.opacity(0.8))
                         .padding(.horizontal, 5)
@@ -194,6 +245,14 @@ struct NotchQuickNoteView: View {
                     .strokeBorder(DS.accent.opacity(isFocused ? 0.7 : 0), lineWidth: 1)
             )
             .padding(.horizontal, 4)
+
+            if let label = QuickNoteStore.savedLabel(for: lastSaved) {
+                Text(label)
+                    .font(.system(size: 10))
+                    .foregroundColor(palette.secondary.opacity(0.85))
+                    .padding(.horizontal, 6)
+                    .accessibilityLabel(label)
+            }
         }
         .onAppear(perform: load)
         .onChange(of: text) { _, newValue in
@@ -219,8 +278,10 @@ struct NotchQuickNoteView: View {
         let store = store
         DispatchQueue.global(qos: .userInitiated).async {
             let saved = store.load()
+            let date = saved.isEmpty ? nil : store.lastSavedDate()
             DispatchQueue.main.async {
                 text = saved
+                lastSaved = date
                 didLoad = true
             }
         }
@@ -231,6 +292,8 @@ struct NotchQuickNoteView: View {
         Self.saveQueue.async {
             do {
                 try store.save(value)
+                let date = value.isEmpty ? nil : Date()
+                DispatchQueue.main.async { lastSaved = date }
             } catch {
                 Log.app.error(
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")

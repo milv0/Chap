@@ -24,15 +24,20 @@ struct MirrorPolicyTests {
         }
     }
 
-    @Test("capture runs only for a live mirror on the visible page of an open dock")
-    func captureNeedsLiveVisibleOpen() {
-        #expect(MirrorPolicy.shouldCapture(state: .live, isPageActive: true, isPanelOpen: true))
-        #expect(!MirrorPolicy.shouldCapture(state: .live, isPageActive: false, isPanelOpen: true))
-        #expect(!MirrorPolicy.shouldCapture(state: .live, isPageActive: true, isPanelOpen: false))
-        #expect(
-            !MirrorPolicy.shouldCapture(
-                state: .needsPermission, isPageActive: true, isPanelOpen: true))
-        #expect(!MirrorPolicy.shouldCapture(state: .denied, isPageActive: true, isPanelOpen: true))
+    @Test("capture runs only for a turned-on live mirror on the visible page of an open dock")
+    func captureNeedsLiveOnVisibleOpen() {
+        func capture(
+            _ state: MirrorDisplayState, on: Bool = true, active: Bool = true, open: Bool = true
+        ) -> Bool {
+            MirrorPolicy.shouldCapture(
+                state: state, isTurnedOn: on, isPageActive: active, isPanelOpen: open)
+        }
+        #expect(capture(.live))
+        #expect(!capture(.live, on: false))
+        #expect(!capture(.live, active: false))
+        #expect(!capture(.live, open: false))
+        #expect(!capture(.needsPermission))
+        #expect(!capture(.denied))
     }
 }
 
@@ -85,6 +90,30 @@ struct QuickNoteStoreTests {
 
         #expect(saved.count == QuickNoteStore.maxLength)
         #expect(store.load().count == QuickNoteStore.maxLength)
+    }
+
+    @Test("saved label reads just now, then a short relative time")
+    func savedLabel() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        #expect(QuickNoteStore.savedLabel(for: nil, now: now) == nil)
+        #expect(
+            QuickNoteStore.savedLabel(for: now.addingTimeInterval(-20), now: now)
+                == "Saved just now")
+        let tenMinutes = QuickNoteStore.savedLabel(for: now.addingTimeInterval(-600), now: now)
+        #expect(tenMinutes?.hasPrefix("Saved 10 min") == true)
+        #expect(tenMinutes?.hasSuffix("ago") == true)
+    }
+
+    @Test("a saved note reports its save date")
+    func lastSavedDate() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        #expect(store.lastSavedDate() == nil)
+
+        try store.save("hello")
+
+        let date = try #require(store.lastSavedDate())
+        #expect(abs(date.timeIntervalSinceNow) < 60)
     }
 
     @Test("the default note lives in Chap's Application Support folder")
