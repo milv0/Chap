@@ -61,7 +61,8 @@ struct NotchLauncherPanelView: View {
     /// 아이콘 오른쪽이 절반 가까이 비어 보인다.
     static var appGridColumnWidth: CGFloat {
         let columns = CGFloat(LauncherListPolicy.appIconColumns)
-        return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.gap + 4
+        return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
+            + 4
     }
 
     private func width(for slot: NotchSlotContent) -> CGFloat {
@@ -435,9 +436,9 @@ struct NotchLauncherPanelView: View {
         LazyVGrid(
             columns: Array(
                 repeating: GridItem(
-                    .fixed(NotchAppIconTile.tileSize), spacing: NotchAppIconTile.gap),
+                    .fixed(NotchAppIconTile.tileSize), spacing: NotchAppIconTile.columnGap),
                 count: LauncherListPolicy.appIconColumns),
-            alignment: .leading, spacing: NotchAppIconTile.gap
+            alignment: .leading, spacing: NotchAppIconTile.rowGap
         ) {
             ForEach(
                 section.entries.prefix(
@@ -555,12 +556,19 @@ struct NotchAppIconTile: View {
     @State private var icon: NSImage?
     @State private var isHovered = false
 
-    private static let iconSize: CGFloat = 34
-    /// 타일 한 변: 아이콘 + 호버 배경 여백. macOS 앱 아이콘은 가장자리에 약 10%의
-    /// 투명 여백이 있어, 타일 여백을 크게 잡으면 아이콘 사이가 실제보다 넓어 보인다.
-    static let tileSize: CGFloat = iconSize + 4
-    /// 타일 사이 간격.
-    static let gap: CGFloat = 8
+    // 격자 3줄(앱 6개)의 높이를 목록 칸 4줄(Sites·Folders 최대)과 정확히 맞춘다.
+    // 목록 한 줄 = 13pt 본문 줄 높이 16pt + 위아래 여백 5pt씩, 줄 간격 3pt.
+    static let listRowHeight: CGFloat = 26
+    static let listRowSpacing: CGFloat = 3
+    static let listBodyHeight: CGFloat = 4 * listRowHeight + 3 * listRowSpacing  // 113pt
+
+    static let iconSize: CGFloat = 32
+    /// 타일 한 변: 아이콘 + 호버 배경 여백 2pt씩.
+    static let tileSize: CGFloat = iconSize + 2
+    /// 가로 간격: 앱 아이콘의 투명 가장자리를 감안해 넉넉히 둔다.
+    static let columnGap: CGFloat = 8
+    /// 세로 간격: 3줄이 목록 4줄 높이를 정확히 채우도록 계산한다 (5.5pt).
+    static let rowGap: CGFloat = (listBodyHeight - 3 * tileSize) / 2
 
     var body: some View {
         Button(action: action) {
