@@ -7,7 +7,9 @@ All notable changes to Chap are documented in this file.
 ### Added
 
 - **Chap the Seal** — Chap's pixel mascot, a baby seal, now rests on the left of
-  the notch's black strip. It steps aside for the Focus timer while Focus runs.
+  the notch's black strip. It flicks its tail when you open the notch and now and
+  then while it stays open (never with Reduce Motion on), and steps aside for the
+  Focus timer while Focus runs.
 
 ## [2.4.2] — 2026-09-29
 

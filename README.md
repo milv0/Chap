@@ -14,7 +14,7 @@
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, and steps aside for the Focus timer while Focus runs
+- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, and steps aside for the Focus timer while Focus runs
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A lightning-bolt notch slot that keeps your Mac awake for 1h, 4h, or 8h with one click and counts down while it runs (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your four newest downloads in a notch slot with their names and age; click to open, drag out, or right-click to share or show in Finder

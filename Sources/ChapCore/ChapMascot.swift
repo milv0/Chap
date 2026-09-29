@@ -37,20 +37,65 @@ public enum ChapMascot {
         ".......ooooooooo........",
     ]
 
+    /// 꼬리를 든 프레임. 꼬리 쪽(오른쪽 끝 다섯 칸)만 다르고 나머지는 `rows`와 같다.
+    public static let tailUpRows: [String] = [
+        ".....oooo...............",
+        "....owwwwoo.............",
+        "...owwwwwwwo............",
+        "..owwwwwwwwwoooo........",
+        "..owewwewwwwwwwwoo...oo.",
+        "..owwwwwwwwwwwwwwwo.owo.",
+        "..owwoowwwwwwwwwwwwoowo.",
+        ".oswwwwwwwwwwwwwwwwwwwo.",
+        "oswswwwwwwwwwwwwwwwwwwo.",
+        "ossoossswwwwwwwwssssssso",
+        ".oo..oosssssssssooooooo.",
+        ".......ooooooooo........",
+    ]
+
     public static let width = 24
     public static let height = 12
 
-    /// 투명이 아닌 모든 픽셀.
-    public static let pixels: [Pixel] = rows.enumerated().flatMap { y, row in
-        row.enumerated().compactMap { x, ch -> Pixel? in
-            switch ch {
-            case "o", "e": return Pixel(x: x, y: y, ink: .outline)
-            case "w": return Pixel(x: x, y: y, ink: .body)
-            case "s": return Pixel(x: x, y: y, ink: .shade)
-            default: return nil
+    /// 꼬리 자세.
+    public enum Pose: Equatable, Sendable {
+        case rest
+        case tailUp
+    }
+
+    /// 투명이 아닌 모든 픽셀 (쉬는 자세).
+    public static let pixels: [Pixel] = pixels(from: rows)
+
+    /// 꼬리를 든 자세의 픽셀.
+    public static let tailUpPixels: [Pixel] = pixels(from: tailUpRows)
+
+    public static func pixels(for pose: Pose) -> [Pixel] {
+        pose == .rest ? pixels : tailUpPixels
+    }
+
+    private static func pixels(from rows: [String]) -> [Pixel] {
+        rows.enumerated().flatMap { y, row in
+            row.enumerated().compactMap { x, ch -> Pixel? in
+                switch ch {
+                case "o", "e": return Pixel(x: x, y: y, ink: .outline)
+                case "w": return Pixel(x: x, y: y, ink: .body)
+                case "s": return Pixel(x: x, y: y, ink: .shade)
+                default: return nil
+                }
             }
         }
     }
+
+    /// 꼬리 까딱 한 번: 들고, 내리고, 한 번 더 들고, 내린다.
+    public static let flickSequence: [Pose] = [.tailUp, .rest, .tailUp, .rest]
+
+    /// 까딱 한 프레임의 길이(초).
+    public static let flickFrameDuration: Double = 0.14
+
+    /// 노치를 연 뒤 첫 까딱까지의 지연(초). 펼침 애니메이션이 끝난 뒤 반긴다.
+    public static let openFlickDelay: Double = 0.35
+
+    /// 열려 있는 동안 다음 까딱까지의 간격(초) 범위. 불규칙해야 기계적으로 보이지 않는다.
+    public static let idleFlickInterval: ClosedRange<Double> = 7...12
 
     /// 노치 상단 띠에서 한 픽셀의 크기(pt). 1.5pt는 Retina에서 정확히 3픽셀이라 흐려지지 않는다.
     public static let stripPixelSize: CGFloat = 1.5

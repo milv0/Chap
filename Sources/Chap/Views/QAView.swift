@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap의 마스코트인 아기 물범입니다. Focus가 꺼져 있을 때 노치 왼쪽 검정 띠에 엎드려 있고, Focus를 켜면 그 자리를 남은 시간에 양보합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap의 마스코트인 아기 물범입니다. Focus가 꺼져 있을 때 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 그 자리를 남은 시간에 양보합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
@@ -398,7 +398,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip while Focus is off and gives the spot to the Focus timer while Focus runs. It is just decoration, so clicking it does nothing."
+                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip while Focus is off, flicks its tail when you open the notch (it stays still with Reduce Motion on), and gives the spot to the Focus timer while Focus runs. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

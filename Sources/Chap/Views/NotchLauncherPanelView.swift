@@ -301,7 +301,7 @@ struct NotchLauncherPanelView: View {
             let sideWidth = NotchGeometry.stripPlateauSideWidth
             let notchHalf = stripPlateauHalfWidth - sideWidth
             GeometryReader { geo in
-                NotchMascotView()
+                NotchMascotView(isAnimating: reveal.revealed)
                     .position(
                         x: geo.size.width / 2 - notchHalf - sideWidth / 2,
                         y: topInset / 2)

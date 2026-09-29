@@ -19,8 +19,10 @@ Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
 (`ChapMascot`, three inks: navy outline, white body, blue-gray shade). It lies
 on the left of the notch's black strip whenever Focus is off, and gives the
 spot back to the Focus timer while Focus runs. It is decoration, never a
-control: it takes no clicks, carries no text, and VoiceOver skips it. Keep it
-calm and still; it is a friend resting nearby, not a pet asking for attention.
+control: it takes no clicks, carries no text, and VoiceOver skips it. Its only
+motion is a small tail flick when you open the notch, and now and then (every
+7–12 s) while it stays open; it holds still when the notch is closed or Reduce
+Motion is on. Keep it calm: a friend resting nearby, not a pet asking for attention.
 
 ## The name carries both meanings
 

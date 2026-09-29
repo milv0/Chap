@@ -660,9 +660,25 @@ struct NotchQuickNoteView: View {
 }
 
 /// Chap 마스코트(아기 물범). 픽셀마다 사각형을 칠해 어떤 배율에서도 도트가 선명하다.
+/// 노치를 열면 꼬리를 한 번 까딱하고, 열려 있는 동안 7~12초마다 가끔 까딱한다.
+/// `isAnimating`이 false(노치 닫힘)거나 동작 줄이기가 켜져 있으면 가만히 있다.
 /// 장식이므로 누를 수 없고 VoiceOver에서도 건너뛴다.
 struct NotchMascotView: View {
     var pixelSize: CGFloat = ChapMascot.stripPixelSize
+    var isAnimating = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pose: ChapMascot.Pose = .rest
+
+    /// 까딱 한 번을 재생한다. 취소되면 쉬는 자세로 돌아간다.
+    private func flick() async {
+        for next in ChapMascot.flickSequence {
+            pose = next
+            try? await Task.sleep(for: .seconds(ChapMascot.flickFrameDuration))
+            if Task.isCancelled { break }
+        }
+        pose = .rest
+    }
 
     /// 윤곽선은 검정 띠에서도 몸통 가장자리가 보이도록 아주 짙은 남색이다.
     private static func color(_ ink: ChapMascot.Ink) -> Color {
@@ -675,7 +691,7 @@ struct NotchMascotView: View {
 
     var body: some View {
         Canvas { context, _ in
-            for pixel in ChapMascot.pixels {
+            for pixel in ChapMascot.pixels(for: pose) {
                 let rect = CGRect(
                     x: CGFloat(pixel.x) * pixelSize, y: CGFloat(pixel.y) * pixelSize,
                     width: pixelSize, height: pixelSize)
@@ -688,5 +704,19 @@ struct NotchMascotView: View {
         )
         .accessibilityHidden(true)
         .allowsHitTesting(false)
+        // 열려 있는 동안에만 도는 루프. 닫히면 task가 취소되어 CPU를 쓰지 않는다.
+        .task(id: isAnimating && !reduceMotion) {
+            guard isAnimating, !reduceMotion else {
+                pose = .rest
+                return
+            }
+            try? await Task.sleep(for: .seconds(ChapMascot.openFlickDelay))
+            while !Task.isCancelled {
+                await flick()
+                let wait = Double.random(in: ChapMascot.idleFlickInterval)
+                try? await Task.sleep(for: .seconds(wait))
+            }
+            pose = .rest
+        }
     }
 }

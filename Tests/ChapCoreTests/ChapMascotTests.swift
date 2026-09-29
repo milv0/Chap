@@ -34,6 +34,31 @@ struct ChapMascotTests {
         #expect(ChapMascot.pixels.contains { $0.ink == .shade })
     }
 
+    @Test("the tail-up frame matches the grid and only changes the tail")
+    func tailUpFrame() {
+        #expect(ChapMascot.tailUpRows.count == 12)
+        #expect(ChapMascot.tailUpRows.allSatisfy { $0.count == 24 })
+        for (rest, up) in zip(ChapMascot.rows, ChapMascot.tailUpRows) {
+            // 머리와 몸통(왼쪽 19칸)은 두 프레임이 같다.
+            #expect(rest.prefix(19) == up.prefix(19))
+        }
+        #expect(ChapMascot.rows != ChapMascot.tailUpRows)
+        #expect(ChapMascot.pixels(for: .rest) == ChapMascot.pixels)
+        #expect(ChapMascot.pixels(for: .tailUp) == ChapMascot.tailUpPixels)
+    }
+
+    @Test("a flick lifts the tail twice and ends at rest")
+    func flickSequence() {
+        #expect(ChapMascot.flickSequence == [.tailUp, .rest, .tailUp, .rest])
+        #expect(ChapMascot.flickSequence.last == .rest)
+    }
+
+    @Test("idle flicks stay rare and quick")
+    func flickTiming() {
+        #expect(ChapMascot.idleFlickInterval.lowerBound >= 5)
+        #expect(ChapMascot.flickFrameDuration <= 0.2)
+    }
+
     @Test("the strip size lands on whole Retina pixels")
     func stripSizeIsCrisp() {
         #expect(ChapMascot.stripPixelSize * 2 == 3)
