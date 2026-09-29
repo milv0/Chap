@@ -43,6 +43,18 @@ final class MirrorCamera: @unchecked Sendable {
         }
     }
 
+    /// 미리보기 레이어를 세션에 연결한다. 연결은 세션 구성을 바꾸므로 start/stop과 같은
+    /// 직렬 큐에서 해야 한다. 메인 스레드에서 연결하는 동안 다른 스레드가 startRunning을
+    /// 부르면 AVFoundation이 NSFastEnumerationMutation 예외로 앱을 종료한다 (2.2.0 크래시).
+    /// 연결이 끝나면 메인 스레드에서 completion을 부른다.
+    func attach(_ layer: AVCaptureVideoPreviewLayer, completion: @escaping () -> Void) {
+        queue.async { [self] in
+            configureIfNeeded()
+            layer.session = session
+            DispatchQueue.main.async(execute: completion)
+        }
+    }
+
     func start() {
         queue.async { [self] in
             guard Self.access == .authorized else { return }
