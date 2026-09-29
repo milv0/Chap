@@ -1,6 +1,8 @@
 # Chap
 
-A macOS menubar app for quick-launching sites, apps, and folders with automatic window centering.
+**Your chap in the menu bar.** A friend that lives in your menu bar and notch: it opens your sites, apps, and folders and lands each window right where it belongs.
+
+> *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
 ![Version](https://img.shields.io/badge/version-2.3.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
@@ -248,6 +250,7 @@ The script signs the notarized DMG with the operator's Keychain-stored EdDSA pri
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 See [DESIGN.md](DESIGN.md) for app, Guide Window, and website color tokens.
+See [BRAND.md](BRAND.md) for Chap's identity (your friend in the menu bar), voice rules, and approved copy.
 
 The website's Product history is intentionally curated. Add an entry only when
 a release introduces a major user-facing capability or meaningfully changes a

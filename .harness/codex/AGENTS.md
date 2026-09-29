@@ -2,6 +2,11 @@
 
 Follow these instructions when working in this repository.
 
+**Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
+snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
+copy; controls stay plain, wit goes in secondary text, and Chap asks for as few
+permissions as possible.
+
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
@@ -107,6 +112,7 @@ Follow these files before making relevant changes:
 - `.harness/shared/rules/swift-testing.md`
 - `.harness/shared/rules/commit-convention.md`
 - `.harness/shared/rules/architecture-docs.md`
+- `.harness/shared/rules/brand-voice.md` (identity and copy; source of truth is `BRAND.md`)
 
 Important expectations:
 

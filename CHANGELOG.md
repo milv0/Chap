@@ -24,6 +24,9 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Your chap in the menu bar** — Chap now introduces itself as a friend: the
+  welcome screen says hello, About and the website share one line, and a new
+  BRAND.md keeps Chap's voice consistent.
 - **Roomier Quick Note** — Clicking the note icon now turns the widget row into a
   wide note across the notch, with a character count and a copy button. Click ×
   or the icon again to return to your widgets.

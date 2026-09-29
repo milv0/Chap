@@ -7,6 +7,11 @@ and centers resizable windows on the selected display. Alongside the status menu
 it offers an optional Notch Launcher (a six-slot panel with Chap Drop and a
 Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
+**Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
+snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
+copy; controls stay plain, wit goes in secondary text, and Chap asks for as few
+permissions as possible.
+
 ## Commands
 
 ```bash
@@ -79,6 +84,9 @@ bump version numbers by hand — the release script owns
 `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`.
 
 ## Rules
+
+- Follow `.harness/shared/rules/brand-voice.md` for any user-facing text; `BRAND.md` is the
+  source of truth for Chap's identity (your friend in the menu bar) and voice.
 
 - Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior;
   its invariants section lists past regressions.

@@ -145,6 +145,7 @@ Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
 ├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (.gitignore 대상)
 ├── ARCHITECTURE.txt               ← 구조·기능·API·이력 (이 문서)
+├── BRAND.md                       ← 앱 정체성(메뉴바 속 친구)·목소리 규칙·승인 문구 (문구의 기준)
 ├── DESIGN.md                     ← 앱·Guide Window·웹 색상 토큰 기준
 ├── FLOW.md                        ← 런타임 실행 흐름: 순서, 분기, 스레드, 타임아웃, 판정,
 │                                    불변 규칙, 알려진 이슈 (LLM 온보딩용)

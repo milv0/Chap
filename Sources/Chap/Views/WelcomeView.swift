@@ -10,9 +10,21 @@ struct WelcomeView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Text("Welcome to Chap")
-                .font(DS.titleFont)
-                .foregroundColor(DS.textPrimary)
+            // 정체성: 메뉴바 속 친구 (BRAND.md). 첫인사는 친구처럼 짧게.
+            VStack(spacing: 6) {
+                Text("Hi, I'm Chap.")
+                    .font(DS.titleFont)
+                    .foregroundColor(DS.textPrimary)
+                Text(
+                    "Your friend in the menu bar. Tell me what you open most, "
+                        + "and I'll bring it to the center of your screen."
+                )
+                .font(DS.bodyFont)
+                .foregroundColor(DS.textSecondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 360)
+            }
 
             VStack(spacing: 10) {
                 OnboardingCard(
