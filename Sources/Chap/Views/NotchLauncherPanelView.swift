@@ -296,6 +296,12 @@ struct NotchLauncherPanelView: View {
         return usesDarkCustomForeground ? .black.opacity(0.08) : .white.opacity(0.16)
     }
 
+    /// 키캡 글자: 본문색 80%. 옅은 회색보다 대비가 높아 3:1 이상을 지킨다.
+    private var keycapForeground: Color { primaryForeground.opacity(0.8) }
+
+    /// 키캡 바탕: 본문색 14%. 구분선용 `subtleSurface`(10%)보다 한 단계 진하다.
+    private var keycapBackground: Color { primaryForeground.opacity(0.14) }
+
     private var subtleSurface: Color {
         if usesSemanticGlass { return Color.primary.opacity(0.10) }
         return usesDarkCustomForeground ? .black.opacity(0.10) : .white.opacity(0.10)
@@ -413,25 +419,24 @@ struct NotchLauncherPanelView: View {
 
     private func sectionView(_ section: LauncherListSection) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            // 아이콘은 스캔 앵커. 배경과의 대비가 HIG 비텍스트 최소치에
-            // 미달하면(예: 파란 배경) 액센트 대신 흰색을 쓴다.
+            // 제목 아이콘은 제목과 같은 보조색 하나로 통일한다. 여러 파란색이
+            // 내용과 경쟁하지 않고, 제목은 굵기로 구분된다.
             HStack(spacing: 5) {
                 Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
-                    .font(DS.captionFont)
-                    .foregroundColor(accentForeground)
+                    .font(DS.notchLabel)
+                    .foregroundColor(secondaryForeground)
                 Text(Self.sectionTitle(section.launchType))
-                    .font(DS.captionFont.weight(.semibold))
+                    .font(DS.notchLabel)
                     .foregroundColor(secondaryForeground)
                 // 앱 배지는 글자만 보여주므로, 누를 수식키(⌥)는 제목 옆에 한 번만 표시한다.
                 if section.launchType == .app, LauncherListPolicy.hasShortcut(in: section) {
                     Text("⌥")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(secondaryForeground)
+                        .font(DS.notchMeta)
+                        .foregroundColor(keycapForeground)
                         .padding(.horizontal, 3.5)
-                        .padding(.vertical, 1)
                         .background(
                             RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(subtleSurface)
+                                .fill(keycapBackground)
                         )
                         .help("Hold Option and press the letter to launch")
                         .accessibilityLabel("Option-key shortcuts")
@@ -439,7 +444,7 @@ struct NotchLauncherPanelView: View {
             }
             .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
-            .padding(.bottom, 1)
+            .frame(height: DS.notchHeaderHeight)
 
             if section.launchType == .app {
                 appIconGrid(section)
@@ -467,8 +472,8 @@ struct NotchLauncherPanelView: View {
                 NotchAppIconTile(
                     entry: entry,
                     primaryForeground: primaryForeground,
-                    badgeForeground: primaryForeground,
-                    badgeBackground: subtleSurface,
+                    badgeForeground: keycapForeground,
+                    badgeBackground: keycapBackground,
                     hoverBackground: rowHoverBackground
                 ) {
                     onLaunch(entry.siteIndex)
@@ -490,16 +495,10 @@ struct NotchLauncherPanelView: View {
                 NotchLauncherRow(
                     entry: entry,
                     primaryForeground: primaryForeground,
-                    shortcutForeground: usesSemanticGlass
-                        ? Color.secondary
-                        : (usesDarkCustomForeground
-                            ? .black.opacity(0.5)
-                            : .white.opacity(
-                                NotchContrastPolicy.tertiaryTextOpacity(
-                                    backgroundHex: contrastBackgroundHex))),
+                    shortcutForeground: keycapForeground,
                     textShadowOpacity: textShadowOpacity,
                     hoverBackground: rowHoverBackground,
-                    keycapBackground: subtleSurface
+                    keycapBackground: keycapBackground
                 ) {
                     onLaunch(entry.siteIndex)
                 }
@@ -533,7 +532,7 @@ private struct NotchLauncherRow: View {
                 Text(entry.site.name)
                     // 목록 본문은 Apple 기본 계층대로 regular. 섹션 헤더만
                     // semibold를 유지해 Glass에서 글자가 과하게 무거워지지 않는다.
-                    .font(DS.bodyFont)
+                    .font(DS.notchBody)
                     .foregroundColor(primaryForeground)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
@@ -541,7 +540,7 @@ private struct NotchLauncherRow: View {
                 if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
                     // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
                     Text(badge)
-                        .font(DS.captionFont.weight(.medium))
+                        .font(DS.notchLabel)
                         .foregroundColor(shortcutForeground)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1.5)
@@ -613,7 +612,7 @@ struct NotchAppIconTile: View {
                     // Sites 목록의 키캡과 같은 모양(모서리 4pt). 글자만 크게 보여 읽기 쉽고,
                     // 아이콘 위에서도 읽히도록 반투명 재질을 깐다.
                     Text(key)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(DS.notchMeta.weight(.semibold))
                         .frame(minWidth: 10)
                         .foregroundColor(badgeForeground)
                         .padding(.horizontal, 3.5)
@@ -673,7 +672,10 @@ enum NotchDockStyle {
             Group {
                 switch material {
                 case .clear:
+                    // Clear는 뒤 화면이 그대로 비쳐 글자 대비가 떨어진다. 창 배경색(라이트는 흰색,
+                    // 다크는 검정 계열)을 얇게 깔아 투명감은 두고 가독성만 끌어올린다.
                     Color.clear.glassEffect(.clear, in: Rectangle())
+                        .overlay(Color(nsColor: .windowBackgroundColor).opacity(0.28))
                 case .regular:
                     Color.clear.glassEffect(.regular, in: Rectangle())
                 }

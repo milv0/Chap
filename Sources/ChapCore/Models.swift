@@ -404,7 +404,7 @@ public struct Config: Codable {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
-        notchGlassMaterial: NotchGlassMaterial = .clear,
+        notchGlassMaterial: NotchGlassMaterial = .regular,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -455,10 +455,11 @@ public struct Config: Codable {
         notchGlassAppearance =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassAppearance))
             .flatMap(NotchGlassAppearance.init(rawValue:)) ?? .system
-        // 알 수 없는 재질은 더 투명한 Clear로 취급한다 (관용 디코딩).
+        // 키가 없거나 알 수 없는 재질은 대비가 높은 Regular로 취급한다 (관용 디코딩).
+        // 이미 저장된 사용자 선택은 그대로 둔다.
         notchGlassMaterial =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassMaterial))
-            .flatMap(NotchGlassMaterial.init(rawValue:)) ?? .clear
+            .flatMap(NotchGlassMaterial.init(rawValue:)) ?? .regular
         // 범위 밖 값은 클램프, 타입이 어긋나면 기본값으로 취급한다 (관용 디코딩).
         let rawOpacity =
             (try? container.decodeIfPresent(Double.self, forKey: .notchPanelOpacity))

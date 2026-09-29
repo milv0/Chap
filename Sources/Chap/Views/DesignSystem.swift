@@ -27,6 +27,16 @@ enum DS {
     static let headlineFont = Font.system(size: 15, weight: .semibold)
     static let bodyFont = Font.system(size: 13)
     static let captionFont = Font.system(size: 11)
+
+    // 노치 글자 체계: 세 단계만 쓴다 (HIG macOS Body 13 / Subheadline 11 / Footnote 10).
+    /// 목록·메모 본문.
+    static let notchBody = Font.system(size: 13)
+    /// 섹션 제목·키캡.
+    static let notchLabel = Font.system(size: 11, weight: .semibold)
+    /// 저장 시각·아이콘 배지 같은 보조 정보. 노치의 최소 글자 크기.
+    static let notchMeta = Font.system(size: 10, weight: .medium)
+    /// 섹션 제목 줄 높이. 제목 옆 키캡 유무와 관계없이 모든 칸의 첫 줄이 맞는다.
+    static let notchHeaderHeight: CGFloat = 16
     static let monoFont = Font.system(size: 12, design: .monospaced)
 }
 

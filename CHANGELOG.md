@@ -22,6 +22,12 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **More legible notch** — Text uses three sizes (13, 11, and 10pt), section
+  icons share the heading color instead of competing blues, shortcut keys have
+  stronger contrast, and every row lines up at the same height. Screenshots show
+  a larger thumbnail and when they were taken ("5 min ago") instead of a cut-off
+  file name. Clear Glass gets a light veil for contrast, and new setups default
+  to Regular Glass.
 - **Six notch slots, no pages** — The notch now shows up to six widgets in one
   row, enough for every widget type, and the page dots and swipe from 2.1 are
   gone. Widgets placed on later pages move into the first free slots.

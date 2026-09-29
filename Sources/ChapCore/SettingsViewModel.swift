@@ -145,7 +145,7 @@ public final class SettingsViewModel: ObservableObject {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
-        notchGlassMaterial: NotchGlassMaterial = .clear,
+        notchGlassMaterial: NotchGlassMaterial = .regular,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,

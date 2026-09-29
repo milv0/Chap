@@ -138,10 +138,15 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 | 요소 | 어두운 Custom 배경 | 밝은 Custom 배경 | Glass |
 |---|---|---|---|
-| 섹션 아이콘 | 테마 블루 또는 흰색 | 테마 블루 또는 검정 (3:1 기준) | 테마 블루 |
-| 섹션 라벨 | 흰색 계층 | 검정 65% | semantic secondary |
-| 단축키 힌트 | 흰색 계층 | 검정 50% | semantic secondary |
+| 섹션 아이콘·라벨 | 흰색 보조 계층 | 검정 65% | semantic secondary |
+| 키캡 글자 / 바탕 | 본문색 80% / 14% | 본문색 80% / 14% | primary 80% / 14% |
 | 본문 텍스트 | 흰 96% + 그림자 | 검정 87%, 그림자 없음 | semantic primary |
+
+글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
+보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
+목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일과
+"5 min ago" 같은 상대 시각을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
 

@@ -20,15 +20,15 @@ struct NotchWidgetHeader: View {
     var body: some View {
         HStack(spacing: 5) {
             Image(systemName: symbol)
-                .font(DS.captionFont)
-                .foregroundColor(palette.accent)
+                .font(DS.notchLabel)
+                .foregroundColor(palette.secondary)
             Text(title)
-                .font(DS.captionFont.weight(.semibold))
+                .font(DS.notchLabel)
                 .foregroundColor(palette.secondary)
         }
         .shadow(color: .black.opacity(palette.textShadowOpacity), radius: 1.5, y: 0.5)
         .padding(.horizontal, 6)
-        .padding(.bottom, 1)
+        .frame(height: DS.notchHeaderHeight)
         .accessibilityAddTraits(.isHeader)
     }
 }
@@ -106,7 +106,7 @@ struct NotchMirrorView: View {
                     .font(.system(size: 30, weight: .light))
                     .foregroundColor(palette.primary.opacity(action == nil ? 0.5 : 0.9))
                 Text(caption)
-                    .font(DS.captionFont)
+                    .font(DS.notchLabel)
                     .foregroundColor(palette.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -205,7 +205,7 @@ struct NotchQuickNoteView: View {
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
                     Text("What's on your mind?")
-                        .font(DS.bodyFont)
+                        .font(DS.notchBody)
                         .foregroundColor(palette.secondary)
                         // TextEditor 본문 인셋(가로 5pt)에 맞춘다.
                         .padding(.leading, 5)
@@ -213,7 +213,7 @@ struct NotchQuickNoteView: View {
                         .accessibilityHidden(true)
                 }
                 TextEditor(text: $text)
-                    .font(DS.bodyFont)
+                    .font(DS.notchBody)
                     .foregroundColor(palette.primary)
                     .scrollContentBackground(.hidden)
                     .focused($isFocused)
@@ -225,7 +225,7 @@ struct NotchQuickNoteView: View {
             .overlay(alignment: .bottomTrailing) {
                 if let label = QuickNoteStore.savedLabel(for: lastSaved) {
                     Text(label)
-                        .font(.system(size: 10))
+                        .font(DS.notchMeta)
                         .foregroundColor(palette.secondary)
                         .padding(EdgeInsets(top: 0, leading: 6, bottom: 4, trailing: 7))
                         .accessibilityLabel(label)
