@@ -28,7 +28,9 @@ resting nearby, not a pet asking for attention.
 In the **Focus** slot the seal tells the Keep Awake story: it sleeps (closed
 eyes, z) while Focus is off, wakes with a tail flick when Focus starts, gets
 drowsy (heavy eyelids) in the last 30 minutes (Final stretch, Landing soon), and
-falls asleep again when Focus ends. There is only ever one seal on screen: when
+falls asleep again when Focus ends. While Focus runs its tail keeps wagging
+(slower once drowsy): the one steady motion Chap allows, because it means "I'm
+keeping your Mac awake". There is only ever one seal on screen: when
 the Focus slot is placed, the strip seal steps aside.
 
 ## The name carries both meanings

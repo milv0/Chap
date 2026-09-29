@@ -141,6 +141,16 @@ public enum ChapMascot {
     /// Focus 위젯에서 한 픽셀의 크기(pt). Retina에서 4픽셀.
     public static let widgetPixelSize: CGFloat = 2
 
+    /// Focus가 켜져 있는 동안 꼬리를 쉬지 않고 흔드는 한 프레임의 길이(초).
+    /// 졸릴 때는 느려지고, 잠들면 흔들지 않는다(nil).
+    public static func focusWagFrameDuration(for mood: FocusMood) -> Double? {
+        switch mood {
+        case .asleep: return nil
+        case .awake: return 0.4
+        case .drowsy: return 0.7
+        }
+    }
+
     /// 깨어 있을 때 깜빡임 간격(초)과 감은 시간(초).
     public static let blinkInterval: ClosedRange<Double> = 4...7
     public static let blinkDuration: Double = 0.15

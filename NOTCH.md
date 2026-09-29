@@ -192,9 +192,10 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 | 세션 | `focusMood` | 모습 |
 |---|---|---|
 | 꺼짐 | `.asleep` | 눈 감음(가로 두 칸 선), 머리 위 4×4 z가 3초마다 2.4초에 걸쳐 떠올라 흐려짐 |
-| 30분 이상 남음 | `.awake` | 눈 뜸, 깜빡임, 꼬리 까딱. 켜는 순간 0.35초 뒤 까딱으로 깸 |
-| 30분 미만 | `.drowsy` | 눈 위 그림자 눈꺼풀(`Eyes.drowsy`), 깜빡임·까딱 유지 |
+| 30분 이상 남음 | `.awake` | 눈 뜸, 깜빡임. 켜는 순간 0.35초 뒤 까딱으로 깨고, 이후 꼬리를 0.4초 프레임으로 계속 흔듦 |
+| 30분 미만 | `.drowsy` | 눈 위 그림자 눈꺼풀(`Eyes.drowsy`), 깜빡임, 꼬리를 0.7초 프레임으로 느리게 흔듦 |
 
+꼬리 속도는 `ChapMascot.focusWagFrameDuration(for:)`이며 Focus 칸(`wagsContinuously`)에만 적용된다. 띠 물범은 가끔 까딱 그대로다.
 경계 30분은 `KeepAwakePolicy.focusActiveLine`의 Final stretch와 같다. 동작 줄이기에서는 상태별 정지 모습만 바뀐다(잠든 물범은 z가 떠 있는 채).
 
 ## 도구 위젯: Mirror · Quick Note

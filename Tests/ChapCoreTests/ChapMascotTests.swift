@@ -119,6 +119,13 @@ struct ChapMascotFocusMoodTests {
         #expect(row[6] == "w")
     }
 
+    @Test("the tail wags while Focus runs, slower when drowsy, never asleep")
+    func focusWag() {
+        #expect(ChapMascot.focusWagFrameDuration(for: .asleep) == nil)
+        #expect(ChapMascot.focusWagFrameDuration(for: .awake) == 0.4)
+        #expect(ChapMascot.focusWagFrameDuration(for: .drowsy) == 0.7)
+    }
+
     @Test("the z is a 4x4 zig-zag and the widget size lands on Retina pixels")
     func zAndSize() {
         #expect(ChapMascot.sleepZRows == ["oooo", "..o.", ".o..", "oooo"])

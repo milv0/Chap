@@ -12,7 +12,8 @@ All notable changes to Chap are documented in this file.
   Focus timer while Focus runs.
 - **Seal in Focus** — The Focus slot shows the seal instead of the big bolt: it
   sleeps with a rising z while Focus is off, wakes with a tail flick when Focus
-  starts, blinks while it keeps watch, and gets drowsy in the last 30 minutes.
+  starts, wags its tail the whole time Focus runs (slower once drowsy), blinks
+  while it keeps watch, and gets drowsy in the last 30 minutes.
   When the Focus slot is placed, the strip seal steps aside so there is only one.
 
 ## [2.4.2] — 2026-09-29

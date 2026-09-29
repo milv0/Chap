@@ -111,7 +111,8 @@ struct NotchFocusView: View {
                 NotchMascotView(
                     pixelSize: ChapMascot.widgetPixelSize,
                     mood: ChapMascot.focusMood(remaining: remaining),
-                    isAnimating: isAnimating, zColor: palette.secondary)
+                    isAnimating: isAnimating, wagsContinuously: true,
+                    zColor: palette.secondary)
                 Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .monospacedDigit()
@@ -669,6 +670,8 @@ struct NotchMascotView: View {
     var pixelSize: CGFloat = ChapMascot.stripPixelSize
     var mood: ChapMascot.FocusMood = .awake
     var isAnimating = false
+    /// true면 깨어 있는 동안 꼬리를 쉬지 않고 흔든다(Focus 칸). false면 가끔 까딱(띠).
+    var wagsContinuously = false
     /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
     var zColor: Color = .secondary
 
@@ -729,10 +732,20 @@ struct NotchMascotView: View {
         .accessibilityHidden(true)
         .allowsHitTesting(false)
         // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
-        .task(id: [moves, mood != .asleep]) {
+        // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
+        .task(id: "\(moves)-\(mood)-\(wagsContinuously)") {
             pose = .rest
             guard moves, mood != .asleep else { return }
             try? await Task.sleep(for: .seconds(ChapMascot.openFlickDelay))
+            if wagsContinuously, let frame = ChapMascot.focusWagFrameDuration(for: mood) {
+                await flick()
+                while !Task.isCancelled {
+                    pose = pose == .rest ? .tailUp : .rest
+                    try? await Task.sleep(for: .seconds(frame))
+                }
+                pose = .rest
+                return
+            }
             while !Task.isCancelled {
                 await flick()
                 let wait = Double.random(in: ChapMascot.idleFlickInterval)
