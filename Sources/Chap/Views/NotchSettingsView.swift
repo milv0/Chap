@@ -149,14 +149,14 @@ struct NotchSettingsView: View {
                             .onChange(of: vm.notchWidgets) { _, _ in onSave() }
 
                             // Mirror는 칸이 아니라 도커 아래 줄 오른쪽 끝의 아이콘이다.
-                            Toggle("Show Mirror", isOn: $vm.notchMirrorEnabled)
+                            Toggle("Show Mirror Icon", isOn: $vm.notchMirrorEnabled)
                                 .help(
                                     "Show a camera mirror icon at the end of the notch's bottom row. "
                                         + "The camera turns on only when you click it."
                                 )
                                 .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
 
-                            Toggle("Show Quick Note", isOn: $vm.notchQuickNoteEnabled)
+                            Toggle("Show Quick Note Icon", isOn: $vm.notchQuickNoteEnabled)
                                 .help(
                                     "Show a note icon next to Mirror in the notch's top strip. "
                                         + "Click it to write across the notch, or open the note "

@@ -33,7 +33,7 @@ All notable changes to Chap are documented in this file.
 
 - **Quick Note in the top strip** — Quick Note moved out of the widget slots to a
   note icon right of Mirror in the notch's black strip. Click it and the note
-  opens just below, ready to type. Hide it with Show Quick Note in Settings.
+  opens just below, ready to type. Hide it with Show Quick Note Icon in Settings.
 - **Minimum notch width** — The open notch is at least 640pt wide and centers the
   widget row, so a few widgets no longer squeeze it against the notch.
 - **Drop box always visible when open** — The open notch shows the Drop box in
@@ -70,7 +70,7 @@ All notable changes to Chap are documented in this file.
 - **Mirror** — A webcam icon in the black strip beside the notch, next to the
   Drop badge. Click it and your camera, flipped like a mirror, pops open just
   below the strip; nothing is recorded and Chap asks for camera access only the first
-  time. Hide it with Show Mirror in Settings → Notch.
+  time. Hide it with Show Mirror Icon in Settings → Notch.
 - **Quick Note widget** — Type a plain-text note right in the notch. It saves
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.

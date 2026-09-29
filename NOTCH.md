@@ -145,7 +145,7 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
 보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
 목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
-"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 고정폭 숫자)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 10pt 보조색·고정폭 숫자, 다운로드 칸과 같은 크기)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
@@ -189,8 +189,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
     × (위젯으로). 분리 창(`QuickNoteWindow`)은 floating·크기 조절·위치 기억(420×320 기본, 280×180 최소)이며, 창이 열려
     있는 동안 띠 아이콘은 그 창을 앞으로 가져온다. 분리 직전 flush하고 창은 같은 직렬 큐에서 읽어 입력을 놓치지 않는다.
   아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
-  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`)와
-  **Show Quick Note**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
+  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror Icon**(`notchMirrorEnabled`)와
+  **Show Quick Note Icon**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
 - **Quick Note 입력**: 13pt 본문 `TextEditor`, 0.5s debounce 후 직렬 큐 저장, `willHidePanel` 때 flush.
   입력 중에는 마우스가 벗어나도 닫지 않고 Esc 또는 key 상실로 끝낸다. 패널은 `NotchKeyablePanel`이다.
 

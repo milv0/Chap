@@ -119,7 +119,7 @@ struct NotchLauncherPanelView: View {
             // 썸네일 34 + 간격 6 + 시각 문구 + Spacer 앞 간격 6 + 좌우 여백 12.
             let label =
                 ["88 min ago", "Yesterday", "88 hr ago"]
-                .map(NotchTextMetrics.bodyWidth).max() ?? 0
+                .map(NotchTextMetrics.metaWidth).max() ?? 0
             let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
@@ -982,10 +982,16 @@ struct PressedStripShape: Shape {
 enum NotchTextMetrics {
     private static let body = NSFont.systemFont(ofSize: 13)
     private static let label = NSFont.systemFont(ofSize: 11, weight: .semibold)
+    private static let meta = NSFont.systemFont(ofSize: 10, weight: .medium)
 
     static func bodyWidth(_ text: String) -> CGFloat {
         // SwiftUI 렌더링은 AppKit 측정보다 1~2pt 넓게 그리므로 여유를 둔다.
         ceil((text as NSString).size(withAttributes: [.font: body]).width) + 3
+    }
+
+    /// 보조 정보(10pt medium) 폭. 스크린샷·다운로드 칸의 시각 문구에 쓴다.
+    static func metaWidth(_ text: String) -> CGFloat {
+        ceil((text as NSString).size(withAttributes: [.font: meta]).width) + 2
     }
 
     static func labelWidth(_ text: String) -> CGFloat {
