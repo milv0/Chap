@@ -54,13 +54,18 @@ struct NotchRenderTool {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
             }
             for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
+            // 캐시가 비워질 수 있으니 그리기 직전에 한 번 더 채운다.
+            for site in config.sites where site.launchType == .app {
+                if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
+            }
             let reveal = NotchRevealModel()
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
-                minWidth: 265, topInset: 32, stripPlateauHalfWidth: 92.5 + 110,
+                minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
+                stripPlateauHalfWidth: 92.5 + 110,
                 awakeSessionEnd: nil, style: style, glassMaterial: config.notchGlassMaterial,
                 slots: slots, showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },

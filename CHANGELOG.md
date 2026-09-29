@@ -9,6 +9,8 @@ All notable changes to Chap are documented in this file.
 - **Quick Note in the top strip** — Quick Note moved out of the widget slots to a
   note icon right of Mirror in the notch's black strip. Click it and the note
   opens just below, ready to type. Hide it with Show Quick Note in Settings.
+- **Minimum notch width** — The open notch is at least 640pt wide and centers the
+  widget row, so a few widgets no longer squeeze it against the notch.
 - **Tighter strip icons** — Mirror now sits right next to the Drop badge instead
   of leaving a wide gap.
 

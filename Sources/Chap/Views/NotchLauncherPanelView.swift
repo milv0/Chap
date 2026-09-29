@@ -391,6 +391,8 @@ struct NotchLauncherPanelView: View {
             }
             // 칸 높이를 가장 긴 칸의 이상 높이로 고정해 무한 확장을 막는다.
             .fixedSize(horizontal: false, vertical: true)
+            // 도커가 최소 폭보다 좁은 내용을 담으면 위젯 줄을 가운데에 둔다.
+            .frame(maxWidth: .infinity, alignment: .center)
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.

@@ -59,7 +59,6 @@ final class NotchLauncherController {
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
 
-    private static let panelMinWidth: CGFloat = 300
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
     /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
     private static let badgeLevel = NSWindow.Level(
@@ -288,7 +287,7 @@ final class NotchLauncherController {
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
         let inset = screen.safeAreaInsets.top
         let notchWidth = Self.notchRect(on: screen).width
-        let minWidth = max(notchWidth + 80, Self.panelMinWidth)
+        let minWidth = NotchLauncherPolicy.dockMinWidth(notchWidth: notchWidth)
 
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()

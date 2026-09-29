@@ -50,6 +50,15 @@ public enum NotchLauncherPolicy {
             height: notchRect.height)
     }
 
+    /// 펼친 도커의 최소 폭. 위젯이 적어도 노치 양옆 상태 영역(Keep Awake 시계, Drop·Mirror·
+    /// Quick Note 아이콘)을 넉넉히 감싸고, 칸이 두세 개뿐일 때 도커가 노치에 붙어 보이지 않게 한다.
+    public static let dockMinimumWidth: CGFloat = 640
+
+    /// 노치 폭 기준 최소 도커 폭: 노치 + 양쪽 상태 영역(110pt씩) + 여유, 그리고 `dockMinimumWidth` 중 큰 값.
+    public static func dockMinWidth(notchWidth: CGFloat) -> CGFloat {
+        max(notchWidth + 2 * NotchGeometry.stripPlateauSideWidth + 80, dockMinimumWidth)
+    }
+
     /// 상단 띠 도구 아이콘(Mirror, Quick Note)의 누름 폭과 간격.
     public static let stripToolPitch: CGFloat = 28
 

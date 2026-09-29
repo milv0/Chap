@@ -172,3 +172,13 @@ struct NotchToolWidgetDecodingTests {
         #expect(NotchWidget(rawValue: "mirror") == nil)
     }
 }
+
+@Suite("Notch dock width")
+struct NotchDockWidthTests {
+    @Test("the dock never shrinks below 640pt or the notch plus both status areas")
+    func minimumWidth() {
+        #expect(NotchLauncherPolicy.dockMinWidth(notchWidth: 185) == 640)
+        let wide = NotchLauncherPolicy.dockMinWidth(notchWidth: 520)
+        #expect(wide == 820, "got \(wide)")
+    }
+}
