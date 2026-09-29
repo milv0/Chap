@@ -18,7 +18,7 @@ public enum NotchGeometry {
     /// 노치 좌우에 확보하는 평평한 검정 plateau 영역 폭.
     /// 왼쪽은 Keep Awake 상태, 오른쪽은 Drop 배지와 향후 상태 표시에 쓴다.
     public static let stripPlateauSideWidth: CGFloat = 110
-    /// 메인 도커 왼쪽 상태 영역 안의 커피+시간 묶음 광학 보정.
+    /// 메인 도커 왼쪽 상태 영역 안의 번개+시간 묶음 광학 보정.
     /// h:mm:ss가 h:mm보다 약 20pt 넓어져 아이콘이 왼쪽으로 밀리는 것을
     /// 반폭(약 10pt)만큼 보상해 기존 아이콘 위치를 유지한다.
     public static let awakeStatusOffsetX: CGFloat = -2
