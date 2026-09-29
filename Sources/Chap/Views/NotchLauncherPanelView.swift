@@ -57,12 +57,13 @@ struct NotchLauncherPanelView: View {
 
     static let columnWidth: CGFloat = 160
 
-    /// Apps 아이콘 칸 폭: 2열 격자 + 좌우 여백만큼만 쓴다. 목록 칸 폭(160pt)을 쓰면
-    /// 아이콘 오른쪽이 절반 가까이 비어 보인다.
+    /// Apps 칸 폭: 제목 줄("Apps" + ⌥ 키캡)이 잘리지 않는 폭(96pt)과 2열 격자 폭 중 큰 값.
+    /// 격자는 이 폭 안에서 가운데 정렬한다.
     static var appGridColumnWidth: CGFloat {
         let columns = CGFloat(LauncherListPolicy.appIconColumns)
-        return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
-            + 4
+        let grid =
+            columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap + 4
+        return max(grid, 96)
     }
 
     private func width(for slot: NotchSlotContent) -> CGFloat {
@@ -428,6 +429,7 @@ struct NotchLauncherPanelView: View {
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.notchLabel)
                     .foregroundColor(secondaryForeground)
+                    .fixedSize()
                 // 앱 배지는 글자만 보여주므로, 누를 수식키(⌥)는 제목 옆에 한 번만 표시한다.
                 if section.launchType == .app, LauncherListPolicy.hasShortcut(in: section) {
                     Text("⌥")
@@ -462,7 +464,7 @@ struct NotchLauncherPanelView: View {
                 repeating: GridItem(
                     .fixed(NotchAppIconTile.tileSize), spacing: NotchAppIconTile.columnGap),
                 count: LauncherListPolicy.appIconColumns),
-            alignment: .leading, spacing: NotchAppIconTile.rowGap
+            alignment: .center, spacing: NotchAppIconTile.rowGap
         ) {
             ForEach(
                 section.entries.prefix(
@@ -480,8 +482,9 @@ struct NotchLauncherPanelView: View {
                 }
             }
         }
-        .padding(.horizontal, 2)
-        // 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
+        .fixedSize(horizontal: true, vertical: false)
+        // 칸 폭 안에서 가운데, 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
+        .frame(maxWidth: .infinity)
         .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
     }
 

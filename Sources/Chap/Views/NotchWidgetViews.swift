@@ -216,6 +216,8 @@ struct NotchQuickNoteView: View {
                     .font(DS.notchBody)
                     .foregroundColor(palette.primary)
                     .scrollContentBackground(.hidden)
+                    // 스크롤 막대 트랙이 상자 안에 상시 보이지 않게 한다 (트랙패드 스크롤은 유지).
+                    .scrollIndicators(.never)
                     .focused($isFocused)
                     .disabled(!didLoad)
                     .accessibilityLabel("Quick Note")
