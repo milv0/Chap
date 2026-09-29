@@ -22,6 +22,7 @@ Sources/
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
+│   ├── QuickNoteWindow.swift      ← 노치에서 분리한 floating Quick Note 창 (크기·위치 기억)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기

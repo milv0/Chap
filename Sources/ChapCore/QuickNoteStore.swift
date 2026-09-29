@@ -53,6 +53,19 @@ public struct QuickNoteStore: Sendable {
         return clamped
     }
 
+    /// 메모 도구 줄의 글자 수 표시. 상한의 90%를 넘으면 남은 여유가 보이도록 상한도 함께 적는다.
+    public static func characterCountLabel(_ count: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US")
+        formatter.numberStyle = .decimal
+        let value = formatter.string(from: NSNumber(value: count)) ?? "\(count)"
+        if count * 10 >= maxLength * 9 {
+            let limit = formatter.string(from: NSNumber(value: maxLength)) ?? "\(maxLength)"
+            return "\(value) / \(limit) chars"
+        }
+        return count == 1 ? "1 char" : "\(value) chars"
+    }
+
     public static func clamped(_ text: String) -> String {
         text.count > maxLength ? String(text.prefix(maxLength)) : text
     }

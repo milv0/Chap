@@ -2,6 +2,20 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Roomier Quick Note** — Clicking the note icon now turns the widget row into a
+  wide note across the notch, with a character count and a copy button. Click ×
+  or the icon again to return to your widgets.
+
+### Added
+
+- **Quick Note window** — Open the note in its own floating, resizable window
+  from the note toolbar. It stays above other windows while the notch is closed
+  and remembers its size and position.
+
 ## [2.3.0] — 2026-09-29
 
 ### Added

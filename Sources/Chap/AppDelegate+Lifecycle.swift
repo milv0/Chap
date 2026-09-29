@@ -54,6 +54,9 @@ extension AppDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // 메모를 쓰던 중 종료해도 마지막 입력이 남도록 대기 중인 저장을 끝까지 쓴다.
+        NotificationCenter.default.post(name: NotchQuickNoteView.flushRequest, object: nil)
+        NotchQuickNoteView.drainPendingSaves()
         globalHotKeyManager.stop()
         pendingScreenRefresh?.cancel()
         pendingScreenRefresh = nil

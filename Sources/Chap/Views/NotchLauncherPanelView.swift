@@ -36,6 +36,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var isDropTargetActive = false
     /// ⌥를 누르고 있는 동안. 키캡이 강조되고 "⌥1"처럼 수식키를 함께 보여준다.
     @Published var isOptionHeld = false
+    /// 메모 모드: 위젯 줄 자리를 넓은 Quick Note 편집기로 바꾼다. 도커를 열 때마다 꺼진 채 시작한다.
+    @Published var isNoteMode = false
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -78,6 +80,8 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
+    /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
+    static let noteModeHeight: CGFloat = 200
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
@@ -204,7 +208,8 @@ struct NotchLauncherPanelView: View {
                     besideDropBadge: true,
                     showsEmptyDropBox: dropFiles.isEmpty,
                     showsMirror: showsMirror,
-                    showsNote: showsNote)
+                    showsNote: showsNote,
+                    isNoteMode: $reveal.isNoteMode)
             }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
@@ -393,6 +398,30 @@ struct NotchLauncherPanelView: View {
             .fixedSize(horizontal: false, vertical: true)
             // 도커가 최소 폭보다 좁은 내용을 담으면 위젯 줄을 가운데에 둔다.
             .frame(maxWidth: .infinity, alignment: .center)
+            // 메모 모드: 위젯 줄 자리를 도커 폭 전체의 넓은 메모장으로 바꾼다. 높이가 늘면
+            // 컨트롤러가 창을 다시 맞춘다 (`resizePanelToFit`).
+            .frame(minHeight: reveal.isNoteMode ? Self.noteModeHeight : 0, alignment: .top)
+            .opacity(reveal.isNoteMode ? 0 : 1)
+            .allowsHitTesting(!reveal.isNoteMode)
+            .accessibilityHidden(reveal.isNoteMode)
+            .overlay {
+                if reveal.isNoteMode {
+                    GeometryReader { geo in
+                        NotchQuickNoteView(
+                            palette: widgetPalette, showsHeader: false,
+                            bodyHeight: max(geo.size.height - DS.notchHeaderHeight - 7, 60),
+                            focusesOnAppear: true,
+                            toolbar: NotchQuickNoteToolbar(
+                                onDetach: {
+                                    QuickNoteWindow.show()
+                                    NotificationCenter.default.post(
+                                        name: NotchLauncherController.requestClose, object: nil)
+                                },
+                                onClose: { reveal.isNoteMode = false }))
+                    }
+                    .transition(.opacity)
+                }
+            }
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.

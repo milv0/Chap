@@ -157,7 +157,8 @@ struct NotchSettingsView: View {
                             Toggle("Show Quick Note", isOn: $vm.notchQuickNoteEnabled)
                                 .help(
                                     "Show a note icon next to Mirror in the notch's top strip. "
-                                        + "Click it to open your note."
+                                        + "Click it to write across the notch, or open the note "
+                                        + "in its own window from there."
                                 )
                                 .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
                         }

@@ -182,7 +182,10 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   첫 도구는 항상 상자 바로 오른쪽에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
   Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
   - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
-  - Quick Note: 240×128 어두운 카드 안에서 메모를 바로 입력한다(펼치면 커서가 들어간다).
+  - Quick Note: 팝업이 아니라 **메모 모드**다. 누르면 위젯 줄 자리가 도커 폭 전체의 메모장(줄 높이 200pt)으로 바뀌고
+    컨트롤러가 창 높이를 다시 맞춘다(`resizePanelToFit`). 도구 줄: 제목, 글자 수(`characterCountLabel`), 복사, 창으로 분리,
+    × (위젯으로). 분리 창(`QuickNoteWindow`)은 floating·크기 조절·위치 기억(420×320 기본, 280×180 최소)이며, 창이 열려
+    있는 동안 띠 아이콘은 그 창을 앞으로 가져온다. 분리 직전 flush하고 창은 같은 직렬 큐에서 읽어 입력을 놓치지 않는다.
   아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
   패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`)와
   **Show Quick Note**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.

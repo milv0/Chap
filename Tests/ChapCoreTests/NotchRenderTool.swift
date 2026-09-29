@@ -45,6 +45,7 @@ struct NotchRenderTool {
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
             ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-empty-drop", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-note", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
@@ -64,6 +65,7 @@ struct NotchRenderTool {
             let reveal = NotchRevealModel()
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
+            reveal.isNoteMode = name.hasSuffix("-note")
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(

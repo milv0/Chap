@@ -1,4 +1,5 @@
 import Cocoa
+import Combine
 import SwiftUI
 
 /// 노치 아래에 런처 목록 패널을 띄우는 컨트롤러.
@@ -19,6 +20,8 @@ final class NotchLauncherController {
     static let didClickPanel = Notification.Name("ChapNotchDidClickPanel")
     /// 공유 메뉴 같은 시스템 팝업이 떠 있는 동안 도커를 고정/해제한다. object는 Bool(고정 여부).
     static let setSharingPinned = Notification.Name("ChapNotchSetSharingPinned")
+    /// 도커 안 UI(메모 분리 등)가 도커를 닫아 달라고 요청한다.
+    static let requestClose = Notification.Name("ChapNotchRequestClose")
 
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
@@ -45,6 +48,9 @@ final class NotchLauncherController {
     /// 공유 메뉴가 떠 있는 동안: 마우스가 밖으로 나가도 닫지 않는다.
     private var isSharingPinned = false
     private var sharingPinObserver: NSObjectProtocol?
+    private var closeRequestObserver: NSObjectProtocol?
+    /// 메모 모드가 바뀌면 창 높이를 새 내용에 맞춘다.
+    private var noteModeCancellable: AnyCancellable?
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
@@ -80,6 +86,24 @@ final class NotchLauncherController {
     private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
+    /// 열린 도커 창을 현재 SwiftUI 내용 크기에 다시 맞춘다 (메모 모드 전환 등).
+    /// 상단은 항상 화면 최상단에 붙인다. 계산은 `showPanel`과 같은 규칙을 쓴다.
+    private func resizePanelToFit() {
+        guard let panel, let hosting = panel.contentView, let screen = Self.notchScreen()
+        else { return }
+        hosting.layoutSubtreeIfNeeded()
+        let inset = screen.safeAreaInsets.top
+        let fitting = hosting.fittingSize
+        var frame = NotchLauncherPolicy.panelFrame(
+            screenFrame: screen.frame,
+            topSafeAreaInset: inset,
+            contentSize: CGSize(width: ceil(fitting.width), height: ceil(fitting.height) - inset))
+        frame = frame.integral
+        frame.origin.y = screen.frame.maxY - frame.height
+        panel.setFrame(frame, display: true)
+        lastInsideDate = Date()
+    }
+
     func update(enabled: Bool) {
         guard let screen = Self.notchScreen(),
             NotchLauncherPolicy.shouldPresent(
@@ -100,6 +124,7 @@ final class NotchLauncherController {
         badgeRefreshToken += 1
         isPreviewPinned = false
         revealModel = nil
+        noteModeCancellable = nil
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -359,6 +384,11 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
+        noteModeCancellable = reveal.$isNoteMode.dropFirst().removeDuplicates().sink {
+            [weak self] _ in
+            // @Published는 값이 바뀌기 전에 알린다. 다음 틱에 새 레이아웃으로 잰다.
+            DispatchQueue.main.async { self?.resizePanelToFit() }
+        }
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -499,12 +529,21 @@ final class NotchLauncherController {
         resignKeyObserver = nil
         if let sharingPinObserver { NotificationCenter.default.removeObserver(sharingPinObserver) }
         sharingPinObserver = nil
+        if let closeRequestObserver {
+            NotificationCenter.default.removeObserver(closeRequestObserver)
+        }
+        closeRequestObserver = nil
         isSharingPinned = false
     }
 
     /// 띠 팝업(Quick Note·Mirror) 바깥을 누르거나 다른 앱을 누르면 팝업을 접게 알린다.
     /// 클릭 이벤트는 그대로 흘려보내 아래 위젯도 평소처럼 반응한다.
     private func startSharingPinObserver() {
+        closeRequestObserver = NotificationCenter.default.addObserver(
+            forName: Self.requestClose, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.hidePanel()
+        }
         sharingPinObserver = NotificationCenter.default.addObserver(
             forName: Self.setSharingPinned, object: nil, queue: .main
         ) { [weak self] note in
@@ -583,6 +622,7 @@ final class NotchLauncherController {
         panel?.orderOut(nil)
         panel = nil
         revealModel = nil
+        noteModeCancellable = nil
     }
 
     private func hidePanel() {
@@ -602,6 +642,7 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
+        noteModeCancellable = nil
         DispatchQueue.main.asyncAfter(
             deadline: .now() + NotchLauncherPanelView.closeDuration + 0.02
         ) { [weak self] in
