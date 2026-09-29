@@ -562,7 +562,7 @@ struct NotchLauncherPanelView: View {
         switch launchType {
         case .url: return "Sites"
         case .app: return "Apps"
-        case .finder: return "Folders"
+        case .finder: return "Finder"
         }
     }
 }
@@ -673,7 +673,7 @@ struct NotchAppIconTile: View {
         _icon = State(initialValue: entry.site.appPath.flatMap(AppIconLoader.cachedIcon))
     }
 
-    // 격자 3줄(앱 6개)의 높이를 목록 칸 4줄(Sites·Folders 최대)과 정확히 맞춘다.
+    // 격자 3줄(앱 6개)의 높이를 목록 칸 4줄(Sites·Finder 최대)과 정확히 맞춘다.
     // 목록 한 줄 = 13pt 본문 줄 높이 16pt + 위아래 여백 5pt씩, 줄 간격 3pt.
     static let listRowHeight: CGFloat = 26
     static let listRowSpacing: CGFloat = 3

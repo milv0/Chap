@@ -17,28 +17,30 @@ All notable changes to Chap are documented in this file.
 - **App icons in the notch** — The Apps widget shows your apps as a two-column
   grid of icons that uses only the rows it needs, with the shortcut letter on
   apps that have one and a single ⌥ next to the Apps title. Hover for the name; click to launch.
-- **Six apps** — You can now add up to six apps (Sites and Folders stay at
+- **Six apps** — You can now add up to six apps (Sites and Finder stay at
   four), so the Apps icon grid can fill three rows.
 
 ### Changed
 
+- **Finder naming** — The notch widget and section formerly called Folders are
+  now called Finder, matching the Finder launch type in Settings and the menu.
 - **More legible notch** — Text uses three sizes (13, 11, and 10pt), section
   icons share the heading color instead of competing blues, shortcut keys have
   stronger contrast, and every row lines up at the same height. Screenshots show
   a larger thumbnail and when they were taken ("5 min ago") instead of a cut-off
   file name. Clear Glass gets a light veil for contrast, and new setups default
   to Regular Glass.
-- **Edit from the notch** — Click the Sites, Apps, or Folders title in the notch
+- **Edit from the notch** — Click the Sites, Apps, or Finder title in the notch
   to open Settings with that list selected.
 - **Plain app launch from the notch** — Clicking an app without a shortcut in
   the notch opens it as-is, without resizing. Apps with a shortcut, Sites, and
-  Folders still open centered at their saved size, as do all status-menu and
+  Finder still open centered at their saved size, as do all status-menu and
   Option-shortcut launches.
 - **Cleaner shortcut keys** — Sites and Apps show just the key (1, N). Hold
   Option while the notch is open and every keycap turns blue and shows the full
   shortcut (⌥1, ⌥N). Tooltips and VoiceOver always include Option.
 - **Right-sized notch columns** — Each widget column now fits its content
-  (Sites and Folders 112–170pt, Mirror 104pt, Apps to its icon grid), making
+  (Sites and Finder 112–170pt, Mirror 104pt, Apps to its icon grid), making
   the dock noticeably narrower. Headings are brighter, the Apps title no longer
   carries an extra ⌥ key, and dropped files show as a compact row of icons with
   one-line names.

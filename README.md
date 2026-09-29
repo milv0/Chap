@@ -137,11 +137,11 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Folders, Screenshots, Mirror, or Quick Note into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Mirror, or Quick Note into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
-The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut keys on Sites and Apps show just the key (`1`, `N`); hold Option while the dock is open and they light up as `⌥1`, `⌥N`; hover for the name and click to launch. Sites and Folders stay as lists. Click the Sites, Apps, or Folders title to edit that list in Settings.
+The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut keys on Sites and Apps show just the key (`1`, `N`); hold Option while the dock is open and they light up as `⌥1`, `⌥N`; hover for the name and click to launch. Sites and Finder stay as lists. Click the Sites, Apps, or Finder title to edit that list in Settings.
 
 **Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you close the dock or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
 

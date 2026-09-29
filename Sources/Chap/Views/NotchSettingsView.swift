@@ -57,7 +57,7 @@ struct NotchSettingsView: View {
         switch widget {
         case .sites: return "Sites"
         case .apps: return "Apps"
-        case .folders: return "Folders"
+        case .folders: return "Finder"
         case .screenshots: return "Screenshots"
         case .mirror: return "Mirror"
         case .note: return "Quick Note"
@@ -338,7 +338,7 @@ private struct WidgetSlotBox: View {
         .contextMenu {
             Button("Sites") { onAssign(.sites) }
             Button("Apps") { onAssign(.apps) }
-            Button("Folders") { onAssign(.folders) }
+            Button("Finder") { onAssign(.folders) }
             Button("Screenshots") { onAssign(.screenshots) }
             Button("Mirror") { onAssign(.mirror) }
             Button("Quick Note") { onAssign(.note) }
@@ -350,7 +350,7 @@ private struct WidgetSlotBox: View {
         // VoiceOver rotor actions: drag/drop 없이 배치·비우기 가능.
         .accessibilityAction(named: "Place Sites") { onAssign(.sites) }
         .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
-        .accessibilityAction(named: "Place Folders") { onAssign(.folders) }
+        .accessibilityAction(named: "Place Finder") { onAssign(.folders) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
         .accessibilityAction(named: "Place Mirror") { onAssign(.mirror) }
         .accessibilityAction(named: "Place Quick Note") { onAssign(.note) }

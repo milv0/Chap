@@ -104,7 +104,7 @@ search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-six slots (Sites, Apps, Folders, Screenshots, Mirror, or Quick Note). It is an additive
+six slots (Sites, Apps, Finder, Screenshots, Mirror, or Quick Note). It is an additive
 surface — the status-bar `NSMenu` is always available, including on notchless
 Macs. Chap Drop copies dropped files into
 `~/Library/Application Support/Chap/Drop/` (originals untouched) and the
