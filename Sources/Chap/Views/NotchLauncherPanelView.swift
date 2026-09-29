@@ -540,8 +540,9 @@ private struct NotchAppIconTile: View {
     @State private var isHovered = false
 
     private static let iconSize: CGFloat = 34
-    /// 타일 한 변: 아이콘 + 호버 배경 여백.
-    static let tileSize: CGFloat = iconSize + 10
+    /// 타일 한 변: 아이콘 + 호버 배경 여백. macOS 앱 아이콘은 가장자리에 약 10%의
+    /// 투명 여백이 있어, 타일 여백을 크게 잡으면 아이콘 사이가 실제보다 넓어 보인다.
+    static let tileSize: CGFloat = iconSize + 4
     /// 타일 사이 간격.
     static let gap: CGFloat = 2
 
