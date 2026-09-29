@@ -95,7 +95,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
                 path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
-        case .shell: ShellLauncher.launch(site)
         }
     }
 }

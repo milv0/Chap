@@ -222,7 +222,6 @@ struct LaunchTypeTests {
 
         #expect(site.launchType == .url)
         #expect(site.appPath == nil)
-        #expect(site.script == nil)
     }
 
     @Test func decodesAppType() throws {
@@ -234,30 +233,15 @@ struct LaunchTypeTests {
         #expect(site.appPath == "/Applications/Slack.app")
     }
 
-    @Test func decodesShellType() throws {
-        let json =
-            #"{"name":"Deploy","url":"","width":800,"height":600,"x":0,"y":0,"launchType":"shell","script":"echo hello"}"#
-        let site = try JSONDecoder().decode(Site.self, from: Data(json.utf8))
-
-        #expect(site.launchType == .shell)
-        #expect(site.script == "echo hello")
+    @Test func removedShellTypeIsNotALaunchType() {
+        #expect(LaunchType(rawValue: LaunchType.removedShellRawValue) == nil)
+        #expect(LaunchType.allCases == [.url, .app, .finder])
     }
 
     @Test func roundTripsAppType() throws {
         let original = Site(
             name: "App", url: "", width: 800, height: 600,
             launchType: .app, appPath: "/Applications/Safari.app")
-
-        let data = try JSONEncoder().encode(original)
-        let decoded = try JSONDecoder().decode(Site.self, from: data)
-
-        #expect(decoded == original)
-    }
-
-    @Test func roundTripsShellType() throws {
-        let original = Site(
-            name: "Script", url: "", width: 800, height: 600,
-            launchType: .shell, script: "ls -la\necho done")
 
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(Site.self, from: data)
@@ -299,11 +283,5 @@ struct WindowSizePresetTests {
                 == InitialWindowSizeRecommendation(
                     widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil,
                     sizePresetID: WindowSizePresets.compact.id))
-        #expect(
-            InitialWindowSizeRecommendations.recommendation(for: .shell)
-                == InitialWindowSizeRecommendation(
-                    widthRatio: 0.66, heightRatio: 0.66,
-                    aspectRatio: Defaults.defaultWindowAspectRatio,
-                    sizePresetID: WindowSizePresets.standard.id))
     }
 }

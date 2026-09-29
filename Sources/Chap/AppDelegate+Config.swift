@@ -42,6 +42,29 @@ extension AppDelegate {
         }
     }
 
+    /// 2.1 Shell 제거 마이그레이션 결과를 한 번 알린다. 파일이 다시 쓰였으므로
+    /// 다음 실행부터는 뜨지 않는다 (백업 실패로 파일을 못 바꾼 경우만 반복).
+    private func showShellRemovalNotice(removedNames: [String], backupPath: String?) {
+        Log.config.info(
+            "Removed \(removedNames.count, privacy: .public) Shell launchables during config load")
+        DispatchQueue.main.async {
+            let alert = NSAlert()
+            alert.messageText = ShellRemovalNotice.title
+            alert.informativeText = ShellRemovalNotice.migrationMessage(
+                removedNames: removedNames, backupPath: backupPath)
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "OK")
+            if backupPath != nil {
+                alert.addButton(withTitle: "Show Backup in Finder")
+            }
+            if alert.runModal() == .alertSecondButtonReturn, let backupPath {
+                NSWorkspace.shared.activateFileViewerSelecting([
+                    URL(fileURLWithPath: backupPath)
+                ])
+            }
+        }
+    }
+
     func loadConfig() {
         let connectedDisplays = NSScreen.screens.map {
             DisplayMatchCandidate(identifier: displayUUID(for: $0), name: $0.localizedName)
@@ -55,6 +78,11 @@ extension AppDelegate {
             for warning in result.displayWarnings {
                 Log.config.warning(
                     "Display migration: \(warning.message, privacy: .public)")
+            }
+            if !result.removedShellSiteNames.isEmpty {
+                showShellRemovalNotice(
+                    removedNames: result.removedShellSiteNames,
+                    backupPath: result.shellRemovalBackupPath)
             }
         } catch ConfigStoreError.readFailed {
             Log.config.error("Failed to read config file at \(self.configPath, privacy: .public)")

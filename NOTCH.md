@@ -87,7 +87,7 @@
 ## 스타일
 
 Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상·불투명도
-설정을, Glass는 System/Light/Dark appearance를 노출한다.
+설정을, Glass는 System/Light/Dark appearance와 Clear/Regular 재질을 각각 노출한다.
 
 | 스타일 | 콘텐츠 박스 | 비고 |
 |---|---|---|
@@ -98,14 +98,17 @@ Style 피커는 **Custom / Glass** 두 가지만 제공한다. Custom은 색상�
 유리·색이 침범하지 않는다.
 
 Apple 공식 API는 연속 강도를 제공하지 않고 `Glass.clear`와
-`Glass.regular` 두 재질 변형을 제공한다. appearance와의 조합은 정책으로 고정한다:
+`Glass.regular` 두 재질 변형을 제공한다. appearance와 재질은 서로 독립적으로 고른다:
 
-- `system`: `NSPanel.appearance = nil` — macOS Light/Dark 변경을 자동 추적하며,
-  사용자가 Clear/Regular를 직접 고른다
-- `light`: `NSAppearance(named: .aqua)` + **Clear** 고정 — 더 옅은 라이트 유리
-- `dark`: `NSAppearance(named: .darkAqua)` + **Regular** 고정 — 대비가 강한 다크 유리
+- appearance는 패널의 `NSAppearance`만 정한다 — `system`은 `NSPanel.appearance = nil`
+  (macOS Light/Dark 자동 추적), `light`은 `NSAppearance(named: .aqua)`,
+  `dark`는 `NSAppearance(named: .darkAqua)`
+- 재질은 appearance와 무관하게 `config.notchGlassMaterial` 값을 그대로 쓴다.
+  어떤 appearance에서도 Clear·Regular를 자유롭게 조합할 수 있다
 
-렌더러도 `resolvedMaterial` 정책을 적용해 config를 수동 편집해도 이 페어가 유지된다.
+`resolvedMaterial` 정책은 더 이상 없다. 렌더러(`glassMaterialProvider`)는
+`config.notchGlassMaterial`을 직접 전달하고, Settings의 Glass Material 피커는
+Glass 스타일일 때 항상 노출된다.
 
 노치 UI는 Settings와 별도 `NSPanel`이므로 SwiftUI `colorScheme`만 바꾸지 않고
 패널 자체에 appearance를 적용한다. Settings에서 재질 또는 appearance를 바꾸면
@@ -142,6 +145,23 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
 
+## 위젯 페이지
+
+위젯은 12칸이며 4칸씩 좌·중·우 3페이지로 나뉜다. 위젯이 하나라도 있는
+페이지만 도커에 나타나고, 빈 페이지는 건너뛴다.
+
+| 항목 | 값 | 의미 |
+|---|---|---|
+| 페이지 크기 | 4칸 (`NotchWidget.pageSize`) | 한 번에 보이는 칸 수 |
+| 페이지 수 | 3 (`NotchWidget.pageCount`) | 좌·중·우 |
+| 페이지 점 | 지름 6pt, 누름 영역 16×12pt | 상단바와 위젯 사이. 보이는 페이지가 2개 이상일 때만 |
+| 스와이프 임계값 | 36pt (`NotchPageSwipeTracker.threshold`) | 가로 이동이 세로의 1.5배를 넘어야 인정. 한 제스처에 1페이지, 관성 무시 |
+| 전환 | smooth 0.28s, 동작 줄이기 시 즉시 | 페이지 폭 + 패딩만큼 밀면서 교체 |
+
+모든 페이지를 겹쳐 두므로 도커 폭은 칸이 가장 많은 페이지, 높이는 가장
+긴 페이지에 맞춰 고정된다. 페이지를 넘겨도 창 크기는 바뀌지 않는다.
+끝 페이지에서는 순환하지 않고 멈춘다. 도커를 열 때마다 첫 페이지부터 보인다.
+
 ## 모션 기준
 
 모든 노치 표면이 같은 타이밍 기준을 쓴다. 닫힘 관련 값은 전부
@@ -167,6 +187,7 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
+- `Sources/ChapCore/NotchPagePolicy.swift` — 페이지 분할·이동·스와이프 판정 (테스트로 고정)
 - `Sources/Chap/Views/NotchLauncherPanelView.swift` — 메인 패널 + 도커 실루엣 셰이프
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
 - `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직

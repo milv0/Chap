@@ -133,6 +133,16 @@ enum SettingsConfigTransfer {
             showImportError(detail)
             return false
 
+        case .unsupportedShellSites(let names):
+            let alert = NSAlert()
+            alert.messageText = "Import blocked"
+            alert.informativeText = ShellRemovalNotice.importRejectionMessage(
+                removedNames: names)
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            return false
+
         case .blocked(let sourceConfig, let issues):
             let issueMessages = issues.map { issue in
                 let siteName =

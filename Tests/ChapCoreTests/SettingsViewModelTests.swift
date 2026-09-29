@@ -203,7 +203,7 @@ struct SettingsViewModelTests {
     @Test func exportConfigPreservesHiddenMenuAndNotchSettings() {
         let vm = SettingsViewModel(
             sites: baseSites,
-            hiddenMenuLaunchTypes: [.shell],
+            hiddenMenuLaunchTypes: [.finder],
             notchLauncherEnabled: true,
             notchPanelStyle: .glass,
             notchGlassAppearance: .dark,
@@ -214,14 +214,16 @@ struct SettingsViewModelTests {
 
         let config = SettingsConfigTransfer.exportConfigValue(vm: vm)
 
-        #expect(config.hiddenMenuLaunchTypes == [.shell])
+        #expect(config.hiddenMenuLaunchTypes == [.finder])
         #expect(config.notchLauncherEnabled)
         #expect(config.notchPanelStyle == .glass)
         #expect(config.notchGlassAppearance == .dark)
         #expect(config.notchGlassMaterial == .regular)
         #expect(config.notchPanelOpacity == 0.8)
         #expect(config.notchPanelColorHex == "#123456")
-        #expect(config.notchWidgets == [.screenshots, .sites, .none, .none])
+        #expect(
+            config.notchWidgets
+                == NotchWidget.normalizedSlots([.screenshots, .sites, .none, .none]))
     }
     @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
         let vm = SettingsViewModel(sites: baseSites)

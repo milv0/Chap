@@ -18,7 +18,7 @@ struct WelcomeView: View {
                 OnboardingCard(
                     icon: "plus.circle.fill",
                     title: "Add Sites",
-                    description: "Register sites, apps, folders, and scripts"
+                    description: "Register sites, apps, and folders"
                 )
                 OnboardingCard(
                     icon: "keyboard",

@@ -35,7 +35,6 @@ Sources/
 │   │   ├── AppLauncher+Observation.swift ← AX 관찰 루프, fallback, eligibility 판정
 │   │   ├── AppLauncherSupport.swift      ← 관찰 정책/결과/레지스트리/컨텍스트 타입
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
-│   │   ├── ShellLauncher.swift    ← Shell (스크립트 실행)
 │   │   ├── LauncherUtils.swift    ← 공용 AX API, showAlert
 │   │   ├── AXResizePolicy.swift   ← Rectangle 기반 AX 리사이즈 순수 정책 (size→position→size·timeout·재중앙)
 │   │   ├── AXWindowIntrospection.swift ← AX 요소 메타데이터·settable 검사·창 상태 스냅샷·public CGWindowID 매칭
@@ -52,9 +51,9 @@ Sources/
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
-│       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯
+│       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── SiteConfigView.swift   ← 사이트별 설정
-│       ├── SiteLaunchFields.swift ← launch type별 입력 필드 + Ctrl-Z 스크립트 편집기(UndoableScriptTextView)
+│       ├── SiteLaunchFields.swift ← launch type별 입력 필드
 │       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)
 │       ├── QAView.swift           ← Q&A 페이지
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
@@ -62,6 +61,7 @@ Sources/
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
 │   ├── ConfigStore.swift          ← config 파일 읽기/쓰기/백업/레거시 정리·파일 마이그레이션
 │   ├── ConfigImportProcessor.swift ← JSON decode + 안전 import normalization 순수 처리기
+│   ├── ShellRemovalNotice.swift   ← Shell 제거 안내 문구 (마이그레이션·import 거부)
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
 │   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
 │   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
@@ -73,13 +73,13 @@ Sources/
 │   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
 │   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
-│   ├── EditActivationPolicy.swift ← 저장 상태 패널 탭의 편집 활성화 판정 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
 │   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료 판정 (순수 로직)
 │   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
+│   ├── NotchPagePolicy.swift  ← 노치 좌·중·우 페이지 분할·이동, 트랙패드 스와이프 판정
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
 │   ├── SiteCountLimitPolicy.swift ← launch type별 최대 4개 추가·검증 정책
@@ -111,7 +111,6 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── UpdateConfigurationTests.swift
     ├── ResizeLogRetentionTests.swift
     ├── MinimumSizeNoticePolicyTests.swift
-    ├── EditActivationPolicyTests.swift
     ├── ChromeReuseRetryPolicyTests.swift
     ├── KeepAwakePolicyTests.swift
     ├── HiddenMenuLaunchTypesTests.swift
@@ -120,10 +119,11 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── DropPolicyTests.swift
     ├── ScreenshotShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
+    ├── NotchPagePolicyTests.swift
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift
     ├── StatusBarSymbolImageTests.swift
-    └── ScriptEditorUndoTests.swift
+    └── ShellRemovalMigrationTests.swift
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
 └── StatusBarIcon.png
@@ -174,10 +174,9 @@ Site 모델 필드:
   - windowSizePreset: String? 프리셋 ID (Follow Cursor면 내장 화면 기준, 지정 화면이면 대상 화면 기준, nil이면 Custom)
   - displaySizeOverrides: [DisplaySizeOverride] 화면별 size/preset override. 실제 실행 화면과
                               UUID → unique displayName 순으로 매칭되면 기본 size보다 우선 적용
-  - launchType: LaunchType    url | app | finder | shell
+  - launchType: LaunchType    url | app | finder
   - reuseExistingWindow: Bool URL 타입에서 현재 세션에 연결된 Chap 생성 Chrome 창 재사용 여부. 누락 시 false
   - appPath: String?          앱 경로 (launchType=app)
-  - script: String?           스크립트 내용 (launchType=shell)
   - folderPath: String?       폴더 경로 (launchType=finder)
   - shortcut: String?         커스텀 단축키 ("T" → ⌥T)
 
@@ -192,9 +191,11 @@ Config 모델 필드:
   - notchPanelStyle: NotchPanelStyle  custom | glass. 과거 black/iceberg는 custom으로 마이그레이션. Glass는 macOS 26+
   - notchGlassAppearance: NotchGlassAppearance  system | light | dark. 누락/unknown은 system
   - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 clear.
-    System appearance에서만 사용자 선택을 존중하며 Light는 Clear, Dark는 Regular로 강제
+    appearance와 독립적으로 선택하며, 어떤 appearance에서도 Clear/Regular를 직접 고른다
   - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
-  - notchWidgets: [NotchWidget]  노치 패널 4칸 위젯 배치
+  - notchWidgets: [NotchWidget]  노치 패널 12칸(4칸 × 3페이지) 위젯 배치. 누락 시 첫 페이지
+                                 [sites, apps, folders, screenshots] + 빈 칸 8개. 2.0의 4칸
+                                 설정은 첫 페이지가 되고, 이전 버전은 앞 4칸만 읽는다
   - sites: [Site]             사이트 목록
 
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.
@@ -217,12 +218,13 @@ Config 모델 필드:
     (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
-  - URL/App/Finder/Shell 각 launch type은 최대 4개. 추가 UI·저장·Import에서 동일하게 차단
+  - URL/App/Finder 각 launch type은 최대 4개. 추가 UI·저장·Import에서 동일하게 차단
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
   Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘,
   Notch는 노치 런처 on/off·위젯 배치·Custom/Glass 스타일, Glass 재질·appearance 설정을
-  제공한다. Glass Light는 Clear, Dark는 Regular와 고정 페어이고 System에서만 Clear/Regular를
-  직접 고른다. 재질·appearance 변경 시 메인 도커를 2.5초 프리뷰로 펼쳐 즉시 확인한다.
+  제공한다. Glass appearance(System/Light/Dark)와 재질(Clear/Regular)은 서로 독립적으로
+  고르며, 재질 picker는 appearance와 무관하게 항상 표시된다. 재질·appearance 변경 시 메인
+  도커를 2.5초 프리뷰로 펼쳐 즉시 확인한다.
   General/Notch에서 사이드바 항목을 선택하면 Launchers로 복귀. Behavior 섹션에는
   ⌥./⌥,/⌥(key) 단축키 상시 안내가 있다. 하단의 앱 아이콘을 클릭하면 About Chap을 연다
   (메뉴바에는 About Chap 항목이 없다).
@@ -241,7 +243,6 @@ Config 모델 필드:
 - 숫자 width/height는 draft로 편집해 Enter/blur 때 commit하며 실제 변경 때만 Custom 전환
 - Follow Cursor 미니맵은 각 연결 화면의 화면별 size/default size preview를 동시에 표시한다. Follow Cursor에서 화면을 클릭하면 커서 추적을 유지한 채 그 화면을 size/preset 편집 대상으로 삼고, 일반 모드에서 클릭하면 해당 화면을 사이트 target으로 선택한다. 각 preview 창 중앙에 preset 또는 Custom label을 표시한다.
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
-- Shell → 스크립트 실행 (리사이즈 없음)
 - 멀티 모니터 지원 + Display Picker로 고정 디스플레이 선택, Follow Cursor로 커서 화면 실행
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
 - 크기 프리셋: Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, Custom
@@ -254,14 +255,14 @@ Config 모델 필드:
     config 로드 중 바뀐 값은 즉시 저장. 손으로 편집한 ~/.chap.json이나 Import JSON의
     잘못된 단축키가 런타임이나 다음 실행에 새어 들지 않음
 - 사이트 중복 체크 (동일 URL/앱/폴더 저장 차단)
-- 필수 필드 미입력 시 저장 차단 (URL/앱경로/폴더/스크립트)
+- 필수 필드 미입력 시 저장 차단 (URL/앱경로/폴더)
 - 사이트 검색 (사이드바 이름 필터)
 - 사이트 추가 시 Name 필드 자동 포커스 + 타입별 초기 추천 크기(URL Standard 상당, App Comfortable 상당, Finder Compact 상당)
 - Import (파일/Paste JSON/드래그앤드랍) + Export → ~/Downloads
 - ConfigStore가 config 읽기/쓰기/백업(.bak)/레거시 정리를 일원화; 파싱 실패 시 기본값 복구
 - 레거시 필드 자동 정리 (x, y, hotkey, showGhostWindow, runInBackground)
 - 타입별 그룹 사이드바 + 메뉴바 구분선
-  - 검색 중이 아니면 url/app/finder/shell 네 섹션을 항상 표시하고, 빈 섹션은
+  - 검색 중이 아니면 url/app/finder 세 섹션을 항상 표시하고, 빈 섹션은
     "Add <Type>" 행으로 해당 타입 항목을 바로 추가 (검색 중에는 매칭 없는 섹션 숨김)
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
@@ -325,7 +326,6 @@ Config 모델 필드:
   URL:     HTTP(S) URL 검증 → Chrome --app 모드 실행 → AX API로 새 윈도우 감지 → position/size 설정
   App:     NSWorkspace.openApplication → AXObserver(kAXWindowCreated) → 리사이즈 가능 윈도우 중앙정렬
   Finder:  단일 AppleScript로 열기+리사이즈 동시 (딜레이 없음)
-  Shell:   Process로 스크립트 실행 (리사이즈 없음)
 
 리사이즈 전략:
   URL (Chrome 실행 중):  AX API 폴링 50ms 간격 (캐싱한 Chrome PID에서 새 윈도우 비교 감지, 최대 6초)
@@ -499,6 +499,48 @@ App 윈도우 감지 방식 (AXObserver):
     `Chap/AppDelegate+Menu.swift`, `Tests/ChapCoreTests/KeepAwakePolicyTests.swift`.
 
 
+## 2.1 Shell 제거·Glass 재질 선택 개방 이력 (2.1 예정)
+
+### 변경 배경
+  Chap은 창을 여는 데 집중하는 런처이며, 임의 명령을 실행하는 Shell launch type은
+  이 방향과 어긋나고 보안·유지보수 부담이 컸다. 그래서 2.1에서 Shell launch type과
+  Scripts 노치 위젯, 스크립트 편집기를 완전히 제거한다.
+
+### Shell 제거와 마이그레이션
+  - `LaunchType`은 이제 `url | app | finder`만 갖는다. `Site.script` 필드와
+    `Launchers/ShellLauncher.swift`, 스크립트 편집기(`UndoableScriptTextView`/
+    `ScriptTextEditor`), `ScriptEditorUndoTests`를 삭제했다.
+  - 관용 디코딩: `Config` 디코딩이 private `SiteEntry` enum을 거쳐 `launchType == "shell"`
+    항목을 설정 전체를 버리지 않고 걸러내고, 그 이름을 `Config.removedShellSiteNames`
+    (transient, 인코딩하지 않음)에 기록한다.
+  - 레거시 `"scripts"` 노치 칸은 `.screenshots`로 바꾸고, 이미 Screenshots가 배치돼 있으면
+    `.none`(빈 칸)으로 둔다. 변경 여부는 `Config.didMigrateScriptsWidget`(transient)에 남긴다.
+  - `ConfigStore.load()`는 Shell 흔적이 있으면 원본을 `~/.chap.json.shell-scripts.bak`에
+    **한 번만** 저장하고(기존 보관본은 절대 덮어쓰지 않음), 그 다음 `~/.chap.json`을 Shell
+    흔적 없이 다시 쓴다. 백업에 실패하면 원본 파일을 그대로 두고 다시 쓰지 않는다.
+  - 앱 실행 중 걸러낸 항목이 있으면 `ShellRemovalNotice`(Sources/ChapCore/ShellRemovalNotice.swift)
+    문구로 제거 목록을 알리는 1회성 `NSAlert`를 띄우고, 백업이 있으면 'Show Backup in Finder'
+    버튼을 제공한다.
+  - Import(`ConfigImportProcessor`)는 Shell 항목이 있으면 `.unsupportedShellSites(names)`를
+    반환하고 파일 전체를 원자적으로 거부한다(부분 반영 없음).
+  - `EditActivationPolicy`와 스크립트 편집기가 사라지면서 패널 탭의 특수 편집 활성화 경로가
+    없어져, 항목 편집은 다시 일관된 tap-to-edit으로 통일됐다.
+
+### Glass 재질 선택 개방
+  - `NotchGlassAppearance.resolvedMaterial`을 삭제했다. 이전에는 Light가 Clear,
+    Dark가 Regular를 강제했다.
+  - 이제 appearance(System/Light/Dark)와 재질(Clear/Regular)을 서로 독립적으로 고른다.
+    Settings의 'Glass Material' picker는 appearance와 무관하게 항상 표시되고, 렌더러는
+    `config.notchGlassMaterial`을 직접 사용한다.
+
+### 관련 파일
+  - `ChapCore/Models.swift`, `ChapCore/ConfigStore.swift`,
+    `ChapCore/ConfigImportProcessor.swift`, `ChapCore/ShellRemovalNotice.swift`,
+    `Chap/AppDelegate+Config.swift`, `Chap/Views/NotchSettingsView.swift`,
+    `Chap/Views/NotchLauncherPanelView.swift`,
+    `Tests/ChapCoreTests/ShellRemovalMigrationTests.swift`.
+
+
 ## 글로벌 단축키 안정성 개선 이력 (2026-08-06)
 
 ### 변경 배경
@@ -595,8 +637,8 @@ App 윈도우 감지 방식 (AXObserver):
 
 ### Full edition 배포
 
-Chap의 전체 기능(URL/App 타 앱 창 제어와 Shell launcher)은 Mac App Store/TestFlight 대상이 아니다.
-App Store 배포에는 App Sandbox가 필요하지만 AXUIElement 기반 타 앱 제어와 임의 Shell 실행은
+Chap의 전체 기능(URL/App 타 앱 창 제어)은 Mac App Store/TestFlight 대상이 아니다.
+App Store 배포에는 App Sandbox가 필요하지만 AXUIElement 기반 타 앱 제어는
 sandbox 모델과 양립하지 않는다. 현재 Release source of truth는 `project.yml`이다.
 
 ```

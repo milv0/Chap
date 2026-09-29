@@ -57,9 +57,6 @@ struct SettingsView: View {
     @State private var pendingNewSiteID: UUID?
     @State private var searchText = ""
     @State private var suppressNextSelectionSave = false
-    /// Shell script 편집기 상자의 글로벌 프레임 (SiteLaunchFields preference).
-    /// 저장 상태에서 Shell 편집 활성화 탭 판정에 쓰인다.
-    @State private var scriptEditorFrame: CGRect = .zero
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -295,24 +292,12 @@ struct SettingsView: View {
                     .onChange(of: vm.sites) { _, _ in
                         if isEditing { vm.scheduleAutoSave() }
                     }
-                    .onPreferenceChange(ScriptEditorFramePreferenceKey.self) { frame in
-                        scriptEditorFrame = frame
-                    }
 
                     if !isEditing {
-                        // Shell은 script 편집기 내부 탭만 편집을 켠다 (EditActivationPolicy).
-                        // 다른 타입은 기존처럼 패널 어디를 탭해도 켠다.
+                        // 저장 상태에서는 패널 어디를 탭해도 편집을 켠다.
                         Color.clear
                             .contentShape(Rectangle())
-                            .onTapGesture(coordinateSpace: .global) { location in
-                                guard
-                                    EditActivationPolicy.shouldEnableEditing(
-                                        launchType: vm.sites[idx].launchType,
-                                        tapLocation: location,
-                                        scriptEditorFrame: scriptEditorFrame)
-                                else { return }
-                                isEditing = true
-                            }
+                            .onTapGesture { isEditing = true }
                             .accessibilityLabel("Enable editing")
                     }
                 }
@@ -637,7 +622,6 @@ struct SettingsView: View {
         case .url: return "URL"
         case .app: return "App"
         case .finder: return "Finder"
-        case .shell: return "Shell"
         }
     }
 
@@ -649,8 +633,6 @@ struct SettingsView: View {
             return "app.fill"
         case .finder:
             return "folder.fill"
-        case .shell:
-            return "terminal.fill"
         }
     }
 

@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.0.1"
+        ?? "2.1.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -22,7 +22,9 @@ public enum LaunchType: String, Codable, CaseIterable {
     case url
     case app
     case finder
-    case shell
+
+    /// 2.1에서 제거된 Shell launch type의 저장 문자열. 마이그레이션 판별에만 쓴다.
+    public static let removedShellRawValue = "shell"
 }
 
 public struct WindowSizePreset: Equatable, Identifiable {
@@ -84,7 +86,7 @@ public struct InitialWindowSizeRecommendation: Equatable {
 public enum InitialWindowSizeRecommendations {
     public static func recommendation(for type: LaunchType) -> InitialWindowSizeRecommendation {
         switch type {
-        case .url, .shell:
+        case .url:
             return InitialWindowSizeRecommendation(
                 widthRatio: 0.66, heightRatio: 0.66,
                 aspectRatio: Defaults.defaultWindowAspectRatio,
@@ -139,7 +141,6 @@ public struct Site: Codable, Equatable, Identifiable {
     public var launchType: LaunchType
     public var reuseExistingWindow: Bool
     public var appPath: String?
-    public var script: String?
     public var folderPath: String?
     public var shortcut: String?  // 예: "T", "G" → ⌥T, ⌥G로 실행. nil이면 단축키 없음.
 
@@ -149,7 +150,7 @@ public struct Site: Codable, Equatable, Identifiable {
         windowSizePreset: String? = nil,
         displaySizeOverrides: [DisplaySizeOverride] = [],
         launchType: LaunchType = .url, reuseExistingWindow: Bool = false,
-        appPath: String? = nil, script: String? = nil, folderPath: String? = nil,
+        appPath: String? = nil, folderPath: String? = nil,
         shortcut: String? = nil
     ) {
         self.name = name
@@ -163,7 +164,6 @@ public struct Site: Codable, Equatable, Identifiable {
         self.launchType = launchType
         self.reuseExistingWindow = reuseExistingWindow
         self.appPath = appPath
-        self.script = script
         self.folderPath = folderPath
         self.shortcut = shortcut
     }
@@ -171,7 +171,7 @@ public struct Site: Codable, Equatable, Identifiable {
     private enum CodingKeys: String, CodingKey {
         case name, url, width, height, x, y, displayName, displayIdentifier
         case windowSizePreset, displaySizeOverrides, launchType
-        case reuseExistingWindow, appPath, script, folderPath, shortcut, hotkey
+        case reuseExistingWindow, appPath, folderPath, shortcut, hotkey
     }
 
     public init(from decoder: Decoder) throws {
@@ -193,7 +193,6 @@ public struct Site: Codable, Equatable, Identifiable {
         reuseExistingWindow =
             try container.decodeIfPresent(Bool.self, forKey: .reuseExistingWindow) ?? false
         appPath = try container.decodeIfPresent(String.self, forKey: .appPath)
-        script = try container.decodeIfPresent(String.self, forKey: .script)
         folderPath = try container.decodeIfPresent(String.self, forKey: .folderPath)
         // "shortcut" 우선, 없으면 "hotkey"에서 마이그레이션
         shortcut =
@@ -217,7 +216,6 @@ public struct Site: Codable, Equatable, Identifiable {
         try container.encode(launchType, forKey: .launchType)
         try container.encode(reuseExistingWindow, forKey: .reuseExistingWindow)
         try container.encodeIfPresent(appPath, forKey: .appPath)
-        try container.encodeIfPresent(script, forKey: .script)
         try container.encodeIfPresent(folderPath, forKey: .folderPath)
         try container.encodeIfPresent(shortcut, forKey: .shortcut)
         // hotkey는 encode하지 않음 (마이그레이션 완료)
@@ -234,7 +232,7 @@ public struct Site: Codable, Equatable, Identifiable {
             && lhs.launchType == rhs.launchType
             && lhs.reuseExistingWindow == rhs.reuseExistingWindow
             && lhs.appPath == rhs.appPath
-            && lhs.script == rhs.script && lhs.folderPath == rhs.folderPath
+            && lhs.folderPath == rhs.folderPath
             && lhs.shortcut == rhs.shortcut
     }
 }
@@ -273,16 +271,6 @@ public enum NotchGlassAppearance: String, Codable, CaseIterable {
     case light = "light"
     /// 노치 Glass 패널만 Dark Aqua appearance로 강제한다.
     case dark = "dark"
-
-    /// appearance와 잘 어울리는 재질을 결정한다. Light는 옅은 Clear,
-    /// Dark는 대비가 강한 Regular로 고정하고, System만 사용자 선택을 존중한다.
-    public func resolvedMaterial(fallback: NotchGlassMaterial) -> NotchGlassMaterial {
-        switch self {
-        case .system: return fallback
-        case .light: return .clear
-        case .dark: return .regular
-        }
-    }
 }
 
 /// Apple 공식 Liquid Glass 재질 변형. 연속 강도 값은 제공되지 않는다.
@@ -301,8 +289,6 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case apps = "apps"
     /// Finder 폴더 런처 목록.
     case folders = "folders"
-    /// 셸 스크립트 런처 목록.
-    case scripts = "scripts"
     /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
     case screenshots = "screenshots"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
@@ -316,18 +302,28 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .scripts: return .shell
         case .screenshots, .drop, .none: return nil
         }
     }
 
-    /// 노치 패널의 고정 칸 수.
-    public static let slotCount = 4
+    /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
+    public static let removedScriptsRawValue = "scripts"
 
-    /// 기본 배치: 4칸에 런처 섹션 순서대로.
-    public static let defaultSlots: [NotchWidget] = [.sites, .apps, .folders, .scripts]
+    /// 한 페이지의 칸 수. 노치 도커는 한 번에 한 페이지를 보여준다.
+    public static let pageSize = 4
+    /// 좌·중·우 페이지 수.
+    public static let pageCount = 3
+    /// 노치 패널의 고정 칸 수 (페이지 3개 × 4칸). 앞 4칸이 첫 페이지다.
+    /// 2.0 이하의 4칸 설정은 첫 페이지로 그대로 옮겨지고, 이전 버전은
+    /// 앞 4칸만 읽으므로 12칸 파일도 호환된다.
+    public static let slotCount = pageSize * pageCount
 
-    /// 임의 길이 입력을 정확히 4칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
+    /// 기본 배치: 첫 페이지 4칸에 런처 섹션 순서대로, 나머지는 빈 칸.
+    public static let defaultSlots: [NotchWidget] = normalizedSlots([
+        .sites, .apps, .folders, .screenshots,
+    ])
+
+    /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
         var seen: Set<NotchWidget> = []
         let unique = widgets.filter { widget in
@@ -358,9 +354,19 @@ public struct Config: Codable {
     /// 노치 패널 콘텐츠 박스(노치 하단 경계 아래)의 배경색. "#RRGGBB".
     /// 상단바 구간은 노치 연장이라 항상 검정으로 유지된다.
     public var notchPanelColorHex: String
-    /// 노치 패널 4칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    /// 노치 패널 12칸(4칸 × 3페이지)에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
+
+    /// 디코딩 중 걸러낸 Shell 항목 이름 (2.1 마이그레이션). 저장하지 않는다.
+    public var removedShellSiteNames: [String] = []
+    /// 디코딩 중 Scripts 노치 칸을 바꿨는지 (2.1 마이그레이션). 저장하지 않는다.
+    public var didMigrateScriptsWidget = false
+
+    /// 제거된 Shell 기능 흔적 때문에 파일을 다시 써야 하는지.
+    public var needsShellRemovalMigration: Bool {
+        !removedShellSiteNames.isEmpty || didMigrateScriptsWidget
+    }
 
     /// 패널 불투명도의 허용 범위. 하한은 텍스트 가독성 하한선이다.
     public static let notchPanelOpacityRange: ClosedRange<Double> = 0.2...1.0
@@ -460,11 +466,20 @@ public struct Config: Codable {
                 try? container.decodeIfPresent(String.self, forKey: .notchPanelColorHex)
                     .flatMap { $0 })
             ?? Config.notchPanelColorHexDefault
-        // 알 수 없는 위젯 이름은 버리고 항상 4칸으로 정규화한다 (관용 디코딩).
+        // 알 수 없는 위젯 이름은 버리고 항상 12칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
         {
-            let knownWidgets = rawWidgets.compactMap(NotchWidget.init(rawValue:))
+            // 2.1에서 제거된 "scripts" 칸은 Screenshots(이미 배치돼 있으면 빈 칸)로 바꾼다.
+            let hasScripts = rawWidgets.contains(NotchWidget.removedScriptsRawValue)
+            didMigrateScriptsWidget = hasScripts
+            let screenshotsPlaced = rawWidgets.contains(NotchWidget.screenshots.rawValue)
+            let knownWidgets = rawWidgets.compactMap { raw -> NotchWidget? in
+                if raw == NotchWidget.removedScriptsRawValue {
+                    return screenshotsPlaced ? NotchWidget.none : .screenshots
+                }
+                return NotchWidget(rawValue: raw)
+            }
             // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
             // 현재 버전의 안전한 기본 슬롯으로 폴백한다.
             notchWidgets =
@@ -474,7 +489,11 @@ public struct Config: Codable {
         } else {
             notchWidgets = NotchWidget.defaultSlots
         }
-        sites = try container.decode([Site].self, forKey: .sites)
+        // Shell 항목은 2.1에서 제거됐다. 설정 전체를 버리지 않도록 걸러내고
+        // 이름을 기록해 호출자가 백업·안내를 할 수 있게 한다.
+        let entries = try container.decode([SiteEntry].self, forKey: .sites)
+        sites = entries.compactMap(\.site)
+        removedShellSiteNames = entries.compactMap(\.removedShellName)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -506,4 +525,33 @@ public struct Config: Codable {
             name: "GitHub", url: "https://github.com/", width: Defaults.defaultWidth,
             height: Defaults.defaultHeight),
     ])
+}
+
+/// 설정의 `sites` 배열 원소. 제거된 Shell 항목을 디코딩 에러 없이 구분한다.
+private enum SiteEntry: Decodable {
+    case site(Site)
+    case removedShell(name: String)
+
+    private enum ProbeKeys: String, CodingKey { case name, launchType }
+
+    init(from decoder: Decoder) throws {
+        let probe = try decoder.container(keyedBy: ProbeKeys.self)
+        let rawType = try? probe.decodeIfPresent(String.self, forKey: .launchType)
+        if rawType == LaunchType.removedShellRawValue {
+            self = .removedShell(
+                name: (try? probe.decodeIfPresent(String.self, forKey: .name)) ?? "Untitled")
+        } else {
+            self = .site(try Site(from: decoder))
+        }
+    }
+
+    var site: Site? {
+        if case .site(let site) = self { return site }
+        return nil
+    }
+
+    var removedShellName: String? {
+        if case .removedShell(let name) = self { return name }
+        return nil
+    }
 }

@@ -102,7 +102,7 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 - **granted → denied (revoke)**: error 로그 + alert 1회 (`didShowAlert`로 중복 차단)
 
 > 리사이즈 실패는 권한 알림을 **오발**하지 않는다. `AccessibilityStateController › refresh`가 `AXIsProcessTrusted()`를 다시 확인하고 trusted면 즉시 return 하기 때문.
-> 글로벌 단축키는 접근성 상태 머신과 독립이다. 권한이 없어도 단축키와 Finder/Shell 실행은 동작하고,
+> 글로벌 단축키는 접근성 상태 머신과 독립이다. 권한이 없어도 단축키와 Finder 실행은 동작하고,
 > URL/App은 실행되지만 AX 리사이즈만 생략한다.
 
 ---
@@ -153,13 +153,12 @@ launchSite(site)
 └─ switch site.launchType
    ├─ .url    → ChromeLauncher.launch(site) { GuideWindow.dismiss(guideToken) }
    ├─ .app    → AppLauncher.launch(site)             (guide 없음)
-   ├─ .finder → folderPath 검증 → 존재 확인 → 화면 결정 → FinderLauncher.openAndResize
-   │            (화면이 없으면 NSWorkspace.open 만, 리사이즈 없음)
-   └─ .shell  → ShellLauncher.launch(site)
+   └─ .finder → folderPath 검증 → 존재 확인 → 화면 결정 → FinderLauncher.openAndResize
+                (화면이 없으면 NSWorkspace.open 만, 리사이즈 없음)
 ```
 
 가이드 창은 **url 타입에만** 뜬다. Finder 타입의 경로 검증은 여기(AppDelegate)에서 하고,
-app/shell 타입의 필수값 검증은 각 런처 진입부에서 한다.
+app 타입의 필수값 검증은 각 런처 진입부에서 한다.
 
 ---
 
@@ -395,11 +394,6 @@ osascript -e '
 - 실패해도 alert를 띄우지 않고 error 로그만 남긴다. `ResizeLogger`에도 기록하지 않는다.
 - 필요 권한은 Accessibility가 아니라 **Automation**(Apple Events)이다.
 
-### 7.4 Shell — `ShellLauncher`
-
-`$SHELL -c <script>` (없으면 `/bin/zsh`). 리사이즈 없음 — 스크립트가 창을 만든다는 보장이 없다.
-stdout/stderr를 한 파이프로 합쳐 `waitUntilExit` 전에 전부 읽고, exit code ≠ 0이면 그 내용을 alert로 보여준다.
-
 ---
 
 ## 8. AX bounds 적용과 검증
@@ -441,7 +435,7 @@ posErr=0 sizeErr=0
 Settings는 하단의 `Launchers`·`General`·`Notch` 세 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
 사이드바는 모든 탭에서 유지되며, General/Notch에서 사이트를 선택하면 Launchers로 복귀한다.
 Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
-상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·4칸 위젯·Custom/Glass를 관리한다.
+상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·12칸(4칸 × 3페이지) 위젯·Custom/Glass를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -449,14 +443,23 @@ Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide
 파일 읽기 실패        → ConfigStoreError.readFailed → Config.default (alert 없음)
 JSON decode 실패      → decodeFailed → alert("Config file is corrupted") + Config.default
 성공
+ ├─ Shell 제거 마이그레이션 (2.1)
+ │    · decode가 `SiteEntry`로 `launchType == "shell"` 사이트를 걸러 `removedShellSiteNames`에 기록
+ │    · `"scripts"` 노치 칸 → `.screenshots`(이미 있으면 `.none`), `didMigrateScriptsWidget` 표시
+ │    · 흔적이 있으면 원본을 `~/.chap.json.shell-scripts.bak`에 **한 번만** 백업(기존 보관본은 유지),
+ │      백업 성공 시에만 파일을 다시 써서 Shell 흔적 제거. 백업 실패 시 파일을 그대로 둔다
  ├─ optionShortcutsEnabled 누락 시 true (기존 config 동작 유지)
  ├─ sanitizedShortcuts   빈값/다글자/예약키/중복(대소문자 무시, 앞의 것 유지) → nil
  ├─ migrateDisplayIdentifiers
  │    · UUID가 연결돼 있으면 유지하고 displayName만 최신화
  │    · UUID 없거나 stale이면 이름으로 폴백. 이름이 정확히 1개 화면과 일치할 때만 UUID 보강
  │    · 0개 → disconnectedDisplay 경고 / 2개 이상 → ambiguousDisplay 경고 (자동 선택 안 함)
- └─ 값이 바뀌었으면 즉시 save() (= .bak 생성 후 atomic write)
+ └─ 값이 바뀌었으면 즉시 save() (shortcut/display 정규화 또는 백업 성공한 Shell 제거 = .bak 생성 후 atomic write)
 ```
+
+`AppDelegate › loadConfig()`는 `removedShellSiteNames`가 비어 있지 않으면 `ShellRemovalNotice`
+문구로 제거 목록을 알리는 1회성 alert를 띄우고, 백업이 있으면 'Show Backup in Finder'를 제공한다.
+파일이 다시 쓰였으므로 다음 실행부터는 뜨지 않는다(백업 실패로 파일을 못 바꾼 경우만 반복).
 
 레거시 호환은 decode 시점에 흡수된다: `hotkey`→`shortcut`, `showGhostWindow`→`showGuideWindow`,
 `x`/`y`는 decode만 하고 버림, `runInBackground`는 키 자체가 없음.
@@ -516,7 +519,10 @@ Settings → Notch Launcher on
 
 노치 hover
   → showPanel(forDrop:false)
-  → LauncherListPolicy 기반 위젯 4칸 + 조건부 Drop 파일 행
+  → LauncherListPolicy 기반 위젯 페이지(4칸씩, 칸이 있는 페이지만) + 조건부 Drop 파일 행
+  → 페이지가 둘 이상이면 상단바와 위젯 사이에 페이지 점. 점 클릭 또는 도커 위
+    가로 트랙패드 스와이프(로컬 scrollWheel 모니터, 관성 무시, 제스처당 1페이지)로
+    좌·중·우 이동. 모든 페이지를 겹쳐 두어 창 크기는 가장 큰 페이지에 고정된다
   → 80ms common-mode mouse polling
   → 노치·패널·배지 영역 밖 200ms → 180ms 접힘 후 orderOut
 
@@ -529,11 +535,12 @@ Settings → Notch Launcher on
 ```
 
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
-- URL/App/Finder/Shell은 타입별 최대 4개. 노치 한 칸도 최대 4개를 표시한다.
+- URL/App/Finder는 타입별 최대 4개. 노치 한 칸도 최대 4개를 표시한다.
 - Screenshots 위젯은 시스템 스크린샷 위치를 2초마다 background scan하며 원본을 이동하지 않는다.
 - Chap Drop 위치는 `~/Library/Application Support/Chap/Drop/`; 사용자가 제거하기 전까지 유지한다.
 - Custom은 색·불투명도 페이드, Glass는 macOS 26+의 public `glassEffect` API.
-  Light→Clear, Dark→Regular, System은 macOS appearance를 따르며 재질을 직접 선택한다.
+  appearance(System/Light/Dark)와 재질(Clear/Regular)을 서로 독립적으로 고르며, System은
+  macOS appearance를 따른다.
 - 디스플레이 파라미터 변경 알림은 150ms debounce 후 hotzone/배지를 재배치하거나 tearDown한다.
 
 ---
@@ -546,7 +553,7 @@ Settings → Notch Launcher on
 | `launchSite`, 메뉴, alert, 창 | main | |
 | Chrome 전체 파이프라인 | serial queue `ChromeRequestCoordinator` | Process 실행 포함 (I4) |
 | App 관찰 루프 | `global(qos: .userInitiated)` | 최대 30초 점유. AXObserver run loop source를 이 스레드 런루프에 붙인다 |
-| Finder / Shell `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
+| Finder `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
@@ -591,7 +598,7 @@ subsystem = 번들 ID(`com.mingyupark.Chap`), category = `app` / `launcher` / `c
 | --- | --- | --- |
 | 1 | `timestamp` | ISO8601 (로컬 타임존) |
 | 2 | `site` | 사이트 이름 |
-| 3 | `type` | `url` / `app` (finder·shell은 기록하지 않음) |
+| 3 | `type` | `url` / `app` (finder는 기록하지 않음) |
 | 4 | `app_state` | `running` / `cold` |
 | 5 | `attempt` | **항상 1** (레거시 열) |
 | 6 | `delay` | **항상 0.00** (레거시 열) |

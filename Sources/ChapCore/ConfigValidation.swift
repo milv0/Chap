@@ -8,7 +8,6 @@ public enum ValidationField: String, Sendable {
     case url
     case appPath
     case folderPath
-    case script
     case shortcut
     case windowSizePreset
     case width
@@ -120,15 +119,6 @@ public func validateConfig(_ config: Config) -> ValidationResult {
                     ValidationIssue(
                         siteIndex: index, field: .folderPath, severity: .error,
                         message: "Folder path is required for Finder launch type."))
-            }
-
-        case .shell:
-            let script = site.script?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            if script.isEmpty {
-                issues.append(
-                    ValidationIssue(
-                        siteIndex: index, field: .script, severity: .error,
-                        message: "Script is required for Shell launch type."))
             }
         }
 
@@ -281,9 +271,6 @@ private func detectDuplicateValues(in sites: [Site]) -> [ValidationIssue] {
             } else {
                 seenFolderPaths[value] = index
             }
-
-        case .shell:
-            break
         }
     }
 

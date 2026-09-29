@@ -4,6 +4,10 @@ public struct ConfigLoadResult {
     public let config: Config
     public let displayWarnings: [ImportWarning]
     public let didAutoSaveDisplayMigration: Bool
+    /// 2.1 Shell 제거 마이그레이션으로 걸러낸 항목 이름. 없으면 빈 배열.
+    public var removedShellSiteNames: [String] = []
+    /// 마이그레이션 전 원본을 보관한 경로. 백업에 실패했거나 필요 없으면 nil.
+    public var shellRemovalBackupPath: String? = nil
 }
 
 public enum ConfigStoreError: LocalizedError {
@@ -29,6 +33,11 @@ public struct ConfigStore {
 
     public var backupPath: String {
         configPath + ".bak"
+    }
+
+    /// Shell 제거 전 원본 설정 보관 경로. 일반 `.bak`은 다음 저장 때 덮어쓰이므로 따로 둔다.
+    public var shellRemovalBackupPath: String {
+        configPath + ".shell-scripts.bak"
     }
 
     public init(
@@ -82,6 +91,7 @@ public struct ConfigStore {
         }
 
         var config = decodedConfig
+        let shellBackupPath = migrateShellRemovalIfNeeded(config, originalData: data)
         let sitesBeforeShortcutNormalization = config.sites
         config.sites = sanitizedShortcuts(for: config.sites)
         let didNormalizeShortcuts = config.sites != sitesBeforeShortcutNormalization
@@ -93,7 +103,9 @@ public struct ConfigStore {
         if didChangeDisplaySelection {
             config.sites = migrationResult.sites
         }
-        if didNormalizeShortcuts || didChangeDisplaySelection {
+        if didNormalizeShortcuts || didChangeDisplaySelection
+            || (config.needsShellRemovalMigration && shellBackupPath != nil)
+        {
             do {
                 try save(config)
                 didAutoSaveDisplayMigration = didChangeDisplaySelection
@@ -107,7 +119,33 @@ public struct ConfigStore {
         return ConfigLoadResult(
             config: config,
             displayWarnings: migrationResult.warnings,
-            didAutoSaveDisplayMigration: didAutoSaveDisplayMigration)
+            didAutoSaveDisplayMigration: didAutoSaveDisplayMigration,
+            removedShellSiteNames: config.removedShellSiteNames,
+            shellRemovalBackupPath: shellBackupPath)
+    }
+
+    /// Shell 항목·Scripts 칸이 남은 원본을 전용 백업으로 한 번 보관한다.
+    /// 백업이 끝나야만 호출자가 파일을 다시 써서 Shell 흔적을 지운다.
+    /// 백업에 실패하면 nil을 돌려주고 원본 파일은 그대로 둔다.
+    private func migrateShellRemovalIfNeeded(_ config: Config, originalData: Data) -> String? {
+        guard config.needsShellRemovalMigration else { return nil }
+        let path = shellRemovalBackupPath
+        // 이미 보관본이 있으면 덮어쓰지 않는다: 가장 오래된 원본이 가장 완전하다.
+        var isDirectory: ObjCBool = false
+        if FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+            !isDirectory.boolValue
+        {
+            return path
+        }
+        do {
+            try originalData.write(to: URL(fileURLWithPath: path), options: .atomic)
+            return path
+        } catch {
+            Log.config.error(
+                "Failed to back up config before Shell removal: \(error.localizedDescription, privacy: .public)"
+            )
+            return nil
+        }
     }
 
     @discardableResult

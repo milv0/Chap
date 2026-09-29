@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .scripts, .screenshots,
+        .sites, .apps, .folders, .screenshots,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -58,11 +58,20 @@ struct NotchSettingsView: View {
         case .sites: return "Sites"
         case .apps: return "Apps"
         case .folders: return "Folders"
-        case .scripts: return "Scripts"
         case .screenshots: return "Screenshots"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
+    }
+
+    /// 보드의 페이지 이름. 노치에서 점 순서(좌·중·우)와 같다.
+    static func pageName(_ page: Int) -> String {
+        "Page \(page + 1)"
+    }
+
+    static func slotIndices(onPage page: Int) -> Range<Int> {
+        let start = page * NotchWidget.pageSize
+        return start..<start + NotchWidget.pageSize
     }
 
     static func widgetSymbol(_ widget: NotchWidget) -> String {
@@ -106,19 +115,32 @@ struct NotchSettingsView: View {
                         Section("Widgets") {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(
-                                    "Drag a widget into a slot. Slots fill the panel from the left."
+                                    "Drag a widget into a slot. Each page shows four slots; "
+                                        + "swipe or click the dots in the notch to switch pages."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
 
-                                // 노치 패널의 4칸을 그대로 본뜬 드롭 보드.
-                                HStack(spacing: 8) {
-                                    ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
-                                        WidgetSlotBox(
-                                            index: index,
-                                            widget: slotWidget(index),
-                                            onAssign: { assign($0, to: index) },
-                                            onClear: { assign(.none, to: index) })
+                                // 노치 패널의 12칸을 좌·중·우 페이지(4칸씩)로 본뜬 드롭 보드.
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(0..<NotchWidget.pageCount, id: \.self) { page in
+                                        HStack(spacing: 8) {
+                                            Text(Self.pageName(page))
+                                                .font(.caption)
+                                                .foregroundColor(DS.textSecondary)
+                                                .frame(width: 44, alignment: .leading)
+                                            ForEach(
+                                                Self.slotIndices(onPage: page), id: \.self
+                                            ) { index in
+                                                WidgetSlotBox(
+                                                    index: index,
+                                                    widget: slotWidget(index),
+                                                    onAssign: { assign($0, to: index) },
+                                                    onClear: { assign(.none, to: index) })
+                                            }
+                                        }
+                                        .accessibilityElement(children: .contain)
+                                        .accessibilityLabel(Self.pageName(page))
                                     }
                                 }
 
@@ -157,43 +179,28 @@ struct NotchSettingsView: View {
                                     Text("Dark").tag(NotchGlassAppearance.dark)
                                 }
                                 .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassAppearance) { _, newValue in
-                                    // Light→Clear, Dark→Regular. System은 마지막 재질 유지.
-                                    vm.notchGlassMaterial = newValue.resolvedMaterial(
-                                        fallback: vm.notchGlassMaterial)
+                                .onChange(of: vm.notchGlassAppearance) { _, _ in
                                     onSave()
                                     notchController?.previewGlassAppearance()
                                 }
 
-                                if vm.notchGlassAppearance == .system {
-                                    Picker(
-                                        "Glass Material",
-                                        selection: $vm.notchGlassMaterial
-                                    ) {
-                                        Text("Clear").tag(NotchGlassMaterial.clear)
-                                        Text("Regular").tag(NotchGlassMaterial.regular)
-                                    }
-                                    .pickerStyle(.segmented)
-                                    .onChange(of: vm.notchGlassMaterial) { _, _ in
-                                        // System에서만 사용자가 재질을 직접 고른다.
-                                        onSave()
-                                        notchController?.previewGlassMaterial()
-                                    }
-                                } else {
-                                    HStack {
-                                        Text("Glass Material")
-                                        Spacer()
-                                        Text(
-                                            vm.notchGlassAppearance == .light
-                                                ? "Clear" : "Regular"
-                                        )
-                                        .foregroundColor(DS.textSecondary)
-                                    }
+                                // 재질은 appearance와 독립적으로 사용자가 고른다.
+                                Picker(
+                                    "Glass Material",
+                                    selection: $vm.notchGlassMaterial
+                                ) {
+                                    Text("Clear").tag(NotchGlassMaterial.clear)
+                                    Text("Regular").tag(NotchGlassMaterial.regular)
+                                }
+                                .pickerStyle(.segmented)
+                                .onChange(of: vm.notchGlassMaterial) { _, _ in
+                                    onSave()
+                                    notchController?.previewGlassMaterial()
                                 }
 
                                 Label(
-                                    "Light uses Clear. Dark uses Regular. System follows "
-                                        + "macOS and lets you choose the material.",
+                                    "Appearance sets light or dark tinting; System follows macOS. "
+                                        + "Clear is more transparent, Regular adds contrast.",
                                     systemImage: "info.circle"
                                 )
                                 .font(.caption)
@@ -335,7 +342,6 @@ private struct WidgetSlotBox: View {
             Button("Sites") { onAssign(.sites) }
             Button("Apps") { onAssign(.apps) }
             Button("Folders") { onAssign(.folders) }
-            Button("Scripts") { onAssign(.scripts) }
             Button("Screenshots") { onAssign(.screenshots) }
             if !isEmpty {
                 Divider()
@@ -346,7 +352,6 @@ private struct WidgetSlotBox: View {
         .accessibilityAction(named: "Place Sites") { onAssign(.sites) }
         .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
         .accessibilityAction(named: "Place Folders") { onAssign(.folders) }
-        .accessibilityAction(named: "Place Scripts") { onAssign(.scripts) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
         .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.

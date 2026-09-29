@@ -93,8 +93,7 @@ struct SiteConfigView: View {
             site: $site,
             isEditing: $isEditing,
             browseForApp: browseForApp,
-            browseFolder: browseFolder,
-            onSave: { onSave?() ?? false }
+            browseFolder: browseFolder
         )
     }
 
@@ -131,22 +130,19 @@ struct SiteConfigView: View {
         }
     }
 
-    @ViewBuilder
     private var windowConfiguration: some View {
-        if site.launchType != .shell {
-            SiteWindowConfigView(
-                site: $site,
-                isEditing: $isEditing,
-                hoveredSizeSelection: $hoveredSizeSelection,
-                isSizePresetPopoverPresented: $isSizePresetPopoverPresented,
-                sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
-                sizeEditingDisplayName: $sizeEditingDisplayName,
-                widthDraft: $widthDraft,
-                heightDraft: $heightDraft,
-                widthFocused: $widthFocused,
-                heightFocused: $heightFocused
-            )
-        }
+        SiteWindowConfigView(
+            site: $site,
+            isEditing: $isEditing,
+            hoveredSizeSelection: $hoveredSizeSelection,
+            isSizePresetPopoverPresented: $isSizePresetPopoverPresented,
+            sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
+            sizeEditingDisplayName: $sizeEditingDisplayName,
+            widthDraft: $widthDraft,
+            heightDraft: $heightDraft,
+            widthFocused: $widthFocused,
+            heightFocused: $heightFocused
+        )
     }
 
     // MARK: - Actions

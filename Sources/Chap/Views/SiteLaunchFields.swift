@@ -1,149 +1,13 @@
 import Cocoa
 import SwiftUI
 
-final class UndoableScriptTextView: NSTextView {
-    private let scriptUndoManager = UndoManager()
-
-    static func makeEditable() -> UndoableScriptTextView {
-        let textStorage = NSTextStorage()
-        let layoutManager = NSLayoutManager()
-        let textContainer = NSTextContainer(
-            size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
-        textStorage.addLayoutManager(layoutManager)
-        layoutManager.addTextContainer(textContainer)
-
-        let textView = UndoableScriptTextView(frame: .zero, textContainer: textContainer)
-        textView.isEditable = true
-        textView.isSelectable = true
-        textView.allowsUndo = true
-        return textView
-    }
-
-    override var undoManager: UndoManager? {
-        scriptUndoManager
-    }
-
-    func setEditingEnabled(_ isEnabled: Bool) {
-        isEditable = isEnabled
-        isSelectable = isEnabled
-        textColor = isEnabled ? .labelColor : .secondaryLabelColor
-        if !isEnabled, window?.firstResponder === self {
-            window?.makeFirstResponder(nil)
-        }
-    }
-
-    override func keyDown(with event: NSEvent) {
-        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let isControlZ =
-            modifiers.contains(.control)
-            && !modifiers.contains(.command)
-            && !modifiers.contains(.option)
-            && event.charactersIgnoringModifiers?.lowercased() == "z"
-
-        guard isControlZ else {
-            super.keyDown(with: event)
-            return
-        }
-
-        if modifiers.contains(.shift) {
-            undoManager?.redo()
-        } else {
-            undoManager?.undo()
-        }
-    }
-}
-
-struct ScriptTextEditor: NSViewRepresentable {
-    @Binding var text: String
-    var isEditable = true
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text)
-    }
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.drawsBackground = false
-        scrollView.hasVerticalScroller = true
-        scrollView.autohidesScrollers = true
-        scrollView.borderType = .noBorder
-
-        let textView = UndoableScriptTextView.makeEditable()
-        textView.delegate = context.coordinator
-        textView.string = text
-        textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.textColor = .labelColor
-        textView.drawsBackground = false
-        textView.isRichText = false
-        textView.importsGraphics = false
-        textView.allowsUndo = true
-        textView.usesFindBar = true
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.isContinuousSpellCheckingEnabled = false
-        textView.textContainerInset = NSSize(width: 4, height: 4)
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(
-            width: CGFloat.greatestFiniteMagnitude,
-            height: CGFloat.greatestFiniteMagnitude)
-        textView.setEditingEnabled(isEditable)
-
-        scrollView.documentView = textView
-        return scrollView
-    }
-
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? UndoableScriptTextView else { return }
-        context.coordinator.text = $text
-        textView.setEditingEnabled(isEditable)
-
-        if textView.string != text {
-            context.coordinator.isApplyingExternalText = true
-            textView.string = text
-            context.coordinator.isApplyingExternalText = false
-        }
-    }
-
-    final class Coordinator: NSObject, NSTextViewDelegate {
-        var text: Binding<String>
-        var isApplyingExternalText = false
-
-        init(text: Binding<String>) {
-            self.text = text
-        }
-
-        func textDidChange(_ notification: Notification) {
-            guard !isApplyingExternalText,
-                let textView = notification.object as? NSTextView
-            else { return }
-            text.wrappedValue = textView.string
-        }
-    }
-}
-
-/// Shell 스크립트 편집기 상자의 글로벌 프레임을 상위 뷰로 전달한다.
-/// 저장 상태에서 "script 영역 내부 탭만 편집 활성화" 판정(EditActivationPolicy)에 쓰인다.
-struct ScriptEditorFramePreferenceKey: PreferenceKey {
-    static let defaultValue: CGRect = .zero
-
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        let next = nextValue()
-        if next != .zero { value = next }
-    }
-}
-
 /// Launch-type specific input fields extracted from SiteConfigView.
-/// Renders URL, App, Finder, or Shell fields based on the current launchType.
+/// Renders URL, App, or Finder fields based on the current launchType.
 struct SiteLaunchFields: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
     let browseForApp: () -> Void
     let browseFolder: () -> Void
-    let onSave: () -> Bool
 
     var body: some View {
         switch site.launchType {
@@ -153,8 +17,6 @@ struct SiteLaunchFields: View {
             appFields
         case .finder:
             finderFields
-        case .shell:
-            shellFields
         }
     }
 
@@ -281,73 +143,6 @@ struct SiteLaunchFields: View {
             }
             .buttonStyle(.bordered)
             .frame(height: 30)
-        }
-    }
-
-    // MARK: - Shell Fields
-
-    private var shellFields: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Script")
-                .font(DS.captionFont)
-                .foregroundColor(DS.textSecondary)
-            ScriptTextEditor(
-                text: Binding(
-                    get: { site.script ?? "" },
-                    set: { site.script = $0 }
-                ),
-                isEditable: isEditing
-            )
-            .accessibilityLabel("Script")
-            .frame(minHeight: 120)
-            .padding(8)
-            .background(isEditing ? DS.surfaceBg : DS.border.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-            .overlay(
-                RoundedRectangle(cornerRadius: DS.radiusSmall)
-                    .stroke(isEditing ? DS.border : DS.border.opacity(0.45), lineWidth: 1)
-            )
-            .opacity(isEditing ? 1 : 0.6)
-            .background(
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: ScriptEditorFramePreferenceKey.self,
-                        value: proxy.frame(in: .global))
-                }
-            )
-
-            HStack {
-                Spacer()
-                if isEditing {
-                    Button {
-                        guard onSave() else { return }
-                        isEditing = false
-                    } label: {
-                        Label("Save", systemImage: "checkmark")
-                            .font(.system(size: 13, weight: .semibold))
-                            .frame(width: 72)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                    .tint(DS.accent)
-                    .frame(width: 92, height: 30)
-                } else {
-                    Label("Saved", systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(Color(nsColor: .systemGreen))
-                        .frame(width: 90, height: 28)
-                        .background(Color(nsColor: .systemGreen).opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 7))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 7)
-                                .stroke(
-                                    Color(nsColor: .systemGreen).opacity(0.35),
-                                    lineWidth: 1
-                                )
-                        )
-                        .frame(width: 92, height: 30)
-                }
-            }
         }
     }
 }

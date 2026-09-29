@@ -2,9 +2,9 @@
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
 uses XcodeGen (`project.yml`) to generate `Chap.xcodeproj`. It launches URLs,
-macOS apps, Finder folders, and shell scripts (up to four items per launch type)
+macOS apps, and Finder folders (up to four items per launch type)
 and centers resizable windows on the selected display. Alongside the status menu
-it offers an optional Notch Launcher (a four-slot panel with Chap Drop and a
+it offers an optional Notch Launcher (a paged panel of up to twelve slots with Chap Drop and a
 Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
 ## Commands
@@ -31,7 +31,7 @@ There is no `Package.swift`; do not use `swift test`.
   Chap Drop store, Screenshot Shelf source, async thumbnails.
 - `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Mac Awake session and HUD.
 - `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).
-- `Sources/Chap/Launchers/`: Chrome, app, Finder, shell launch behavior.
+- `Sources/Chap/Launchers/`: Chrome, app, Finder launch behavior.
 - `Sources/Chap/Views/`: SwiftUI settings, site config, notch panel/settings, QA, welcome, components.
 - `Tests/ChapCoreTests/`: Swift Testing unit tests for `ChapCore`.
 - `Scripts/`: release, notarization, appcast, DMG/PKG build scripts.
@@ -52,10 +52,9 @@ There is no `Package.swift`; do not use `swift test`.
   session; it never searches user tabs or uses focused/frontmost fallbacks.
 - App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize, including resizable non-standard Office windows.
 - Finder launch uses AppleScript to open and set bounds atomically.
-- Shell launch runs the configured script through `$SHELL -c`.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
-  `.nonactivatingPanel` under the hardware notch with four slots (Sites, Apps,
-  Folders, Scripts, or Screenshots); the status menu stays available, including
+  `.nonactivatingPanel` under the hardware notch with up to twelve slots on three pages (Sites, Apps,
+  Folders, or Screenshots); the status menu stays available, including
   on notchless Macs. Chap Drop copies dropped files into
   `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot
   Shelf reads the system screenshot folder in place.
@@ -66,6 +65,9 @@ There is no `Package.swift`; do not use `swift test`.
 - Updates: `UpdateController` wraps Sparkle fail-closed — it starts only with a
   valid `SUFeedURL` and `SUPublicEDKey`, and never during tests.
 - Config lives at `~/.chap.json`; backup path is `~/.chap.json.bak`.
+- The Shell launch type was removed in 2.1. Config decoding drops legacy `shell`
+  sites and the `scripts` notch widget; the original is backed up once to
+  `~/.chap.json.shell-scripts.bak`. Never reintroduce arbitrary command execution.
 
 ## Release flow
 

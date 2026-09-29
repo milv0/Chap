@@ -1,20 +1,20 @@
 # Chap
 
-A macOS menubar app for quick-launching sites, apps, folders, and scripts with automatic window centering.
+A macOS menubar app for quick-launching sites, apps, and folders with automatic window centering.
 
-![Version](https://img.shields.io/badge/version-2.0.1-orange)
+![Version](https://img.shields.io/badge/version-2.1.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
-- **Notch Launcher** — An optional four-slot command surface that expands from the MacBook notch; the classic status menu always remains available
+- **Notch Launcher** — An optional command surface with up to twelve widget slots on three swipeable pages that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals
+- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
-- **4 Launch Types** — URL (Chrome --app), macOS App, Finder folder, Shell script
+- **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
 - **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
@@ -30,7 +30,7 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
-- **Focused Lists** — URL, App, Finder, and Shell each allow up to four launchables, keeping the menu and notch predictable
+- **Focused Lists** — URL, App, and Finder each allow up to four launchables, keeping the menu and notch predictable
 
 ## Requirements
 
@@ -50,7 +50,6 @@ A macOS menubar app for quick-launching sites, apps, folders, and scripts with a
 | URL | Opens in Chrome `--app` mode (no address bar) | AX API (new window detection via CFEqual) |
 | App | Launches macOS app via NSWorkspace | AX API (AXObserver + polling fallback) |
 | Finder | Opens folder in Finder | AppleScript bounds |
-| Shell | Runs script via `$SHELL -c` | N/A |
 
 ### Chrome Window Reuse
 
@@ -99,7 +98,7 @@ Stored at `~/.chap.json`:
   "notchGlassMaterial": "clear",
   "notchPanelOpacity": 0.6,
   "notchPanelColorHex": "#000000",
-  "notchWidgets": ["sites", "apps", "folders", "scripts"],
+  "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none", "none", "none", "none", "none", "none", "none"],
   "sites": [
     {
       "name": "GitHub",
@@ -132,19 +131,19 @@ For URL entries, `reuseExistingWindow: true` enables the per-launchable,
 Chap-created Chrome window behavior described above. It does not reuse arbitrary
 tabs that happen to show the same URL.
 
-> **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch. Legacy notch styles `black` and `iceberg` migrate to `custom`.
+> **Migration note:** Legacy fields (`x`, `y`, `hotkey`, `showGhostWindow`, `runInBackground`) are automatically removed from existing config files on app launch. Legacy notch styles `black` and `iceberg` migrate to `custom`. Chap 2.1 removed the Shell launch type: on first launch, Shell launchables are removed from `~/.chap.json` after the original is saved to `~/.chap.json.shell-scripts.bak`, and Chap shows a one-time notice. A Scripts notch slot becomes Screenshots, or Empty if Screenshots is already placed. Importing a file that contains Shell launchables is rejected without changing anything.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange four slots by dragging Sites, Apps, Folders, Scripts, or Screenshots into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange up to twelve slots, four per page, by dragging Sites, Apps, Folders, or Screenshots into the board. When more than one page has widgets, dots between the notch and the widgets switch pages, and a horizontal trackpad swipe over the dock moves left or right; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
-Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Light pairs with Clear, Dark pairs with Regular, and System follows macOS while allowing either material. Glass text uses native semantic foregrounds.
+Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 
 ## Direct Distribution (Developer ID)
 
-Chap’s Accessibility-based window control and Shell launcher are distributed outside the Mac App Store. The full edition uses **Developer ID Application** signing, the Hardened Runtime, and Apple notarization; TestFlight is not a valid test or distribution channel for this edition because it is an App Store sandbox build.
+Chap’s Accessibility-based window control is distributed outside the Mac App Store. The full edition uses **Developer ID Application** signing, the Hardened Runtime, and Apple notarization; TestFlight is not a valid test or distribution channel for this edition because it is an App Store sandbox build.
 
 ### Build and notarize
 
@@ -174,11 +173,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.0.1
+Scripts/release.sh 2.1.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.0.1 --publish
+Scripts/release.sh 2.1.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

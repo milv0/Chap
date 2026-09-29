@@ -50,14 +50,6 @@ struct ConfigValidationTests {
         #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .folderPath })
     }
 
-    @Test("shell launch type requires non-empty script")
-    func shellLaunchTypeRequiresScript() {
-        let site = Site(
-            name: "Test", url: "", width: 800, height: 600, launchType: .shell, script: nil)
-        let result = validateConfig(Config(sites: [site]))
-        #expect(result.issues.contains { $0.siteIndex == 0 && $0.field == .script })
-    }
-
     // MARK: - URL Scheme Validation
 
     @Test("url must start with http:// or https://")
