@@ -50,6 +50,20 @@ public enum NotchLauncherPolicy {
             height: notchRect.height)
     }
 
+    /// 상단 띠 도구 아이콘(Mirror, Quick Note)의 누름 폭과 간격.
+    public static let stripToolPitch: CGFloat = 28
+
+    /// Drop 배지 아이콘 중심의 노치 오른쪽 끝 기준 거리. 배지 본체(34pt)는 노치 밑으로
+    /// 12pt 파고든 뒤 시작하고, 아이콘은 본체 가운데에서 왼쪽으로 4pt 광학 보정된다.
+    public static let dropBadgeIconCenterOffset: CGFloat = NotchGeometry.badgeBodyWidth / 2 - 4
+
+    /// 상단 띠 도구 아이콘들의 중심 위치(노치 오른쪽 끝 기준). Drop 배지가 있으면 배지 바로
+    /// 오른쪽부터, 없으면 배지 자리부터 `stripToolPitch` 간격으로 나란히 둔다.
+    public static func stripToolCenterOffsets(besideDropBadge: Bool, count: Int) -> [CGFloat] {
+        let first = dropBadgeIconCenterOffset + (besideDropBadge ? stripToolPitch : 0)
+        return (0..<max(count, 0)).map { first + CGFloat($0) * stripToolPitch }
+    }
+
     /// Drop 배지는 보관함에 파일이 있을 때만 보인다.
     public static func shouldShowDropBadge(fileCount: Int) -> Bool {
         fileCount > 0

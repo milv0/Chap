@@ -40,6 +40,8 @@ final class NotchLauncherController {
     var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 상단 띠 Mirror 아이콘 표시 여부.
     var mirrorEnabledProvider: () -> Bool = { false }
+    /// 상단 띠 Quick Note 아이콘 표시 여부.
+    var quickNoteEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -278,7 +280,8 @@ final class NotchLauncherController {
         let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !slots.isEmpty || mirrorEnabledProvider(), forDrop: forDrop)
+                hasSlots: !slots.isEmpty || mirrorEnabledProvider()
+                    || quickNoteEnabledProvider(), forDrop: forDrop)
         else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
@@ -299,6 +302,7 @@ final class NotchLauncherController {
             glassMaterial: glassMaterialProvider(),
             slots: slots,
             showsMirror: mirrorEnabledProvider(),
+            showsNote: quickNoteEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)

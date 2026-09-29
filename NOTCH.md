@@ -159,9 +159,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
-| Quick Note | 170pt |
 
-글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Quick Note)가
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
@@ -176,15 +175,15 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
-- **Mirror**: 칸이 아니라 상단 검정 띠 오른쪽의 아이콘(`web.camera`, 13pt 흰색)이다. Drop 배지가 있으면
-  배지 오른쪽(노치 끝 + 배지 본체 34 + 플레어 10 뒤), 없으면 배지 자리(노치 바로 오른쪽)에 34pt 폭으로 둔다.
-  누르면 띠 바로 아래로 144×108(4:3, 좌우는 aspect fill로 잘림) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
-  꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다.
-  예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
-- **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
-  직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
-  `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
-  메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
+- **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 첫 아이콘은 Drop 배지가
+  있으면 배지 아이콘 바로 오른쪽, 없으면 배지 자리(노치 끝 +13pt)에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
+  Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
+  - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
+  - Quick Note: 240×128 어두운 카드 안에서 메모를 바로 입력한다(펼치면 커서가 들어간다).
+  아이콘 재클릭·×·도커 닫힘으로 접힌다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`)와
+  **Show Quick Note**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
+- **Quick Note 입력**: 13pt 본문 `TextEditor`, 0.5s debounce 후 직렬 큐 저장, `willHidePanel` 때 flush.
+  입력 중에는 마우스가 벗어나도 닫지 않고 Esc 또는 key 상실로 끝낸다. 패널은 `NotchKeyablePanel`이다.
 
 ## 칸 제목 클릭
 

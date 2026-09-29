@@ -778,6 +778,7 @@ struct SettingsView: View {
                     notchPanelOpacity: vm.notchPanelOpacity,
                     notchPanelColorHex: vm.notchPanelColorHex,
                     notchMirrorEnabled: vm.notchMirrorEnabled,
+                    notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.

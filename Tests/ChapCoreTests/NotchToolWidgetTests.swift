@@ -123,14 +123,37 @@ struct QuickNoteStoreTests {
 
 @Suite("Mirror and Quick Note widgets")
 struct NotchToolWidgetDecodingTests {
-    @Test("a former Mirror slot is removed and later widgets move up")
-    func formerMirrorSlotIsRemoved() throws {
-        let json = #"{"notchWidgets": ["mirror", "note", "sites"], "sites": []}"#
+    @Test("former Mirror and Quick Note slots are removed and later widgets move up")
+    func formerToolSlotsAreRemoved() throws {
+        let json = #"{"notchWidgets": ["mirror", "note", "sites", "apps"], "sites": []}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(Array(config.notchWidgets.prefix(2)) == [.note, .sites])
-        #expect(!config.notchWidgets.map(\.rawValue).contains("mirror"))
+        #expect(Array(config.notchWidgets.prefix(2)) == [.sites, .apps])
+        #expect(config.notchWidgets.dropFirst(2).allSatisfy { $0 == .none })
         #expect(config.notchMirrorEnabled)
+        #expect(config.notchQuickNoteEnabled)
+    }
+
+    @Test("the Quick Note toggle defaults on and round-trips")
+    func quickNoteToggleRoundTrips() throws {
+        let off = Config(notchQuickNoteEnabled: false, sites: [])
+        let decoded = try JSONDecoder().decode(Config.self, from: try JSONEncoder().encode(off))
+        #expect(!decoded.notchQuickNoteEnabled)
+    }
+
+    @Test("strip tools sit right after the Drop badge, or in its place when Drop is empty")
+    func stripToolLayout() {
+        let badge = NotchLauncherPolicy.dropBadgeIconCenterOffset
+        let pitch = NotchLauncherPolicy.stripToolPitch
+        #expect(
+            NotchLauncherPolicy.stripToolCenterOffsets(besideDropBadge: false, count: 2)
+                == [badge, badge + pitch])
+        #expect(
+            NotchLauncherPolicy.stripToolCenterOffsets(besideDropBadge: true, count: 2)
+                == [badge + pitch, badge + 2 * pitch])
+        // 모두 노치 오른쪽 상태 영역(110pt) 안에 들어간다.
+        let last = NotchLauncherPolicy.stripToolCenterOffsets(besideDropBadge: true, count: 2).last!
+        #expect(last + pitch / 2 <= NotchGeometry.stripPlateauSideWidth)
     }
 
     @Test("the Mirror toggle defaults on and round-trips")
@@ -143,8 +166,9 @@ struct NotchToolWidgetDecodingTests {
         #expect(!decoded.notchMirrorEnabled)
     }
 
-    @Test("Quick Note is not a launcher section")
-    func noteHasNoLaunchType() {
-        #expect(NotchWidget.note.launchType == nil)
+    @Test("tool widgets are no longer placeable slots")
+    func toolsAreNotSlots() {
+        #expect(NotchWidget(rawValue: "note") == nil)
+        #expect(NotchWidget(rawValue: "mirror") == nil)
     }
 }

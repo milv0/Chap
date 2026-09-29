@@ -6,8 +6,6 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
-    /// 빠른 메모 위젯.
-    case note
 
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
@@ -20,7 +18,6 @@ enum NotchSlotContent {
                 // Drop 파일은 메인 도커 하단 행이 전담한다.
                 return nil
             case .screenshots: return .screenshots
-            case .note: return .note
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
@@ -64,6 +61,8 @@ struct NotchLauncherPanelView: View {
     let slots: [NotchSlotContent]
     /// 상단 검정 띠에 Mirror 아이콘을 둘지. Drop 배지 오른쪽, 배지가 없으면 배지 자리에 둔다.
     var showsMirror = false
+    /// 상단 검정 띠에 Quick Note 아이콘을 둘지. Mirror 오른쪽에 둔다.
+    var showsNote = false
     let onLaunch: (Int) -> Void
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
@@ -86,9 +85,6 @@ struct NotchLauncherPanelView: View {
         return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
             + 4
     }
-
-    /// 메모는 적을 공간이 필요해 목록 최대 폭을 쓴다.
-    static let noteColumnWidth: CGFloat = 170
 
     /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
     private func width(for slot: NotchSlotContent) -> CGFloat {
@@ -113,8 +109,6 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(34 + 6 + label + 6 + 12, header))))
-        case .note:
-            return Self.noteColumnWidth
         }
     }
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -200,14 +194,16 @@ struct NotchLauncherPanelView: View {
             )
             // Keep Awake 상태는 별도 배지 창이 아니라 메인 도커 상단에 통합한다.
             .overlay(alignment: .top) { awakeStripStatus }
-            // Mirror: 상단 띠 오른쪽, Drop 배지 옆 아이콘 + 누르면 띠 바로 아래로 펼쳐지는 미리보기.
+            // 상단 띠 오른쪽 도구: Drop 배지 옆 Mirror, 그 오른쪽 Quick Note. 누르면 띠 아래로 펼친다.
             .overlay(alignment: .top) {
-                if showsMirror {
-                    NotchMirrorStripControl(
+                if showsMirror || showsNote {
+                    NotchStripTools(
                         notchRightEdge: stripPlateauHalfWidth
                             - NotchGeometry.stripPlateauSideWidth,
                         stripHeight: topInset,
-                        besideDropBadge: !dropFiles.isEmpty)
+                        besideDropBadge: !dropFiles.isEmpty,
+                        showsMirror: showsMirror,
+                        showsNote: showsNote)
                 }
             }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
@@ -468,8 +464,6 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
-        case .note:
-            NotchQuickNoteView(palette: widgetPalette)
         }
     }
 

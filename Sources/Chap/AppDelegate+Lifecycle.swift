@@ -134,6 +134,7 @@ extension AppDelegate {
             notchPanelOpacity: config.notchPanelOpacity,
             notchPanelColorHex: config.notchPanelColorHex,
             notchMirrorEnabled: config.notchMirrorEnabled,
+            notchQuickNoteEnabled: config.notchQuickNoteEnabled,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -151,6 +152,7 @@ extension AppDelegate {
                 notchPanelOpacity: payload.notchPanelOpacity,
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchMirrorEnabled: payload.notchMirrorEnabled,
+                notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -183,6 +185,7 @@ extension AppDelegate {
             let previousNotchPanelColorHex = self.config.notchPanelColorHex
             let previousNotchWidgets = self.config.notchWidgets
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
+            let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -220,6 +223,7 @@ extension AppDelegate {
                 || previousNotchPanelColorHex != newConfig.notchPanelColorHex
                 || previousNotchWidgets != newConfig.notchWidgets
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
+                || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }

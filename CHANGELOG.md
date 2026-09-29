@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Quick Note in the top strip** — Quick Note moved out of the widget slots to a
+  note icon right of Mirror in the notch's black strip. Click it and the note
+  opens just below, ready to type. Hide it with Show Quick Note in Settings.
+- **Tighter strip icons** — Mirror now sits right next to the Drop badge instead
+  of leaving a wide gap.
+
 ## [2.2.2] — 2026-09-29
 
 ### Changed

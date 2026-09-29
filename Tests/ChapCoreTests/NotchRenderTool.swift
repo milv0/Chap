@@ -62,7 +62,8 @@ struct NotchRenderTool {
             let panel = NotchLauncherPanelView(
                 minWidth: 265, topInset: 32, stripPlateauHalfWidth: 92.5 + 110,
                 awakeSessionEnd: nil, style: style, glassMaterial: config.notchGlassMaterial,
-                slots: slots, showsMirror: config.notchMirrorEnabled, onLaunch: { _ in },
+                slots: slots, showsMirror: config.notchMirrorEnabled,
+                showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
                 reveal: reveal)
             let view =
                 panel
