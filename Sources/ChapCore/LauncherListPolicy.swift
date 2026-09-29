@@ -33,6 +33,23 @@ public enum LauncherListPolicy {
     /// `SiteCountLimitPolicy.maxPerLaunchType`개로 제한되므로 항상 전부 들어간다.
     public static let maxEntriesPerNotchSlot = 4
 
+    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 4개가 2×2로 한 칸에 들어간다.
+    public static let appIconColumns = 2
+
+    /// 단축키 표기 (예: "⌥S"). 단축키가 없으면 nil.
+    public static func shortcutBadge(for site: Site) -> String? {
+        guard let key = site.shortcut?.trimmingCharacters(in: .whitespaces), !key.isEmpty
+        else { return nil }
+        return "⌥\(key.uppercased())"
+    }
+
+    /// VoiceOver용 실행 버튼 이름 (예: "Launch Slack, Option S").
+    public static func launchAccessibilityLabel(for site: Site) -> String {
+        guard let key = site.shortcut?.trimmingCharacters(in: .whitespaces), !key.isEmpty
+        else { return "Launch \(site.name)" }
+        return "Launch \(site.name), Option \(key.uppercased())"
+    }
+
     /// `LaunchType.allCases` 순서로 섹션을 만들고, 각 섹션 안에서는 저장된 순서를 유지한다.
     public static func sections(
         sites: [Site], hiddenLaunchTypes: Set<LaunchType>

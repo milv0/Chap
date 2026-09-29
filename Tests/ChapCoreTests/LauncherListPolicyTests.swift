@@ -89,3 +89,35 @@ struct LauncherListPolicyTests {
         #expect(capped.count == 4)
     }
 }
+
+@Suite("Notch app icons")
+struct NotchAppIconLabelTests {
+    private func app(_ name: String, shortcut: String?) -> Site {
+        Site(
+            name: name, url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/\(name).app", shortcut: shortcut)
+    }
+
+    @Test("four apps fit in a two-column icon grid")
+    func gridFitsFourApps() {
+        #expect(LauncherListPolicy.appIconColumns == 2)
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot % LauncherListPolicy.appIconColumns == 0)
+    }
+
+    @Test("the shortcut badge shows the uppercased Option key")
+    func shortcutBadge() {
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Slack", shortcut: "s")) == "⌥S")
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Mail", shortcut: nil)) == nil)
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Notes", shortcut: " ")) == nil)
+    }
+
+    @Test("VoiceOver hears the app name and its shortcut")
+    func accessibilityLabel() {
+        #expect(
+            LauncherListPolicy.launchAccessibilityLabel(for: app("Slack", shortcut: "s"))
+                == "Launch Slack, Option S")
+        #expect(
+            LauncherListPolicy.launchAccessibilityLabel(for: app("Mail", shortcut: nil))
+                == "Launch Mail")
+    }
+}

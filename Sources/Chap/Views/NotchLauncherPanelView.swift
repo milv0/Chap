@@ -407,6 +407,42 @@ struct NotchLauncherPanelView: View {
             .padding(.horizontal, 6)
             .padding(.bottom, 1)
 
+            if section.launchType == .app {
+                appIconGrid(section)
+            } else {
+                launcherRows(section)
+            }
+        }
+    }
+
+    /// Apps 칸: 앱 아이콘 2열 격자. 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
+    private func appIconGrid(_ section: LauncherListSection) -> some View {
+        LazyVGrid(
+            columns: Array(
+                repeating: GridItem(.flexible(), spacing: 4),
+                count: LauncherListPolicy.appIconColumns),
+            alignment: .leading, spacing: 4
+        ) {
+            ForEach(
+                section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
+                id: \.siteIndex
+            ) { entry in
+                NotchAppIconTile(
+                    entry: entry,
+                    primaryForeground: primaryForeground,
+                    badgeForeground: primaryForeground,
+                    badgeBackground: subtleSurface,
+                    hoverBackground: rowHoverBackground
+                ) {
+                    onLaunch(entry.siteIndex)
+                }
+            }
+        }
+        .padding(.horizontal, 2)
+    }
+
+    private func launcherRows(_ section: LauncherListSection) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
             ForEach(
                 section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
                 id: \.siteIndex
@@ -462,9 +498,9 @@ private struct NotchLauncherRow: View {
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
                 Spacer(minLength: DS.spacingSmall)
-                if let shortcut = entry.site.shortcut, !shortcut.isEmpty {
+                if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
                     // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
-                    Text("⌥\(shortcut.uppercased())")
+                    Text(badge)
                         .font(DS.captionFont.weight(.medium))
                         .foregroundColor(shortcutForeground)
                         .padding(.horizontal, 5)
@@ -485,7 +521,72 @@ private struct NotchLauncherRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .accessibilityLabel("Launch \(entry.site.name)")
+        .accessibilityLabel(LauncherListPolicy.launchAccessibilityLabel(for: entry.site))
+    }
+}
+
+/// Apps 칸의 아이콘 한 개. 호버 시 앱 이름 툴팁과 옅은 배경을 보여준다.
+private struct NotchAppIconTile: View {
+    let entry: LauncherListEntry
+    let primaryForeground: Color
+    let badgeForeground: Color
+    let badgeBackground: Color
+    let hoverBackground: Color
+    let action: () -> Void
+
+    @State private var icon: NSImage?
+    @State private var isHovered = false
+
+    private static let iconSize: CGFloat = 40
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .bottomTrailing) {
+                Group {
+                    if let icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .interpolation(.high)
+                    } else {
+                        Image(systemName: "app.fill")
+                            .resizable()
+                            .foregroundColor(primaryForeground.opacity(0.5))
+                            .padding(6)
+                    }
+                }
+                .frame(width: Self.iconSize, height: Self.iconSize)
+                .frame(maxWidth: .infinity)
+
+                if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
+                    Text(badge)
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(badgeForeground)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay(Capsule().fill(badgeBackground))
+                        )
+                        .offset(x: -8, y: 2)
+                }
+            }
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isHovered ? hoverBackground : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(entry.site.name)
+        .accessibilityLabel(LauncherListPolicy.launchAccessibilityLabel(for: entry.site))
+        .task(id: entry.site.appPath) {
+            guard let path = entry.site.appPath, !path.isEmpty else { return }
+            icon = AppIconLoader.cachedIcon(forAppPath: path)
+            if icon == nil { icon = await AppIconLoader.icon(forAppPath: path) }
+        }
     }
 }
 

@@ -141,6 +141,8 @@ Enable the feature in **Settings → Notch**. Arrange six slots by dragging Site
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
+The **Apps** widget shows your apps as a two-by-two grid of icons, with an Option-key badge on apps that have a shortcut; hover for the name and click to launch. Sites and Folders stay as lists.
+
 **Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you close the dock or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
 
 **Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.

@@ -14,6 +14,9 @@ All notable changes to Chap are documented in this file.
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.
 - **Section dividers** — Thin vertical lines now separate the notch widgets.
+- **App icons in the notch** — The Apps widget shows your apps as a two-by-two
+  grid of icons, with an Option-key badge on apps that have a shortcut. Hover
+  for the name; click to launch.
 
 ### Changed
 

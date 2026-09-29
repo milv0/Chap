@@ -152,6 +152,13 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
+## Apps 칸: 아이콘 격자
+
+Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2×2)다. 아이콘 40pt, 타일 세로 여백 5pt.
+단축키가 있으면 아이콘 오른쪽 아래에 `⌥S` 캡슐 배지(9pt semibold)를 붙인다. 호버 시 앱 이름
+툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
+utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Sites·Folders는 목록 그대로다.
+
 ## 도구 위젯: Mirror · Quick Note
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 폭 계산에는 영향이 없다.

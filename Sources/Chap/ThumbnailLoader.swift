@@ -49,3 +49,35 @@ enum ThumbnailLoader {
         }
     }
 }
+
+/// 노치 Apps 칸의 앱 아이콘 로더. NSWorkspace 아이콘 조회를 utility queue에서 하고
+/// 경로별로 캐시해 패널을 다시 열 때 즉시 보인다.
+enum AppIconLoader {
+    private static let queue = DispatchQueue(label: "com.mingyupark.Chap.appicon", qos: .utility)
+    private static let cache = NSCache<NSString, NSImage>()
+
+    static func cachedIcon(forAppPath path: String) -> NSImage? {
+        cache.object(forKey: expanded(path) as NSString)
+    }
+
+    @MainActor
+    static func icon(forAppPath path: String) async -> NSImage? {
+        let path = expanded(path)
+        if let cached = cache.object(forKey: path as NSString) { return cached }
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                guard FileManager.default.fileExists(atPath: path) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let icon = NSWorkspace.shared.icon(forFile: path)
+                cache.setObject(icon, forKey: path as NSString)
+                continuation.resume(returning: icon)
+            }
+        }
+    }
+
+    private static func expanded(_ path: String) -> String {
+        (path as NSString).expandingTildeInPath
+    }
+}
