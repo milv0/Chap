@@ -537,7 +537,7 @@ private struct NotchAppIconTile: View {
     @State private var icon: NSImage?
     @State private var isHovered = false
 
-    private static let iconSize: CGFloat = 40
+    private static let iconSize: CGFloat = 34
 
     var body: some View {
         Button(action: action) {
