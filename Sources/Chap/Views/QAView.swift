@@ -172,6 +172,10 @@ struct QAView: View {
                     "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
                 ),
                 (
+                    "화면의 글자를 바로 복사할 수 있나요?",
+                    "⌥⇧T를 누르거나 노치 상단 띠의 텍스트 아이콘을 누른 뒤 원하는 영역을 드래그하세요. 그 영역의 한국어·영어 글자가 바로 클립보드에 복사됩니다. 인식은 Mac 안에서만 처리되고 이미지는 저장하지 않습니다. 처음 한 번 화면 기록 권한이 필요합니다."
+                ),
+                (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
@@ -391,6 +395,10 @@ struct QAView: View {
                 (
                     "How do I enable the Notch Launcher?",
                     "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
+                ),
+                (
+                    "Can I copy text straight from the screen?",
+                    "Press ⌥⇧T or click the text icon in the notch's top strip, then drag over the area you want. Its Korean and English text is copied to the clipboard right away. Recognition runs on your Mac and no image is saved. The first use needs Screen Recording permission."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

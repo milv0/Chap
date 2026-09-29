@@ -6,10 +6,26 @@ enum GlobalHotKeyAction: Equatable {
     case openMenu
     case openSettings
     case launchSite(index: Int)
+    /// 화면 영역 텍스트 인식 (⌥⇧T).
+    case recognizeText
+}
+
+/// 등록할 수식키 조합. 사이트·메뉴는 ⌥만, 텍스트 인식은 ⌥⇧를 쓴다.
+enum GlobalHotKeyModifiers: Equatable {
+    case option
+    case optionShift
+
+    var carbonFlags: UInt32 {
+        switch self {
+        case .option: return UInt32(optionKey)
+        case .optionShift: return UInt32(optionKey | shiftKey)
+        }
+    }
 }
 
 struct GlobalHotKeyRegistration: Equatable {
     let character: String
+    var modifiers: GlobalHotKeyModifiers = .option
     let action: GlobalHotKeyAction
 }
 
@@ -29,6 +45,10 @@ func globalHotKeyRegistrations(
             return GlobalHotKeyRegistration(
                 character: shortcut, action: .launchSite(index: index))
         })
+    registrations.append(
+        GlobalHotKeyRegistration(
+            character: TextRecognitionPolicy.shortcutKey, modifiers: .optionShift,
+            action: .recognizeText))
     return registrations
 }
 
@@ -192,7 +212,7 @@ final class GlobalHotKeyManager: NSObject {
             var hotKey: EventHotKeyRef?
             let status = RegisterEventHotKey(
                 keyCode,
-                UInt32(optionKey),
+                registration.modifiers.carbonFlags,
                 hotKeyID,
                 GetApplicationEventTarget(),
                 0,

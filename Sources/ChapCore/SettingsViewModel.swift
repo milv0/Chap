@@ -15,6 +15,7 @@ public struct SettingsPayload {
     public let notchPanelColorHex: String
     public let notchMirrorEnabled: Bool
     public let notchQuickNoteEnabled: Bool
+    public let notchTextRecognitionEnabled: Bool
     public let notchWidgets: [NotchWidget]
 }
 
@@ -33,6 +34,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchPanelColorHex: String
     @Published public var notchMirrorEnabled: Bool
     @Published public var notchQuickNoteEnabled: Bool
+    @Published public var notchTextRecognitionEnabled: Bool
     @Published public var notchWidgets: [NotchWidget]
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
@@ -49,6 +51,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchWidgets: [NotchWidget]
     @Published public var originalNotchMirrorEnabled: Bool
     @Published public var originalNotchQuickNoteEnabled: Bool
+    @Published public var originalNotchTextRecognitionEnabled: Bool
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -68,6 +71,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchWidgets != originalNotchWidgets
             || notchMirrorEnabled != originalNotchMirrorEnabled
             || notchQuickNoteEnabled != originalNotchQuickNoteEnabled
+            || notchTextRecognitionEnabled != originalNotchTextRecognitionEnabled
     }
 
     public func markSaved() {
@@ -92,6 +96,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchWidgets = notchWidgets
         originalNotchMirrorEnabled = notchMirrorEnabled
         originalNotchQuickNoteEnabled = notchQuickNoteEnabled
+        originalNotchTextRecognitionEnabled = notchTextRecognitionEnabled
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -112,6 +117,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchPanelColorHex: self.notchPanelColorHex,
                 notchMirrorEnabled: self.notchMirrorEnabled,
                 notchQuickNoteEnabled: self.notchQuickNoteEnabled,
+                notchTextRecognitionEnabled: self.notchTextRecognitionEnabled,
                 notchWidgets: self.notchWidgets,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
@@ -145,6 +151,7 @@ public final class SettingsViewModel: ObservableObject {
                     notchPanelColorHex: notchPanelColorHex,
                     notchMirrorEnabled: notchMirrorEnabled,
                     notchQuickNoteEnabled: notchQuickNoteEnabled,
+                    notchTextRecognitionEnabled: notchTextRecognitionEnabled,
                     notchWidgets: notchWidgets)) ?? true
         if saved { markSaved() }
         return saved
@@ -164,6 +171,7 @@ public final class SettingsViewModel: ObservableObject {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
+        notchTextRecognitionEnabled: Bool = true,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
@@ -181,6 +189,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchPanelColorHex = notchPanelColorHex
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
+        self.notchTextRecognitionEnabled = notchTextRecognitionEnabled
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.originalSites = sites
         self.originalGuide = showGuideWindow
@@ -196,6 +205,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchPanelColorHex = notchPanelColorHex
         self.originalNotchMirrorEnabled = notchMirrorEnabled
         self.originalNotchQuickNoteEnabled = notchQuickNoteEnabled
+        self.originalNotchTextRecognitionEnabled = notchTextRecognitionEnabled
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.saveDebouncer = saveDebouncer
     }

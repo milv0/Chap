@@ -160,6 +160,15 @@ struct NotchSettingsView: View {
                                         + "Click it to open your note."
                                 )
                                 .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
+
+                            Toggle(
+                                "Show Copy Text from Screen", isOn: $vm.notchTextRecognitionEnabled
+                            )
+                            .help(
+                                "Show a text icon in the notch's top strip. Drag over any part "
+                                    + "of the screen to copy its text (also \(TextRecognitionPolicy.shortcutLabel))."
+                            )
+                            .onChange(of: vm.notchTextRecognitionEnabled) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {

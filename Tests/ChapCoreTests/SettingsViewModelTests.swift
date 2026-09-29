@@ -152,6 +152,7 @@ struct SettingsViewModelTests {
                 notchPanelColorHex: vm.notchPanelColorHex,
                 notchMirrorEnabled: vm.notchMirrorEnabled,
                 notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
+                notchTextRecognitionEnabled: vm.notchTextRecognitionEnabled,
                 notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)

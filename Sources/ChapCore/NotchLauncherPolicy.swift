@@ -60,7 +60,8 @@ public enum NotchLauncherPolicy {
     }
 
     /// 상단 띠 도구 아이콘(Mirror, Quick Note)의 누름 폭과 간격.
-    public static let stripToolPitch: CGFloat = 28
+    /// 4개(Drop, Mirror, Quick Note, 텍스트 인식)가 노치 오른쪽 110pt 상태 영역 안에 들어가는 간격.
+    public static let stripToolPitch: CGFloat = 26
 
     /// Drop 배지 아이콘 중심의 노치 오른쪽 끝 기준 거리. 배지 본체(34pt)는 노치 밑으로
     /// 12pt 파고든 뒤 시작하고, 아이콘은 본체 가운데에서 왼쪽으로 4pt 광학 보정된다.

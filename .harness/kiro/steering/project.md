@@ -47,6 +47,8 @@ There is no `Package.swift`; do not use `swift test`.
 - `Option + .`: open menu.
 - `Option + custom key`: launch the matching site.
 - `Option + ,`: open Settings.
+- `Option + Shift + T`: copy text from a dragged screen area (ScreenCaptureKit +
+  Vision, in memory only; needs Screen Recording permission).
 - URL launch uses Chrome `--app` plus AX API resize. Optional reuse remembers
   only the window ID created by that launchable for the current Chap/Chrome
   session; it never searches user tabs or uses focused/frontmost fallbacks.
@@ -54,7 +56,7 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
-  Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
+  Finder, or Screenshots; Mirror, Quick Note, and Copy Text from Screen are icons in the black top strip beside the Drop badge); the status menu stays available, including
   on notchless Macs. Chap Drop copies dropped files into
   `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot
   Shelf reads the system screenshot folder in place.

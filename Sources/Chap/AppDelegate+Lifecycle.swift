@@ -29,6 +29,12 @@ extension AppDelegate {
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         buildMenu()
+        // 노치 띠 아이콘이 요청하면 화면 영역 텍스트 인식을 시작한다.
+        textRecognitionObserver = NotificationCenter.default.addObserver(
+            forName: TextRecognitionController.requestNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.startTextRecognition() }
+        }
         // 해상도·배치·외장 모니터·clamshell 변경 시 노치 창 프레임을 재계산한다.
         screenParametersObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -135,6 +141,7 @@ extension AppDelegate {
             notchPanelColorHex: config.notchPanelColorHex,
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+            notchTextRecognitionEnabled: config.notchTextRecognitionEnabled,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -153,6 +160,7 @@ extension AppDelegate {
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
+                notchTextRecognitionEnabled: payload.notchTextRecognitionEnabled,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -186,6 +194,7 @@ extension AppDelegate {
             let previousNotchWidgets = self.config.notchWidgets
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
+            let previousNotchTextRecognitionEnabled = self.config.notchTextRecognitionEnabled
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -224,6 +233,7 @@ extension AppDelegate {
                 || previousNotchWidgets != newConfig.notchWidgets
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
                 || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
+                || previousNotchTextRecognitionEnabled != newConfig.notchTextRecognitionEnabled
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }
