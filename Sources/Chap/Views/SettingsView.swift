@@ -259,8 +259,12 @@ struct SettingsView: View {
                             )
                             .contentShape(Rectangle())
                             .onTapGesture {
+                                // 섹션을 고르면 항목 선택은 해제한다. 한 번에 하나만 강조되어
+                                // "+"가 어디에 추가될지 헷갈리지 않는다. 편집 중인 값은
+                                // handleSelectionChange가 저장하고 이름 없는 새 항목은 폐기한다.
                                 focusedLaunchType = type
                                 selectedTab = .launchables
+                                selectedIndex = nil
                             }
                             .padding(.top, 5)
                             .accessibilityElement(children: .combine)
