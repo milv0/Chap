@@ -6,6 +6,10 @@ All notable changes to Chap are documented in this file.
 
 ### Added
 
+- **Focus Mode widget** — A lightning-bolt notch slot for Keep Mac Awake. Tap 1h,
+  4h, or 8h to stay charged; while it runs, the bolt pulses and a countdown shows
+  how long is left, from "Fully charged" down to "Landing soon". Tap Wind down to
+  stop. It is the same session as Keep Mac Awake in the menu.
 - **Downloads widget** — A new notch slot shows your four newest downloads with
   their file names and how long ago they arrived. Click to open, drag a file out,
   or right-click to share it or show it in Finder. Click the title to open

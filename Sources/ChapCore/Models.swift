@@ -293,6 +293,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// 다운로드 선반: ~/Downloads의 최근 파일을 모아 보여준다.
     case downloads = "downloads"
+    /// Focus 모드: Keep Mac Awake 세션을 노치에서 켜고 끄며 남은 시간을 보여준다.
+    case awake = "awake"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
     /// 빈 칸.
@@ -304,7 +306,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .drop, .none: return nil
+        case .screenshots, .downloads, .awake, .drop, .none: return nil
         }
     }
 

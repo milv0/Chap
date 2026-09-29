@@ -38,6 +38,130 @@ struct NotchWidgetHeader: View {
 /// 위젯 본문 높이. 목록 칸 4줄과 정확히 같아 모든 칸의 바닥선이 맞는다.
 private let widgetBodyHeight: CGFloat = NotchAppIconTile.listBodyHeight
 
+// MARK: - Focus (Keep Mac Awake)
+
+/// 노치 한 칸의 Focus 모드. Keep Mac Awake 세션을 번개 아이콘과 함께 켜고 끄며
+/// 남은 시간을 크게 보여준다. 상태바 메뉴의 Keep Mac Awake와 같은 세션이다.
+struct NotchFocusView: View {
+    let palette: NotchWidgetPalette
+    /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
+    @State var sessionEnd: Date?
+
+    /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
+    static let activateRequest = Notification.Name("ChapFocusActivate")
+    static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            NotchWidgetHeader(symbol: "bolt.fill", title: "Focus", palette: palette)
+            Group {
+                if let sessionEnd, sessionEnd > Date() {
+                    active(until: sessionEnd)
+                } else {
+                    idle
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: widgetBodyHeight)
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
+        ) { note in
+            sessionEnd = note.object as? Date
+        }
+    }
+
+    /// 꺼짐: 흐린 번개 + 한 줄 + 시간 버튼 셋.
+    private var idle: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "bolt")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(palette.primary.opacity(0.55))
+            VStack(spacing: 1) {
+                Text(KeepAwakePolicy.focusIdleLine)
+                    .font(DS.notchLabel)
+                    .foregroundColor(palette.primary)
+                Text(KeepAwakePolicy.focusIdleHint)
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+            }
+            HStack(spacing: 5) {
+                ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
+                    FocusPresetButton(
+                        title: KeepAwakePolicy.shortTitle(of: preset), palette: palette
+                    ) {
+                        NotificationCenter.default.post(
+                            name: Self.activateRequest, object: preset.duration)
+                    }
+                    .help("Keep your Mac awake for \(preset.title.lowercased())")
+                }
+            }
+        }
+    }
+
+    /// 켜짐: 파란 번개(살짝 맥박) + 남은 시간 + 위트 한 줄 + 끄기.
+    private func active(until end: Date) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = end.timeIntervalSince(context.date)
+            VStack(spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(DS.accent)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(palette.primary)
+                }
+                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+                FocusPresetButton(title: "Wind down", palette: palette, isQuiet: true) {
+                    NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
+                }
+                .help("Turn off Keep Mac Awake")
+                .padding(.top, 2)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
+        }
+    }
+}
+
+/// Focus 위젯의 작은 캡슐 버튼.
+private struct FocusPresetButton: View {
+    let title: String
+    let palette: NotchWidgetPalette
+    var isQuiet = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(DS.notchMeta.weight(.semibold))
+                .foregroundColor(
+                    isQuiet ? palette.secondary : (isHovered ? .white : palette.primary)
+                )
+                .padding(.horizontal, isQuiet ? 8 : 9)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(
+                            isQuiet
+                                ? palette.subtleSurface
+                                : (isHovered ? DS.accent : palette.subtleSurface))
+                )
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
 // MARK: - Mirror
 
 /// 상단 검정 띠의 거울 아이콘과, 누르면 띠 바로 아래로 펼쳐지는 좌우 반전 미리보기.

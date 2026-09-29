@@ -40,6 +40,9 @@ struct NotchRenderTool {
         if !previewWidgets.contains(.downloads), let gap = previewWidgets.firstIndex(of: .none) {
             previewWidgets[gap] = .downloads
         }
+        if !previewWidgets.contains(.awake), let gap = previewWidgets.firstIndex(of: .none) {
+            previewWidgets[gap] = .awake
+        }
         let previewSlots = NotchSlotContent.slots(widgets: previewWidgets, sites: config.sites)
         let drops = await withCheckedContinuation { continuation in
             ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) {
@@ -57,6 +60,7 @@ struct NotchRenderTool {
             ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-empty-drop", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-note", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
@@ -82,7 +86,9 @@ struct NotchRenderTool {
             let panel = NotchLauncherPanelView(
                 minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
                 stripPlateauHalfWidth: 92.5 + 110,
-                awakeSessionEnd: nil, style: style, glassMaterial: config.notchGlassMaterial,
+                awakeSessionEnd: name.hasSuffix("focus-on")
+                    ? Date().addingTimeInterval(3 * 3600 + 25 * 60) : nil, style: style,
+                glassMaterial: config.notchGlassMaterial,
                 slots: previewSlots, showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
                 reveal: reveal)

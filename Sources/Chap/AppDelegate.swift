@@ -5,6 +5,7 @@ import os
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     let keepAwake = KeepAwakeController()
+    var focusObservers: [NSObjectProtocol] = []
     let notchLauncher = NotchLauncherController()
     var screenParametersObserver: NSObjectProtocol?
     var pendingScreenRefresh: DispatchWorkItem?

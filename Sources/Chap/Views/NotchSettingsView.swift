@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .screenshots, .downloads,
+        .sites, .apps, .folders, .screenshots, .downloads, .awake,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -60,6 +60,7 @@ struct NotchSettingsView: View {
         case .folders: return "Finder"
         case .screenshots: return "Screenshots"
         case .downloads: return "Downloads"
+        case .awake: return "Focus"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
@@ -72,6 +73,7 @@ struct NotchSettingsView: View {
         switch widget {
         case .screenshots: return "camera.viewfinder"
         case .downloads: return "arrow.down.circle"
+        case .awake: return "bolt.fill"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
         }
@@ -355,6 +357,7 @@ private struct WidgetSlotBox: View {
             Button("Finder") { onAssign(.folders) }
             Button("Screenshots") { onAssign(.screenshots) }
             Button("Downloads") { onAssign(.downloads) }
+            Button("Focus") { onAssign(.awake) }
             if !isEmpty {
                 Divider()
                 Button("Clear Slot", action: onClear)
@@ -366,6 +369,7 @@ private struct WidgetSlotBox: View {
         .accessibilityAction(named: "Place Finder") { onAssign(.folders) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
         .accessibilityAction(named: "Place Downloads") { onAssign(.downloads) }
+        .accessibilityAction(named: "Place Focus") { onAssign(.awake) }
         .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
         .draggable(widget.rawValue)

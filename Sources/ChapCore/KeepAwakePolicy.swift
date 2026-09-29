@@ -75,4 +75,30 @@ enum KeepAwakePolicy {
 
     /// 모든 Quit 확인창에 사용하는 간결한 본문.
     static let quitConfirmationInfo = "Are you sure you want to quit Chap?"
+
+    // MARK: - Focus 위젯 (노치)
+
+    /// 노치 Focus 위젯의 빠른 선택지. 메뉴 프리셋 중 자주 쓰는 셋.
+    static let focusPresets: [Preset] = [presets[1], presets[2], presets[3]]
+
+    /// 버튼에 들어갈 짧은 이름 ("1h", "4h", "8h").
+    static func shortTitle(of preset: Preset) -> String {
+        let hours = Int(preset.duration / 3600)
+        return hours > 0 ? "\(hours)h" : "\(Int(preset.duration / 60))m"
+    }
+
+    /// 꺼져 있을 때의 한 줄. 번개처럼 바로 켜진다는 느낌.
+    static let focusIdleLine = "Stay charged"
+    /// 꺼져 있을 때의 보조 문구.
+    static let focusIdleHint = "No sleep, no dimming."
+
+    /// 켜져 있을 때 남은 시간에 따라 바뀌는 한 줄. 끝으로 갈수록 톤이 가벼워진다.
+    static func focusActiveLine(remaining: TimeInterval) -> String {
+        switch remaining {
+        case ..<(5 * 60): return "Landing soon"
+        case ..<(30 * 60): return "Final stretch"
+        case ..<(2 * 3600): return "In the zone"
+        default: return "Fully charged"
+        }
+    }
 }

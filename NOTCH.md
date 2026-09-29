@@ -162,6 +162,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (파일명이 핵심) |
+| Focus | 150pt |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -231,6 +232,15 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 `notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다. 화면 기록 권한 없이 레이어를
 직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
+
+## Focus 칸 (Keep Mac Awake)
+
+번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
+- 꺼짐: 흐린 `bolt` + "Stay charged" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
+- 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
+  Final stretch → Landing soon, `focusActiveLine`) + "Wind down"(끄기).
+- 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
+  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
 ## Downloads 칸
 

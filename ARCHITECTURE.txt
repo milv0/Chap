@@ -56,7 +56,7 @@ Sources/
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
-│       ├── NotchWidgetViews.swift ← 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
+│       ├── NotchWidgetViews.swift ← Focus(Keep Awake) 위젯, 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
 │       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)

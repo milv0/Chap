@@ -8,6 +8,8 @@ enum NotchSlotContent {
     case screenshots
     /// 다운로드 선반 위젯.
     case downloads
+    /// Focus(Keep Mac Awake) 위젯.
+    case awake
 
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
@@ -21,6 +23,7 @@ enum NotchSlotContent {
                 return nil
             case .screenshots: return .screenshots
             case .downloads: return .downloads
+            case .awake: return .awake
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
@@ -88,6 +91,8 @@ struct NotchLauncherPanelView: View {
     static let columnWidth: CGFloat = 160
     /// 다운로드 칸 폭. 파일명이 20자 안팎까지 보인다.
     static let downloadsColumnWidth: CGFloat = 200
+    /// Focus 칸 폭. 시간 버튼 셋(1h·4h·8h)이 한 줄에 들어간다.
+    static let focusColumnWidth: CGFloat = 150
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
     static let noteModeHeight: CGFloat = 200
 
@@ -112,6 +117,8 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(rows.max() ?? 0, header))))
+        case .awake:
+            return Self.focusColumnWidth
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -522,6 +529,8 @@ struct NotchLauncherPanelView: View {
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
+        case .awake:
+            NotchFocusView(palette: widgetPalette, sessionEnd: awakeSessionEnd)
         }
     }
 
