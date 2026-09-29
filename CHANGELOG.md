@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **White strip widgets** — The Drop, Mirror, and Quick Note icons in the notch's
+  black strip are white again; only an open tool turns blue. Section icons keep
+  the soft Chap blue.
+
 ## [2.4.1] — 2026-09-29
 
 ### Fixed
