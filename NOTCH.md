@@ -154,14 +154,14 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 ## Apps 칸: 아이콘 격자
 
-Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 필요한 줄만 그리므로 앱 3개면 2줄, 5~6개면 3줄이다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
+Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 앱 수와 관계없이 2열 × 3줄 자리(113pt)를 잡고 위에서부터 한 줄에 둘씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
 단축키가 있으면 아이콘 오른쪽 아래에 `⌥S` 캡슐 배지(9pt semibold)를 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭(2 × 34 + 8 + 여백 4 = 80pt)만 쓰고, 목록 칸(Sites·Folders 등)은 160pt 그대로다.
 
 ## 도구 위젯: Mirror · Quick Note
 
-위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 폭 계산에는 영향이 없다.
+위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
 - **Mirror**: `AVCaptureVideoPreviewLayer`를 좌우 반전해 칸 폭 × 92pt에 aspect fill로 채운다.
   도커를 열 때마다 큰 `web.camera` 아이콘 + "Mirror" 이름의 꺼진 상태로 시작하고, 누르면 켜진다.

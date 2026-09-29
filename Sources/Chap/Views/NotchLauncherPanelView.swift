@@ -309,6 +309,9 @@ struct NotchLauncherPanelView: View {
                 ForEach(Array(slots.enumerated()), id: \.offset) { column, slot in
                     slotView(slot)
                         .frame(width: width(for: slot), alignment: .leading)
+                        // 모든 칸을 가장 긴 칸 높이로 늘려, 구분선이 내용 길이와 무관하게
+                        // 항상 줄 전체 높이로 그려지게 한다.
+                        .frame(maxHeight: .infinity, alignment: .top)
                         // 섹션 사이 얇은 세로 구분선. 폭 계산에 영향이 없도록 간격 중앙에 겹쳐 그린다.
                         .overlay(alignment: .leading) {
                             if column > 0 {
@@ -322,6 +325,8 @@ struct NotchLauncherPanelView: View {
                         }
                 }
             }
+            // 칸 높이를 가장 긴 칸의 이상 높이로 고정해 무한 확장을 막는다.
+            .fixedSize(horizontal: false, vertical: true)
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.
@@ -457,6 +462,8 @@ struct NotchLauncherPanelView: View {
             }
         }
         .padding(.horizontal, 2)
+        // 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
+        .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
     }
 
     private func launcherRows(_ section: LauncherListSection) -> some View {
