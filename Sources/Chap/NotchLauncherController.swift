@@ -482,6 +482,12 @@ final class NotchLauncherController {
             stopVisibilityMonitor()
             return
         }
+        // ⌥ 상태는 앱이 비활성이어도 읽을 수 있는 전역 modifierFlags로 확인한다.
+        // (nonactivating 패널에는 flagsChanged 이벤트가 오지 않고, 전역 키 모니터는 권한이 필요하다.)
+        let optionHeld = NSEvent.modifierFlags.contains(.option)
+        if let reveal = revealModel, reveal.isOptionHeld != optionHeld {
+            reveal.isOptionHeld = optionHeld
+        }
         // 프리뷰 고정 중에는 마우스 위치와 무관하게 유지한다.
         if isPreviewPinned {
             lastInsideDate = Date()

@@ -40,6 +40,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var colorHex: String = Config.notchPanelColorHexDefault
     /// 파일 드래그가 노치에 닿아 "Drop here" 레이어를 덮어야 하는 상태.
     @Published var isDropTargetActive = false
+    /// ⌥를 누르고 있는 동안. 키캡이 강조되고 "⌥1"처럼 수식키를 함께 보여준다.
+    @Published var isOptionHeld = false
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -519,6 +521,7 @@ struct NotchLauncherPanelView: View {
             ) { entry in
                 NotchAppIconTile(
                     entry: entry,
+                    isOptionHeld: reveal.isOptionHeld,
                     primaryForeground: primaryForeground,
                     badgeForeground: keycapForeground,
                     badgeBackground: keycapBackground,
@@ -530,7 +533,6 @@ struct NotchLauncherPanelView: View {
         }
         .fixedSize(horizontal: true, vertical: false)
         // 배지 글자는 ⌥와 함께 누르는 키다. 수식키 안내는 툴팁으로만 둔다.
-        .help("Hold Option and press the letter on an app to launch it")
         // 칸 폭 안에서 가운데, 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
         .frame(maxWidth: .infinity)
         .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
@@ -545,6 +547,7 @@ struct NotchLauncherPanelView: View {
             ) { entry in
                 NotchLauncherRow(
                     entry: entry,
+                    isOptionHeld: reveal.isOptionHeld,
                     primaryForeground: primaryForeground,
                     shortcutForeground: keycapForeground,
                     textShadowOpacity: textShadowOpacity,
@@ -568,6 +571,7 @@ struct NotchLauncherPanelView: View {
 
 private struct NotchLauncherRow: View {
     let entry: LauncherListEntry
+    let isOptionHeld: Bool
     let primaryForeground: Color
     let shortcutForeground: Color
     let textShadowOpacity: Double
@@ -588,17 +592,10 @@ private struct NotchLauncherRow: View {
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
                 Spacer(minLength: DS.spacingSmall)
-                if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
-                    // 키캡 칩: 옅은 회색 글자보다 배경 대비로 읽히게 한다.
-                    Text(badge)
-                        .font(DS.notchLabel)
-                        .foregroundColor(shortcutForeground)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1.5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(keycapBackground)
-                        )
+                if let key = LauncherListPolicy.shortcutKey(for: entry.site) {
+                    NotchKeycap(
+                        key: key, isOptionHeld: isOptionHeld,
+                        foreground: shortcutForeground, background: keycapBackground)
                 }
             }
             .padding(.horizontal, 6)
@@ -611,13 +608,48 @@ private struct NotchLauncherRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        .help(LauncherListPolicy.shortcutBadge(for: entry.site) ?? "")
         .accessibilityLabel(LauncherListPolicy.launchAccessibilityLabel(for: entry.site))
+    }
+}
+
+/// 단축키 키캡. 평소에는 키 글자만(`1`, `N`) 보여 읽기 쉽게 하고, ⌥를 누르고 있으면
+/// 액센트로 강조하며 `⌥1`로 바뀌어 어떤 조합인지 알려준다. 폭은 `⌥1` 기준으로 잡아
+/// 바뀌어도 줄이 움직이지 않는다.
+struct NotchKeycap: View {
+    let key: String
+    let isOptionHeld: Bool
+    let foreground: Color
+    let background: Color
+    var font: Font = DS.notchLabel
+    /// 목록 줄은 `⌥1` 폭을 미리 잡아 줄이 움직이지 않게 한다. 아이콘 배지는 아이콘을
+    /// 덜 가리도록 글자 폭만 쓴다 (겹쳐 그리는 배지라 폭이 바뀌어도 배치가 움직이지 않는다).
+    var reservesModifierWidth = true
+
+    var body: some View {
+        ZStack {
+            if reservesModifierWidth {
+                Text("⌥\(key)").font(font).hidden()
+            }
+            Text(isOptionHeld ? "⌥\(key)" : key)
+                .font(font)
+                .foregroundColor(isOptionHeld ? .white : foreground)
+        }
+        .padding(.horizontal, 5)
+        .padding(.vertical, 1.5)
+        .background(
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(isOptionHeld ? DS.accent : background)
+        )
+        .animation(.easeOut(duration: 0.12), value: isOptionHeld)
+        .accessibilityHidden(true)
     }
 }
 
 /// Apps 칸의 아이콘 한 개. 호버 시 앱 이름 툴팁과 옅은 배경을 보여준다.
 struct NotchAppIconTile: View {
     let entry: LauncherListEntry
+    let isOptionHeld: Bool
     let primaryForeground: Color
     let badgeForeground: Color
     let badgeBackground: Color
@@ -628,10 +660,12 @@ struct NotchAppIconTile: View {
     @State private var isHovered = false
 
     init(
-        entry: LauncherListEntry, primaryForeground: Color, badgeForeground: Color,
-        badgeBackground: Color, hoverBackground: Color, action: @escaping () -> Void
+        entry: LauncherListEntry, isOptionHeld: Bool, primaryForeground: Color,
+        badgeForeground: Color, badgeBackground: Color, hoverBackground: Color,
+        action: @escaping () -> Void
     ) {
         self.entry = entry
+        self.isOptionHeld = isOptionHeld
         self.primaryForeground = primaryForeground
         self.badgeForeground = badgeForeground
         self.badgeBackground = badgeBackground
@@ -674,22 +708,18 @@ struct NotchAppIconTile: View {
                 .frame(width: Self.tileSize, height: Self.tileSize)
 
                 if let key = LauncherListPolicy.shortcutKey(for: entry.site) {
-                    // Sites 목록의 키캡과 같은 모양(모서리 4pt). 글자만 크게 보여 읽기 쉽고,
-                    // 아이콘 위에서도 읽히도록 반투명 재질을 깐다.
-                    Text(key)
-                        .font(DS.notchMeta.weight(.semibold))
-                        .frame(minWidth: 10)
-                        .foregroundColor(badgeForeground)
-                        .padding(.horizontal, 3.5)
-                        .padding(.vertical, 1)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(.regularMaterial)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                        .fill(badgeBackground))
-                        )
-                        .offset(x: 3, y: 3)
+                    // 목록과 같은 키캡. 아이콘 위에서도 읽히도록 반투명 재질을 깐다.
+                    NotchKeycap(
+                        key: key, isOptionHeld: isOptionHeld,
+                        foreground: badgeForeground, background: badgeBackground,
+                        font: DS.notchMeta.weight(.semibold),
+                        reservesModifierWidth: false
+                    )
+                    .background(
+                        RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .fill(.regularMaterial)
+                    )
+                    .offset(x: 3, y: 3)
                 }
             }
             .background(
@@ -700,7 +730,10 @@ struct NotchAppIconTile: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help(entry.site.name)
+        .help(
+            LauncherListPolicy.shortcutBadge(for: entry.site).map { "\(entry.site.name)  \($0)" }
+                ?? entry.site.name
+        )
         .accessibilityLabel(LauncherListPolicy.launchAccessibilityLabel(for: entry.site))
         .task(id: entry.site.appPath) {
             guard let path = entry.site.appPath, !path.isEmpty else { return }

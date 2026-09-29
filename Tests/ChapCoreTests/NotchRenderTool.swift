@@ -27,14 +27,9 @@ struct NotchRenderTool {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
         let slots = NotchSlotContent.slots(widgets: config.notchWidgets, sites: config.sites)
 
-        // 비동기로 채우는 이미지·목록을 미리 캐시에 넣어 첫 프레임에 보이게 한다.
-        for site in config.sites where site.launchType == .app {
-            if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
-        }
         let shots = await withCheckedContinuation { continuation in
             ScreenshotShelf.recentScreenshotsAsync { continuation.resume(returning: $0) }
         }
-        for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
         ScreenshotShelf.previewOverride = shots
         let drops = await withCheckedContinuation { continuation in
             ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) {
@@ -47,14 +42,21 @@ struct NotchRenderTool {
             ChapDrop.previewOverride = nil
         }
 
-        let variants: [(String, NotchPanelStyle, ColorScheme, Color)] = [
-            ("notch-glass-light", .glass, .light, Color(white: 0.92)),
-            ("notch-glass-dark", .glass, .dark, Color(white: 0.16)),
-            ("notch-custom", .custom, .dark, Color(white: 0.55)),
+        let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
+            ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
+            ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
+            ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
-        for (name, style, scheme, backdrop) in variants {
+        for (name, style, scheme, backdrop, optionHeld) in variants {
+            // 비동기로 채우는 이미지를 그리기 직전에 캐시에 넣는다 (NSCache는 언제든 비울 수 있다).
+            for site in config.sites where site.launchType == .app {
+                if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
+            }
+            for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
             let reveal = NotchRevealModel()
             reveal.revealed = true
+            reveal.isOptionHeld = optionHeld
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(

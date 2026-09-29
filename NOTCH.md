@@ -169,7 +169,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 ## Apps 칸: 아이콘 격자
 
 Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 앱 수와 관계없이 2열 × 3줄 자리(113pt)를 잡고 위에서부터 한 줄에 둘씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
-단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 수식키 ⌥ 안내는 격자 툴팁("Hold Option and press the letter…")과 VoiceOver("Option S")로만 둔다. 호버 시 앱 이름
+단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Folders 등)은 160pt 그대로다.
 
@@ -187,6 +187,14 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
   `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
   메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
+
+## 단축키 키캡과 ⌥
+
+Sites 목록과 Apps 아이콘의 키캡은 평소 키 글자만(`1`, `N`) 보여준다. 도커가 열린 채 ⌥를 누르고 있으면
+모든 키캡이 액센트 블루로 바뀌며 `⌥1`, `⌥N`처럼 수식키를 함께 보여준다. ⌥ 상태는 visibility 타이머(80ms)가
+전역 `NSEvent.modifierFlags`로 읽는다(nonactivating 패널은 flagsChanged를 받지 못하고, 전역 키 모니터는
+권한이 필요하기 때문). 목록 키캡은 `⌥1` 폭을 미리 잡아 바뀌어도 줄이 움직이지 않는다. 행·아이콘 툴팁과
+VoiceOver("Option 1")는 항상 전체 조합을 알려준다.
 
 ## Drop 파일 줄
 

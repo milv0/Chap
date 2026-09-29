@@ -172,6 +172,10 @@ struct QAView: View {
                     "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
                 ),
                 (
+                    "노치의 숫자·글자 키캡은 무엇인가요?",
+                    "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
+                ),
+                (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
                     "Notch 탭의 Widgets 보드에 있는 6칸에 Sites, Apps, Folders, Screenshots, Mirror, Quick Note를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
@@ -387,6 +391,10 @@ struct QAView: View {
                 (
                     "How do I enable the Notch Launcher?",
                     "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
+                ),
+                (
+                    "What do the number and letter keycaps in the notch mean?",
+                    "They are Option shortcuts. The notch shows just the key for readability; hold Option while it is open and the keycaps turn blue and show the full combination, such as ⌥1."
                 ),
                 (
                     "How do I arrange the notch slots?",
