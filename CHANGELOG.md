@@ -11,6 +11,12 @@ All notable changes to Chap are documented in this file.
   opens just below, ready to type. Hide it with Show Quick Note in Settings.
 - **Minimum notch width** — The open notch is at least 640pt wide and centers the
   widget row, so a few widgets no longer squeeze it against the notch.
+- **Drop box always visible when open** — The open notch shows the Drop box in
+  the strip even when it is empty (without a count), so Mirror and Quick Note
+  keep a fixed place. The closed notch still shows the badge only when files are
+  kept.
+- **Screenshot times on the right** — Each screenshot row keeps the thumbnail on
+  the left and aligns the time to the row's right edge.
 - **Click away to close** — Clicking anywhere outside an open Quick Note or Mirror
   popup, or switching to another app, folds it away.
 - **Tighter strip icons** — Mirror now sits right next to the Drop badge instead

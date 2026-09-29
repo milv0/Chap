@@ -144,8 +144,8 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
 보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
-목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일과
-"5 min ago" 같은 상대 시각을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
+"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 고정폭 숫자)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
@@ -177,8 +177,9 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
-- **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 첫 아이콘은 Drop 배지가
-  있으면 배지 아이콘 바로 오른쪽, 없으면 배지 자리(노치 끝 +13pt)에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
+- **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 도커가 펼쳐져 있으면
+  Drop 상자는 파일이 없어도 배지 자리에 숫자 없는 빈 상자로 보이고(접힌 노치에서는 파일이 있을 때만 배지),
+  첫 도구는 항상 상자 바로 오른쪽에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
   Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
   - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
   - Quick Note: 240×128 어두운 카드 안에서 메모를 바로 입력한다(펼치면 커서가 들어간다).

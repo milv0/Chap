@@ -181,6 +181,9 @@ struct NotchStripTools: View {
     let notchRightEdge: CGFloat
     let stripHeight: CGFloat
     let besideDropBadge: Bool
+    /// 보관 파일이 없어 Drop 배지 창이 없을 때, 도커가 열린 동안만 같은 자리에 빈 상자
+    /// 아이콘을 그린다 (숫자 배지 없이). 접힌 노치에서는 그리지 않는다.
+    var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
 
@@ -193,6 +196,20 @@ struct NotchStripTools: View {
             besideDropBadge: besideDropBadge, count: tools.count)
         GeometryReader { geo in
             ZStack(alignment: .topLeading) {
+                if showsEmptyDropBox {
+                    // Drop 배지와 같은 아이콘·크기·광학 위치 (배지 아이콘은 본체 중앙에서 왼쪽 4pt, 아래 1pt).
+                    Image(systemName: "tray.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
+                        .position(
+                            x: geo.size.width / 2 + notchRightEdge
+                                + NotchLauncherPolicy.dropBadgeIconCenterOffset,
+                            y: stripHeight / 2 + 1
+                        )
+                        .help("Drop files on the notch to keep them in Chap Drop")
+                        .accessibilityLabel("Chap Drop: empty")
+                }
                 ForEach(Array(tools.enumerated()), id: \.offset) { index, tool in
                     let centerX = geo.size.width / 2 + notchRightEdge + offsets[index]
                     switch tool {

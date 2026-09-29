@@ -103,12 +103,12 @@ struct NotchLauncherPanelView: View {
         case .screenshots:
             // 썸네일 34 + 간격 6 + 시각 문구 + Spacer 앞 간격 6 + 좌우 여백 12.
             let label =
-                ["00 min ago", "Yesterday", "00 hr ago"]
+                ["88 min ago", "Yesterday", "88 hr ago"]
                 .map(NotchTextMetrics.bodyWidth).max() ?? 0
             let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
-                    contentWidth: Double(max(34 + 6 + label + 6 + 12, header))))
+                    contentWidth: Double(max(34 + 6 + label + 6 + 12 + 8, header))))
         }
     }
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
@@ -194,17 +194,17 @@ struct NotchLauncherPanelView: View {
             )
             // Keep Awake 상태는 별도 배지 창이 아니라 메인 도커 상단에 통합한다.
             .overlay(alignment: .top) { awakeStripStatus }
-            // 상단 띠 오른쪽 도구: Drop 배지 옆 Mirror, 그 오른쪽 Quick Note. 누르면 띠 아래로 펼친다.
+            // 상단 띠 오른쪽: Drop 상자(파일이 없어도 펼친 동안은 빈 상자), 그 오른쪽 Mirror, Quick Note.
+            // 파일이 있으면 상자는 별도 배지 창이 그리고, 없으면 여기서 숫자 없이 그린다.
             .overlay(alignment: .top) {
-                if showsMirror || showsNote {
-                    NotchStripTools(
-                        notchRightEdge: stripPlateauHalfWidth
-                            - NotchGeometry.stripPlateauSideWidth,
-                        stripHeight: topInset,
-                        besideDropBadge: !dropFiles.isEmpty,
-                        showsMirror: showsMirror,
-                        showsNote: showsNote)
-                }
+                NotchStripTools(
+                    notchRightEdge: stripPlateauHalfWidth
+                        - NotchGeometry.stripPlateauSideWidth,
+                    stripHeight: topInset,
+                    besideDropBadge: true,
+                    showsEmptyDropBox: dropFiles.isEmpty,
+                    showsMirror: showsMirror,
+                    showsNote: showsNote)
             }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
