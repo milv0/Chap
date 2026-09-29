@@ -22,6 +22,8 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Add to the section you picked** — In Settings, click the URL, App, or Finder
+  heading to highlight that section; + and ⌘N then add a new item there.
 - **Finder naming** — The notch widget and section formerly called Folders are
   now called Finder, matching the Finder launch type in Settings and the menu.
 - **More legible notch** — Text uses three sizes (13, 11, and 10pt), section
