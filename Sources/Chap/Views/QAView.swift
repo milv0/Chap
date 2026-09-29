@@ -193,7 +193,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
-                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지 네 개를 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 열립니다."
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다)."
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
@@ -418,7 +418,7 @@ struct QAView: View {
                 ),
                 (
                     "Does the Screenshots widget move my files?",
-                    "No. It only reads the four newest images from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder."
+                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way)."
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",

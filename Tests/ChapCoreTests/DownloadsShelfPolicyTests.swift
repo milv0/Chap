@@ -19,7 +19,7 @@ struct DownloadsShelfPolicyTests {
         #expect(DownloadsShelfPolicy.isCandidate(fileName: "Tool.app", isDirectory: true))
     }
 
-    @Test("the newest four finished downloads are shown, newest first")
+    @Test("finished downloads are shown newest first")
     func selection() {
         let files: [(name: String, isDirectory: Bool, date: Date)] = [
             ("old.pdf", false, now.addingTimeInterval(-500)),
@@ -33,7 +33,23 @@ struct DownloadsShelfPolicyTests {
 
         #expect(
             DownloadsShelfPolicy.shelfSelection(files: files)
-                == ["new.png", "mid.zip", "a.txt", "b.txt"])
+                == ["new.png", "mid.zip", "a.txt", "b.txt", "old.pdf"])
+    }
+
+    @Test("the shelf keeps twelve downloads and shows four rows before scrolling")
+    func limitAndVisibleRows() {
+        let base = Date(timeIntervalSince1970: 1_000_000)
+        let files = (0..<20).map { index in
+            (
+                name: "f\(index).pdf", isDirectory: false,
+                date: base.addingTimeInterval(Double(index))
+            )
+        }
+        let selected = DownloadsShelfPolicy.shelfSelection(files: files)
+        #expect(selected.count == 12)
+        #expect(selected.first == "f19.pdf")
+        #expect(selected.last == "f8.pdf")
+        #expect(DownloadsShelfPolicy.visibleRows == 4)
     }
 
     @Test("ages are short so the file name gets the width")

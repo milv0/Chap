@@ -794,3 +794,49 @@ struct NotchMascotView: View {
         .frame(width: 4 * pixelSize, height: 4 * pixelSize)
     }
 }
+
+/// 노치 선반(Screenshots·Downloads) 목록. 목록 칸 4줄 높이(113pt)에 고정하고, 더 있으면
+/// 트랙패드·휠로 스크롤한다. 스크롤바는 시스템 설정("항상 보기")과 관계없이 숨기고,
+/// 아래로 더 있을 때만 맨 아래를 살짝 흐리게 해 이어진다는 것을 알린다.
+struct NotchShelfScrollList<Content: View>: View {
+    let itemCount: Int
+    let visibleRows: Int
+    @ViewBuilder let content: () -> Content
+
+    /// 맨 아래 흐림 높이. 끝까지 내리면 같은 만큼의 여백이 마지막 줄을 흐림 밖으로 올린다.
+    private static var fadeHeight: CGFloat { 10 }
+
+    private var scrolls: Bool { itemCount > visibleRows }
+
+    var body: some View {
+        ScrollView(.vertical) {
+            LazyVStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
+                content()
+            }
+            .padding(.bottom, scrolls ? Self.fadeHeight : 0)
+        }
+        .scrollIndicators(.never)
+        .scrollDisabled(!scrolls)
+        .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+        .mask {
+            VStack(spacing: 0) {
+                Color.black
+                LinearGradient(
+                    colors: [.black, scrolls ? .black.opacity(0) : .black],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: Self.fadeHeight)
+            }
+        }
+    }
+}
+
+/// 선반 제목에서 폴더 열기 요청. 앱이 일반 Finder 실행 경로(Standard 프리셋, 커서 화면
+/// 가운데)로 연다. object는 폴더 URL, userInfo["name"]은 로그용 이름이다.
+enum NotchShelfFolder {
+    static let openRequest = Notification.Name("ChapShelfFolderOpen")
+
+    static func open(_ url: URL, name: String) {
+        NotificationCenter.default.post(name: openRequest, object: url, userInfo: ["name": name])
+    }
+}

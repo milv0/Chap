@@ -231,7 +231,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 - Sites·Apps·Finder 제목: 누르면 도커를 닫고 설정창 Launchables 탭에서 그 타입의 첫 항목을 선택한다
   (`showSettings(focusing:)` → `SettingsView.focusLaunchType` 알림). 호버 시 옅은 면과 ›, 툴팁 "Edit Sites in Settings".
-- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다.
+- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다. Downloads 제목은 ~/Downloads를 연다. 두 창 모두 일반 Finder
+  런처와 같은 경로로 Standard 크기 프리셋, 커서 화면 가운데에 열린다(`ShelfFolderLaunch`, Finder Automation 권한 사용).
 - Mirror·Quick Note 제목: 동작 없음.
 
 ## 노치에서 실행할 때의 창 크기
@@ -275,9 +276,19 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
+## 선반 스크롤 (Screenshots · Downloads)
+
+두 선반은 최근 12개까지 담고(`maxItems`), 목록 칸 4줄 높이(113pt, `visibleRows` 4)에 고정된
+`NotchShelfScrollList`에 그린다. 5개 이상이면 트랙패드·휠로 스크롤한다.
+
+- 스크롤바는 `.scrollIndicators(.never)`로 시스템 "스크롤 막대 항상 보기" 설정에서도 숨긴다.
+- 더 있음을 알리는 신호는 맨 아래 10pt 흐림 하나뿐이다. 콘텐츠 아래에 같은 10pt 여백이 있어
+  끝까지 내리면 마지막 줄이 흐림 밖으로 올라온다. 4개 이하이면 흐림도 스크롤도 없다.
+- 줄은 `LazyVStack`이라 보이는 줄의 썸네일·아이콘만 먼저 읽는다.
+
 ## Downloads 칸
 
-`~/Downloads`에서 최근 4개(폴더에 들어온 시각 순, 없으면 수정 시각)를 보여준다. 숨김 파일, 받는 중인 파일
+`~/Downloads`에서 최근 12개(폴더에 들어온 시각 순, 없으면 수정 시각)를 담고 4줄이 보인다. 나머지는 스크롤로 본다(위 "선반 스크롤"). 숨김 파일, 받는 중인 파일
 (`.crdownload`, `.download`, `.part` 등), 폴더(.app 제외)는 뺀다(`DownloadsShelfPolicy`). 한 줄은 26pt: 20pt 파일
 아이콘(이미지는 썸네일), 가운데 생략 파일명, 오른쪽 끝 짧은 시각(`now`, `5m`, `3h`, `1d`, `Sep 24`). 클릭 열기, 드래그
 꺼내기, 우클릭 Open·Share…·Show in Finder. 제목 클릭은 Finder로 다운로드 폴더를 연다. 2초마다 다시 읽고, 위젯이

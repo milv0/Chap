@@ -57,7 +57,7 @@ struct NotchDownloadsShelfView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Button {
-                NSWorkspace.shared.open(DownloadsShelf.directory())
+                NotchShelfFolder.open(DownloadsShelf.directory(), name: "Downloads")
             } label: {
                 header
             }
@@ -74,10 +74,14 @@ struct NotchDownloadsShelfView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
-                ForEach(urls, id: \.self) { url in
-                    DownloadsShelfRow(
-                        url: url, primary: primary, secondary: tertiary,
-                        textShadowOpacity: textShadowOpacity, hoverBackground: hoverBackground)
+                NotchShelfScrollList(
+                    itemCount: urls.count, visibleRows: DownloadsShelfPolicy.visibleRows
+                ) {
+                    ForEach(urls, id: \.self) { url in
+                        DownloadsShelfRow(
+                            url: url, primary: primary, secondary: tertiary,
+                            textShadowOpacity: textShadowOpacity, hoverBackground: hoverBackground)
+                    }
                 }
             }
         }

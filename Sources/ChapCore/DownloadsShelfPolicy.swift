@@ -3,8 +3,10 @@ import Foundation
 /// 노치 다운로드 선반이 ~/Downloads에서 보여줄 파일을 고르는 규칙.
 /// 파일 시스템 접근과 분리된 순수 정책이라 단위 테스트로 고정한다.
 public enum DownloadsShelfPolicy {
-    /// 선반에 보여줄 최대 파일 수. 다른 목록 칸과 같은 4줄.
-    public static let maxItems = 4
+    /// 선반에 담는 최대 파일 수. 한 번에 4줄이 보이고 나머지는 스크롤로 본다.
+    public static let maxItems = 12
+    /// 스크롤 없이 보이는 줄 수. 다른 목록 칸과 같은 4줄.
+    public static let visibleRows = 4
 
     /// 아직 받는 중인 파일의 확장자 (Chrome, Safari, Firefox, 일반 부분 파일).
     public static let inProgressExtensions: Set<String> = [

@@ -19,6 +19,12 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Scrollable shelves** — Screenshots and Downloads now keep up to twelve items.
+  Four show at a glance; scroll with the trackpad or wheel for the rest. There is
+  no scroll bar, only a soft fade at the bottom when more is below.
+- **Centered shelf folders** — Clicking the Screenshots or Downloads title opens
+  that folder in a Finder window at the Standard size, centered on the screen
+  with the pointer, like any Finder launchable.
 - **Slimmer Downloads slot** — File names in the Downloads slot are 10pt and the
   slot is 160pt wide instead of 200pt, so the dock is narrower while names show
   about as much as before. Sites and Finder lists stay at 13pt.

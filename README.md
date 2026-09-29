@@ -17,8 +17,8 @@
 - **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, and steps aside for the Focus timer while Focus runs. In the Focus slot it sleeps while Focus is off, wakes when you start a session, and gets drowsy near the end
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A lightning-bolt notch slot that keeps your Mac awake for 1h, 4h, or 8h with one click and counts down while it runs (the same session as Keep Mac Awake)
-- **Downloads Shelf** — See your four newest downloads in a notch slot with their names and age; click to open, drag out, or right-click to share or show in Finder
-- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
+- **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age; click to open, drag out, or right-click to share or show in Finder
+- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
