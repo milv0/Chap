@@ -179,13 +179,22 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 ## 상단 띠 왼쪽: 마스코트 · Focus 시계
 
+`NotchLauncherPolicy.stripLeading(focusActive:focusSlotVisible:)`가 정한다. Focus 칸이 위젯 줄에
+보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로 띠 왼쪽은 비운다.
+
+| 상황 | 띠 왼쪽 |
+|---|---|
+| Focus 칸 보임 | 비움 |
+| Focus 칸 없음, 또는 메모 모드 + Focus 켜짐 | 번개 + 남은 시간 |
+| Focus 칸 없음, 또는 메모 모드 + Focus 꺼짐 | 물범 |
+
 노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt 가운데)에는 Focus가 켜져 있으면 번개와 남은 시간,
 꺼져 있으면 Chap 마스코트(아기 물범, `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다.
 마스코트는 `Canvas`로 픽셀마다 사각형을 칠하며, 누를 수 없고 VoiceOver에서 제외된다.
 꼬리 까딱: 도커가 펼쳐지고 0.35초 뒤 한 번(`flickSequence` 들기·내리기 ×2, 프레임 0.14초),
 이후 열려 있는 동안 7~12초 무작위 간격으로 반복한다. 꼬리 프레임(`tailUpRows`)은 오른쪽 끝 다섯 칸만 다르다.
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
-깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`). Focus 칸이 배치되어 있으면 띠 물범은 그리지 않는다(물범은 한 마리).
+깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
 
 **Focus 칸의 물범** (`ChapMascot.widgetPixelSize` 2pt = 48×24pt, 기존 큰 번개 자리):
 

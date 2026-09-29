@@ -14,7 +14,8 @@ All notable changes to Chap are documented in this file.
   sleeps with a rising z while Focus is off, wakes with a tail flick when Focus
   starts, wags its tail the whole time Focus runs (slower once drowsy), blinks
   while it keeps watch, and gets drowsy in the last 30 minutes.
-  When the Focus slot is placed, the strip seal steps aside so there is only one.
+  While the Focus slot is showing, the strip's left side stays empty (no second
+  seal, no duplicate clock); in Quick Note mode the strip shows them again.
 
 ## [2.4.2] — 2026-09-29
 

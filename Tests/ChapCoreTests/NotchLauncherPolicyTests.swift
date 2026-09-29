@@ -94,3 +94,24 @@ struct NotchLauncherPolicyTests {
         #expect(NotchLauncherPolicy.shouldBuildPanel(hasSlots: true, forDrop: false))
     }
 }
+
+@Suite("NotchLauncherPolicy – strip leading content")
+struct NotchStripLeadingTests {
+    @Test("a visible Focus slot owns the clock and the seal, so the strip stays empty")
+    func focusSlotVisible() {
+        #expect(
+            NotchLauncherPolicy.stripLeading(focusActive: true, focusSlotVisible: true) == .empty)
+        #expect(
+            NotchLauncherPolicy.stripLeading(focusActive: false, focusSlotVisible: true) == .empty)
+    }
+
+    @Test("without a visible Focus slot the strip shows the clock or the seal")
+    func focusSlotHidden() {
+        #expect(
+            NotchLauncherPolicy.stripLeading(focusActive: true, focusSlotVisible: false)
+                == .focusClock)
+        #expect(
+            NotchLauncherPolicy.stripLeading(focusActive: false, focusSlotVisible: false) == .mascot
+        )
+    }
+}
