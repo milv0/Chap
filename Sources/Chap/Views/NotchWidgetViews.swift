@@ -64,10 +64,9 @@ struct NotchMirrorStripControl: View {
                 if isOpen && state == .live {
                     preview
                         .position(
-                            x: min(
-                                max(iconCenterX, Self.previewSize.width / 2 + 12),
-                                geo.size.width - Self.previewSize.width / 2 - 12),
-                            y: stripHeight + 8 + Self.previewSize.height / 2
+                            NotchLauncherPolicy.stripPopupCenter(
+                                iconCenterX: iconCenterX, popupSize: Self.previewSize,
+                                containerWidth: geo.size.width, stripHeight: stripHeight)
                         )
                         .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .top)))
                 }
@@ -185,7 +184,7 @@ struct NotchStripTools: View {
     let showsMirror: Bool
     let showsNote: Bool
 
-    private enum Tool { case mirror, note }
+    private enum Tool: Equatable { case mirror, note }
     @State private var openTool: Tool?
 
     var body: some View {
@@ -206,6 +205,34 @@ struct NotchStripTools: View {
                             iconCenterX: centerX, stripHeight: stripHeight,
                             isOpen: binding(for: .note))
                     }
+                }
+            }
+            // 팝업 바깥을 누르거나 패널이 key를 잃으면 접는다.
+            .onReceive(
+                NotificationCenter.default.publisher(for: NotchLauncherController.didClickPanel)
+            ) {
+                note in
+                guard let open = openTool, let index = tools.firstIndex(of: open) else { return }
+                guard let click = note.userInfo?["point"] as? CGPoint else {
+                    openTool = nil
+                    return
+                }
+                // 클릭 위치를 이 오버레이의 좌표로 옮긴 뒤, 같은 좌표의 팝업 영역과 비교한다.
+                let origin = geo.frame(in: .global).origin
+                let local = CGPoint(x: click.x - origin.x, y: click.y - origin.y)
+                let size =
+                    open == .mirror
+                    ? NotchMirrorStripControl.previewSize : NotchQuickNoteStripControl.popupSize
+                let center = NotchLauncherPolicy.stripPopupCenter(
+                    iconCenterX: geo.size.width / 2 + notchRightEdge + offsets[index],
+                    popupSize: size, containerWidth: geo.size.width, stripHeight: stripHeight)
+                let popupFrame = CGRect(
+                    x: center.x - size.width / 2, y: center.y - size.height / 2,
+                    width: size.width, height: size.height)
+                if NotchLauncherPolicy.shouldCollapseStripPopup(
+                    click: local, popupFrame: popupFrame, stripHeight: stripHeight)
+                {
+                    openTool = nil
                 }
             }
         }
@@ -271,10 +298,9 @@ struct NotchQuickNoteStripControl: View {
                     .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
                     .environment(\.colorScheme, .dark)
                     .position(
-                        x: min(
-                            max(iconCenterX, Self.popupSize.width / 2 + 12),
-                            geo.size.width - Self.popupSize.width / 2 - 12),
-                        y: stripHeight + 8 + Self.popupSize.height / 2
+                        NotchLauncherPolicy.stripPopupCenter(
+                            iconCenterX: iconCenterX, popupSize: Self.popupSize,
+                            containerWidth: geo.size.width, stripHeight: stripHeight)
                     )
                     .transition(.opacity.combined(with: .scale(scale: 0.94, anchor: .top)))
                 }

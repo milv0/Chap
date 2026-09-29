@@ -182,3 +182,37 @@ struct NotchDockWidthTests {
         #expect(wide == 820, "got \(wide)")
     }
 }
+
+@Suite("Strip popup dismissal")
+struct StripPopupDismissalTests {
+    let strip: CGFloat = 32
+    var popup: CGRect { CGRect(x: 400, y: 40, width: 240, height: 128) }
+
+    @Test("a click outside the open popup collapses it")
+    func outsideCollapses() {
+        #expect(
+            NotchLauncherPolicy.shouldCollapseStripPopup(
+                click: CGPoint(x: 100, y: 150), popupFrame: popup, stripHeight: strip))
+    }
+
+    @Test("clicks inside the popup or on the strip icons keep it open")
+    func insideAndStripKeep() {
+        #expect(
+            !NotchLauncherPolicy.shouldCollapseStripPopup(
+                click: CGPoint(x: 500, y: 100), popupFrame: popup, stripHeight: strip))
+        #expect(
+            !NotchLauncherPolicy.shouldCollapseStripPopup(
+                click: CGPoint(x: 520, y: 16), popupFrame: popup, stripHeight: strip))
+    }
+
+    @Test("popups hang below the strip and stay 12pt inside the dock")
+    func popupCenterClamps() {
+        let size = CGSize(width: 240, height: 128)
+        let normal = NotchLauncherPolicy.stripPopupCenter(
+            iconCenterX: 400, popupSize: size, containerWidth: 900, stripHeight: strip)
+        #expect(normal == CGPoint(x: 400, y: 32 + 8 + 64))
+        let nearEdge = NotchLauncherPolicy.stripPopupCenter(
+            iconCenterX: 880, popupSize: size, containerWidth: 900, stripHeight: strip)
+        #expect(nearEdge.x == 768, "got \(nearEdge.x)")
+    }
+}

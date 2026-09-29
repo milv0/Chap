@@ -73,6 +73,24 @@ public enum NotchLauncherPolicy {
         return (0..<max(count, 0)).map { first + CGFloat($0) * stripToolPitch }
     }
 
+    /// 띠 도구 팝업(Mirror 미리보기, Quick Note 카드)의 중심. 아이콘 아래 8pt에 걸고,
+    /// 도커 가장자리에서 12pt 안쪽으로 가로 위치를 제한한다.
+    public static func stripPopupCenter(
+        iconCenterX: CGFloat, popupSize: CGSize, containerWidth: CGFloat, stripHeight: CGFloat
+    ) -> CGPoint {
+        let halfWidth = popupSize.width / 2
+        let x = min(max(iconCenterX, halfWidth + 12), containerWidth - halfWidth - 12)
+        return CGPoint(x: x, y: stripHeight + 8 + popupSize.height / 2)
+    }
+
+    /// 도커 안 클릭이 열린 띠 팝업을 접어야 하는지. 팝업 안 클릭은 유지하고, 상단 띠 클릭은
+    /// 각 아이콘 버튼이 직접 처리하므로 건드리지 않는다 (아이콘으로 다시 열리는 것을 막는다).
+    public static func shouldCollapseStripPopup(
+        click: CGPoint, popupFrame: CGRect, stripHeight: CGFloat
+    ) -> Bool {
+        click.y > stripHeight && !popupFrame.contains(click)
+    }
+
     /// Drop 배지는 보관함에 파일이 있을 때만 보인다.
     public static func shouldShowDropBadge(fileCount: Int) -> Bool {
         fileCount > 0

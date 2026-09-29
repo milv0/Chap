@@ -14,6 +14,9 @@ import SwiftUI
 final class NotchLauncherController {
     /// 패널이 닫히기 직전. 메모처럼 입력 중인 위젯이 남은 변경을 저장한다.
     static let willHidePanel = Notification.Name("ChapNotchWillHidePanel")
+    /// 도커 안을 클릭했다. userInfo["point"]는 SwiftUI 좌표(창 왼쪽 위 원점)의 CGPoint.
+    /// point가 없으면 패널이 key를 잃은 것으로, 열린 띠 팝업을 무조건 접는다.
+    static let didClickPanel = Notification.Name("ChapNotchDidClickPanel")
 
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
@@ -33,6 +36,8 @@ final class NotchLauncherController {
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
     private var revealModel: NotchRevealModel?
     private var escapeMonitor: Any?
+    private var clickMonitor: Any?
+    private var resignKeyObserver: NSObjectProtocol?
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
 
@@ -451,6 +456,7 @@ final class NotchLauncherController {
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
         startEscapeMonitor()
+        startOutsideClickMonitor()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
@@ -481,6 +487,32 @@ final class NotchLauncherController {
     private func stopEscapeMonitor() {
         if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
         escapeMonitor = nil
+        if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
+        clickMonitor = nil
+        if let resignKeyObserver { NotificationCenter.default.removeObserver(resignKeyObserver) }
+        resignKeyObserver = nil
+    }
+
+    /// 띠 팝업(Quick Note·Mirror) 바깥을 누르거나 다른 앱을 누르면 팝업을 접게 알린다.
+    /// 클릭 이벤트는 그대로 흘려보내 아래 위젯도 평소처럼 반응한다.
+    private func startOutsideClickMonitor() {
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) {
+            [weak self] event in
+            guard let self, let panel = self.panel, event.window === panel,
+                let content = panel.contentView
+            else { return event }
+            let location = event.locationInWindow
+            let point = CGPoint(x: location.x, y: content.bounds.height - location.y)
+            NotificationCenter.default.post(
+                name: Self.didClickPanel, object: self, userInfo: ["point": point])
+            return event
+        }
+        guard let panel else { return }
+        resignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            NotificationCenter.default.post(name: Self.didClickPanel, object: self)
+        }
     }
 
     /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.

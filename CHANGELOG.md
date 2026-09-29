@@ -11,6 +11,8 @@ All notable changes to Chap are documented in this file.
   opens just below, ready to type. Hide it with Show Quick Note in Settings.
 - **Minimum notch width** — The open notch is at least 640pt wide and centers the
   widget row, so a few widgets no longer squeeze it against the notch.
+- **Click away to close** — Clicking anywhere outside an open Quick Note or Mirror
+  popup, or switching to another app, folds it away.
 - **Tighter strip icons** — Mirror now sits right next to the Drop badge instead
   of leaving a wide gap.
 
