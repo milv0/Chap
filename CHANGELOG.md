@@ -17,6 +17,12 @@ All notable changes to Chap are documented in this file.
   While the Focus slot is showing, the strip's left side stays empty (no second
   seal, no duplicate clock); in Quick Note mode the strip shows them again.
 
+### Changed
+
+- **Lighter Downloads names** — File names in the Downloads slot are one step
+  smaller (12pt), so long names get cut less and the slot sits lighter beside
+  Screenshots. Sites and Finder lists stay at 13pt.
+
 ## [2.4.2] — 2026-09-29
 
 ### Changed

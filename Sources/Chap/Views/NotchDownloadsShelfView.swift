@@ -168,7 +168,7 @@ private struct DownloadsShelfRow: View {
                 .frame(width: 20, height: 20)
 
                 Text(url.lastPathComponent)
-                    .font(DS.notchBody)
+                    .font(DS.notchFileName)
                     .foregroundColor(primary)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
