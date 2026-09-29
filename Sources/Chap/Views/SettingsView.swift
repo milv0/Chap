@@ -218,13 +218,13 @@ struct SettingsView: View {
                         // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
                         // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
                         if !indices.isEmpty || searchText.isEmpty {
-                            // 제목 옆 (n/4) 카운트로 타입별 한도를 상시 보여준다.
+                            // 제목 옆 (n/한도) 카운트로 타입별 한도를 상시 보여준다.
                             HStack(spacing: 4) {
                                 Text(typeSectionTitle(type))
                                     .foregroundColor(DS.textSecondary)
                                 Text(
                                     "(\(SiteCountLimitPolicy.count(of: type, in: vm.sites))"
-                                        + "/\(SiteCountLimitPolicy.maxPerLaunchType))"
+                                        + "/\(SiteCountLimitPolicy.limit(for: type)))"
                                 )
                                 .foregroundColor(DS.textTertiary)
                                 .monospacedDigit()
@@ -549,7 +549,7 @@ struct SettingsView: View {
             LauncherUtils.showAlert(
                 message: "Launch type limit reached",
                 info:
-                    "Only \(SiteCountLimitPolicy.maxPerLaunchType) \(typeSectionTitle(type)) "
+                    "Only \(SiteCountLimitPolicy.limit(for: type)) \(typeSectionTitle(type)) "
                     + "launchables are allowed. Remove one before adding another.")
             return
         }

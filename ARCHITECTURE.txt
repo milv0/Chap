@@ -85,7 +85,7 @@ Sources/
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
-│   ├── SiteCountLimitPolicy.swift ← launch type별 최대 4개 추가·검증 정책
+│   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
 │   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책
 │   └── Log.swift                  ← os.Logger 통합 진입점
@@ -221,7 +221,7 @@ Config 모델 필드:
     (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
-  - URL/App/Finder 각 launch type은 최대 4개. 추가 UI·저장·Import에서 동일하게 차단
+  - URL·Finder는 최대 4개, App은 최대 6개(노치 2열 × 3줄 아이콘). 추가 UI·저장·Import에서 동일하게 차단
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환.
   Launchers는 실행 항목 편집, General은 Option 단축키·가이드·로그인 실행·상태바 아이콘,
   Notch는 노치 런처 on/off·위젯 배치·Custom/Glass 스타일, Glass 재질·appearance 설정을

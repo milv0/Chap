@@ -426,7 +426,8 @@ struct NotchLauncherPanelView: View {
             alignment: .leading, spacing: NotchAppIconTile.gap
         ) {
             ForEach(
-                section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
+                section.entries.prefix(
+                    LauncherListPolicy.maxEntriesPerNotchSlot(for: section.launchType)),
                 id: \.siteIndex
             ) { entry in
                 NotchAppIconTile(
@@ -446,7 +447,8 @@ struct NotchLauncherPanelView: View {
     private func launcherRows(_ section: LauncherListSection) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             ForEach(
-                section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
+                section.entries.prefix(
+                    LauncherListPolicy.maxEntriesPerNotchSlot(for: section.launchType)),
                 id: \.siteIndex
             ) { entry in
                 NotchLauncherRow(

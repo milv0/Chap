@@ -83,9 +83,10 @@ struct LauncherListPolicyTests {
         }
 
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
-        let capped = sections[0].entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot)
+        let capped = sections[0].entries.prefix(
+            LauncherListPolicy.maxEntriesPerNotchSlot(for: sections[0].launchType))
 
-        #expect(LauncherListPolicy.maxEntriesPerNotchSlot == 4)
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot(for: .url) == 4)
         #expect(capped.count == 4)
     }
 }
@@ -98,10 +99,18 @@ struct NotchAppIconLabelTests {
             appPath: "/Applications/\(name).app", shortcut: shortcut)
     }
 
-    @Test("four apps fit in a two-column icon grid")
-    func gridFitsFourApps() {
+    @Test("up to six apps fit in a two-column icon grid of three rows")
+    func gridFitsSixApps() {
         #expect(LauncherListPolicy.appIconColumns == 2)
-        #expect(LauncherListPolicy.maxEntriesPerNotchSlot % LauncherListPolicy.appIconColumns == 0)
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot(for: .app) == 6)
+        #expect(LauncherListPolicy.appIconRows(forCount: 6) == 3)
+    }
+
+    @Test(
+        "the grid uses only the rows it needs",
+        arguments: [(0, 0), (1, 1), (2, 1), (3, 2), (4, 2), (5, 3), (6, 3), (9, 3)])
+    func rowsForCount(count: Int, rows: Int) {
+        #expect(LauncherListPolicy.appIconRows(forCount: count) == rows)
     }
 
     @Test("the shortcut badge shows the uppercased Option key")

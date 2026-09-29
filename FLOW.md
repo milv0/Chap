@@ -535,7 +535,7 @@ Settings → Notch Launcher on
 ```
 
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
-- URL/App/Finder는 타입별 최대 4개. 노치 한 칸도 최대 4개를 표시한다.
+- URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 2열 아이콘, 필요한 줄만).
 - Screenshots 위젯은 시스템 스크린샷 위치를 2초마다 background scan하며 원본을 이동하지 않는다.
 - Chap Drop 위치는 `~/Library/Application Support/Chap/Drop/`; 사용자가 제거하기 전까지 유지한다.
 - Custom은 색·불투명도 페이드, Glass는 macOS 26+의 public `glassEffect` API.

@@ -188,8 +188,8 @@ struct QAView: View {
                     "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지 네 개를 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 열립니다."
                 ),
                 (
-                    "왜 각 URL/App/Finder 항목은 네 개까지만 추가되나요?",
-                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 launch type별로 최대 네 개를 허용합니다. 각 타입의 한도는 서로 독립적입니다."
+                    "URL/App/Finder 항목은 몇 개까지 추가되나요?",
+                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 URL·Finder는 최대 네 개, App은 노치에서 2열 아이콘으로 보여 최대 여섯 개까지 허용합니다. 각 타입의 한도는 서로 독립적입니다."
                 ),
             ]
         ),
@@ -405,8 +405,8 @@ struct QAView: View {
                     "No. It only reads the four newest images from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder."
                 ),
                 (
-                    "Why can I add only four URL, App, or Finder launchables?",
-                    "Each launch type is capped at four to keep both the status menu and each notch slot short and predictable. The four limits are independent."
+                    "How many URL, App, or Finder launchables can I add?",
+                    "URL and Finder allow four each, and App allows six because the notch shows apps as a two-column icon grid. The limits keep the status menu and each notch slot short and predictable, and each type is counted separately."
                 ),
             ]
         ),

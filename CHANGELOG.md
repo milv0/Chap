@@ -14,9 +14,11 @@ All notable changes to Chap are documented in this file.
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.
 - **Section dividers** — Thin vertical lines now separate the notch widgets.
-- **App icons in the notch** — The Apps widget shows your apps as a two-by-two
-  grid of icons, with an Option-key badge on apps that have a shortcut. Hover
-  for the name; click to launch.
+- **App icons in the notch** — The Apps widget shows your apps as a two-column
+  grid of icons that uses only the rows it needs, with an Option-key badge on
+  apps that have a shortcut. Hover for the name; click to launch.
+- **Six apps** — You can now add up to six apps (Sites and Folders stay at
+  four), so the Apps icon grid can fill three rows.
 
 ### Changed
 

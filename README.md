@@ -31,7 +31,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
-- **Focused Lists** — URL, App, and Finder each allow up to four launchables, keeping the menu and notch predictable
+- **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
 
 ## Requirements
 
@@ -141,7 +141,7 @@ Enable the feature in **Settings → Notch**. Arrange six slots by dragging Site
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
-The **Apps** widget shows your apps as a two-by-two grid of icons, with an Option-key badge on apps that have a shortcut; hover for the name and click to launch. Sites and Folders stay as lists.
+The **Apps** widget shows up to six apps as a two-column grid of icons that uses only the rows it needs, with an Option-key badge on apps that have a shortcut; hover for the name and click to launch. Sites and Folders stay as lists.
 
 **Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you close the dock or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
 

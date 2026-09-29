@@ -29,12 +29,20 @@ public struct LauncherListSection: Equatable {
 /// 표시에서 숨긴 launch type만 제외하며, `⌥` 단축키는 `config.sites` 기준으로
 /// 동작하므로 이 정책의 결과와 무관하게 계속 유효하다.
 public enum LauncherListPolicy {
-    /// 노치 패널 한 칸에 표시할 최대 항목 수. 사이트 자체가 launch type당
-    /// `SiteCountLimitPolicy.maxPerLaunchType`개로 제한되므로 항상 전부 들어간다.
-    public static let maxEntriesPerNotchSlot = 4
+    /// 노치 한 칸에 보이는 최대 항목 수. 타입 상한과 같아 항상 전부 들어간다
+    /// (목록은 4줄, Apps 아이콘 격자는 2열 × 3줄).
+    public static func maxEntriesPerNotchSlot(for launchType: LaunchType) -> Int {
+        SiteCountLimitPolicy.limit(for: launchType)
+    }
 
-    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 4개가 2×2로 한 칸에 들어간다.
+    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 6개가 2열 × 3줄로 한 칸에 들어간다.
     public static let appIconColumns = 2
+
+    /// 앱 개수에 필요한 격자 줄 수. 빈 줄 공간은 만들지 않는다 (예: 3개 → 2줄).
+    public static func appIconRows(forCount count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        return (min(count, SiteCountLimitPolicy.maxApps) + appIconColumns - 1) / appIconColumns
+    }
 
     /// 단축키 표기 (예: "⌥S"). 단축키가 없으면 nil.
     public static func shortcutBadge(for site: Site) -> String? {
