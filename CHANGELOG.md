@@ -2,7 +2,7 @@
 
 All notable changes to Chap are documented in this file.
 
-## [Unreleased]
+## [2.2.0] — 2026-09-29
 
 ### Added
 
@@ -16,7 +16,7 @@ All notable changes to Chap are documented in this file.
 - **Section dividers** — Thin vertical lines now separate the notch widgets.
 - **App icons in the notch** — The Apps widget shows your apps as a two-column
   grid of icons that uses only the rows it needs, with the shortcut letter on
-  apps that have one and a single ⌥ next to the Apps title. Hover for the name; click to launch.
+  apps that have one. Hover for the name; click to launch.
 - **Six apps** — You can now add up to six apps (Sites and Finder stay at
   four), so the Apps icon grid can fill three rows.
 
@@ -42,7 +42,7 @@ All notable changes to Chap are documented in this file.
   Option while the notch is open and every keycap turns blue and shows the full
   shortcut (⌥1, ⌥N). Tooltips and VoiceOver always include Option.
 - **Right-sized notch columns** — Each widget column now fits its content
-  (Sites and Finder 112–170pt, Mirror 104pt, Apps to its icon grid), making
+  (Sites and Finder 112–170pt, Apps to its icon grid), making
   the dock noticeably narrower. Headings are brighter, the Apps title no longer
   carries an extra ⌥ key, and dropped files show as a compact row of icons with
   one-line names.

@@ -41,7 +41,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
-- Camera permission only if you place the notch Mirror widget (asked when you click Turn On Mirror)
+- Camera permission only if you use the notch Mirror (asked the first time you click its icon)
 
 ## Usage
 
@@ -97,10 +97,11 @@ Stored at `~/.chap.json`:
   "notchLauncherEnabled": false,
   "notchPanelStyle": "custom",
   "notchGlassAppearance": "system",
-  "notchGlassMaterial": "clear",
+  "notchGlassMaterial": "regular",
   "notchPanelOpacity": 0.6,
   "notchPanelColorHex": "#000000",
   "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none"],
+  "notchMirrorEnabled": true,
   "sites": [
     {
       "name": "GitHub",
@@ -143,7 +144,7 @@ Custom style supports a background color and opacity. On macOS 26+, Glass uses A
 
 The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut keys on Sites and Apps show just the key (`1`, `N`); hold Option while the dock is open and they light up as `⌥1`, `⌥N`; hover for the name and click to launch. Sites and Finder stay as lists. Click the Sites, Apps, or Finder title to edit that list in Settings.
 
-**Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop badge (or in the badge's place when Drop is empty). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
+**Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop badge (or in the badge's place when Drop is empty). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
 **Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
 
