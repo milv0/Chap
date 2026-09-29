@@ -315,6 +315,9 @@ extension AppDelegate {
                 AppLauncher.open(site)
             }
         }
+        notchLauncher.onOpenSettings = { [weak self] type in
+            self?.showSettings(focusing: type)
+        }
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
 

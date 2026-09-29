@@ -66,6 +66,8 @@ struct NotchLauncherPanelView: View {
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
     let slots: [NotchSlotContent]
     let onLaunch: (Int) -> Void
+    /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
+    var onOpenSettings: (LaunchType) -> Void = { _ in }
     @ObservedObject var reveal: NotchRevealModel
 
     /// 원래의 모션: 패널 전체가 노치 상단 기준으로 스프링 확장하고,
@@ -481,20 +483,16 @@ struct NotchLauncherPanelView: View {
 
     private func sectionView(_ section: LauncherListSection) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            // 제목 아이콘은 제목과 같은 보조색 하나로 통일한다. 여러 파란색이
-            // 내용과 경쟁하지 않고, 제목은 굵기로 구분된다.
-            HStack(spacing: 5) {
-                Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
-                    .font(DS.notchLabel)
-                    .foregroundColor(headingForeground)
-                Text(Self.sectionTitle(section.launchType))
-                    .font(DS.notchLabel)
-                    .foregroundColor(headingForeground)
-                    .fixedSize()
+            // 제목을 누르면 그 타입이 선택된 설정창을 연다 (Screenshots 제목이 폴더를 여는 것과 같은 모양).
+            NotchSectionTitleButton(
+                symbol: LauncherListPolicy.symbolName(for: section.launchType),
+                title: Self.sectionTitle(section.launchType),
+                foreground: headingForeground,
+                hoverBackground: rowHoverBackground,
+                textShadowOpacity: textShadowOpacity
+            ) {
+                onOpenSettings(section.launchType)
             }
-            .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
-            .padding(.horizontal, 6)
-            .frame(height: DS.notchHeaderHeight)
 
             if section.launchType == .app {
                 appIconGrid(section)
@@ -948,5 +946,47 @@ enum NotchTextMetrics {
     /// 제목 줄: 좌우 여백 6 + 아이콘 약 13 + 간격 5 + 제목.
     static func headerWidth(title: String) -> CGFloat {
         12 + 13 + 5 + labelWidth(title)
+    }
+}
+
+/// 런처 칸 제목. 호버 시 옅은 면과 › 표시, 누르면 설정창을 연다.
+private struct NotchSectionTitleButton: View {
+    let symbol: String
+    let title: String
+    let foreground: Color
+    let hoverBackground: Color
+    let textShadowOpacity: Double
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(DS.notchLabel)
+                Text(title)
+                    .font(DS.notchLabel)
+                    .fixedSize()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .opacity(isHovered ? 1 : 0)
+            }
+            .foregroundColor(foreground)
+            .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
+            .padding(.horizontal, 6)
+            .frame(height: DS.notchHeaderHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isHovered ? hoverBackground : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help("Edit \(title) in Settings")
+        .accessibilityLabel(title)
+        .accessibilityHint("Opens \(title) in Chap Settings")
+        .accessibilityAddTraits(.isHeader)
     }
 }

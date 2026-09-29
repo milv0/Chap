@@ -40,6 +40,9 @@ private struct SettingsTabButton: View {
 }
 
 struct SettingsView: View {
+    /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
+    static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
+
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
     @State private var selectedTab: SettingsTab = .launchables
@@ -104,6 +107,12 @@ struct SettingsView: View {
         }
         .onChange(of: selectedIndex) { oldValue, newValue in
             handleSelectionChange(from: oldValue, to: newValue)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Self.focusLaunchType)) { note in
+            guard let raw = note.object as? String, let type = LaunchType(rawValue: raw) else {
+                return
+            }
+            focus(on: type)
         }
         .alert("Delete site?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
@@ -453,6 +462,15 @@ struct SettingsView: View {
             .keyboardShortcut("n", modifiers: .command)
             .frame(width: 0, height: 0)
             .opacity(0)
+    }
+
+    /// Launchables 탭으로 가서 그 타입의 첫 항목을 선택한다. 항목이 없으면 탭만 연다.
+    private func focus(on type: LaunchType) {
+        searchText = ""
+        selectedTab = .launchables
+        if let first = vm.sites.indices.first(where: { vm.sites[$0].launchType == type }) {
+            selectedIndex = first
+        }
     }
 
     /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동

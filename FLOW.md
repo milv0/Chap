@@ -520,6 +520,8 @@ Settings → Notch Launcher on
 노치 hover
   → showPanel(forDrop:false)
   → LauncherListPolicy 기반 위젯 6칸(빈 칸 제외 한 줄) + 조건부 Drop 파일 행
+  → 런처 칸 제목 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
+    → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
   → Mirror 칸: 사용자가 켰을 때만 MirrorCamera.start() (전용 직렬 큐), 끄기·닫힘 시 stop()

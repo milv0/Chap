@@ -97,6 +97,20 @@ extension AppDelegate {
     // MARK: - Settings
 
     @objc func openSettings() {
+        showSettings(focusing: nil)
+    }
+
+    /// 설정창을 열고, 타입이 주어지면 Launchables 탭에서 그 타입의 첫 항목을 선택한다.
+    func showSettings(focusing launchType: LaunchType?) {
+        defer {
+            if let launchType {
+                // 새 창이면 SettingsView가 구독을 마친 다음 틱에 전달한다.
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: SettingsView.focusLaunchType, object: launchType.rawValue)
+                }
+            }
+        }
         accessibilityController.refresh(reason: "settings", showAlert: false)
         if let w = settingsWindow, w.isVisible {
             // 이미 열려 있어도 커서가 있는 화면 중앙으로 이동

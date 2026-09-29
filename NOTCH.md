@@ -188,6 +188,13 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
   메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
 
+## 칸 제목 클릭
+
+- Sites·Apps·Folders 제목: 누르면 도커를 닫고 설정창 Launchables 탭에서 그 타입의 첫 항목을 선택한다
+  (`showSettings(focusing:)` → `SettingsView.focusLaunchType` 알림). 호버 시 옅은 면과 ›, 툴팁 "Edit Sites in Settings".
+- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다.
+- Mirror·Quick Note 제목: 동작 없음.
+
 ## 노치에서 실행할 때의 창 크기
 
 노치는 확장 런처다. Apps 칸에서 **단축키가 없는 앱**은 크기·위치를 건드리지 않고 그냥 연다

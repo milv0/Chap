@@ -52,6 +52,8 @@ final class NotchLauncherController {
     var awakeSessionEndProvider: () -> Date? = { nil }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
+    /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
+    var onOpenSettings: (LaunchType) -> Void = { _ in }
 
     private static let panelMinWidth: CGFloat = 300
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
@@ -297,6 +299,10 @@ final class NotchLauncherController {
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
+            },
+            onOpenSettings: { [weak self] type in
+                self?.hidePanel()
+                self?.onOpenSettings(type)
             },
             reveal: reveal)
         let hosting = NSHostingView(rootView: content)
