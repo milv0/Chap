@@ -26,6 +26,15 @@ blue competing with content. Titles and labels stay neutral gray.
 | Black top strip widgets (Drop box, Mirror, Quick Note) | White at 85%, 100% on hover | `DS.notchStripIconColor` |
 | Active strip tool, Focus bolt when running | `#3664FF` | `DS.accent` |
 
+## Notch panel presets
+
+Custom style offers two one-click panel colors; the color picker covers the rest.
+
+| Preset | Hex | Notes |
+|---|---|---|
+| Black | `#000000` | Extends the hardware notch (default) |
+| Mist | `#E8ECF8` | Soft blue-gray light; light-background text and icon contrast applies |
+
 ## Guide Window
 
 `GuideWindow` follows the user's current macOS accent color, so it does not
