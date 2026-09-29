@@ -87,7 +87,8 @@ struct NotchDropFileItem: View {
                     .foregroundColor(.white)
                     .offset(y: -0.5)
                     .frame(width: 15, height: 15)
-                    .background(Circle().fill(DS.accent))
+                    // 삭제(빨강)보다 한 단계 조용한 중립 회색. 어떤 배경에서도 흰 아이콘이 읽힌다.
+                    .background(Circle().fill(Color.black.opacity(0.45)))
                     .overlay(
                         Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
                     )
