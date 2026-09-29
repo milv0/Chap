@@ -31,6 +31,16 @@ struct NotchRenderTool {
             ScreenshotShelf.recentScreenshotsAsync { continuation.resume(returning: $0) }
         }
         ScreenshotShelf.previewOverride = shots
+        let downloads = await withCheckedContinuation { continuation in
+            DownloadsShelf.recentFilesAsync { continuation.resume(returning: $0) }
+        }
+        DownloadsShelf.previewOverride = downloads
+        // 렌더에는 다운로드 칸을 빈 칸 자리에 넣어 본다 (설정 파일은 바꾸지 않는다).
+        var previewWidgets = config.notchWidgets
+        if !previewWidgets.contains(.downloads), let gap = previewWidgets.firstIndex(of: .none) {
+            previewWidgets[gap] = .downloads
+        }
+        let previewSlots = NotchSlotContent.slots(widgets: previewWidgets, sites: config.sites)
         let drops = await withCheckedContinuation { continuation in
             ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) {
                 continuation.resume(returning: $0)
@@ -39,6 +49,7 @@ struct NotchRenderTool {
         ChapDrop.previewOverride = drops
         defer {
             ScreenshotShelf.previewOverride = nil
+            DownloadsShelf.previewOverride = nil
             ChapDrop.previewOverride = nil
         }
 
@@ -72,7 +83,7 @@ struct NotchRenderTool {
                 minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
                 stripPlateauHalfWidth: 92.5 + 110,
                 awakeSessionEnd: nil, style: style, glassMaterial: config.notchGlassMaterial,
-                slots: slots, showsMirror: config.notchMirrorEnabled,
+                slots: previewSlots, showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
                 reveal: reveal)
             let view =

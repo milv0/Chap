@@ -4,17 +4,22 @@ All notable changes to Chap are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Downloads widget** — A new notch slot shows your four newest downloads with
+  their file names and how long ago they arrived. Click to open, drag a file out,
+  or right-click to share it or show it in Finder. Click the title to open
+  Downloads. Files still downloading are hidden. macOS asks once for access to
+  the Downloads folder.
+- **Quick Note window** — Open the note in its own floating, resizable window
+  from the note toolbar. It stays above other windows while the notch is closed
+  and remembers its size and position.
+
 ### Changed
 
 - **Roomier Quick Note** — Clicking the note icon now turns the widget row into a
   wide note across the notch, with a character count and a copy button. Click ×
   or the icon again to return to your widgets.
-
-### Added
-
-- **Quick Note window** — Open the note in its own floating, resizable window
-  from the note toolbar. It stays above other windows while the notch is closed
-  and remembers its size and position.
 
 ## [2.3.0] — 2026-09-29
 

@@ -6,6 +6,8 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
+    /// 다운로드 선반 위젯.
+    case downloads
 
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
@@ -18,6 +20,7 @@ enum NotchSlotContent {
                 // Drop 파일은 메인 도커 하단 행이 전담한다.
                 return nil
             case .screenshots: return .screenshots
+            case .downloads: return .downloads
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
@@ -83,6 +86,8 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
+    /// 다운로드 칸 폭. 파일명이 20자 안팎까지 보인다.
+    static let downloadsColumnWidth: CGFloat = 200
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
     static let noteModeHeight: CGFloat = 200
 
@@ -107,6 +112,9 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(rows.max() ?? 0, header))))
+        case .downloads:
+            // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
+            return Self.downloadsColumnWidth
         case .screenshots:
             // 썸네일 34 + 간격 6 + 시각 문구 + Spacer 앞 간격 6 + 좌우 여백 12.
             let label =
@@ -508,6 +516,10 @@ struct NotchLauncherPanelView: View {
             sectionView(section)
         case .screenshots:
             NotchScreenshotShelfView(
+                backgroundHex: contrastBackgroundHex,
+                usesSemanticForeground: usesSemanticGlass)
+        case .downloads:
+            NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
         }

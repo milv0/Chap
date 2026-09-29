@@ -1,0 +1,63 @@
+import Foundation
+import Testing
+
+@testable import Chap
+
+@Suite("Downloads shelf")
+struct DownloadsShelfPolicyTests {
+    private let now = Date(timeIntervalSince1970: 2_000_000_000)
+
+    @Test("in-progress, hidden, and folder entries are skipped; apps are kept")
+    func candidates() {
+        #expect(DownloadsShelfPolicy.isCandidate(fileName: "report.pdf", isDirectory: false))
+        #expect(!DownloadsShelfPolicy.isCandidate(fileName: ".DS_Store", isDirectory: false))
+        #expect(
+            !DownloadsShelfPolicy.isCandidate(fileName: "movie.mp4.crdownload", isDirectory: false))
+        #expect(!DownloadsShelfPolicy.isCandidate(fileName: "file.zip.download", isDirectory: true))
+        #expect(!DownloadsShelfPolicy.isCandidate(fileName: "data.part", isDirectory: false))
+        #expect(!DownloadsShelfPolicy.isCandidate(fileName: "Photos", isDirectory: true))
+        #expect(DownloadsShelfPolicy.isCandidate(fileName: "Tool.app", isDirectory: true))
+    }
+
+    @Test("the newest four finished downloads are shown, newest first")
+    func selection() {
+        let files: [(name: String, isDirectory: Bool, date: Date)] = [
+            ("old.pdf", false, now.addingTimeInterval(-500)),
+            ("new.png", false, now.addingTimeInterval(-10)),
+            ("partial.crdownload", false, now),
+            ("mid.zip", false, now.addingTimeInterval(-100)),
+            ("folder", true, now.addingTimeInterval(-5)),
+            ("a.txt", false, now.addingTimeInterval(-200)),
+            ("b.txt", false, now.addingTimeInterval(-300)),
+        ]
+
+        #expect(
+            DownloadsShelfPolicy.shelfSelection(files: files)
+                == ["new.png", "mid.zip", "a.txt", "b.txt"])
+    }
+
+    @Test("ages are short so the file name gets the width")
+    func shortAge() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let afternoon = calendar.date(
+            from: DateComponents(year: 2026, month: 9, day: 29, hour: 15))!
+        func age(_ seconds: TimeInterval) -> String {
+            DownloadsShelfPolicy.shortAge(
+                of: afternoon.addingTimeInterval(-seconds), now: afternoon)
+        }
+        #expect(age(30) == "now")
+        #expect(age(5 * 60) == "5m")
+        #expect(age(3 * 3600) == "3h")
+        #expect(age(20 * 3600) == "1d")
+        #expect(age(5 * 86400) == "Sep 24")
+    }
+
+    @Test("downloads is a placeable widget that round-trips")
+    func widgetRoundTrips() throws {
+        let config = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"notchWidgets": ["downloads", "sites"], "sites": []}"#.utf8))
+        #expect(Array(config.notchWidgets.prefix(2)) == [.downloads, .sites])
+        #expect(NotchWidget.downloads.launchType == nil)
+    }
+}
