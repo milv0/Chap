@@ -307,7 +307,13 @@ extension AppDelegate {
         }
         notchLauncher.onLaunch = { [weak self] index in
             guard let self, index >= 0, index < self.config.sites.count else { return }
-            self.launchSite(self.config.sites[index])
+            let site = self.config.sites[index]
+            // 노치는 확장 런처: 단축키 없는 앱은 크기 조정 없이 그냥 연다.
+            if LauncherListPolicy.resizesOnNotchLaunch(site) {
+                self.launchSite(site)
+            } else {
+                AppLauncher.open(site)
+            }
         }
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }

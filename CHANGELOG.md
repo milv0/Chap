@@ -28,6 +28,10 @@ All notable changes to Chap are documented in this file.
   a larger thumbnail and when they were taken ("5 min ago") instead of a cut-off
   file name. Clear Glass gets a light veil for contrast, and new setups default
   to Regular Glass.
+- **Plain app launch from the notch** — Clicking an app without a shortcut in
+  the notch opens it as-is, without resizing. Apps with a shortcut, Sites, and
+  Folders still open centered at their saved size, as do all status-menu and
+  Option-shortcut launches.
 - **Cleaner shortcut keys** — Sites and Apps show just the key (1, N). Hold
   Option while the notch is open and every keycap turns blue and shows the full
   shortcut (⌥1, ⌥N). Tooltips and VoiceOver always include Option.

@@ -73,6 +73,14 @@ public enum LauncherListPolicy {
         section.entries.contains { shortcutKey(for: $0.site) != nil }
     }
 
+    /// 노치에서 눌렀을 때 창 크기·위치를 맞출지. 노치는 확장 런처라서 단축키를 지정하지 않은
+    /// 앱은 크기 조정 없이 그냥 연다. 단축키가 있는 앱과 URL·Finder는 항상 맞춘다.
+    /// 상태바 메뉴와 ⌥ 단축키 실행은 이 정책과 무관하게 항상 맞춘다.
+    public static func resizesOnNotchLaunch(_ site: Site) -> Bool {
+        guard site.launchType == .app else { return true }
+        return shortcutKey(for: site) != nil
+    }
+
     /// VoiceOver용 실행 버튼 이름 (예: "Launch Slack, Option S").
     public static func launchAccessibilityLabel(for site: Site) -> String {
         guard let key = site.shortcut?.trimmingCharacters(in: .whitespaces), !key.isEmpty

@@ -93,6 +93,14 @@ enum AppLauncher {
         }
     }
 
+    /// 크기·위치를 건드리지 않고 앱만 연다 (노치에서 단축키 없는 앱).
+    /// Accessibility 권한이 필요 없다.
+    static func open(_ site: Site) {
+        guard let path = validatedAppPath(for: site) else { return }
+        Log.launcher.info("AppLauncher open without resize site=\(site.name, privacy: .private)")
+        openWithoutResize(path: path, onComplete: nil)
+    }
+
     // MARK: - Launch phases
 
     /// appPath 필수값·존재 검증. 실패 시 에러 로그와 alert까지 처리하고 nil을 반환한다.

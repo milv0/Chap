@@ -158,3 +158,25 @@ struct NotchColumnWidthTests {
         #expect(LauncherListPolicy.listColumnWidth(contentWidth: 400) == 170)
     }
 }
+
+@Suite("Notch launch resizing")
+struct NotchLaunchResizeTests {
+    @Test("notch opens apps without a shortcut as-is and resizes everything else")
+    func resizesOnlyShortcutAppsAndOtherTypes() {
+        let plainApp = Site(
+            name: "Mail", url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/Mail.app")
+        let shortcutApp = Site(
+            name: "Slack", url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/Slack.app", shortcut: "S")
+        let site = Site(name: "Docs", url: "https://docs.example", width: 800, height: 600)
+        let folder = Site(
+            name: "Downloads", url: "", width: 800, height: 600, launchType: .finder,
+            folderPath: "~/Downloads")
+
+        #expect(!LauncherListPolicy.resizesOnNotchLaunch(plainApp))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(shortcutApp))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(site))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(folder))
+    }
+}
