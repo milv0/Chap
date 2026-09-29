@@ -88,6 +88,46 @@ struct NotchRenderTool {
         }
     }
 
+    /// 메모 모드를 켜고 끌 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.
+    /// 실제 앱처럼 창 안에 올린 뒤 모드를 바꾸고, 보고된 높이가 늘었다 줄어드는지 본다.
+    @Test(
+        "note mode reports a taller dock size and returns when closed",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func noteModeReportsSize() throws {
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        let slots = NotchSlotContent.slots(widgets: config.notchWidgets, sites: config.sites)
+        let reveal = NotchRevealModel()
+        reveal.revealed = true
+        var reported: [CGSize] = []
+        let panel = NotchLauncherPanelView(
+            minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
+            stripPlateauHalfWidth: 92.5 + 110, awakeSessionEnd: nil, style: .glass,
+            glassMaterial: .regular, slots: slots, showsMirror: true, showsNote: true,
+            onLaunch: { _ in }, onContentSizeChange: { reported.append($0) }, reveal: reveal)
+        let hosting = NSHostingView(rootView: panel)
+        hosting.safeAreaRegions = []
+        let size = hosting.fittingSize
+        let window = NSWindow(
+            contentRect: CGRect(x: -10_000, y: -10_000, width: size.width, height: size.height),
+            styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        defer { window.orderOut(nil) }
+        func settle() { RunLoop.main.run(until: Date().addingTimeInterval(0.3)) }
+
+        settle()
+        let normal = try #require(reported.last)
+        reveal.isNoteMode = true
+        settle()
+        let note = try #require(reported.last)
+        reveal.isNoteMode = false
+        settle()
+        let back = try #require(reported.last)
+
+        #expect(note.height > normal.height + 50, "normal \(normal) note \(note)")
+        #expect(back.height == normal.height, "normal \(normal) back \(back)")
+    }
+
     static func renderPNG<V: View>(_ view: V) throws -> Data {
         let hosting = NSHostingView(rootView: view)
         hosting.safeAreaRegions = []

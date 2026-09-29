@@ -524,7 +524,7 @@ Settings → Notch Launcher on
     → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
-  → Quick Note 아이콘: reveal.isNoteMode 토글 → 위젯 줄 자리에 넓은 편집기, $isNoteMode 구독이 다음 틱에 resizePanelToFit.
+  → Quick Note 아이콘: reveal.isNoteMode 토글 → 위젯 줄 자리에 넓은 편집기, 도커가 잰 크기(NotchContentSizeKey)로 resizePanel(toContentSize:).
     분리 버튼: flush → QuickNoteWindow.show() → requestClose로 도커 닫기. 분리 창이 열려 있으면 아이콘은 창을 앞으로.
     종료 시 flushRequest + drainPendingSaves로 마지막 입력을 파일에 쓴다
   → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만

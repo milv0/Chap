@@ -1,5 +1,4 @@
 import Cocoa
-import Combine
 import SwiftUI
 
 /// 노치 아래에 런처 목록 패널을 띄우는 컨트롤러.
@@ -49,8 +48,6 @@ final class NotchLauncherController {
     private var isSharingPinned = false
     private var sharingPinObserver: NSObjectProtocol?
     private var closeRequestObserver: NSObjectProtocol?
-    /// 메모 모드가 바뀌면 창 높이를 새 내용에 맞춘다.
-    private var noteModeCancellable: AnyCancellable?
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
@@ -86,20 +83,18 @@ final class NotchLauncherController {
     private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
-    /// 열린 도커 창을 현재 SwiftUI 내용 크기에 다시 맞춘다 (메모 모드 전환 등).
+    /// 열린 도커 창을 SwiftUI가 잰 콘텐츠 크기에 맞춘다 (메모 모드 전환 등).
     /// 상단은 항상 화면 최상단에 붙인다. 계산은 `showPanel`과 같은 규칙을 쓴다.
-    private func resizePanelToFit() {
-        guard let panel, let hosting = panel.contentView, let screen = Self.notchScreen()
-        else { return }
-        hosting.layoutSubtreeIfNeeded()
+    private func resizePanel(toContentSize size: CGSize) {
+        guard let panel, let screen = Self.notchScreen(), size.height > 0 else { return }
         let inset = screen.safeAreaInsets.top
-        let fitting = hosting.fittingSize
         var frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: inset,
-            contentSize: CGSize(width: ceil(fitting.width), height: ceil(fitting.height) - inset))
+            contentSize: CGSize(width: ceil(size.width), height: ceil(size.height) - inset))
         frame = frame.integral
         frame.origin.y = screen.frame.maxY - frame.height
+        guard frame != panel.frame else { return }
         panel.setFrame(frame, display: true)
         lastInsideDate = Date()
     }
@@ -124,7 +119,6 @@ final class NotchLauncherController {
         badgeRefreshToken += 1
         isPreviewPinned = false
         revealModel = nil
-        noteModeCancellable = nil
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -341,6 +335,10 @@ final class NotchLauncherController {
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
             },
+            onContentSizeChange: { [weak self] size in
+                // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.
+                DispatchQueue.main.async { self?.resizePanel(toContentSize: size) }
+            },
             onOpenSettings: { [weak self] type in
                 self?.hidePanel()
                 self?.onOpenSettings(type)
@@ -384,11 +382,6 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
-        noteModeCancellable = reveal.$isNoteMode.dropFirst().removeDuplicates().sink {
-            [weak self] _ in
-            // @Published는 값이 바뀌기 전에 알린다. 다음 틱에 새 레이아웃으로 잰다.
-            DispatchQueue.main.async { self?.resizePanelToFit() }
-        }
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -622,7 +615,6 @@ final class NotchLauncherController {
         panel?.orderOut(nil)
         panel = nil
         revealModel = nil
-        noteModeCancellable = nil
     }
 
     private func hidePanel() {
@@ -642,7 +634,6 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        noteModeCancellable = nil
         DispatchQueue.main.asyncAfter(
             deadline: .now() + NotchLauncherPanelView.closeDuration + 0.02
         ) { [weak self] in

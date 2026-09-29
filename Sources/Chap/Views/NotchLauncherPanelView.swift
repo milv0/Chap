@@ -66,6 +66,9 @@ struct NotchLauncherPanelView: View {
     /// 상단 검정 띠에 Quick Note 아이콘을 둘지. Mirror 오른쪽에 둔다.
     var showsNote = false
     let onLaunch: (Int) -> Void
+    /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 메모 모드처럼 내용이 바뀌면
+    /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
+    var onContentSizeChange: (CGSize) -> Void = { _ in }
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     @ObservedObject var reveal: NotchRevealModel
@@ -216,6 +219,15 @@ struct NotchLauncherPanelView: View {
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
             .padding(.bottom, Self.shadowPadding)
+            // 스케일 애니메이션 전의 실제 크기를 잰다 (scaleEffect는 레이아웃 크기를 바꾸지 않는다).
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: NotchContentSizeKey.self, value: geo.size)
+                }
+            )
+            .onPreferenceChange(NotchContentSizeKey.self) { size in
+                onContentSizeChange(size)
+            }
             // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
             .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
             .opacity(reveal.revealed ? 1 : 0)
@@ -1016,5 +1028,14 @@ private struct NotchSectionTitleButton: View {
         .accessibilityLabel(title)
         .accessibilityHint("Opens \(title) in Chap Settings")
         .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// 도커 콘텐츠 크기를 창 컨트롤러로 올려 보내는 preference.
+struct NotchContentSizeKey: PreferenceKey {
+    static let defaultValue: CGSize = .zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        let next = nextValue()
+        if next != .zero { value = next }
     }
 }

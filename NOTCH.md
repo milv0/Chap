@@ -183,7 +183,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
   - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
   - Quick Note: 팝업이 아니라 **메모 모드**다. 누르면 위젯 줄 자리가 도커 폭 전체의 메모장(줄 높이 200pt)으로 바뀌고
-    컨트롤러가 창 높이를 다시 맞춘다(`resizePanelToFit`). 도구 줄: 제목, 글자 수(`characterCountLabel`), 복사, 창으로 분리,
+    도커가 SwiftUI로 잰 콘텐츠 크기를 `NotchContentSizeKey`로 올려 보내고 컨트롤러가 그 크기로 창을 맞춘다
+    (`resizePanel(toContentSize:)`). 레이아웃 전 추측 측정을 쓰지 않아 아래 Drop 줄이 창 밖으로 밀리지 않는다. 도구 줄: 제목, 글자 수(`characterCountLabel`), 복사, 창으로 분리,
     × (위젯으로). 분리 창(`QuickNoteWindow`)은 floating·크기 조절·위치 기억(420×320 기본, 280×180 최소)이며, 창이 열려
     있는 동안 띠 아이콘은 그 창을 앞으로 가져온다. 분리 직전 flush하고 창은 같은 직렬 큐에서 읽어 입력을 놓치지 않는다.
   아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
