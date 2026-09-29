@@ -13,6 +13,20 @@ enum DS {
 
     static let accent = Color(red: 54 / 255, green: 100 / 255, blue: 255 / 255)
     static let accentSoft = accent.opacity(0.08)
+    /// 밝은 대표 블루(#89A3FF, 웹 `--blue-light`). 검정 노치 띠 위 아이콘처럼 어두운 바탕에서
+    /// 진한 액센트보다 부드럽게 읽힌다.
+    static let accentLight = Color(red: 137 / 255, green: 163 / 255, blue: 255 / 255)
+
+    /// 노치 아이콘 색. 대표 블루를 연하게 쓴다: 어두운 바탕은 밝은 블루, 밝은 바탕은 액센트 75%.
+    /// 제목 글자는 중립 회색 그대로 두고 아이콘만 물들여, 파란색이 내용과 경쟁하지 않게 한다.
+    static func notchIconColor(onDarkBackground: Bool) -> Color {
+        onDarkBackground ? accentLight.opacity(0.9) : accent.opacity(0.75)
+    }
+
+    /// 검정 노치 띠 위 도구 아이콘(Drop·Mirror·Quick Note) 색. 호버 시 한 단계 밝아진다.
+    static func notchStripIconColor(isHovered: Bool = false) -> Color {
+        accentLight.opacity(isHovered ? 1 : 0.8)
+    }
     /// 강조 입력면. 라이트/다크 모두에서 대비가 유지되도록 고정 RGB 대신 accent 틴트를 쓴다.
     static let accentSurface = accent.opacity(0.12)
     static let cardBg = Color(.controlBackgroundColor)

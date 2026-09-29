@@ -10,8 +10,21 @@ counterparts. App source remains authoritative.
 | Accent | `#3664FF` | `DS.accent` | Selection, primary actions, active controls |
 | Accent soft | `rgba(54, 100, 255, 0.08)` | `DS.accentSoft` | Selected and hover backgrounds |
 | Accent surface | `rgba(54, 100, 255, 0.12)` | `DS.accentSurface` | Emphasized fields and soft feature surfaces |
+| Accent light | `#89A3FF` | `DS.accentLight` | Notch icons on dark surfaces (black strip, dark Glass/Custom) |
 | Danger | `#EB4444` | `DS.danger` | Destructive and error states |
 | On-accent text | `#FFFFFF` | Primary button styling | Text and symbols on the accent color |
+
+## Notch icons
+
+Notch icons carry a soft brand blue so Chap feels like one product without the
+blue competing with content. Titles and labels stay neutral gray.
+
+| Where | Color | Source |
+|---|---|---|
+| Section title icons on dark backgrounds | `#89A3FF` at 90% | `DS.notchIconColor(onDarkBackground: true)` |
+| Section title icons on light backgrounds | `#3664FF` at 75% | `DS.notchIconColor(onDarkBackground: false)` |
+| Black top strip (Drop box, Mirror, Quick Note) | `#89A3FF` at 80%, 100% on hover | `DS.notchStripIconColor` |
+| Active strip tool, Focus bolt when running | `#3664FF` | `DS.accent` |
 
 ## Guide Window
 

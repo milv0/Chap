@@ -63,7 +63,7 @@ enough: a friend who snaps things into place.
 | Positioning | Your chap in the menu bar. |
 | Hero | Open anything. Chap. Centered. |
 | Sign-off / CTA | Press. Chap. Done. |
-| Welcome | Hi, I'm Chap. |
+| Welcome | Hi, I'm your chap. |
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
 | Focus (idle) | Chap on |
@@ -74,7 +74,7 @@ enough: a friend who snaps things into place.
 
 | Do | Don't |
 |---|---|
-| "Hi, I'm Chap." | "Welcome to the ultimate productivity suite!" |
+| "Hi, I'm your chap." | "Welcome to the ultimate productivity suite!" |
 | "Nothing is recorded or saved." | "Your privacy is our top priority!!" |
 | "No recent downloads" | "Oops, nothing here yet 😢" |
 | "Chap off" (with tooltip "Turn off Keep Mac Awake") | "Wind down", "Terminate session" |

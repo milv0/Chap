@@ -15,6 +15,7 @@ struct NotchDownloadsShelfView: View {
     @State private var didLoad = DownloadsShelf.previewOverride != nil
     @State private var isRefreshing = false
     @State private var isHeaderHovered = false
+    @Environment(\.colorScheme) private var colorScheme
     private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     private var usesDarkCustomForeground: Bool {
@@ -89,6 +90,10 @@ struct NotchDownloadsShelfView: View {
         HStack(spacing: 5) {
             Image(systemName: "arrow.down.circle")
                 .font(DS.notchLabel)
+                .foregroundColor(
+                    DS.notchIconColor(
+                        onDarkBackground: usesSemanticForeground
+                            ? colorScheme == .dark : !usesDarkCustomForeground))
             Text("Downloads")
                 .font(DS.notchLabel)
             Image(systemName: "chevron.right")
