@@ -37,6 +37,9 @@ pixel, at 1.5pt per pixel in the notch strip (3 Retina pixels, so edges stay cri
 | Body | `#FFFFFF` | `w` |
 | Shade | `#B0BED8` | `s` |
 
+In the Focus slot the seal is 2pt per pixel (4 Retina pixels). Its sleep z uses
+the slot's secondary text color so it reads on dark, Mist, and Glass panels.
+
 ## Notch panel presets
 
 Custom style offers two one-click panel colors; the color picker covers the rest.

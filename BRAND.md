@@ -20,9 +20,16 @@ Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
 on the left of the notch's black strip whenever Focus is off, and gives the
 spot back to the Focus timer while Focus runs. It is decoration, never a
 control: it takes no clicks, carries no text, and VoiceOver skips it. Its only
-motion is a small tail flick when you open the notch, and now and then (every
-7–12 s) while it stays open; it holds still when the notch is closed or Reduce
-Motion is on. Keep it calm: a friend resting nearby, not a pet asking for attention.
+motions are small: a tail flick when you open the notch and now and then (every
+7–12 s), a blink every few seconds, and a rising z while it sleeps. It holds
+still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
+resting nearby, not a pet asking for attention.
+
+In the **Focus** slot the seal tells the Keep Awake story: it sleeps (closed
+eyes, z) while Focus is off, wakes with a tail flick when Focus starts, gets
+drowsy (heavy eyelids) in the last 30 minutes (Final stretch, Landing soon), and
+falls asleep again when Focus ends. There is only ever one seal on screen: when
+the Focus slot is placed, the strip seal steps aside.
 
 ## The name carries both meanings
 

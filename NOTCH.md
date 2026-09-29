@@ -185,6 +185,17 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 꼬리 까딱: 도커가 펼쳐지고 0.35초 뒤 한 번(`flickSequence` 들기·내리기 ×2, 프레임 0.14초),
 이후 열려 있는 동안 7~12초 무작위 간격으로 반복한다. 꼬리 프레임(`tailUpRows`)은 오른쪽 끝 다섯 칸만 다르다.
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
+깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`). Focus 칸이 배치되어 있으면 띠 물범은 그리지 않는다(물범은 한 마리).
+
+**Focus 칸의 물범** (`ChapMascot.widgetPixelSize` 2pt = 48×24pt, 기존 큰 번개 자리):
+
+| 세션 | `focusMood` | 모습 |
+|---|---|---|
+| 꺼짐 | `.asleep` | 눈 감음(가로 두 칸 선), 머리 위 4×4 z가 3초마다 2.4초에 걸쳐 떠올라 흐려짐 |
+| 30분 이상 남음 | `.awake` | 눈 뜸, 깜빡임, 꼬리 까딱. 켜는 순간 0.35초 뒤 까딱으로 깸 |
+| 30분 미만 | `.drowsy` | 눈 위 그림자 눈꺼풀(`Eyes.drowsy`), 깜빡임·까딱 유지 |
+
+경계 30분은 `KeepAwakePolicy.focusActiveLine`의 Final stretch와 같다. 동작 줄이기에서는 상태별 정지 모습만 바뀐다(잠든 물범은 z가 떠 있는 채).
 
 ## 도구 위젯: Mirror · Quick Note
 

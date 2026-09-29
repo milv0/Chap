@@ -64,3 +64,66 @@ struct ChapMascotTests {
         #expect(ChapMascot.stripPixelSize * 2 == 3)
     }
 }
+
+@Suite("ChapMascot – Focus moods")
+struct ChapMascotFocusMoodTests {
+    @Test("mood follows the Keep Awake session")
+    func moodFromRemaining() {
+        #expect(ChapMascot.focusMood(remaining: nil) == .asleep)
+        #expect(ChapMascot.focusMood(remaining: 0) == .asleep)
+        #expect(ChapMascot.focusMood(remaining: 60) == .drowsy)
+        #expect(ChapMascot.focusMood(remaining: 1799) == .drowsy)
+        #expect(ChapMascot.focusMood(remaining: 1800) == .awake)
+        #expect(ChapMascot.focusMood(remaining: 8 * 3600) == .awake)
+    }
+
+    @Test("the drowsy boundary matches the Final stretch line")
+    func drowsyMatchesCopy() {
+        #expect(KeepAwakePolicy.focusActiveLine(remaining: 1799) == "Final stretch")
+        #expect(ChapMascot.focusMood(remaining: 1799) == .drowsy)
+        #expect(KeepAwakePolicy.focusActiveLine(remaining: 1800) == "In the zone")
+        #expect(ChapMascot.focusMood(remaining: 1800) == .awake)
+    }
+
+    @Test("each mood has its own eyes")
+    func moodEyes() {
+        #expect(ChapMascot.FocusMood.asleep.eyes == .closed)
+        #expect(ChapMascot.FocusMood.awake.eyes == .open)
+        #expect(ChapMascot.FocusMood.drowsy.eyes == .drowsy)
+    }
+
+    @Test("eye variants only touch the face and keep the grid shape")
+    func eyeVariants() {
+        for eyes in [ChapMascot.Eyes.closed, .drowsy] {
+            for pose in [ChapMascot.Pose.rest, .tailUp] {
+                let grid = ChapMascot.rows(eyes: eyes, pose: pose)
+                let base = pose == .rest ? ChapMascot.rows : ChapMascot.tailUpRows
+                #expect(grid.count == 12)
+                #expect(grid.allSatisfy { $0.count == 24 })
+                #expect(grid != base)
+                // 얼굴(3~4행, 4~8열) 밖은 그대로다.
+                for (y, (a, b)) in zip(grid, base).enumerated() {
+                    for (x, (ca, cb)) in zip(a, b).enumerated() where ca != cb {
+                        #expect((3...4).contains(y) && (4...8).contains(x))
+                    }
+                }
+            }
+        }
+        #expect(ChapMascot.pixels(eyes: .open, pose: .rest) == ChapMascot.pixels)
+    }
+
+    @Test("closed eyes have no open-eye dots left")
+    func closedEyes() {
+        let row = Array(ChapMascot.rows(eyes: .closed, pose: .rest)[4])
+        #expect(row[4] == "e" && row[5] == "e" && row[7] == "e" && row[8] == "e")
+        #expect(row[6] == "w")
+    }
+
+    @Test("the z is a 4x4 zig-zag and the widget size lands on Retina pixels")
+    func zAndSize() {
+        #expect(ChapMascot.sleepZRows == ["oooo", "..o.", ".o..", "oooo"])
+        #expect(ChapMascot.widgetPixelSize * 2 == 4)
+        #expect(ChapMascot.blinkDuration < 0.3)
+        #expect(ChapMascot.sleepZRiseDuration < ChapMascot.sleepZPeriod)
+    }
+}

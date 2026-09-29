@@ -10,6 +10,10 @@ All notable changes to Chap are documented in this file.
   the notch's black strip. It flicks its tail when you open the notch and now and
   then while it stays open (never with Reduce Motion on), and steps aside for the
   Focus timer while Focus runs.
+- **Seal in Focus** — The Focus slot shows the seal instead of the big bolt: it
+  sleeps with a rising z while Focus is off, wakes with a tail flick when Focus
+  starts, blinks while it keeps watch, and gets drowsy in the last 30 minutes.
+  When the Focus slot is placed, the strip seal steps aside so there is only one.
 
 ## [2.4.2] — 2026-09-29
 

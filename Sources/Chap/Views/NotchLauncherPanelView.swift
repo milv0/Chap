@@ -296,8 +296,9 @@ struct NotchLauncherPanelView: View {
                 }
             }
             .allowsHitTesting(false)
-        } else {
+        } else if !slots.contains(where: { if case .awake = $0 { true } else { false } }) {
             // Focus가 꺼져 있으면 같은 자리(노치 왼쪽 띠)에 Chap 마스코트가 엎드려 있다.
+            // Focus 칸이 있으면 그 안에서 물범이 자고 있으므로 띠에는 그리지 않는다(한 마리만).
             let sideWidth = NotchGeometry.stripPlateauSideWidth
             let notchHalf = stripPlateauHalfWidth - sideWidth
             GeometryReader { geo in
@@ -560,7 +561,9 @@ struct NotchLauncherPanelView: View {
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
         case .awake:
-            NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
+            NotchFocusView(
+                palette: widgetPalette, sessionEnd: currentAwakeSessionEnd,
+                isAnimating: reveal.revealed)
         }
     }
 
