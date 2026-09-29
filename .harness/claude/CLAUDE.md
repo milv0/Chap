@@ -82,7 +82,6 @@ Global shortcuts:
 | `Option + .` | Open the menu bar menu |
 | `Option + custom key` | Launch the site assigned to that shortcut |
 | `Option + ,` | Open Settings |
-| `Option + Shift + T` | Copy text from a dragged screen area (ScreenCaptureKit + Vision, in memory only; needs Screen Recording) |
 
 Launch types:
 
@@ -105,7 +104,7 @@ search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-six slots (Sites, Apps, Finder, or Screenshots; Mirror, Quick Note, and Copy Text from Screen are icons in the black top strip beside the Drop badge). It is an additive
+six slots (Sites, Apps, Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is an additive
 surface — the status-bar `NSMenu` is always available, including on notchless
 Macs. Chap Drop copies dropped files into
 `~/Library/Application Support/Chap/Drop/` (originals untouched) and the

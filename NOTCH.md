@@ -227,18 +227,6 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
-## 화면 텍스트 인식
-
-- 상단 띠 네 번째 아이콘(`text.viewfinder`, Quick Note 오른쪽), `⌥⇧T`, 상태 메뉴 "Copy Text from Screen"으로 시작한다.
-  시작하면 노치 도커를 접는다. 띠 간격은 네 아이콘이 110pt 상태 영역에 들어가도록 26pt(`stripToolPitch`)다.
-- 모든 화면에 28% 검정 오버레이(`TextSelectionWindow`, `.screenSaver` 레벨)와 십자 커서. 드래그한 영역만 밝게 뚫고
-  1pt 액센트 테두리를 그린다. Esc·우클릭·6pt 미만 드래그는 취소.
-- 캡처는 ScreenCaptureKit `SCScreenshotManager`로 선택 영역만(`sourceRect`, 레티나 배율) 메모리에 받고 Chap 창은 뺀다.
-  Vision `VNRecognizeTextRequest`(accurate, ko-KR·en-US, 언어 보정)로 읽고 위→아래·왼→오른 순서로 잇는다.
-- 결과는 클립보드에 넣고 노치(없으면 메뉴 막대) 아래 10pt에 34pt 높이 알림 "Copied: 첫 줄 (+N lines)"을 2.2초 띄운다.
-- 화면 기록 권한이 없으면 요청 후 시스템 설정 안내 창을 띄운다. 규칙은 `TextRecognitionPolicy`가 테스트로 고정한다.
-- Settings → Notch **Show Copy Text from Screen**(`notchTextRecognitionEnabled`, 기본 켬)으로 띠 아이콘을 숨긴다.
-
 ## 모션 기준
 
 모든 노치 표면이 같은 타이밍 기준을 쓴다. 닫힘 관련 값은 전부
@@ -264,7 +252,6 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
-- `Sources/ChapCore/TextRecognitionPolicy.swift`, `Sources/Chap/TextRecognitionController.swift` — 화면 텍스트 인식
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
 - `Sources/Chap/Views/NotchWidgetViews.swift`, `Sources/Chap/MirrorCamera.swift` — 거울·메모 위젯
 - `Sources/Chap/Views/NotchLauncherPanelView.swift` — 메인 패널 + 도커 실루엣 셰이프

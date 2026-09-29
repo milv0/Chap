@@ -366,8 +366,6 @@ public struct Config: Codable {
     public var notchMirrorEnabled: Bool
     /// 상단 띠 Quick Note 아이콘 표시 여부. 누르면 메모가 띠 아래로 펼쳐진다.
     public var notchQuickNoteEnabled: Bool
-    /// 상단 띠 텍스트 인식 아이콘 표시 여부. 누르면 화면 영역 글자를 읽어 복사한다.
-    public var notchTextRecognitionEnabled: Bool
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
 
@@ -399,7 +397,7 @@ public struct Config: Codable {
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
-        case notchQuickNoteEnabled, notchTextRecognitionEnabled
+        case notchQuickNoteEnabled
         case sites
     }
 
@@ -417,7 +415,6 @@ public struct Config: Codable {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
-        notchTextRecognitionEnabled: Bool = true,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -436,7 +433,6 @@ public struct Config: Codable {
             ?? Config.notchPanelColorHexDefault
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
-        self.notchTextRecognitionEnabled = notchTextRecognitionEnabled
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -492,9 +488,6 @@ public struct Config: Codable {
             (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
         notchQuickNoteEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchQuickNoteEnabled)) ?? true
-        notchTextRecognitionEnabled =
-            (try? container.decodeIfPresent(Bool.self, forKey: .notchTextRecognitionEnabled))
-            ?? true
         // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -549,8 +542,6 @@ public struct Config: Codable {
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
-        try container.encode(
-            notchTextRecognitionEnabled, forKey: .notchTextRecognitionEnabled)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

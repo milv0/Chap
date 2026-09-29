@@ -56,8 +56,6 @@ Global shortcuts:
 - `Option + .`: open the menu bar menu.
 - `Option + custom key`: launch the matching site.
 - `Option + ,`: open Settings.
-- `Option + Shift + T`: copy text from a dragged screen area (ScreenCaptureKit +
-  Vision, in memory only; needs Screen Recording permission).
 
 Launch types:
 
@@ -79,7 +77,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  six slots (Sites, Apps, Finder, or Screenshots; Mirror, Quick Note, and Copy Text from Screen are icons in the black top strip beside the Drop badge). It is additive —
+  six slots (Sites, Apps, Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
   untouched); the Screenshot Shelf reads the system screenshot folder in place.

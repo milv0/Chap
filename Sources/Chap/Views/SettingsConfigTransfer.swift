@@ -25,7 +25,6 @@ enum SettingsConfigTransfer {
             notchPanelColorHex: vm.notchPanelColorHex,
             notchMirrorEnabled: vm.notchMirrorEnabled,
             notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-            notchTextRecognitionEnabled: vm.notchTextRecognitionEnabled,
             notchWidgets: vm.notchWidgets,
             sites: vm.sites)
     }
@@ -186,7 +185,6 @@ enum SettingsConfigTransfer {
                         notchPanelColorHex: vm.notchPanelColorHex,
                         notchMirrorEnabled: vm.notchMirrorEnabled,
                         notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                        notchTextRecognitionEnabled: vm.notchTextRecognitionEnabled,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 

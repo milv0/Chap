@@ -524,8 +524,6 @@ Settings → Notch Launcher on
     → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
-  → 텍스트 인식(띠 아이콘·⌥⇧T·메뉴): closePanel → 화면 기록 권한 확인(없으면 요청+설정 안내) → 화면별 선택 오버레이
-    → mouseUp → 오버레이 닫기 → SCScreenshotManager(선택 영역만, Chap 제외) → Vision(백그라운드) → 메인에서 복사+NotchToast
   → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
     MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
   → Quick Note 칸: 패널이 key가 되어 입력. 커서가 메모에 있으면 visibility 판정이 닫지 않음.

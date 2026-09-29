@@ -2,18 +2,6 @@
 
 All notable changes to Chap are documented in this file.
 
-## [Unreleased]
-
-### Added
-
-- **Copy Text from Screen** — Press ⌥⇧T, click the new text icon in the notch's
-  top strip, or choose it from the status menu, then drag over any part of the
-  screen. Its Korean and English text is copied to the clipboard right away and
-  a short "Copied: …" notice appears below the notch. Recognition runs on your
-  Mac with Apple's Vision framework, only the selected area is captured, and
-  nothing is saved. The first use asks for Screen Recording permission. Hide the
-  icon with Show Copy Text from Screen in Settings → Notch.
-
 ## [2.3.0] — 2026-09-29
 
 ### Added

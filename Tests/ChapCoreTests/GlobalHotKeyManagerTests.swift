@@ -21,8 +21,6 @@ struct GlobalHotKeyManagerTests {
                 GlobalHotKeyRegistration(character: ",", action: .openSettings),
                 GlobalHotKeyRegistration(character: "G", action: .launchSite(index: 0)),
                 GlobalHotKeyRegistration(character: "T", action: .launchSite(index: 2)),
-                GlobalHotKeyRegistration(
-                    character: "T", modifiers: .optionShift, action: .recognizeText),
             ])
     }
 
@@ -43,21 +41,7 @@ struct GlobalHotKeyManagerTests {
                 GlobalHotKeyRegistration(character: ".", action: .openMenu),
                 GlobalHotKeyRegistration(character: ",", action: .openSettings),
                 GlobalHotKeyRegistration(character: "G", action: .launchSite(index: 2)),
-                GlobalHotKeyRegistration(
-                    character: "T", modifiers: .optionShift, action: .recognizeText),
             ])
-    }
-
-    @Test("text recognition uses Option-Shift-T, distinct from an Option-T site shortcut")
-    func textRecognitionUsesOptionShift() {
-        let registrations = globalHotKeyRegistrations(
-            for: [site(name: "Terminal", shortcut: "T")], optionShortcutsEnabled: true)
-        let ocr = registrations.first { $0.action == .recognizeText }
-        let terminal = registrations.first { $0.action == .launchSite(index: 0) }
-
-        #expect(ocr?.character == "T")
-        #expect(ocr?.modifiers == .optionShift)
-        #expect(terminal?.modifiers == .option)
     }
 
     @Test("disabled Option shortcuts produce no registrations")

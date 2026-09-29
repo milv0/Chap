@@ -12,7 +12,6 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Copy Text from Screen** — Press `⌥⇧T` or click the text icon in the notch, drag over any part of the screen, and its text (Korean and English) is copied right away. Recognition runs on your Mac and nothing is saved
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
@@ -42,7 +41,6 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
-- Screen Recording permission only if you use Copy Text from Screen (asked the first time)
 - Camera permission only if you use the notch Mirror (asked the first time you click its icon)
 
 ## Usage
@@ -74,7 +72,6 @@ causes the next launch to create and link a new window.
 | `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
-| `⌥⇧T` | Copy text from a screen area |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |
@@ -106,7 +103,6 @@ Stored at `~/.chap.json`:
   "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none"],
   "notchMirrorEnabled": true,
   "notchQuickNoteEnabled": true,
-  "notchTextRecognitionEnabled": true,
   "sites": [
     {
       "name": "GitHub",
@@ -152,8 +148,6 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
 **Quick Note** is a note icon right of Mirror in the black strip; click it and a single plain-text note opens just below, ready to type. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
-
-**Copy Text from Screen** is the text icon at the end of the black strip, also `⌥⇧T` and the status menu. The screen dims; drag over the text you want and release. Chap captures only that area in memory (excluding its own windows), reads it with Apple's Vision framework on your Mac, copies the text, and shows "Copied: …" below the notch. Nothing is saved or sent. Esc or a right-click cancels. The first use asks for Screen Recording permission; turn Chap on in System Settings → Privacy & Security → Screen & System Audio Recording, then reopen Chap.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Hover a file to share it (AirDrop, Messages, Mail, …) or remove it; right-click for the same actions plus Show in Finder. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 

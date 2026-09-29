@@ -17,8 +17,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let globalHotKeyManager = GlobalHotKeyManager()
-    lazy var textRecognition = TextRecognitionController()
-    var textRecognitionObserver: NSObjectProtocol?
     let updateController = UpdateController()
     lazy var accessibilityController = AccessibilityStateController(
         suppressesInteractivePrompts: isRunningTests)

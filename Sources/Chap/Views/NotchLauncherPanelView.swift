@@ -63,8 +63,6 @@ struct NotchLauncherPanelView: View {
     var showsMirror = false
     /// 상단 검정 띠에 Quick Note 아이콘을 둘지. Mirror 오른쪽에 둔다.
     var showsNote = false
-    /// 상단 검정 띠에 텍스트 인식 아이콘을 둘지. Quick Note 오른쪽에 둔다.
-    var showsTextRecognition = false
     let onLaunch: (Int) -> Void
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
@@ -206,8 +204,7 @@ struct NotchLauncherPanelView: View {
                     besideDropBadge: true,
                     showsEmptyDropBox: dropFiles.isEmpty,
                     showsMirror: showsMirror,
-                    showsNote: showsNote,
-                    showsTextRecognition: showsTextRecognition)
+                    showsNote: showsNote)
             }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }

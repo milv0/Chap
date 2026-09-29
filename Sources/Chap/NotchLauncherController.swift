@@ -52,8 +52,6 @@ final class NotchLauncherController {
     var mirrorEnabledProvider: () -> Bool = { false }
     /// 상단 띠 Quick Note 아이콘 표시 여부.
     var quickNoteEnabledProvider: () -> Bool = { false }
-    /// 상단 띠 텍스트 인식 아이콘 표시 여부.
-    var textRecognitionEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -82,11 +80,6 @@ final class NotchLauncherController {
     private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
-    /// 외부 기능(텍스트 인식 등)이 화면을 쓰기 전에 열린 도커를 접는다.
-    func closePanel() {
-        hidePanel()
-    }
-
     func update(enabled: Bool) {
         guard let screen = Self.notchScreen(),
             NotchLauncherPolicy.shouldPresent(
@@ -319,7 +312,6 @@ final class NotchLauncherController {
             slots: slots,
             showsMirror: mirrorEnabledProvider(),
             showsNote: quickNoteEnabledProvider(),
-            showsTextRecognition: textRecognitionEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)

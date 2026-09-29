@@ -243,18 +243,6 @@ extension AppDelegate {
         keepAwakeMenuItem = keepAwakeItem
         menu.addItem(.separator())
 
-        let recognize = NSMenuItem(
-            title: "Copy Text from Screen", action: #selector(startTextRecognition),
-            keyEquivalent: config.optionShortcutsEnabled ? "t" : "")
-        if config.optionShortcutsEnabled {
-            recognize.keyEquivalentModifierMask = [.option, .shift]
-        }
-        recognize.image = NSImage(
-            systemSymbolName: "text.viewfinder", accessibilityDescription: "Copy Text from Screen")
-        recognize.target = self
-        menu.addItem(recognize)
-        menu.addItem(.separator())
-
         let settings = NSMenuItem(
             title: "Settings...", action: #selector(openSettings),
             keyEquivalent: config.optionShortcutsEnabled ? "," : "")
@@ -304,9 +292,6 @@ extension AppDelegate {
         }
         notchLauncher.quickNoteEnabledProvider = { [weak self] in
             self?.config.notchQuickNoteEnabled ?? false
-        }
-        notchLauncher.textRecognitionEnabledProvider = { [weak self] in
-            self?.config.notchTextRecognitionEnabled ?? false
         }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .custom
@@ -361,15 +346,7 @@ extension AppDelegate {
         case .launchSite(let index):
             guard config.sites.indices.contains(index) else { return }
             launchSite(config.sites[index])
-        case .recognizeText:
-            startTextRecognition()
         }
-    }
-
-    /// 화면 영역 텍스트 인식을 시작한다. 열린 노치 도커가 영역을 가리지 않게 먼저 접는다.
-    @objc func startTextRecognition() {
-        notchLauncher.closePanel()
-        textRecognition.start()
     }
 
     private func openStatusMenu() {

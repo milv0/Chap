@@ -186,15 +186,12 @@ struct NotchStripTools: View {
     var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
-    var showsTextRecognition = false
 
-    private enum Tool: Equatable { case mirror, note, text }
+    private enum Tool: Equatable { case mirror, note }
     @State private var openTool: Tool?
 
     var body: some View {
-        let tools: [Tool] =
-            (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
-            + (showsTextRecognition ? [.text] : [])
+        let tools: [Tool] = (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
         let offsets = NotchLauncherPolicy.stripToolCenterOffsets(
             besideDropBadge: besideDropBadge, count: tools.count)
         GeometryReader { geo in
@@ -224,12 +221,6 @@ struct NotchStripTools: View {
                         NotchQuickNoteStripControl(
                             iconCenterX: centerX, stripHeight: stripHeight,
                             isOpen: binding(for: .note))
-                    case .text:
-                        NotchTextRecognitionStripButton(
-                            iconCenterX: centerX, stripHeight: stripHeight
-                        ) {
-                            openTool = nil
-                        }
                     }
                 }
             }
@@ -238,8 +229,7 @@ struct NotchStripTools: View {
                 NotificationCenter.default.publisher(for: NotchLauncherController.didClickPanel)
             ) {
                 note in
-                guard let open = openTool, open != .text, let index = tools.firstIndex(of: open)
-                else { return }
+                guard let open = openTool, let index = tools.firstIndex(of: open) else { return }
                 guard let click = note.userInfo?["point"] as? CGPoint else {
                     openTool = nil
                     return
@@ -269,34 +259,6 @@ struct NotchStripTools: View {
         Binding(
             get: { openTool == tool },
             set: { open in openTool = open ? tool : (openTool == tool ? nil : openTool) })
-    }
-}
-
-/// 상단 띠의 텍스트 인식 아이콘. 누르면 도커를 닫고 화면 영역 선택을 시작한다.
-struct NotchTextRecognitionStripButton: View {
-    let iconCenterX: CGFloat
-    let stripHeight: CGFloat
-    let onStart: () -> Void
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Button {
-            onStart()
-            NotificationCenter.default.post(
-                name: TextRecognitionController.requestNotification, object: nil)
-        } label: {
-            Image(systemName: "text.viewfinder")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(isHovered ? 1 : 0.85))
-                .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .help("Copy text from the screen (\(TextRecognitionPolicy.shortcutLabel))")
-        .accessibilityLabel("Copy text from the screen")
-        .position(x: iconCenterX, y: stripHeight / 2)
     }
 }
 
