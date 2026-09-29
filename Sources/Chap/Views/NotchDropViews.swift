@@ -22,7 +22,7 @@ struct NotchDropFileItem: View {
             Button {
                 NSWorkspace.shared.open(url)
             } label: {
-                VStack(spacing: 5) {
+                Group {
                     Group {
                         if let thumbnail {
                             Image(nsImage: thumbnail)
@@ -33,21 +33,10 @@ struct NotchDropFileItem: View {
                                 .resizable()
                         }
                     }
-                    .frame(width: 36, height: 36)
+                    .frame(width: 28, height: 28)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-
-                    Text(url.lastPathComponent)
-                        .font(.system(size: 10))
-                        .foregroundColor(primaryForeground)
-                        .shadow(
-                            color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
-                        )
-                        .lineLimit(1)
-                        .truncationMode(.middle)
                 }
-                .frame(width: 68)
-                .padding(.vertical, 6)
-                .padding(.horizontal, 2)
+                .frame(width: 36, height: 36)
                 .background(
                     RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                         .fill(isHovered ? hoverBackground : Color.clear)
@@ -75,6 +64,7 @@ struct NotchDropFileItem: View {
             .accessibilityHidden(true)
         }
         .onHover { isHovered = $0 }
+        .help(url.lastPathComponent)
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
         // VoiceOver/키보드에는 하나의 파일 요소와 명시적 actions를 제공한다.
         .accessibilityElement(children: .ignore)

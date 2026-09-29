@@ -6,6 +6,8 @@ struct NotchWidgetPalette {
     let primary: Color
     let secondary: Color
     let accent: Color
+    /// 섹션 제목·아이콘 색.
+    let heading: Color
     let textShadowOpacity: Double
     let hoverBackground: Color
     let subtleSurface: Color
@@ -21,10 +23,10 @@ struct NotchWidgetHeader: View {
         HStack(spacing: 5) {
             Image(systemName: symbol)
                 .font(DS.notchLabel)
-                .foregroundColor(palette.secondary)
+                .foregroundColor(palette.heading)
             Text(title)
                 .font(DS.notchLabel)
-                .foregroundColor(palette.secondary)
+                .foregroundColor(palette.heading)
         }
         .shadow(color: .black.opacity(palette.textShadowOpacity), radius: 1.5, y: 0.5)
         .padding(.horizontal, 6)

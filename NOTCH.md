@@ -152,17 +152,26 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 
 ## 위젯 칸
 
-위젯은 6칸 한 줄이다. 빈 칸은 그리지 않으므로 도커 폭은 배치된 위젯 수에 비례한다
-(칸당 `columnWidth` 160pt + 간격). 위젯 종류(Sites·Apps·Folders·Screenshots·Mirror·Quick Note)가
+위젯은 6칸 한 줄이다. 빈 칸은 그리지 않고, 칸마다 내용에 맞는 폭을 쓴다.
+
+| 칸 | 폭 |
+|---|---|
+| Sites·Folders | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
+| Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
+| Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
+| Mirror | 104pt |
+| Quick Note | 170pt |
+
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Folders·Screenshots·Mirror·Quick Note)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
 ## Apps 칸: 아이콘 격자
 
 Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 앱 수와 관계없이 2열 × 3줄 자리(113pt)를 잡고 위에서부터 한 줄에 둘씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
-단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙이고, 수식키 `⌥`는 Apps 제목 옆 키캡에 한 번만 보여준다(툴팁: Hold Option and press the letter). 호버 시 앱 이름
+단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 수식키 ⌥ 안내는 격자 툴팁("Hold Option and press the letter…")과 VoiceOver("Option S")로만 둔다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
-utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 제목 줄("Apps" + ⌥ 키캡)이 잘리지 않는 96pt이고 격자(80pt)는 그 안에서 가운데 정렬한다. 목록 칸(Sites·Folders 등)은 160pt 그대로다.
+utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Folders 등)은 160pt 그대로다.
 
 ## 도구 위젯: Mirror · Quick Note
 
@@ -178,6 +187,20 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
   `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
   메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
+
+## Drop 파일 줄
+
+파일이 있을 때만 위젯 줄 아래에 구분선과 한 줄이 생긴다. 트레이 아이콘 뒤에 36pt 타일(28pt 파일 아이콘)을
+나란히 두고, 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 삭제 ×.
+
+## 오프스크린 렌더 (개발용)
+
+    TEST_RUNNER_CHAP_NOTCH_RENDER_DIR=/tmp/notch xcodebuild -scheme Chap -destination "platform=macOS" test
+
+`Tests/ChapCoreTests/NotchRenderTool.swift`가 현재 `~/.chap.json`·스크린샷·Drop 파일로 도커를 그려
+`notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다. 화면 기록 권한 없이 레이어를
+직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
+배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
 ## 모션 기준
 

@@ -28,6 +28,11 @@ All notable changes to Chap are documented in this file.
   a larger thumbnail and when they were taken ("5 min ago") instead of a cut-off
   file name. Clear Glass gets a light veil for contrast, and new setups default
   to Regular Glass.
+- **Right-sized notch columns** — Each widget column now fits its content
+  (Sites and Folders 112–170pt, Mirror 104pt, Apps to its icon grid), making
+  the dock noticeably narrower. Headings are brighter, the Apps title no longer
+  carries an extra ⌥ key, and dropped files show as a compact row of icons with
+  names in tooltips.
 - **Six notch slots, no pages** — The notch now shows up to six widgets in one
   row, enough for every widget type, and the page dots and swipe from 2.1 are
   gone. Widgets placed on later pages move into the first free slots.

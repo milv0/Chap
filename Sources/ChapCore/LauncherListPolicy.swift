@@ -35,6 +35,16 @@ public enum LauncherListPolicy {
         SiteCountLimitPolicy.limit(for: launchType)
     }
 
+    /// 목록 칸 폭 범위. 내용이 짧으면 좁히고 길면 자르되, 너무 좁거나 넓어지지 않게 한다.
+    public static let listColumnWidthRange: ClosedRange<Double> = 112...170
+
+    /// 가장 긴 줄의 폭(여백 포함)으로 목록 칸 폭을 정한다.
+    public static func listColumnWidth(contentWidth: Double) -> Double {
+        min(
+            max(contentWidth.rounded(.up), listColumnWidthRange.lowerBound),
+            listColumnWidthRange.upperBound)
+    }
+
     /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 6개가 2열 × 3줄로 한 칸에 들어간다.
     public static let appIconColumns = 2
 

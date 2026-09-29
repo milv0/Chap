@@ -11,7 +11,7 @@ struct NotchScreenshotShelfView: View {
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
 
-    @State private var urls: [URL] = []
+    @State private var urls: [URL] = ScreenshotShelf.previewOverride ?? []
     @State private var isRefreshing = false
     @State private var isHeaderHovered = false
     private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -80,16 +80,19 @@ struct NotchScreenshotShelfView: View {
         }
     }
 
+    /// 다른 칸 제목과 같은 색 (Glass: 본문색 62%).
+    private var headingColor: Color {
+        usesSemanticForeground ? Color.primary.opacity(0.62) : customSecondary
+    }
+
     private var header: some View {
         HStack(spacing: 5) {
             Image(systemName: "camera.viewfinder")
                 .font(DS.notchLabel)
-                .foregroundColor(usesSemanticForeground ? .secondary : customSecondary)
+                .foregroundColor(headingColor)
             Text("Screenshots")
                 .font(DS.notchLabel)
-                .foregroundColor(
-                    usesSemanticForeground ? .secondary : customSecondary
-                )
+                .foregroundColor(headingColor)
             // 호버 시에만 Finder로 이동한다는 단서를 보여준다.
             Image(systemName: "chevron.right")
                 .font(.system(size: 8, weight: .bold))
@@ -148,6 +151,23 @@ private struct ScreenshotShelfRow: View {
     @State private var thumbnail: NSImage?
     @State private var modified: Date?
     @State private var isHovered = false
+
+    init(
+        url: URL, primaryForeground: Color, secondaryForeground: Color,
+        borderForeground: Color, textShadowOpacity: Double, hoverBackground: Color
+    ) {
+        self.url = url
+        self.primaryForeground = primaryForeground
+        self.secondaryForeground = secondaryForeground
+        self.borderForeground = borderForeground
+        self.textShadowOpacity = textShadowOpacity
+        self.hoverBackground = hoverBackground
+        // 파일 4개의 stat은 가볍다. 첫 프레임부터 시각이 보여 행이 비어 보이지 않는다.
+        _modified = State(
+            initialValue: (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+                .contentModificationDate)
+        _thumbnail = State(initialValue: ThumbnailLoader.cachedImage(for: url, maxPixelSize: 96))
+    }
 
     var body: some View {
         Button {

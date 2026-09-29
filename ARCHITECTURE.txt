@@ -123,6 +123,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ScreenshotShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
     ├── NotchToolWidgetTests.swift
+    ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정 시만 실행
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift
     ├── StatusBarSymbolImageTests.swift

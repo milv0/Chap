@@ -10,6 +10,26 @@ enum NotchSlotContent {
     case mirror
     /// 빠른 메모 위젯.
     case note
+
+    /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
+    /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
+    static func slots(widgets: [NotchWidget], sites: [Site]) -> [NotchSlotContent] {
+        // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김 설정과 무관하다.
+        let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
+        return widgets.compactMap { widget -> NotchSlotContent? in
+            switch widget {
+            case .none, .drop:
+                // Drop 파일은 메인 도커 하단 행이 전담한다.
+                return nil
+            case .screenshots: return .screenshots
+            case .mirror: return .mirror
+            case .note: return .note
+            case .sites, .apps, .folders:
+                return sections.first { $0.launchType == widget.launchType }
+                    .map(NotchSlotContent.launchers)
+            }
+        }
+    }
 }
 
 /// 패널 펼침/접힘 상태와 실시간 조절 값. 컨트롤러가 접힘 애니메이션과
@@ -57,20 +77,46 @@ struct NotchLauncherPanelView: View {
 
     static let columnWidth: CGFloat = 160
 
-    /// Apps 칸 폭: 제목 줄("Apps" + ⌥ 키캡)이 잘리지 않는 폭(96pt)과 2열 격자 폭 중 큰 값.
-    /// 격자는 이 폭 안에서 가운데 정렬한다.
+    /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
         let columns = CGFloat(LauncherListPolicy.appIconColumns)
-        let grid =
-            columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap + 4
-        return max(grid, 96)
+        return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
+            + 4
     }
 
+    /// 꺼진 거울은 아이콘 하나라 좁은 칸이면 충분하다.
+    static let mirrorColumnWidth: CGFloat = 104
+    /// 메모는 적을 공간이 필요해 목록 최대 폭을 쓴다.
+    static let noteColumnWidth: CGFloat = 170
+
+    /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
     private func width(for slot: NotchSlotContent) -> CGFloat {
-        if case .launchers(let section) = slot, section.launchType == .app {
-            return Self.appGridColumnWidth
+        switch slot {
+        case .launchers(let section) where section.launchType == .app:
+            return max(Self.appGridColumnWidth, NotchTextMetrics.headerWidth(title: "Apps"))
+        case .launchers(let section):
+            let rows = section.entries.map { entry -> CGFloat in
+                let key = LauncherListPolicy.shortcutBadge(for: entry.site)
+                return NotchTextMetrics.rowWidth(name: entry.site.name, keycap: key)
+            }
+            let header = NotchTextMetrics.headerWidth(title: Self.sectionTitle(section.launchType))
+            return CGFloat(
+                LauncherListPolicy.listColumnWidth(
+                    contentWidth: Double(max(rows.max() ?? 0, header))))
+        case .screenshots:
+            // 썸네일 34 + 간격 6 + 시각 문구 + Spacer 앞 간격 6 + 좌우 여백 12.
+            let label =
+                ["00 min ago", "Yesterday", "00 hr ago"]
+                .map(NotchTextMetrics.bodyWidth).max() ?? 0
+            let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14
+            return CGFloat(
+                LauncherListPolicy.listColumnWidth(
+                    contentWidth: Double(max(34 + 6 + label + 6 + 12, header))))
+        case .mirror:
+            return Self.mirrorColumnWidth
+        case .note:
+            return Self.noteColumnWidth
         }
-        return Self.columnWidth
     }
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
@@ -239,7 +285,7 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    @State private var dropFiles: [URL] = []
+    @State private var dropFiles: [URL] = ChapDrop.previewOverride ?? []
     @State private var isRefreshingDropFiles = false
     @State private var dropRefreshPending = false
 
@@ -297,6 +343,12 @@ struct NotchLauncherPanelView: View {
         return usesDarkCustomForeground ? .black.opacity(0.08) : .white.opacity(0.16)
     }
 
+    /// 섹션 제목·아이콘: 본문색 62%. 기본 보조 회색보다 밝은 Glass 위에서 또렷하다.
+    /// Custom은 배경 대비 정책의 보조 불투명도를 그대로 쓴다.
+    private var headingForeground: Color {
+        usesSemanticGlass ? Color.primary.opacity(0.62) : secondaryForeground
+    }
+
     /// 키캡 글자: 본문색 80%. 옅은 회색보다 대비가 높아 3:1 이상을 지킨다.
     private var keycapForeground: Color { primaryForeground.opacity(0.8) }
 
@@ -342,7 +394,13 @@ struct NotchLauncherPanelView: View {
                     .fill(subtleSurface)
                     .frame(height: 1)
                     .padding(.top, 2)
-                HStack(alignment: .top, spacing: DS.spacingSmall) {
+                // 파일은 아이콘만 한 줄로 둔다. 이름은 툴팁과 VoiceOver로 제공해 줄 높이를 줄인다.
+                HStack(alignment: .center, spacing: 4) {
+                    Image(systemName: "tray.and.arrow.down")
+                        .font(DS.notchLabel)
+                        .foregroundColor(headingForeground)
+                        .padding(.horizontal, 6)
+                        .accessibilityHidden(true)
                     ForEach(dropFiles, id: \.self) { url in
                         NotchDropFileItem(
                             url: url,
@@ -413,6 +471,7 @@ struct NotchLauncherPanelView: View {
             primary: primaryForeground,
             secondary: secondaryForeground,
             accent: accentForeground,
+            heading: headingForeground,
             textShadowOpacity: textShadowOpacity,
             hoverBackground: rowHoverBackground,
             subtleSurface: subtleSurface)
@@ -425,24 +484,11 @@ struct NotchLauncherPanelView: View {
             HStack(spacing: 5) {
                 Image(systemName: LauncherListPolicy.symbolName(for: section.launchType))
                     .font(DS.notchLabel)
-                    .foregroundColor(secondaryForeground)
+                    .foregroundColor(headingForeground)
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.notchLabel)
-                    .foregroundColor(secondaryForeground)
+                    .foregroundColor(headingForeground)
                     .fixedSize()
-                // 앱 배지는 글자만 보여주므로, 누를 수식키(⌥)는 제목 옆에 한 번만 표시한다.
-                if section.launchType == .app, LauncherListPolicy.hasShortcut(in: section) {
-                    Text("⌥")
-                        .font(DS.notchMeta)
-                        .foregroundColor(keycapForeground)
-                        .padding(.horizontal, 3.5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(keycapBackground)
-                        )
-                        .help("Hold Option and press the letter to launch")
-                        .accessibilityLabel("Option-key shortcuts")
-                }
             }
             .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
@@ -483,6 +529,8 @@ struct NotchLauncherPanelView: View {
             }
         }
         .fixedSize(horizontal: true, vertical: false)
+        // 배지 글자는 ⌥와 함께 누르는 키다. 수식키 안내는 툴팁으로만 둔다.
+        .help("Hold Option and press the letter on an app to launch it")
         // 칸 폭 안에서 가운데, 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
         .frame(maxWidth: .infinity)
         .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
@@ -578,6 +626,20 @@ struct NotchAppIconTile: View {
 
     @State private var icon: NSImage?
     @State private var isHovered = false
+
+    init(
+        entry: LauncherListEntry, primaryForeground: Color, badgeForeground: Color,
+        badgeBackground: Color, hoverBackground: Color, action: @escaping () -> Void
+    ) {
+        self.entry = entry
+        self.primaryForeground = primaryForeground
+        self.badgeForeground = badgeForeground
+        self.badgeBackground = badgeBackground
+        self.hoverBackground = hoverBackground
+        self.action = action
+        // 캐시에 있으면 첫 프레임부터 아이콘을 그린다 (재오픈·오프스크린 렌더).
+        _icon = State(initialValue: entry.site.appPath.flatMap(AppIconLoader.cachedIcon))
+    }
 
     // 격자 3줄(앱 6개)의 높이를 목록 칸 4줄(Sites·Folders 최대)과 정확히 맞춘다.
     // 목록 한 줄 = 13pt 본문 줄 높이 16pt + 위아래 여백 5pt씩, 줄 간격 3pt.
@@ -827,5 +889,31 @@ struct PressedStripShape: Shape {
         }
         path.closeSubpath()
         return path
+    }
+}
+
+/// 노치 칸 폭 계산용 글자 측정. 실제 글꼴(13pt 본문, 11pt semibold 제목)로 잰다.
+enum NotchTextMetrics {
+    private static let body = NSFont.systemFont(ofSize: 13)
+    private static let label = NSFont.systemFont(ofSize: 11, weight: .semibold)
+
+    static func bodyWidth(_ text: String) -> CGFloat {
+        // SwiftUI 렌더링은 AppKit 측정보다 1~2pt 넓게 그리므로 여유를 둔다.
+        ceil((text as NSString).size(withAttributes: [.font: body]).width) + 3
+    }
+
+    static func labelWidth(_ text: String) -> CGFloat {
+        ceil((text as NSString).size(withAttributes: [.font: label]).width) + 2
+    }
+
+    /// 목록 한 줄: 좌우 여백 6 + 이름 + 최소 간격 8 + 키캡(글자 + 좌우 5).
+    static func rowWidth(name: String, keycap: String?) -> CGFloat {
+        let keycapWidth = keycap.map { labelWidth($0) + 10 + 8 } ?? 0
+        return 12 + bodyWidth(name) + keycapWidth
+    }
+
+    /// 제목 줄: 좌우 여백 6 + 아이콘 약 13 + 간격 5 + 제목.
+    static func headerWidth(title: String) -> CGFloat {
+        12 + 13 + 5 + labelWidth(title)
     }
 }

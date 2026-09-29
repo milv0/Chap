@@ -148,3 +148,13 @@ struct NotchAppIconLabelTests {
                 == "Launch Mail")
     }
 }
+
+@Suite("Notch column widths")
+struct NotchColumnWidthTests {
+    @Test("list columns fit their content between 112 and 170pt")
+    func listColumnWidthClamps() {
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 60) == 112)
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 131.2) == 132)
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 400) == 170)
+    }
+}

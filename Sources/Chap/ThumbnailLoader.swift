@@ -13,6 +13,14 @@ enum ThumbnailLoader {
         "png", "jpg", "jpeg", "heic", "tiff", "gif",
     ]
 
+    /// 이미 디코딩된 썸네일이 있으면 즉시 돌려준다. 없으면 nil (디코딩하지 않는다).
+    static func cachedImage(for url: URL, maxPixelSize: Int) -> NSImage? {
+        let modified =
+            (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate?.timeIntervalSinceReferenceDate ?? 0
+        return cache.object(forKey: "\(url.path)|\(modified)|\(maxPixelSize)" as NSString)
+    }
+
     /// 이미지 파일이면 다운샘플 썸네일, 아니면 nil.
     @MainActor
     static func image(for url: URL, maxPixelSize: Int) async -> NSImage? {

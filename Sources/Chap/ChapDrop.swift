@@ -6,6 +6,10 @@ import AppKit
 /// 위치: `~/Library/Application Support/Chap/Drop/`
 /// 접근은 노치 UI를 통해서만 이뤄지는 앱 내부 보관함 모델이다.
 enum ChapDrop {
+    /// 오프스크린 렌더 도구 전용: 설정하면 노치가 파일을 읽는 대신 이 목록을 첫 프레임에 쓴다.
+    /// 앱 실행 중에는 항상 nil이다.
+    static var previewOverride: [URL]?
+
     /// 보관함 내용이 바뀔 때마다 메인 큐에서 게시된다. 배지·파일 행 갱신 트리거.
     static let didChangeNotification = Notification.Name("ChapDropDidChange")
 
