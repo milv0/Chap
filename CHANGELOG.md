@@ -2,6 +2,13 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.2.1] — 2026-09-29
+
+### Fixed
+
+- **Mirror crash** — Clicking the Mirror icon could quit Chap. The camera now
+  starts only after its preview is connected, so the two no longer collide.
+
 ## [2.2.0] — 2026-09-29
 
 ### Added

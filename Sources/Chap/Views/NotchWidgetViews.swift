@@ -103,7 +103,7 @@ struct NotchMirrorStripControl: View {
     }
 
     private var preview: some View {
-        MirrorPreview(session: MirrorCamera.shared.session)
+        MirrorPreview(camera: MirrorCamera.shared)
             .frame(width: Self.previewSize.width, height: Self.previewSize.height)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
@@ -165,11 +165,12 @@ struct NotchMirrorStripControl: View {
         }
     }
 
+    /// 미리보기를 보여주기만 한다. 캡처 시작은 미리보기가 세션에 연결된 뒤
+    /// `MirrorPreview`가 한다 (연결 전에 시작하면 크래시).
     private func turnOn() {
+        guard MirrorPolicy.shouldCapture(state: state, isTurnedOn: true, isPanelOpen: true)
+        else { return }
         isOpen = true
-        if MirrorPolicy.shouldCapture(state: state, isTurnedOn: true, isPanelOpen: true) {
-            MirrorCamera.shared.start()
-        }
     }
 
     private func turnOff() {
@@ -178,25 +179,34 @@ struct NotchMirrorStripControl: View {
     }
 }
 
-/// 좌우 반전된 카메라 미리보기 레이어.
+/// 좌우 반전된 카메라 미리보기 레이어. 세션 연결은 카메라 큐에서 하고,
+/// 연결이 끝난 뒤에만 캡처를 시작한다 (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다).
 private struct MirrorPreview: NSViewRepresentable {
-    let session: AVCaptureSession
+    let camera: MirrorCamera
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
-        let layer = AVCaptureVideoPreviewLayer(session: session)
+        // 세션 없이 만든 뒤 카메라 큐에서 연결한다.
+        let layer = AVCaptureVideoPreviewLayer()
         layer.videoGravity = .resizeAspectFill
-        // 거울처럼 보이도록 좌우를 뒤집는다.
-        if let connection = layer.connection, connection.isVideoMirroringSupported {
-            connection.automaticallyAdjustsVideoMirroring = false
-            connection.isVideoMirrored = true
-        }
         view.layer = layer
+        camera.attach(layer) {
+            // 거울처럼 보이도록 좌우를 뒤집는다. connection은 세션 연결 뒤에 생긴다.
+            if let connection = layer.connection, connection.isVideoMirroringSupported {
+                connection.automaticallyAdjustsVideoMirroring = false
+                connection.isVideoMirrored = true
+            }
+            camera.start()
+        }
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: ()) {
+        MirrorCamera.shared.stop()
+    }
 }
 
 // MARK: - Quick Note
