@@ -290,6 +290,9 @@ extension AppDelegate {
         notchLauncher.mirrorEnabledProvider = { [weak self] in
             self?.config.notchMirrorEnabled ?? false
         }
+        notchLauncher.quickNoteEnabledProvider = { [weak self] in
+            self?.config.notchQuickNoteEnabled ?? false
+        }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .custom
         }

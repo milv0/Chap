@@ -44,39 +44,29 @@ private let widgetBodyHeight: CGFloat = NotchAppIconTile.listBodyHeight
 /// 아이콘은 Drop 배지 오른쪽에 두고, 배지가 없으면(보관 파일 없음) 배지 자리에 둔다.
 /// 켜기 전에는 카메라를 쓰지 않고, ×·아이콘 재클릭·도커 닫힘으로 꺼진다.
 struct NotchMirrorStripControl: View {
-    /// 패널 가운데에서 노치 오른쪽 끝까지의 거리 (노치 반폭).
-    let notchRightEdge: CGFloat
+    /// 패널 좌표의 아이콘 중심 x.
+    let iconCenterX: CGFloat
     let stripHeight: CGFloat
-    let besideDropBadge: Bool
+    /// 한 번에 하나의 띠 도구만 펼친다. 컨테이너가 소유한다.
+    @Binding var isOpen: Bool
 
     @State private var state = MirrorCamera.displayState
-    @State private var isOpen = false
     @State private var isHovered = false
 
     /// 펼친 미리보기 크기. 얼굴 확인용이라 세로가 약간 긴 4:3에 가깝게 좁힌다
     /// (가로 144, 원본이 넓으면 aspect fill로 좌우를 잘라 얼굴이 가운데 남는다).
     static let previewSize = CGSize(width: 144, height: 108)
-    /// 띠 아이콘의 누름 영역 폭. Drop 배지 본체 폭과 같다.
-    static let iconWidth: CGFloat = NotchGeometry.badgeBodyWidth
-
     var body: some View {
         GeometryReader { geo in
-            let iconCenterX =
-                geo.size.width / 2 + notchRightEdge
-                + (besideDropBadge
-                    ? NotchGeometry.badgeBodyWidth + NotchGeometry.dockFlareRadius
-                        + Self.iconWidth / 2
-                    : Self.iconWidth / 2)
             ZStack(alignment: .topLeading) {
                 stripButton
                     .position(x: iconCenterX, y: stripHeight / 2)
                 if isOpen && state == .live {
                     preview
                         .position(
-                            x: min(
-                                max(iconCenterX, Self.previewSize.width / 2 + 12),
-                                geo.size.width - Self.previewSize.width / 2 - 12),
-                            y: stripHeight + 8 + Self.previewSize.height / 2
+                            NotchLauncherPolicy.stripPopupCenter(
+                                iconCenterX: iconCenterX, popupSize: Self.previewSize,
+                                containerWidth: geo.size.width, stripHeight: stripHeight)
                         )
                         .transition(.opacity.combined(with: .scale(scale: 0.92, anchor: .top)))
                 }
@@ -85,6 +75,10 @@ struct NotchMirrorStripControl: View {
         .animation(.smooth(duration: 0.18), value: isOpen)
         .onAppear { state = MirrorCamera.displayState }
         .onDisappear { turnOff() }
+        // 다른 도구가 열리며 닫히면 카메라도 끈다.
+        .onChange(of: isOpen) { _, open in
+            if !open { MirrorCamera.shared.stop() }
+        }
     }
 
     private var stripButton: some View {
@@ -92,7 +86,7 @@ struct NotchMirrorStripControl: View {
             Image(systemName: symbol)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(isOpen ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
-                .frame(width: Self.iconWidth, height: stripHeight)
+                .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -180,6 +174,159 @@ struct NotchMirrorStripControl: View {
     }
 }
 
+/// 상단 검정 띠 오른쪽의 도구 아이콘 묶음 (Mirror, Quick Note). Drop 배지가 있으면 그 오른쪽,
+/// 없으면 배지 자리부터 28pt 간격으로 나란히 두고, 한 번에 하나만 띠 아래로 펼친다.
+struct NotchStripTools: View {
+    /// 패널 가운데에서 노치 오른쪽 끝까지의 거리 (노치 반폭).
+    let notchRightEdge: CGFloat
+    let stripHeight: CGFloat
+    let besideDropBadge: Bool
+    /// 보관 파일이 없어 Drop 배지 창이 없을 때, 도커가 열린 동안만 같은 자리에 빈 상자
+    /// 아이콘을 그린다 (숫자 배지 없이). 접힌 노치에서는 그리지 않는다.
+    var showsEmptyDropBox = false
+    let showsMirror: Bool
+    let showsNote: Bool
+
+    private enum Tool: Equatable { case mirror, note }
+    @State private var openTool: Tool?
+
+    var body: some View {
+        let tools: [Tool] = (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
+        let offsets = NotchLauncherPolicy.stripToolCenterOffsets(
+            besideDropBadge: besideDropBadge, count: tools.count)
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                if showsEmptyDropBox {
+                    // Drop 배지와 같은 아이콘·크기·광학 위치 (배지 아이콘은 본체 중앙에서 왼쪽 4pt, 아래 1pt).
+                    Image(systemName: "tray.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
+                        .position(
+                            x: geo.size.width / 2 + notchRightEdge
+                                + NotchLauncherPolicy.dropBadgeIconCenterOffset,
+                            y: stripHeight / 2 + 1
+                        )
+                        .help("Drop files on the notch to keep them in Chap Drop")
+                        .accessibilityLabel("Chap Drop: empty")
+                }
+                ForEach(Array(tools.enumerated()), id: \.offset) { index, tool in
+                    let centerX = geo.size.width / 2 + notchRightEdge + offsets[index]
+                    switch tool {
+                    case .mirror:
+                        NotchMirrorStripControl(
+                            iconCenterX: centerX, stripHeight: stripHeight,
+                            isOpen: binding(for: .mirror))
+                    case .note:
+                        NotchQuickNoteStripControl(
+                            iconCenterX: centerX, stripHeight: stripHeight,
+                            isOpen: binding(for: .note))
+                    }
+                }
+            }
+            // 팝업 바깥을 누르거나 패널이 key를 잃으면 접는다.
+            .onReceive(
+                NotificationCenter.default.publisher(for: NotchLauncherController.didClickPanel)
+            ) {
+                note in
+                guard let open = openTool, let index = tools.firstIndex(of: open) else { return }
+                guard let click = note.userInfo?["point"] as? CGPoint else {
+                    openTool = nil
+                    return
+                }
+                // 클릭 위치를 이 오버레이의 좌표로 옮긴 뒤, 같은 좌표의 팝업 영역과 비교한다.
+                let origin = geo.frame(in: .global).origin
+                let local = CGPoint(x: click.x - origin.x, y: click.y - origin.y)
+                let size =
+                    open == .mirror
+                    ? NotchMirrorStripControl.previewSize : NotchQuickNoteStripControl.popupSize
+                let center = NotchLauncherPolicy.stripPopupCenter(
+                    iconCenterX: geo.size.width / 2 + notchRightEdge + offsets[index],
+                    popupSize: size, containerWidth: geo.size.width, stripHeight: stripHeight)
+                let popupFrame = CGRect(
+                    x: center.x - size.width / 2, y: center.y - size.height / 2,
+                    width: size.width, height: size.height)
+                if NotchLauncherPolicy.shouldCollapseStripPopup(
+                    click: local, popupFrame: popupFrame, stripHeight: stripHeight)
+                {
+                    openTool = nil
+                }
+            }
+        }
+    }
+
+    private func binding(for tool: Tool) -> Binding<Bool> {
+        Binding(
+            get: { openTool == tool },
+            set: { open in openTool = open ? tool : (openTool == tool ? nil : openTool) })
+    }
+}
+
+/// 상단 띠의 Quick Note 아이콘. 누르면 띠 바로 아래로 메모가 펼쳐져 전체 내용을 보고 쓸 수 있다.
+struct NotchQuickNoteStripControl: View {
+    let iconCenterX: CGFloat
+    let stripHeight: CGFloat
+    @Binding var isOpen: Bool
+
+    @State private var isHovered = false
+
+    static let popupSize = CGSize(width: 240, height: 128)
+
+    /// 검정 띠에서 내려오는 어두운 카드에 맞춘 고정 색.
+    private static let palette = NotchWidgetPalette(
+        primary: .white.opacity(0.95), secondary: .white.opacity(0.6), accent: DS.accent,
+        heading: .white.opacity(0.6), textShadowOpacity: 0,
+        hoverBackground: .white.opacity(0.1), subtleSurface: .white.opacity(0.14))
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .topLeading) {
+                Button {
+                    isOpen.toggle()
+                } label: {
+                    Image(systemName: "note.text")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(isOpen ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
+                        .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .onHover { isHovered = $0 }
+                .help(isOpen ? "Close Quick Note" : "Quick Note")
+                .accessibilityLabel(isOpen ? "Close Quick Note" : "Quick Note")
+                .position(x: iconCenterX, y: stripHeight / 2)
+
+                if isOpen {
+                    NotchQuickNoteView(
+                        palette: Self.palette, showsHeader: false,
+                        bodyHeight: Self.popupSize.height - 16, focusesOnAppear: true
+                    )
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 4)
+                    .frame(width: Self.popupSize.width, height: Self.popupSize.height)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(white: 0.1).opacity(0.96))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.14), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
+                    .environment(\.colorScheme, .dark)
+                    .position(
+                        NotchLauncherPolicy.stripPopupCenter(
+                            iconCenterX: iconCenterX, popupSize: Self.popupSize,
+                            containerWidth: geo.size.width, stripHeight: stripHeight)
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.94, anchor: .top)))
+                }
+            }
+        }
+        .animation(.smooth(duration: 0.18), value: isOpen)
+    }
+}
+
 /// 좌우 반전된 카메라 미리보기 레이어. 세션 연결은 카메라 큐에서 하고,
 /// 연결이 끝난 뒤에만 캡처를 시작한다 (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다).
 private struct MirrorPreview: NSViewRepresentable {
@@ -216,6 +363,10 @@ private struct MirrorPreview: NSViewRepresentable {
 /// 칸이 사라질 때 남은 변경을 즉시 저장한다.
 struct NotchQuickNoteView: View {
     let palette: NotchWidgetPalette
+    var showsHeader = true
+    var bodyHeight: CGFloat = widgetBodyHeight
+    /// 띠에서 펼칠 때는 바로 입력할 수 있게 커서를 넣는다.
+    var focusesOnAppear = false
 
     @State private var text = ""
     @State private var didLoad = false
@@ -230,7 +381,9 @@ struct NotchQuickNoteView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
+            if showsHeader {
+                NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
+            }
             // 목록 본문과 같은 13pt. 회색 상자 대신 옅은 테두리만 두고,
             // 저장 시각은 상자 안 오른쪽 아래에 넣어 칸 높이를 늘리지 않는다.
             ZStack(alignment: .topLeading) {
@@ -254,7 +407,7 @@ struct NotchQuickNoteView: View {
                     .accessibilityLabel("Quick Note")
             }
             .padding(EdgeInsets(top: 5, leading: 3, bottom: 16, trailing: 3))
-            .frame(height: widgetBodyHeight)
+            .frame(height: bodyHeight)
             .overlay(alignment: .bottomTrailing) {
                 if let label = QuickNoteStore.savedLabel(for: lastSaved) {
                     Text(label)
@@ -272,7 +425,13 @@ struct NotchQuickNoteView: View {
             )
             .padding(.horizontal, 4)
         }
-        .onAppear(perform: load)
+        .onAppear {
+            load()
+            if focusesOnAppear {
+                // 패널이 key가 된 다음 틱에 커서를 넣는다.
+                DispatchQueue.main.async { isFocused = true }
+            }
+        }
         .onChange(of: text) { _, newValue in
             guard didLoad else { return }
             let clamped = QuickNoteStore.clamped(newValue)

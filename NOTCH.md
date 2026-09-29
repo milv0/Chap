@@ -144,8 +144,8 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
 보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
-목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일과
-"5 min ago" 같은 상대 시각을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
+"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 고정폭 숫자)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
@@ -153,15 +153,16 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 ## 위젯 칸
 
 위젯은 6칸 한 줄이다. 빈 칸은 그리지 않고, 칸마다 내용에 맞는 폭을 쓴다.
+도커 최소 폭은 640pt(또는 노치 + 양쪽 상태 영역 110pt씩 + 80pt 중 큰 값, `NotchLauncherPolicy.dockMinWidth`)이고,
+위젯 줄이 그보다 좁으면 가운데 정렬한다. Drop 파일 줄은 왼쪽 정렬을 유지한다.
 
 | 칸 | 폭 |
 |---|---|
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
-| Quick Note | 170pt |
 
-글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Quick Note)가
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
@@ -176,15 +177,17 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
-- **Mirror**: 칸이 아니라 상단 검정 띠 오른쪽의 아이콘(`web.camera`, 13pt 흰색)이다. Drop 배지가 있으면
-  배지 오른쪽(노치 끝 + 배지 본체 34 + 플레어 10 뒤), 없으면 배지 자리(노치 바로 오른쪽)에 34pt 폭으로 둔다.
-  누르면 띠 바로 아래로 144×108(4:3, 좌우는 aspect fill로 잘림) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
-  꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다.
-  예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
-- **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
-  직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
-  `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
-  메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
+- **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 도커가 펼쳐져 있으면
+  Drop 상자는 파일이 없어도 배지 자리에 숫자 없는 빈 상자로 보이고(접힌 노치에서는 파일이 있을 때만 배지),
+  첫 도구는 항상 상자 바로 오른쪽에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
+  Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
+  - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
+  - Quick Note: 240×128 어두운 카드 안에서 메모를 바로 입력한다(펼치면 커서가 들어간다).
+  아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
+  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`)와
+  **Show Quick Note**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
+- **Quick Note 입력**: 13pt 본문 `TextEditor`, 0.5s debounce 후 직렬 큐 저장, `willHidePanel` 때 flush.
+  입력 중에는 마우스가 벗어나도 닫지 않고 Esc 또는 key 상실로 끝낸다. 패널은 `NotchKeyablePanel`이다.
 
 ## 칸 제목 클릭
 
@@ -211,7 +214,9 @@ VoiceOver("Option 1")는 항상 전체 조합을 알려준다.
 ## Drop 파일 줄
 
 파일이 있을 때만 위젯 줄 아래에 구분선과 한 줄이 생긴다. 트레이 아이콘 뒤에 64×48pt 타일(28pt 파일 아이콘 + 10pt 한 줄 파일명,
-가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 삭제 ×.
+가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 왼쪽 위 반투명 회색 공유(`NSSharingServicePicker`:
+AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 공유 메뉴가 떠 있는 동안은 도커를 고정한다
+(`setSharingPinned`). 우클릭 메뉴·VoiceOver 동작: Open, Share…, Show in Finder, Remove from Chap Drop.
 
 ## 오프스크린 렌더 (개발용)
 

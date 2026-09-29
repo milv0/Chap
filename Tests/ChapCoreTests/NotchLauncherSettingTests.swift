@@ -331,16 +331,16 @@ struct NotchLauncherSettingTests {
              "sites": []}
             """#)
 
-        #expect(config.notchWidgets == [.screenshots, .sites, .apps, .folders, .note, .none])
+        #expect(config.notchWidgets == [.screenshots, .sites, .apps, .folders, .none, .none])
     }
 
     @Test("widgets beyond the six slots are dropped only when no gap is left")
     func overflowWithoutGapsIsDropped() {
         let slots = NotchWidget.normalizedSlots([
-            .sites, .apps, .folders, .screenshots, .note, .drop, .none,
+            .sites, .apps, .folders, .screenshots, .drop, .none, .none,
         ])
 
-        #expect(slots == [.sites, .apps, .folders, .screenshots, .note, .drop])
+        #expect(slots == [.sites, .apps, .folders, .screenshots, .drop, .none])
     }
 
     @Test("a legacy four-slot layout keeps its order with two empty slots")

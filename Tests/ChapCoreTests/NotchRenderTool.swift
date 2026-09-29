@@ -44,25 +44,34 @@ struct NotchRenderTool {
 
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
             ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-empty-drop", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
         for (name, style, scheme, backdrop, optionHeld) in variants {
+            // 빈 Drop 상태(상자만, 숫자 없음)도 한 장 그린다.
+            ChapDrop.previewOverride = name.hasSuffix("empty-drop") ? [] : drops
             // 비동기로 채우는 이미지를 그리기 직전에 캐시에 넣는다 (NSCache는 언제든 비울 수 있다).
             for site in config.sites where site.launchType == .app {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
             }
             for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
+            // 캐시가 비워질 수 있으니 그리기 직전에 한 번 더 채운다.
+            for site in config.sites where site.launchType == .app {
+                if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
+            }
             let reveal = NotchRevealModel()
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
-                minWidth: 265, topInset: 32, stripPlateauHalfWidth: 92.5 + 110,
+                minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
+                stripPlateauHalfWidth: 92.5 + 110,
                 awakeSessionEnd: nil, style: style, glassMaterial: config.notchGlassMaterial,
-                slots: slots, showsMirror: config.notchMirrorEnabled, onLaunch: { _ in },
+                slots: slots, showsMirror: config.notchMirrorEnabled,
+                showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
                 reveal: reveal)
             let view =
                 panel

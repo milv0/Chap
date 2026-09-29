@@ -14,6 +14,11 @@ import SwiftUI
 final class NotchLauncherController {
     /// 패널이 닫히기 직전. 메모처럼 입력 중인 위젯이 남은 변경을 저장한다.
     static let willHidePanel = Notification.Name("ChapNotchWillHidePanel")
+    /// 도커 안을 클릭했다. userInfo["point"]는 SwiftUI 좌표(창 왼쪽 위 원점)의 CGPoint.
+    /// point가 없으면 패널이 key를 잃은 것으로, 열린 띠 팝업을 무조건 접는다.
+    static let didClickPanel = Notification.Name("ChapNotchDidClickPanel")
+    /// 공유 메뉴 같은 시스템 팝업이 떠 있는 동안 도커를 고정/해제한다. object는 Bool(고정 여부).
+    static let setSharingPinned = Notification.Name("ChapNotchSetSharingPinned")
 
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
@@ -33,13 +38,20 @@ final class NotchLauncherController {
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
     private var revealModel: NotchRevealModel?
     private var escapeMonitor: Any?
+    private var clickMonitor: Any?
+    private var resignKeyObserver: NSObjectProtocol?
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
+    /// 공유 메뉴가 떠 있는 동안: 마우스가 밖으로 나가도 닫지 않는다.
+    private var isSharingPinned = false
+    private var sharingPinObserver: NSObjectProtocol?
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 상단 띠 Mirror 아이콘 표시 여부.
     var mirrorEnabledProvider: () -> Bool = { false }
+    /// 상단 띠 Quick Note 아이콘 표시 여부.
+    var quickNoteEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -57,7 +69,6 @@ final class NotchLauncherController {
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
 
-    private static let panelMinWidth: CGFloat = 300
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
     /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
     private static let badgeLevel = NSWindow.Level(
@@ -278,14 +289,15 @@ final class NotchLauncherController {
         let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !slots.isEmpty || mirrorEnabledProvider(), forDrop: forDrop)
+                hasSlots: !slots.isEmpty || mirrorEnabledProvider()
+                    || quickNoteEnabledProvider(), forDrop: forDrop)
         else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
         let inset = screen.safeAreaInsets.top
         let notchWidth = Self.notchRect(on: screen).width
-        let minWidth = max(notchWidth + 80, Self.panelMinWidth)
+        let minWidth = NotchLauncherPolicy.dockMinWidth(notchWidth: notchWidth)
 
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
@@ -299,6 +311,7 @@ final class NotchLauncherController {
             glassMaterial: glassMaterialProvider(),
             slots: slots,
             showsMirror: mirrorEnabledProvider(),
+            showsNote: quickNoteEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
@@ -448,6 +461,8 @@ final class NotchLauncherController {
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
         startEscapeMonitor()
+        startOutsideClickMonitor()
+        startSharingPinObserver()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
@@ -478,6 +493,44 @@ final class NotchLauncherController {
     private func stopEscapeMonitor() {
         if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
         escapeMonitor = nil
+        if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
+        clickMonitor = nil
+        if let resignKeyObserver { NotificationCenter.default.removeObserver(resignKeyObserver) }
+        resignKeyObserver = nil
+        if let sharingPinObserver { NotificationCenter.default.removeObserver(sharingPinObserver) }
+        sharingPinObserver = nil
+        isSharingPinned = false
+    }
+
+    /// 띠 팝업(Quick Note·Mirror) 바깥을 누르거나 다른 앱을 누르면 팝업을 접게 알린다.
+    /// 클릭 이벤트는 그대로 흘려보내 아래 위젯도 평소처럼 반응한다.
+    private func startSharingPinObserver() {
+        sharingPinObserver = NotificationCenter.default.addObserver(
+            forName: Self.setSharingPinned, object: nil, queue: .main
+        ) { [weak self] note in
+            self?.isSharingPinned = (note.object as? Bool) ?? false
+            self?.lastInsideDate = Date()
+        }
+    }
+
+    private func startOutsideClickMonitor() {
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) {
+            [weak self] event in
+            guard let self, let panel = self.panel, event.window === panel,
+                let content = panel.contentView
+            else { return event }
+            let location = event.locationInWindow
+            let point = CGPoint(x: location.x, y: content.bounds.height - location.y)
+            NotificationCenter.default.post(
+                name: Self.didClickPanel, object: self, userInfo: ["point": point])
+            return event
+        }
+        guard let panel else { return }
+        resignKeyObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            NotificationCenter.default.post(name: Self.didClickPanel, object: self)
+        }
     }
 
     /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.
@@ -498,7 +551,7 @@ final class NotchLauncherController {
             reveal.isOptionHeld = optionHeld
         }
         // 프리뷰 고정 중에는 마우스 위치와 무관하게 유지한다.
-        if isPreviewPinned {
+        if isPreviewPinned || isSharingPinned {
             lastInsideDate = Date()
             return
         }

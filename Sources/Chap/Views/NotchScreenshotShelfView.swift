@@ -191,6 +191,8 @@ private struct ScreenshotShelfRow: View {
                         .strokeBorder(borderForeground, lineWidth: 0.5)
                 )
 
+                // 썸네일과 시각 사이를 비워 시각을 행의 오른쪽 끝에 붙인다.
+                Spacer(minLength: 6)
                 // 잘린 파일명 대신 찍은 시각. 파일명은 툴팁과 VoiceOver로 제공한다.
                 Text(modified.map { ScreenshotShelfPolicy.relativeLabel(for: $0) } ?? " ")
                     .font(DS.notchBody)
@@ -199,7 +201,7 @@ private struct ScreenshotShelfRow: View {
                         color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
                     )
                     .lineLimit(1)
-                Spacer(minLength: 0)
+                    .monospacedDigit()
             }
             .padding(.horizontal, 6)
             // 목록 한 줄과 같은 26pt: 썸네일 22 + 위아래 2.
