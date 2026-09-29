@@ -214,7 +214,9 @@ VoiceOver("Option 1")는 항상 전체 조합을 알려준다.
 ## Drop 파일 줄
 
 파일이 있을 때만 위젯 줄 아래에 구분선과 한 줄이 생긴다. 트레이 아이콘 뒤에 64×48pt 타일(28pt 파일 아이콘 + 10pt 한 줄 파일명,
-가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 삭제 ×.
+가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 왼쪽 위 파란 공유(`NSSharingServicePicker`:
+AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 공유 메뉴가 떠 있는 동안은 도커를 고정한다
+(`setSharingPinned`). 우클릭 메뉴·VoiceOver 동작: Open, Share…, Show in Finder, Remove from Chap Drop.
 
 ## 오프스크린 렌더 (개발용)
 

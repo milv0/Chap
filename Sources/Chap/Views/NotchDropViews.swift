@@ -3,7 +3,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// Finder식 파일 아이템: 위에 아이콘/썸네일, 아래에 파일명.
-/// 클릭으로 열고, 드래그로 꺼내고, hover의 x로 보관함에서 지운다.
+/// 클릭으로 열고, 드래그로 꺼내고, hover의 왼쪽 위 공유·오른쪽 위 x로 공유하거나 지운다.
+/// 우클릭 메뉴와 VoiceOver 동작도 같은 기능을 제공한다.
 struct NotchDropFileItem: View {
     let url: URL
     /// Glass에서는 semantic primary, 다른 스타일은 고대비 흰색.
@@ -16,6 +17,8 @@ struct NotchDropFileItem: View {
 
     @State private var isHovered = false
     @State private var thumbnail: NSImage?
+    /// 공유 메뉴를 띄울 기준 뷰. 공유 버튼 자리에 깔린 보이지 않는 NSView다.
+    @State private var shareAnchor = ShareAnchor()
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -76,8 +79,38 @@ struct NotchDropFileItem: View {
             .opacity(isHovered ? 1 : 0)
             .allowsHitTesting(isHovered)
             .accessibilityHidden(true)
+
+            // 왼쪽 위 공유 버튼: AirDrop·메시지·메일 등 macOS 공유 메뉴.
+            Button(action: share) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 7.5, weight: .bold))
+                    .foregroundColor(.white)
+                    .offset(y: -0.5)
+                    .frame(width: 15, height: 15)
+                    .background(Circle().fill(DS.accent))
+                    .overlay(
+                        Circle().strokeBorder(Color.white.opacity(0.75), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.45), radius: 1.5, y: 0.5)
+            }
+            .buttonStyle(.plain)
+            .contentShape(Circle())
+            .background(ShareAnchorView(anchor: shareAnchor))
+            .opacity(isHovered ? 1 : 0)
+            .allowsHitTesting(isHovered)
+            .help("Share")
+            .accessibilityHidden(true)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(width: 64)
         .onHover { isHovered = $0 }
+        .contextMenu {
+            Button("Open") { NSWorkspace.shared.open(url) }
+            Button("Share…", action: share)
+            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+            Divider()
+            Button("Remove from Chap Drop", role: .destructive, action: onRemove)
+        }
         .help(url.lastPathComponent)
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
         // VoiceOver/키보드에는 하나의 파일 요소와 명시적 actions를 제공한다.
@@ -85,10 +118,64 @@ struct NotchDropFileItem: View {
         .accessibilityLabel(url.lastPathComponent)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { NSWorkspace.shared.open(url) }
+        .accessibilityAction(named: "Share", share)
+        .accessibilityAction(named: "Show in Finder") {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        }
         .accessibilityAction(named: "Remove from Chap Drop", onRemove)
         .task(id: url) {
             thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 72)
         }
+    }
+}
+
+extension NotchDropFileItem {
+    /// macOS 공유 메뉴를 공유 버튼 아래에 띄운다. 메뉴가 떠 있는 동안 도커를 고정해,
+    /// 마우스가 메뉴로 이동해도 노치가 닫히며 메뉴가 사라지지 않게 한다.
+    fileprivate func share() {
+        guard let view = shareAnchor.view ?? NSApp.keyWindow?.contentView else { return }
+        NotificationCenter.default.post(
+            name: NotchLauncherController.setSharingPinned, object: true)
+        let picker = NSSharingServicePicker(items: [url])
+        let delegate = SharePickerDelegate {
+            NotificationCenter.default.post(
+                name: NotchLauncherController.setSharingPinned, object: false)
+        }
+        picker.delegate = delegate
+        shareAnchor.delegate = delegate
+        picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
+    }
+}
+
+/// 공유 메뉴 기준 뷰를 담는 참조 상자. 공유 중 delegate도 여기서 붙잡아 둔다.
+final class ShareAnchor {
+    weak var view: NSView?
+    var delegate: SharePickerDelegate?
+}
+
+/// SwiftUI 버튼 자리에 깔리는 보이지 않는 NSView. 공유 메뉴를 이 뷰 기준으로 띄운다.
+private struct ShareAnchorView: NSViewRepresentable {
+    let anchor: ShareAnchor
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        anchor.view = view
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) { anchor.view = nsView }
+}
+
+/// 공유 메뉴가 닫히면(서비스 선택 또는 취소) 도커 고정을 푼다.
+final class SharePickerDelegate: NSObject, NSSharingServicePickerDelegate {
+    private let onFinish: () -> Void
+
+    init(onFinish: @escaping () -> Void) { self.onFinish = onFinish }
+
+    func sharingServicePicker(
+        _ sharingServicePicker: NSSharingServicePicker, didChoose service: NSSharingService?
+    ) {
+        onFinish()
     }
 }
 

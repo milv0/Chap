@@ -4,6 +4,12 @@ All notable changes to Chap are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Share dropped files** — Hover a file in Chap Drop and click the blue share
+  button (top left) to send it with AirDrop, Messages, Mail, and more. Right-click
+  a file for Open, Share…, Show in Finder, and Remove.
+
 ### Changed
 
 - **Quick Note in the top strip** — Quick Note moved out of the widget slots to a

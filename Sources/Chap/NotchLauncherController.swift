@@ -17,6 +17,8 @@ final class NotchLauncherController {
     /// 도커 안을 클릭했다. userInfo["point"]는 SwiftUI 좌표(창 왼쪽 위 원점)의 CGPoint.
     /// point가 없으면 패널이 key를 잃은 것으로, 열린 띠 팝업을 무조건 접는다.
     static let didClickPanel = Notification.Name("ChapNotchDidClickPanel")
+    /// 공유 메뉴 같은 시스템 팝업이 떠 있는 동안 도커를 고정/해제한다. object는 Bool(고정 여부).
+    static let setSharingPinned = Notification.Name("ChapNotchSetSharingPinned")
 
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
@@ -40,6 +42,9 @@ final class NotchLauncherController {
     private var resignKeyObserver: NSObjectProtocol?
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
+    /// 공유 메뉴가 떠 있는 동안: 마우스가 밖으로 나가도 닫지 않는다.
+    private var isSharingPinned = false
+    private var sharingPinObserver: NSObjectProtocol?
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
@@ -457,6 +462,7 @@ final class NotchLauncherController {
         stopVisibilityMonitor()
         startEscapeMonitor()
         startOutsideClickMonitor()
+        startSharingPinObserver()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
@@ -491,10 +497,22 @@ final class NotchLauncherController {
         clickMonitor = nil
         if let resignKeyObserver { NotificationCenter.default.removeObserver(resignKeyObserver) }
         resignKeyObserver = nil
+        if let sharingPinObserver { NotificationCenter.default.removeObserver(sharingPinObserver) }
+        sharingPinObserver = nil
+        isSharingPinned = false
     }
 
     /// 띠 팝업(Quick Note·Mirror) 바깥을 누르거나 다른 앱을 누르면 팝업을 접게 알린다.
     /// 클릭 이벤트는 그대로 흘려보내 아래 위젯도 평소처럼 반응한다.
+    private func startSharingPinObserver() {
+        sharingPinObserver = NotificationCenter.default.addObserver(
+            forName: Self.setSharingPinned, object: nil, queue: .main
+        ) { [weak self] note in
+            self?.isSharingPinned = (note.object as? Bool) ?? false
+            self?.lastInsideDate = Date()
+        }
+    }
+
     private func startOutsideClickMonitor() {
         clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) {
             [weak self] event in
@@ -533,7 +551,7 @@ final class NotchLauncherController {
             reveal.isOptionHeld = optionHeld
         }
         // 프리뷰 고정 중에는 마우스 위치와 무관하게 유지한다.
-        if isPreviewPinned {
+        if isPreviewPinned || isSharingPinned {
             lastInsideDate = Date()
             return
         }
