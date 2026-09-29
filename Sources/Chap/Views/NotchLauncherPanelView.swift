@@ -219,6 +219,9 @@ struct NotchLauncherPanelView: View {
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
             .padding(.bottom, Self.shadowPadding)
+            // 창 크기에 눌리지 않은 본래 크기로 배치한다. 창보다 크면 창이 이 크기를 따라온다.
+            // (눌리면 Drop 줄·구분선이 위젯 줄과 겹치고, 잰 크기도 창 크기라 창이 커지지 않는다.)
+            .fixedSize()
             // 스케일 애니메이션 전의 실제 크기를 잰다 (scaleEffect는 레이아웃 크기를 바꾸지 않는다).
             .background(
                 GeometryReader { geo in

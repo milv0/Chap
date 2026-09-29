@@ -128,6 +128,53 @@ struct NotchRenderTool {
         #expect(back.height == normal.height, "normal \(normal) back \(back)")
     }
 
+    /// 실제 앱처럼 Drop 파일 목록이 창을 연 뒤에 비동기로 채워질 때, 도커가 창 크기에 눌리지
+    /// 않은 본래 높이를 보고하는지 확인한다 (눌린 높이를 보고하면 창이 커지지 않아 줄이 겹친다).
+    @Test(
+        "late-loading Drop files report the dock's natural height, not the window's",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func lateDropFilesReportNaturalHeight() async throws {
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        let slots = NotchSlotContent.slots(widgets: config.notchWidgets, sites: config.sites)
+        let hasDropFiles =
+            !(try FileManager.default.contentsOfDirectory(
+                at: ChapDrop.directory(), includingPropertiesForKeys: nil
+            ).filter { !$0.lastPathComponent.hasPrefix(".") }.isEmpty)
+        try #require(hasDropFiles, "needs at least one Chap Drop file to reproduce")
+        ChapDrop.previewOverride = nil
+        ScreenshotShelf.previewOverride = nil
+        let reveal = NotchRevealModel()
+        reveal.revealed = true
+        var reported: [CGSize] = []
+        let panel = NotchLauncherPanelView(
+            minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
+            stripPlateauHalfWidth: 92.5 + 110, awakeSessionEnd: nil, style: .glass,
+            glassMaterial: .regular, slots: slots, showsMirror: true, showsNote: true,
+            onLaunch: { _ in }, onContentSizeChange: { reported.append($0) }, reveal: reveal)
+        let hosting = NSHostingView(rootView: panel)
+        hosting.safeAreaRegions = []
+        // 앱과 같이: 파일이 아직 없을 때 잰 크기로 창을 만든다.
+        let initial = hosting.fittingSize
+        let window = NSWindow(
+            contentRect: CGRect(
+                x: -10_000, y: -10_000, width: initial.width, height: initial.height),
+            styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        defer { window.orderOut(nil) }
+        // 메인 액터를 양보해야 메인 큐 completion(Drop 목록)이 실행된다.
+        try await Task.sleep(for: .milliseconds(900))
+
+        var direct: [URL] = []
+        ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) { direct = $0 }
+        try await Task.sleep(for: .milliseconds(400))
+        let after = hosting.fittingSize
+        let last = try #require(reported.last)
+        #expect(
+            last.height > initial.height + 20,
+            "initial \(initial) after \(after) direct \(direct.count) reported \(reported)")
+    }
+
     static func renderPNG<V: View>(_ view: V) throws -> Data {
         let hosting = NSHostingView(rootView: view)
         hosting.safeAreaRegions = []
