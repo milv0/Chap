@@ -26,4 +26,25 @@ public enum ScreenshotShelfPolicy {
             .prefix(maxItems)
             .map(\.name)
     }
+
+    /// 선반 행의 짧은 시각 문구. 잘린 파일명 대신 언제 찍었는지를 보여준다.
+    public static func relativeLabel(for date: Date, now: Date = Date()) -> String {
+        let elapsed = now.timeIntervalSince(date)
+        if elapsed < 60 { return "Just now" }
+        if elapsed < 3600 { return "\(Int(elapsed / 60)) min ago" }
+        let calendar = Calendar(identifier: .gregorian)
+        if calendar.isDate(date, inSameDayAs: now) {
+            let hours = Int(elapsed / 3600)
+            return hours == 1 ? "1 hr ago" : "\(hours) hr ago"
+        }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+            calendar.isDate(date, inSameDayAs: yesterday)
+        {
+            return "Yesterday"
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
+    }
 }

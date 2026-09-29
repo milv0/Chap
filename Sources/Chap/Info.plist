@@ -26,6 +26,8 @@
 	<string>public.app-category.utilities</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Chap shows your camera in the notch Mirror widget so you can check how you look before a call. Video is never recorded or saved.</string>
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUEnableAutomaticChecks</key>

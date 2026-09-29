@@ -10,9 +10,21 @@ struct SiteCountLimitPolicyTests {
             launchType: launchType)
     }
 
-    @Test("the limit is four per launch type")
-    func limitIsFour() {
-        #expect(SiteCountLimitPolicy.maxPerLaunchType == 4)
+    @Test("URL and Finder allow four, App allows six")
+    func limitsPerType() {
+        #expect(SiteCountLimitPolicy.limit(for: .url) == 4)
+        #expect(SiteCountLimitPolicy.limit(for: .finder) == 4)
+        #expect(SiteCountLimitPolicy.limit(for: .app) == 6)
+    }
+
+    @Test("apps can be added up to six")
+    func appsUpToSix() {
+        #expect(SiteCountLimitPolicy.canAdd(.app, to: Array(repeating: site(.app), count: 5)))
+        #expect(!SiteCountLimitPolicy.canAdd(.app, to: Array(repeating: site(.app), count: 6)))
+        #expect(
+            SiteCountLimitPolicy.remainingSlots(
+                for: .app, in: Array(repeating: site(.app), count: 4))
+                == 2)
     }
 
     @Test("adding is allowed below the limit")

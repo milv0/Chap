@@ -83,9 +83,100 @@ struct LauncherListPolicyTests {
         }
 
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
-        let capped = sections[0].entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot)
+        let capped = sections[0].entries.prefix(
+            LauncherListPolicy.maxEntriesPerNotchSlot(for: sections[0].launchType))
 
-        #expect(LauncherListPolicy.maxEntriesPerNotchSlot == 4)
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot(for: .url) == 4)
         #expect(capped.count == 4)
+    }
+}
+
+@Suite("Notch app icons")
+struct NotchAppIconLabelTests {
+    private func app(_ name: String, shortcut: String?) -> Site {
+        Site(
+            name: name, url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/\(name).app", shortcut: shortcut)
+    }
+
+    @Test("up to six apps fit in a two-column icon grid of three rows")
+    func gridFitsSixApps() {
+        #expect(LauncherListPolicy.appIconColumns == 2)
+        #expect(LauncherListPolicy.maxEntriesPerNotchSlot(for: .app) == 6)
+        #expect(LauncherListPolicy.appIconRows(forCount: 6) == 3)
+    }
+
+    @Test(
+        "the grid uses only the rows it needs",
+        arguments: [(0, 0), (1, 1), (2, 1), (3, 2), (4, 2), (5, 3), (6, 3), (9, 3)])
+    func rowsForCount(count: Int, rows: Int) {
+        #expect(LauncherListPolicy.appIconRows(forCount: count) == rows)
+    }
+
+    @Test("the shortcut badge shows the uppercased Option key")
+    func shortcutBadge() {
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Slack", shortcut: "s")) == "⌥S")
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Mail", shortcut: nil)) == nil)
+        #expect(LauncherListPolicy.shortcutBadge(for: app("Notes", shortcut: " ")) == nil)
+    }
+
+    @Test("app icon badges show only the key; the header shows Option once")
+    func letterOnlyBadge() {
+        let slack = app("Slack", shortcut: "s")
+        let mail = app("Mail", shortcut: nil)
+        #expect(LauncherListPolicy.shortcutKey(for: slack) == "S")
+        #expect(LauncherListPolicy.shortcutKey(for: mail) == nil)
+        let withShortcut = LauncherListSection(
+            launchType: .app,
+            entries: [
+                LauncherListEntry(siteIndex: 0, site: mail),
+                LauncherListEntry(siteIndex: 1, site: slack),
+            ])
+        let without = LauncherListSection(
+            launchType: .app, entries: [LauncherListEntry(siteIndex: 0, site: mail)])
+        #expect(LauncherListPolicy.hasShortcut(in: withShortcut))
+        #expect(!LauncherListPolicy.hasShortcut(in: without))
+    }
+
+    @Test("VoiceOver hears the app name and its shortcut")
+    func accessibilityLabel() {
+        #expect(
+            LauncherListPolicy.launchAccessibilityLabel(for: app("Slack", shortcut: "s"))
+                == "Launch Slack, Option S")
+        #expect(
+            LauncherListPolicy.launchAccessibilityLabel(for: app("Mail", shortcut: nil))
+                == "Launch Mail")
+    }
+}
+
+@Suite("Notch column widths")
+struct NotchColumnWidthTests {
+    @Test("list columns fit their content between 112 and 170pt")
+    func listColumnWidthClamps() {
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 60) == 112)
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 131.2) == 132)
+        #expect(LauncherListPolicy.listColumnWidth(contentWidth: 400) == 170)
+    }
+}
+
+@Suite("Notch launch resizing")
+struct NotchLaunchResizeTests {
+    @Test("notch opens apps without a shortcut as-is and resizes everything else")
+    func resizesOnlyShortcutAppsAndOtherTypes() {
+        let plainApp = Site(
+            name: "Mail", url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/Mail.app")
+        let shortcutApp = Site(
+            name: "Slack", url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/Slack.app", shortcut: "S")
+        let site = Site(name: "Docs", url: "https://docs.example", width: 800, height: 600)
+        let folder = Site(
+            name: "Downloads", url: "", width: 800, height: 600, launchType: .finder,
+            folderPath: "~/Downloads")
+
+        #expect(!LauncherListPolicy.resizesOnNotchLaunch(plainApp))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(shortcutApp))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(site))
+        #expect(LauncherListPolicy.resizesOnNotchLaunch(folder))
     }
 }

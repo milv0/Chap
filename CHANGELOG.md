@@ -2,6 +2,54 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.2.0] — 2026-09-29
+
+### Added
+
+- **Mirror** — A webcam icon in the black strip beside the notch, next to the
+  Drop badge. Click it and your camera, flipped like a mirror, pops open just
+  below the strip; nothing is recorded and Chap asks for camera access only the first
+  time. Hide it with Show Mirror in Settings → Notch.
+- **Quick Note widget** — Type a plain-text note right in the notch. It saves
+  as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
+  write; press Esc or click elsewhere to finish.
+- **Section dividers** — Thin vertical lines now separate the notch widgets.
+- **App icons in the notch** — The Apps widget shows your apps as a two-column
+  grid of icons that uses only the rows it needs, with the shortcut letter on
+  apps that have one. Hover for the name; click to launch.
+- **Six apps** — You can now add up to six apps (Sites and Finder stay at
+  four), so the Apps icon grid can fill three rows.
+
+### Changed
+
+- **Add to the section you picked** — In Settings, click the URL, App, or Finder
+  heading to highlight that section; + and ⌘N then add a new item there.
+- **Finder naming** — The notch widget and section formerly called Folders are
+  now called Finder, matching the Finder launch type in Settings and the menu.
+- **More legible notch** — Text uses three sizes (13, 11, and 10pt), section
+  icons share the heading color instead of competing blues, shortcut keys have
+  stronger contrast, and every row lines up at the same height. Screenshots show
+  a larger thumbnail and when they were taken ("5 min ago") instead of a cut-off
+  file name. Clear Glass gets a light veil for contrast, and new setups default
+  to Regular Glass.
+- **Edit from the notch** — Click the Sites, Apps, or Finder title in the notch
+  to open Settings with that list selected.
+- **Plain app launch from the notch** — Clicking an app without a shortcut in
+  the notch opens it as-is, without resizing. Apps with a shortcut, Sites, and
+  Finder still open centered at their saved size, as do all status-menu and
+  Option-shortcut launches.
+- **Cleaner shortcut keys** — Sites and Apps show just the key (1, N). Hold
+  Option while the notch is open and every keycap turns blue and shows the full
+  shortcut (⌥1, ⌥N). Tooltips and VoiceOver always include Option.
+- **Right-sized notch columns** — Each widget column now fits its content
+  (Sites and Finder 112–170pt, Apps to its icon grid), making
+  the dock noticeably narrower. Headings are brighter, the Apps title no longer
+  carries an extra ⌥ key, and dropped files show as a compact row of icons with
+  one-line names.
+- **Six notch slots, no pages** — The notch now shows up to six widgets in one
+  row, enough for every widget type, and the page dots and swipe from 2.1 are
+  gone. Widgets placed on later pages move into the first free slots.
+
 ## [2.1.0] — 2026-09-29
 
 ### Added

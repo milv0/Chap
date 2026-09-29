@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .screenshots,
+        .sites, .apps, .folders, .screenshots, .note,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -57,21 +57,12 @@ struct NotchSettingsView: View {
         switch widget {
         case .sites: return "Sites"
         case .apps: return "Apps"
-        case .folders: return "Folders"
+        case .folders: return "Finder"
         case .screenshots: return "Screenshots"
+        case .note: return "Quick Note"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
-    }
-
-    /// 보드의 페이지 이름. 노치에서 점 순서(좌·중·우)와 같다.
-    static func pageName(_ page: Int) -> String {
-        "Page \(page + 1)"
-    }
-
-    static func slotIndices(onPage page: Int) -> Range<Int> {
-        let start = page * NotchWidget.pageSize
-        return start..<start + NotchWidget.pageSize
     }
 
     static func widgetSymbol(_ widget: NotchWidget) -> String {
@@ -80,6 +71,7 @@ struct NotchSettingsView: View {
         }
         switch widget {
         case .screenshots: return "camera.viewfinder"
+        case .note: return "note.text"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
         }
@@ -115,45 +107,54 @@ struct NotchSettingsView: View {
                         Section("Widgets") {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(
-                                    "Drag a widget into a slot. Each page shows four slots; "
-                                        + "swipe or click the dots in the notch to switch pages."
+                                    "Drag a widget into a slot. Slots fill the panel from the left."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
 
-                                // 노치 패널의 12칸을 좌·중·우 페이지(4칸씩)로 본뜬 드롭 보드.
-                                VStack(alignment: .leading, spacing: 6) {
-                                    ForEach(0..<NotchWidget.pageCount, id: \.self) { page in
-                                        HStack(spacing: 8) {
-                                            Text(Self.pageName(page))
-                                                .font(.caption)
-                                                .foregroundColor(DS.textSecondary)
-                                                .frame(width: 44, alignment: .leading)
-                                            ForEach(
-                                                Self.slotIndices(onPage: page), id: \.self
-                                            ) { index in
-                                                WidgetSlotBox(
-                                                    index: index,
-                                                    widget: slotWidget(index),
-                                                    onAssign: { assign($0, to: index) },
-                                                    onClear: { assign(.none, to: index) })
-                                            }
-                                        }
-                                        .accessibilityElement(children: .contain)
-                                        .accessibilityLabel(Self.pageName(page))
+                                // 노치 패널의 6칸을 그대로 본뜬 드롭 보드.
+                                HStack(spacing: 6) {
+                                    ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
+                                        WidgetSlotBox(
+                                            index: index,
+                                            widget: slotWidget(index),
+                                            onAssign: { assign($0, to: index) },
+                                            onClear: { assign(.none, to: index) })
                                     }
                                 }
 
                                 // 배치 가능한 위젯 팔레트. 이미 배치된 위젯은 흐리게.
-                                HStack(spacing: 8) {
-                                    ForEach(Self.paletteWidgets, id: \.self) { widget in
-                                        WidgetPaletteChip(
-                                            widget: widget,
-                                            isPlaced: vm.notchWidgets.contains(widget))
+                                // 칩이 설정 폭을 넘지 않도록 세 개씩 두 줄로 놓는다.
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(
+                                        Array(
+                                            stride(from: 0, to: Self.paletteWidgets.count, by: 3)),
+                                        id: \.self
+                                    ) { start in
+                                        HStack(spacing: 8) {
+                                            ForEach(
+                                                Self.paletteWidgets[
+                                                    start..<min(
+                                                        start + 3, Self.paletteWidgets.count)],
+                                                id: \.self
+                                            ) { widget in
+                                                WidgetPaletteChip(
+                                                    widget: widget,
+                                                    isPlaced: vm.notchWidgets.contains(widget))
+                                            }
+                                        }
                                     }
                                 }
                             }
                             .onChange(of: vm.notchWidgets) { _, _ in onSave() }
+
+                            // Mirror는 칸이 아니라 도커 아래 줄 오른쪽 끝의 아이콘이다.
+                            Toggle("Show Mirror", isOn: $vm.notchMirrorEnabled)
+                                .help(
+                                    "Show a camera mirror icon at the end of the notch's bottom row. "
+                                        + "The camera turns on only when you click it."
+                                )
+                                .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {
@@ -309,8 +310,10 @@ private struct WidgetSlotBox: View {
                 .font(DS.captionFont)
                 .foregroundColor(isEmpty ? DS.textTertiary : DS.textPrimary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .frame(width: 92, height: 64)
+        .padding(.horizontal, 3)
+        .frame(width: 76, height: 64)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                 .fill(
@@ -341,8 +344,9 @@ private struct WidgetSlotBox: View {
         .contextMenu {
             Button("Sites") { onAssign(.sites) }
             Button("Apps") { onAssign(.apps) }
-            Button("Folders") { onAssign(.folders) }
+            Button("Finder") { onAssign(.folders) }
             Button("Screenshots") { onAssign(.screenshots) }
+            Button("Quick Note") { onAssign(.note) }
             if !isEmpty {
                 Divider()
                 Button("Clear Slot", action: onClear)
@@ -351,8 +355,9 @@ private struct WidgetSlotBox: View {
         // VoiceOver rotor actions: drag/drop 없이 배치·비우기 가능.
         .accessibilityAction(named: "Place Sites") { onAssign(.sites) }
         .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
-        .accessibilityAction(named: "Place Folders") { onAssign(.folders) }
+        .accessibilityAction(named: "Place Finder") { onAssign(.folders) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
+        .accessibilityAction(named: "Place Quick Note") { onAssign(.note) }
         .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
         .draggable(widget.rawValue)

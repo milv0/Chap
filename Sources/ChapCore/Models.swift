@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.1.0"
+        ?? "2.2.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -293,6 +293,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
+    /// 빠른 메모: 노치에서 바로 적는 한 장짜리 메모.
+    case note = "note"
     /// 빈 칸.
     case none = "none"
 
@@ -302,35 +304,40 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .drop, .none: return nil
+        case .screenshots, .note, .drop, .none: return nil
         }
     }
+
+    /// 칸 위젯이었던 Mirror의 저장 문자열. Mirror는 이제 Drop 줄의 아이콘이라 칸에서 뺀다.
+    public static let formerMirrorRawValue = "mirror"
 
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
     public static let removedScriptsRawValue = "scripts"
 
-    /// 한 페이지의 칸 수. 노치 도커는 한 번에 한 페이지를 보여준다.
-    public static let pageSize = 4
-    /// 좌·중·우 페이지 수.
-    public static let pageCount = 3
-    /// 노치 패널의 고정 칸 수 (페이지 3개 × 4칸). 앞 4칸이 첫 페이지다.
-    /// 2.0 이하의 4칸 설정은 첫 페이지로 그대로 옮겨지고, 이전 버전은
-    /// 앞 4칸만 읽으므로 12칸 파일도 호환된다.
-    public static let slotCount = pageSize * pageCount
+    /// 노치 패널의 고정 칸 수. 위젯 종류가 모두 한 줄에 들어가도록 6칸이다.
+    public static let slotCount = 6
 
-    /// 기본 배치: 첫 페이지 4칸에 런처 섹션 순서대로, 나머지는 빈 칸.
+    /// 기본 배치: 런처 섹션과 Screenshots, 나머지는 빈 칸.
     public static let defaultSlots: [NotchWidget] = normalizedSlots([
         .sites, .apps, .folders, .screenshots,
     ])
 
-    /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
+    /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다.
+    /// 중복 위젯은 첫 칸만 남긴다. 칸 수를 넘는 뒤쪽 위젯은 버리지 않고 앞쪽 빈 칸에
+    /// 순서대로 당겨 넣는다 (2.1의 12칸 배치를 6칸으로 옮길 때 위젯을 잃지 않게).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
         var seen: Set<NotchWidget> = []
         let unique = widgets.filter { widget in
             widget == .none || seen.insert(widget).inserted
         }
-        let trimmed = unique.prefix(slotCount)
-        return Array(trimmed) + Array(repeating: .none, count: slotCount - trimmed.count)
+        var slots = Array(unique.prefix(slotCount))
+        slots += Array(repeating: .none, count: slotCount - slots.count)
+        var overflow = unique.dropFirst(slotCount).filter { $0 != .none }[...]
+        for index in slots.indices where slots[index] == .none {
+            guard let next = overflow.popFirst() else { break }
+            slots[index] = next
+        }
+        return slots
     }
 }
 
@@ -354,7 +361,9 @@ public struct Config: Codable {
     /// 노치 패널 콘텐츠 박스(노치 하단 경계 아래)의 배경색. "#RRGGBB".
     /// 상단바 구간은 노치 연장이라 항상 검정으로 유지된다.
     public var notchPanelColorHex: String
-    /// 노치 패널 12칸(4칸 × 3페이지)에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    /// 노치 패널 6칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    /// 노치 Drop 줄 오른쪽 끝의 Mirror 아이콘 표시 여부. 카메라는 누를 때만 켠다.
+    public var notchMirrorEnabled: Bool
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
 
@@ -385,7 +394,7 @@ public struct Config: Codable {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
         case notchGlassAppearance, notchGlassMaterial
-        case notchPanelOpacity, notchPanelColorHex, notchWidgets
+        case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case sites
     }
 
@@ -398,9 +407,10 @@ public struct Config: Codable {
         notchLauncherEnabled: Bool = false,
         notchPanelStyle: NotchPanelStyle = .custom,
         notchGlassAppearance: NotchGlassAppearance = .system,
-        notchGlassMaterial: NotchGlassMaterial = .clear,
+        notchGlassMaterial: NotchGlassMaterial = .regular,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
+        notchMirrorEnabled: Bool = true,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -417,6 +427,7 @@ public struct Config: Codable {
         self.notchPanelColorHex =
             Config.validNotchPanelColorHex(notchPanelColorHex)
             ?? Config.notchPanelColorHexDefault
+        self.notchMirrorEnabled = notchMirrorEnabled
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -449,10 +460,11 @@ public struct Config: Codable {
         notchGlassAppearance =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassAppearance))
             .flatMap(NotchGlassAppearance.init(rawValue:)) ?? .system
-        // 알 수 없는 재질은 더 투명한 Clear로 취급한다 (관용 디코딩).
+        // 키가 없거나 알 수 없는 재질은 대비가 높은 Regular로 취급한다 (관용 디코딩).
+        // 이미 저장된 사용자 선택은 그대로 둔다.
         notchGlassMaterial =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlassMaterial))
-            .flatMap(NotchGlassMaterial.init(rawValue:)) ?? .clear
+            .flatMap(NotchGlassMaterial.init(rawValue:)) ?? .regular
         // 범위 밖 값은 클램프, 타입이 어긋나면 기본값으로 취급한다 (관용 디코딩).
         let rawOpacity =
             (try? container.decodeIfPresent(Double.self, forKey: .notchPanelOpacity))
@@ -466,7 +478,10 @@ public struct Config: Codable {
                 try? container.decodeIfPresent(String.self, forKey: .notchPanelColorHex)
                     .flatMap { $0 })
             ?? Config.notchPanelColorHexDefault
-        // 알 수 없는 위젯 이름은 버리고 항상 12칸으로 정규화한다 (관용 디코딩).
+        // 키가 없으면 켠다. 카메라는 사용자가 아이콘을 누를 때만 켜진다.
+        notchMirrorEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
+        // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
         {
@@ -478,6 +493,8 @@ public struct Config: Codable {
                 if raw == NotchWidget.removedScriptsRawValue {
                     return screenshotsPlaced ? NotchWidget.none : .screenshots
                 }
+                // Mirror 칸은 빼고 뒤 위젯을 한 칸씩 당긴다 (Mirror는 Drop 줄 아이콘으로 옮겨졌다).
+                if raw == NotchWidget.formerMirrorRawValue { return nil }
                 return NotchWidget(rawValue: raw)
             }
             // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
@@ -514,6 +531,7 @@ public struct Config: Codable {
         try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
         try container.encode(notchPanelColorHex, forKey: .notchPanelColorHex)
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
+        try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

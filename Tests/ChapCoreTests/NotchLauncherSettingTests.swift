@@ -132,27 +132,27 @@ struct NotchLauncherSettingTests {
         }
     }
 
-    @Test("Glass material defaults to Clear when the key is missing")
-    func glassMaterialDefaultsToClear() throws {
+    @Test("Glass material defaults to the more legible Regular when the key is missing")
+    func glassMaterialDefaultsToRegular() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
-
-        #expect(config.notchGlassMaterial == .clear)
-    }
-
-    @Test("decodes explicit Regular Glass material")
-    func decodesRegularGlassMaterial() throws {
-        let config = try decodeConfig(
-            #"{"notchGlassMaterial": "regular", "sites": []}"#)
 
         #expect(config.notchGlassMaterial == .regular)
     }
 
-    @Test("unknown Glass material falls back to Clear")
+    @Test("a saved Clear Glass choice is kept")
+    func decodesClearGlassMaterial() throws {
+        let config = try decodeConfig(
+            #"{"notchGlassMaterial": "clear", "sites": []}"#)
+
+        #expect(config.notchGlassMaterial == .clear)
+    }
+
+    @Test("unknown Glass material falls back to Regular")
     func unknownGlassMaterialFallsBack() throws {
         let config = try decodeConfig(
             #"{"notchGlassMaterial": "heavy", "sites": []}"#)
 
-        #expect(config.notchGlassMaterial == .clear)
+        #expect(config.notchGlassMaterial == .regular)
     }
 
     @Test("Glass material round-trips through encoding")
@@ -316,24 +316,39 @@ struct NotchLauncherSettingTests {
         #expect(slots == NotchWidget.normalizedSlots([.sites, .none, .none, .apps]))
     }
 
-    @Test("more than twelve slots are capped at twelve")
-    func widgetsCappedAtTwelve() throws {
-        let nones = Array(repeating: "\"none\"", count: 12).joined(separator: ", ")
-        let config = try decodeConfig(
-            #"{"notchWidgets": [\#(nones), "sites"], "sites": []}"#)
-
-        #expect(config.notchWidgets.count == NotchWidget.slotCount)
-        #expect(!config.notchWidgets.contains(.sites))
+    @Test("the notch has six slots")
+    func sixSlots() {
+        #expect(NotchWidget.slotCount == 6)
+        #expect(NotchWidget.defaultSlots == [.sites, .apps, .folders, .screenshots, .none, .none])
     }
 
-    @Test("a legacy four-slot layout becomes page one of twelve slots")
-    func legacyFourSlotsBecomePageOne() throws {
+    @Test("a 2.1 twelve-slot layout keeps every widget by moving late ones into gaps")
+    func twelveSlotLayoutIsCompacted() throws {
+        let config = try decodeConfig(
+            #"""
+            {"notchWidgets": ["screenshots", "sites", "apps", "folders", "none", "none",
+                              "none", "none", "mirror", "none", "note", "none"],
+             "sites": []}
+            """#)
+
+        #expect(config.notchWidgets == [.screenshots, .sites, .apps, .folders, .note, .none])
+    }
+
+    @Test("widgets beyond the six slots are dropped only when no gap is left")
+    func overflowWithoutGapsIsDropped() {
+        let slots = NotchWidget.normalizedSlots([
+            .sites, .apps, .folders, .screenshots, .note, .drop, .none,
+        ])
+
+        #expect(slots == [.sites, .apps, .folders, .screenshots, .note, .drop])
+    }
+
+    @Test("a legacy four-slot layout keeps its order with two empty slots")
+    func legacyFourSlotsKeepOrder() throws {
         let config = try decodeConfig(
             #"{"notchWidgets": ["sites", "apps", "folders", "screenshots"], "sites": []}"#)
 
-        #expect(config.notchWidgets.count == 12)
-        #expect(Array(config.notchWidgets.prefix(4)) == [.sites, .apps, .folders, .screenshots])
-        #expect(config.notchWidgets.dropFirst(4).allSatisfy { $0 == .none })
+        #expect(config.notchWidgets == [.sites, .apps, .folders, .screenshots, .none, .none])
     }
 
     @Test("widgets round-trip through encoding")

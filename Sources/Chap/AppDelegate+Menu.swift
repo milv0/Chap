@@ -282,32 +282,13 @@ extension AppDelegate {
     /// 숨긴 섹션·순서가 항상 일치한다. 테스트에서는 창을 만들지 않는다.
     func refreshNotchLauncher() {
         guard !isRunningTests else { return }
-        notchLauncher.pagesProvider = { [weak self] in
+        notchLauncher.slotsProvider = { [weak self] in
             guard let self else { return [] }
-            // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김
-            // 설정과 무관하게 모든 launch type 섹션에서 고른다.
-            let sections = LauncherListPolicy.sections(
-                sites: self.config.sites, hiddenLaunchTypes: [])
-            let pages = NotchPagePolicy.pages(self.config.notchWidgets, empty: .none)
-                .map { page in
-                    page.compactMap { widget -> NotchSlotContent? in
-                        switch widget {
-                        case .none:
-                            return nil
-                        case .screenshots:
-                            return .screenshots
-                        case .drop:
-                            // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
-                            return nil
-                        case .sites, .apps, .folders:
-                            // 해당 타입의 런처가 없으면 칸을 건너뛴다.
-                            return sections.first { $0.launchType == widget.launchType }
-                                .map(NotchSlotContent.launchers)
-                        }
-                    }
-                }
-            // 보여줄 칸이 없는 페이지는 점도 만들지 않는다.
-            return pages.filter { !$0.isEmpty }
+            return NotchSlotContent.slots(
+                widgets: self.config.notchWidgets, sites: self.config.sites)
+        }
+        notchLauncher.mirrorEnabledProvider = { [weak self] in
+            self?.config.notchMirrorEnabled ?? false
         }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .custom
@@ -329,7 +310,16 @@ extension AppDelegate {
         }
         notchLauncher.onLaunch = { [weak self] index in
             guard let self, index >= 0, index < self.config.sites.count else { return }
-            self.launchSite(self.config.sites[index])
+            let site = self.config.sites[index]
+            // 노치는 확장 런처: 단축키 없는 앱은 크기 조정 없이 그냥 연다.
+            if LauncherListPolicy.resizesOnNotchLaunch(site) {
+                self.launchSite(site)
+            } else {
+                AppLauncher.open(site)
+            }
+        }
+        notchLauncher.onOpenSettings = { [weak self] type in
+            self?.showSettings(focusing: type)
         }
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }

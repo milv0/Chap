@@ -138,29 +138,89 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 | 요소 | 어두운 Custom 배경 | 밝은 Custom 배경 | Glass |
 |---|---|---|---|
-| 섹션 아이콘 | 테마 블루 또는 흰색 | 테마 블루 또는 검정 (3:1 기준) | 테마 블루 |
-| 섹션 라벨 | 흰색 계층 | 검정 65% | semantic secondary |
-| 단축키 힌트 | 흰색 계층 | 검정 50% | semantic secondary |
+| 섹션 아이콘·라벨 | 흰색 보조 계층 | 검정 65% | semantic secondary |
+| 키캡 글자 / 바탕 | 본문색 80% / 14% | 본문색 80% / 14% | primary 80% / 14% |
 | 본문 텍스트 | 흰 96% + 그림자 | 검정 87%, 그림자 없음 | semantic primary |
+
+글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
+보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
+목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일과
+"5 min ago" 같은 상대 시각을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
 
-## 위젯 페이지
+## 위젯 칸
 
-위젯은 12칸이며 4칸씩 좌·중·우 3페이지로 나뉜다. 위젯이 하나라도 있는
-페이지만 도커에 나타나고, 빈 페이지는 건너뛴다.
+위젯은 6칸 한 줄이다. 빈 칸은 그리지 않고, 칸마다 내용에 맞는 폭을 쓴다.
 
-| 항목 | 값 | 의미 |
-|---|---|---|
-| 페이지 크기 | 4칸 (`NotchWidget.pageSize`) | 한 번에 보이는 칸 수 |
-| 페이지 수 | 3 (`NotchWidget.pageCount`) | 좌·중·우 |
-| 페이지 점 | 지름 6pt, 누름 영역 16×12pt | 상단바와 위젯 사이. 보이는 페이지가 2개 이상일 때만 |
-| 스와이프 임계값 | 36pt (`NotchPageSwipeTracker.threshold`) | 가로 이동이 세로의 1.5배를 넘어야 인정. 한 제스처에 1페이지, 관성 무시 |
-| 전환 | smooth 0.28s, 동작 줄이기 시 즉시 | 페이지 폭 + 패딩만큼 밀면서 교체 |
+| 칸 | 폭 |
+|---|---|
+| Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
+| Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
+| Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
+| Quick Note | 170pt |
 
-모든 페이지를 겹쳐 두므로 도커 폭은 칸이 가장 많은 페이지, 높이는 가장
-긴 페이지에 맞춰 고정된다. 페이지를 넘겨도 창 크기는 바뀌지 않는다.
-끝 페이지에서는 순환하지 않고 멈춘다. 도커를 열 때마다 첫 페이지부터 보인다.
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Quick Note)가
+모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
+당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
+
+## Apps 칸: 아이콘 격자
+
+Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 앱 수와 관계없이 2열 × 3줄 자리(113pt)를 잡고 위에서부터 한 줄에 둘씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
+단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 호버 시 앱 이름
+툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
+utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
+
+## 도구 위젯: Mirror · Quick Note
+
+위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
+
+- **Mirror**: 칸이 아니라 상단 검정 띠 오른쪽의 아이콘(`web.camera`, 13pt 흰색)이다. Drop 배지가 있으면
+  배지 오른쪽(노치 끝 + 배지 본체 34 + 플레어 10 뒤), 없으면 배지 자리(노치 바로 오른쪽)에 34pt 폭으로 둔다.
+  누르면 띠 바로 아래로 208×117(16:9) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
+  꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다.
+  예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
+- **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
+  직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
+  `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
+  메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
+
+## 칸 제목 클릭
+
+- Sites·Apps·Finder 제목: 누르면 도커를 닫고 설정창 Launchables 탭에서 그 타입의 첫 항목을 선택한다
+  (`showSettings(focusing:)` → `SettingsView.focusLaunchType` 알림). 호버 시 옅은 면과 ›, 툴팁 "Edit Sites in Settings".
+- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다.
+- Mirror·Quick Note 제목: 동작 없음.
+
+## 노치에서 실행할 때의 창 크기
+
+노치는 확장 런처다. Apps 칸에서 **단축키가 없는 앱**은 크기·위치를 건드리지 않고 그냥 연다
+(`AppLauncher.open`, Accessibility 권한 불필요). 단축키가 있는 앱과 Sites·Finder는 상태바 메뉴와 같이
+설정한 크기로 가운데에 연다. 판정은 `LauncherListPolicy.resizesOnNotchLaunch`. 상태바 메뉴와 ⌥ 단축키
+실행은 항상 크기를 맞춘다.
+
+## 단축키 키캡과 ⌥
+
+Sites 목록과 Apps 아이콘의 키캡은 평소 키 글자만(`1`, `N`) 보여준다. 도커가 열린 채 ⌥를 누르고 있으면
+모든 키캡(10pt semibold, 좌우 4·위아래 1pt 여백)이 액센트 블루로 바뀌며 `⌥1`, `⌥N`처럼 수식키를 함께 보여준다. ⌥ 상태는 visibility 타이머(80ms)가
+전역 `NSEvent.modifierFlags`로 읽는다(nonactivating 패널은 flagsChanged를 받지 못하고, 전역 키 모니터는
+권한이 필요하기 때문). 목록 키캡은 `⌥1` 폭을 미리 잡아 바뀌어도 줄이 움직이지 않는다. 행·아이콘 툴팁과
+VoiceOver("Option 1")는 항상 전체 조합을 알려준다.
+
+## Drop 파일 줄
+
+파일이 있을 때만 위젯 줄 아래에 구분선과 한 줄이 생긴다. 트레이 아이콘 뒤에 64×48pt 타일(28pt 파일 아이콘 + 10pt 한 줄 파일명,
+가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 삭제 ×.
+
+## 오프스크린 렌더 (개발용)
+
+    TEST_RUNNER_CHAP_NOTCH_RENDER_DIR=/tmp/notch xcodebuild -scheme Chap -destination "platform=macOS" test
+
+`Tests/ChapCoreTests/NotchRenderTool.swift`가 현재 `~/.chap.json`·스크린샷·Drop 파일로 도커를 그려
+`notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다. 화면 기록 권한 없이 레이어를
+직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
+배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
 ## 모션 기준
 
@@ -187,7 +247,8 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
-- `Sources/ChapCore/NotchPagePolicy.swift` — 페이지 분할·이동·스와이프 판정 (테스트로 고정)
+- `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
+- `Sources/Chap/Views/NotchWidgetViews.swift`, `Sources/Chap/MirrorCamera.swift` — 거울·메모 위젯
 - `Sources/Chap/Views/NotchLauncherPanelView.swift` — 메인 패널 + 도커 실루엣 셰이프
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
 - `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직

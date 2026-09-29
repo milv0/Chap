@@ -40,10 +40,16 @@ private struct SettingsTabButton: View {
 }
 
 struct SettingsView: View {
+    /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
+    static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
+
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
     @State private var selectedTab: SettingsTab = .launchables
     @State private var selectedIndex: Int? = nil
+    /// 사이드바에서 마지막으로 고른 섹션(URL·App·Finder). "+"가 이 섹션에 항목을 만든다.
+    /// 섹션 제목이나 그 섹션의 항목을 누르면 바뀐다.
+    @State private var focusedLaunchType: LaunchType = .url
     @State private var showDeleteAlert = false
     @State private var showGuide = false
     @State private var isGuideEnglish = false
@@ -103,7 +109,16 @@ struct SettingsView: View {
             searchFocused = false
         }
         .onChange(of: selectedIndex) { oldValue, newValue in
+            if let newValue, newValue < vm.sites.count {
+                focusedLaunchType = vm.sites[newValue].launchType
+            }
             handleSelectionChange(from: oldValue, to: newValue)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Self.focusLaunchType)) { note in
+            guard let raw = note.object as? String, let type = LaunchType(rawValue: raw) else {
+                return
+            }
+            focus(on: type)
         }
         .alert("Delete site?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
@@ -218,21 +233,45 @@ struct SettingsView: View {
                         // 검색 중이 아니면 항목이 없는 타입도 섹션을 유지해,
                         // 네 가지 실행 타입을 사이드바에서 바로 추가할 수 있게 한다.
                         if !indices.isEmpty || searchText.isEmpty {
-                            // 제목 옆 (n/4) 카운트로 타입별 한도를 상시 보여준다.
+                            // 제목 옆 (n/한도) 카운트로 타입별 한도를 상시 보여준다.
+                            // 제목을 누르면 이 섹션이 "+"의 대상이 된다.
+                            let isFocusedSection = focusedLaunchType == type
                             HStack(spacing: 4) {
                                 Text(typeSectionTitle(type))
-                                    .foregroundColor(DS.textSecondary)
+                                    .fontWeight(isFocusedSection ? .semibold : .regular)
+                                    .foregroundColor(
+                                        isFocusedSection ? DS.accent : DS.textSecondary)
                                 Text(
                                     "(\(SiteCountLimitPolicy.count(of: type, in: vm.sites))"
-                                        + "/\(SiteCountLimitPolicy.maxPerLaunchType))"
+                                        + "/\(SiteCountLimitPolicy.limit(for: type)))"
                                 )
                                 .foregroundColor(DS.textTertiary)
                                 .monospacedDigit()
+                                Spacer(minLength: 0)
                             }
                             .font(DS.captionFont)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 8)
-                            .padding(.top, 8)
+                            .padding(.vertical, 3)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                    .fill(isFocusedSection ? DS.accentSoft : Color.clear)
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                // 섹션을 고르면 항목 선택은 해제한다. 한 번에 하나만 강조되어
+                                // "+"가 어디에 추가될지 헷갈리지 않는다. 편집 중인 값은
+                                // handleSelectionChange가 저장하고 이름 없는 새 항목은 폐기한다.
+                                focusedLaunchType = type
+                                selectedTab = .launchables
+                                selectedIndex = nil
+                            }
+                            .padding(.top, 5)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityAddTraits(
+                                isFocusedSection ? [.isButton, .isSelected] : .isButton
+                            )
+                            .accessibilityHint("New items from + are added to this section")
                             if indices.isEmpty {
                                 SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
                                     addSite(type: type)
@@ -399,7 +438,10 @@ struct SettingsView: View {
     private var launchablesBottomBar: some View {
         HStack(spacing: 4) {
             ToolbarIconButton(
-                icon: "plus", color: DS.textSecondary, action: { addSite() })
+                icon: "plus", color: DS.textSecondary, action: { addSite() }
+            )
+            .help("Add to \(typeSectionTitle(focusedLaunchType)) (⌘N)")
+            .accessibilityLabel("Add \(typeSectionTitle(focusedLaunchType)) item")
             ToolbarIconButton(
                 icon: "minus", color: DS.danger,
                 action: {
@@ -453,6 +495,16 @@ struct SettingsView: View {
             .keyboardShortcut("n", modifiers: .command)
             .frame(width: 0, height: 0)
             .opacity(0)
+    }
+
+    /// Launchables 탭으로 가서 그 타입의 첫 항목을 선택한다. 항목이 없으면 탭만 연다.
+    private func focus(on type: LaunchType) {
+        searchText = ""
+        selectedTab = .launchables
+        focusedLaunchType = type
+        if let first = vm.sites.indices.first(where: { vm.sites[$0].launchType == type }) {
+            selectedIndex = first
+        }
     }
 
     /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
@@ -538,18 +590,14 @@ struct SettingsView: View {
         {
             vm.sites.remove(at: pendingIdx)
         }
-        let type: LaunchType = {
-            if let explicitType { return explicitType }
-            if let idx = selectedIndex, idx < vm.sites.count {
-                return vm.sites[idx].launchType
-            }
-            return .url
-        }()
+        // 명시한 타입(빈 섹션의 Add 행)이 없으면 사이드바에서 고른 섹션에 만든다.
+        let type = explicitType ?? focusedLaunchType
+        focusedLaunchType = type
         guard SiteCountLimitPolicy.canAdd(type, to: vm.sites) else {
             LauncherUtils.showAlert(
                 message: "Launch type limit reached",
                 info:
-                    "Only \(SiteCountLimitPolicy.maxPerLaunchType) \(typeSectionTitle(type)) "
+                    "Only \(SiteCountLimitPolicy.limit(for: type)) \(typeSectionTitle(type)) "
                     + "launchables are allowed. Remove one before adding another.")
             return
         }
@@ -729,6 +777,7 @@ struct SettingsView: View {
                     notchGlassMaterial: vm.notchGlassMaterial,
                     notchPanelOpacity: vm.notchPanelOpacity,
                     notchPanelColorHex: vm.notchPanelColorHex,
+                    notchMirrorEnabled: vm.notchMirrorEnabled,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.

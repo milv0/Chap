@@ -13,6 +13,14 @@ enum ThumbnailLoader {
         "png", "jpg", "jpeg", "heic", "tiff", "gif",
     ]
 
+    /// 이미 디코딩된 썸네일이 있으면 즉시 돌려준다. 없으면 nil (디코딩하지 않는다).
+    static func cachedImage(for url: URL, maxPixelSize: Int) -> NSImage? {
+        let modified =
+            (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate?.timeIntervalSinceReferenceDate ?? 0
+        return cache.object(forKey: "\(url.path)|\(modified)|\(maxPixelSize)" as NSString)
+    }
+
     /// 이미지 파일이면 다운샘플 썸네일, 아니면 nil.
     @MainActor
     static func image(for url: URL, maxPixelSize: Int) async -> NSImage? {
@@ -47,5 +55,37 @@ enum ThumbnailLoader {
                 continuation.resume(returning: image)
             }
         }
+    }
+}
+
+/// 노치 Apps 칸의 앱 아이콘 로더. NSWorkspace 아이콘 조회를 utility queue에서 하고
+/// 경로별로 캐시해 패널을 다시 열 때 즉시 보인다.
+enum AppIconLoader {
+    private static let queue = DispatchQueue(label: "com.mingyupark.Chap.appicon", qos: .utility)
+    private static let cache = NSCache<NSString, NSImage>()
+
+    static func cachedIcon(forAppPath path: String) -> NSImage? {
+        cache.object(forKey: expanded(path) as NSString)
+    }
+
+    @MainActor
+    static func icon(forAppPath path: String) async -> NSImage? {
+        let path = expanded(path)
+        if let cached = cache.object(forKey: path as NSString) { return cached }
+        return await withCheckedContinuation { continuation in
+            queue.async {
+                guard FileManager.default.fileExists(atPath: path) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let icon = NSWorkspace.shared.icon(forFile: path)
+                cache.setObject(icon, forKey: path as NSString)
+                continuation.resume(returning: icon)
+            }
+        }
+    }
+
+    private static func expanded(_ path: String) -> String {
+        (path as NSString).expandingTildeInPath
     }
 }

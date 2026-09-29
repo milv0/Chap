@@ -3,6 +3,10 @@ import AppKit
 /// 스크린샷 선반의 파일 소스. macOS 스크린샷 저장 위치를 읽어
 /// 정책(`ScreenshotShelfPolicy`)이 고른 최신 파일들을 돌려준다.
 enum ScreenshotShelf {
+    /// 오프스크린 렌더 도구 전용: 설정하면 노치가 파일을 읽는 대신 이 목록을 첫 프레임에 쓴다.
+    /// 앱 실행 중에는 항상 nil이다.
+    static var previewOverride: [URL]?
+
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.screenshots", qos: .utility,
         attributes: .concurrent)

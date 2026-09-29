@@ -12,6 +12,9 @@ import SwiftUI
 /// 핫존 entered → 재등장)이 플리커를 만들기 때문이다.
 /// 모든 호출은 메인 스레드 전제(AppKit 윈도우 소유).
 final class NotchLauncherController {
+    /// 패널이 닫히기 직전. 메모처럼 입력 중인 위젯이 남은 변경을 저장한다.
+    static let willHidePanel = Notification.Name("ChapNotchWillHidePanel")
+
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
@@ -29,16 +32,14 @@ final class NotchLauncherController {
     private var lastInsideDate = Date()
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
     private var revealModel: NotchRevealModel?
-    /// 열린 도커의 현재 페이지. 패널을 열 때마다 첫 페이지로 돌아간다.
-    private var pageModel: NotchPageModel?
-    private var scrollMonitor: Any?
-    private var swipeTracker = NotchPageSwipeTracker()
+    private var escapeMonitor: Any?
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
-    /// 위젯이 있는 페이지들 (좌→우). 각 페이지는 최대 4칸이며 빈 페이지는 없다.
-    var pagesProvider: () -> [[NotchSlotContent]] = { [] }
+    var slotsProvider: () -> [NotchSlotContent] = { [] }
+    /// 상단 띠 Mirror 아이콘 표시 여부.
+    var mirrorEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -53,6 +54,8 @@ final class NotchLauncherController {
     var awakeSessionEndProvider: () -> Date? = { nil }
     /// 항목 실행 콜백. `config.sites` 원본 인덱스를 넘긴다.
     var onLaunch: (Int) -> Void = { _ in }
+    /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
+    var onOpenSettings: (LaunchType) -> Void = { _ in }
 
     private static let panelMinWidth: CGFloat = 300
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
@@ -81,11 +84,11 @@ final class NotchLauncherController {
     }
 
     func tearDown() {
+        prepareForPanelHide()
         stopVisibilityMonitor()
         badgeRefreshToken += 1
         isPreviewPinned = false
         revealModel = nil
-        pageModel = nil
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -272,10 +275,10 @@ final class NotchLauncherController {
     private func showPanel(forDrop: Bool = false) {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
-        let pages = pagesProvider()
+        let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !pages.isEmpty, forDrop: forDrop)
+                hasSlots: !slots.isEmpty || mirrorEnabledProvider(), forDrop: forDrop)
         else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
@@ -284,7 +287,6 @@ final class NotchLauncherController {
         let notchWidth = Self.notchRect(on: screen).width
         let minWidth = max(notchWidth + 80, Self.panelMinWidth)
 
-        let pageModel = NotchPageModel(pageCount: pages.count)
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
         reveal.colorHex = colorProvider()
@@ -295,11 +297,15 @@ final class NotchLauncherController {
             awakeSessionEnd: awakeSessionEndProvider(),
             style: styleProvider(),
             glassMaterial: glassMaterialProvider(),
-            pages: pages,
-            pageModel: pageModel,
+            slots: slots,
+            showsMirror: mirrorEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
+            },
+            onOpenSettings: { [weak self] type in
+                self?.hidePanel()
+                self?.onOpenSettings(type)
             },
             reveal: reveal)
         let hosting = NSHostingView(rootView: content)
@@ -318,7 +324,7 @@ final class NotchLauncherController {
         frame = frame.integral
         frame.origin.y = screen.frame.maxY - frame.height
 
-        let panel = NSPanel(
+        let panel = NotchKeyablePanel(
             contentRect: frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false)
@@ -340,7 +346,6 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
-        self.pageModel = pageModel
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -442,7 +447,7 @@ final class NotchLauncherController {
     /// 마우스가 노치·패널을 벗어난 채 `hideDelay`를 넘기면 닫는다.
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
-        startSwipeMonitor()
+        startEscapeMonitor()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
@@ -454,47 +459,31 @@ final class NotchLauncherController {
     private func stopVisibilityMonitor() {
         visibilityTimer?.invalidate()
         visibilityTimer = nil
-        stopSwipeMonitor()
+        stopEscapeMonitor()
     }
 
-    // MARK: - Page swipe
-
-    /// 도커 위에서 트랙패드를 가로로 쓸면 좌·중·우 페이지를 넘긴다.
-    /// nonactivating 패널도 커서 아래 창으로 스크롤 이벤트를 받으므로
-    /// 앱이 비활성이어도 로컬 모니터가 이벤트를 본다.
-    private func startSwipeMonitor() {
-        stopSwipeMonitor()
-        guard (pageModel?.pageCount ?? 0) > 1 else { return }
-        swipeTracker.reset()
-        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) {
+    /// 패널이 key일 때 Esc로 닫는다 (메모 입력 중 빠져나오는 길).
+    private func startEscapeMonitor() {
+        stopEscapeMonitor()
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
             [weak self] event in
-            guard let self, let panel = self.panel, event.window === panel,
-                let pageModel = self.pageModel
+            guard let self, event.keyCode == 53, let panel = self.panel,
+                event.window === panel
             else { return event }
-            // 손을 뗀 뒤의 관성 스크롤은 무시한다: 한 번 쓸면 한 페이지만 넘긴다.
-            guard event.momentumPhase.isEmpty else { return event }
-            // 손가락 이동 방향으로 통일한다: 자연스러운 스크롤이 켜져 있으면
-            // scrollingDeltaX가 이미 손가락 방향이고, 꺼져 있으면 반대다.
-            let fingerDeltaX =
-                event.isDirectionInvertedFromDevice
-                ? event.scrollingDeltaX : -event.scrollingDeltaX
-            let hasPhase = !event.phase.isEmpty
-            let began = event.phase.contains(.began) || !hasPhase
-            let ended =
-                event.phase.contains(.ended) || event.phase.contains(.cancelled) || !hasPhase
-            if let step = self.swipeTracker.consume(
-                deltaX: fingerDeltaX, deltaY: event.scrollingDeltaY,
-                began: began, ended: ended)
-            {
-                pageModel.move(by: step)
-            }
-            return event
+            self.hidePanel()
+            return nil
         }
     }
 
-    private func stopSwipeMonitor() {
-        if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
-        scrollMonitor = nil
+    private func stopEscapeMonitor() {
+        if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
+        escapeMonitor = nil
+    }
+
+    /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.
+    private func prepareForPanelHide() {
+        NotificationCenter.default.post(name: Self.willHidePanel, object: self)
+        MirrorCamera.shared.stop()
     }
 
     private func evaluateVisibility() {
@@ -502,8 +491,20 @@ final class NotchLauncherController {
             stopVisibilityMonitor()
             return
         }
+        // ⌥ 상태는 앱이 비활성이어도 읽을 수 있는 전역 modifierFlags로 확인한다.
+        // (nonactivating 패널에는 flagsChanged 이벤트가 오지 않고, 전역 키 모니터는 권한이 필요하다.)
+        let optionHeld = NSEvent.modifierFlags.contains(.option)
+        if let reveal = revealModel, reveal.isOptionHeld != optionHeld {
+            reveal.isOptionHeld = optionHeld
+        }
         // 프리뷰 고정 중에는 마우스 위치와 무관하게 유지한다.
         if isPreviewPinned {
+            lastInsideDate = Date()
+            return
+        }
+        // 빠른 메모를 입력하는 동안에는 마우스가 벗어나도 닫지 않는다.
+        // 다른 곳을 클릭해 패널이 key를 잃거나 Esc를 누르면 평소 규칙으로 돌아간다.
+        if panel.isKeyWindow, panel.firstResponder is NSTextView {
             lastInsideDate = Date()
             return
         }
@@ -524,16 +525,17 @@ final class NotchLauncherController {
 
     /// 표면 전환용 즉시 정리. 애니메이션 없이 현재 패널을 내린다.
     private func dismissPanelImmediately() {
+        if panel != nil { prepareForPanelHide() }
         stopVisibilityMonitor()
         panel?.orderOut(nil)
         panel = nil
         revealModel = nil
-        pageModel = nil
     }
 
     private func hidePanel() {
         stopVisibilityMonitor()
         guard let panel else { return }
+        prepareForPanelHide()
         self.panel = nil
         // 메인 패널을 노치로 말아 넣고 애니메이션 뒤 창을 정리한다.
         if let reveal = revealModel {
@@ -547,7 +549,6 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        pageModel = nil
         DispatchQueue.main.asyncAfter(
             deadline: .now() + NotchLauncherPanelView.closeDuration + 0.02
         ) { [weak self] in
@@ -610,4 +611,11 @@ private final class HoverView: NSView {
         onFilesDropped(urls)
         return true
     }
+}
+
+/// 메인 도커 패널. borderless 패널은 기본적으로 key가 될 수 없어 빠른 메모에
+/// 입력할 수 없으므로 key를 허용한다. `.nonactivatingPanel`이라 key가 되어도
+/// 앞의 앱을 비활성화하지 않고, `becomesKeyOnlyIfNeeded`로 입력 칸을 누를 때만 key가 된다.
+final class NotchKeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
 }

@@ -46,4 +46,20 @@ struct ScreenshotShelfPolicyTests {
 
         #expect(selected == ["old.png"])
     }
+
+    @Test("shelf rows show a short relative time instead of the file name")
+    func relativeLabels() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        let now = calendar.date(from: DateComponents(year: 2026, month: 9, day: 29, hour: 15))!
+        func label(_ seconds: TimeInterval) -> String {
+            ScreenshotShelfPolicy.relativeLabel(for: now.addingTimeInterval(-seconds), now: now)
+        }
+        #expect(label(20) == "Just now")
+        #expect(label(5 * 60) == "5 min ago")
+        #expect(label(3600) == "1 hr ago")
+        #expect(label(3 * 3600) == "3 hr ago")
+        #expect(label(20 * 3600) == "Yesterday")
+        #expect(label(5 * 86400) == "Sep 24")
+    }
 }

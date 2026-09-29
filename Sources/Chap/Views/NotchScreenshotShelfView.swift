@@ -11,7 +11,7 @@ struct NotchScreenshotShelfView: View {
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
 
-    @State private var urls: [URL] = []
+    @State private var urls: [URL] = ScreenshotShelf.previewOverride ?? []
     @State private var isRefreshing = false
     @State private var isHeaderHovered = false
     private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
@@ -60,11 +60,10 @@ struct NotchScreenshotShelfView: View {
             .help("Open the screenshot folder in Finder")
             .accessibilityLabel("Screenshots")
             .accessibilityHint("Opens the screenshot folder in Finder")
-            .padding(.bottom, 1)
 
             if urls.isEmpty {
                 Text("No recent screenshots")
-                    .font(DS.captionFont)
+                    .font(DS.notchBody)
                     .foregroundColor(
                         usesSemanticForeground ? .secondary : customTertiary
                     )
@@ -81,23 +80,19 @@ struct NotchScreenshotShelfView: View {
         }
     }
 
+    /// 다른 칸 제목과 같은 색 (Glass: 본문색 62%).
+    private var headingColor: Color {
+        usesSemanticForeground ? Color.primary.opacity(0.62) : customSecondary
+    }
+
     private var header: some View {
         HStack(spacing: 5) {
             Image(systemName: "camera.viewfinder")
-                .font(DS.captionFont)
-                .foregroundColor(
-                    usesSemanticForeground
-                        ? DS.accent
-                        : (NotchContrastPolicy.usesAccentForeground(
-                            backgroundHex: backgroundHex)
-                            ? DS.accent
-                            : (usesDarkCustomForeground
-                                ? .black.opacity(0.87) : .white.opacity(0.95))))
+                .font(DS.notchLabel)
+                .foregroundColor(headingColor)
             Text("Screenshots")
-                .font(DS.captionFont.weight(.semibold))
-                .foregroundColor(
-                    usesSemanticForeground ? .secondary : customSecondary
-                )
+                .font(DS.notchLabel)
+                .foregroundColor(headingColor)
             // 호버 시에만 Finder로 이동한다는 단서를 보여준다.
             Image(systemName: "chevron.right")
                 .font(.system(size: 8, weight: .bold))
@@ -110,7 +105,7 @@ struct NotchScreenshotShelfView: View {
             radius: 1.5, y: 0.5
         )
         .padding(.horizontal, 6)
-        .padding(.vertical, 1)
+        .frame(height: DS.notchHeaderHeight)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                 .fill(isHeaderHovered ? rowHoverBackground : Color.clear)
@@ -154,7 +149,25 @@ private struct ScreenshotShelfRow: View {
     let hoverBackground: Color
 
     @State private var thumbnail: NSImage?
+    @State private var modified: Date?
     @State private var isHovered = false
+
+    init(
+        url: URL, primaryForeground: Color, secondaryForeground: Color,
+        borderForeground: Color, textShadowOpacity: Double, hoverBackground: Color
+    ) {
+        self.url = url
+        self.primaryForeground = primaryForeground
+        self.secondaryForeground = secondaryForeground
+        self.borderForeground = borderForeground
+        self.textShadowOpacity = textShadowOpacity
+        self.hoverBackground = hoverBackground
+        // 파일 4개의 stat은 가볍다. 첫 프레임부터 시각이 보여 행이 비어 보이지 않는다.
+        _modified = State(
+            initialValue: (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+                .contentModificationDate)
+        _thumbnail = State(initialValue: ThumbnailLoader.cachedImage(for: url, maxPixelSize: 96))
+    }
 
     var body: some View {
         Button {
@@ -171,24 +184,26 @@ private struct ScreenshotShelfRow: View {
                             .foregroundColor(secondaryForeground)
                     }
                 }
-                .frame(width: 26, height: 20)
+                .frame(width: 34, height: 22)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .strokeBorder(borderForeground, lineWidth: 0.5)
                 )
 
-                Text(url.lastPathComponent)
-                    .font(DS.captionFont)
+                // 잘린 파일명 대신 찍은 시각. 파일명은 툴팁과 VoiceOver로 제공한다.
+                Text(modified.map { ScreenshotShelfPolicy.relativeLabel(for: $0) } ?? " ")
+                    .font(DS.notchBody)
                     .foregroundColor(primaryForeground)
                     .shadow(
                         color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
                     )
                     .lineLimit(1)
-                    .truncationMode(.middle)
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, 6)
-            .padding(.vertical, 3)
+            // 목록 한 줄과 같은 26pt: 썸네일 22 + 위아래 2.
+            .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? hoverBackground : Color.clear)
@@ -199,9 +214,13 @@ private struct ScreenshotShelfRow: View {
         .onHover { isHovered = $0 }
         // 드래그로 파일을 다른 앱/Finder에 떨어뜨릴 수 있다.
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
+        .help(url.lastPathComponent)
         .accessibilityLabel("Open screenshot \(url.lastPathComponent)")
         .task(id: url) {
-            thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 64)
+            modified =
+                (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+                .contentModificationDate
+            thumbnail = await ThumbnailLoader.image(for: url, maxPixelSize: 96)
         }
     }
 }
