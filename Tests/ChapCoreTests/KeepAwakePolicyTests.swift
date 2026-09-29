@@ -152,6 +152,12 @@ struct KeepAwakePolicyTests {
 
 @Suite("Focus widget")
 struct FocusWidgetTests {
+    @Test("Focus switches with Chap on and Chap off")
+    func chapWording() {
+        #expect(KeepAwakePolicy.focusIdleLine == "Chap on")
+        #expect(KeepAwakePolicy.focusOffTitle == "Chap off")
+    }
+
     @Test("the notch offers 1h, 4h, and 8h")
     func quickPresets() {
         #expect(

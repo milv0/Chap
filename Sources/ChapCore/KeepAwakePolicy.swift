@@ -87,10 +87,12 @@ enum KeepAwakePolicy {
         return hours > 0 ? "\(hours)h" : "\(Int(preset.duration / 60))m"
     }
 
-    /// 꺼져 있을 때의 한 줄. 번개처럼 바로 켜진다는 느낌.
-    static let focusIdleLine = "Stay charged"
+    /// 꺼져 있을 때의 한 줄. "chap"은 창이 제자리에 딱 붙는 소리다: 딱 켜고 딱 끈다.
+    static let focusIdleLine = "Chap on"
     /// 꺼져 있을 때의 보조 문구.
     static let focusIdleHint = "No sleep, no dimming."
+    /// 켜져 있을 때 끄는 버튼.
+    static let focusOffTitle = "Chap off"
 
     /// 켜져 있을 때 남은 시간에 따라 바뀌는 한 줄. 끝으로 갈수록 톤이 가벼워진다.
     static func focusActiveLine(remaining: TimeInterval) -> String {

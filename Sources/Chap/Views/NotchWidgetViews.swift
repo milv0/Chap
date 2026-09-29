@@ -117,7 +117,9 @@ struct NotchFocusView: View {
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)
-                FocusPresetButton(title: "Wind down", palette: palette, isQuiet: true) {
+                FocusPresetButton(
+                    title: KeepAwakePolicy.focusOffTitle, palette: palette, isQuiet: true
+                ) {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 }
                 .help("Turn off Keep Mac Awake")

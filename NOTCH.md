@@ -236,9 +236,10 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 ## Focus 칸 (Keep Mac Awake)
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
-- 꺼짐: 흐린 `bolt` + "Stay charged" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
+- 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
 - 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
-  Final stretch → Landing soon, `focusActiveLine`) + "Wind down"(끄기).
+  Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
+- 켜져 있는 동안 상단 띠 왼쪽 Keep Awake 시계도 커피 대신 같은 번개(`bolt.fill`) 아이콘을 쓴다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 

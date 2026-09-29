@@ -264,7 +264,8 @@ struct NotchLauncherPanelView: View {
             GeometryReader { geo in
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     HStack(spacing: 5) {
-                        Image(systemName: "cup.and.saucer.fill")
+                        // Focus 위젯과 같은 번개. 켜져 있는 동안 상단 띠 왼쪽에 남은 시간과 함께 보인다.
+                        Image(systemName: "bolt.fill")
                             .font(.system(size: 12))
                             .foregroundColor(DS.accent)
                         Text(

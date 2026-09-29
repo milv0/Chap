@@ -196,7 +196,7 @@ struct PillPicker: View {
 
     private let barWidth: CGFloat = 420
     private let items: [(LaunchType, String, String)] = [
-        (.url, "bolt.fill", "URL"),
+        (.url, LauncherListPolicy.symbolName(for: .url), "URL"),
         (.app, "app.fill", "App"),
         (.finder, "folder.fill", "Finder"),
     ]

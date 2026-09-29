@@ -105,7 +105,8 @@ public enum LauncherListPolicy {
     /// launch type을 나타내는 SF Symbol 이름.
     public static func symbolName(for launchType: LaunchType) -> String {
         switch launchType {
-        case .url: return "bolt.fill"
+        // URL은 Chrome --app 창으로 열린다: 창 모양 아이콘. 번개는 Focus(Keep Awake) 전용이다.
+        case .url: return "macwindow"
         case .app: return "app.fill"
         case .finder: return "folder.fill"
         }
