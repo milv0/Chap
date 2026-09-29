@@ -33,8 +33,8 @@ struct NotchWidgetHeader: View {
     }
 }
 
-/// 위젯 본문 높이. 런처 네 줄과 비슷해 도커 높이가 튀지 않는다.
-private let widgetBodyHeight: CGFloat = 92
+/// 위젯 본문 높이. 목록 칸 4줄과 정확히 같아 모든 칸의 바닥선이 맞는다.
+private let widgetBodyHeight: CGFloat = NotchAppIconTile.listBodyHeight
 
 // MARK: - Mirror
 
@@ -81,66 +81,53 @@ struct NotchMirrorView: View {
                     .accessibilityLabel("Turn off Mirror")
                 }
         case .live:
-            restingButton
+            resting(symbol: "web.camera", caption: "Turn On Mirror", action: turnOn)
         case .needsPermission:
-            message(
-                "See yourself before a call.", button: "Turn On Mirror",
-                action: requestAccess)
+            // 처음 누를 때만 권한을 묻고, 허용하면 바로 켠다.
+            resting(symbol: "web.camera", caption: "Turn On Mirror", action: requestAccess)
         case .denied:
-            message(
-                "Camera access is off for Chap.", button: "Open Settings",
+            resting(
+                symbol: "video.slash", caption: "Camera Off · Open Settings",
                 action: openCameraSettings)
         case .restricted:
-            message("Camera access is restricted on this Mac.", button: nil, action: {})
+            resting(symbol: "video.slash", caption: "Camera Restricted", action: nil)
         case .noCamera:
-            message("No camera is connected.", button: nil, action: {})
+            resting(symbol: "video.slash", caption: "No Camera", action: nil)
         }
     }
 
-    /// 꺼진 거울: 큰 웹캠 아이콘과 이름. 누르면 카메라를 켠다.
-    private var restingButton: some View {
+    /// 꺼진 거울: 상자 없이 큰 아이콘과 짧은 안내만 둔다. 누를 수 있으면 호버 면이 생긴다.
+    private func resting(symbol: String, caption: String, action: (() -> Void)?) -> some View {
         Button {
-            isTurnedOn = true
-            refresh()
+            action?()
         } label: {
-            VStack(spacing: 6) {
-                Image(systemName: "web.camera")
-                    .font(.system(size: 26, weight: .regular))
-                    .foregroundColor(palette.primary)
-                Text("Mirror")
+            VStack(spacing: 8) {
+                Image(systemName: symbol)
+                    .font(.system(size: 30, weight: .light))
+                    .foregroundColor(palette.primary.opacity(action == nil ? 0.5 : 0.9))
+                Text(caption)
                     .font(DS.captionFont)
                     .foregroundColor(palette.secondary)
+                    .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(isRestingHovered ? palette.hoverBackground : Color.clear)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isRestingHovered && action != nil ? palette.hoverBackground : .clear)
+            )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(action == nil)
         .onHover { isRestingHovered = $0 }
-        .accessibilityLabel("Turn on Mirror")
+        .accessibilityLabel(caption)
     }
 
     @State private var isRestingHovered = false
 
-    private func message(_ text: String, button: String?, action: @escaping () -> Void)
-        -> some View
-    {
-        VStack(spacing: 6) {
-            Image(systemName: "video.slash")
-                .foregroundColor(palette.secondary)
-            Text(text)
-                .font(DS.captionFont)
-                .foregroundColor(palette.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            if let button {
-                Button(button, action: action)
-                    .controlSize(.small)
-            }
-        }
-        .padding(6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(palette.subtleSurface)
+    private func turnOn() {
+        isTurnedOn = true
+        refresh()
     }
 
     private func refresh() {
@@ -213,43 +200,44 @@ struct NotchQuickNoteView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
+            // 목록 본문과 같은 13pt. 회색 상자 대신 옅은 테두리만 두고,
+            // 저장 시각은 상자 안 오른쪽 아래에 넣어 칸 높이를 늘리지 않는다.
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
                     Text("What's on your mind?")
-                        .font(DS.captionFont)
-                        .foregroundColor(palette.secondary.opacity(0.8))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
+                        .font(DS.bodyFont)
+                        .foregroundColor(palette.secondary)
+                        // TextEditor 본문 인셋(가로 5pt)에 맞춘다.
+                        .padding(.leading, 5)
                         .allowsHitTesting(false)
                         .accessibilityHidden(true)
                 }
                 TextEditor(text: $text)
-                    .font(DS.captionFont)
+                    .font(DS.bodyFont)
                     .foregroundColor(palette.primary)
                     .scrollContentBackground(.hidden)
                     .focused($isFocused)
                     .disabled(!didLoad)
                     .accessibilityLabel("Quick Note")
             }
-            .padding(4)
+            .padding(EdgeInsets(top: 5, leading: 3, bottom: 16, trailing: 3))
             .frame(height: widgetBodyHeight)
+            .overlay(alignment: .bottomTrailing) {
+                if let label = QuickNoteStore.savedLabel(for: lastSaved) {
+                    Text(label)
+                        .font(.system(size: 10))
+                        .foregroundColor(palette.secondary)
+                        .padding(EdgeInsets(top: 0, leading: 6, bottom: 4, trailing: 7))
+                        .accessibilityLabel(label)
+                }
+            }
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(palette.subtleSurface)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .strokeBorder(DS.accent.opacity(isFocused ? 0.7 : 0), lineWidth: 1)
+                    .strokeBorder(
+                        isFocused ? DS.accent.opacity(0.7) : palette.subtleSurface,
+                        lineWidth: 1)
             )
             .padding(.horizontal, 4)
-
-            if let label = QuickNoteStore.savedLabel(for: lastSaved) {
-                Text(label)
-                    .font(.system(size: 10))
-                    .foregroundColor(palette.secondary.opacity(0.85))
-                    .padding(.horizontal, 6)
-                    .accessibilityLabel(label)
-            }
         }
         .onAppear(perform: load)
         .onChange(of: text) { _, newValue in

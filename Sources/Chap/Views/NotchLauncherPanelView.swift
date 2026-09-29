@@ -596,17 +596,21 @@ struct NotchAppIconTile: View {
                 .frame(width: Self.tileSize, height: Self.tileSize)
 
                 if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
+                    // Sites 목록의 키캡과 같은 모양(모서리 4pt, medium). 아이콘 위에서도
+                    // 읽히도록 반투명 재질을 깐다.
                     Text(badge)
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.system(size: 9, weight: .medium))
                         .foregroundColor(badgeForeground)
-                        .padding(.horizontal, 4)
+                        .padding(.horizontal, 3.5)
                         .padding(.vertical, 1)
                         .background(
-                            Capsule(style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .overlay(Capsule().fill(badgeBackground))
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .fill(.regularMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                        .fill(badgeBackground))
                         )
-                        .offset(x: 1, y: 1)
+                        .offset(x: 3, y: 3)
                 }
             }
             .background(

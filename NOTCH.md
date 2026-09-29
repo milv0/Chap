@@ -163,12 +163,13 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
-- **Mirror**: `AVCaptureVideoPreviewLayer`를 좌우 반전해 칸 폭 × 92pt에 aspect fill로 채운다.
+- **Mirror**: `AVCaptureVideoPreviewLayer`를 좌우 반전해 칸 폭 × 113pt(목록 4줄 높이)에 aspect fill로 채운다.
+  꺼진 상태는 상자 없이 30pt light 아이콘 + 한 줄 안내(Turn On Mirror / Camera Off · Open Settings 등)다.
   도커를 열 때마다 큰 `web.camera` 아이콘 + "Mirror" 이름의 꺼진 상태로 시작하고, 누르면 켜진다.
   카메라 세션은 `MirrorPolicy.shouldCapture`가 참일 때만, 즉 권한이 있고 사용자가 켰으며 도커가 열려
   있을 때만 돈다. 미리보기 오른쪽 위 ×로 끌 수 있고, 도커를 닫으면(`willHidePanel`) 즉시 멈춘다.
   권한은 칸의 **Turn On Mirror** 버튼을 눌렀을 때만 요청한다. 노치 hover만으로 권한 창을 띄우지 않는다.
-- **Quick Note**: 92pt 높이 `TextEditor`. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
+- **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
   직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
   `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.
   메모에 커서가 있는 동안에는 마우스가 벗어나도 닫지 않고, Esc 또는 다른 곳 클릭(key 상실)으로 끝낸다.
