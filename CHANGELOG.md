@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.2.2] — 2026-09-29
+
+### Changed
+
+- **Smaller Mirror preview** — The camera preview is narrower (144 × 108) and
+  keeps your face centered.
+- **Accurate help** — The in-app Q&A now describes choosing Glass appearance and
+  material independently.
+
 ## [2.2.1] — 2026-09-29
 
 ### Fixed
