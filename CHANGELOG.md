@@ -6,9 +6,9 @@ All notable changes to Chap are documented in this file.
 
 ### Added
 
-- **Mirror** — A webcam icon at the right end of the notch's bottom row, after
-  any dropped files. Click it to see your camera, flipped like a mirror, before
-  a call; nothing is recorded and Chap asks for camera access only the first
+- **Mirror** — A webcam icon in the black strip beside the notch, next to the
+  Drop badge. Click it and your camera, flipped like a mirror, pops open just
+  below the strip; nothing is recorded and Chap asks for camera access only the first
   time. Hide it with Show Mirror in Settings → Notch.
 - **Quick Note widget** — Type a plain-text note right in the notch. It saves
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you

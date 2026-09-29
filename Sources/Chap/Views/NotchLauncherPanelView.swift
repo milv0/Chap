@@ -62,7 +62,7 @@ struct NotchLauncherPanelView: View {
     let glassMaterial: NotchGlassMaterial
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
     let slots: [NotchSlotContent]
-    /// Drop 줄 오른쪽 끝에 Mirror 아이콘을 둘지. 파일이 없으면 Mirror만 그 자리에 둔다.
+    /// 상단 검정 띠에 Mirror 아이콘을 둘지. Drop 배지 오른쪽, 배지가 없으면 배지 자리에 둔다.
     var showsMirror = false
     let onLaunch: (Int) -> Void
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
@@ -200,6 +200,16 @@ struct NotchLauncherPanelView: View {
             )
             // Keep Awake 상태는 별도 배지 창이 아니라 메인 도커 상단에 통합한다.
             .overlay(alignment: .top) { awakeStripStatus }
+            // Mirror: 상단 띠 오른쪽, Drop 배지 옆 아이콘 + 누르면 띠 바로 아래로 펼쳐지는 미리보기.
+            .overlay(alignment: .top) {
+                if showsMirror {
+                    NotchMirrorStripControl(
+                        notchRightEdge: stripPlateauHalfWidth
+                            - NotchGeometry.stripPlateauSideWidth,
+                        stripHeight: topInset,
+                        besideDropBadge: !dropFiles.isEmpty)
+                }
+            }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
@@ -386,21 +396,20 @@ struct NotchLauncherPanelView: View {
             // 칸 높이를 가장 긴 칸의 이상 높이로 고정해 무한 확장을 막는다.
             .fixedSize(horizontal: false, vertical: true)
 
-            // 아래 줄: Chap Drop 파일 + 오른쪽 끝 Mirror 아이콘. 둘 다 없으면 줄이 사라진다.
-            if !dropFiles.isEmpty || showsMirror {
+            // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
+            // 도커는 원래 크기로 돌아간다.
+            if !dropFiles.isEmpty {
                 Rectangle()
                     .fill(subtleSurface)
                     .frame(height: 1)
                     .padding(.top, 2)
                 // 파일은 아이콘 + 한 줄 파일명으로 둔다. 전체 이름은 툴팁과 VoiceOver로 제공한다.
                 HStack(alignment: .center, spacing: 4) {
-                    if !dropFiles.isEmpty {
-                        Image(systemName: "tray.and.arrow.down")
-                            .font(DS.notchLabel)
-                            .foregroundColor(headingForeground)
-                            .padding(.horizontal, 6)
-                            .accessibilityHidden(true)
-                    }
+                    Image(systemName: "tray.and.arrow.down")
+                        .font(DS.notchLabel)
+                        .foregroundColor(headingForeground)
+                        .padding(.horizontal, 6)
+                        .accessibilityHidden(true)
                     ForEach(dropFiles, id: \.self) { url in
                         NotchDropFileItem(
                             url: url,
@@ -418,16 +427,6 @@ struct NotchLauncherPanelView: View {
                                 }
                             }
                         }
-                    }
-                    if showsMirror {
-                        if !dropFiles.isEmpty {
-                            Rectangle()
-                                .fill(subtleSurface)
-                                .frame(width: 1, height: 32)
-                                .padding(.horizontal, 6)
-                                .accessibilityHidden(true)
-                        }
-                        NotchMirrorTile(palette: widgetPalette)
                     }
                 }
             }

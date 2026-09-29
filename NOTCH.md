@@ -176,10 +176,11 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
 
-- **Mirror**: 칸이 아니라 아래 줄(Drop 파일 줄) 오른쪽 끝의 64×48 아이콘(`web.camera` + "Mirror")이다.
-  파일이 있으면 1pt 세로 구분선 뒤, 없으면 그 자리에 혼자 둔다. 누르면 그 자리가 좌우 반전 미리보기(112×63, 16:9)로
-  바뀌고 ×나 도커 닫힘(`willHidePanel`)으로 꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의
-  **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다. 예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
+- **Mirror**: 칸이 아니라 상단 검정 띠 오른쪽의 아이콘(`web.camera`, 13pt 흰색)이다. Drop 배지가 있으면
+  배지 오른쪽(노치 끝 + 배지 본체 34 + 플레어 10 뒤), 없으면 배지 자리(노치 바로 오른쪽)에 34pt 폭으로 둔다.
+  누르면 띠 바로 아래로 208×117(16:9) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
+  꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다.
+  예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
 - **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
   직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
   `NotchKeyablePanel`(canBecomeKey)이다. `.nonactivatingPanel`이라 앞의 앱은 비활성화되지 않는다.

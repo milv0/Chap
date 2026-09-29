@@ -38,7 +38,7 @@ final class NotchLauncherController {
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
-    /// Drop 줄 끝 Mirror 아이콘 표시 여부.
+    /// 상단 띠 Mirror 아이콘 표시 여부.
     var mirrorEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
