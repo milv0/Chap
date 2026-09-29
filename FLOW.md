@@ -524,7 +524,8 @@ Settings → Notch Launcher on
     → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
-  → Mirror 칸: 사용자가 켰을 때만 MirrorCamera.start() (전용 직렬 큐), 끄기·닫힘 시 stop()
+  → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
+    MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
   → Quick Note 칸: 패널이 key가 되어 입력. 커서가 메모에 있으면 visibility 판정이 닫지 않음.
     Esc(keyDown 로컬 모니터) 또는 key 상실 후 일반 규칙. 닫히기 직전 willHidePanel → 메모 flush·카메라 stop
   → 80ms common-mode mouse polling

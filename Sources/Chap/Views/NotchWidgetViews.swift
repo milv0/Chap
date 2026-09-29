@@ -53,8 +53,9 @@ struct NotchMirrorStripControl: View {
     @State private var isOpen = false
     @State private var isHovered = false
 
-    /// 펼친 미리보기 크기 (16:9).
-    static let previewSize = CGSize(width: 208, height: 117)
+    /// 펼친 미리보기 크기. 얼굴 확인용이라 세로가 약간 긴 4:3에 가깝게 좁힌다
+    /// (가로 144, 원본이 넓으면 aspect fill로 좌우를 잘라 얼굴이 가운데 남는다).
+    static let previewSize = CGSize(width: 144, height: 108)
     /// 띠 아이콘의 누름 영역 폭. Drop 배지 본체 폭과 같다.
     static let iconWidth: CGFloat = NotchGeometry.badgeBodyWidth
 

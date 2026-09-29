@@ -181,7 +181,7 @@ struct QAView: View {
                 ),
                 (
                     "Custom과 Glass의 차이는?",
-                    "Custom은 macOS 14 이상에서 색상과 불투명도를 조절합니다. Glass는 macOS 26 이상에서 Apple Liquid Glass를 사용하며, Light는 Clear, Dark는 Regular 재질과 짝을 이루고 System은 macOS 테마를 따릅니다."
+                    "Custom은 macOS 14 이상에서 색상과 불투명도를 조절합니다. Glass는 macOS 26 이상에서 Apple Liquid Glass를 사용합니다. 모양(System/Light/Dark)과 재질(Clear/Regular)을 각각 고를 수 있고, System은 macOS 테마를 따릅니다. 새 설정의 기본 재질은 더 선명한 Regular입니다."
                 ),
                 (
                     "Chap Drop은 어떻게 쓰나요?",
@@ -402,7 +402,7 @@ struct QAView: View {
                 ),
                 (
                     "What is the difference between Custom and Glass?",
-                    "Custom provides color and opacity on macOS 14 or later. Glass uses Apple Liquid Glass on macOS 26 or later: Light pairs with Clear, Dark with Regular, and System follows the macOS appearance."
+                    "Custom provides color and opacity on macOS 14 or later. Glass uses Apple Liquid Glass on macOS 26 or later. Appearance (System, Light, or Dark) and material (Clear or Regular) are chosen independently, and System follows the macOS appearance. New setups default to the more legible Regular."
                 ),
                 (
                     "How does Chap Drop work?",

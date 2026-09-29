@@ -194,7 +194,7 @@ Config 모델 필드:
   - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false
   - notchPanelStyle: NotchPanelStyle  custom | glass. 과거 black/iceberg는 custom으로 마이그레이션. Glass는 macOS 26+
   - notchGlassAppearance: NotchGlassAppearance  system | light | dark. 누락/unknown은 system
-  - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 clear.
+  - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 regular.
     appearance와 독립적으로 선택하며, 어떤 appearance에서도 Clear/Regular를 직접 고른다
   - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치. 누락 시 [sites, apps, folders,
