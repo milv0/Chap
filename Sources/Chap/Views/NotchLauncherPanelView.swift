@@ -417,11 +417,13 @@ struct NotchLauncherPanelView: View {
 
     /// Apps 칸: 앱 아이콘 2열 격자. 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
     private func appIconGrid(_ section: LauncherListSection) -> some View {
+        // 고정 폭 열: flexible 열은 칸 폭(160pt)을 나눠 가져 아이콘 사이가 벌어진다.
         LazyVGrid(
             columns: Array(
-                repeating: GridItem(.flexible(), spacing: 4),
+                repeating: GridItem(
+                    .fixed(NotchAppIconTile.tileSize), spacing: NotchAppIconTile.gap),
                 count: LauncherListPolicy.appIconColumns),
-            alignment: .leading, spacing: 4
+            alignment: .leading, spacing: NotchAppIconTile.gap
         ) {
             ForEach(
                 section.entries.prefix(LauncherListPolicy.maxEntriesPerNotchSlot),
@@ -538,6 +540,10 @@ private struct NotchAppIconTile: View {
     @State private var isHovered = false
 
     private static let iconSize: CGFloat = 34
+    /// 타일 한 변: 아이콘 + 호버 배경 여백.
+    static let tileSize: CGFloat = iconSize + 10
+    /// 타일 사이 간격.
+    static let gap: CGFloat = 2
 
     var body: some View {
         Button(action: action) {
@@ -555,7 +561,7 @@ private struct NotchAppIconTile: View {
                     }
                 }
                 .frame(width: Self.iconSize, height: Self.iconSize)
-                .frame(maxWidth: .infinity)
+                .frame(width: Self.tileSize, height: Self.tileSize)
 
                 if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
                     Text(badge)
@@ -568,10 +574,9 @@ private struct NotchAppIconTile: View {
                                 .fill(.ultraThinMaterial)
                                 .overlay(Capsule().fill(badgeBackground))
                         )
-                        .offset(x: -8, y: 2)
+                        .offset(x: 1, y: 1)
                 }
             }
-            .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? hoverBackground : Color.clear)

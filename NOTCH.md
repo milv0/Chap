@@ -154,7 +154,7 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 ## Apps 칸: 아이콘 격자
 
-Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2×2)다. 아이콘 34pt, 타일 세로 여백 5pt.
+Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2×2)다. 아이콘 34pt, 타일 44pt 정사각(고정 폭 열), 타일 간격 2pt.
 단축키가 있으면 아이콘 오른쪽 아래에 `⌥S` 캡슐 배지(9pt semibold)를 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Sites·Folders는 목록 그대로다.
