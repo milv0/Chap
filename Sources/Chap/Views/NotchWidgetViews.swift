@@ -11,6 +11,8 @@ struct NotchWidgetPalette {
     let textShadowOpacity: Double
     let hoverBackground: Color
     let subtleSurface: Color
+    /// 제목 아이콘 색 (연한 대표 블루). nil이면 제목 색을 쓴다.
+    var icon: Color? = nil
 }
 
 /// 위젯 칸 상단의 아이콘+제목 줄. 런처 섹션 제목과 같은 모양이다.
@@ -23,7 +25,7 @@ struct NotchWidgetHeader: View {
         HStack(spacing: 5) {
             Image(systemName: symbol)
                 .font(DS.notchLabel)
-                .foregroundColor(palette.heading)
+                .foregroundColor(palette.icon ?? palette.heading)
             Text(title)
                 .font(DS.notchLabel)
                 .foregroundColor(palette.heading)
@@ -76,7 +78,7 @@ struct NotchFocusView: View {
         VStack(spacing: 6) {
             Image(systemName: "bolt")
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(palette.primary.opacity(0.55))
+                .foregroundColor((palette.icon ?? palette.primary).opacity(0.7))
             VStack(spacing: 1) {
                 Text(KeepAwakePolicy.focusIdleLine)
                     .font(DS.notchLabel)
@@ -211,7 +213,7 @@ struct NotchMirrorStripControl: View {
         Button(action: tapped) {
             Image(systemName: symbol)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(isOpen ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
+                .foregroundColor(isOpen ? DS.accent : DS.notchStripIconColor(isHovered: isHovered))
                 .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                 .contentShape(Rectangle())
         }
@@ -328,7 +330,7 @@ struct NotchStripTools: View {
                     // Drop 배지와 같은 아이콘·크기·광학 위치 (배지 아이콘은 본체 중앙에서 왼쪽 4pt, 아래 1pt).
                     Image(systemName: "tray.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundColor(DS.notchStripIconColor())
                         .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                         .position(
                             x: geo.size.width / 2 + notchRightEdge
@@ -410,7 +412,9 @@ struct NotchQuickNoteStripButton: View {
         } label: {
             Image(systemName: "note.text")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(isNoteMode ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
+                .foregroundColor(
+                    isNoteMode ? DS.accent : DS.notchStripIconColor(isHovered: isHovered)
+                )
                 .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                 .contentShape(Rectangle())
         }

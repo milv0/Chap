@@ -12,7 +12,7 @@ struct WelcomeView: View {
 
             // 정체성: 메뉴바 속 친구 (BRAND.md). 첫인사는 친구처럼 짧게.
             VStack(spacing: 6) {
-                Text("Hi, I'm Chap.")
+                Text("Hi, I'm your chap.")
                     .font(DS.titleFont)
                     .foregroundColor(DS.textPrimary)
                 Text(

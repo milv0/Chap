@@ -206,7 +206,7 @@ struct NotchDropBadgeView: View {
             // 아이콘과 숫자 배지를 한 덩어리로 묶어 광학 보정도 함께 움직인다.
             Image(systemName: "tray.fill")
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(DS.notchStripIconColor())
                 .overlay(alignment: .topTrailing) {
                     Text("\(min(count, 99))")
                         .font(.system(size: 8, weight: .bold))

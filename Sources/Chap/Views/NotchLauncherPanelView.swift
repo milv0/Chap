@@ -60,7 +60,13 @@ struct NotchLauncherPanelView: View {
     /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 좌우 상태 영역).
     let stripPlateauHalfWidth: CGFloat
     /// Keep Awake 세션 종료 시각. 활성 중이면 왼쪽 상단 영역에 h:mm:ss로 표시.
+    /// 도커를 열 때의 Keep Awake 종료 시각. 이후 변화는 `liveAwakeSessionEnd`가 따라간다.
     let awakeSessionEnd: Date?
+    /// 도커가 열린 동안 Focus·메뉴에서 켜고 끈 결과를 바로 반영하는 종료 시각.
+    /// nil은 "아직 알림 없음"(= 열 때 값 사용), .some(nil)은 "꺼짐"이다.
+    @State private var liveAwakeSessionEnd: Date??
+    @Environment(\.colorScheme) private var colorScheme
+    private var currentAwakeSessionEnd: Date? { liveAwakeSessionEnd ?? awakeSessionEnd }
     /// 시각 스타일. Custom은 색상·불투명도 도크, Glass는 시스템 재질.
     let style: NotchPanelStyle
     /// Apple 공식 Glass.clear/regular 재질 변형.
@@ -246,6 +252,12 @@ struct NotchLauncherPanelView: View {
             .onPreferenceChange(NotchContentSizeKey.self) { size in
                 onContentSizeChange(size)
             }
+            // Keep Awake를 Focus 위젯·상태 메뉴에서 켜고 끄면 상단 띠 시계를 바로 바꾼다.
+            .onReceive(
+                NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
+            ) { note in
+                liveAwakeSessionEnd = .some(note.object as? Date)
+            }
             // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
             .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
             .opacity(reveal.revealed ? 1 : 0)
@@ -258,7 +270,7 @@ struct NotchLauncherPanelView: View {
     /// 시간은 고정 h:mm:ss이며 1초마다 갱신한다. 넓어진 문자열 때문에
     /// 아이콘이 왼쪽으로 밀리지 않도록 광학 위치를 오른쪽으로 보정한다.
     @ViewBuilder private var awakeStripStatus: some View {
-        if let awakeSessionEnd {
+        if let awakeSessionEnd = currentAwakeSessionEnd, awakeSessionEnd > Date() {
             let sideWidth = NotchGeometry.stripPlateauSideWidth
             let notchHalf = stripPlateauHalfWidth - sideWidth
             GeometryReader { geo in
@@ -299,7 +311,7 @@ struct NotchLauncherPanelView: View {
             VStack(spacing: 8) {
                 Image(systemName: "tray.and.arrow.down.fill")
                     .font(.system(size: 24))
-                    .foregroundColor(dropTargeted ? DS.accent : .white.opacity(0.85))
+                    .foregroundColor(dropTargeted ? DS.accent : DS.accentLight)
                 Text("Drop here")
                     .font(DS.headlineFont)
                     .foregroundColor(.white.opacity(0.95))
@@ -388,6 +400,12 @@ struct NotchLauncherPanelView: View {
     /// Custom은 배경 대비 정책의 보조 불투명도를 그대로 쓴다.
     private var headingForeground: Color {
         usesSemanticGlass ? Color.primary.opacity(0.62) : secondaryForeground
+    }
+
+    /// 제목 아이콘: 연한 대표 블루. 어두운 바탕(Glass 다크·검정 Custom)은 밝은 블루를 쓴다.
+    private var iconForeground: Color {
+        let dark = usesSemanticGlass ? colorScheme == .dark : !usesDarkCustomForeground
+        return DS.notchIconColor(onDarkBackground: dark)
     }
 
     /// 키캡 글자: 본문색 80%. 옅은 회색보다 대비가 높아 3:1 이상을 지킨다.
@@ -531,7 +549,7 @@ struct NotchLauncherPanelView: View {
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
         case .awake:
-            NotchFocusView(palette: widgetPalette, sessionEnd: awakeSessionEnd)
+            NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
         }
     }
 
@@ -543,7 +561,8 @@ struct NotchLauncherPanelView: View {
             heading: headingForeground,
             textShadowOpacity: textShadowOpacity,
             hoverBackground: rowHoverBackground,
-            subtleSurface: subtleSurface)
+            subtleSurface: subtleSurface,
+            icon: iconForeground)
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {
@@ -553,6 +572,7 @@ struct NotchLauncherPanelView: View {
                 symbol: LauncherListPolicy.symbolName(for: section.launchType),
                 title: Self.sectionTitle(section.launchType),
                 foreground: headingForeground,
+                iconForeground: iconForeground,
                 hoverBackground: rowHoverBackground,
                 textShadowOpacity: textShadowOpacity
             ) {
@@ -1025,6 +1045,7 @@ private struct NotchSectionTitleButton: View {
     let symbol: String
     let title: String
     let foreground: Color
+    let iconForeground: Color
     let hoverBackground: Color
     let textShadowOpacity: Double
     let action: () -> Void
@@ -1036,6 +1057,7 @@ private struct NotchSectionTitleButton: View {
             HStack(spacing: 5) {
                 Image(systemName: symbol)
                     .font(DS.notchLabel)
+                    .foregroundColor(iconForeground)
                 Text(title)
                     .font(DS.notchLabel)
                     .fixedSize()

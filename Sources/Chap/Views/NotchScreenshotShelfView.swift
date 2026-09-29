@@ -85,11 +85,20 @@ struct NotchScreenshotShelfView: View {
         usesSemanticForeground ? Color.primary.opacity(0.62) : customSecondary
     }
 
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// 제목 아이콘: 연한 대표 블루 (다른 칸과 같은 규칙).
+    private var iconColor: Color {
+        DS.notchIconColor(
+            onDarkBackground: usesSemanticForeground
+                ? colorScheme == .dark : !usesDarkCustomForeground)
+    }
+
     private var header: some View {
         HStack(spacing: 5) {
             Image(systemName: "camera.viewfinder")
                 .font(DS.notchLabel)
-                .foregroundColor(headingColor)
+                .foregroundColor(iconColor)
             Text("Screenshots")
                 .font(DS.notchLabel)
                 .foregroundColor(headingColor)
