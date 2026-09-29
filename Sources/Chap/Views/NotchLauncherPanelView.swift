@@ -422,6 +422,20 @@ struct NotchLauncherPanelView: View {
                 Text(Self.sectionTitle(section.launchType))
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(secondaryForeground)
+                // 앱 배지는 글자만 보여주므로, 누를 수식키(⌥)는 제목 옆에 한 번만 표시한다.
+                if section.launchType == .app, LauncherListPolicy.hasShortcut(in: section) {
+                    Text("⌥")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(secondaryForeground)
+                        .padding(.horizontal, 3.5)
+                        .padding(.vertical, 1)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .fill(subtleSurface)
+                        )
+                        .help("Hold Option and press the letter to launch")
+                        .accessibilityLabel("Option-key shortcuts")
+                }
             }
             .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
             .padding(.horizontal, 6)
@@ -595,11 +609,12 @@ struct NotchAppIconTile: View {
                 .frame(width: Self.iconSize, height: Self.iconSize)
                 .frame(width: Self.tileSize, height: Self.tileSize)
 
-                if let badge = LauncherListPolicy.shortcutBadge(for: entry.site) {
-                    // Sites 목록의 키캡과 같은 모양(모서리 4pt, medium). 아이콘 위에서도
-                    // 읽히도록 반투명 재질을 깐다.
-                    Text(badge)
-                        .font(.system(size: 9, weight: .medium))
+                if let key = LauncherListPolicy.shortcutKey(for: entry.site) {
+                    // Sites 목록의 키캡과 같은 모양(모서리 4pt). 글자만 크게 보여 읽기 쉽고,
+                    // 아이콘 위에서도 읽히도록 반투명 재질을 깐다.
+                    Text(key)
+                        .font(.system(size: 10, weight: .semibold))
+                        .frame(minWidth: 10)
                         .foregroundColor(badgeForeground)
                         .padding(.horizontal, 3.5)
                         .padding(.vertical, 1)

@@ -51,6 +51,18 @@ public enum LauncherListPolicy {
         return "⌥\(key.uppercased())"
     }
 
+    /// 앱 아이콘 배지용 키 글자만 (예: "N"). ⌥는 Apps 제목 옆에 한 번만 보여준다.
+    public static func shortcutKey(for site: Site) -> String? {
+        guard let key = site.shortcut?.trimmingCharacters(in: .whitespaces), !key.isEmpty
+        else { return nil }
+        return key.uppercased()
+    }
+
+    /// 칸 안에 단축키가 있는 항목이 하나라도 있는지. Apps 제목 옆 ⌥ 표시 여부에 쓴다.
+    public static func hasShortcut(in section: LauncherListSection) -> Bool {
+        section.entries.contains { shortcutKey(for: $0.site) != nil }
+    }
+
     /// VoiceOver용 실행 버튼 이름 (예: "Launch Slack, Option S").
     public static func launchAccessibilityLabel(for site: Site) -> String {
         guard let key = site.shortcut?.trimmingCharacters(in: .whitespaces), !key.isEmpty

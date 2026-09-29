@@ -15,8 +15,8 @@ All notable changes to Chap are documented in this file.
   write; press Esc or click elsewhere to finish.
 - **Section dividers** — Thin vertical lines now separate the notch widgets.
 - **App icons in the notch** — The Apps widget shows your apps as a two-column
-  grid of icons that uses only the rows it needs, with an Option-key badge on
-  apps that have a shortcut. Hover for the name; click to launch.
+  grid of icons that uses only the rows it needs, with the shortcut letter on
+  apps that have one and a single ⌥ next to the Apps title. Hover for the name; click to launch.
 - **Six apps** — You can now add up to six apps (Sites and Folders stay at
   four), so the Apps icon grid can fill three rows.
 

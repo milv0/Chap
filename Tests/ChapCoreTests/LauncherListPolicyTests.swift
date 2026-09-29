@@ -120,6 +120,24 @@ struct NotchAppIconLabelTests {
         #expect(LauncherListPolicy.shortcutBadge(for: app("Notes", shortcut: " ")) == nil)
     }
 
+    @Test("app icon badges show only the key; the header shows Option once")
+    func letterOnlyBadge() {
+        let slack = app("Slack", shortcut: "s")
+        let mail = app("Mail", shortcut: nil)
+        #expect(LauncherListPolicy.shortcutKey(for: slack) == "S")
+        #expect(LauncherListPolicy.shortcutKey(for: mail) == nil)
+        let withShortcut = LauncherListSection(
+            launchType: .app,
+            entries: [
+                LauncherListEntry(siteIndex: 0, site: mail),
+                LauncherListEntry(siteIndex: 1, site: slack),
+            ])
+        let without = LauncherListSection(
+            launchType: .app, entries: [LauncherListEntry(siteIndex: 0, site: mail)])
+        #expect(LauncherListPolicy.hasShortcut(in: withShortcut))
+        #expect(!LauncherListPolicy.hasShortcut(in: without))
+    }
+
     @Test("VoiceOver hears the app name and its shortcut")
     func accessibilityLabel() {
         #expect(
