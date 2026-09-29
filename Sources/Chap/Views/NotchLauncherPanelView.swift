@@ -56,6 +56,20 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
+
+    /// Apps 아이콘 칸 폭: 2열 격자 + 좌우 여백만큼만 쓴다. 목록 칸 폭(160pt)을 쓰면
+    /// 아이콘 오른쪽이 절반 가까이 비어 보인다.
+    static var appGridColumnWidth: CGFloat {
+        let columns = CGFloat(LauncherListPolicy.appIconColumns)
+        return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.gap + 4
+    }
+
+    private func width(for slot: NotchSlotContent) -> CGFloat {
+        if case .launchers(let section) = slot, section.launchType == .app {
+            return Self.appGridColumnWidth
+        }
+        return Self.columnWidth
+    }
     /// 그림자가 창 경계에서 잘리지 않도록 검정 형태 주변에 두는 투명 여백.
     /// 그림자 확산(radius 9, y 4)이 이 여백 안에서 완전히 소멸해야
     /// 창 가장자리에 그림자 경계선이 생기지 않는다.
@@ -293,7 +307,7 @@ struct NotchLauncherPanelView: View {
             HStack(alignment: .top, spacing: DS.spacing) {
                 ForEach(Array(slots.enumerated()), id: \.offset) { column, slot in
                     slotView(slot)
-                        .frame(width: Self.columnWidth, alignment: .leading)
+                        .frame(width: width(for: slot), alignment: .leading)
                         // 섹션 사이 얇은 세로 구분선. 폭 계산에 영향이 없도록 간격 중앙에 겹쳐 그린다.
                         .overlay(alignment: .leading) {
                             if column > 0 {
@@ -530,7 +544,7 @@ private struct NotchLauncherRow: View {
 }
 
 /// Apps 칸의 아이콘 한 개. 호버 시 앱 이름 툴팁과 옅은 배경을 보여준다.
-private struct NotchAppIconTile: View {
+struct NotchAppIconTile: View {
     let entry: LauncherListEntry
     let primaryForeground: Color
     let badgeForeground: Color
