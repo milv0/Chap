@@ -178,7 +178,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 - **Mirror**: 칸이 아니라 상단 검정 띠 오른쪽의 아이콘(`web.camera`, 13pt 흰색)이다. Drop 배지가 있으면
   배지 오른쪽(노치 끝 + 배지 본체 34 + 플레어 10 뒤), 없으면 배지 자리(노치 바로 오른쪽)에 34pt 폭으로 둔다.
-  누르면 띠 바로 아래로 208×117(16:9) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
+  누르면 띠 바로 아래로 144×108(4:3, 좌우는 aspect fill로 잘림) 좌우 반전 미리보기가 펼쳐지고, 아이콘 재클릭·×·도커 닫힘(`willHidePanel`)으로
   꺼진다. 권한은 처음 누를 때만 묻는다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`, 기본 켬)로 숨긴다.
   예전 `mirror` 칸은 디코딩 때 빠지고 뒤 위젯이 당겨진다.
 - **Quick Note**: 113pt 높이, 13pt 본문 `TextEditor`. 회색 채움 대신 1pt 옅은 테두리(포커스 시 액센트)만 두고, 저장 시각은 상자 안 오른쪽 아래에 둔다. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
