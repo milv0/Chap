@@ -102,6 +102,7 @@ Stored at `~/.chap.json`:
   "notchPanelColorHex": "#000000",
   "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none"],
   "notchMirrorEnabled": true,
+  "notchQuickNoteEnabled": true,
   "sites": [
     {
       "name": "GitHub",
