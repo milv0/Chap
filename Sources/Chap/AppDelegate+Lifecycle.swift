@@ -133,6 +133,7 @@ extension AppDelegate {
             notchGlassMaterial: config.notchGlassMaterial,
             notchPanelOpacity: config.notchPanelOpacity,
             notchPanelColorHex: config.notchPanelColorHex,
+            notchMirrorEnabled: config.notchMirrorEnabled,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -149,6 +150,7 @@ extension AppDelegate {
                 notchGlassMaterial: payload.notchGlassMaterial,
                 notchPanelOpacity: payload.notchPanelOpacity,
                 notchPanelColorHex: payload.notchPanelColorHex,
+                notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -180,6 +182,7 @@ extension AppDelegate {
             let previousNotchPanelOpacity = self.config.notchPanelOpacity
             let previousNotchPanelColorHex = self.config.notchPanelColorHex
             let previousNotchWidgets = self.config.notchWidgets
+            let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -216,6 +219,7 @@ extension AppDelegate {
                 || previousNotchPanelOpacity != newConfig.notchPanelOpacity
                 || previousNotchPanelColorHex != newConfig.notchPanelColorHex
                 || previousNotchWidgets != newConfig.notchWidgets
+                || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }

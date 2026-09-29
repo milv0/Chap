@@ -123,20 +123,28 @@ struct QuickNoteStoreTests {
 
 @Suite("Mirror and Quick Note widgets")
 struct NotchToolWidgetDecodingTests {
-    @Test("mirror and note widgets decode and round-trip")
-    func toolWidgetsRoundTrip() throws {
+    @Test("a former Mirror slot is removed and later widgets move up")
+    func formerMirrorSlotIsRemoved() throws {
         let json = #"{"notchWidgets": ["mirror", "note", "sites"], "sites": []}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(Array(config.notchWidgets.prefix(3)) == [.mirror, .note, .sites])
-        let decoded = try JSONDecoder().decode(
-            Config.self, from: try JSONEncoder().encode(config))
-        #expect(decoded.notchWidgets == config.notchWidgets)
+        #expect(Array(config.notchWidgets.prefix(2)) == [.note, .sites])
+        #expect(!config.notchWidgets.map(\.rawValue).contains("mirror"))
+        #expect(config.notchMirrorEnabled)
     }
 
-    @Test("tool widgets are not launcher sections")
-    func toolWidgetsHaveNoLaunchType() {
-        #expect(NotchWidget.mirror.launchType == nil)
+    @Test("the Mirror toggle defaults on and round-trips")
+    func mirrorToggleRoundTrips() throws {
+        let missing = try JSONDecoder().decode(Config.self, from: Data(#"{"sites": []}"#.utf8))
+        #expect(missing.notchMirrorEnabled)
+
+        let off = Config(notchMirrorEnabled: false, sites: [])
+        let decoded = try JSONDecoder().decode(Config.self, from: try JSONEncoder().encode(off))
+        #expect(!decoded.notchMirrorEnabled)
+    }
+
+    @Test("Quick Note is not a launcher section")
+    func noteHasNoLaunchType() {
         #expect(NotchWidget.note.launchType == nil)
     }
 }

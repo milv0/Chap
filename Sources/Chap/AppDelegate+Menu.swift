@@ -287,6 +287,9 @@ extension AppDelegate {
             return NotchSlotContent.slots(
                 widgets: self.config.notchWidgets, sites: self.config.sites)
         }
+        notchLauncher.mirrorEnabledProvider = { [weak self] in
+            self?.config.notchMirrorEnabled ?? false
+        }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .custom
         }

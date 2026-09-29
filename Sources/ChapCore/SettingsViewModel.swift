@@ -13,6 +13,7 @@ public struct SettingsPayload {
     public let notchGlassMaterial: NotchGlassMaterial
     public let notchPanelOpacity: Double
     public let notchPanelColorHex: String
+    public let notchMirrorEnabled: Bool
     public let notchWidgets: [NotchWidget]
 }
 
@@ -29,6 +30,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchGlassMaterial: NotchGlassMaterial
     @Published public var notchPanelOpacity: Double
     @Published public var notchPanelColorHex: String
+    @Published public var notchMirrorEnabled: Bool
     @Published public var notchWidgets: [NotchWidget]
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
@@ -43,6 +45,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchPanelOpacity: Double
     @Published public var originalNotchPanelColorHex: String
     @Published public var originalNotchWidgets: [NotchWidget]
+    @Published public var originalNotchMirrorEnabled: Bool
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -60,6 +63,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchPanelOpacity != originalNotchPanelOpacity
             || notchPanelColorHex != originalNotchPanelColorHex
             || notchWidgets != originalNotchWidgets
+            || notchMirrorEnabled != originalNotchMirrorEnabled
     }
 
     public func markSaved() {
@@ -82,6 +86,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchPanelOpacity = notchPanelOpacity
         originalNotchPanelColorHex = notchPanelColorHex
         originalNotchWidgets = notchWidgets
+        originalNotchMirrorEnabled = notchMirrorEnabled
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -100,6 +105,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchGlassMaterial: self.notchGlassMaterial,
                 notchPanelOpacity: self.notchPanelOpacity,
                 notchPanelColorHex: self.notchPanelColorHex,
+                notchMirrorEnabled: self.notchMirrorEnabled,
                 notchWidgets: self.notchWidgets,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
@@ -131,6 +137,7 @@ public final class SettingsViewModel: ObservableObject {
                     notchGlassMaterial: notchGlassMaterial,
                     notchPanelOpacity: notchPanelOpacity,
                     notchPanelColorHex: notchPanelColorHex,
+                    notchMirrorEnabled: notchMirrorEnabled,
                     notchWidgets: notchWidgets)) ?? true
         if saved { markSaved() }
         return saved
@@ -148,6 +155,7 @@ public final class SettingsViewModel: ObservableObject {
         notchGlassMaterial: NotchGlassMaterial = .regular,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
+        notchMirrorEnabled: Bool = true,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
@@ -163,6 +171,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchGlassMaterial = notchGlassMaterial
         self.notchPanelOpacity = notchPanelOpacity
         self.notchPanelColorHex = notchPanelColorHex
+        self.notchMirrorEnabled = notchMirrorEnabled
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.originalSites = sites
         self.originalGuide = showGuideWindow
@@ -176,6 +185,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchGlassMaterial = notchGlassMaterial
         self.originalNotchPanelOpacity = notchPanelOpacity
         self.originalNotchPanelColorHex = notchPanelColorHex
+        self.originalNotchMirrorEnabled = notchMirrorEnabled
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.saveDebouncer = saveDebouncer
     }

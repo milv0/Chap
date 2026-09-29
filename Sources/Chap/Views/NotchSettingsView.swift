@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .screenshots, .mirror, .note,
+        .sites, .apps, .folders, .screenshots, .note,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -59,7 +59,6 @@ struct NotchSettingsView: View {
         case .apps: return "Apps"
         case .folders: return "Finder"
         case .screenshots: return "Screenshots"
-        case .mirror: return "Mirror"
         case .note: return "Quick Note"
         case .drop: return "Drop"
         case .none: return "Empty"
@@ -72,7 +71,6 @@ struct NotchSettingsView: View {
         }
         switch widget {
         case .screenshots: return "camera.viewfinder"
-        case .mirror: return "person.crop.square"
         case .note: return "note.text"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
@@ -149,6 +147,14 @@ struct NotchSettingsView: View {
                                 }
                             }
                             .onChange(of: vm.notchWidgets) { _, _ in onSave() }
+
+                            // Mirror는 칸이 아니라 도커 아래 줄 오른쪽 끝의 아이콘이다.
+                            Toggle("Show Mirror", isOn: $vm.notchMirrorEnabled)
+                                .help(
+                                    "Show a camera mirror icon at the end of the notch's bottom row. "
+                                        + "The camera turns on only when you click it."
+                                )
+                                .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {
@@ -340,7 +346,6 @@ private struct WidgetSlotBox: View {
             Button("Apps") { onAssign(.apps) }
             Button("Finder") { onAssign(.folders) }
             Button("Screenshots") { onAssign(.screenshots) }
-            Button("Mirror") { onAssign(.mirror) }
             Button("Quick Note") { onAssign(.note) }
             if !isEmpty {
                 Divider()
@@ -352,7 +357,6 @@ private struct WidgetSlotBox: View {
         .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
         .accessibilityAction(named: "Place Finder") { onAssign(.folders) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
-        .accessibilityAction(named: "Place Mirror") { onAssign(.mirror) }
         .accessibilityAction(named: "Place Quick Note") { onAssign(.note) }
         .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.

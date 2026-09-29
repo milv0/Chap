@@ -293,8 +293,6 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
-    /// 거울: 통화 전에 내장 카메라 화면을 좌우 반전해 바로 비춰 본다.
-    case mirror = "mirror"
     /// 빠른 메모: 노치에서 바로 적는 한 장짜리 메모.
     case note = "note"
     /// 빈 칸.
@@ -306,9 +304,12 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .mirror, .note, .drop, .none: return nil
+        case .screenshots, .note, .drop, .none: return nil
         }
     }
+
+    /// 칸 위젯이었던 Mirror의 저장 문자열. Mirror는 이제 Drop 줄의 아이콘이라 칸에서 뺀다.
+    public static let formerMirrorRawValue = "mirror"
 
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
     public static let removedScriptsRawValue = "scripts"
@@ -361,6 +362,8 @@ public struct Config: Codable {
     /// 상단바 구간은 노치 연장이라 항상 검정으로 유지된다.
     public var notchPanelColorHex: String
     /// 노치 패널 6칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    /// 노치 Drop 줄 오른쪽 끝의 Mirror 아이콘 표시 여부. 카메라는 누를 때만 켠다.
+    public var notchMirrorEnabled: Bool
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
 
@@ -391,7 +394,7 @@ public struct Config: Codable {
         case showGuideWindow, showGhostWindow, launchAtLogin, optionShortcutsEnabled
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
         case notchGlassAppearance, notchGlassMaterial
-        case notchPanelOpacity, notchPanelColorHex, notchWidgets
+        case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case sites
     }
 
@@ -407,6 +410,7 @@ public struct Config: Codable {
         notchGlassMaterial: NotchGlassMaterial = .regular,
         notchPanelOpacity: Double = Config.notchPanelOpacityDefault,
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
+        notchMirrorEnabled: Bool = true,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -423,6 +427,7 @@ public struct Config: Codable {
         self.notchPanelColorHex =
             Config.validNotchPanelColorHex(notchPanelColorHex)
             ?? Config.notchPanelColorHexDefault
+        self.notchMirrorEnabled = notchMirrorEnabled
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -473,6 +478,9 @@ public struct Config: Codable {
                 try? container.decodeIfPresent(String.self, forKey: .notchPanelColorHex)
                     .flatMap { $0 })
             ?? Config.notchPanelColorHexDefault
+        // 키가 없으면 켠다. 카메라는 사용자가 아이콘을 누를 때만 켜진다.
+        notchMirrorEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
         // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -485,6 +493,8 @@ public struct Config: Codable {
                 if raw == NotchWidget.removedScriptsRawValue {
                     return screenshotsPlaced ? NotchWidget.none : .screenshots
                 }
+                // Mirror 칸은 빼고 뒤 위젯을 한 칸씩 당긴다 (Mirror는 Drop 줄 아이콘으로 옮겨졌다).
+                if raw == NotchWidget.formerMirrorRawValue { return nil }
                 return NotchWidget(rawValue: raw)
             }
             // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
@@ -521,6 +531,7 @@ public struct Config: Codable {
         try container.encode(notchPanelOpacity, forKey: .notchPanelOpacity)
         try container.encode(notchPanelColorHex, forKey: .notchPanelColorHex)
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
+        try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

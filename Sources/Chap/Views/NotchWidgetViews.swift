@@ -40,92 +40,101 @@ private let widgetBodyHeight: CGFloat = NotchAppIconTile.listBodyHeight
 
 // MARK: - Mirror
 
-/// 통화 전 얼굴을 비춰 보는 거울. 사용자가 켠 뒤 도커가 열려 있는 동안만 카메라를 쓴다.
-struct NotchMirrorView: View {
+/// 도커 아래 줄 오른쪽 끝의 거울 아이콘. 누르면 그 자리에서 좌우 반전 미리보기로 바뀌고,
+/// ×나 도커 닫힘으로 꺼진다. 켜기 전에는 카메라를 쓰지 않는다.
+struct NotchMirrorTile: View {
     let palette: NotchWidgetPalette
 
     @State private var state = MirrorCamera.displayState
-    /// 도커를 열 때마다 꺼진 상태로 시작한다. 켜기 전에는 카메라를 쓰지 않는다.
+    /// 도커를 열 때마다 꺼진 상태로 시작한다.
     @State private var isTurnedOn = false
+    @State private var isHovered = false
+
+    /// 켜진 미리보기 크기 (16:9). 파일 타일(64×48)과 줄 높이가 크게 어긋나지 않는다.
+    static let previewSize = CGSize(width: 112, height: 63)
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            NotchWidgetHeader(symbol: "person.crop.square", title: "Mirror", palette: palette)
-            content
-                .frame(maxWidth: .infinity)
-                .frame(height: widgetBodyHeight)
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous))
-                .padding(.horizontal, 4)
+        Group {
+            if state == .live && isTurnedOn {
+                preview
+            } else {
+                resting
+            }
         }
         .onAppear { refresh() }
         .onDisappear { MirrorCamera.shared.stop() }
     }
 
-    @ViewBuilder
-    private var content: some View {
-        switch state {
-        case .live where isTurnedOn:
-            MirrorPreview(session: MirrorCamera.shared.session)
-                .accessibilityLabel("Camera mirror preview")
-                .overlay(alignment: .topTrailing) {
-                    Button {
-                        isTurnedOn = false
-                        refresh()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 16, height: 16)
-                            .background(Circle().fill(.black.opacity(0.45)))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(4)
-                    .accessibilityLabel("Turn off Mirror")
+    private var preview: some View {
+        MirrorPreview(session: MirrorCamera.shared.session)
+            .frame(width: Self.previewSize.width, height: Self.previewSize.height)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    isTurnedOn = false
+                    refresh()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 16, height: 16)
+                        .background(Circle().fill(.black.opacity(0.45)))
                 }
-        case .live:
-            resting(symbol: "web.camera", caption: "Turn On Mirror", action: turnOn)
-        case .needsPermission:
-            // 처음 누를 때만 권한을 묻고, 허용하면 바로 켠다.
-            resting(symbol: "web.camera", caption: "Turn On Mirror", action: requestAccess)
-        case .denied:
-            resting(
-                symbol: "video.slash", caption: "Camera Off · Open Settings",
-                action: openCameraSettings)
-        case .restricted:
-            resting(symbol: "video.slash", caption: "Camera Restricted", action: nil)
-        case .noCamera:
-            resting(symbol: "video.slash", caption: "No Camera", action: nil)
-        }
+                .buttonStyle(.plain)
+                .padding(4)
+                .accessibilityLabel("Turn off Mirror")
+            }
+            .accessibilityLabel("Camera mirror preview")
     }
 
-    /// 꺼진 거울: 상자 없이 큰 아이콘과 짧은 안내만 둔다. 누를 수 있으면 호버 면이 생긴다.
-    private func resting(symbol: String, caption: String, action: (() -> Void)?) -> some View {
-        Button {
+    /// 꺼진 상태: 파일 타일과 같은 64×48 칸에 아이콘 + 한 줄 이름.
+    private var resting: some View {
+        let (symbol, caption, action) = restingContent
+        return Button {
             action?()
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 4) {
                 Image(systemName: symbol)
-                    .font(.system(size: 30, weight: .light))
-                    .foregroundColor(palette.primary.opacity(action == nil ? 0.5 : 0.9))
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundColor(palette.primary.opacity(action == nil ? 0.45 : 0.85))
+                    .frame(height: 28)
                 Text(caption)
-                    .font(DS.notchLabel)
-                    .foregroundColor(palette.secondary)
-                    .multilineTextAlignment(.center)
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.primary)
+                    .lineLimit(1)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: 64, height: 48)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                    .fill(isRestingHovered && action != nil ? palette.hoverBackground : .clear)
+                    .fill(isHovered && action != nil ? palette.hoverBackground : .clear)
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(action == nil)
-        .onHover { isRestingHovered = $0 }
-        .accessibilityLabel(caption)
+        .onHover { isHovered = $0 }
+        .help(helpText)
+        .accessibilityLabel(helpText)
     }
 
-    @State private var isRestingHovered = false
+    private var restingContent: (String, String, (() -> Void)?) {
+        switch state {
+        case .live: return ("web.camera", "Mirror", turnOn)
+        case .needsPermission: return ("web.camera", "Mirror", requestAccess)
+        case .denied: return ("video.slash", "Camera Off", openCameraSettings)
+        case .restricted: return ("video.slash", "Restricted", nil)
+        case .noCamera: return ("video.slash", "No Camera", nil)
+        }
+    }
+
+    private var helpText: String {
+        switch state {
+        case .live, .needsPermission: return "Turn on Mirror to check your camera"
+        case .denied: return "Camera access is off. Click to open Privacy settings"
+        case .restricted: return "Camera access is restricted on this Mac"
+        case .noCamera: return "No camera is connected"
+        }
+    }
 
     private func turnOn() {
         isTurnedOn = true
@@ -134,9 +143,7 @@ struct NotchMirrorView: View {
 
     private func refresh() {
         state = MirrorCamera.displayState
-        if MirrorPolicy.shouldCapture(
-            state: state, isTurnedOn: isTurnedOn, isPanelOpen: true)
-        {
+        if MirrorPolicy.shouldCapture(state: state, isTurnedOn: isTurnedOn, isPanelOpen: true) {
             MirrorCamera.shared.start()
         } else {
             MirrorCamera.shared.stop()

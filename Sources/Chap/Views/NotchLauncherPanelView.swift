@@ -6,8 +6,6 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
-    /// 카메라 거울 위젯.
-    case mirror
     /// 빠른 메모 위젯.
     case note
 
@@ -22,7 +20,6 @@ enum NotchSlotContent {
                 // Drop 파일은 메인 도커 하단 행이 전담한다.
                 return nil
             case .screenshots: return .screenshots
-            case .mirror: return .mirror
             case .note: return .note
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
@@ -65,6 +62,8 @@ struct NotchLauncherPanelView: View {
     let glassMaterial: NotchGlassMaterial
     /// 배치된 위젯 칸들 (빈 칸 제외, 왼쪽부터).
     let slots: [NotchSlotContent]
+    /// Drop 줄 오른쪽 끝에 Mirror 아이콘을 둘지. 파일이 없으면 Mirror만 그 자리에 둔다.
+    var showsMirror = false
     let onLaunch: (Int) -> Void
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
@@ -88,8 +87,6 @@ struct NotchLauncherPanelView: View {
             + 4
     }
 
-    /// 꺼진 거울은 아이콘 하나라 좁은 칸이면 충분하다.
-    static let mirrorColumnWidth: CGFloat = 104
     /// 메모는 적을 공간이 필요해 목록 최대 폭을 쓴다.
     static let noteColumnWidth: CGFloat = 170
 
@@ -116,8 +113,6 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(34 + 6 + label + 6 + 12, header))))
-        case .mirror:
-            return Self.mirrorColumnWidth
         case .note:
             return Self.noteColumnWidth
         }
@@ -391,20 +386,21 @@ struct NotchLauncherPanelView: View {
             // 칸 높이를 가장 긴 칸의 이상 높이로 고정해 무한 확장을 막는다.
             .fixedSize(horizontal: false, vertical: true)
 
-            // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
-            // 도커는 원래 크기로 돌아간다.
-            if !dropFiles.isEmpty {
+            // 아래 줄: Chap Drop 파일 + 오른쪽 끝 Mirror 아이콘. 둘 다 없으면 줄이 사라진다.
+            if !dropFiles.isEmpty || showsMirror {
                 Rectangle()
                     .fill(subtleSurface)
                     .frame(height: 1)
                     .padding(.top, 2)
                 // 파일은 아이콘 + 한 줄 파일명으로 둔다. 전체 이름은 툴팁과 VoiceOver로 제공한다.
                 HStack(alignment: .center, spacing: 4) {
-                    Image(systemName: "tray.and.arrow.down")
-                        .font(DS.notchLabel)
-                        .foregroundColor(headingForeground)
-                        .padding(.horizontal, 6)
-                        .accessibilityHidden(true)
+                    if !dropFiles.isEmpty {
+                        Image(systemName: "tray.and.arrow.down")
+                            .font(DS.notchLabel)
+                            .foregroundColor(headingForeground)
+                            .padding(.horizontal, 6)
+                            .accessibilityHidden(true)
+                    }
                     ForEach(dropFiles, id: \.self) { url in
                         NotchDropFileItem(
                             url: url,
@@ -422,6 +418,16 @@ struct NotchLauncherPanelView: View {
                                 }
                             }
                         }
+                    }
+                    if showsMirror {
+                        if !dropFiles.isEmpty {
+                            Rectangle()
+                                .fill(subtleSurface)
+                                .frame(width: 1, height: 32)
+                                .padding(.horizontal, 6)
+                                .accessibilityHidden(true)
+                        }
+                        NotchMirrorTile(palette: widgetPalette)
                     }
                 }
             }
@@ -463,8 +469,6 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
-        case .mirror:
-            NotchMirrorView(palette: widgetPalette)
         case .note:
             NotchQuickNoteView(palette: widgetPalette)
         }

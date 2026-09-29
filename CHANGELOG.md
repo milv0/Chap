@@ -6,10 +6,10 @@ All notable changes to Chap are documented in this file.
 
 ### Added
 
-- **Mirror widget** — See your camera, flipped like a mirror, in the notch
-  before a call. It rests as a webcam icon and turns on only when you click it,
-  then turns off when you close the dock. Nothing is recorded,
-  and Chap asks for camera access only when you first turn it on.
+- **Mirror** — A webcam icon at the right end of the notch's bottom row, after
+  any dropped files. Click it to see your camera, flipped like a mirror, before
+  a call; nothing is recorded and Chap asks for camera access only the first
+  time. Hide it with Show Mirror in Settings → Notch.
 - **Quick Note widget** — Type a plain-text note right in the notch. It saves
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.

@@ -23,6 +23,7 @@ enum SettingsConfigTransfer {
             notchGlassMaterial: vm.notchGlassMaterial,
             notchPanelOpacity: vm.notchPanelOpacity,
             notchPanelColorHex: vm.notchPanelColorHex,
+            notchMirrorEnabled: vm.notchMirrorEnabled,
             notchWidgets: vm.notchWidgets,
             sites: vm.sites)
     }
@@ -181,6 +182,7 @@ enum SettingsConfigTransfer {
                         notchGlassMaterial: vm.notchGlassMaterial,
                         notchPanelOpacity: vm.notchPanelOpacity,
                         notchPanelColorHex: vm.notchPanelColorHex,
+                        notchMirrorEnabled: vm.notchMirrorEnabled,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 
