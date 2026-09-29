@@ -9,7 +9,7 @@ launches URLs, macOS apps, and Finder folders (up to four items
 per launch type), then centers resizable windows on the selected display.
 
 Alongside the always-present status menu it offers an optional Notch Launcher (a
-paged panel of up to twelve slots that expands from the MacBook notch, with Chap Drop and a
+six-slot panel that expands from the MacBook notch, with Chap Drop and a
 Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
 This is an XcodeGen project:
@@ -77,7 +77,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  up to twelve slots on three pages of four (Sites, Apps, Folders, Screenshots, Mirror, or Quick Note). It is additive —
+  six slots (Sites, Apps, Folders, Screenshots, Mirror, or Quick Note). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
   untouched); the Screenshot Shelf reads the system screenshot folder in place.

@@ -24,7 +24,7 @@ public enum MirrorDisplayState: Equatable, Sendable {
 }
 
 /// 거울 위젯의 상태·캡처 판정. 카메라 켜짐 표시등이 불필요하게 켜지지 않도록
-/// "사용자가 켠 거울이 보이는 페이지의 열린 도커에 있을 때"만 캡처한다.
+/// "사용자가 켠 거울이 열린 도커에 있을 때"만 캡처한다.
 /// 거울은 도커를 열 때마다 꺼진 상태(아이콘)로 시작한다.
 public enum MirrorPolicy {
     public static func displayState(access: CameraAccess, hasCamera: Bool) -> MirrorDisplayState {
@@ -38,8 +38,8 @@ public enum MirrorPolicy {
     }
 
     public static func shouldCapture(
-        state: MirrorDisplayState, isTurnedOn: Bool, isPageActive: Bool, isPanelOpen: Bool
+        state: MirrorDisplayState, isTurnedOn: Bool, isPanelOpen: Bool
     ) -> Bool {
-        state == .live && isTurnedOn && isPageActive && isPanelOpen
+        state == .live && isTurnedOn && isPanelOpen
     }
 }

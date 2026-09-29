@@ -8,13 +8,18 @@ All notable changes to Chap are documented in this file.
 
 - **Mirror widget** — See your camera, flipped like a mirror, in the notch
   before a call. It rests as a webcam icon and turns on only when you click it,
-  then turns off when you switch pages or close the dock. Nothing is recorded,
+  then turns off when you close the dock. Nothing is recorded,
   and Chap asks for camera access only when you first turn it on.
 - **Quick Note widget** — Type a plain-text note right in the notch. It saves
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.
-- **Section dividers** — Thin vertical lines now separate the widgets on each
-  notch page.
+- **Section dividers** — Thin vertical lines now separate the notch widgets.
+
+### Changed
+
+- **Six notch slots, no pages** — The notch now shows up to six widgets in one
+  row, enough for every widget type, and the page dots and swipe from 2.1 are
+  gone. Widgets placed on later pages move into the first free slots.
 
 ## [2.1.0] — 2026-09-29
 

@@ -66,16 +66,6 @@ struct NotchSettingsView: View {
         }
     }
 
-    /// 보드의 페이지 이름. 노치에서 점 순서(좌·중·우)와 같다.
-    static func pageName(_ page: Int) -> String {
-        "Page \(page + 1)"
-    }
-
-    static func slotIndices(onPage page: Int) -> Range<Int> {
-        let start = page * NotchWidget.pageSize
-        return start..<start + NotchWidget.pageSize
-    }
-
     static func widgetSymbol(_ widget: NotchWidget) -> String {
         if let launchType = widget.launchType {
             return LauncherListPolicy.symbolName(for: launchType)
@@ -119,32 +109,19 @@ struct NotchSettingsView: View {
                         Section("Widgets") {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(
-                                    "Drag a widget into a slot. Each page shows four slots; "
-                                        + "swipe or click the dots in the notch to switch pages."
+                                    "Drag a widget into a slot. Slots fill the panel from the left."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
 
-                                // 노치 패널의 12칸을 좌·중·우 페이지(4칸씩)로 본뜬 드롭 보드.
-                                VStack(alignment: .leading, spacing: 6) {
-                                    ForEach(0..<NotchWidget.pageCount, id: \.self) { page in
-                                        HStack(spacing: 8) {
-                                            Text(Self.pageName(page))
-                                                .font(.caption)
-                                                .foregroundColor(DS.textSecondary)
-                                                .frame(width: 44, alignment: .leading)
-                                            ForEach(
-                                                Self.slotIndices(onPage: page), id: \.self
-                                            ) { index in
-                                                WidgetSlotBox(
-                                                    index: index,
-                                                    widget: slotWidget(index),
-                                                    onAssign: { assign($0, to: index) },
-                                                    onClear: { assign(.none, to: index) })
-                                            }
-                                        }
-                                        .accessibilityElement(children: .contain)
-                                        .accessibilityLabel(Self.pageName(page))
+                                // 노치 패널의 6칸을 그대로 본뜬 드롭 보드.
+                                HStack(spacing: 6) {
+                                    ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
+                                        WidgetSlotBox(
+                                            index: index,
+                                            widget: slotWidget(index),
+                                            onAssign: { assign($0, to: index) },
+                                            onClear: { assign(.none, to: index) })
                                     }
                                 }
 
@@ -327,8 +304,10 @@ private struct WidgetSlotBox: View {
                 .font(DS.captionFont)
                 .foregroundColor(isEmpty ? DS.textTertiary : DS.textPrimary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .frame(width: 92, height: 64)
+        .padding(.horizontal, 3)
+        .frame(width: 76, height: 64)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                 .fill(

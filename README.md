@@ -9,7 +9,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 
 ## Features
 
-- **Notch Launcher** — An optional command surface with up to twelve widget slots on three swipeable pages that expands from the MacBook notch; the classic status menu always remains available
+- **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
@@ -100,7 +100,7 @@ Stored at `~/.chap.json`:
   "notchGlassMaterial": "clear",
   "notchPanelOpacity": 0.6,
   "notchPanelColorHex": "#000000",
-  "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none", "none", "none", "none", "none", "none", "none"],
+  "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none"],
   "sites": [
     {
       "name": "GitHub",
@@ -137,11 +137,11 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange up to twelve slots, four per page, by dragging Sites, Apps, Folders, Screenshots, Mirror, or Quick Note into the board. When more than one page has widgets, dots between the notch and the widgets switch pages, and a horizontal trackpad swipe over the dock moves left or right; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Folders, Screenshots, Mirror, or Quick Note into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
-**Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you switch pages, close the dock, or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
+**Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. It rests as a webcam icon: click it to turn the camera on, and it turns off again when you close the dock or click ×. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
 
 **Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
 

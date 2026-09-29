@@ -81,7 +81,6 @@ Sources/
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
-│   ├── NotchPagePolicy.swift  ← 노치 좌·중·우 페이지 분할·이동, 트랙패드 스와이프 판정
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
@@ -123,7 +122,6 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── DropPolicyTests.swift
     ├── ScreenshotShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
-    ├── NotchPagePolicyTests.swift
     ├── NotchToolWidgetTests.swift
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift
@@ -198,9 +196,9 @@ Config 모델 필드:
   - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 clear.
     appearance와 독립적으로 선택하며, 어떤 appearance에서도 Clear/Regular를 직접 고른다
   - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
-  - notchWidgets: [NotchWidget]  노치 패널 12칸(4칸 × 3페이지) 위젯 배치. 누락 시 첫 페이지
-                                 [sites, apps, folders, screenshots] + 빈 칸 8개. 2.0의 4칸
-                                 설정은 첫 페이지가 되고, 이전 버전은 앞 4칸만 읽는다
+  - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치. 누락 시 [sites, apps, folders,
+                                 screenshots, none, none]. 2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로
+                                 당겨 6칸에 옮기고, 2.0의 4칸 설정은 앞 4칸이 된다
   - sites: [Site]             사이트 목록
 
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.

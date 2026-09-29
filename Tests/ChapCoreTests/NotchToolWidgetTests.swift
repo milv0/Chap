@@ -24,17 +24,15 @@ struct MirrorPolicyTests {
         }
     }
 
-    @Test("capture runs only for a turned-on live mirror on the visible page of an open dock")
+    @Test("capture runs only for a turned-on live mirror in an open dock")
     func captureNeedsLiveOnVisibleOpen() {
         func capture(
-            _ state: MirrorDisplayState, on: Bool = true, active: Bool = true, open: Bool = true
+            _ state: MirrorDisplayState, on: Bool = true, open: Bool = true
         ) -> Bool {
-            MirrorPolicy.shouldCapture(
-                state: state, isTurnedOn: on, isPageActive: active, isPanelOpen: open)
+            MirrorPolicy.shouldCapture(state: state, isTurnedOn: on, isPanelOpen: open)
         }
         #expect(capture(.live))
         #expect(!capture(.live, on: false))
-        #expect(!capture(.live, active: false))
         #expect(!capture(.live, open: false))
         #expect(!capture(.needsPermission))
         #expect(!capture(.denied))

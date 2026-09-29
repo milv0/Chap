@@ -38,10 +38,8 @@ private let widgetBodyHeight: CGFloat = 92
 
 // MARK: - Mirror
 
-/// 통화 전 얼굴을 비춰 보는 거울. 보이는 페이지의 열린 도커에서만 카메라를 켠다.
+/// 통화 전 얼굴을 비춰 보는 거울. 사용자가 켠 뒤 도커가 열려 있는 동안만 카메라를 쓴다.
 struct NotchMirrorView: View {
-    /// 이 칸이 속한 페이지가 현재 보이는지.
-    let isActive: Bool
     let palette: NotchWidgetPalette
 
     @State private var state = MirrorCamera.displayState
@@ -58,7 +56,6 @@ struct NotchMirrorView: View {
                 .padding(.horizontal, 4)
         }
         .onAppear { refresh() }
-        .onChange(of: isActive) { _, _ in refresh() }
         .onDisappear { MirrorCamera.shared.stop() }
     }
 
@@ -149,7 +146,7 @@ struct NotchMirrorView: View {
     private func refresh() {
         state = MirrorCamera.displayState
         if MirrorPolicy.shouldCapture(
-            state: state, isTurnedOn: isTurnedOn, isPageActive: isActive, isPanelOpen: true)
+            state: state, isTurnedOn: isTurnedOn, isPanelOpen: true)
         {
             MirrorCamera.shared.start()
         } else {

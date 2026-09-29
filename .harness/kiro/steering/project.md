@@ -4,7 +4,7 @@ Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
 uses XcodeGen (`project.yml`) to generate `Chap.xcodeproj`. It launches URLs,
 macOS apps, and Finder folders (up to four items per launch type)
 and centers resizable windows on the selected display. Alongside the status menu
-it offers an optional Notch Launcher (a paged panel of up to twelve slots with Chap Drop and a
+it offers an optional Notch Launcher (a six-slot panel with Chap Drop and a
 Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
 ## Commands
@@ -53,7 +53,7 @@ There is no `Package.swift`; do not use `swift test`.
 - App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize, including resizable non-standard Office windows.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
-  `.nonactivatingPanel` under the hardware notch with up to twelve slots on three pages (Sites, Apps,
+  `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
   Folders, Screenshots, Mirror, or Quick Note); the status menu stays available, including
   on notchless Macs. Chap Drop copies dropped files into
   `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot

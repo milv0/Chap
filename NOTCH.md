@@ -145,31 +145,21 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
 
-## 위젯 페이지
+## 위젯 칸
 
-위젯은 12칸이며 4칸씩 좌·중·우 3페이지로 나뉜다. 위젯이 하나라도 있는
-페이지만 도커에 나타나고, 빈 페이지는 건너뛴다.
-
-| 항목 | 값 | 의미 |
-|---|---|---|
-| 페이지 크기 | 4칸 (`NotchWidget.pageSize`) | 한 번에 보이는 칸 수 |
-| 페이지 수 | 3 (`NotchWidget.pageCount`) | 좌·중·우 |
-| 페이지 점 | 지름 6pt, 누름 영역 16×12pt | 상단바와 위젯 사이. 보이는 페이지가 2개 이상일 때만 |
-| 스와이프 임계값 | 36pt (`NotchPageSwipeTracker.threshold`) | 가로 이동이 세로의 1.5배를 넘어야 인정. 한 제스처에 1페이지, 관성 무시 |
-| 전환 | smooth 0.28s, 동작 줄이기 시 즉시 | 페이지 폭 + 패딩만큼 밀면서 교체 |
-
-모든 페이지를 겹쳐 두므로 도커 폭은 칸이 가장 많은 페이지, 높이는 가장
-긴 페이지에 맞춰 고정된다. 페이지를 넘겨도 창 크기는 바뀌지 않는다.
-끝 페이지에서는 순환하지 않고 멈춘다. 도커를 열 때마다 첫 페이지부터 보인다.
+위젯은 6칸 한 줄이다. 빈 칸은 그리지 않으므로 도커 폭은 배치된 위젯 수에 비례한다
+(칸당 `columnWidth` 160pt + 간격). 위젯 종류(Sites·Apps·Folders·Screenshots·Mirror·Quick Note)가
+모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
+당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
 ## 도구 위젯: Mirror · Quick Note
 
-한 페이지의 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 폭 계산에는 영향이 없다.
+위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 폭 계산에는 영향이 없다.
 
 - **Mirror**: `AVCaptureVideoPreviewLayer`를 좌우 반전해 칸 폭 × 92pt에 aspect fill로 채운다.
   도커를 열 때마다 큰 `web.camera` 아이콘 + "Mirror" 이름의 꺼진 상태로 시작하고, 누르면 켜진다.
-  카메라 세션은 `MirrorPolicy.shouldCapture`가 참일 때만, 즉 권한이 있고 사용자가 켰으며 도커가 열려 있고
-  Mirror가 있는 페이지가 보일 때만 돈다. 미리보기 오른쪽 위 ×로 끌 수 있다. 페이지를 넘기거나 도커를 닫으면(`willHidePanel`) 즉시 멈춘다.
+  카메라 세션은 `MirrorPolicy.shouldCapture`가 참일 때만, 즉 권한이 있고 사용자가 켰으며 도커가 열려
+  있을 때만 돈다. 미리보기 오른쪽 위 ×로 끌 수 있고, 도커를 닫으면(`willHidePanel`) 즉시 멈춘다.
   권한은 칸의 **Turn On Mirror** 버튼을 눌렀을 때만 요청한다. 노치 hover만으로 권한 창을 띄우지 않는다.
 - **Quick Note**: 92pt 높이 `TextEditor`. 빈 메모는 "What's on your mind?"를 보여주고, 아래에 "Saved just now" 같은 상대 저장 시각을 표시한다. 입력은 0.5s debounce 후 직렬 큐에서 저장하고, 도커가 닫히기
   직전 `willHidePanel` 알림에 남은 변경을 flush한다. 입력하려면 패널이 key여야 하므로 메인 도커는
@@ -201,7 +191,6 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
-- `Sources/ChapCore/NotchPagePolicy.swift` — 페이지 분할·이동·스와이프 판정 (테스트로 고정)
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
 - `Sources/Chap/Views/NotchWidgetViews.swift`, `Sources/Chap/MirrorCamera.swift` — 거울·메모 위젯
 - `Sources/Chap/Views/NotchLauncherPanelView.swift` — 메인 패널 + 도커 실루엣 셰이프

@@ -313,28 +313,30 @@ public enum NotchWidget: String, Codable, CaseIterable {
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
     public static let removedScriptsRawValue = "scripts"
 
-    /// 한 페이지의 칸 수. 노치 도커는 한 번에 한 페이지를 보여준다.
-    public static let pageSize = 4
-    /// 좌·중·우 페이지 수.
-    public static let pageCount = 3
-    /// 노치 패널의 고정 칸 수 (페이지 3개 × 4칸). 앞 4칸이 첫 페이지다.
-    /// 2.0 이하의 4칸 설정은 첫 페이지로 그대로 옮겨지고, 이전 버전은
-    /// 앞 4칸만 읽으므로 12칸 파일도 호환된다.
-    public static let slotCount = pageSize * pageCount
+    /// 노치 패널의 고정 칸 수. 위젯 종류가 모두 한 줄에 들어가도록 6칸이다.
+    public static let slotCount = 6
 
-    /// 기본 배치: 첫 페이지 4칸에 런처 섹션 순서대로, 나머지는 빈 칸.
+    /// 기본 배치: 런처 섹션과 Screenshots, 나머지는 빈 칸.
     public static let defaultSlots: [NotchWidget] = normalizedSlots([
         .sites, .apps, .folders, .screenshots,
     ])
 
-    /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다 (초과는 자르고 부족은 빈 칸).
+    /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다.
+    /// 중복 위젯은 첫 칸만 남긴다. 칸 수를 넘는 뒤쪽 위젯은 버리지 않고 앞쪽 빈 칸에
+    /// 순서대로 당겨 넣는다 (2.1의 12칸 배치를 6칸으로 옮길 때 위젯을 잃지 않게).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
         var seen: Set<NotchWidget> = []
         let unique = widgets.filter { widget in
             widget == .none || seen.insert(widget).inserted
         }
-        let trimmed = unique.prefix(slotCount)
-        return Array(trimmed) + Array(repeating: .none, count: slotCount - trimmed.count)
+        var slots = Array(unique.prefix(slotCount))
+        slots += Array(repeating: .none, count: slotCount - slots.count)
+        var overflow = unique.dropFirst(slotCount).filter { $0 != .none }[...]
+        for index in slots.indices where slots[index] == .none {
+            guard let next = overflow.popFirst() else { break }
+            slots[index] = next
+        }
+        return slots
     }
 }
 
@@ -358,7 +360,7 @@ public struct Config: Codable {
     /// 노치 패널 콘텐츠 박스(노치 하단 경계 아래)의 배경색. "#RRGGBB".
     /// 상단바 구간은 노치 연장이라 항상 검정으로 유지된다.
     public var notchPanelColorHex: String
-    /// 노치 패널 12칸(4칸 × 3페이지)에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
+    /// 노치 패널 6칸에 배치된 위젯. 항상 정확히 `NotchWidget.slotCount`개다.
     public var notchWidgets: [NotchWidget]
     public var sites: [Site]
 
@@ -470,7 +472,7 @@ public struct Config: Codable {
                 try? container.decodeIfPresent(String.self, forKey: .notchPanelColorHex)
                     .flatMap { $0 })
             ?? Config.notchPanelColorHexDefault
-        // 알 수 없는 위젯 이름은 버리고 항상 12칸으로 정규화한다 (관용 디코딩).
+        // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
         {

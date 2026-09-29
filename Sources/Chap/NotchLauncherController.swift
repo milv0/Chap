@@ -32,17 +32,12 @@ final class NotchLauncherController {
     private var lastInsideDate = Date()
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
     private var revealModel: NotchRevealModel?
-    /// 열린 도커의 현재 페이지. 패널을 열 때마다 첫 페이지로 돌아간다.
-    private var pageModel: NotchPageModel?
-    private var scrollMonitor: Any?
     private var escapeMonitor: Any?
-    private var swipeTracker = NotchPageSwipeTracker()
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
-    /// 위젯이 있는 페이지들 (좌→우). 각 페이지는 최대 4칸이며 빈 페이지는 없다.
-    var pagesProvider: () -> [[NotchSlotContent]] = { [] }
+    var slotsProvider: () -> [NotchSlotContent] = { [] }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -90,7 +85,6 @@ final class NotchLauncherController {
         badgeRefreshToken += 1
         isPreviewPinned = false
         revealModel = nil
-        pageModel = nil
         panel?.orderOut(nil)
         panel = nil
         hotzoneWindow?.orderOut(nil)
@@ -277,10 +271,10 @@ final class NotchLauncherController {
     private func showPanel(forDrop: Bool = false) {
         guard panel == nil, let screen = Self.notchScreen() else { return }
 
-        let pages = pagesProvider()
+        let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !pages.isEmpty, forDrop: forDrop)
+                hasSlots: !slots.isEmpty, forDrop: forDrop)
         else { return }
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
@@ -289,7 +283,6 @@ final class NotchLauncherController {
         let notchWidth = Self.notchRect(on: screen).width
         let minWidth = max(notchWidth + 80, Self.panelMinWidth)
 
-        let pageModel = NotchPageModel(pageCount: pages.count)
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
         reveal.colorHex = colorProvider()
@@ -300,8 +293,7 @@ final class NotchLauncherController {
             awakeSessionEnd: awakeSessionEndProvider(),
             style: styleProvider(),
             glassMaterial: glassMaterialProvider(),
-            pages: pages,
-            pageModel: pageModel,
+            slots: slots,
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
@@ -345,7 +337,6 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
-        self.pageModel = pageModel
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -447,7 +438,6 @@ final class NotchLauncherController {
     /// 마우스가 노치·패널을 벗어난 채 `hideDelay`를 넘기면 닫는다.
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
-        startSwipeMonitor()
         startEscapeMonitor()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
@@ -460,15 +450,9 @@ final class NotchLauncherController {
     private func stopVisibilityMonitor() {
         visibilityTimer?.invalidate()
         visibilityTimer = nil
-        stopSwipeMonitor()
         stopEscapeMonitor()
     }
 
-    // MARK: - Page swipe
-
-    /// 도커 위에서 트랙패드를 가로로 쓸면 좌·중·우 페이지를 넘긴다.
-    /// nonactivating 패널도 커서 아래 창으로 스크롤 이벤트를 받으므로
-    /// 앱이 비활성이어도 로컬 모니터가 이벤트를 본다.
     /// 패널이 key일 때 Esc로 닫는다 (메모 입력 중 빠져나오는 길).
     private func startEscapeMonitor() {
         stopEscapeMonitor()
@@ -491,41 +475,6 @@ final class NotchLauncherController {
     private func prepareForPanelHide() {
         NotificationCenter.default.post(name: Self.willHidePanel, object: self)
         MirrorCamera.shared.stop()
-    }
-
-    private func startSwipeMonitor() {
-        stopSwipeMonitor()
-        guard (pageModel?.pageCount ?? 0) > 1 else { return }
-        swipeTracker.reset()
-        scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) {
-            [weak self] event in
-            guard let self, let panel = self.panel, event.window === panel,
-                let pageModel = self.pageModel
-            else { return event }
-            // 손을 뗀 뒤의 관성 스크롤은 무시한다: 한 번 쓸면 한 페이지만 넘긴다.
-            guard event.momentumPhase.isEmpty else { return event }
-            // 손가락 이동 방향으로 통일한다: 자연스러운 스크롤이 켜져 있으면
-            // scrollingDeltaX가 이미 손가락 방향이고, 꺼져 있으면 반대다.
-            let fingerDeltaX =
-                event.isDirectionInvertedFromDevice
-                ? event.scrollingDeltaX : -event.scrollingDeltaX
-            let hasPhase = !event.phase.isEmpty
-            let began = event.phase.contains(.began) || !hasPhase
-            let ended =
-                event.phase.contains(.ended) || event.phase.contains(.cancelled) || !hasPhase
-            if let step = self.swipeTracker.consume(
-                deltaX: fingerDeltaX, deltaY: event.scrollingDeltaY,
-                began: began, ended: ended)
-            {
-                pageModel.move(by: step)
-            }
-            return event
-        }
-    }
-
-    private func stopSwipeMonitor() {
-        if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
-        scrollMonitor = nil
     }
 
     private func evaluateVisibility() {
@@ -566,7 +515,6 @@ final class NotchLauncherController {
         panel?.orderOut(nil)
         panel = nil
         revealModel = nil
-        pageModel = nil
     }
 
     private func hidePanel() {
@@ -586,7 +534,6 @@ final class NotchLauncherController {
             }
         }
         revealModel = nil
-        pageModel = nil
         DispatchQueue.main.asyncAfter(
             deadline: .now() + NotchLauncherPanelView.closeDuration + 0.02
         ) { [weak self] in
