@@ -95,8 +95,8 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
-    /// 다운로드 칸 폭. 파일명이 20자 안팎까지 보인다.
-    static let downloadsColumnWidth: CGFloat = 200
+    /// 다운로드 칸 폭. 10pt 파일명이 20자 안팎까지 보인다.
+    static let downloadsColumnWidth: CGFloat = 160
     /// Focus 칸 폭. 시간 버튼 셋(1h·4h·8h)이 한 줄에 들어간다.
     static let focusColumnWidth: CGFloat = 150
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.

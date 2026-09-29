@@ -19,9 +19,9 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
-- **Lighter Downloads names** — File names in the Downloads slot are one step
-  smaller (12pt), so long names get cut less and the slot sits lighter beside
-  Screenshots. Sites and Finder lists stay at 13pt.
+- **Slimmer Downloads slot** — File names in the Downloads slot are 10pt and the
+  slot is 160pt wide instead of 200pt, so the dock is narrower while names show
+  about as much as before. Sites and Finder lists stay at 13pt.
 
 ## [2.4.2] — 2026-09-29
 
