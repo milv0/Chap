@@ -13,6 +13,15 @@ It stays out of the way, remembers how you like things, and when you call, it
 shows up at once and puts your windows exactly where they belong. Then it steps
 back.
 
+## Mascot
+
+Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
+(`ChapMascot`, three inks: navy outline, white body, blue-gray shade). It lies
+on the left of the notch's black strip whenever Focus is off, and gives the
+spot back to the Focus timer while Focus runs. It is decoration, never a
+control: it takes no clicks, carries no text, and VoiceOver skips it. Keep it
+calm and still; it is a friend resting nearby, not a pet asking for attention.
+
 ## The name carries both meanings
 
 | Meaning | Where it comes from | What it gives Chap |

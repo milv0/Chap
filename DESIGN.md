@@ -26,6 +26,17 @@ blue competing with content. Titles and labels stay neutral gray.
 | Black top strip widgets (Drop box, Mirror, Quick Note) | White at 85%, 100% on hover | `DS.notchStripIconColor` |
 | Active strip tool, Focus bolt when running | `#3664FF` | `DS.accent` |
 
+## Mascot sprite
+
+The seal is drawn from the `ChapMascot` character grid, one filled square per
+pixel, at 1.5pt per pixel in the notch strip (3 Retina pixels, so edges stay crisp).
+
+| Ink | Hex | Grid symbol |
+|---|---|---|
+| Outline, eyes, mouth | `#161A30` | `o`, `e` |
+| Body | `#FFFFFF` | `w` |
+| Shade | `#B0BED8` | `s` |
+
 ## Notch panel presets
 
 Custom style offers two one-click panel colors; the color picker covers the rest.

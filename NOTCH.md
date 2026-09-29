@@ -177,6 +177,12 @@ Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
 
+## 상단 띠 왼쪽: 마스코트 · Focus 시계
+
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt 가운데)에는 Focus가 켜져 있으면 번개와 남은 시간,
+꺼져 있으면 Chap 마스코트(아기 물범, `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다.
+마스코트는 `Canvas`로 픽셀마다 사각형을 칠하며, 누를 수 없고 VoiceOver에서 제외된다.
+
 ## 도구 위젯: Mirror · Quick Note
 
 위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.

@@ -172,6 +172,10 @@ struct QAView: View {
                     "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
                 ),
                 (
+                    "노치 왼쪽의 물범은 뭔가요?",
+                    "Chap의 마스코트인 아기 물범입니다. Focus가 꺼져 있을 때 노치 왼쪽 검정 띠에 엎드려 있고, Focus를 켜면 그 자리를 남은 시간에 양보합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                ),
+                (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
@@ -391,6 +395,10 @@ struct QAView: View {
                 (
                     "How do I enable the Notch Launcher?",
                     "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
+                ),
+                (
+                    "Who is the seal on the left of the notch?",
+                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip while Focus is off and gives the spot to the Focus timer while Focus runs. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

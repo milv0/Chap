@@ -658,3 +658,35 @@ struct NotchQuickNoteView: View {
         }
     }
 }
+
+/// Chap 마스코트(아기 물범). 픽셀마다 사각형을 칠해 어떤 배율에서도 도트가 선명하다.
+/// 장식이므로 누를 수 없고 VoiceOver에서도 건너뛴다.
+struct NotchMascotView: View {
+    var pixelSize: CGFloat = ChapMascot.stripPixelSize
+
+    /// 윤곽선은 검정 띠에서도 몸통 가장자리가 보이도록 아주 짙은 남색이다.
+    private static func color(_ ink: ChapMascot.Ink) -> Color {
+        switch ink {
+        case .outline: return Color(red: 22 / 255, green: 26 / 255, blue: 48 / 255)
+        case .body: return .white
+        case .shade: return Color(red: 176 / 255, green: 190 / 255, blue: 216 / 255)
+        }
+    }
+
+    var body: some View {
+        Canvas { context, _ in
+            for pixel in ChapMascot.pixels {
+                let rect = CGRect(
+                    x: CGFloat(pixel.x) * pixelSize, y: CGFloat(pixel.y) * pixelSize,
+                    width: pixelSize, height: pixelSize)
+                context.fill(Path(rect), with: .color(Self.color(pixel.ink)))
+            }
+        }
+        .frame(
+            width: CGFloat(ChapMascot.width) * pixelSize,
+            height: CGFloat(ChapMascot.height) * pixelSize
+        )
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+    }
+}

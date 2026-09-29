@@ -220,7 +220,7 @@ struct NotchLauncherPanelView: View {
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
-            // Keep Awake 상태는 별도 배지 창이 아니라 메인 도커 상단에 통합한다.
+            // 상단 띠 왼쪽: Focus가 켜져 있으면 남은 시간, 아니면 Chap 마스코트.
             .overlay(alignment: .top) { awakeStripStatus }
             // 상단 띠 오른쪽: Drop 상자(파일이 없어도 펼친 동안은 빈 상자), 그 오른쪽 Mirror, Quick Note.
             // 파일이 있으면 상자는 별도 배지 창이 그리고, 없으면 여기서 숫자 없이 그린다.
@@ -294,6 +294,17 @@ struct NotchLauncherPanelView: View {
                             + NotchGeometry.awakeStatusOffsetX,
                         y: topInset / 2)
                 }
+            }
+            .allowsHitTesting(false)
+        } else {
+            // Focus가 꺼져 있으면 같은 자리(노치 왼쪽 띠)에 Chap 마스코트가 엎드려 있다.
+            let sideWidth = NotchGeometry.stripPlateauSideWidth
+            let notchHalf = stripPlateauHalfWidth - sideWidth
+            GeometryReader { geo in
+                NotchMascotView()
+                    .position(
+                        x: geo.size.width / 2 - notchHalf - sideWidth / 2,
+                        y: topInset / 2)
             }
             .allowsHitTesting(false)
         }
