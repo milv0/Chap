@@ -23,9 +23,10 @@ enum DS {
         onDarkBackground ? accentLight.opacity(0.9) : accent.opacity(0.75)
     }
 
-    /// 검정 노치 띠 위 도구 아이콘(Drop·Mirror·Quick Note) 색. 호버 시 한 단계 밝아진다.
+    /// 검정 노치 띠 위 위젯 아이콘(Drop·Mirror·Quick Note) 색. 하드웨어 노치와 이어지는 띠라
+    /// 흰색을 쓰고, 호버 시 한 단계 밝아진다. 켜진 도구만 액센트 블루로 바뀐다.
     static func notchStripIconColor(isHovered: Bool = false) -> Color {
-        accentLight.opacity(isHovered ? 1 : 0.8)
+        .white.opacity(isHovered ? 1 : 0.85)
     }
     /// 강조 입력면. 라이트/다크 모두에서 대비가 유지되도록 고정 RGB 대신 accent 틴트를 쓴다.
     static let accentSurface = accent.opacity(0.12)

@@ -30,11 +30,11 @@ struct NotchSettingsView: View {
         return false
     }
 
-    /// 콘텐츠 박스 배경 기본 프리셋. Guide는 GuideWindow 시그니처
-    /// 색(DS.accent, DESIGN.md의 #3664FF)이다.
+    /// 콘텐츠 박스 배경 기본 프리셋. Mist는 푸른 기가 도는 밝은 회색
+    /// (#E8ECF8)으로, 밝은 배경용 텍스트/아이콘 대비가 자동 적용된다.
     private static let colorPresets: [(name: String, hex: String)] = [
         (name: "Black", hex: "#000000"),
-        (name: "Guide", hex: "#3664FF"),
+        (name: "Mist", hex: "#E8ECF8"),
     ]
 
     private func slotWidget(_ index: Int) -> NotchWidget {
@@ -246,8 +246,7 @@ struct NotchSettingsView: View {
                                 HStack {
                                     Text("Panel Color")
                                     Spacer()
-                                    // 기본 프리셋: 검정(노치 연장)과 Chap 테마 블루
-                                    // (GuideWindow 시그니처 색, DS.accent #3664FF).
+                                    // 기본 프리셋: 검정(노치 연장)과 밝은 Mist(#E8ECF8).
                                     ForEach(Self.colorPresets, id: \.hex) { preset in
                                         ColorPresetSwatch(
                                             name: preset.name, hex: preset.hex,

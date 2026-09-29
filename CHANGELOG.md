@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.4.2] — 2026-09-29
+
+### Changed
+
+- **Mist panel preset** — Custom panel color presets are now Black and Mist (`#E8ECF8`, a soft blue-gray light), replacing the Guide blue swatch. Any color stays available from the color picker.
+- **White strip widgets** — The Drop, Mirror, and Quick Note icons in the notch's
+  black strip are white again; only an open tool turns blue. Section icons keep
+  the soft Chap blue.
+
 ## [2.4.1] — 2026-09-29
 
 ### Fixed
