@@ -54,7 +54,7 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with up to twelve slots on three pages (Sites, Apps,
-  Folders, or Screenshots); the status menu stays available, including
+  Folders, Screenshots, Mirror, or Quick Note); the status menu stays available, including
   on notchless Macs. Chap Drop copies dropped files into
   `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot
   Shelf reads the system screenshot folder in place.

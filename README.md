@@ -12,6 +12,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - **Notch Launcher** — An optional command surface with up to twelve widget slots on three swipeable pages that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
+- **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
@@ -40,6 +41,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
+- Camera permission only if you place the notch Mirror widget (asked when you click Turn On Mirror)
 
 ## Usage
 
@@ -135,9 +137,13 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange up to twelve slots, four per page, by dragging Sites, Apps, Folders, or Screenshots into the board. When more than one page has widgets, dots between the notch and the widgets switch pages, and a horizontal trackpad swipe over the dock moves left or right; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange up to twelve slots, four per page, by dragging Sites, Apps, Folders, Screenshots, Mirror, or Quick Note into the board. When more than one page has widgets, dots between the notch and the widgets switch pages, and a horizontal trackpad swipe over the dock moves left or right; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
+
+**Mirror** shows your built-in camera, flipped like a mirror, so you can check how you look before a call. The camera runs only while the dock is open on the Mirror's page, and the green camera light shows when it does; nothing is recorded or saved. Chap asks for camera access only when you click **Turn On Mirror**.
+
+**Quick Note** is a single plain-text note you can type into right from the notch. It saves as you type to `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 

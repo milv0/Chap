@@ -6,6 +6,10 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
+    /// 카메라 거울 위젯.
+    case mirror
+    /// 빠른 메모 위젯.
+    case note
 }
 
 /// 열린 도커의 현재 페이지. 컨트롤러의 스와이프 모니터와 페이지 점이 함께 바꾼다.
@@ -385,7 +389,7 @@ struct NotchLauncherPanelView: View {
                 let isCurrent = index == pageModel.current
                 HStack(alignment: .top, spacing: DS.spacing) {
                     ForEach(Array(page.enumerated()), id: \.offset) { _, slot in
-                        slotView(slot)
+                        slotView(slot, isActive: isCurrent)
                             .frame(width: Self.columnWidth, alignment: .leading)
                     }
                 }
@@ -420,7 +424,7 @@ struct NotchLauncherPanelView: View {
     }
 
     @ViewBuilder
-    private func slotView(_ slot: NotchSlotContent) -> some View {
+    private func slotView(_ slot: NotchSlotContent, isActive: Bool) -> some View {
         switch slot {
         case .launchers(let section):
             sectionView(section)
@@ -428,7 +432,21 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
+        case .mirror:
+            NotchMirrorView(isActive: isActive, palette: widgetPalette)
+        case .note:
+            NotchQuickNoteView(palette: widgetPalette)
         }
+    }
+
+    private var widgetPalette: NotchWidgetPalette {
+        NotchWidgetPalette(
+            primary: primaryForeground,
+            secondary: secondaryForeground,
+            accent: accentForeground,
+            textShadowOpacity: textShadowOpacity,
+            hoverBackground: rowHoverBackground,
+            subtleSurface: subtleSurface)
     }
 
     private func sectionView(_ section: LauncherListSection) -> some View {

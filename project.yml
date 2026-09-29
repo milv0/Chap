@@ -24,6 +24,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSAppleEventsUsageDescription: "Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows."
+        NSCameraUsageDescription: "Chap shows your camera in the notch Mirror widget so you can check how you look before a call. Video is never recorded or saved."
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.utilities
         SUFeedURL: "https://milv0.github.io/Chap/appcast.xml"

@@ -21,7 +21,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .screenshots,
+        .sites, .apps, .folders, .screenshots, .mirror, .note,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -59,6 +59,8 @@ struct NotchSettingsView: View {
         case .apps: return "Apps"
         case .folders: return "Folders"
         case .screenshots: return "Screenshots"
+        case .mirror: return "Mirror"
+        case .note: return "Quick Note"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
@@ -80,6 +82,8 @@ struct NotchSettingsView: View {
         }
         switch widget {
         case .screenshots: return "camera.viewfinder"
+        case .mirror: return "person.crop.square"
+        case .note: return "note.text"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
         }
@@ -145,11 +149,25 @@ struct NotchSettingsView: View {
                                 }
 
                                 // 배치 가능한 위젯 팔레트. 이미 배치된 위젯은 흐리게.
-                                HStack(spacing: 8) {
-                                    ForEach(Self.paletteWidgets, id: \.self) { widget in
-                                        WidgetPaletteChip(
-                                            widget: widget,
-                                            isPlaced: vm.notchWidgets.contains(widget))
+                                // 칩이 설정 폭을 넘지 않도록 세 개씩 두 줄로 놓는다.
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(
+                                        Array(
+                                            stride(from: 0, to: Self.paletteWidgets.count, by: 3)),
+                                        id: \.self
+                                    ) { start in
+                                        HStack(spacing: 8) {
+                                            ForEach(
+                                                Self.paletteWidgets[
+                                                    start..<min(
+                                                        start + 3, Self.paletteWidgets.count)],
+                                                id: \.self
+                                            ) { widget in
+                                                WidgetPaletteChip(
+                                                    widget: widget,
+                                                    isPlaced: vm.notchWidgets.contains(widget))
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -343,6 +361,8 @@ private struct WidgetSlotBox: View {
             Button("Apps") { onAssign(.apps) }
             Button("Folders") { onAssign(.folders) }
             Button("Screenshots") { onAssign(.screenshots) }
+            Button("Mirror") { onAssign(.mirror) }
+            Button("Quick Note") { onAssign(.note) }
             if !isEmpty {
                 Divider()
                 Button("Clear Slot", action: onClear)
@@ -353,6 +373,8 @@ private struct WidgetSlotBox: View {
         .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
         .accessibilityAction(named: "Place Folders") { onAssign(.folders) }
         .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
+        .accessibilityAction(named: "Place Mirror") { onAssign(.mirror) }
+        .accessibilityAction(named: "Place Quick Note") { onAssign(.note) }
         .accessibilityAction(named: "Clear Slot", onClear)
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
         .draggable(widget.rawValue)

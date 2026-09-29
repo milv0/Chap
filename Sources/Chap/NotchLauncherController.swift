@@ -12,6 +12,9 @@ import SwiftUI
 /// 핫존 entered → 재등장)이 플리커를 만들기 때문이다.
 /// 모든 호출은 메인 스레드 전제(AppKit 윈도우 소유).
 final class NotchLauncherController {
+    /// 패널이 닫히기 직전. 메모처럼 입력 중인 위젯이 남은 변경을 저장한다.
+    static let willHidePanel = Notification.Name("ChapNotchWillHidePanel")
+
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
@@ -32,6 +35,7 @@ final class NotchLauncherController {
     /// 열린 도커의 현재 페이지. 패널을 열 때마다 첫 페이지로 돌아간다.
     private var pageModel: NotchPageModel?
     private var scrollMonitor: Any?
+    private var escapeMonitor: Any?
     private var swipeTracker = NotchPageSwipeTracker()
     /// 설정 슬라이더 프리뷰 중에는 자동 숨김을 멈추고 패널을 고정한다.
     private var isPreviewPinned = false
@@ -81,6 +85,7 @@ final class NotchLauncherController {
     }
 
     func tearDown() {
+        prepareForPanelHide()
         stopVisibilityMonitor()
         badgeRefreshToken += 1
         isPreviewPinned = false
@@ -318,7 +323,7 @@ final class NotchLauncherController {
         frame = frame.integral
         frame.origin.y = screen.frame.maxY - frame.height
 
-        let panel = NSPanel(
+        let panel = NotchKeyablePanel(
             contentRect: frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false)
@@ -443,6 +448,7 @@ final class NotchLauncherController {
     private func startVisibilityMonitor() {
         stopVisibilityMonitor()
         startSwipeMonitor()
+        startEscapeMonitor()
         lastInsideDate = Date()
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
             self?.evaluateVisibility()
@@ -455,6 +461,7 @@ final class NotchLauncherController {
         visibilityTimer?.invalidate()
         visibilityTimer = nil
         stopSwipeMonitor()
+        stopEscapeMonitor()
     }
 
     // MARK: - Page swipe
@@ -462,6 +469,30 @@ final class NotchLauncherController {
     /// 도커 위에서 트랙패드를 가로로 쓸면 좌·중·우 페이지를 넘긴다.
     /// nonactivating 패널도 커서 아래 창으로 스크롤 이벤트를 받으므로
     /// 앱이 비활성이어도 로컬 모니터가 이벤트를 본다.
+    /// 패널이 key일 때 Esc로 닫는다 (메모 입력 중 빠져나오는 길).
+    private func startEscapeMonitor() {
+        stopEscapeMonitor()
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) {
+            [weak self] event in
+            guard let self, event.keyCode == 53, let panel = self.panel,
+                event.window === panel
+            else { return event }
+            self.hidePanel()
+            return nil
+        }
+    }
+
+    private func stopEscapeMonitor() {
+        if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
+        escapeMonitor = nil
+    }
+
+    /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.
+    private func prepareForPanelHide() {
+        NotificationCenter.default.post(name: Self.willHidePanel, object: self)
+        MirrorCamera.shared.stop()
+    }
+
     private func startSwipeMonitor() {
         stopSwipeMonitor()
         guard (pageModel?.pageCount ?? 0) > 1 else { return }
@@ -507,6 +538,12 @@ final class NotchLauncherController {
             lastInsideDate = Date()
             return
         }
+        // 빠른 메모를 입력하는 동안에는 마우스가 벗어나도 닫지 않는다.
+        // 다른 곳을 클릭해 패널이 key를 잃거나 Esc를 누르면 평소 규칙으로 돌아간다.
+        if panel.isKeyWindow, panel.firstResponder is NSTextView {
+            lastInsideDate = Date()
+            return
+        }
         let location = NSEvent.mouseLocation
         var stayRegion = panel.frame.union(hotzoneWindow?.frame ?? panel.frame)
         if let badgeFrame = badgeWindow?.frame {
@@ -524,6 +561,7 @@ final class NotchLauncherController {
 
     /// 표면 전환용 즉시 정리. 애니메이션 없이 현재 패널을 내린다.
     private func dismissPanelImmediately() {
+        if panel != nil { prepareForPanelHide() }
         stopVisibilityMonitor()
         panel?.orderOut(nil)
         panel = nil
@@ -534,6 +572,7 @@ final class NotchLauncherController {
     private func hidePanel() {
         stopVisibilityMonitor()
         guard let panel else { return }
+        prepareForPanelHide()
         self.panel = nil
         // 메인 패널을 노치로 말아 넣고 애니메이션 뒤 창을 정리한다.
         if let reveal = revealModel {
@@ -610,4 +649,11 @@ private final class HoverView: NSView {
         onFilesDropped(urls)
         return true
     }
+}
+
+/// 메인 도커 패널. borderless 패널은 기본적으로 key가 될 수 없어 빠른 메모에
+/// 입력할 수 없으므로 key를 허용한다. `.nonactivatingPanel`이라 key가 되어도
+/// 앞의 앱을 비활성화하지 않고, `becomesKeyOnlyIfNeeded`로 입력 칸을 누를 때만 key가 된다.
+final class NotchKeyablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
 }

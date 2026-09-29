@@ -293,6 +293,10 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
+    /// 거울: 통화 전에 내장 카메라 화면을 좌우 반전해 바로 비춰 본다.
+    case mirror = "mirror"
+    /// 빠른 메모: 노치에서 바로 적는 한 장짜리 메모.
+    case note = "note"
     /// 빈 칸.
     case none = "none"
 
@@ -302,7 +306,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .drop, .none: return nil
+        case .screenshots, .mirror, .note, .drop, .none: return nil
         }
     }
 

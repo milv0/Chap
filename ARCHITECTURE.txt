@@ -22,6 +22,7 @@ Sources/
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
+│   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
 │   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
@@ -52,6 +53,7 @@ Sources/
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
+│       ├── NotchWidgetViews.swift ← 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
 │       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)
@@ -80,6 +82,8 @@ Sources/
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
 │   ├── NotchPagePolicy.swift  ← 노치 좌·중·우 페이지 분할·이동, 트랙패드 스와이프 판정
+│   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
+│   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
 │   ├── SiteCountLimitPolicy.swift ← launch type별 최대 4개 추가·검증 정책
@@ -120,6 +124,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ScreenshotShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
     ├── NotchPagePolicyTests.swift
+    ├── NotchToolWidgetTests.swift
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift
     ├── StatusBarSymbolImageTests.swift

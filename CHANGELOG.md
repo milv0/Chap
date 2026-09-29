@@ -2,6 +2,18 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Mirror widget** — See your camera, flipped like a mirror, in the notch
+  before a call. The camera runs only while the dock is open on the Mirror's
+  page, nothing is recorded, and Chap asks for access only when you click
+  Turn On Mirror.
+- **Quick Note widget** — Type a plain-text note right in the notch. It saves
+  as you type, stays out of config export, and keeps the dock open while you
+  write; press Esc or click elsewhere to finish.
+
 ## [2.1.0] — 2026-09-29
 
 ### Added

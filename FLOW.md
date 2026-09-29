@@ -523,6 +523,9 @@ Settings → Notch Launcher on
   → 페이지가 둘 이상이면 상단바와 위젯 사이에 페이지 점. 점 클릭 또는 도커 위
     가로 트랙패드 스와이프(로컬 scrollWheel 모니터, 관성 무시, 제스처당 1페이지)로
     좌·중·우 이동. 모든 페이지를 겹쳐 두어 창 크기는 가장 큰 페이지에 고정된다
+  → Mirror 칸: 보이는 페이지일 때만 MirrorCamera.start() (전용 직렬 큐), 페이지 이탈·닫힘 시 stop()
+  → Quick Note 칸: 패널이 key가 되어 입력. 커서가 메모에 있으면 visibility 판정이 닫지 않음.
+    Esc(keyDown 로컬 모니터) 또는 key 상실 후 일반 규칙. 닫히기 직전 willHidePanel → 메모 flush·카메라 stop
   → 80ms common-mode mouse polling
   → 노치·패널·배지 영역 밖 200ms → 180ms 접힘 후 orderOut
 

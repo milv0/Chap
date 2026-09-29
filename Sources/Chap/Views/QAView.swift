@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에는 4칸씩 3페이지, 모두 12칸이 있습니다. Sites, Apps, Folders, Screenshots를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다. 두 페이지 이상에 위젯이 있으면 노치의 점을 누르거나 트랙패드를 좌우로 쓸어 페이지를 넘깁니다."
+                    "Notch 탭의 Widgets 보드에는 4칸씩 3페이지, 모두 12칸이 있습니다. Sites, Apps, Folders, Screenshots, Mirror, Quick Note를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다. 두 페이지 이상에 위젯이 있으면 노치의 점을 누르거나 트랙패드를 좌우로 쓸어 페이지를 넘깁니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -390,7 +390,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "The Widgets board has twelve slots on three pages of four. Drag Sites, Apps, Folders, or Screenshots into any slot, or use a slot's context menu or VoiceOver actions. When more than one page has widgets, click the dots in the notch or swipe left or right on the trackpad to switch pages."
+                    "The Widgets board has twelve slots on three pages of four. Drag Sites, Apps, Folders, Screenshots, Mirror, or Quick Note into any slot, or use a slot's context menu or VoiceOver actions. When more than one page has widgets, click the dots in the notch or swipe left or right on the trackpad to switch pages."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

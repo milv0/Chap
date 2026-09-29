@@ -77,7 +77,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  up to twelve slots on three pages of four (Sites, Apps, Folders, or Screenshots). It is additive —
+  up to twelve slots on three pages of four (Sites, Apps, Folders, Screenshots, Mirror, or Quick Note). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
   untouched); the Screenshot Shelf reads the system screenshot folder in place.

@@ -296,6 +296,10 @@ extension AppDelegate {
                             return nil
                         case .screenshots:
                             return .screenshots
+                        case .mirror:
+                            return .mirror
+                        case .note:
+                            return .note
                         case .drop:
                             // Drop 파일은 이제 메인 도커 하단 행이 전담한다.
                             return nil
