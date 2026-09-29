@@ -396,7 +396,7 @@ struct NotchLauncherPanelView: View {
                     .fill(subtleSurface)
                     .frame(height: 1)
                     .padding(.top, 2)
-                // 파일은 아이콘만 한 줄로 둔다. 이름은 툴팁과 VoiceOver로 제공해 줄 높이를 줄인다.
+                // 파일은 아이콘 + 한 줄 파일명으로 둔다. 전체 이름은 툴팁과 VoiceOver로 제공한다.
                 HStack(alignment: .center, spacing: 4) {
                     Image(systemName: "tray.and.arrow.down")
                         .font(DS.notchLabel)
@@ -621,7 +621,7 @@ struct NotchKeycap: View {
     let isOptionHeld: Bool
     let foreground: Color
     let background: Color
-    var font: Font = DS.notchLabel
+    var font: Font = DS.notchMeta.weight(.semibold)
     /// 목록 줄은 `⌥1` 폭을 미리 잡아 줄이 움직이지 않게 한다. 아이콘 배지는 아이콘을
     /// 덜 가리도록 글자 폭만 쓴다 (겹쳐 그리는 배지라 폭이 바뀌어도 배치가 움직이지 않는다).
     var reservesModifierWidth = true
@@ -635,8 +635,8 @@ struct NotchKeycap: View {
                 .font(font)
                 .foregroundColor(isOptionHeld ? .white : foreground)
         }
-        .padding(.horizontal, 5)
-        .padding(.vertical, 1.5)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 1)
         .background(
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(isOptionHeld ? DS.accent : background)
@@ -941,7 +941,7 @@ enum NotchTextMetrics {
 
     /// 목록 한 줄: 좌우 여백 6 + 이름 + 최소 간격 8 + 키캡(글자 + 좌우 5).
     static func rowWidth(name: String, keycap: String?) -> CGFloat {
-        let keycapWidth = keycap.map { labelWidth($0) + 10 + 8 } ?? 0
+        let keycapWidth = keycap.map { labelWidth($0) - 2 + 8 + 8 } ?? 0
         return 12 + bodyWidth(name) + keycapWidth
     }
 

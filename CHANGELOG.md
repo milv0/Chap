@@ -35,7 +35,7 @@ All notable changes to Chap are documented in this file.
   (Sites and Folders 112–170pt, Mirror 104pt, Apps to its icon grid), making
   the dock noticeably narrower. Headings are brighter, the Apps title no longer
   carries an extra ⌥ key, and dropped files show as a compact row of icons with
-  names in tooltips.
+  one-line names.
 - **Six notch slots, no pages** — The notch now shows up to six widgets in one
   row, enough for every widget type, and the page dots and swipe from 2.1 are
   gone. Widgets placed on later pages move into the first free slots.

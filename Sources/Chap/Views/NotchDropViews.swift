@@ -36,7 +36,21 @@ struct NotchDropFileItem: View {
                     .frame(width: 28, height: 28)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 36, height: 30)
+                // 파일명은 한 줄로 보인다. 긴 이름은 가운데를 줄이고 전체는 툴팁으로 본다.
+                .overlay(alignment: .bottom) {
+                    Text(url.lastPathComponent)
+                        .font(DS.notchMeta)
+                        .foregroundColor(primaryForeground)
+                        .shadow(
+                            color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
+                        )
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(width: 64)
+                        .offset(y: 16)
+                }
+                .frame(width: 64, height: 48, alignment: .top)
                 .background(
                     RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                         .fill(isHovered ? hoverBackground : Color.clear)
