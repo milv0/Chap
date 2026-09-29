@@ -38,6 +38,132 @@ struct NotchWidgetHeader: View {
 /// 위젯 본문 높이. 목록 칸 4줄과 정확히 같아 모든 칸의 바닥선이 맞는다.
 private let widgetBodyHeight: CGFloat = NotchAppIconTile.listBodyHeight
 
+// MARK: - Focus (Keep Mac Awake)
+
+/// 노치 한 칸의 Focus 모드. Keep Mac Awake 세션을 번개 아이콘과 함께 켜고 끄며
+/// 남은 시간을 크게 보여준다. 상태바 메뉴의 Keep Mac Awake와 같은 세션이다.
+struct NotchFocusView: View {
+    let palette: NotchWidgetPalette
+    /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
+    @State var sessionEnd: Date?
+
+    /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
+    static let activateRequest = Notification.Name("ChapFocusActivate")
+    static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            NotchWidgetHeader(symbol: "bolt.fill", title: "Focus", palette: palette)
+            Group {
+                if let sessionEnd, sessionEnd > Date() {
+                    active(until: sessionEnd)
+                } else {
+                    idle
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: widgetBodyHeight)
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
+        ) { note in
+            sessionEnd = note.object as? Date
+        }
+    }
+
+    /// 꺼짐: 흐린 번개 + 한 줄 + 시간 버튼 셋.
+    private var idle: some View {
+        VStack(spacing: 6) {
+            Image(systemName: "bolt")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(palette.primary.opacity(0.55))
+            VStack(spacing: 1) {
+                Text(KeepAwakePolicy.focusIdleLine)
+                    .font(DS.notchLabel)
+                    .foregroundColor(palette.primary)
+                Text(KeepAwakePolicy.focusIdleHint)
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+            }
+            HStack(spacing: 5) {
+                ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
+                    FocusPresetButton(
+                        title: KeepAwakePolicy.shortTitle(of: preset), palette: palette
+                    ) {
+                        NotificationCenter.default.post(
+                            name: Self.activateRequest, object: preset.duration)
+                    }
+                    .help("Keep your Mac awake for \(preset.title.lowercased())")
+                }
+            }
+        }
+    }
+
+    /// 켜짐: 파란 번개(살짝 맥박) + 남은 시간 + 위트 한 줄 + 끄기.
+    private func active(until end: Date) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            let remaining = end.timeIntervalSince(context.date)
+            VStack(spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(DS.accent)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(palette.primary)
+                }
+                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+                FocusPresetButton(
+                    title: KeepAwakePolicy.focusOffTitle, palette: palette, isQuiet: true
+                ) {
+                    NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
+                }
+                .help("Turn off Keep Mac Awake")
+                .padding(.top, 2)
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(
+                "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
+        }
+    }
+}
+
+/// Focus 위젯의 작은 캡슐 버튼.
+private struct FocusPresetButton: View {
+    let title: String
+    let palette: NotchWidgetPalette
+    var isQuiet = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(DS.notchMeta.weight(.semibold))
+                .foregroundColor(
+                    isQuiet ? palette.secondary : (isHovered ? .white : palette.primary)
+                )
+                .padding(.horizontal, isQuiet ? 8 : 9)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(
+                            isQuiet
+                                ? palette.subtleSurface
+                                : (isHovered ? DS.accent : palette.subtleSurface))
+                )
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
 // MARK: - Mirror
 
 /// 상단 검정 띠의 거울 아이콘과, 누르면 띠 바로 아래로 펼쳐지는 좌우 반전 미리보기.
@@ -186,6 +312,8 @@ struct NotchStripTools: View {
     var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
+    /// Quick Note 아이콘이 켜고 끄는 도커 메모 모드.
+    @Binding var isNoteMode: Bool
 
     private enum Tool: Equatable { case mirror, note }
     @State private var openTool: Tool?
@@ -218,9 +346,9 @@ struct NotchStripTools: View {
                             iconCenterX: centerX, stripHeight: stripHeight,
                             isOpen: binding(for: .mirror))
                     case .note:
-                        NotchQuickNoteStripControl(
+                        NotchQuickNoteStripButton(
                             iconCenterX: centerX, stripHeight: stripHeight,
-                            isOpen: binding(for: .note))
+                            isNoteMode: $isNoteMode)
                     }
                 }
             }
@@ -237,9 +365,8 @@ struct NotchStripTools: View {
                 // 클릭 위치를 이 오버레이의 좌표로 옮긴 뒤, 같은 좌표의 팝업 영역과 비교한다.
                 let origin = geo.frame(in: .global).origin
                 let local = CGPoint(x: click.x - origin.x, y: click.y - origin.y)
-                let size =
-                    open == .mirror
-                    ? NotchMirrorStripControl.previewSize : NotchQuickNoteStripControl.popupSize
+                // 팝업으로 뜨는 도구는 Mirror뿐이다 (Quick Note는 도커 메모 모드로 펼친다).
+                let size = NotchMirrorStripControl.previewSize
                 let center = NotchLauncherPolicy.stripPopupCenter(
                     iconCenterX: geo.size.width / 2 + notchRightEdge + offsets[index],
                     popupSize: size, containerWidth: geo.size.width, stripHeight: stripHeight)
@@ -262,68 +389,36 @@ struct NotchStripTools: View {
     }
 }
 
-/// 상단 띠의 Quick Note 아이콘. 누르면 띠 바로 아래로 메모가 펼쳐져 전체 내용을 보고 쓸 수 있다.
-struct NotchQuickNoteStripControl: View {
+/// 상단 띠의 Quick Note 아이콘. 누르면 위젯 줄 자리가 넓은 메모장으로 바뀐다(메모 모드).
+/// 메모를 창으로 분리해 둔 상태면 그 창을 앞으로 가져온다.
+struct NotchQuickNoteStripButton: View {
     let iconCenterX: CGFloat
     let stripHeight: CGFloat
-    @Binding var isOpen: Bool
+    @Binding var isNoteMode: Bool
 
     @State private var isHovered = false
 
-    static let popupSize = CGSize(width: 240, height: 128)
-
-    /// 검정 띠에서 내려오는 어두운 카드에 맞춘 고정 색.
-    private static let palette = NotchWidgetPalette(
-        primary: .white.opacity(0.95), secondary: .white.opacity(0.6), accent: DS.accent,
-        heading: .white.opacity(0.6), textShadowOpacity: 0,
-        hoverBackground: .white.opacity(0.1), subtleSurface: .white.opacity(0.14))
-
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .topLeading) {
-                Button {
-                    isOpen.toggle()
-                } label: {
-                    Image(systemName: "note.text")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(isOpen ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
-                        .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .onHover { isHovered = $0 }
-                .help(isOpen ? "Close Quick Note" : "Quick Note")
-                .accessibilityLabel(isOpen ? "Close Quick Note" : "Quick Note")
-                .position(x: iconCenterX, y: stripHeight / 2)
-
-                if isOpen {
-                    NotchQuickNoteView(
-                        palette: Self.palette, showsHeader: false,
-                        bodyHeight: Self.popupSize.height - 16, focusesOnAppear: true
-                    )
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 4)
-                    .frame(width: Self.popupSize.width, height: Self.popupSize.height)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(white: 0.1).opacity(0.96))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.14), lineWidth: 0.5)
-                    )
-                    .shadow(color: .black.opacity(0.35), radius: 10, y: 4)
-                    .environment(\.colorScheme, .dark)
-                    .position(
-                        NotchLauncherPolicy.stripPopupCenter(
-                            iconCenterX: iconCenterX, popupSize: Self.popupSize,
-                            containerWidth: geo.size.width, stripHeight: stripHeight)
-                    )
-                    .transition(.opacity.combined(with: .scale(scale: 0.94, anchor: .top)))
-                }
+        Button {
+            if QuickNoteWindow.isOpen {
+                QuickNoteWindow.show()
+                NotificationCenter.default.post(
+                    name: NotchLauncherController.requestClose, object: nil)
+            } else {
+                isNoteMode.toggle()
             }
+        } label: {
+            Image(systemName: "note.text")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(isNoteMode ? DS.accent : .white.opacity(isHovered ? 1 : 0.85))
+                .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
+                .contentShape(Rectangle())
         }
-        .animation(.smooth(duration: 0.18), value: isOpen)
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(isNoteMode ? "Back to widgets" : "Quick Note")
+        .accessibilityLabel(isNoteMode ? "Close Quick Note" : "Quick Note")
+        .position(x: iconCenterX, y: stripHeight / 2)
     }
 }
 
@@ -359,14 +454,34 @@ private struct MirrorPreview: NSViewRepresentable {
 
 // MARK: - Quick Note
 
+/// 넓게 펼친 메모(도커 메모 모드, 분리 창)의 상단 도구 줄 동작.
+struct NotchQuickNoteToolbar {
+    /// 메모를 떠 있는 창으로 분리한다. nil이면 버튼을 숨긴다(이미 창인 경우).
+    var onDetach: (() -> Void)?
+    /// 메모 모드를 닫고 위젯으로 돌아간다. nil이면 버튼을 숨긴다.
+    var onClose: (() -> Void)?
+}
+
 /// 노치에서 바로 적는 한 장짜리 메모. 입력은 잠시 멈추면 저장되고,
 /// 칸이 사라질 때 남은 변경을 즉시 저장한다.
 struct NotchQuickNoteView: View {
+    /// 대기 중인 저장을 즉시 쓰라는 요청 (분리 창 닫힘, 앱 종료).
+    static let flushRequest = Notification.Name("ChapQuickNoteFlush")
+
+    /// 대기 중인 저장이 파일에 다 쓰일 때까지 기다린다 (앱 종료 직전).
+    static func drainPendingSaves() {
+        saveQueue.sync {}
+    }
+
     let palette: NotchWidgetPalette
     var showsHeader = true
     var bodyHeight: CGFloat = widgetBodyHeight
     /// 띠에서 펼칠 때는 바로 입력할 수 있게 커서를 넣는다.
     var focusesOnAppear = false
+    /// 넓은 메모의 도구 줄(제목·글자 수·복사·분리·닫기). 주면 헤더 대신 그린다.
+    var toolbar: NotchQuickNoteToolbar?
+
+    @State private var didCopy = false
 
     @State private var text = ""
     @State private var didLoad = false
@@ -381,7 +496,9 @@ struct NotchQuickNoteView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            if showsHeader {
+            if let toolbar {
+                toolbarRow(toolbar)
+            } else if showsHeader {
                 NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
             }
             // 목록 본문과 같은 13pt. 회색 상자 대신 옅은 테두리만 두고,
@@ -448,12 +565,71 @@ struct NotchQuickNoteView: View {
         ) { _ in
             debouncer.flush()
         }
+        .onReceive(NotificationCenter.default.publisher(for: Self.flushRequest)) { _ in
+            debouncer.flush()
+        }
+    }
+
+    private func toolbarRow(_ toolbar: NotchQuickNoteToolbar) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: "note.text")
+                .font(DS.notchLabel)
+                .foregroundColor(palette.heading)
+            Text("Quick Note")
+                .font(DS.notchLabel)
+                .foregroundColor(palette.heading)
+            Text(QuickNoteStore.characterCountLabel(text.count))
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+                .monospacedDigit()
+            Spacer(minLength: 0)
+            toolButton(
+                symbol: didCopy ? "checkmark" : "doc.on.doc",
+                label: didCopy ? "Copied" : "Copy note", action: copyAll
+            )
+            .disabled(text.isEmpty)
+            if let onDetach = toolbar.onDetach {
+                toolButton(symbol: "macwindow.on.rectangle", label: "Open in a window") {
+                    // 분리 창이 최신 내용을 읽도록 먼저 저장한다 (같은 직렬 큐라 순서가 보장된다).
+                    debouncer.flush()
+                    onDetach()
+                }
+            }
+            if let onClose = toolbar.onClose {
+                toolButton(symbol: "xmark", label: "Back to widgets", action: onClose)
+            }
+        }
+        .padding(.horizontal, 6)
+        .frame(height: DS.notchHeaderHeight)
+    }
+
+    private func toolButton(symbol: String, label: String, action: @escaping () -> Void)
+        -> some View
+    {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(palette.heading)
+                .frame(width: 22, height: DS.notchHeaderHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(label)
+        .accessibilityLabel(label)
+    }
+
+    private func copyAll() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        didCopy = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { didCopy = false }
     }
 
     private func load() {
         guard !didLoad else { return }
         let store = store
-        DispatchQueue.global(qos: .userInitiated).async {
+        // 저장과 같은 직렬 큐에서 읽어, 방금 flush한 내용(분리 직전 입력)을 놓치지 않는다.
+        Self.saveQueue.async {
             let saved = store.load()
             let date = saved.isEmpty ? nil : store.lastSavedDate()
             DispatchQueue.main.async {

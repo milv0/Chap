@@ -33,7 +33,7 @@
   하단의 가로 아이콘 행(파일이 있을 때만 표시)으로 보여준다.
 - **왼쪽 상태 영역**: 별도 배지 창은 두지 않는다. Keep Awake 시작/종료는
   상단바 아이콘 색과 중앙 HUD가 담당하고, 메인 도커가 열렸을 때만 왼쪽
-  plateau 안에 파란 커피 아이콘 + h:mm:ss 남은 시간을 1초마다 렌더링한다.
+  plateau 안에 파란 번개(bolt.fill) 아이콘 + h:mm:ss 남은 시간을 1초마다 렌더링한다.
   묶음은 영역 중심에서 오른쪽으로 `awakeStatusOffsetX`만큼 보정한다.
 
 ## 실루엣 문법: 오목 플레어
@@ -61,7 +61,7 @@
 | 이름 | 값 | 의미 |
 |---|---|---|
 | `stripPlateauSideWidth` | 110 | 노치 좌우의 평평한 검정 상태 영역 폭 |
-| `awakeStatusOffsetX` | -2 | 왼쪽 상태 영역 안의 h:mm:ss 커피+시간 묶음 좌측 광학 보정 |
+| `awakeStatusOffsetX` | -2 | 왼쪽 상태 영역 안의 h:mm:ss 번개+시간 묶음 좌측 광학 보정 |
 | `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
@@ -145,7 +145,7 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
 보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
 목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
-"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 고정폭 숫자)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
+"5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 10pt 보조색·고정폭 숫자, 다운로드 칸과 같은 크기)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
 
 참고: https://developer.apple.com/design/human-interface-guidelines/color
@@ -161,6 +161,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
+| Downloads | 200pt (파일명이 핵심) |
+| Focus | 150pt |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -182,10 +184,14 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   첫 도구는 항상 상자 바로 오른쪽에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
   Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
   - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
-  - Quick Note: 240×128 어두운 카드 안에서 메모를 바로 입력한다(펼치면 커서가 들어간다).
+  - Quick Note: 팝업이 아니라 **메모 모드**다. 누르면 위젯 줄 자리가 도커 폭 전체의 메모장(줄 높이 200pt)으로 바뀌고
+    도커가 SwiftUI로 잰 콘텐츠 크기를 `NotchContentSizeKey`로 올려 보내고 컨트롤러가 그 크기로 창을 맞춘다
+    (`resizePanel(toContentSize:)`). 레이아웃 전 추측 측정을 쓰지 않아 아래 Drop 줄이 창 밖으로 밀리지 않는다. 도구 줄: 제목, 글자 수(`characterCountLabel`), 복사, 창으로 분리,
+    × (위젯으로). 분리 창(`QuickNoteWindow`)은 floating·크기 조절·위치 기억(420×320 기본, 280×180 최소)이며, 창이 열려
+    있는 동안 띠 아이콘은 그 창을 앞으로 가져온다. 분리 직전 flush하고 창은 같은 직렬 큐에서 읽어 입력을 놓치지 않는다.
   아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
-  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror**(`notchMirrorEnabled`)와
-  **Show Quick Note**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
+  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror Icon**(`notchMirrorEnabled`)와
+  **Show Quick Note Icon**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
 - **Quick Note 입력**: 13pt 본문 `TextEditor`, 0.5s debounce 후 직렬 큐 저장, `willHidePanel` 때 flush.
   입력 중에는 마우스가 벗어나도 닫지 않고 Esc 또는 key 상실로 끝낸다. 패널은 `NotchKeyablePanel`이다.
 
@@ -226,6 +232,24 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 `notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다. 화면 기록 권한 없이 레이어를
 직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
+
+## Focus 칸 (Keep Mac Awake)
+
+번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
+- 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
+- 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
+  Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
+- 켜져 있는 동안 상단 띠 왼쪽 Keep Awake 시계도 커피 대신 같은 번개(`bolt.fill`) 아이콘을 쓴다.
+- 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
+  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
+
+## Downloads 칸
+
+`~/Downloads`에서 최근 4개(폴더에 들어온 시각 순, 없으면 수정 시각)를 보여준다. 숨김 파일, 받는 중인 파일
+(`.crdownload`, `.download`, `.part` 등), 폴더(.app 제외)는 뺀다(`DownloadsShelfPolicy`). 한 줄은 26pt: 20pt 파일
+아이콘(이미지는 썸네일), 가운데 생략 파일명, 오른쪽 끝 짧은 시각(`now`, `5m`, `3h`, `1d`, `Sep 24`). 클릭 열기, 드래그
+꺼내기, 우클릭 Open·Share…·Show in Finder. 제목 클릭은 Finder로 다운로드 폴더를 연다. 2초마다 다시 읽고, 위젯이
+보일 때만 읽는다. macOS가 다운로드 폴더를 보호하므로 처음 한 번 폴더 접근 권한을 묻는다.
 
 ## 모션 기준
 

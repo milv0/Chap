@@ -29,6 +29,22 @@ extension AppDelegate {
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         buildMenu()
+        // 노치 Focus 위젯이 Keep Mac Awake 세션을 켜고 끈다 (메뉴와 같은 세션).
+        focusObservers = [
+            NotificationCenter.default.addObserver(
+                forName: NotchFocusView.activateRequest, object: nil, queue: .main
+            ) { [weak self] note in
+                guard let duration = note.object as? TimeInterval,
+                    let preset = KeepAwakePolicy.presets.first(where: { $0.duration == duration })
+                else { return }
+                self?.keepAwake.activate(preset: preset)
+            },
+            NotificationCenter.default.addObserver(
+                forName: NotchFocusView.deactivateRequest, object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.keepAwake.deactivate()
+            },
+        ]
         // 해상도·배치·외장 모니터·clamshell 변경 시 노치 창 프레임을 재계산한다.
         screenParametersObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -54,6 +70,9 @@ extension AppDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        // 메모를 쓰던 중 종료해도 마지막 입력이 남도록 대기 중인 저장을 끝까지 쓴다.
+        NotificationCenter.default.post(name: NotchQuickNoteView.flushRequest, object: nil)
+        NotchQuickNoteView.drainPendingSaves()
         globalHotKeyManager.stop()
         pendingScreenRefresh?.cancel()
         pendingScreenRefresh = nil

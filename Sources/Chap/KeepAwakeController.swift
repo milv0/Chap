@@ -13,6 +13,9 @@ import IOKit.pwr_mgt
 /// 열어도 세션과 파란 상태 아이콘이 남는 문제가 있었다. 잠든 시간도 세는
 /// `wallDeadline` 타이머와 wake 알림 재확인으로 이미 지난 세션을 즉시 정리한다.
 final class KeepAwakeController {
+    /// 세션이 켜지거나 꺼질 때 모든 곳(노치 Focus 위젯 등)에 알린다. object는 종료 시각(Date?)이다.
+    static let didChangeNotification = Notification.Name("ChapKeepAwakeDidChange")
+
     /// 상태 변화 이벤트. 피드백(HUD·사운드)과 메뉴 갱신에 쓰인다.
     enum Event: Equatable {
         case started(presetTitle: String)
@@ -30,7 +33,18 @@ final class KeepAwakeController {
     private(set) var sessionEnd: Date?
 
     /// 세션 시작/해제/만료 시 호출. HUD·사운드 피드백과 메뉴 갱신용.
-    var onEvent: ((Event) -> Void)?
+    /// 호출될 때마다 `didChangeNotification`도 함께 보낸다.
+    var onEvent: ((Event) -> Void)? {
+        get { eventHandler }
+        set {
+            eventHandler = { [weak self] event in
+                newValue?(event)
+                NotificationCenter.default.post(
+                    name: Self.didChangeNotification, object: self?.sessionEnd)
+            }
+        }
+    }
+    private var eventHandler: ((Event) -> Void)?
 
     var isActive: Bool { hasAssertion }
 

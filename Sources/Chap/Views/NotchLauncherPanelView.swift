@@ -6,6 +6,10 @@ enum NotchSlotContent {
     case launchers(LauncherListSection)
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
+    /// 다운로드 선반 위젯.
+    case downloads
+    /// Focus(Keep Mac Awake) 위젯.
+    case awake
 
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
@@ -18,6 +22,8 @@ enum NotchSlotContent {
                 // Drop 파일은 메인 도커 하단 행이 전담한다.
                 return nil
             case .screenshots: return .screenshots
+            case .downloads: return .downloads
+            case .awake: return .awake
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
@@ -36,6 +42,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var isDropTargetActive = false
     /// ⌥를 누르고 있는 동안. 키캡이 강조되고 "⌥1"처럼 수식키를 함께 보여준다.
     @Published var isOptionHeld = false
+    /// 메모 모드: 위젯 줄 자리를 넓은 Quick Note 편집기로 바꾼다. 도커를 열 때마다 꺼진 채 시작한다.
+    @Published var isNoteMode = false
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -64,6 +72,9 @@ struct NotchLauncherPanelView: View {
     /// 상단 검정 띠에 Quick Note 아이콘을 둘지. Mirror 오른쪽에 둔다.
     var showsNote = false
     let onLaunch: (Int) -> Void
+    /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 메모 모드처럼 내용이 바뀌면
+    /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
+    var onContentSizeChange: (CGSize) -> Void = { _ in }
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     @ObservedObject var reveal: NotchRevealModel
@@ -78,6 +89,12 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
+    /// 다운로드 칸 폭. 파일명이 20자 안팎까지 보인다.
+    static let downloadsColumnWidth: CGFloat = 200
+    /// Focus 칸 폭. 시간 버튼 셋(1h·4h·8h)이 한 줄에 들어간다.
+    static let focusColumnWidth: CGFloat = 150
+    /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
+    static let noteModeHeight: CGFloat = 200
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
@@ -100,11 +117,16 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(rows.max() ?? 0, header))))
+        case .awake:
+            return Self.focusColumnWidth
+        case .downloads:
+            // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
+            return Self.downloadsColumnWidth
         case .screenshots:
             // 썸네일 34 + 간격 6 + 시각 문구 + Spacer 앞 간격 6 + 좌우 여백 12.
             let label =
                 ["88 min ago", "Yesterday", "88 hr ago"]
-                .map(NotchTextMetrics.bodyWidth).max() ?? 0
+                .map(NotchTextMetrics.metaWidth).max() ?? 0
             let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
@@ -204,13 +226,26 @@ struct NotchLauncherPanelView: View {
                     besideDropBadge: true,
                     showsEmptyDropBox: dropFiles.isEmpty,
                     showsMirror: showsMirror,
-                    showsNote: showsNote)
+                    showsNote: showsNote,
+                    isNoteMode: $reveal.isNoteMode)
             }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
             .padding(.horizontal, Self.shadowPadding)
             .padding(.bottom, Self.shadowPadding)
+            // 창 크기에 눌리지 않은 본래 크기로 배치한다. 창보다 크면 창이 이 크기를 따라온다.
+            // (눌리면 Drop 줄·구분선이 위젯 줄과 겹치고, 잰 크기도 창 크기라 창이 커지지 않는다.)
+            .fixedSize()
+            // 스케일 애니메이션 전의 실제 크기를 잰다 (scaleEffect는 레이아웃 크기를 바꾸지 않는다).
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: NotchContentSizeKey.self, value: geo.size)
+                }
+            )
+            .onPreferenceChange(NotchContentSizeKey.self) { size in
+                onContentSizeChange(size)
+            }
             // 노치에서 아래로 펼쳐지는 등장. 페이드 대신 상단 고정 확장을 쓴다.
             .scaleEffect(x: 1, y: reveal.revealed ? 1 : 0.4, anchor: .top)
             .opacity(reveal.revealed ? 1 : 0)
@@ -229,7 +264,8 @@ struct NotchLauncherPanelView: View {
             GeometryReader { geo in
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     HStack(spacing: 5) {
-                        Image(systemName: "cup.and.saucer.fill")
+                        // Focus 위젯과 같은 번개. 켜져 있는 동안 상단 띠 왼쪽에 남은 시간과 함께 보인다.
+                        Image(systemName: "bolt.fill")
                             .font(.system(size: 12))
                             .foregroundColor(DS.accent)
                         Text(
@@ -393,6 +429,30 @@ struct NotchLauncherPanelView: View {
             .fixedSize(horizontal: false, vertical: true)
             // 도커가 최소 폭보다 좁은 내용을 담으면 위젯 줄을 가운데에 둔다.
             .frame(maxWidth: .infinity, alignment: .center)
+            // 메모 모드: 위젯 줄 자리를 도커 폭 전체의 넓은 메모장으로 바꾼다. 높이가 늘면
+            // 컨트롤러가 창을 다시 맞춘다 (`resizePanelToFit`).
+            .frame(minHeight: reveal.isNoteMode ? Self.noteModeHeight : 0, alignment: .top)
+            .opacity(reveal.isNoteMode ? 0 : 1)
+            .allowsHitTesting(!reveal.isNoteMode)
+            .accessibilityHidden(reveal.isNoteMode)
+            .overlay {
+                if reveal.isNoteMode {
+                    GeometryReader { geo in
+                        NotchQuickNoteView(
+                            palette: widgetPalette, showsHeader: false,
+                            bodyHeight: max(geo.size.height - DS.notchHeaderHeight - 7, 60),
+                            focusesOnAppear: true,
+                            toolbar: NotchQuickNoteToolbar(
+                                onDetach: {
+                                    QuickNoteWindow.show()
+                                    NotificationCenter.default.post(
+                                        name: NotchLauncherController.requestClose, object: nil)
+                                },
+                                onClose: { reveal.isNoteMode = false }))
+                    }
+                    .transition(.opacity)
+                }
+            }
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.
@@ -466,6 +526,12 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass)
+        case .downloads:
+            NotchDownloadsShelfView(
+                backgroundHex: contrastBackgroundHex,
+                usesSemanticForeground: usesSemanticGlass)
+        case .awake:
+            NotchFocusView(palette: widgetPalette, sessionEnd: awakeSessionEnd)
         }
     }
 
@@ -926,10 +992,16 @@ struct PressedStripShape: Shape {
 enum NotchTextMetrics {
     private static let body = NSFont.systemFont(ofSize: 13)
     private static let label = NSFont.systemFont(ofSize: 11, weight: .semibold)
+    private static let meta = NSFont.systemFont(ofSize: 10, weight: .medium)
 
     static func bodyWidth(_ text: String) -> CGFloat {
         // SwiftUI 렌더링은 AppKit 측정보다 1~2pt 넓게 그리므로 여유를 둔다.
         ceil((text as NSString).size(withAttributes: [.font: body]).width) + 3
+    }
+
+    /// 보조 정보(10pt medium) 폭. 스크린샷·다운로드 칸의 시각 문구에 쓴다.
+    static func metaWidth(_ text: String) -> CGFloat {
+        ceil((text as NSString).size(withAttributes: [.font: meta]).width) + 2
     }
 
     static func labelWidth(_ text: String) -> CGFloat {
@@ -987,5 +1059,14 @@ private struct NotchSectionTitleButton: View {
         .accessibilityLabel(title)
         .accessibilityHint("Opens \(title) in Chap Settings")
         .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// 도커 콘텐츠 크기를 창 컨트롤러로 올려 보내는 preference.
+struct NotchContentSizeKey: PreferenceKey {
+    static let defaultValue: CGSize = .zero
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        let next = nextValue()
+        if next != .zero { value = next }
     }
 }

@@ -71,7 +71,7 @@ struct LauncherListPolicyTests {
 
     @Test("each launch type maps to its own stable symbol")
     func symbolPerLaunchType() {
-        #expect(LauncherListPolicy.symbolName(for: .url) == "bolt.fill")
+        #expect(LauncherListPolicy.symbolName(for: .url) == "macwindow")
         #expect(LauncherListPolicy.symbolName(for: .app) == "app.fill")
         #expect(LauncherListPolicy.symbolName(for: .finder) == "folder.fill")
     }

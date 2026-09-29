@@ -3,6 +3,11 @@
 This file is loaded by Claude Code for this repository. Keep it aligned with
 `README.md`, `ARCHITECTURE.txt`, and the shared rules under `.harness/shared/rules/`.
 
+**Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
+snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
+copy; controls stay plain, wit goes in secondary text, and Chap asks for as few
+permissions as possible.
+
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
@@ -104,7 +109,7 @@ search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-six slots (Sites, Apps, Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is an additive
+six slots (Sites, Apps, Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is an additive
 surface — the status-bar `NSMenu` is always available, including on notchless
 Macs. Chap Drop copies dropped files into
 `~/Library/Application Support/Chap/Drop/` (originals untouched) and the
@@ -140,6 +145,7 @@ Follow the shared rules:
 - `.harness/shared/rules/swift-testing.md`
 - `.harness/shared/rules/commit-convention.md`
 - `.harness/shared/rules/architecture-docs.md`
+- `.harness/shared/rules/brand-voice.md` (identity and copy; source of truth is `BRAND.md`)
 
 Important local expectations:
 

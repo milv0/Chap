@@ -375,7 +375,9 @@ extension AppDelegate {
     @objc func showAbout() {
         let alert = NSAlert()
         alert.messageText = "Chap"
-        alert.informativeText = "Version \(Defaults.appVersion)\n\nMade by Team Chap"
+        alert.informativeText =
+            "Your chap in the menu bar — always close, never in the way.\n\n"
+            + "Version \(Defaults.appVersion) · Made by Team Chap"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()

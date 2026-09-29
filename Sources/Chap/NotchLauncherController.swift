@@ -19,6 +19,8 @@ final class NotchLauncherController {
     static let didClickPanel = Notification.Name("ChapNotchDidClickPanel")
     /// 공유 메뉴 같은 시스템 팝업이 떠 있는 동안 도커를 고정/해제한다. object는 Bool(고정 여부).
     static let setSharingPinned = Notification.Name("ChapNotchSetSharingPinned")
+    /// 도커 안 UI(메모 분리 등)가 도커를 닫아 달라고 요청한다.
+    static let requestClose = Notification.Name("ChapNotchRequestClose")
 
     private var hotzoneWindow: NSWindow?
     private var panel: NSPanel?
@@ -45,6 +47,7 @@ final class NotchLauncherController {
     /// 공유 메뉴가 떠 있는 동안: 마우스가 밖으로 나가도 닫지 않는다.
     private var isSharingPinned = false
     private var sharingPinObserver: NSObjectProtocol?
+    private var closeRequestObserver: NSObjectProtocol?
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
@@ -80,6 +83,22 @@ final class NotchLauncherController {
     private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
+    /// 열린 도커 창을 SwiftUI가 잰 콘텐츠 크기에 맞춘다 (메모 모드 전환 등).
+    /// 상단은 항상 화면 최상단에 붙인다. 계산은 `showPanel`과 같은 규칙을 쓴다.
+    private func resizePanel(toContentSize size: CGSize) {
+        guard let panel, let screen = Self.notchScreen(), size.height > 0 else { return }
+        let inset = screen.safeAreaInsets.top
+        var frame = NotchLauncherPolicy.panelFrame(
+            screenFrame: screen.frame,
+            topSafeAreaInset: inset,
+            contentSize: CGSize(width: ceil(size.width), height: ceil(size.height) - inset))
+        frame = frame.integral
+        frame.origin.y = screen.frame.maxY - frame.height
+        guard frame != panel.frame else { return }
+        panel.setFrame(frame, display: true)
+        lastInsideDate = Date()
+    }
+
     func update(enabled: Bool) {
         guard let screen = Self.notchScreen(),
             NotchLauncherPolicy.shouldPresent(
@@ -316,6 +335,10 @@ final class NotchLauncherController {
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
             },
+            onContentSizeChange: { [weak self] size in
+                // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.
+                DispatchQueue.main.async { self?.resizePanel(toContentSize: size) }
+            },
             onOpenSettings: { [weak self] type in
                 self?.hidePanel()
                 self?.onOpenSettings(type)
@@ -499,12 +522,21 @@ final class NotchLauncherController {
         resignKeyObserver = nil
         if let sharingPinObserver { NotificationCenter.default.removeObserver(sharingPinObserver) }
         sharingPinObserver = nil
+        if let closeRequestObserver {
+            NotificationCenter.default.removeObserver(closeRequestObserver)
+        }
+        closeRequestObserver = nil
         isSharingPinned = false
     }
 
     /// 띠 팝업(Quick Note·Mirror) 바깥을 누르거나 다른 앱을 누르면 팝업을 접게 알린다.
     /// 클릭 이벤트는 그대로 흘려보내 아래 위젯도 평소처럼 반응한다.
     private func startSharingPinObserver() {
+        closeRequestObserver = NotificationCenter.default.addObserver(
+            forName: Self.requestClose, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.hidePanel()
+        }
         sharingPinObserver = NotificationCenter.default.addObserver(
             forName: Self.setSharingPinned, object: nil, queue: .main
         ) { [weak self] note in

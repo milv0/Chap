@@ -2,6 +2,35 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.4.0] — 2026-09-29
+
+### Added
+
+- **Focus Mode widget** — A lightning-bolt notch slot for Keep Mac Awake. Chap on
+  with 1h, 4h, or 8h; while it runs, the bolt pulses and a countdown shows how
+  long is left, from "Fully charged" down to "Landing soon". Chap off to stop. It
+  is the same session as Keep Mac Awake in the menu, and the timer in the notch's
+  top strip now uses the same bolt instead of a coffee cup.
+- **Window icon for Sites** — URL launchables use a browser-window icon in the
+  menu, the notch, and Settings, so the lightning bolt now means Focus only.
+- **Downloads widget** — A new notch slot shows your four newest downloads with
+  their file names and how long ago they arrived. Click to open, drag a file out,
+  or right-click to share it or show it in Finder. Click the title to open
+  Downloads. Files still downloading are hidden. macOS asks once for access to
+  the Downloads folder.
+- **Quick Note window** — Open the note in its own floating, resizable window
+  from the note toolbar. It stays above other windows while the notch is closed
+  and remembers its size and position.
+
+### Changed
+
+- **Your chap in the menu bar** — Chap now introduces itself as a friend: the
+  welcome screen says hello, About and the website share one line, and a new
+  BRAND.md keeps Chap's voice consistent.
+- **Roomier Quick Note** — Clicking the note icon now turns the widget row into a
+  wide note across the notch, with a character count and a copy button. Click ×
+  or the icon again to return to your widgets.
+
 ## [2.3.0] — 2026-09-29
 
 ### Added
@@ -14,7 +43,7 @@ All notable changes to Chap are documented in this file.
 
 - **Quick Note in the top strip** — Quick Note moved out of the widget slots to a
   note icon right of Mirror in the notch's black strip. Click it and the note
-  opens just below, ready to type. Hide it with Show Quick Note in Settings.
+  opens just below, ready to type. Hide it with Show Quick Note Icon in Settings.
 - **Minimum notch width** — The open notch is at least 640pt wide and centers the
   widget row, so a few widgets no longer squeeze it against the notch.
 - **Drop box always visible when open** — The open notch shows the Drop box in
@@ -51,7 +80,7 @@ All notable changes to Chap are documented in this file.
 - **Mirror** — A webcam icon in the black strip beside the notch, next to the
   Drop badge. Click it and your camera, flipped like a mirror, pops open just
   below the strip; nothing is recorded and Chap asks for camera access only the first
-  time. Hide it with Show Mirror in Settings → Notch.
+  time. Hide it with Show Mirror Icon in Settings → Notch.
 - **Quick Note widget** — Type a plain-text note right in the notch. It saves
   as you type, shows when it was last saved, stays out of config export, and keeps the dock open while you
   write; press Esc or click elsewhere to finish.

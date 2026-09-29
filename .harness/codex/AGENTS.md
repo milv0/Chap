@@ -2,6 +2,11 @@
 
 Follow these instructions when working in this repository.
 
+**Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
+snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
+copy; controls stay plain, wit goes in secondary text, and Chap asks for as few
+permissions as possible.
+
 ## Project Snapshot
 
 Chap is a macOS 14+ menu bar launcher written in Swift, AppKit, and SwiftUI. It
@@ -77,7 +82,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  six slots (Sites, Apps, Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
+  six slots (Sites, Apps, Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
   untouched); the Screenshot Shelf reads the system screenshot folder in place.
@@ -107,6 +112,7 @@ Follow these files before making relevant changes:
 - `.harness/shared/rules/swift-testing.md`
 - `.harness/shared/rules/commit-convention.md`
 - `.harness/shared/rules/architecture-docs.md`
+- `.harness/shared/rules/brand-voice.md` (identity and copy; source of truth is `BRAND.md`)
 
 Important expectations:
 

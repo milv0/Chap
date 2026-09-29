@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.3.0"
+        ?? "2.4.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -291,6 +291,10 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case folders = "folders"
     /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
     case screenshots = "screenshots"
+    /// 다운로드 선반: ~/Downloads의 최근 파일을 모아 보여준다.
+    case downloads = "downloads"
+    /// Focus 모드: Keep Mac Awake 세션을 노치에서 켜고 끄며 남은 시간을 보여준다.
+    case awake = "awake"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
     /// 빈 칸.
@@ -302,7 +306,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .drop, .none: return nil
+        case .screenshots, .downloads, .awake, .drop, .none: return nil
         }
     }
 

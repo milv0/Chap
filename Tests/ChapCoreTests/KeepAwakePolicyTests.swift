@@ -149,3 +149,37 @@ struct KeepAwakePolicyTests {
         #expect(result == late)
     }
 }
+
+@Suite("Focus widget")
+struct FocusWidgetTests {
+    @Test("Focus switches with Chap on and Chap off")
+    func chapWording() {
+        #expect(KeepAwakePolicy.focusIdleLine == "Chap on")
+        #expect(KeepAwakePolicy.focusOffTitle == "Chap off")
+    }
+
+    @Test("the notch offers 1h, 4h, and 8h")
+    func quickPresets() {
+        #expect(
+            KeepAwakePolicy.focusPresets.map(KeepAwakePolicy.shortTitle(of:)) == ["1h", "4h", "8h"])
+        #expect(KeepAwakePolicy.shortTitle(of: KeepAwakePolicy.presets[0]) == "30m")
+    }
+
+    @Test(
+        "the active line lightens as the session winds down",
+        arguments: [
+            (TimeInterval(3 * 3600), "Fully charged"), (3600, "In the zone"),
+            (20 * 60, "Final stretch"), (2 * 60, "Landing soon"),
+        ])
+    func activeLine(remaining: TimeInterval, expected: String) {
+        #expect(KeepAwakePolicy.focusActiveLine(remaining: remaining) == expected)
+    }
+
+    @Test("Focus is a placeable widget that round-trips")
+    func widgetRoundTrips() throws {
+        let config = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"notchWidgets": ["awake"], "sites": []}"#.utf8))
+        #expect(config.notchWidgets.first == .awake)
+        #expect(NotchWidget.awake.launchType == nil)
+    }
+}

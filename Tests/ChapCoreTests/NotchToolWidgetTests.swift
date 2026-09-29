@@ -114,6 +114,15 @@ struct QuickNoteStoreTests {
         #expect(abs(date.timeIntervalSinceNow) < 60)
     }
 
+    @Test("the character count reads naturally and shows the limit near the cap")
+    func characterCount() {
+        #expect(QuickNoteStore.characterCountLabel(0) == "0 chars")
+        #expect(QuickNoteStore.characterCountLabel(1) == "1 char")
+        #expect(QuickNoteStore.characterCountLabel(1234) == "1,234 chars")
+        #expect(QuickNoteStore.characterCountLabel(17_999) == "17,999 chars")
+        #expect(QuickNoteStore.characterCountLabel(18_000) == "18,000 / 20,000 chars")
+    }
+
     @Test("the default note lives in Chap's Application Support folder")
     func defaultLocation() {
         let path = QuickNoteStore.defaultFileURL.path

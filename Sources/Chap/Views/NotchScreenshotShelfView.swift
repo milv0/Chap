@@ -194,12 +194,10 @@ private struct ScreenshotShelfRow: View {
                 // 썸네일과 시각 사이를 비워 시각을 행의 오른쪽 끝에 붙인다.
                 Spacer(minLength: 6)
                 // 잘린 파일명 대신 찍은 시각. 파일명은 툴팁과 VoiceOver로 제공한다.
+                // 다운로드 칸의 시각과 같은 보조 크기(10pt medium)·보조색.
                 Text(modified.map { ScreenshotShelfPolicy.relativeLabel(for: $0) } ?? " ")
-                    .font(DS.notchBody)
-                    .foregroundColor(primaryForeground)
-                    .shadow(
-                        color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5
-                    )
+                    .font(DS.notchMeta)
+                    .foregroundColor(secondaryForeground)
                     .lineLimit(1)
                     .monospacedDigit()
             }

@@ -131,10 +131,16 @@ struct NotchDropFileItem: View {
 }
 
 extension NotchDropFileItem {
-    /// macOS 공유 메뉴를 공유 버튼 아래에 띄운다. 메뉴가 떠 있는 동안 도커를 고정해,
-    /// 마우스가 메뉴로 이동해도 노치가 닫히며 메뉴가 사라지지 않게 한다.
     fileprivate func share() {
-        guard let view = shareAnchor.view ?? NSApp.keyWindow?.contentView else { return }
+        NotchSharing.present(url, from: shareAnchor)
+    }
+}
+
+/// macOS 공유 메뉴(AirDrop·메시지·메일 등). 메뉴가 떠 있는 동안 도커를 고정해,
+/// 마우스가 메뉴로 이동해도 노치가 닫히며 메뉴가 사라지지 않게 한다.
+enum NotchSharing {
+    static func present(_ url: URL, from anchor: ShareAnchor) {
+        guard let view = anchor.view ?? NSApp.keyWindow?.contentView else { return }
         NotificationCenter.default.post(
             name: NotchLauncherController.setSharingPinned, object: true)
         let picker = NSSharingServicePicker(items: [url])
@@ -143,7 +149,7 @@ extension NotchDropFileItem {
                 name: NotchLauncherController.setSharingPinned, object: false)
         }
         picker.delegate = delegate
-        shareAnchor.delegate = delegate
+        anchor.delegate = delegate
         picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
     }
 }
@@ -155,7 +161,7 @@ final class ShareAnchor {
 }
 
 /// SwiftUI 버튼 자리에 깔리는 보이지 않는 NSView. 공유 메뉴를 이 뷰 기준으로 띄운다.
-private struct ShareAnchorView: NSViewRepresentable {
+struct ShareAnchorView: NSViewRepresentable {
     let anchor: ShareAnchor
 
     func makeNSView(context: Context) -> NSView {

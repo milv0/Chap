@@ -21,7 +21,9 @@ Sources/
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
+│   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
+│   ├── QuickNoteWindow.swift      ← 노치에서 분리한 floating Quick Note 창 (크기·위치 기억)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
@@ -52,8 +54,9 @@ Sources/
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
+│       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
-│       ├── NotchWidgetViews.swift ← 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
+│       ├── NotchWidgetViews.swift ← Focus(Keep Awake) 위젯, 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
 │       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)
@@ -87,6 +90,7 @@ Sources/
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
+│   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·짧은 시각
 │   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
@@ -121,6 +125,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── SiteCountLimitPolicyTests.swift
     ├── DropPolicyTests.swift
     ├── ScreenshotShelfPolicyTests.swift
+    ├── DownloadsShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
     ├── NotchToolWidgetTests.swift
     ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정 시만 실행
@@ -140,6 +145,7 @@ Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의
 ├── Chap.xcodeproj/                ← 생성된 Xcode 프로젝트 (.gitignore 대상)
 ├── ARCHITECTURE.txt               ← 구조·기능·API·이력 (이 문서)
+├── BRAND.md                       ← 앱 정체성(메뉴바 속 친구)·목소리 규칙·승인 문구 (문구의 기준)
 ├── DESIGN.md                     ← 앱·Guide Window·웹 색상 토큰 기준
 ├── FLOW.md                        ← 런타임 실행 흐름: 순서, 분기, 스레드, 타임아웃, 판정,
 │                                    불변 규칙, 알려진 이슈 (LLM 온보딩용)
@@ -283,7 +289,7 @@ Config 모델 필드:
 - 상태바 아이콘 선택 (Default/Lightning) — Settings > General > Appearance에서 변경, config에 저장·재시작 유지
   - Default/Lightning 선택 + Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
   - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
-    메인 노치 도커가 열린 동안에만 왼쪽 plateau에 파란 커피 아이콘 + h:mm:ss 남은 시간을 1초마다 표시
+    메인 노치 도커가 열린 동안에만 왼쪽 plateau에 파란 번개(bolt.fill) 아이콘 + h:mm:ss 남은 시간을 1초마다 표시
 - Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
 ## 메뉴바 메뉴 구성

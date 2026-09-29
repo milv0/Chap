@@ -1,8 +1,10 @@
 # Chap
 
-A macOS menubar app for quick-launching sites, apps, and folders with automatic window centering.
+**Your chap in the menu bar.** A friend that lives in your menu bar and notch: it opens your sites, apps, and folders and lands each window right where it belongs.
 
-![Version](https://img.shields.io/badge/version-2.3.0-orange)
+> *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
+
+![Version](https://img.shields.io/badge/version-2.4.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -13,6 +15,8 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
+- **Focus Mode** — A lightning-bolt notch slot that keeps your Mac awake for 1h, 4h, or 8h with one click and counts down while it runs (the same session as Keep Mac Awake)
+- **Downloads Shelf** — See your four newest downloads in a notch slot with their names and age; click to open, drag out, or right-click to share or show in Finder
 - **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
@@ -41,6 +45,7 @@ A macOS menubar app for quick-launching sites, apps, and folders with automatic 
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
+- Downloads folder access only if you place the Downloads widget (macOS asks once)
 - Camera permission only if you use the notch Mirror (asked the first time you click its icon)
 
 ## Usage
@@ -139,15 +144,15 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, or Screenshots into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, or Focus into the board; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
 The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut keys on Sites and Apps show just the key (`1`, `N`); hold Option while the dock is open and they light up as `⌥1`, `⌥N`; hover for the name and click to launch. Sites and Finder stay as lists. Click the Sites, Apps, or Finder title to edit that list in Settings.
 
-**Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
+**Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Quick Note** is a note icon right of Mirror in the black strip; click it and a single plain-text note opens just below, ready to type. It saves as you type, shows when it was last saved, and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters) and is not part of config export. While you are typing, the dock stays open; press Esc or click elsewhere to finish.
+**Quick Note** is a note icon right of Mirror in the black strip. Click it and the widget row turns into a wide note (the notch grows to about 600 × 180) with a character count, a copy button, and an **Open in a window** button that detaches the note into a floating, resizable window you can keep open while the notch is closed. The note saves as you type and lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export. Click × or the note icon to go back to your widgets.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Hover a file to share it (AirDrop, Messages, Mail, …) or remove it; right-click for the same actions plus Show in Finder. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 
@@ -183,11 +188,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.3.0
+Scripts/release.sh 2.4.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.3.0 --publish
+Scripts/release.sh 2.4.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
@@ -245,6 +250,7 @@ The script signs the notarized DMG with the operator's Keychain-stored EdDSA pri
 
 See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 See [DESIGN.md](DESIGN.md) for app, Guide Window, and website color tokens.
+See [BRAND.md](BRAND.md) for Chap's identity (your friend in the menu bar), voice rules, and approved copy.
 
 The website's Product history is intentionally curated. Add an entry only when
 a release introduces a major user-facing capability or meaningfully changes a

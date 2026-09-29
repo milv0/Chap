@@ -7,6 +7,11 @@ and centers resizable windows on the selected display. Alongside the status menu
 it offers an optional Notch Launcher (a six-slot panel with Chap Drop and a
 Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
 
+**Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
+snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
+copy; controls stay plain, wit goes in secondary text, and Chap asks for as few
+permissions as possible.
+
 ## Commands
 
 ```bash
@@ -54,7 +59,7 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
-  Finder, or Screenshots; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
+  Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
   on notchless Macs. Chap Drop copies dropped files into
   `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot
   Shelf reads the system screenshot folder in place.
@@ -79,6 +84,9 @@ bump version numbers by hand — the release script owns
 `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`.
 
 ## Rules
+
+- Follow `.harness/shared/rules/brand-voice.md` for any user-facing text; `BRAND.md` is the
+  source of truth for Chap's identity (your friend in the menu bar) and voice.
 
 - Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior;
   its invariants section lists past regressions.
