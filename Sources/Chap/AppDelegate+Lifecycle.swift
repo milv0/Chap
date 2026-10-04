@@ -44,6 +44,14 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
+            // 선반 제목: Standard 크기로 커서 화면 가운데에 폴더를 연다.
+            NotificationCenter.default.addObserver(
+                forName: NotchShelfFolder.openRequest, object: nil, queue: .main
+            ) { [weak self] note in
+                guard let url = note.object as? URL else { return }
+                let name = note.userInfo?["name"] as? String ?? url.lastPathComponent
+                self?.launchSite(ShelfFolderLaunch.site(name: name, folderPath: url.path))
+            },
         ]
         // 해상도·배치·외장 모니터·clamshell 변경 시 노치 창 프레임을 재계산한다.
         screenParametersObserver = NotificationCenter.default.addObserver(

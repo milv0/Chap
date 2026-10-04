@@ -172,6 +172,10 @@ struct QAView: View {
                     "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
                 ),
                 (
+                    "노치 왼쪽의 물범은 뭔가요?",
+                    "Chap의 마스코트인 아기 물범입니다. Focus가 꺼져 있을 때 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 그 자리를 남은 시간에 양보합니다. Focus 칸에서는 Focus가 꺼져 있으면 자고, 켜면 깨어 꼬리를 흔들며 지키다가 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                ),
+                (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
@@ -189,7 +193,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
-                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지 네 개를 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 열립니다."
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다)."
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
@@ -393,6 +397,10 @@ struct QAView: View {
                     "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
                 ),
                 (
+                    "Who is the seal on the left of the notch?",
+                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip while Focus is off, flicks its tail when you open the notch (it stays still with Reduce Motion on), and gives the spot to the Focus timer while Focus runs. In the Focus slot it sleeps while Focus is off, wags its tail while it runs, and gets drowsy (and wags slower) in the last 30 minutes. It is just decoration, so clicking it does nothing."
+                ),
+                (
                     "What do the number and letter keycaps in the notch mean?",
                     "They are Option shortcuts. The notch shows just the key for readability; hold Option while it is open and the keycaps turn blue and show the full combination, such as ⌥1."
                 ),
@@ -410,7 +418,7 @@ struct QAView: View {
                 ),
                 (
                     "Does the Screenshots widget move my files?",
-                    "No. It only reads the four newest images from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder."
+                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way)."
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",

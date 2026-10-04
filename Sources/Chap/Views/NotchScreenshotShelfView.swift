@@ -51,7 +51,7 @@ struct NotchScreenshotShelfView: View {
             // 경로는 `com.apple.screencapture location` 설정에서 오므로
             // 스크린샷을 한 장도 찍기 전에도 동작한다.
             Button {
-                NSWorkspace.shared.open(ScreenshotShelf.directory())
+                NotchShelfFolder.open(ScreenshotShelf.directory(), name: "Screenshots")
             } label: {
                 header
             }
@@ -70,7 +70,11 @@ struct NotchScreenshotShelfView: View {
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
-                rows
+                NotchShelfScrollList(
+                    itemCount: urls.count, visibleRows: ScreenshotShelfPolicy.visibleRows
+                ) {
+                    rows
+                }
             }
         }
         .onAppear { refresh() }

@@ -145,7 +145,7 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 | 본문 텍스트 | 흰 96% + 그림자 | 검정 87%, 그림자 없음 | semantic primary |
 
 글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
-보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
+보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). Downloads 파일명은 좁은 칸에 맞춰 같은 10pt의 regular·기본 글자색(`DS.notchFileName`)이다. 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
 목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
 "5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 10pt 보조색·고정폭 숫자, 다운로드 칸과 같은 크기)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
@@ -163,7 +163,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
-| Downloads | 200pt (파일명이 핵심) |
+| Downloads | 160pt (10pt 파일명, 20자 안팎) |
 | Focus | 150pt |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
@@ -176,6 +176,36 @@ Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개
 단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
+
+## 상단 띠 왼쪽: 마스코트 · Focus 시계
+
+`NotchLauncherPolicy.stripLeading(focusActive:focusSlotVisible:)`가 정한다. Focus 칸이 위젯 줄에
+보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로 띠 왼쪽은 비운다.
+
+| 상황 | 띠 왼쪽 |
+|---|---|
+| Focus 칸 보임 | 비움 |
+| Focus 칸 없음, 또는 메모 모드 + Focus 켜짐 | 번개 + 남은 시간 |
+| Focus 칸 없음, 또는 메모 모드 + Focus 꺼짐 | 물범 |
+
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt 가운데)에는 Focus가 켜져 있으면 번개와 남은 시간,
+꺼져 있으면 Chap 마스코트(아기 물범, `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다.
+마스코트는 `Canvas`로 픽셀마다 사각형을 칠하며, 누를 수 없고 VoiceOver에서 제외된다.
+꼬리 까딱: 도커가 펼쳐지고 0.35초 뒤 한 번(`flickSequence` 들기·내리기 ×2, 프레임 0.14초),
+이후 열려 있는 동안 7~12초 무작위 간격으로 반복한다. 꼬리 프레임(`tailUpRows`)은 오른쪽 끝 다섯 칸만 다르다.
+`.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
+깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
+
+**Focus 칸의 물범** (`ChapMascot.widgetPixelSize` 2pt = 48×24pt, 기존 큰 번개 자리):
+
+| 세션 | `focusMood` | 모습 |
+|---|---|---|
+| 꺼짐 | `.asleep` | 눈 감음(가로 두 칸 선), 머리 위 4×4 z가 3초마다 2.4초에 걸쳐 떠올라 흐려짐 |
+| 30분 이상 남음 | `.awake` | 눈 뜸, 깜빡임. 켜는 순간 0.35초 뒤 까딱으로 깨고, 이후 꼬리를 0.4초 프레임으로 계속 흔듦 |
+| 30분 미만 | `.drowsy` | 눈 위 그림자 눈꺼풀(`Eyes.drowsy`), 깜빡임, 꼬리를 0.7초 프레임으로 느리게 흔듦 |
+
+꼬리 속도는 `ChapMascot.focusWagFrameDuration(for:)`이며 Focus 칸(`wagsContinuously`)에만 적용된다. 띠 물범은 가끔 까딱 그대로다.
+경계 30분은 `KeepAwakePolicy.focusActiveLine`의 Final stretch와 같다. 동작 줄이기에서는 상태별 정지 모습만 바뀐다(잠든 물범은 z가 떠 있는 채).
 
 ## 도구 위젯: Mirror · Quick Note
 
@@ -201,7 +231,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 - Sites·Apps·Finder 제목: 누르면 도커를 닫고 설정창 Launchables 탭에서 그 타입의 첫 항목을 선택한다
   (`showSettings(focusing:)` → `SettingsView.focusLaunchType` 알림). 호버 시 옅은 면과 ›, 툴팁 "Edit Sites in Settings".
-- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다.
+- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다. Downloads 제목은 ~/Downloads를 연다. 두 창 모두 일반 Finder
+  런처와 같은 경로로 Standard 크기 프리셋, 커서 화면 가운데에 열린다(`ShelfFolderLaunch`, Finder Automation 권한 사용).
 - Mirror·Quick Note 제목: 동작 없음.
 
 ## 노치에서 실행할 때의 창 크기
@@ -245,9 +276,19 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
+## 선반 스크롤 (Screenshots · Downloads)
+
+두 선반은 최근 12개까지 담고(`maxItems`), 목록 칸 4줄 높이(113pt, `visibleRows` 4)에 고정된
+`NotchShelfScrollList`에 그린다. 5개 이상이면 트랙패드·휠로 스크롤한다.
+
+- 스크롤바는 `.scrollIndicators(.never)`로 시스템 "스크롤 막대 항상 보기" 설정에서도 숨긴다.
+- 더 있음을 알리는 신호는 맨 아래 10pt 흐림 하나뿐이다. 콘텐츠 아래에 같은 10pt 여백이 있어
+  끝까지 내리면 마지막 줄이 흐림 밖으로 올라온다. 4개 이하이면 흐림도 스크롤도 없다.
+- 줄은 `LazyVStack`이라 보이는 줄의 썸네일·아이콘만 먼저 읽는다.
+
 ## Downloads 칸
 
-`~/Downloads`에서 최근 4개(폴더에 들어온 시각 순, 없으면 수정 시각)를 보여준다. 숨김 파일, 받는 중인 파일
+`~/Downloads`에서 최근 12개(폴더에 들어온 시각 순, 없으면 수정 시각)를 담고 4줄이 보인다. 나머지는 스크롤로 본다(위 "선반 스크롤"). 숨김 파일, 받는 중인 파일
 (`.crdownload`, `.download`, `.part` 등), 폴더(.app 제외)는 뺀다(`DownloadsShelfPolicy`). 한 줄은 26pt: 20pt 파일
 아이콘(이미지는 썸네일), 가운데 생략 파일명, 오른쪽 끝 짧은 시각(`now`, `5m`, `3h`, `1d`, `Sep 24`). 클릭 열기, 드래그
 꺼내기, 우클릭 Open·Share…·Show in Finder. 제목 클릭은 Finder로 다운로드 폴더를 연다. 2초마다 다시 읽고, 위젯이

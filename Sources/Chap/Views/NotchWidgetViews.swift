@@ -48,6 +48,8 @@ struct NotchFocusView: View {
     let palette: NotchWidgetPalette
     /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
     @State var sessionEnd: Date?
+    /// 도커가 펼쳐져 있는 동안만 물범이 움직인다.
+    var isAnimating = false
 
     /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
@@ -73,12 +75,12 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 꺼짐: 흐린 번개 + 한 줄 + 시간 버튼 셋.
+    /// 꺼짐: 잠든 물범 + 한 줄 + 시간 버튼 셋.
     private var idle: some View {
         VStack(spacing: 6) {
-            Image(systemName: "bolt")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor((palette.icon ?? palette.primary).opacity(0.7))
+            NotchMascotView(
+                pixelSize: ChapMascot.widgetPixelSize, mood: .asleep,
+                isAnimating: isAnimating, zColor: palette.secondary)
             VStack(spacing: 1) {
                 Text(KeepAwakePolicy.focusIdleLine)
                     .font(DS.notchLabel)
@@ -101,21 +103,20 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 켜짐: 파란 번개(살짝 맥박) + 남은 시간 + 위트 한 줄 + 끄기.
+    /// 켜짐: 깨어 있는 물범(30분 미만이면 졸림) + 남은 시간 + 위트 한 줄 + 끄기.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
             VStack(spacing: 4) {
-                HStack(spacing: 5) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(DS.accent)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(palette.primary)
-                }
+                NotchMascotView(
+                    pixelSize: ChapMascot.widgetPixelSize,
+                    mood: ChapMascot.focusMood(remaining: remaining),
+                    isAnimating: isAnimating, wagsContinuously: true,
+                    zColor: palette.secondary)
+                Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(palette.primary)
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)
@@ -656,5 +657,186 @@ struct NotchQuickNoteView: View {
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")
             }
         }
+    }
+}
+
+/// Chap 마스코트(아기 물범). 픽셀마다 사각형을 칠해 어떤 배율에서도 도트가 선명하다.
+/// - 깨어 있음(`.awake`, `.drowsy`): 노치를 열면 꼬리를 한 번 까딱하고, 열려 있는 동안
+///   7~12초마다 까딱, 4~7초마다 깜빡인다. 졸릴 때는 눈꺼풀이 무겁다.
+/// - 잠(`.asleep`): 눈을 감고 머리 위로 z가 3초마다 하나씩 떠오른다.
+/// `isAnimating`이 false(노치 닫힘)거나 동작 줄이기가 켜져 있으면 움직이지 않고, 상태별
+/// 정지 모습(잠든 물범은 z가 떠 있는 채)만 보인다. 장식이므로 누를 수 없고 VoiceOver에서도 건너뛴다.
+struct NotchMascotView: View {
+    var pixelSize: CGFloat = ChapMascot.stripPixelSize
+    var mood: ChapMascot.FocusMood = .awake
+    var isAnimating = false
+    /// true면 깨어 있는 동안 꼬리를 쉬지 않고 흔든다(Focus 칸). false면 가끔 까딱(띠).
+    var wagsContinuously = false
+    /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
+    var zColor: Color = .secondary
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pose: ChapMascot.Pose = .rest
+    @State private var isBlinking = false
+    @State private var zRisen = false
+
+    private var moves: Bool { isAnimating && !reduceMotion }
+
+    private var eyes: ChapMascot.Eyes {
+        isBlinking && mood != .asleep ? .closed : mood.eyes
+    }
+
+    /// 까딱 한 번을 재생한다. 취소되면 쉬는 자세로 돌아간다.
+    private func flick() async {
+        for next in ChapMascot.flickSequence {
+            pose = next
+            try? await Task.sleep(for: .seconds(ChapMascot.flickFrameDuration))
+            if Task.isCancelled { break }
+        }
+        pose = .rest
+    }
+
+    /// 윤곽선은 검정 띠에서도 몸통 가장자리가 보이도록 아주 짙은 남색이다.
+    private static func color(_ ink: ChapMascot.Ink) -> Color {
+        switch ink {
+        case .outline: return Color(red: 22 / 255, green: 26 / 255, blue: 48 / 255)
+        case .body: return .white
+        case .shade: return Color(red: 176 / 255, green: 190 / 255, blue: 216 / 255)
+        }
+    }
+
+    var body: some View {
+        Canvas { context, _ in
+            for pixel in ChapMascot.pixels(eyes: eyes, pose: pose) {
+                let rect = CGRect(
+                    x: CGFloat(pixel.x) * pixelSize, y: CGFloat(pixel.y) * pixelSize,
+                    width: pixelSize, height: pixelSize)
+                context.fill(Path(rect), with: .color(Self.color(pixel.ink)))
+            }
+        }
+        .frame(
+            width: CGFloat(ChapMascot.width) * pixelSize,
+            height: CGFloat(ChapMascot.height) * pixelSize
+        )
+        // z는 레이아웃 크기에 넣지 않고 머리 오른쪽 위에 겹쳐 그린다.
+        .overlay(alignment: .topLeading) {
+            if mood == .asleep {
+                sleepZ
+                    .offset(
+                        x: 11 * pixelSize,
+                        y: (zRisen ? -9 : -5) * pixelSize
+                    )
+                    .opacity(moves ? (zRisen ? 0 : 1) : 1)
+            }
+        }
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+        // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
+        // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
+        .task(id: "\(moves)-\(mood)-\(wagsContinuously)") {
+            pose = .rest
+            guard moves, mood != .asleep else { return }
+            try? await Task.sleep(for: .seconds(ChapMascot.openFlickDelay))
+            if wagsContinuously, let frame = ChapMascot.focusWagFrameDuration(for: mood) {
+                await flick()
+                while !Task.isCancelled {
+                    pose = pose == .rest ? .tailUp : .rest
+                    try? await Task.sleep(for: .seconds(frame))
+                }
+                pose = .rest
+                return
+            }
+            while !Task.isCancelled {
+                await flick()
+                let wait = Double.random(in: ChapMascot.idleFlickInterval)
+                try? await Task.sleep(for: .seconds(wait))
+            }
+            pose = .rest
+        }
+        // 깜빡임: 깨어 있는 동안 불규칙하게.
+        .task(id: [moves, mood != .asleep]) {
+            isBlinking = false
+            guard moves, mood != .asleep else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Double.random(in: ChapMascot.blinkInterval)))
+                if Task.isCancelled { break }
+                isBlinking = true
+                try? await Task.sleep(for: .seconds(ChapMascot.blinkDuration))
+                isBlinking = false
+            }
+            isBlinking = false
+        }
+        // z: 잠든 동안 하나씩 떠올라 흐려진다.
+        .task(id: [moves, mood == .asleep]) {
+            zRisen = false
+            guard moves, mood == .asleep else { return }
+            while !Task.isCancelled {
+                zRisen = false
+                try? await Task.sleep(for: .milliseconds(50))
+                withAnimation(.easeOut(duration: ChapMascot.sleepZRiseDuration)) { zRisen = true }
+                try? await Task.sleep(for: .seconds(ChapMascot.sleepZPeriod))
+            }
+            zRisen = false
+        }
+    }
+
+    private var sleepZ: some View {
+        Canvas { context, _ in
+            for (y, row) in ChapMascot.sleepZRows.enumerated() {
+                for (x, ch) in row.enumerated() where ch == "o" {
+                    let rect = CGRect(
+                        x: CGFloat(x) * pixelSize, y: CGFloat(y) * pixelSize,
+                        width: pixelSize, height: pixelSize)
+                    context.fill(Path(rect), with: .color(zColor))
+                }
+            }
+        }
+        .frame(width: 4 * pixelSize, height: 4 * pixelSize)
+    }
+}
+
+/// 노치 선반(Screenshots·Downloads) 목록. 목록 칸 4줄 높이(113pt)에 고정하고, 더 있으면
+/// 트랙패드·휠로 스크롤한다. 스크롤바는 시스템 설정("항상 보기")과 관계없이 숨기고,
+/// 아래로 더 있을 때만 맨 아래를 살짝 흐리게 해 이어진다는 것을 알린다.
+struct NotchShelfScrollList<Content: View>: View {
+    let itemCount: Int
+    let visibleRows: Int
+    @ViewBuilder let content: () -> Content
+
+    /// 맨 아래 흐림 높이. 끝까지 내리면 같은 만큼의 여백이 마지막 줄을 흐림 밖으로 올린다.
+    private static var fadeHeight: CGFloat { 10 }
+
+    private var scrolls: Bool { itemCount > visibleRows }
+
+    var body: some View {
+        ScrollView(.vertical) {
+            LazyVStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
+                content()
+            }
+            .padding(.bottom, scrolls ? Self.fadeHeight : 0)
+        }
+        .scrollIndicators(.never)
+        .scrollDisabled(!scrolls)
+        .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+        .mask {
+            VStack(spacing: 0) {
+                Color.black
+                LinearGradient(
+                    colors: [.black, scrolls ? .black.opacity(0) : .black],
+                    startPoint: .top, endPoint: .bottom
+                )
+                .frame(height: Self.fadeHeight)
+            }
+        }
+    }
+}
+
+/// 선반 제목에서 폴더 열기 요청. 앱이 일반 Finder 실행 경로(Standard 프리셋, 커서 화면
+/// 가운데)로 연다. object는 폴더 URL, userInfo["name"]은 로그용 이름이다.
+enum NotchShelfFolder {
+    static let openRequest = Notification.Name("ChapShelfFolderOpen")
+
+    static func open(_ url: URL, name: String) {
+        NotificationCenter.default.post(name: openRequest, object: url, userInfo: ["name": name])
     }
 }

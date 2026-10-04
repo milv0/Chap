@@ -59,6 +59,23 @@ public enum NotchLauncherPolicy {
         max(notchWidth + 2 * NotchGeometry.stripPlateauSideWidth + 80, dockMinimumWidth)
     }
 
+    /// 상단 띠 왼쪽(노치 왼쪽)에 무엇을 둘지.
+    public enum StripLeading: Equatable, Sendable {
+        /// 번개 + Focus 남은 시간.
+        case focusClock
+        /// Chap 마스코트(물범).
+        case mascot
+        /// 비움.
+        case empty
+    }
+
+    /// Focus 칸이 위젯 줄에 보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로
+    /// 띠 왼쪽은 비운다. 칸이 안 보이면 Focus가 켜져 있을 때 시계, 꺼져 있을 때 물범을 둔다.
+    public static func stripLeading(focusActive: Bool, focusSlotVisible: Bool) -> StripLeading {
+        if focusSlotVisible { return .empty }
+        return focusActive ? .focusClock : .mascot
+    }
+
     /// 상단 띠 도구 아이콘(Mirror, Quick Note)의 누름 폭과 간격.
     public static let stripToolPitch: CGFloat = 28
 

@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.4.2-orange)
+![Version](https://img.shields.io/badge/version-2.5.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -14,10 +14,11 @@
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
+- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, and steps aside for the Focus timer while Focus runs. In the Focus slot it sleeps while Focus is off, wakes when you start a session, and gets drowsy near the end
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A lightning-bolt notch slot that keeps your Mac awake for 1h, 4h, or 8h with one click and counts down while it runs (the same session as Keep Mac Awake)
-- **Downloads Shelf** — See your four newest downloads in a notch slot with their names and age; click to open, drag out, or right-click to share or show in Finder
-- **Screenshot Shelf** — Place recent screenshots in a notch slot without moving or duplicating the originals; click the Screenshots title to open the screenshot folder in Finder
+- **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age; click to open, drag out, or right-click to share or show in Finder
+- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
@@ -188,11 +189,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.4.2
+Scripts/release.sh 2.5.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.4.2 --publish
+Scripts/release.sh 2.5.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

@@ -3,8 +3,10 @@ import Foundation
 /// 노치 패널 왼쪽 칸에 모이는 스크린샷 선반의 선택 규칙.
 /// 파일 시스템 접근과 분리된 순수 정책이라 단위 테스트로 고정한다.
 public enum ScreenshotShelfPolicy {
-    /// 선반에 보여줄 최대 파일 수. 노치 위젯 칸 상한과 통일한다.
-    public static let maxItems = 4
+    /// 선반에 담는 최대 파일 수. 한 번에 4줄이 보이고 나머지는 스크롤로 본다.
+    public static let maxItems = 12
+    /// 스크롤 없이 보이는 줄 수. 노치 목록 칸 4줄과 같다.
+    public static let visibleRows = 4
 
     /// 스크린샷으로 취급하는 이미지 확장자.
     public static let imageExtensions: Set<String> = [

@@ -13,6 +13,28 @@ It stays out of the way, remembers how you like things, and when you call, it
 shows up at once and puts your windows exactly where they belong. Then it steps
 back.
 
+## Mascot
+
+Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
+(`ChapMascot`, three inks: navy outline, white body, blue-gray shade). It lies
+on the left of the notch's black strip whenever Focus is off, and gives the
+spot back to the Focus timer while Focus runs. It is decoration, never a
+control: it takes no clicks, carries no text, and VoiceOver skips it. Its only
+motions are small: a tail flick when you open the notch and now and then (every
+7–12 s), a blink every few seconds, and a rising z while it sleeps. It holds
+still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
+resting nearby, not a pet asking for attention.
+
+In the **Focus** slot the seal tells the Keep Awake story: it sleeps (closed
+eyes, z) while Focus is off, wakes with a tail flick when Focus starts, gets
+drowsy (heavy eyelids) in the last 30 minutes (Final stretch, Landing soon), and
+falls asleep again when Focus ends. While Focus runs its tail keeps wagging
+(slower once drowsy): the one steady motion Chap allows, because it means "I'm
+keeping your Mac awake". There is only ever one seal on screen: when
+the Focus slot is showing, the strip's left side stays empty (no seal, no
+duplicate clock); in Quick Note mode the slot is hidden, so the strip takes the
+clock or the seal back.
+
 ## The name carries both meanings
 
 | Meaning | Where it comes from | What it gives Chap |

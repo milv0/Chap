@@ -2,6 +2,33 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.5.0] — 2026-10-05
+
+### Added
+
+- **Chap the Seal** — Chap's pixel mascot, a baby seal, now rests on the left of
+  the notch's black strip. It flicks its tail when you open the notch and now and
+  then while it stays open (never with Reduce Motion on), and steps aside for the
+  Focus timer while Focus runs.
+- **Seal in Focus** — The Focus slot shows the seal instead of the big bolt: it
+  sleeps with a rising z while Focus is off, wakes with a tail flick when Focus
+  starts, wags its tail the whole time Focus runs (slower once drowsy), blinks
+  while it keeps watch, and gets drowsy in the last 30 minutes.
+  While the Focus slot is showing, the strip's left side stays empty (no second
+  seal, no duplicate clock); in Quick Note mode the strip shows them again.
+
+### Changed
+
+- **Scrollable shelves** — Screenshots and Downloads now keep up to twelve items.
+  Four show at a glance; scroll with the trackpad or wheel for the rest. There is
+  no scroll bar, only a soft fade at the bottom when more is below.
+- **Centered shelf folders** — Clicking the Screenshots or Downloads title opens
+  that folder in a Finder window at the Standard size, centered on the screen
+  with the pointer, like any Finder launchable.
+- **Slimmer Downloads slot** — File names in the Downloads slot are 10pt and the
+  slot is 160pt wide instead of 200pt, so the dock is narrower while names show
+  about as much as before. Sites and Finder lists stay at 13pt.
+
 ## [2.4.2] — 2026-09-29
 
 ### Changed

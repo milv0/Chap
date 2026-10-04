@@ -23,15 +23,16 @@ struct ScreenshotShelfPolicyTests {
     @Test("selection returns newest first capped at the limit")
     func selectionNewestFirstCapped() {
         let base = Date(timeIntervalSince1970: 1_000_000)
-        let files = (0..<8).map { index in
+        let files = (0..<16).map { index in
             (name: "s\(index).png", modified: base.addingTimeInterval(Double(index)))
         }
 
         let selected = ScreenshotShelfPolicy.shelfSelection(files: files)
 
-        #expect(selected.count == ScreenshotShelfPolicy.maxItems)
-        #expect(selected.first == "s7.png")
+        #expect(selected.count == 12)
+        #expect(selected.first == "s15.png")
         #expect(selected.last == "s4.png")
+        #expect(ScreenshotShelfPolicy.visibleRows == 4)
     }
 
     @Test("selection filters out non-candidates before capping")
