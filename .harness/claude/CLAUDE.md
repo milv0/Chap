@@ -111,8 +111,9 @@ Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
 six slots (Sites, Apps, Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is an additive
 surface — the status-bar `NSMenu` is always available, including on notchless
-Macs. Chap Drop copies dropped files into
-`~/Library/Application Support/Chap/Drop/` (originals untouched) and the
+Macs. Chap Drop keeps bookmark references to dropped originals (`DropStore`; only
+temporary-location items are copied into `~/Library/Application Support/Chap/Drop/`,
+and removing never deletes an original) and the
 Screenshot Shelf reads the system screenshot folder in place. Notch geometry is
 computed in `ChapCore/NotchGeometry.swift` (see `NOTCH.md`).
 

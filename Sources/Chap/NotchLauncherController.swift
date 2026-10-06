@@ -267,7 +267,7 @@ final class NotchLauncherController {
         badgeWindow = window
     }
 
-    /// 파일 복사는 utility queue에서 수행하고 실패 건수는 사용자에게 알린다.
+    /// 보관(원본 참조)은 utility queue에서 수행하고 실패 건수는 사용자에게 알린다.
     private func storeDroppedFiles(_ urls: [URL], closePanelWhenDone: Bool) {
         guard !urls.isEmpty else { return }
         hoverOpenSuppressedUntil = Date().addingTimeInterval(0.8)
@@ -275,7 +275,7 @@ final class NotchLauncherController {
             if failedCount > 0 {
                 LauncherUtils.showAlert(
                     message: "Some files could not be added",
-                    info: "\(failedCount) item(s) could not be copied to Chap Drop.")
+                    info: "\(failedCount) item(s) could not be added to Chap Drop.")
             }
             if closePanelWhenDone { self?.hidePanel() }
         }

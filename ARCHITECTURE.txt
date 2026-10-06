@@ -20,7 +20,7 @@ Sources/
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
-│   ├── ChapDrop.swift             ← Application Support/Chap/Drop 파일 보관함
+│   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
 │   ├── QuickNoteWindow.swift      ← 노치에서 분리한 floating Quick Note 창 (크기·위치 기억)
@@ -84,6 +84,7 @@ Sources/
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
+│   ├── DropStore.swift        ← Chap Drop 원본 북마크 참조·임시 위치 사본·빼기(원본 미삭제) 규칙
 │   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
@@ -128,6 +129,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── LauncherListPolicyTests.swift
     ├── SiteCountLimitPolicyTests.swift
     ├── DropPolicyTests.swift
+    ├── DropStoreTests.swift
     ├── ScreenshotShelfPolicyTests.swift
     ├── DownloadsShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift

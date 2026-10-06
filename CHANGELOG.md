@@ -6,6 +6,12 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Chap Drop remembers originals** — Dropping a file no longer copies it. Chap
+  keeps a reference to the original, so it takes no extra space, follows the file
+  if you move or rename it, and lets it go if you delete it. Items from temporary
+  places (like an image dragged from a browser) are still copied so they don't
+  vanish, and files kept by earlier versions stay. Removing an item from Chap Drop
+  never deletes the original.
 - **Focus ring** — The Focus slot is one ring now. Off, the ring holds the bolt
   and "Chap on"; press the ring to start (pick 1h, 4h, or 8h below it). On, the
   same ring fills blue with the time left and empties as it runs; hover shows

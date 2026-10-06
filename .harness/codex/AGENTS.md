@@ -84,8 +84,9 @@ Other surfaces:
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
   six slots (Sites, Apps, Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
-  copies dropped files into `~/Library/Application Support/Chap/Drop/` (originals
-  untouched); the Screenshot Shelf reads the system screenshot folder in place.
+  keeps bookmark references to dropped originals (`DropStore`; only temporary-location
+  items are copied into `~/Library/Application Support/Chap/Drop/`, and removing never
+  deletes an original); the Screenshot Shelf reads the system screenshot folder in place.
   Notch geometry lives in `ChapCore/NotchGeometry.swift` (see `NOTCH.md`).
 - Keep Mac Awake: `KeepAwakeController` holds an IOKit assertion for a
   `KeepAwakePolicy` preset (30m–12h). Expiry is wall-clock based via a

@@ -60,8 +60,9 @@ There is no `Package.swift`; do not use `swift test`.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
   Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
-  on notchless Macs. Chap Drop copies dropped files into
-  `~/Library/Application Support/Chap/Drop/` (originals untouched); the Screenshot
+  on notchless Macs. Chap Drop keeps bookmark references to dropped originals
+  (`DropStore`; only temporary-location items are copied into
+  `~/Library/Application Support/Chap/Drop/`, and removing never deletes an original); the Screenshot
   Shelf reads the system screenshot folder in place.
 - Keep Mac Awake: `KeepAwakeController` holds an IOKit assertion for a
   `KeepAwakePolicy` preset (30m–12h), expiring on a wall-clock `DispatchSourceTimer`

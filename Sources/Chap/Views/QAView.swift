@@ -197,7 +197,7 @@ struct QAView: View {
                 ),
                 (
                     "Chap Drop은 어떻게 쓰나요?",
-                    "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. 드롭한 파일은 ~/Library/Application Support/Chap/Drop/에 복사되며 원본은 그대로입니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
+                    "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. Chap은 파일을 복사하지 않고 원본을 기억합니다. 원본을 옮기거나 이름을 바꿔도 따라가고, 원본을 지우면 Drop에서도 사라집니다. 브라우저에서 끌어온 이미지처럼 임시 위치의 파일만 ~/Library/Application Support/Chap/Drop/에 복사해 둡니다. Drop에서 지워도 원본은 지워지지 않습니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
@@ -430,7 +430,7 @@ struct QAView: View {
                 ),
                 (
                     "How does Chap Drop work?",
-                    "Drag files toward the notch or its right Drop badge. The main dock shows a translucent Drop here layer and copies accepted items into ~/Library/Application Support/Chap/Drop/ without changing the originals. Open, drag out, or remove them from the bottom file row."
+                    "Drag files toward the notch or its right Drop badge. The main dock shows a translucent Drop here layer and Chap remembers the original files instead of copying them: it follows a moved or renamed file, and a deleted original leaves Chap Drop too. Only items from temporary locations, such as an image dragged from a browser, are copied into ~/Library/Application Support/Chap/Drop/. Removing an item never deletes the original. Open, drag out, or remove them from the bottom file row."
                 ),
                 (
                     "Does the Screenshots widget move my files?",

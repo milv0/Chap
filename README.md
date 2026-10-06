@@ -12,7 +12,7 @@
 ## Features
 
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
-- **Chap Drop** — Drag files to the notch, keep them locally in Chap's private Drop folder, and drag them back out from the dock's Finder-style file row
+- **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when you press Chap on, and wags its tail while Focus runs
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
@@ -157,7 +157,7 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Quick Note** is a note icon right of Mirror in the black strip. Click it and the widget row turns into a wide note (the notch grows to about 600 × 180) with a character count, a copy button, and an **Open in a window** button that detaches the note into a floating, resizable window you can keep open while the notch is closed. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export. Click × or the note icon to go back to your widgets.
 
-Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap copies accepted items into `~/Library/Application Support/Chap/Drop/`; the originals are untouched. Hover a file to share it (AirDrop, Messages, Mail, …) or remove it; right-click for the same actions plus Show in Finder. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
+Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap keeps a reference to each original instead of a copy, so it takes no extra disk space; if you move or rename the file, Chap follows it, and if you delete it, it leaves Chap Drop too. Only items from temporary locations (such as a picture dragged from a browser) are copied into `~/Library/Application Support/Chap/Drop/` so they don't vanish. Removing an item from Chap Drop never deletes the original. Hover a file to share it (AirDrop, Messages, Mail, …) or remove it; right-click for the same actions plus Show in Finder. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 
 ## Direct Distribution (Developer ID)
 

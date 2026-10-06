@@ -430,7 +430,7 @@ struct NotchLauncherPanelView: View {
                 if failedCount > 0 {
                     LauncherUtils.showAlert(
                         message: "Some files could not be added",
-                        info: "\(failedCount) item(s) could not be copied to Chap Drop.")
+                        info: "\(failedCount) item(s) could not be added to Chap Drop.")
                 }
             }
             return true
