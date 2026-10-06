@@ -211,8 +211,8 @@ struct NotchLauncherPanelView: View {
                 // 검정 띠는 노치가 배경을 누른 듯한 곡선 경계로 내려온다.
                 ZStack(alignment: .top) {
                     panelShape.fill(panelFill)
-                    // Glass 스타일: 본체 재질과 좌우 오목 코너 bridge를 함께 그린다.
-                    // bridge가 검정 상단선의 화면 꼭짓점까지 닿아 배경화면 틈을 없앤다.
+                    // 모든 스타일: 좌우 오목 코너 bridge를 본체와 같은 재질로 채워, 패널 색이
+                    // 화면 상단 꼭짓점까지 닿고 배경화면 틈이 생기지 않게 한다.
                     if usesSemanticGlass {
                         NotchDockStyle.liquidGlassLayer(
                             shape: panelShape, material: glassMaterial)
@@ -220,15 +220,18 @@ struct NotchLauncherPanelView: View {
                             shape: GlassCornerBridgeShape(
                                 radius: NotchGeometry.dockFlareRadius),
                             material: glassMaterial)
+                    } else {
+                        GlassCornerBridgeShape(radius: NotchGeometry.dockFlareRadius)
+                            .fill(panelFill)
                     }
                     // 검정 띠는 기존 도커 외곽 안에만 남아 bridge 위의 상단
                     // 실루엣을 보존한다.
                     PressedStripShape(
                         plateauHalfWidth: stripPlateauHalfWidth,
                         centerDepth: topInset,
-                        // Glass 코너에서는 검정이 0까지 사라져, bridge가
-                        // 화면 상단 꼭짓점의 둥근 면으로 직접 드러난다.
-                        edgeDepth: usesSemanticGlass ? 0 : NotchGeometry.stripEdgeDepth
+                        // 모든 스타일에서 검정은 외곽 코너에서 0까지 사라져, 패널 색(bridge)이
+                        // 화면 상단 좌우 꼭짓점에 직접 닿는다.
+                        edgeDepth: 0
                     )
                     .fill(Color.black)
                     .clipShape(panelShape)

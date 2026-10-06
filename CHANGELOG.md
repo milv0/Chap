@@ -17,6 +17,9 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Panel color to the corners** — In every style, the black strip now fades out
+  before the dock's top corners, so the panel color (Mist, any Custom color, or
+  Glass) meets the top of the screen there, as Glass already did.
 - **Calmer dock** — Notch slots are no longer split by vertical lines; a wider
   28pt gap and each slot's title keep them apart.
 - **No strip countdown** — The black strip no longer shows the Focus timer. When
