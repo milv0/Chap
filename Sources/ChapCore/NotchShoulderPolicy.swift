@@ -13,6 +13,10 @@ public enum NotchShoulderPolicy {
     public static let iconPitch: CGFloat = 28
     /// 도커 바깥 모서리(오목 플레어 안쪽)와 첫 아이콘 사이 여백.
     public static let outerMargin: CGFloat = 8
+    /// 어깨 아이콘 글리프 크기(pt).
+    public static let iconSize: CGFloat = 16
+    /// 띠 가운데보다 아래로 내리는 광학 보정. 아이콘이 위 화면 경계에 붙어 보이지 않게 한다.
+    public static let iconDrop: CGFloat = 3
 
     public enum Side: Equatable, Sendable {
         case left
@@ -66,8 +70,8 @@ public enum NotchShoulderPolicy {
         return side == .left ? fromEdge : dockWidth - fromEdge
     }
 
-    /// 어깨 아이콘 중심의 y. 띠 가장자리 깊이와 노치 높이 사이 가운데.
+    /// 어깨 아이콘 중심의 y. 띠 가장자리 깊이와 노치 높이 사이 가운데에서 `iconDrop`만큼 아래.
     public static func iconCenterY(topInset: CGFloat, edgeDepth: CGFloat) -> CGFloat {
-        (topInset + edgeDepth) / 2
+        (topInset + edgeDepth) / 2 + iconDrop
     }
 }

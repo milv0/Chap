@@ -39,7 +39,9 @@ struct NotchShoulderPolicyTests {
         #expect(NotchShoulderPolicy.iconCenterX(side: .left, index: 1, dockWidth: 800) == 60)
         #expect(NotchShoulderPolicy.iconCenterX(side: .right, index: 0, dockWidth: 800) == 768)
         #expect(NotchShoulderPolicy.iconCenterX(side: .right, index: 1, dockWidth: 800) == 740)
-        #expect(NotchShoulderPolicy.iconCenterY(topInset: 32, edgeDepth: 6) == 19)
+        #expect(NotchShoulderPolicy.iconCenterY(topInset: 32, edgeDepth: 6) == 22)
+        #expect(NotchShoulderPolicy.iconCenterY(topInset: 32, edgeDepth: 0) == 19)
+        #expect(NotchShoulderPolicy.iconSize == 16)
     }
 
     @Test("the dock is wide enough to keep shoulder icons clear of the black curve")

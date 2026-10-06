@@ -882,9 +882,9 @@ struct NotchShoulderIcon: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: NotchShoulderPolicy.iconSize, weight: .medium))
                 .foregroundColor(foreground)
-                .frame(width: NotchShoulderPolicy.iconPitch - 4, height: 22)
+                .frame(width: NotchShoulderPolicy.iconPitch - 2, height: 26)
                 .background(
                     RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                         .fill(isHovered ? hoverBackground : Color.clear)
