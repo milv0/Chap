@@ -71,6 +71,19 @@ final class NotchLauncherController {
     var onLaunch: (Int) -> Void = { _ in }
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
+    /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
+    var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
+    var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
+
+    /// (개발용) Debug 빌드에서만 어깨 경계선을 그린다.
+    /// 켜기: `defaults write com.mingyupark.Chap ChapShowShoulderGuides -bool YES`
+    static var showsShoulderGuides: Bool {
+        #if DEBUG
+            return UserDefaults.standard.bool(forKey: "ChapShowShoulderGuides")
+        #else
+            return false
+        #endif
+    }
 
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
     /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
@@ -86,7 +99,37 @@ final class NotchLauncherController {
     /// 열린 도커 창을 SwiftUI가 잰 콘텐츠 크기에 맞춘다 (메모 모드 전환 등).
     /// 상단은 항상 화면 최상단에 붙인다. 계산은 `showPanel`과 같은 규칙을 쓴다.
     private func resizePanel(toContentSize size: CGSize) {
-        guard let panel, let screen = Self.notchScreen(), size.height > 0 else { return }
+        guard panel != nil, size.height > 0 else { return }
+        pendingShrink?.cancel()
+        pendingShrink = nil
+        let steps = NotchLauncherPolicy.resizeSteps(
+            current: appliedContentSize ?? size, target: size)
+        if let now = steps.immediate { applyPanelContentSize(now) }
+        if appliedContentSize == nil { appliedContentSize = size }
+        guard let later = steps.deferred else { return }
+        let work = DispatchWorkItem { [weak self] in self?.applyPanelContentSize(later) }
+        pendingShrink = work
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + NotchLauncherPolicy.shrinkDelay, execute: work)
+    }
+
+    /// 칸을 펼치기 직전에 창을 미리 넓힌다. 미뤄 둔 축소가 있으면 취소한다.
+    private func preparePanelToGrow(byWidth added: CGFloat) {
+        guard let current = appliedContentSize else { return }
+        pendingShrink?.cancel()
+        pendingShrink = nil
+        applyPanelContentSize(
+            NotchLauncherPolicy.preExpandSize(
+                current: current, slotWidth: added, gap: 0))
+    }
+
+    /// 마지막으로 창에 맞춘 콘텐츠 크기와, 애니메이션 뒤로 미룬 축소 작업.
+    private var appliedContentSize: CGSize?
+    private var pendingShrink: DispatchWorkItem?
+
+    private func applyPanelContentSize(_ size: CGSize) {
+        appliedContentSize = size
+        guard let panel, let screen = Self.notchScreen() else { return }
         let inset = screen.safeAreaInsets.top
         var frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
@@ -321,6 +364,7 @@ final class NotchLauncherController {
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
         reveal.colorHex = colorProvider()
+        reveal.collapsedWidgets = collapsedWidgetsProvider()
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
@@ -343,6 +387,13 @@ final class NotchLauncherController {
                 self?.hidePanel()
                 self?.onOpenSettings(type)
             },
+            onCollapsedChange: { [weak self] widgets in
+                self?.onCollapsedChange(widgets)
+            },
+            onPrepareExpand: { [weak self] added in
+                self?.preparePanelToGrow(byWidth: added)
+            },
+            showsShoulderGuides: Self.showsShoulderGuides,
             reveal: reveal)
         let hosting = NSHostingView(rootView: content)
         // 노치 구간 safe area가 콘텐츠를 아래로 밀지 않게 한다.
@@ -352,6 +403,7 @@ final class NotchLauncherController {
         // 소수점 크기는 올림해 상단이 서브픽셀로 내려앉는 틈을 막는다.
         let fitting = hosting.fittingSize
         let size = CGSize(width: ceil(fitting.width), height: ceil(fitting.height))
+        appliedContentSize = size
         var frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: inset,
@@ -567,6 +619,9 @@ final class NotchLauncherController {
 
     /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.
     private func prepareForPanelHide() {
+        pendingShrink?.cancel()
+        pendingShrink = nil
+        appliedContentSize = nil
         NotificationCenter.default.post(name: Self.willHidePanel, object: self)
         MirrorCamera.shared.stop()
     }

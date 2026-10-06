@@ -59,21 +59,61 @@ public enum NotchLauncherPolicy {
         max(notchWidth + 2 * NotchGeometry.stripPlateauSideWidth + 80, dockMinimumWidth)
     }
 
-    /// 상단 띠 왼쪽(노치 왼쪽)에 무엇을 둘지.
+    /// 도커 창 크기를 바꿀 때 커지는 쪽은 바로, 작아지는 쪽은 내용 애니메이션이 끝난 뒤에 맞춘다.
+    /// 그래야 칸이 빠지거나 메모 모드가 닫히는 동안 아직 넓은 내용이 창 밖으로 잘리지 않는다.
+    /// - Returns: `immediate`는 지금 맞출 크기(현재와 목표의 각 변 최댓값), `deferred`는
+    ///   `shrinkDelay` 뒤 맞출 최종 크기. 바꿀 것이 없으면 nil.
+    public static func resizeSteps(current: CGSize, target: CGSize) -> (
+        immediate: CGSize?, deferred: CGSize?
+    ) {
+        let grown = CGSize(
+            width: max(current.width, target.width), height: max(current.height, target.height))
+        return (grown == current ? nil : grown, grown == target ? nil : target)
+    }
+
+    /// 칸을 펼치기 직전에 창을 미리 넓힐 크기. 펼친 내용이 창보다 넓은 순간이 생기면 도커 양 끝이
+    /// 창 경계에 잘려 노치가 접혔다 펼쳐지는 것처럼 보이므로, 칸 폭 + 칸 간격만큼 먼저 넓힌다.
+    /// 실제보다 넓으면(최소 폭 안에서 펼친 경우) 레이아웃 뒤 `resizeSteps`가 애니메이션 후에 맞춰 줄인다.
+    public static func preExpandSize(current: CGSize, slotWidth: CGFloat, gap: CGFloat) -> CGSize {
+        CGSize(width: current.width + slotWidth + gap, height: current.height)
+    }
+
+    /// 작아지는 창 크기를 맞추기까지의 지연. 칸 접기 애니메이션(0.22초)보다 조금 길다.
+    public static let shrinkDelay: Double = 0.26
+
+    /// 상단 띠 왼쪽(노치 왼쪽)에 물범을 둘지.
     public enum StripLeading: Equatable, Sendable {
-        /// 번개 + Focus 남은 시간.
-        case focusClock
+        // Focus 시계는 띠에서 뺐다(남은 시간은 Focus 칸과 상태 메뉴에서 본다). 되살릴 때 쓰도록 남겨 둔다.
+        // /// 번개 + Focus 남은 시간.
+        // case focusClock
         /// Chap 마스코트(물범).
         case mascot
         /// 비움.
         case empty
     }
 
-    /// Focus 칸이 위젯 줄에 보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로
-    /// 띠 왼쪽은 비운다. 칸이 안 보이면 Focus가 켜져 있을 때 시계, 꺼져 있을 때 물범을 둔다.
-    public static func stripLeading(focusActive: Bool, focusSlotVisible: Bool) -> StripLeading {
-        if focusSlotVisible { return .empty }
-        return focusActive ? .focusClock : .mascot
+    /// Focus 칸이 위젯 줄에 보이면(배치됨 + 메모 모드 아님) 그 칸이 물범을 맡으므로 띠에는 두지 않는다.
+    /// 그 밖에는 Focus가 켜져 있든 아니든 물범이 띠 왼쪽에 있다(켜져 있으면 깨어 꼬리를 흔든다).
+    public static func stripLeading(focusSlotVisible: Bool) -> StripLeading {
+        focusSlotVisible ? .empty : .mascot
+        // 이전 규칙 (Focus 시계 포함):
+        // if focusSlotVisible { return .empty }
+        // return focusActive ? .focusClock : .mascot
+    }
+
+    /// 접힌 선반 아이콘 중심의 노치 왼쪽 끝 기준 거리(왼쪽으로). 오른쪽 띠 도구
+    /// (`dropBadgeIconCenterOffset`부터 `stripToolPitch` 간격)와 노치를 기준으로 대칭이다.
+    public static func leftStripIconCenterOffsets(count: Int) -> [CGFloat] {
+        (0..<max(count, 0)).map { dropBadgeIconCenterOffset + CGFloat($0) * stripToolPitch }
+    }
+
+    /// 띠 물범 중심의 노치 왼쪽 끝 기준 거리. 접힌 아이콘이 없으면 왼쪽 상태 영역 가운데,
+    /// 있으면 아이콘 바깥쪽(상태 영역 바깥 끝에서 6pt 안쪽)으로 비켜선다.
+    public static func stripMascotCenterOffset(collapsedIconCount: Int) -> CGFloat {
+        let side = NotchGeometry.stripPlateauSideWidth
+        guard collapsedIconCount > 0 else { return side / 2 }
+        let halfMascot = CGFloat(ChapMascot.width) * ChapMascot.stripPixelSize / 2
+        return side - halfMascot - 6
     }
 
     /// 상단 띠 도구 아이콘(Mirror, Quick Note)의 누름 폭과 간격.

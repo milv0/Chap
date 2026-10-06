@@ -2,6 +2,30 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.6.0] — 2026-10-06
+
+### Added
+
+- **Collapsible shelves** — Collapse Screenshots or Downloads from the chevron at
+  the end of its title (or right-click → Collapse) and it folds into a small
+  white icon on the left of the notch's black strip, mirroring Drop, Mirror, and
+  Quick Note on the right. The dock narrows to the slots that remain. Click the
+  icon to bring the shelf back. Chap remembers this on this Mac.
+- **Full download names** — Rest the pointer on a Downloads row whose name is cut
+  short and the full name appears right over it, the way macOS expands a
+  truncated cell.
+
+### Changed
+
+- **Panel color to the corners** — In every style, the black strip now fades out
+  before the dock's top corners, so the panel color (Mist, any Custom color, or
+  Glass) meets the top of the screen there, as Glass already did.
+- **Calmer dock** — Notch slots are no longer split by vertical lines; a wider
+  28pt gap and each slot's title keep them apart.
+- **No strip countdown** — The black strip no longer shows the Focus timer. When
+  the Focus slot isn't showing, the strip seal stays awake and wags its tail
+  while Focus runs; the time left is in the Focus slot and the status menu.
+
 ## [2.5.0] — 2026-10-05
 
 ### Added

@@ -48,13 +48,16 @@ enum DS {
     static let notchBody = Font.system(size: 13)
     /// 긴 파일명 목록(Downloads). 좁은 칸에서도 이름이 덜 잘리도록 Footnote 크기(10pt)를
     /// 쓰되, 보조 정보(`notchMeta`)와 달리 regular·기본 글자색이다.
-    static let notchFileName = Font.system(size: 10)
+    static let notchFileName = Font.system(size: notchFileNameSize)
+    static let notchFileNameSize: CGFloat = 10
     /// 섹션 제목·키캡.
     static let notchLabel = Font.system(size: 11, weight: .semibold)
     /// 저장 시각·아이콘 배지 같은 보조 정보. 노치의 최소 글자 크기.
     static let notchMeta = Font.system(size: 10, weight: .medium)
     /// 섹션 제목 줄 높이. 제목 옆 키캡 유무와 관계없이 모든 칸의 첫 줄이 맞는다.
     static let notchHeaderHeight: CGFloat = 16
+    /// 노치 위젯 칸 사이 간격. 구분선 없이 간격과 칸 제목만으로 칸을 나눈다.
+    static let notchColumnGap: CGFloat = 28
     static let monoFont = Font.system(size: 12, design: .monospaced)
 }
 

@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.5.0"
+        ?? "2.6.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -371,6 +371,9 @@ public struct Config: Codable {
     /// 상단 띠 Quick Note 아이콘 표시 여부. 누르면 메모가 띠 아래로 펼쳐진다.
     public var notchQuickNoteEnabled: Bool
     public var notchWidgets: [NotchWidget]
+    /// 어깨 아이콘으로 접어 둔 위젯(Screenshots·Downloads). 노치에서 접고 펴며, 이 Mac의
+    /// 표시 선택이라 설정창 저장·가져오기가 바꾸지 않는다. `NotchShoulderPolicy.normalized`로 정리한다.
+    public var notchCollapsedWidgets: [NotchWidget] = []
     public var sites: [Site]
 
     /// 디코딩 중 걸러낸 Shell 항목 이름 (2.1 마이그레이션). 저장하지 않는다.
@@ -401,7 +404,7 @@ public struct Config: Codable {
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
-        case notchQuickNoteEnabled
+        case notchQuickNoteEnabled, notchCollapsedWidgets
         case sites
     }
 
@@ -519,6 +522,11 @@ public struct Config: Codable {
         } else {
             notchWidgets = NotchWidget.defaultSlots
         }
+        // 접힌 위젯: 알 수 없는 값·접을 수 없는 위젯·중복은 버린다 (관용 디코딩).
+        notchCollapsedWidgets = NotchShoulderPolicy.normalized(
+            ((try? container.decodeIfPresent([String].self, forKey: .notchCollapsedWidgets))
+                .flatMap { $0 } ?? [])
+                .compactMap(NotchWidget.init(rawValue:)))
         // Shell 항목은 2.1에서 제거됐다. 설정 전체를 버리지 않도록 걸러내고
         // 이름을 기록해 호출자가 백업·안내를 할 수 있게 한다.
         let entries = try container.decode([SiteEntry].self, forKey: .sites)
@@ -546,6 +554,8 @@ public struct Config: Codable {
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
+        try container.encode(
+            notchCollapsedWidgets.map(\.rawValue), forKey: .notchCollapsedWidgets)
         try container.encode(sites, forKey: .sites)
         // showGhostWindow는 encode하지 않음 (마이그레이션 완료)
     }

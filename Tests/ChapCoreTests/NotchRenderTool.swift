@@ -53,6 +53,7 @@ struct NotchRenderTool {
         defer {
             ScreenshotShelf.previewOverride = nil
             DownloadsShelf.previewOverride = nil
+            DownloadsShelf.previewHoveredURL = nil
             ChapDrop.previewOverride = nil
         }
 
@@ -62,12 +63,19 @@ struct NotchRenderTool {
             ("notch-glass-light-note", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
+            ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
+            ("notch-custom-collapsed", .custom, .dark, Color(white: 0.55), false),
+            ("notch-guides-collapsed", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-download-hover", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
         for (name, style, scheme, backdrop, optionHeld) in variants {
             // 빈 Drop 상태(상자만, 숫자 없음)도 한 장 그린다.
             ChapDrop.previewOverride = name.hasSuffix("empty-drop") ? [] : drops
+            // 마우스를 올린 것처럼 두 번째 다운로드의 전체 파일명 말풍선을 띄운다.
+            DownloadsShelf.previewHoveredURL =
+                name.hasSuffix("download-hover") && downloads.count > 1 ? downloads[1] : nil
             // 비동기로 채우는 이미지를 그리기 직전에 캐시에 넣는다 (NSCache는 언제든 비울 수 있다).
             for site in config.sites where site.launchType == .app {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
@@ -81,6 +89,8 @@ struct NotchRenderTool {
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
             reveal.isNoteMode = name.hasSuffix("-note")
+            reveal.collapsedWidgets =
+                name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -91,6 +101,7 @@ struct NotchRenderTool {
                 glassMaterial: config.notchGlassMaterial,
                 slots: previewSlots, showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
+                showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
             let view =
                 panel
@@ -194,8 +205,10 @@ struct NotchRenderTool {
     }
 
     /// 도커가 열린 채 Keep Awake를 켜고 끄면 상단 띠 시계가 다시 열지 않아도 바뀌는지 확인한다.
+    /// Focus 시계는 띠에서 뺐다(주석으로 남긴 `awakeStripClock`). 시계를 되살리면 이 테스트도 다시 켠다.
     @Test(
         "the strip Focus clock follows Keep Awake changes while the dock is open",
+        .disabled("The Focus clock is no longer drawn on the strip"),
         .enabled(if: NotchRenderTool.outputDirectory != nil))
     func stripClockFollowsKeepAwake() async throws {
         let reveal = NotchRevealModel()

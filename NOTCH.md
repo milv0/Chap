@@ -123,12 +123,13 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 1. `glassEdgeBleed`: Glass 효과의 광학 edge를 외곽으로 밀고 본체 셰이프로 마스킹
 2. `GlassCornerBridgeShape`: 좌우 오목 코너의 빈 wedge를 Glass로 채워 재질이
    화면 상단 플레어 꼭짓점까지 직접 닿게 함
-3. Glass의 `PressedStripShape.edgeDepth`는 0: 검정 띠가 외곽 코너에서 완전히
-   사라지므로, 상단 좌우 둥근 꼭짓점에 보이는 재질은 검정이 아니라 Glass다
+3. `PressedStripShape.edgeDepth`는 0: 검정 띠가 외곽 코너에서 완전히
+   사라지므로, 상단 좌우 둥근 꼭짓점에 보이는 재질은 검정이 아니라 패널 재질이다
 
 검정 `PressedStripShape`은 bridge 위에 별도로 그리되 본체 셰이프로 클립해
-중앙 노치·배지 plateau는 검정으로 유지한다. Custom은 기존 `stripEdgeDepth` 6을
-유지해 검정 상단 띠가 외곽에도 남는다.
+중앙 노치·배지 plateau는 검정으로 유지한다. **Custom(Mist 등)과 Glass 폴백도 같다**: bridge를 본체와 같은
+`panelFill`로 채우고 `edgeDepth` 0을 써서, 모든 테마에서 상단 좌우 꼭짓점에 닿는 것은 검정이 아니라 패널 색이다.
+(`stripEdgeDepth` 6은 `PressedStripShape`의 기본값으로만 남아 있다.)
 
 ## 가독성 기준 (Apple HIG)
 
@@ -177,19 +178,23 @@ Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
 
-## 상단 띠 왼쪽: 마스코트 · Focus 시계
+## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
-`NotchLauncherPolicy.stripLeading(focusActive:focusSlotVisible:)`가 정한다. Focus 칸이 위젯 줄에
-보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로 띠 왼쪽은 비운다.
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap 마스코트(아기 물범,
+`ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
+(Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
 
-| 상황 | 띠 왼쪽 |
+| 상황 (`NotchLauncherPolicy.stripLeading(focusSlotVisible:)`) | 물범 |
 |---|---|
-| Focus 칸 보임 | 비움 |
-| Focus 칸 없음, 또는 메모 모드 + Focus 켜짐 | 번개 + 남은 시간 |
-| Focus 칸 없음, 또는 메모 모드 + Focus 꺼짐 | 물범 |
+| Focus 칸 보임 (배치됨 + 메모 모드 아님) | 띠에 없음 (칸 안에 있음) |
+| 그 밖 | 띠에 있음. Focus가 켜져 있으면 깨어 꼬리를 계속 흔들고(30분 미만이면 졸린 눈), 꺼져 있으면 가끔 까딱 |
 
-노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt 가운데)에는 Focus가 켜져 있으면 번개와 남은 시간,
-꺼져 있으면 Chap 마스코트(아기 물범, `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다.
+- **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
+  대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
+  읽히도록 마지막 칸이 노치에 가장 가깝다. 메모 모드에서는 숨긴다.
+- **물범 자리**: 아이콘이 없으면 왼쪽 상태 영역 가운데(노치에서 55pt), 있으면 바깥쪽으로 비켜 86pt
+  (`stripMascotCenterOffset`). 아이콘 두 개(노치에서 55pt까지)와 물범(68~104pt)이 겹치지 않는다.
+
 마스코트는 `Canvas`로 픽셀마다 사각형을 칠하며, 누를 수 없고 VoiceOver에서 제외된다.
 꼬리 까딱: 도커가 펼쳐지고 0.35초 뒤 한 번(`flickSequence` 들기·내리기 ×2, 프레임 0.14초),
 이후 열려 있는 동안 7~12초 무작위 간격으로 반복한다. 꼬리 프레임(`tailUpRows`)은 오른쪽 끝 다섯 칸만 다르다.
@@ -209,7 +214,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 ## 도구 위젯: Mirror · Quick Note
 
-위젯 칸 사이에는 1pt 세로 구분선(`subtleSurface`)을 간격 중앙에 겹쳐 그린다. 모든 칸을 가장 긴 칸 높이로 늘리므로 구분선은 내용이 짧은 칸에서도 줄 전체 높이다. 폭 계산에는 영향이 없다.
+위젯 칸 사이에는 구분선 없이 28pt 간격(`DS.notchColumnGap`)만 둔다. 칸 제목(아이콘 + 이름)이 그룹 경계 역할을 하고, 선이 없어 Glass 배경에 따라 선이 보였다 사라지는 문제도 없다.
 
 - **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 도커가 펼쳐져 있으면
   Drop 상자는 파일이 없어도 배지 자리에 숫자 없는 빈 상자로 보이고(접힌 노치에서는 파일이 있을 때만 배지),
@@ -272,9 +277,25 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 - 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
 - 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
   Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
-- 켜져 있는 동안 상단 띠 왼쪽 Keep Awake 시계도 커피 대신 같은 번개(`bolt.fill`) 아이콘을 쓴다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
-  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
+  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
+
+## 접는 선반 칸 (Screenshots · Downloads)
+
+- 선반 칸 제목 줄 오른쪽 끝의 접기 버튼(`chevron.up`, 칸에 마우스를 올렸을 때만 보임)이나 제목의
+  우클릭 "Collapse"로 칸을 접는다. 접힌 칸은 위젯 줄에서 빠지고 **검정 띠 왼쪽**에 흰 아이콘으로 놓인다
+  (위 "상단 띠 왼쪽"). 아이콘을 누르면 원래 자리에서 다시 펼쳐진다.
+- **도커 폭**: 접으면 도커는 남은 칸에 맞춰 양쪽이 같이 줄어든다(최소 폭 `dockMinWidth`까지). 최소 폭이
+  검정 띠(노치 + 좌우 상태 영역 110pt씩 + 곡선 90pt)를 늘 감싸고, 띠 아이콘·물범은 노치 기준이라 제자리다.
+  창은 커질 때 바로, 작아질 때는 칸 애니메이션 뒤(0.26초, `NotchLauncherPolicy.resizeSteps`/`shrinkDelay`)
+  맞춰 내용이 창 밖으로 잘리지 않는다. 펼칠 때는 칸 폭 + 간격만큼 창을 먼저 넓히고(`preExpandSize`) 다음 틱에
+  칸을 펼친다. 같은 틱에 바꾸면 넓어진 도커 양 끝이 좁은 창에 잘려 노치가 접혔다 펼쳐지는 것처럼 끊겨 보였다. 메모 모드를 닫을 때도 같은 규칙이다.
+- 새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
+- 접힌 목록은 `Config.notchCollapsedWidgets`에 저장한다. 노치에서만 바꾸는 이 Mac의 표시 선택이라
+  설정창 저장이 덮어쓰지 않는다.
+- **어깨 영역**: 검정 띠가 plateau 바깥에서 곡선(`stripFalloff` 90pt)으로 얇아진 뒤 도커 양 끝까지 남는
+  밝은 띠는 비워 둔다. 렌더 도구와 Debug 빌드(`defaults write com.mingyupark.Chap ChapShowShoulderGuides -bool YES`)
+  에서 경계선(빨강 어깨, 주황 곡선, 파랑 plateau)으로 확인할 수 있다.
 
 ## 선반 스크롤 (Screenshots · Downloads)
 
@@ -293,6 +314,12 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 아이콘(이미지는 썸네일), 가운데 생략 파일명, 오른쪽 끝 짧은 시각(`now`, `5m`, `3h`, `1d`, `Sep 24`). 클릭 열기, 드래그
 꺼내기, 우클릭 Open·Share…·Show in Finder. 제목 클릭은 Finder로 다운로드 폴더를 연다. 2초마다 다시 읽고, 위젯이
 보일 때만 읽는다. macOS가 다운로드 폴더를 보호하므로 처음 한 번 폴더 접근 권한을 묻는다.
+
+**잘린 파일명 보기**: 파일명이 줄 안에서 잘린 줄(`DownloadsShelfPolicy.needsFullName`, 실제 10pt 글꼴 폭과
+보이는 폭 비교)에 0.35초 머물면, 그 이름 자리에 겹쳐 전체 파일명 말풍선이 뜬다(macOS 확장 툴팁 방식).
+글자 시작(줄 왼쪽에서 32pt)에 맞추고, 어두운 바탕(검정 86%)에 흰 10pt라 Mist·Glass에서도 대비가 같다.
+최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
+뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
 
 ## 모션 기준
 

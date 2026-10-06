@@ -8,6 +8,16 @@ public enum DownloadsShelfPolicy {
     /// 스크롤 없이 보이는 줄 수. 다른 목록 칸과 같은 4줄.
     public static let visibleRows = 4
 
+    /// 줄에 마우스를 올린 뒤 전체 파일명 말풍선이 뜨기까지의 지연(초). 목록을 훑을 때 깜빡이지 않는다.
+    public static let fullNameRevealDelay: Double = 0.35
+    /// 전체 파일명 말풍선의 최대 폭(pt). 넘으면 두 줄까지 감싼다.
+    public static let fullNameMaxWidth: Double = 320
+
+    /// 파일명이 줄 안에서 잘려 보일 때만 전체 이름을 띄운다. 0.5pt 여유는 반올림 오차를 흡수한다.
+    public static func needsFullName(idealWidth: Double, shownWidth: Double) -> Bool {
+        idealWidth > shownWidth + 0.5
+    }
+
     /// 아직 받는 중인 파일의 확장자 (Chrome, Safari, Firefox, 일반 부분 파일).
     public static let inProgressExtensions: Set<String> = [
         "crdownload", "download", "part", "partial", "opdownload", "tmp",
