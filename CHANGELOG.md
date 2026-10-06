@@ -4,6 +4,13 @@ All notable changes to Chap are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Shelves stay on the left** — The first two notch slots are now for the
+  Screenshots and Downloads shelves. A folded shelf becomes an icon left of the
+  notch, so it now always opens on the same side. Existing layouts move the
+  shelves to the front and keep everything else in order.
+
 ### Fixed
 
 - **Settings survive a version mismatch** — An older Chap opening settings saved

@@ -179,7 +179,7 @@ struct FocusWidgetTests {
     func widgetRoundTrips() throws {
         let config = try JSONDecoder().decode(
             Config.self, from: Data(#"{"notchWidgets": ["awake"], "sites": []}"#.utf8))
-        #expect(config.notchWidgets.first == .awake)
+        #expect(config.notchWidgets == [.none, .none, .awake, .none, .none, .none])
         #expect(NotchWidget.awake.launchType == nil)
     }
 

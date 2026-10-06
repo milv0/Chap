@@ -42,15 +42,19 @@ struct NotchSettingsView: View {
     }
 
     /// 위젯을 슬롯에 배치한다. 같은 위젯이 다른 슬롯에 있으면 자리를 맞바꿔
-    /// 중복 배치를 막는다.
-    private func assign(_ widget: NotchWidget, to index: Int) {
-        guard vm.notchWidgets.indices.contains(index) else { return }
+    /// 중복 배치를 막는다. 선반은 앞쪽 선반 칸에만, 다른 위젯은 뒤쪽 칸에만 놓인다(`fits(slot:)`).
+    @discardableResult
+    private func assign(_ widget: NotchWidget, to index: Int) -> Bool {
+        guard vm.notchWidgets.indices.contains(index), widget.fits(slot: index) else {
+            return false
+        }
         if widget != .none, let existing = vm.notchWidgets.firstIndex(of: widget),
             existing != index
         {
             vm.notchWidgets[existing] = vm.notchWidgets[index]
         }
         vm.notchWidgets[index] = widget
+        return true
     }
 
     static func widgetName(_ widget: NotchWidget) -> String {
@@ -109,21 +113,31 @@ struct NotchSettingsView: View {
                         Section("Widgets") {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(
-                                    "Drag a widget into a slot. Slots fill the panel from the left."
+                                    "Drag a widget into a slot. The first two slots hold Screenshots "
+                                        + "and Downloads, so a folded shelf and its slot sit on the same side."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
 
-                                // 노치 패널의 6칸을 그대로 본뜬 드롭 보드.
-                                HStack(spacing: 6) {
+                                // 노치 패널의 6칸을 그대로 본뜬 드롭 보드. 앞 두 칸은 선반 전용으로 잠겨 있다.
+                                HStack(alignment: .bottom, spacing: 6) {
                                     ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
                                         WidgetSlotBox(
                                             index: index,
                                             widget: slotWidget(index),
                                             onAssign: { assign($0, to: index) },
-                                            onClear: { assign(.none, to: index) })
+                                            onClear: { _ = assign(.none, to: index) })
                                     }
                                 }
+                                // 선반 칸과 위젯 칸 그룹 라벨.
+                                HStack(spacing: 6) {
+                                    Label("Shelves", systemImage: "lock.fill")
+                                        .frame(width: 76 * 2 + 6, alignment: .leading)
+                                    Text("Widgets")
+                                }
+                                .font(.caption2)
+                                .foregroundColor(DS.textTertiary)
+                                .labelStyle(.titleAndIcon)
 
                                 // 배치 가능한 위젯 팔레트. 이미 배치된 위젯은 흐리게.
                                 // 칩이 설정 폭을 넘지 않도록 세 개씩 두 줄로 놓는다.
@@ -302,24 +316,37 @@ struct NotchSettingsView: View {
 private struct WidgetSlotBox: View {
     let index: Int
     let widget: NotchWidget
-    let onAssign: (NotchWidget) -> Void
+    /// 놓을 수 있으면 true. 선반 칸에 다른 위젯, 위젯 칸에 선반을 놓으면 false라 되돌아간다.
+    let onAssign: (NotchWidget) -> Bool
     let onClear: () -> Void
 
     @State private var isHovered = false
     @State private var isDropTargeted = false
 
     private var isEmpty: Bool { widget == .none }
+    private var isShelfSlot: Bool { index < NotchWidget.shelfSlotCount }
+    /// 이 칸에 놓을 수 있는 위젯(메뉴·VoiceOver 동작).
+    private var choices: [NotchWidget] {
+        [.sites, .apps, .folders, .screenshots, .downloads, .awake].filter { $0.fits(slot: index) }
+    }
 
     var body: some View {
         VStack(spacing: 5) {
-            Image(systemName: NotchSettingsView.widgetSymbol(widget))
-                .font(.system(size: 16))
-                .foregroundColor(isEmpty ? DS.textTertiary : DS.accent)
-            Text(isEmpty ? "Slot \(index + 1)" : NotchSettingsView.widgetName(widget))
-                .font(DS.captionFont)
-                .foregroundColor(isEmpty ? DS.textTertiary : DS.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            Image(
+                systemName: isEmpty && isShelfSlot
+                    ? "tray" : NotchSettingsView.widgetSymbol(widget)
+            )
+            .font(.system(size: 16))
+            .foregroundColor(isEmpty ? DS.textTertiary : DS.accent)
+            Text(
+                isEmpty
+                    ? (isShelfSlot ? "Shelf" : "Slot \(index + 1)")
+                    : NotchSettingsView.widgetName(widget)
+            )
+            .font(DS.captionFont)
+            .foregroundColor(isEmpty ? DS.textTertiary : DS.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 3)
         .frame(width: 76, height: 64)
@@ -350,39 +377,37 @@ private struct WidgetSlotBox: View {
         }
         .onHover { isHovered = $0 }
         // Drag가 어려운 키보드·VoiceOver 사용자를 위한 동일 기능 메뉴.
+        // Drag가 어려운 키보드·VoiceOver 사용자를 위한 동일 기능 메뉴. 이 칸에 놓을 수 있는 위젯만 보인다.
         .contextMenu {
-            Button("Sites") { onAssign(.sites) }
-            Button("Apps") { onAssign(.apps) }
-            Button("Finder") { onAssign(.folders) }
-            Button("Screenshots") { onAssign(.screenshots) }
-            Button("Downloads") { onAssign(.downloads) }
-            Button("Focus") { onAssign(.awake) }
+            ForEach(choices, id: \.self) { choice in
+                Button(NotchSettingsView.widgetName(choice)) { _ = onAssign(choice) }
+            }
             if !isEmpty {
                 Divider()
                 Button("Clear Slot", action: onClear)
             }
         }
         // VoiceOver rotor actions: drag/drop 없이 배치·비우기 가능.
-        .accessibilityAction(named: "Place Sites") { onAssign(.sites) }
-        .accessibilityAction(named: "Place Apps") { onAssign(.apps) }
-        .accessibilityAction(named: "Place Finder") { onAssign(.folders) }
-        .accessibilityAction(named: "Place Screenshots") { onAssign(.screenshots) }
-        .accessibilityAction(named: "Place Downloads") { onAssign(.downloads) }
-        .accessibilityAction(named: "Place Focus") { onAssign(.awake) }
-        .accessibilityAction(named: "Clear Slot", onClear)
+        .accessibilityActions {
+            ForEach(choices, id: \.self) { choice in
+                Button("Place \(NotchSettingsView.widgetName(choice))") { _ = onAssign(choice) }
+            }
+            Button("Clear Slot", action: onClear)
+        }
         // 배치된 위젯은 슬롯에서 직접 끌어 다른 슬롯으로 옮길 수 있다.
         .draggable(widget.rawValue)
         .dropDestination(for: String.self) { items, _ in
             guard let raw = items.first, let dropped = NotchWidget(rawValue: raw) else {
                 return false
             }
-            onAssign(dropped)
-            return true
+            return onAssign(dropped)
         } isTargeted: {
             isDropTargeted = $0
         }
         .accessibilityLabel(
-            "Slot \(index + 1): \(NotchSettingsView.widgetName(widget))")
+            "\(isShelfSlot ? "Shelf slot" : "Slot") \(index + 1): \(NotchSettingsView.widgetName(widget))"
+        )
+        .help(isShelfSlot ? "Shelf slot: Screenshots or Downloads" : "Widget slot")
     }
 }
 

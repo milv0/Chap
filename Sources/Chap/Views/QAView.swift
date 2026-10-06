@@ -185,7 +185,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에 있는 6칸에 Sites, Apps, Finder, Screenshots, Downloads, Focus를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭의 Widgets 보드에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots·Downloads 선반 전용이고(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다), 나머지 네 칸에 Sites, Apps, Finder, Focus를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -414,7 +414,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "The Widgets board has six slots. Drag Sites, Apps, Finder, Screenshots, Downloads, or Focus into any slot, or use a slot's context menu or VoiceOver actions."
+                    "The Widgets board has six slots. The first two are for the Screenshots and Downloads shelves (a folded shelf becomes an icon left of the notch, so its slot stays on the left); the other four take Sites, Apps, Finder, or Focus. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
