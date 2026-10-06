@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap입니다. 이 아기 물범이 바로 Chap이에요. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -402,7 +402,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. It is just decoration, so clicking it does nothing."
+                    "That's Chap. The baby seal is Chap itself. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",

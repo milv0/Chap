@@ -6,6 +6,9 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Meet Chap** — The pixel seal now has a name, and it's Chap: the friend from
+  "Hi, I'm your chap." The in-app Q&A introduces it that way.
+
 - **One row style** — Sites, Finder, and Downloads rows now share one look: a
   12pt name with the shortcut or age on the right. Icons appear only where they
   tell rows apart (file icons in Downloads, app icons in Apps), not repeated

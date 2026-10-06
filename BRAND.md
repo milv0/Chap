@@ -15,7 +15,12 @@ back.
 
 ## Mascot
 
-Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
+The mascot's name is **Chap**. The seal *is* Chap: the friend from "Hi, I'm your
+chap." finally has a face. There is no separate character name; in copy, call it
+"Chap" (or "Chap the Seal" when the seal needs pointing out, e.g. a feature list).
+Never "the mascot" in user-facing text.
+
+Chap is a **baby seal**, drawn as a 24×12 pixel sprite
 (`ChapMascot`, three inks: navy outline, white body, blue-gray shade). It lies
 on the left of the notch's black strip, always, and tells the Keep Awake story
 there. It is decoration, never a
@@ -87,6 +92,7 @@ enough: a friend who snaps things into place.
 | Welcome | Hi, I'm your chap. |
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
+| Mascot | Chap the Seal (the seal is Chap) |
 | Focus (idle) | Chap on (the one big button in the notch) |
 | Focus (stop) | Chap off |
 | Focus (running) | Fully charged → In the zone → Final stretch → Landing soon |

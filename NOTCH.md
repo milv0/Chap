@@ -190,7 +190,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
-노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap 마스코트(아기 물범,
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap(아기 물범 마스코트, 이름이 곧 Chap이다,
 `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
 (Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
 
