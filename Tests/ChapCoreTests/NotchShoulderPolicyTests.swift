@@ -14,43 +14,26 @@ struct NotchShoulderPolicyTests {
         #expect(NotchShoulderPolicy.normalized([.awake, .apps]) == [])
     }
 
-    @Test("slots left of the row center go to the left shoulder, the rest to the right")
-    func sides() {
-        // 6칸: 앞 셋은 왼쪽, 뒤 셋은 오른쪽.
-        let widths: [CGFloat] = [130, 160, 150, 84, 130, 112]
-        #expect(
-            NotchShoulderPolicy.sides(widths: widths, spacing: 20)
-                == [.left, .left, .left, .right, .right, .right])
-        // 한 칸뿐이면 가운데 → 왼쪽.
-        #expect(NotchShoulderPolicy.sides(widths: [160], spacing: 20) == [.left])
-        #expect(NotchShoulderPolicy.sides(widths: [], spacing: 20) == [])
-    }
-
     @Test("the row width is the expanded width that the dock keeps")
     func rowWidth() {
         #expect(NotchShoulderPolicy.rowWidth(widths: [100, 50], spacing: 20) == 170)
         #expect(NotchShoulderPolicy.rowWidth(widths: [], spacing: 20) == 0)
     }
 
-    @Test("icons start at the outer edge and step inward by the pitch")
-    func iconCenters() {
-        // 플레어 10 + 여백 8 + 반 피치 14 = 32.
-        #expect(NotchShoulderPolicy.iconCenterX(side: .left, index: 0, dockWidth: 800) == 32)
-        #expect(NotchShoulderPolicy.iconCenterX(side: .left, index: 1, dockWidth: 800) == 60)
-        #expect(NotchShoulderPolicy.iconCenterX(side: .right, index: 0, dockWidth: 800) == 768)
-        #expect(NotchShoulderPolicy.iconCenterX(side: .right, index: 1, dockWidth: 800) == 740)
-        #expect(NotchShoulderPolicy.iconCenterY(topInset: 32, edgeDepth: 6) == 22)
-        #expect(NotchShoulderPolicy.iconCenterY(topInset: 32, edgeDepth: 0) == 19)
-        #expect(NotchShoulderPolicy.iconSize == 16)
+    @Test("collapsed icons mirror the right-side strip tools across the notch")
+    func leftStripIcons() {
+        #expect(NotchLauncherPolicy.leftStripIconCenterOffsets(count: 2) == [13, 41])
+        #expect(
+            NotchLauncherPolicy.leftStripIconCenterOffsets(count: 2)
+                == NotchLauncherPolicy.stripToolCenterOffsets(besideDropBadge: false, count: 2))
+        #expect(NotchLauncherPolicy.leftStripIconCenterOffsets(count: 0) == [])
     }
 
-    @Test("the dock is wide enough to keep shoulder icons clear of the black curve")
-    func minimumDockWidth() {
-        // 반폭 = plateau 202.5 + 감쇠 90 + 플레어 10 + 여백 8 + 28 × 2 = 366.5.
-        #expect(
-            NotchShoulderPolicy.minimumDockWidth(iconsPerSide: 2, plateauHalfWidth: 202.5) == 733)
-        #expect(
-            NotchShoulderPolicy.minimumDockWidth(iconsPerSide: 0, plateauHalfWidth: 202.5) == 0)
+    @Test("the strip seal steps outward when collapsed icons sit beside the notch")
+    func mascotMakesRoom() {
+        #expect(NotchLauncherPolicy.stripMascotCenterOffset(collapsedIconCount: 0) == 55)
+        // 110 - 18 - 6 = 86: 물범(36pt)이 68…104, 아이콘 두 개는 노치에서 55pt까지.
+        #expect(NotchLauncherPolicy.stripMascotCenterOffset(collapsedIconCount: 2) == 86)
     }
 
     @Test("collapsed widgets round-trip through the config and drop bad values")

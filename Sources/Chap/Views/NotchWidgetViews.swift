@@ -870,25 +870,20 @@ struct NotchCollapseButton: View {
     }
 }
 
-/// 어깨에 놓인 접힌 칸 아이콘. 누르면 원래 자리에서 다시 펼쳐진다.
-struct NotchShoulderIcon: View {
+/// 검정 띠 왼쪽에 놓인 접힌 선반 아이콘. 띠 도구와 같은 흰색이며, 누르면 원래 자리에서 다시 펼쳐진다.
+struct NotchStripShelfIcon: View {
     let symbol: String
     let title: String
-    let foreground: Color
-    let hoverBackground: Color
+    let height: CGFloat
     let action: () -> Void
     @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: NotchShoulderPolicy.iconSize, weight: .medium))
-                .foregroundColor(foreground)
-                .frame(width: NotchShoulderPolicy.iconPitch - 2, height: 26)
-                .background(
-                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                        .fill(isHovered ? hoverBackground : Color.clear)
-                )
+                .font(.system(size: 13))
+                .foregroundColor(DS.notchStripIconColor(isHovered: isHovered))
+                .frame(width: NotchLauncherPolicy.stripToolPitch, height: height)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

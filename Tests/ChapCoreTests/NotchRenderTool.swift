@@ -200,8 +200,10 @@ struct NotchRenderTool {
     }
 
     /// 도커가 열린 채 Keep Awake를 켜고 끄면 상단 띠 시계가 다시 열지 않아도 바뀌는지 확인한다.
+    /// Focus 시계는 띠에서 뺐다(주석으로 남긴 `awakeStripClock`). 시계를 되살리면 이 테스트도 다시 켠다.
     @Test(
         "the strip Focus clock follows Keep Awake changes while the dock is open",
+        .disabled("The Focus clock is no longer drawn on the strip"),
         .enabled(if: NotchRenderTool.outputDirectory != nil))
     func stripClockFollowsKeepAwake() async throws {
         let reveal = NotchRevealModel()

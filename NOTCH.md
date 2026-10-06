@@ -177,19 +177,23 @@ Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
 
-## 상단 띠 왼쪽: 마스코트 · Focus 시계
+## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
-`NotchLauncherPolicy.stripLeading(focusActive:focusSlotVisible:)`가 정한다. Focus 칸이 위젯 줄에
-보이면(배치됨 + 메모 모드 아님) 그 칸이 시계와 물범을 맡으므로 띠 왼쪽은 비운다.
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap 마스코트(아기 물범,
+`ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
+(Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
 
-| 상황 | 띠 왼쪽 |
+| 상황 (`NotchLauncherPolicy.stripLeading(focusSlotVisible:)`) | 물범 |
 |---|---|
-| Focus 칸 보임 | 비움 |
-| Focus 칸 없음, 또는 메모 모드 + Focus 켜짐 | 번개 + 남은 시간 |
-| Focus 칸 없음, 또는 메모 모드 + Focus 꺼짐 | 물범 |
+| Focus 칸 보임 (배치됨 + 메모 모드 아님) | 띠에 없음 (칸 안에 있음) |
+| 그 밖 | 띠에 있음. Focus가 켜져 있으면 깨어 꼬리를 계속 흔들고(30분 미만이면 졸린 눈), 꺼져 있으면 가끔 까딱 |
 
-노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt 가운데)에는 Focus가 켜져 있으면 번개와 남은 시간,
-꺼져 있으면 Chap 마스코트(아기 물범, `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다.
+- **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
+  대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
+  읽히도록 마지막 칸이 노치에 가장 가깝다. 메모 모드에서는 숨긴다.
+- **물범 자리**: 아이콘이 없으면 왼쪽 상태 영역 가운데(노치에서 55pt), 있으면 바깥쪽으로 비켜 86pt
+  (`stripMascotCenterOffset`). 아이콘 두 개(노치에서 55pt까지)와 물범(68~104pt)이 겹치지 않는다.
+
 마스코트는 `Canvas`로 픽셀마다 사각형을 칠하며, 누를 수 없고 VoiceOver에서 제외된다.
 꼬리 까딱: 도커가 펼쳐지고 0.35초 뒤 한 번(`flickSequence` 들기·내리기 ×2, 프레임 0.14초),
 이후 열려 있는 동안 7~12초 무작위 간격으로 반복한다. 꼬리 프레임(`tailUpRows`)은 오른쪽 끝 다섯 칸만 다르다.
@@ -272,27 +276,22 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 - 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
 - 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
   Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
-- 켜져 있는 동안 상단 띠 왼쪽 Keep Awake 시계도 커피 대신 같은 번개(`bolt.fill`) 아이콘을 쓴다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
-  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
+  모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
-## 어깨: 접힌 칸 (Screenshots · Downloads)
-
-어깨는 검정 띠가 plateau 바깥에서 곡선(`stripFalloff` 90pt)으로 얇아진 뒤 도커 양 끝까지 남는
-메뉴 막대 높이의 밝은 띠다(`NotchShoulderPolicy`).
+## 접는 선반 칸 (Screenshots · Downloads)
 
 - 선반 칸 제목 줄 오른쪽 끝의 접기 버튼(`chevron.up`, 칸에 마우스를 올렸을 때만 보임)이나 제목의
-  우클릭 "Collapse"로 칸을 접는다. 접힌 칸은 위젯 줄에서 빠지고 어깨에 16pt 아이콘(`iconSize`)으로 놓인다.
-  아이콘을 누르면 원래 자리에서 다시 펼쳐진다.
-- **도커 폭 유지**: 칸을 접어도 도커는 펼쳤을 때의 줄 폭(`rowWidth`)을 유지하고, 남은 칸은 가운데 정렬된다.
-- **방향**: 펼친 줄에서 칸 가운데가 줄 가운데(= 노치 가운데)보다 왼쪽이면 왼쪽 어깨, 아니면 오른쪽 어깨.
-- **배치**: 도커 바깥 모서리부터 안쪽으로 28pt 간격(플레어 10 + 여백 8 뒤). 왼쪽은 칸 순서대로,
-  오른쪽은 마지막 칸이 가장 바깥이다. 세로 중심은 (노치 높이 + 띠 가장자리 깊이) / 2 + 3pt(`iconDrop`)
-  (Custom 22pt, Glass 19pt). 아이콘이 검정 곡선에 닿지 않도록 필요하면 도커를 넓힌다(`minimumDockWidth`).
-- 아이콘 색은 칸 제목 아이콘과 같은 연한 블루(`DS.notchIconColor`). 검정 띠의 흰 도구 아이콘과 구분된다.
-  새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
+  우클릭 "Collapse"로 칸을 접는다. 접힌 칸은 위젯 줄에서 빠지고 **검정 띠 왼쪽**에 흰 아이콘으로 놓인다
+  (위 "상단 띠 왼쪽"). 아이콘을 누르면 원래 자리에서 다시 펼쳐진다.
+- **도커 폭 유지**: 칸을 접어도 도커는 펼쳤을 때의 줄 폭(`NotchShoulderPolicy.rowWidth`)을 유지하고,
+  남은 칸은 가운데 정렬된다.
+- 새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
 - 접힌 목록은 `Config.notchCollapsedWidgets`에 저장한다. 노치에서만 바꾸는 이 Mac의 표시 선택이라
-  설정창 저장이 덮어쓰지 않는다. 메모 모드에서는 어깨 아이콘을 숨긴다.
+  설정창 저장이 덮어쓰지 않는다.
+- **어깨 영역**: 검정 띠가 plateau 바깥에서 곡선(`stripFalloff` 90pt)으로 얇아진 뒤 도커 양 끝까지 남는
+  밝은 띠는 비워 둔다. 렌더 도구와 Debug 빌드(`defaults write com.mingyupark.Chap ChapShowShoulderGuides -bool YES`)
+  에서 경계선(빨강 어깨, 주황 곡선, 파랑 plateau)으로 확인할 수 있다.
 
 ## 선반 스크롤 (Screenshots · Downloads)
 

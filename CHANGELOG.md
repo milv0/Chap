@@ -7,10 +7,16 @@ All notable changes to Chap are documented in this file.
 ### Added
 
 - **Collapsible shelves** — Collapse Screenshots or Downloads from the chevron at
-  the end of its title (or right-click → Collapse) and it folds into a small icon
-  on the dock's shoulder, the light band beside the black strip: left of the
-  notch goes to the left shoulder, right goes right. The dock keeps its width.
-  Click the icon to bring the shelf back. Chap remembers this on this Mac.
+  the end of its title (or right-click → Collapse) and it folds into a small
+  white icon on the left of the notch's black strip, mirroring Drop, Mirror, and
+  Quick Note on the right. The dock keeps its width. Click the icon to bring the
+  shelf back. Chap remembers this on this Mac.
+
+### Changed
+
+- **No strip countdown** — The black strip no longer shows the Focus timer. When
+  the Focus slot isn't showing, the strip seal stays awake and wags its tail
+  while Focus runs; the time left is in the Focus slot and the status menu.
 
 ## [2.5.0] — 2026-10-05
 

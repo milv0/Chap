@@ -238,7 +238,7 @@ struct NotchLauncherPanelView: View {
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
             // 상단 띠 왼쪽: Focus 칸이 보이면 비움, 아니면 Focus 켜짐 → 남은 시간, 꺼짐 → 마스코트.
-            .overlay(alignment: .top) { awakeStripStatus }
+            .overlay(alignment: .top) { leftStripContent }
             // 상단 띠 오른쪽: Drop 상자(파일이 없어도 펼친 동안은 빈 상자), 그 오른쪽 Mirror, Quick Note.
             // 파일이 있으면 상자는 별도 배지 창이 그리고, 없으면 여기서 숫자 없이 그린다.
             .overlay(alignment: .top) {
@@ -252,8 +252,6 @@ struct NotchLauncherPanelView: View {
                     showsNote: showsNote,
                     isNoteMode: $reveal.isNoteMode)
             }
-            // 어깨: 접힌 Screenshots·Downloads 칸 아이콘. 원래 자리가 노치 왼쪽이면 왼쪽 어깨.
-            .overlay(alignment: .topLeading) { shoulderIcons }
             .overlay(alignment: .topLeading) {
                 if showsShoulderGuides { shoulderGuides }
             }
@@ -297,50 +295,85 @@ struct NotchLauncherPanelView: View {
             && slots.contains(where: { if case .awake = $0 { true } else { false } })
     }
 
-    @ViewBuilder private var awakeStripStatus: some View {
-        let awakeEnd = currentAwakeSessionEnd.flatMap { $0 > Date() ? $0 : nil }
-        let leading = NotchLauncherPolicy.stripLeading(
-            focusActive: awakeEnd != nil, focusSlotVisible: focusSlotVisible)
-        if leading == .focusClock, let awakeSessionEnd = awakeEnd {
-            let sideWidth = NotchGeometry.stripPlateauSideWidth
-            let notchHalf = stripPlateauHalfWidth - sideWidth
-            GeometryReader { geo in
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    HStack(spacing: 5) {
-                        // Focus 위젯과 같은 번개. 켜져 있는 동안 상단 띠 왼쪽에 남은 시간과 함께 보인다.
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(DS.accent)
-                        Text(
-                            KeepAwakePolicy.remainingClockLabel(
-                                until: awakeSessionEnd, now: context.date)
-                        )
-                        .font(.system(size: 13, weight: .medium))
-                        .monospacedDigit()
-                        .foregroundColor(.white.opacity(0.9))
+    /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). Focus 칸이 보이면 물범은 칸 안에 있다.
+    @ViewBuilder private var leftStripContent: some View {
+        let collapsed = reveal.isNoteMode ? [] : collapsedStripWidgets
+        let leading = NotchLauncherPolicy.stripLeading(focusSlotVisible: focusSlotVisible)
+        let notchHalf = stripPlateauHalfWidth - NotchGeometry.stripPlateauSideWidth
+        GeometryReader { geo in
+            let notchLeft = geo.size.width / 2 - notchHalf
+            let offsets = NotchLauncherPolicy.leftStripIconCenterOffsets(count: collapsed.count)
+            ZStack(alignment: .topLeading) {
+                ForEach(Array(collapsed.enumerated()), id: \.element) { index, widget in
+                    NotchStripShelfIcon(
+                        symbol: Self.shoulderSymbol(widget), title: Self.shoulderTitle(widget),
+                        height: topInset
+                    ) {
+                        setCollapsed(widget, false)
                     }
-                    .frame(width: sideWidth, height: topInset)
+                    // 왼쪽에서 오른쪽으로 칸 순서가 읽히도록 마지막 칸이 노치에 가장 가깝다.
                     .position(
-                        x: geo.size.width / 2 - notchHalf - sideWidth / 2
-                            + NotchGeometry.awakeStatusOffsetX,
-                        y: topInset / 2)
+                        x: notchLeft - offsets[collapsed.count - 1 - index], y: topInset / 2)
+                }
+                if leading == .mascot {
+                    // Focus가 켜져 있으면 깨어 꼬리를 흔들고(30분 미만이면 졸림), 꺼져 있으면 쉰다.
+                    TimelineView(.periodic(from: .now, by: 30)) { context in
+                        let remaining = currentAwakeSessionEnd.map {
+                            $0.timeIntervalSince(context.date)
+                        }
+                        let mood = ChapMascot.focusMood(remaining: remaining)
+                        NotchMascotView(
+                            mood: mood == .asleep ? .awake : mood,
+                            isAnimating: reveal.revealed,
+                            wagsContinuously: mood != .asleep)
+                    }
+                    .position(
+                        x: notchLeft
+                            - NotchLauncherPolicy.stripMascotCenterOffset(
+                                collapsedIconCount: collapsed.count),
+                        y: topInset / 2
+                    )
+                    .allowsHitTesting(false)
                 }
             }
-            .allowsHitTesting(false)
-        } else if leading == .mascot {
-            // Focus가 꺼져 있으면 같은 자리(노치 왼쪽 띠)에 Chap 마스코트가 엎드려 있다.
-            // Focus 칸이 보이면 그 칸이 물범과 시계를 맡으므로 띠는 비운다(물범은 한 마리).
-            let sideWidth = NotchGeometry.stripPlateauSideWidth
-            let notchHalf = stripPlateauHalfWidth - sideWidth
-            GeometryReader { geo in
-                NotchMascotView(isAnimating: reveal.revealed)
-                    .position(
-                        x: geo.size.width / 2 - notchHalf - sideWidth / 2,
-                        y: topInset / 2)
-            }
-            .allowsHitTesting(false)
         }
     }
+
+    /// 접혀서 띠 왼쪽에 아이콘으로 놓이는 선반. 칸 순서대로 (왼쪽 → 오른쪽).
+    private var collapsedStripWidgets: [NotchWidget] {
+        slots.compactMap(\.collapsibleWidget).filter { reveal.collapsedWidgets.contains($0) }
+    }
+
+    // Focus 시계는 띠에서 뺐다. 되살릴 때는 `StripLeading.focusClock`과 함께 아래 블록을 쓴다.
+    // @ViewBuilder private var awakeStripClock: some View {
+    //     if let awakeSessionEnd = currentAwakeSessionEnd, awakeSessionEnd > Date() {
+    //         let sideWidth = NotchGeometry.stripPlateauSideWidth
+    //         let notchHalf = stripPlateauHalfWidth - sideWidth
+    //         GeometryReader { geo in
+    //             TimelineView(.periodic(from: .now, by: 1)) { context in
+    //                 HStack(spacing: 5) {
+    //                     // Focus 위젯과 같은 번개. 켜져 있는 동안 상단 띠 왼쪽에 남은 시간과 함께 보인다.
+    //                     Image(systemName: "bolt.fill")
+    //                         .font(.system(size: 12))
+    //                         .foregroundColor(DS.accent)
+    //                     Text(
+    //                         KeepAwakePolicy.remainingClockLabel(
+    //                             until: awakeSessionEnd, now: context.date)
+    //                     )
+    //                     .font(.system(size: 13, weight: .medium))
+    //                     .monospacedDigit()
+    //                     .foregroundColor(.white.opacity(0.9))
+    //                 }
+    //                 .frame(width: sideWidth, height: topInset)
+    //                 .position(
+    //                     x: geo.size.width / 2 - notchHalf - sideWidth / 2
+    //                         + NotchGeometry.awakeStatusOffsetX,
+    //                     y: topInset / 2)
+    //             }
+    //         }
+    //         .allowsHitTesting(false)
+    //     }
+    // }
 
     @State private var dropTargeted = false
 
@@ -587,46 +620,12 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    /// 펼친 상태 기준 칸별 어깨 방향 (노치 왼쪽 → 왼쪽 어깨).
-    private var slotSides: [NotchShoulderPolicy.Side] {
-        NotchShoulderPolicy.sides(widths: slots.map(width(for:)), spacing: DS.spacing)
-    }
-
-    /// 어깨에 올라간 접힌 칸들. 바깥(도커 모서리)부터 칸 순서대로.
-    private var shoulderItems:
-        [(slot: NotchSlotContent, side: NotchShoulderPolicy.Side, index: Int)]
-    {
-        var leftCount = 0
-        var right: [(NotchSlotContent, NotchShoulderPolicy.Side)] = []
-        var items: [(slot: NotchSlotContent, side: NotchShoulderPolicy.Side, index: Int)] = []
-        for (slot, side) in zip(slots, slotSides) {
-            guard let widget = slot.collapsibleWidget, reveal.collapsedWidgets.contains(widget)
-            else { continue }
-            if side == .left {
-                items.append((slot, .left, leftCount))
-                leftCount += 1
-            } else {
-                right.append((slot, .right))
-            }
-        }
-        // 오른쪽 어깨는 오른쪽 끝에서 안쪽으로 놓으므로 마지막 칸이 가장 바깥이다.
-        for (offset, entry) in right.reversed().enumerated() {
-            items.append((entry.0, entry.1, offset))
-        }
-        return items
-    }
-
-    /// 도커 최소 폭: 기본 최소 폭, 펼친 줄 폭(접어도 유지), 어깨 아이콘 자리 중 가장 큰 값.
+    /// 도커 최소 폭: 기본 최소 폭과 펼친 줄 폭 중 큰 값. 칸을 접어도 도커 길이는 그대로다.
     private var dockMinimumWidth: CGFloat {
         let row =
             NotchShoulderPolicy.rowWidth(widths: slots.map(width(for:)), spacing: DS.spacing)
             + 2 * DS.padding
-        let items = shoulderItems
-        let perSide = max(
-            items.filter { $0.side == .left }.count, items.filter { $0.side == .right }.count)
-        let shoulder = NotchShoulderPolicy.minimumDockWidth(
-            iconsPerSide: perSide, plateauHalfWidth: stripPlateauHalfWidth)
-        return max(minWidth, row, shoulder)
+        return max(minWidth, row)
     }
 
     private func setCollapsed(_ widget: NotchWidget, _ collapsed: Bool) {
@@ -637,35 +636,6 @@ struct NotchLauncherPanelView: View {
         onCollapsedChange(list)
     }
 
-    /// 어깨(검정 띠 곡선 바깥의 밝은 띠)에 놓는 접힌 칸 아이콘들.
-    @ViewBuilder private var shoulderIcons: some View {
-        let items = shoulderItems
-        if !items.isEmpty, !reveal.isNoteMode {
-            GeometryReader { geo in
-                let y = NotchShoulderPolicy.iconCenterY(
-                    topInset: topInset,
-                    edgeDepth: usesSemanticGlass ? 0 : NotchGeometry.stripEdgeDepth)
-                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    if let widget = item.slot.collapsibleWidget {
-                        NotchShoulderIcon(
-                            symbol: Self.shoulderSymbol(widget),
-                            title: Self.shoulderTitle(widget),
-                            foreground: iconForeground,
-                            hoverBackground: rowHoverBackground
-                        ) {
-                            setCollapsed(widget, false)
-                        }
-                        .position(
-                            x: NotchShoulderPolicy.iconCenterX(
-                                side: item.side, index: item.index, dockWidth: geo.size.width),
-                            y: y)
-                    }
-                }
-            }
-            .transition(.opacity)
-        }
-    }
-
     /// (개발용) 어깨 경계선. 빨강 = 어깨(아이콘 자리), 주황 = 검정 띠 곡선 구간, 파랑 = 노치 plateau.
     private var shoulderGuides: some View {
         GeometryReader { geo in
@@ -673,7 +643,7 @@ struct NotchLauncherPanelView: View {
             let flare = NotchGeometry.dockFlareRadius
             let plateauLeft = w / 2 - stripPlateauHalfWidth
             let curveLeft = plateauLeft - NotchGeometry.stripFalloff
-            let iconStart = flare + NotchShoulderPolicy.outerMargin
+            let iconStart = flare + 8
             ZStack(alignment: .topLeading) {
                 ForEach([false, true], id: \.self) { mirrored in
                     let place: (CGFloat, CGFloat) -> CGFloat = { x, width in

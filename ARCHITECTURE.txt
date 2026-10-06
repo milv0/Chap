@@ -84,7 +84,7 @@ Sources/
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
-│   ├── NotchShoulderPolicy.swift ← 접힌 선반 칸의 어깨 방향·아이콘 위치·도커 폭 유지 규칙
+│   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 정리·접어도 도커 폭 유지 (어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
 │   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정

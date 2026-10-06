@@ -126,7 +126,8 @@
     .dock-cap path { fill: #000; }
     .dock-awake { align-items: center; color: rgb(255 255 255 / .9); display: flex; font-size: max(9px, calc(13 * var(--pt))); font-variant-numeric: tabular-nums; font-weight: 500; gap: calc(5 * var(--pt)); height: calc(32 * var(--pt)); justify-content: center; left: calc(204.5 * var(--pt)); position: absolute; top: 0; transform: translateX(-50%); width: calc(110 * var(--pt)); z-index: 3; }
     .dock-awake svg { color: var(--blue); flex: none; height: max(8px, calc(12 * var(--pt))); width: max(8px, calc(12 * var(--pt))); }
-    .mac-stage:not(.awake-on) .dock-awake { display: none; }
+    /* Chap 2.5.1+: the notch strip no longer shows the Focus countdown (it lives in the Focus slot). */
+    .dock-awake { display: none; }
     .dock-columns { display: grid; gap: calc(16 * var(--pt)); grid-template-columns: repeat(4, calc(160 * var(--pt))); }
     .dock-section { display: flex; flex-direction: column; gap: calc(3 * var(--pt)); min-width: 0; }
     .dock-heading { align-items: center; color: var(--mac-secondary); display: flex; font-size: max(9px, calc(11 * var(--pt))); font-weight: 600; gap: calc(5 * var(--pt)); line-height: 1.25; padding: 0 calc(6 * var(--pt)) calc(1 * var(--pt)); white-space: nowrap; }
@@ -572,7 +573,7 @@
             <div class="card-number">03 · LIQUID GLASS</div><h3>Clear or Regular, any appearance.</h3><p>On macOS 26+, Apple Liquid Glass pairs semantic text with your pick of Clear or Regular material and any System, Light, or Dark appearance. Custom color remains available everywhere else.</p><div class="glass-samples" aria-hidden="true"><div class="glass-sample">Clear</div><div class="glass-sample">Regular</div></div>
           </article>
           <article class="feature-card feature-card--half">
-            <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the open dock shows a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
+            <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the notch's Focus slot shows a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
           </article>
         </div>
       </div>
