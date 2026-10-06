@@ -75,6 +75,16 @@ final class NotchLauncherController {
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
 
+    /// (개발용) Debug 빌드에서만 어깨 경계선을 그린다.
+    /// 켜기: `defaults write com.mingyupark.Chap ChapShowShoulderGuides -bool YES`
+    static var showsShoulderGuides: Bool {
+        #if DEBUG
+            return UserDefaults.standard.bool(forKey: "ChapShowShoulderGuides")
+        #else
+            return false
+        #endif
+    }
+
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
     /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
     private static let badgeLevel = NSWindow.Level(
@@ -350,6 +360,7 @@ final class NotchLauncherController {
             onCollapsedChange: { [weak self] widgets in
                 self?.onCollapsedChange(widgets)
             },
+            showsShoulderGuides: Self.showsShoulderGuides,
             reveal: reveal)
         let hosting = NSHostingView(rootView: content)
         // 노치 구간 safe area가 콘텐츠를 아래로 밀지 않게 한다.

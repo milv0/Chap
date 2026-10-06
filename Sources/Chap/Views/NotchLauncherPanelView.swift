@@ -96,7 +96,8 @@ struct NotchLauncherPanelView: View {
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     /// 칸을 접거나 펼쳤을 때 새 목록. 컨트롤러가 config에 저장한다.
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
-    /// (개발용) 어깨·곡선 구간 경계선을 그린다. 오프스크린 렌더 도구만 켠다.
+    /// (개발용) 어깨·곡선 구간 경계선을 그린다. 렌더 도구와 Debug 빌드의
+    /// `ChapShowShoulderGuides` 기본값으로만 켠다 (Release에서는 항상 꺼짐).
     var showsShoulderGuides = false
     @ObservedObject var reveal: NotchRevealModel
 
