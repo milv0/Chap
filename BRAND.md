@@ -25,7 +25,9 @@ motions are small: a tail flick when you open the notch and now and then (every
 still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
 resting nearby, not a pet asking for attention.
 
-While Focus runs the seal keeps wagging its tail (slower and drowsy in the last
+When you press Chap on, the seal gets ready: it crouches, hops, ties a blue
+headband, and a few sparkles pop (about 0.7 s, once). It keeps the headband on
+while Focus runs. While Focus runs the seal keeps wagging its tail (slower and drowsy in the last
 30 minutes): the one steady motion Chap allows, because it means "I'm keeping
 your Mac awake". The Focus slot shows the bolt and the time left; the seal stays
 on the strip, so there is only ever one seal and the strip never sits empty.

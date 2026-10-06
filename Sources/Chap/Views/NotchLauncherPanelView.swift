@@ -348,7 +348,8 @@ struct NotchLauncherPanelView: View {
                         NotchMascotView(
                             mood: mood == .asleep ? .awake : mood,
                             isAnimating: reveal.revealed,
-                            wagsContinuously: mood != .asleep)
+                            wagsContinuously: mood != .asleep,
+                            isFocusing: mood != .asleep)
                     }
                     .position(
                         x: notchLeft

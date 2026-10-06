@@ -134,3 +134,44 @@ struct ChapMascotFocusMoodTests {
         #expect(ChapMascot.sleepZRiseDuration < ChapMascot.sleepZPeriod)
     }
 }
+
+@Suite("ChapMascot – Focus headband and entry")
+struct ChapMascotFocusEntryTests {
+    @Test("the tied headband crosses the forehead in Chap blue and keeps the grid shape")
+    func tiedHeadband() {
+        let grid = ChapMascot.rows(eyes: .open, pose: .rest, headband: .tied(ribbon: 1))
+        #expect(grid.count == 12 && grid.allSatisfy { $0.count == 24 })
+        #expect(Array(grid[2])[4...10].allSatisfy { $0 == "b" })
+        #expect(Array(grid[1])[13] == "b" && Array(grid[2])[12] == "b")
+        #expect(
+            ChapMascot.pixels(eyes: .open, pose: .rest, headband: .tied(ribbon: 1))
+                .contains { $0.ink == .band })
+        #expect(ChapMascot.pixels(eyes: .open, pose: .rest, headband: nil) == ChapMascot.pixels)
+    }
+
+    @Test("the band never paints over the outline or the eyes")
+    func bandStaysOnWhite() {
+        for ribbon in [1, 2] {
+            let base = ChapMascot.rows(eyes: .open, pose: .rest)
+            let grid = ChapMascot.rows(eyes: .open, pose: .rest, headband: .tied(ribbon: ribbon))
+            for (a, b) in zip(base, grid) {
+                for (ca, cb) in zip(a, b) where ca != cb {
+                    #expect(cb == "b")
+                    #expect(ca == "w" || ca == ".")
+                }
+            }
+        }
+    }
+
+    @Test("entering Focus crouches, hops, ties the band, then sparkles, in about 0.7s")
+    func entrySequence() {
+        let steps = ChapMascot.focusEntrySequence
+        #expect(steps.first?.offsetY == 1)
+        #expect(steps.contains { $0.offsetY < 0 && $0.pose == .tailUp })
+        #expect(steps.last?.headband == .tied(ribbon: 1))
+        #expect(steps.contains { $0.sparkles })
+        #expect(steps.last?.offsetY == 0)
+        let total = Double(steps.count) * ChapMascot.focusEntryFrameDuration
+        #expect(total > 0.5 && total < 1.0)
+    }
+}

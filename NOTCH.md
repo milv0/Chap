@@ -215,6 +215,12 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
 깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
 
+**Focus 돌입과 머리띠**: Focus가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 "집중!" 돌입을 한다
+(`ChapMascot.focusEntrySequence`, 8프레임 × 0.09초 ≈ 0.7초): 웅크림(아래 1px) → 꼬리를 들고 뛰어오름(위 2px) →
+내려앉아 이마에 파란 머리띠를 왼쪽부터 묶음(`headbandCells`, 2행 x 4…10) → 끈이 휘날리며 머리 왼쪽·꼬리 위에
+반짝임(`sparkleCells`, 스프라이트 바깥까지 그리는 겹침 레이어). Focus가 켜져 있는 동안 머리띠를 매고 있고, 끈은 꼬리와
+같이 펄럭인다(`ribbonCells` 두 자세). 이미 켜진 채 노치를 열면 돌입 없이 머리띠만 보인다. 동작 줄이기·닫힌 노치에서도
+머리띠만 바로 맨다. 머리띠 색 `#5B82FF`, 반짝임 `#89A3FF`(`DS.accentLight`).
 띠에서는 z가 화면 위 경계에 잘리므로 잠든(`.asleep`) 모습 대신 쉬는 자세를 쓴다. `.asleep`·z·`widgetPixelSize`(2pt)는
 `ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 꼬리 속도는 `ChapMascot.focusWagFrameDuration(for:)`.
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
