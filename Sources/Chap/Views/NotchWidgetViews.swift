@@ -146,7 +146,7 @@ struct NotchFocusView: View {
     }
 
     /// 켜짐: 같은 링이 남은 비율만큼 블루로 차 있다가 줄어들고, 가운데에 남은 시간. 링을 누르면 끈다
-    /// (마우스를 올리면 가운데가 "Chap off"로 바뀐다). 아래 한 줄은 남은 시간에 따라 바뀌는 문구.
+    /// (마우스를 올리면 가운데가 "Chap off"로 바뀐다).
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
@@ -185,11 +185,9 @@ struct NotchFocusView: View {
                     "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
                 )
                 .accessibilityHint("Turns Focus off")
-                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-                    .lineLimit(1)
-                    .frame(height: 18)
+                // 남은 시간 문구(Fully charged 등)는 뺐다. 링과 숫자가 이미 말해 준다. 꺼짐의 칩 줄과 같은 높이를 비워
+                // 켜고 꺼도 링이 제자리에 있다.
+                Color.clear.frame(height: 18)
             }
             .frame(maxWidth: .infinity)
         }

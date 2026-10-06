@@ -95,7 +95,7 @@ enough: a friend who snaps things into place.
 | Mascot | Chap the Seal (the seal is Chap) |
 | Focus (idle) | Chap on (in the center of the Focus ring) |
 | Focus (stop) | Chap off |
-| Focus (running) | Fully charged → In the zone → Final stretch → Landing soon |
+| Focus (running) | (no caption; the ring and the time left say it) |
 
 ## Do / Don't
 

@@ -243,7 +243,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   `FocusPressStyle`로 눌렸다 튀어 오르며 트랙패드 햅틱(`.levelChange`, 권한 없음)이 온다. 링 아래에 길이 칩 1h·4h·8h
   (30×18pt 캡슐, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`에 기억, 기본 1h).
 - 켜짐: 같은 링이 남은 비율만큼 블루 호로 12시 방향부터 차 있다가 1초마다 줄어든다(`focusProgress`, 길이를 모르면
-  `inferredFocusDuration`). 가운데 15pt 남은 시간(h:mm:ss), 링 아래 한 줄(`focusActiveLine`). 마우스를 올리면 가운데가
+  `inferredFocusDuration`). 가운데 15pt 남은 시간(h:mm:ss). 링 아래 문구는 두지 않는다(링과 숫자로 충분하다). 마우스를 올리면 가운데가
   "Chap off"로 바뀌고, 누르면 끈다.
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
