@@ -330,10 +330,14 @@ public enum NotchWidget: String, Codable, CaseIterable {
     /// 파일 선반 위젯인지. 선반은 앞쪽 선반 칸에만 놓을 수 있다.
     public var isShelf: Bool { self == .screenshots || self == .downloads }
 
-    /// `index` 칸에 이 위젯을 놓을 수 있는지. 빈 칸은 어디든 된다.
+    /// 선반 칸의 고정 주인: 1번 칸 Screenshots, 2번 칸 Downloads. 설정창에서는 켜고 끄기만 한다.
+    public static let shelfSlots: [NotchWidget] = [.screenshots, .downloads]
+
+    /// `index` 칸에 이 위젯을 놓을 수 있는지. 빈 칸은 어디든 된다. 선반은 자기 고정 칸에만 놓인다.
     public func fits(slot index: Int) -> Bool {
         guard self != .none else { return true }
-        return isShelf == (index < NotchWidget.shelfSlotCount)
+        if isShelf { return NotchWidget.shelfSlots.firstIndex(of: self) == index }
+        return index >= NotchWidget.shelfSlotCount
     }
 
     /// 기본 배치: 선반 칸에 Screenshots, 나머지 칸에 런처 섹션.
@@ -343,7 +347,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
 
     /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다.
     /// - 중복 위젯은 첫 번째만 남긴다.
-    /// - 선반은 앞쪽 `shelfSlotCount`칸에 나타난 순서대로 모으고, 나머지 위젯은 뒤쪽 칸에 순서(빈 칸 포함)를
+    /// - 선반은 자기 고정 칸(`shelfSlots`)에 두고, 나머지 위젯은 뒤쪽 칸에 순서(빈 칸 포함)를
     ///   지켜 둔다. 뒤쪽 칸이 모자라면 빈 칸부터 줄여 위젯을 잃지 않는다(2.1의 12칸 배치, 2.7 이전 자유 배치도
     ///   선반만 앞으로 옮기고 나머지 순서는 그대로다).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
@@ -351,21 +355,17 @@ public enum NotchWidget: String, Codable, CaseIterable {
         let unique = widgets.filter { widget in
             widget == .none || seen.insert(widget).inserted
         }
-        // 이미 선반 칸 규칙을 지킨 배치는 선반 칸 안의 빈 칸 위치까지 그대로 둔다.
-        let shelfZone = Array(unique.prefix(shelfSlotCount))
-        let shelves: [NotchWidget]
+        // 선반은 자기 고정 칸(1번 Screenshots, 2번 Downloads)에, 어디에 있었든 있으면 켜진 채로 둔다.
+        let shelfSlots = shelfSlots.map { unique.contains($0) ? $0 : NotchWidget.none }
+        // 이미 규칙을 지킨 배치는 뒤쪽 칸의 빈 칸 위치까지 그대로 둔다.
         let rest: [NotchWidget]
-        if shelfZone.allSatisfy({ $0 == .none || $0.isShelf }),
+        if unique.prefix(shelfSlotCount).allSatisfy({ $0 == .none || $0.isShelf }),
             !unique.dropFirst(shelfSlotCount).contains(where: \.isShelf)
         {
-            shelves = shelfZone
             rest = Array(unique.dropFirst(shelfSlotCount))
         } else {
-            shelves = unique.filter(\.isShelf)
             rest = unique.filter { !$0.isShelf }
         }
-        var shelfSlots = Array(shelves.prefix(shelfSlotCount))
-        shelfSlots += Array(repeating: .none, count: shelfSlotCount - shelfSlots.count)
 
         let freeCount = slotCount - shelfSlotCount
         var free = rest

@@ -356,7 +356,7 @@ struct NotchLauncherSettingTests {
     func freeLayoutMigrates() {
         #expect(
             NotchWidget.normalizedSlots([.downloads, .apps, .folders, .screenshots, .sites, .awake])
-                == [.downloads, .screenshots, .apps, .folders, .sites, .awake])
+                == [.screenshots, .downloads, .apps, .folders, .sites, .awake])
     }
 
     @Test("a layout that already follows the shelf rule keeps its gaps")
@@ -369,7 +369,10 @@ struct NotchLauncherSettingTests {
     func slotFit() {
         #expect(NotchWidget.shelfSlotCount == 2)
         #expect(NotchWidget.screenshots.fits(slot: 0) && NotchWidget.downloads.fits(slot: 1))
+        // 선반은 자기 고정 칸에만: 서로 자리를 바꿀 수 없다.
+        #expect(!NotchWidget.screenshots.fits(slot: 1) && !NotchWidget.downloads.fits(slot: 0))
         #expect(!NotchWidget.screenshots.fits(slot: 2))
+        #expect(NotchWidget.shelfSlots == [.screenshots, .downloads])
         #expect(!NotchWidget.sites.fits(slot: 1) && NotchWidget.sites.fits(slot: 2))
         #expect(NotchWidget.none.fits(slot: 0) && NotchWidget.none.fits(slot: 5))
     }

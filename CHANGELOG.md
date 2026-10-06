@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Fixed shelf slots** — Screenshots always sits in slot 1 and Downloads in slot 2.
+  In Settings → Notch they can no longer be dragged or swapped; click either to
+  turn it on or off. The other four slots work as before.
+
 ## [2.7.1] — 2026-10-06
 
 ### Changed

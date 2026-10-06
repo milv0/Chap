@@ -74,7 +74,7 @@ struct DownloadsShelfPolicyTests {
         let config = try JSONDecoder().decode(
             Config.self, from: Data(#"{"notchWidgets": ["downloads", "sites"], "sites": []}"#.utf8))
         // 선반은 앞쪽 선반 칸, 런처는 그 뒤 칸.
-        #expect(config.notchWidgets == [.downloads, .none, .sites, .none, .none, .none])
+        #expect(config.notchWidgets == [.none, .downloads, .sites, .none, .none, .none])
         #expect(NotchWidget.downloads.launchType == nil)
     }
 
