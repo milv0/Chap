@@ -84,6 +84,7 @@ Sources/
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
+│   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
 │   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크
@@ -200,7 +201,7 @@ Config 모델 필드:
   - showGuideWindow: Bool     리사이즈 위치 가이드 윈도우 표시 여부
   - launchAtLogin: Bool       로그인 시 자동 실행
   - optionShortcutsEnabled: Bool  Option 글로벌 단축키 활성 여부. 누락 시 true
-  - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
+  - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning" | "seal"). 누락 시 "default"
   - hiddenMenuLaunchTypes: Set<LaunchType>  메뉴에서 숨길 launch type 섹션.
     누락 시 빈 집합, 알 수 없는 문자열은 무시. 숨겨도 ⌥ 단축키는 동작
   - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false

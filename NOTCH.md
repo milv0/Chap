@@ -145,8 +145,18 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 | 키캡 글자 / 바탕 | 본문색 80% / 14% | 본문색 80% / 14% | primary 80% / 14% |
 | 본문 텍스트 | 흰 96% + 그림자 | 검정 87%, 그림자 없음 | semantic primary |
 
-글자 크기는 세 단계만 쓴다: 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
-보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기). Downloads 파일명은 좁은 칸에 맞춰 같은 10pt의 regular·기본 글자색(`DS.notchFileName`)이다. 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
+글자 크기: 목록 줄 이름 12pt(`DS.notchRowName`), 메모 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
+보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기).
+**목록 줄 통일**: Sites·Finder·Downloads 줄은 모두 12pt 이름(`DS.notchRowName`) + 오른쪽 보조 정보(키캡·받은 시각),
+높이 26pt다. **줄 앞 아이콘은 줄마다 다른 정보를 줄 때만** 둔다: Downloads는 파일 아이콘·썸네일(16pt,
+`DS.notchRowIconSize`), Apps는 앱 아이콘 격자. Sites·Finder는 모든 줄이 같은 기호가 되고 칸 제목 아이콘과 겹치므로
+아이콘 없이 이름만 둔다. 긴 이름은 가운데를 줄인다. 칸 폭은 `NotchTextMetrics.rowWidth`가 키캡("⌥키" 폭)까지 재서 잡는다.
+**스크린샷 없음 → 저절로 접힘**: 스크린샷이 하나도 없으면 Screenshots 칸은 검정 띠 왼쪽 아이콘으로 저절로 접힌다
+(`ShelfAutoCollapsePolicy.collapsesScreenshots`, 저장하지 않음). 열려 있는 동안 2초마다 확인해 스크린샷이 생기면
+펼쳐진다. 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다. 마지막 확인값(`ScreenshotShelf.lastKnownEmpty`)으로 시작해
+열자마자 도커가 줄어드는 움직임이 없다.
+**빈 선반**: 다 읽은 뒤 비어 있으면 "No screenshots yet" / "No downloads yet"를 10pt 한 줄로 쓰고, 칸은 제목 + 폴더
+화살표 + 접기 버튼 폭으로 좁아진다(`emptyShelfWidth`). 파일이 생기면 원래 폭으로 돌아간다. 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
 목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
 "5 min ago" 같은 상대 시각(오른쪽 끝 정렬, 10pt 보조색·고정폭 숫자, 다운로드 칸과 같은 크기)을 보여주고, 파일명은 툴팁·VoiceOver로 제공한다.
 Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 대비를 확보한다. 새 설정의 기본 재질은 Regular다.
@@ -164,8 +174,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
-| Downloads | 160pt (10pt 파일명, 20자 안팎) |
-| Focus | 150pt |
+| Downloads | 200pt (12pt 파일명, 20자 안팎) |
+| Focus | 132pt (길이 칩 셋 + 큰 Chap on 버튼) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -180,14 +190,19 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
-노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap 마스코트(아기 물범,
+노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap(아기 물범 마스코트, 이름이 곧 Chap이다,
 `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
 (Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
 
-| 상황 (`NotchLauncherPolicy.stripLeading(focusSlotVisible:)`) | 물범 |
+물범 자리는 Focus 칸이 보이든 아니든 **늘 띠 왼쪽이다**(`NotchLauncherPolicy.stripLeading()`). Focus 칸은 번개와
+남은 시간을 맡고, 물범은 띠에서 Focus 상태를 보여 준다.
+
+| Focus 세션 | 띠 물범 |
 |---|---|
-| Focus 칸 보임 (배치됨 + 메모 모드 아님) | 띠에 없음 (칸 안에 있음) |
-| 그 밖 | 띠에 있음. Focus가 켜져 있으면 깨어 꼬리를 계속 흔들고(30분 미만이면 졸린 눈), 꺼져 있으면 가끔 까딱 |
+| 꺼짐 | 엎드려 쉼. 눈 뜸, 가끔 까딱(7~12초), 깜빡임 |
+| 켜는 순간 | 첨벙 다이빙 한 번(아래 "Focus 다이빙") 뒤 원래 자리로 |
+| 30분 이상 남음 | 꼬리를 0.4초 프레임으로 계속 흔듦 |
+| 30분 미만 | 졸린 눈꺼풀(`Eyes.drowsy`), 꼬리를 0.7초 프레임으로 느리게 흔듦 |
 
 - **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
   대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
@@ -201,82 +216,30 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
 깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
 
-**Focus 칸의 물범** (`ChapMascot.widgetPixelSize` 2pt = 48×24pt, 기존 큰 번개 자리):
-
-| 세션 | `focusMood` | 모습 |
-|---|---|---|
-| 꺼짐 | `.asleep` | 눈 감음(가로 두 칸 선), 머리 위 4×4 z가 3초마다 2.4초에 걸쳐 떠올라 흐려짐 |
-| 30분 이상 남음 | `.awake` | 눈 뜸, 깜빡임. 켜는 순간 0.35초 뒤 까딱으로 깨고, 이후 꼬리를 0.4초 프레임으로 계속 흔듦 |
-| 30분 미만 | `.drowsy` | 눈 위 그림자 눈꺼풀(`Eyes.drowsy`), 깜빡임, 꼬리를 0.7초 프레임으로 느리게 흔듦 |
-
-꼬리 속도는 `ChapMascot.focusWagFrameDuration(for:)`이며 Focus 칸(`wagsContinuously`)에만 적용된다. 띠 물범은 가끔 까딱 그대로다.
-경계 30분은 `KeepAwakePolicy.focusActiveLine`의 Final stretch와 같다. 동작 줄이기에서는 상태별 정지 모습만 바뀐다(잠든 물범은 z가 떠 있는 채).
-
-## 도구 위젯: Mirror · Quick Note
-
-위젯 칸 사이에는 구분선 없이 28pt 간격(`DS.notchColumnGap`)만 둔다. 칸 제목(아이콘 + 이름)이 그룹 경계 역할을 하고, 선이 없어 Glass 배경에 따라 선이 보였다 사라지는 문제도 없다.
-
-- **상단 띠 도구 (Mirror · Quick Note)**: 칸이 아니라 검정 띠 오른쪽의 흰 아이콘(13pt)이다. 도커가 펼쳐져 있으면
-  Drop 상자는 파일이 없어도 배지 자리에 숫자 없는 빈 상자로 보이고(접힌 노치에서는 파일이 있을 때만 배지),
-  첫 도구는 항상 상자 바로 오른쪽에 두고 `stripToolPitch` 28pt 간격으로 Mirror,
-  Quick Note 순서로 놓는다 (`NotchLauncherPolicy.stripToolCenterOffsets`). 한 번에 하나만 띠 아래로 펼친다.
-  - Mirror: 144×108 좌우 반전 미리보기. 미리보기가 카메라 큐에서 세션에 연결된 뒤에만 캡처를 시작한다.
-  - Quick Note: 팝업이 아니라 **메모 모드**다. 누르면 위젯 줄 자리가 도커 폭 전체의 메모장(줄 높이 200pt)으로 바뀌고
-    도커가 SwiftUI로 잰 콘텐츠 크기를 `NotchContentSizeKey`로 올려 보내고 컨트롤러가 그 크기로 창을 맞춘다
-    (`resizePanel(toContentSize:)`). 레이아웃 전 추측 측정을 쓰지 않아 아래 Drop 줄이 창 밖으로 밀리지 않는다. 도구 줄: 제목, 글자 수(`characterCountLabel`), 복사, 창으로 분리,
-    × (위젯으로). 분리 창(`QuickNoteWindow`)은 floating·크기 조절·위치 기억(420×320 기본, 280×180 최소)이며, 창이 열려
-    있는 동안 띠 아이콘은 그 창을 앞으로 가져온다. 분리 직전 flush하고 창은 같은 직렬 큐에서 읽어 입력을 놓치지 않는다.
-  아이콘 재클릭·×·도커 닫힘, 팝업 바깥 클릭(`didClickPanel` 로컬 mouseDown 모니터, 클릭은 그대로 전달),
-  패널 key 상실(다른 앱 클릭)로 접힌다. Settings → Notch의 **Show Mirror Icon**(`notchMirrorEnabled`)와
-  **Show Quick Note Icon**(`notchQuickNoteEnabled`, 둘 다 기본 켬)로 숨긴다. 예전 `mirror`·`note` 칸은 디코딩 때 빠진다.
-- **Quick Note 입력**: 13pt 본문 `TextEditor`, 0.5s debounce 후 직렬 큐 저장, `willHidePanel` 때 flush.
-  입력 중에는 마우스가 벗어나도 닫지 않고 Esc 또는 key 상실로 끝낸다. 패널은 `NotchKeyablePanel`이다.
-
-## 칸 제목 클릭
-
-- Sites·Apps·Finder 제목: 누르면 도커를 닫고 설정창 Launchables 탭에서 그 타입의 첫 항목을 선택한다
-  (`showSettings(focusing:)` → `SettingsView.focusLaunchType` 알림). 호버 시 옅은 면과 ›, 툴팁 "Edit Sites in Settings".
-- Screenshots 제목: 스크린샷 저장 폴더를 Finder로 연다. Downloads 제목은 ~/Downloads를 연다. 두 창 모두 일반 Finder
-  런처와 같은 경로로 Standard 크기 프리셋, 커서 화면 가운데에 열린다(`ShelfFolderLaunch`, Finder Automation 권한 사용).
-- Mirror·Quick Note 제목: 동작 없음.
-
-## 노치에서 실행할 때의 창 크기
-
-노치는 확장 런처다. Apps 칸에서 **단축키가 없는 앱**은 크기·위치를 건드리지 않고 그냥 연다
-(`AppLauncher.open`, Accessibility 권한 불필요). 단축키가 있는 앱과 Sites·Finder는 상태바 메뉴와 같이
-설정한 크기로 가운데에 연다. 판정은 `LauncherListPolicy.resizesOnNotchLaunch`. 상태바 메뉴와 ⌥ 단축키
-실행은 항상 크기를 맞춘다.
-
-## 단축키 키캡과 ⌥
-
-Sites 목록과 Apps 아이콘의 키캡은 평소 키 글자만(`1`, `N`) 보여준다. 도커가 열린 채 ⌥를 누르고 있으면
-모든 키캡(10pt semibold, 좌우 4·위아래 1pt 여백)이 액센트 블루로 바뀌며 `⌥1`, `⌥N`처럼 수식키를 함께 보여준다. ⌥ 상태는 visibility 타이머(80ms)가
-전역 `NSEvent.modifierFlags`로 읽는다(nonactivating 패널은 flagsChanged를 받지 못하고, 전역 키 모니터는
-권한이 필요하기 때문). 목록 키캡은 `⌥1` 폭을 미리 잡아 바뀌어도 줄이 움직이지 않는다. 행·아이콘 툴팁과
-VoiceOver("Option 1")는 항상 전체 조합을 알려준다.
-
-## Drop 파일 줄
-
-파일이 있을 때만 위젯 줄 아래에 구분선과 한 줄이 생긴다. 트레이 아이콘 뒤에 64×48pt 타일(28pt 파일 아이콘 + 10pt 한 줄 파일명,
-가운데 생략)을 나란히 두고, 전체 파일명은 툴팁과 VoiceOver로 제공한다. 호버 시 왼쪽 위 반투명 회색 공유(`NSSharingServicePicker`:
-AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 공유 메뉴가 떠 있는 동안은 도커를 고정한다
-(`setSharingPinned`). 우클릭 메뉴·VoiceOver 동작: Open, Share…, Show in Finder, Remove from Chap Drop.
-
-## 오프스크린 렌더 (개발용)
-
-    TEST_RUNNER_CHAP_NOTCH_RENDER_DIR=/tmp/notch xcodebuild -scheme Chap -destination "platform=macOS" test
-
-`Tests/ChapCoreTests/NotchRenderTool.swift`가 현재 `~/.chap.json`·스크린샷·Drop 파일로 도커를 그려
-`notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다. 화면 기록 권한 없이 레이어를
-직접 그린다. Liquid Glass 재질과 NSView(메모 입력칸, 카메라 미리보기)는 그려지지 않아 Glass는 비슷한 밝기의
+**Focus 다이빙(몰입)**: Focus가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 첨벙 다이빙을 한 번 한다
+(`ChapMascot.focusDiveSequence`, 10프레임 × 0.1초 = 1초): 웅크림(아래 1px) → 꼬리를 들고 뛰어오름(위 3px) → 물이 차오르며
+첨벙 뛰어들어 잠깐 잠김(아래 3·5px) → 꼬리를 들고 튀어 올라 첨벙 → 물이 빠지고 원래 자리. 물범은 열마다 수면(`surfaceRow`)보다
+아래 부분을 그리지 않아 물속으로 들어간 모습이 된다. 물은 다이빙하는 동안만 있고, 그 뒤에는 물 없이 원래 자리에서 꼬리를 흔든다.
+(물에 떠서 헤엄치기와 끝까지 잠수하기도 해 봤지만 유치하거나 상태가 안 보여 뺐다.) 이미 켜진 채 노치를 열거나 동작 줄이기·
+닫힌 노치에서는 다이빙하지 않는다. 물은 물범 위에 그리는 겹침 레이어라 수면은 제자리이고 물범만 뛰고 가라앉는다.
+물속 `#2440AA`, 마루 `#6E91FF`, 물방울 `#A0B9FF`.
+띠에서는 z가 화면 위 경계에 잘리므로 잠든(`.asleep`) 모습 대신 쉬는 자세를 쓴다. `.asleep`·z·`widgetPixelSize`(2pt)는
+`ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 꼬리 흔들기 속도는 `focusWagFrameDuration(for:)`.
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
 ## Focus 칸 (Keep Mac Awake)
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
-- 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
-- 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
-  Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
+- 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
+- "집중할 거야" 하고 한 번 딱 누르는 칸이라, 도커에서 가장 힘이 실린 컨트롤이다(폭 132pt).
+- 꺼짐: 길이 칩 셋 1h·4h·8h(22pt, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`
+  UserDefaults에 기억, 기본 1h) + 큰 "⚡ Chap on" 버튼(높이 38pt, `DS.accent` 채움, 흰 14pt semibold) + 10pt
+  "No sleep, no dimming.". 누르면 `FocusPressStyle`로 0.94배 눌렸다 튀어 오르고, 트랙패드 햅틱
+  (`NSHapticFeedbackManager` `.levelChange`, 권한 없음)이 "딱" 하고 온다.
+- 켜짐: 맥박치는 파란 번개(켜는 순간 bounce) + 22pt 남은 시간 + 남은 비율 막대(4pt, `focusProgress`,
+  `KeepAwakeController.currentSessionDuration`) + 남은 시간에 따른 한 줄(`focusActiveLine`) + 맨 아래 조용한
+  "Chap off" 버튼(회색 면). 켜는 일은 무겁게, 끄는 일은 가볍게.
+- 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 

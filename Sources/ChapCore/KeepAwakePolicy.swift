@@ -94,6 +94,20 @@ enum KeepAwakePolicy {
     /// 켜져 있을 때 끄는 버튼.
     static let focusOffTitle = "Chap off"
 
+    /// Focus 위젯이 처음 고르고 있는 시간. 마지막으로 켠 시간을 기억하되, 목록에 없으면 이 값.
+    static let defaultFocusPreset = focusPresets[0]
+
+    /// 저장된 길이(초)를 Focus 선택지로 되돌린다. 목록에 없거나 없으면 기본값.
+    static func focusPreset(forStoredDuration duration: Double) -> Preset {
+        focusPresets.first { $0.duration == duration } ?? defaultFocusPreset
+    }
+
+    /// 남은 비율(1 → 0). 길이를 모르면 nil이라 진행 막대를 그리지 않는다.
+    static func focusProgress(remaining: TimeInterval, duration: TimeInterval?) -> Double? {
+        guard let duration, duration > 0 else { return nil }
+        return min(max(remaining / duration, 0), 1)
+    }
+
     /// 켜져 있을 때 남은 시간에 따라 바뀌는 한 줄. 끝으로 갈수록 톤이 가벼워진다.
     static func focusActiveLine(remaining: TimeInterval) -> String {
         switch remaining {

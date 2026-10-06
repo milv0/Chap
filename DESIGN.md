@@ -36,9 +36,12 @@ pixel, at 1.5pt per pixel in the notch strip (3 Retina pixels, so edges stay cri
 | Outline, eyes, mouth | `#161A30` | `o`, `e` |
 | Body | `#FFFFFF` | `w` |
 | Shade | `#B0BED8` | `s` |
+| Focus water | `#2440AA` | (overlay) |
+| Focus wave crest | `#6E91FF` | (overlay) |
+| Focus splash | `#A0B9FF` | (overlay) |
 
-In the Focus slot the seal is 2pt per pixel (4 Retina pixels). Its sleep z uses
-the slot's secondary text color so it reads on dark, Mist, and Glass panels.
+The seal lives on the black strip at 1.5pt per pixel. (The 2pt Focus-slot size and
+sleep z from 2.5.0 remain in `ChapMascot` but are not drawn.)
 
 ## Notch panel presets
 

@@ -12,6 +12,12 @@ public enum ChapMascot {
         case body
         /// 배 아래 그림자(`s`).
         case shade
+        /// Focus 물속(깊은 블루). 몸 아래쪽을 덮어 물에 잠긴 모습이 된다.
+        case water
+        /// 물결 마루(밝은 블루).
+        case crest
+        /// 다이빙 물방울.
+        case splash
     }
 
     /// 한 픽셀. 좌상단이 (0, 0)이다.
@@ -101,6 +107,74 @@ public enum ChapMascot {
         return grid.map { String($0) }
     }
 
+    // MARK: - Focus 다이빙(몰입)
+
+    /// 수면 높이(스프라이트 행). 다이빙하는 동안만 이 아래가 물이다.
+    public static let waterLevel = 9
+    /// 물이 깔리는 가로 범위(스프라이트 기준, 몸보다 조금 넓다)와 물속 바닥 행.
+    public static let waterSpan = -3...26
+    public static let waterBottom = 13
+
+    /// 열 `x`의 수면(마루) 행. 네 칸마다 두 칸씩 한 칸 낮고, `phase`만큼 흘러간다.
+    public static func surfaceRow(x: Int, level: Int, phase: Int) -> Int {
+        level + (((x + phase) % 4 + 4) % 4 < 2 ? 0 : 1)
+    }
+
+    /// 물 픽셀: 마루 한 줄 + 그 아래 `rows`줄(nil이면 바닥까지). `rows` 0이면 얇은 수면 한 줄만.
+    public static func waterPixels(level: Int, phase: Int, rows: Int? = nil) -> [Pixel] {
+        waterSpan.flatMap { x -> [Pixel] in
+            let top = surfaceRow(x: x, level: level, phase: phase)
+            let bottom = rows.map { top + $0 } ?? waterBottom
+            let body =
+                bottom > top ? ((top + 1)...bottom).map { Pixel(x: x, y: $0, ink: .water) } : []
+            return [Pixel(x: x, y: top, ink: .crest)] + body
+        }
+    }
+
+    /// 다이빙·떠오르기 한 프레임: 물범 세로 위치(픽셀, 아래가 +), 꼬리, 수면(nil이면 물 없음),
+    /// 물결 위상, 수면 아래 물 줄 수(nil이면 바닥까지, 0이면 수면 한 줄), 물방울.
+    /// 물범은 수면 아래로 내려간 부분이 그려지지 않는다.
+    public struct FocusDiveStep: Equatable, Sendable {
+        public let offsetY: Int
+        public let pose: Pose
+        public let waterLevel: Int?
+        public let wavePhase: Int
+        public let waterRows: Int?
+        public let splash: [Pixel]
+
+        init(
+            _ offsetY: Int, _ pose: Pose = .rest, water: Int? = nil, phase: Int = 0,
+            rows: Int? = nil, splash: [(Int, Int)] = []
+        ) {
+            self.offsetY = offsetY
+            self.pose = pose
+            self.waterLevel = water
+            self.wavePhase = phase
+            self.waterRows = rows
+            self.splash = splash.map { Pixel(x: $0.0, y: $0.1, ink: .splash) }
+        }
+    }
+
+    /// "몰입" 다이빙: 웅크림 → 꼬리를 들고 뛰어오름 → 첨벙 뛰어들어 잠깐 잠김 → 튀어 올라 첨벙 → 물이 빠지고 엎드림.
+    /// 켜는 순간의 연출로만 쓰고, 끝나면 물 없이 원래 자리에서 꼬리를 흔든다(잠수·헤엄은 뺐다).
+    public static let focusDiveSequence: [FocusDiveStep] = [
+        FocusDiveStep(1),
+        FocusDiveStep(-3, .tailUp),
+        FocusDiveStep(-3, .tailUp),
+        FocusDiveStep(0, .tailUp, water: waterLevel + 2, splash: [(-1, 8), (24, 8)]),
+        FocusDiveStep(
+            3, water: waterLevel, phase: 1, splash: [(-2, 5), (-1, 7), (24, 6), (25, 4)]),
+        FocusDiveStep(5, water: waterLevel, phase: 2, splash: [(-3, 3), (26, 2), (25, 5)]),
+        FocusDiveStep(2, water: waterLevel, phase: 3, splash: [(-3, 6), (26, 6)]),
+        FocusDiveStep(
+            -1, .tailUp, water: waterLevel + 1, splash: [(-2, 5), (25, 5), (-1, 3), (24, 3)]),
+        FocusDiveStep(0, water: waterLevel + 2, splash: [(-2, 8), (25, 8)]),
+        FocusDiveStep(0),
+    ]
+
+    /// 다이빙 한 프레임 길이(초). 10프레임 × 0.1 = 1초.
+    public static let focusDiveFrameDuration: Double = 0.1
+
     public static func pixels(eyes: Eyes, pose: Pose) -> [Pixel] {
         eyes == .open ? pixels(for: pose) : pixels(from: rows(eyes: eyes, pose: pose))
     }
@@ -183,6 +257,19 @@ public enum ChapMascot {
 
     /// 열려 있는 동안 다음 까딱까지의 간격(초) 범위. 불규칙해야 기계적으로 보이지 않는다.
     public static let idleFlickInterval: ClosedRange<Double> = 7...12
+
+    // MARK: - 메뉴 막대 아이콘
+
+    /// 메뉴 막대용 한 색 실루엣. 메뉴 막대 아이콘은 템플릿(한 색)이라 윤곽·몸통·그림자를 모두 채우고,
+    /// 눈과 입만 비워 얼굴이 보이게 한다. 1pt = 1칸이면 Retina에서 2픽셀이라 선명하다(24×12pt).
+    public static let menuBarFaceHoles: Set<[Int]> = [[4, 4], [7, 4], [5, 6], [6, 6]]
+
+    public static let menuBarSilhouette: [(x: Int, y: Int)] = rows.enumerated().flatMap { y, row in
+        row.enumerated().compactMap { x, ch -> (x: Int, y: Int)? in
+            guard ch != ".", !menuBarFaceHoles.contains([x, y]) else { return nil }
+            return (x, y)
+        }
+    }
 
     /// 노치 상단 띠에서 한 픽셀의 크기(pt). 1.5pt는 Retina에서 정확히 3픽셀이라 흐려지지 않는다.
     public static let stripPixelSize: CGFloat = 1.5

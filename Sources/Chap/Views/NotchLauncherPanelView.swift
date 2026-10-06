@@ -113,10 +113,10 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
-    /// 다운로드 칸 폭. 10pt 파일명이 20자 안팎까지 보인다.
-    static let downloadsColumnWidth: CGFloat = 160
-    /// Focus 칸 폭. 시간 버튼 셋(1h·4h·8h)이 한 줄에 들어간다.
-    static let focusColumnWidth: CGFloat = 150
+    /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Focus를 줄여 생긴 폭을 여기 쓴다).
+    static let downloadsColumnWidth: CGFloat = 200
+    /// Focus 칸 폭. 큰 "Chap on" 버튼과 길이 칩 셋(1h·4h·8h)이 한 줄에 들어간다.
+    static let focusColumnWidth: CGFloat = 132
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
     static let noteModeHeight: CGFloat = 200
 
@@ -127,9 +127,32 @@ struct NotchLauncherPanelView: View {
             + 4
     }
 
+    /// 읽어 보니 비어 있는 선반. 비면 칸이 제목 폭(+ 접기 버튼)으로 좁아진다.
+    @State private var emptyShelves: Set<NotchWidget> = []
+
+    /// 빈 선반 칸 폭: 제목 + 폴더 화살표(14) + 접기 버튼(22)과 한 줄 안내 중 넓은 쪽.
+    private static func emptyShelfWidth(title: String, message: String) -> CGFloat {
+        let header = NotchTextMetrics.headerWidth(title: title) + 14 + 22
+        let line = NotchTextMetrics.metaWidth(message) + 12
+        return CGFloat(
+            LauncherListPolicy.listColumnWidth(contentWidth: Double(max(header, line))))
+    }
+
+    private func setShelfEmpty(_ widget: NotchWidget, _ empty: Bool) {
+        guard emptyShelves.contains(widget) != empty else { return }
+        withAnimation(.smooth(duration: 0.22)) {
+            if empty { emptyShelves.insert(widget) } else { emptyShelves.remove(widget) }
+        }
+    }
+
     /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
     private func width(for slot: NotchSlotContent) -> CGFloat {
         switch slot {
+        case .downloads where emptyShelves.contains(.downloads):
+            return Self.emptyShelfWidth(title: "Downloads", message: "No downloads yet")
+        case .screenshots where emptyShelves.contains(.screenshots):
+            // 비어서 저절로 접혔다가 사용자가 띠 아이콘으로 펼친 경우.
+            return Self.emptyShelfWidth(title: "Screenshots", message: "No screenshots yet")
         case .launchers(let section) where section.launchType == .app:
             return max(Self.appGridColumnWidth, NotchTextMetrics.headerWidth(title: "Apps"))
         case .launchers(let section):
@@ -294,16 +317,11 @@ struct NotchLauncherPanelView: View {
     /// 메인 도커 왼쪽 plateau의 Keep Awake 상태. 커피 아이콘은 테마 블루,
     /// 시간은 고정 h:mm:ss이며 1초마다 갱신한다. 넓어진 문자열 때문에
     /// 아이콘이 왼쪽으로 밀리지 않도록 광학 위치를 오른쪽으로 보정한다.
-    /// Focus 칸이 위젯 줄에 보이는지. 메모 모드에서는 위젯 줄이 메모장으로 바뀌어 안 보인다.
-    private var focusSlotVisible: Bool {
-        !reveal.isNoteMode
-            && slots.contains(where: { if case .awake = $0 { true } else { false } })
-    }
-
-    /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). Focus 칸이 보이면 물범은 칸 안에 있다.
+    /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). 물범은 늘 여기 있고,
+    /// Focus가 켜져 있으면 깨어 꼬리를 흔든다(Focus 칸은 번개와 남은 시간을 보여 준다).
     @ViewBuilder private var leftStripContent: some View {
         let collapsed = reveal.isNoteMode ? [] : collapsedStripWidgets
-        let leading = NotchLauncherPolicy.stripLeading(focusSlotVisible: focusSlotVisible)
+        let leading = NotchLauncherPolicy.stripLeading()
         let notchHalf = stripPlateauHalfWidth - NotchGeometry.stripPlateauSideWidth
         GeometryReader { geo in
             let notchLeft = geo.size.width / 2 - notchHalf
@@ -314,7 +332,7 @@ struct NotchLauncherPanelView: View {
                         symbol: Self.shoulderSymbol(widget), title: Self.shoulderTitle(widget),
                         height: topInset
                     ) {
-                        setCollapsed(widget, false)
+                        expandFromStrip(widget)
                     }
                     // 왼쪽에서 오른쪽으로 칸 순서가 읽히도록 마지막 칸이 노치에 가장 가깝다.
                     .position(
@@ -330,7 +348,8 @@ struct NotchLauncherPanelView: View {
                         NotchMascotView(
                             mood: mood == .asleep ? .awake : mood,
                             isAnimating: reveal.revealed,
-                            wagsContinuously: mood != .asleep)
+                            wagsContinuously: mood != .asleep,
+                            isFocusing: mood != .asleep)
                     }
                     .position(
                         x: notchLeft
@@ -346,7 +365,8 @@ struct NotchLauncherPanelView: View {
 
     /// 접혀서 띠 왼쪽에 아이콘으로 놓이는 선반. 칸 순서대로 (왼쪽 → 오른쪽).
     private var collapsedStripWidgets: [NotchWidget] {
-        slots.compactMap(\.collapsibleWidget).filter { reveal.collapsedWidgets.contains($0) }
+        let collapsed = effectiveCollapsed
+        return slots.compactMap(\.collapsibleWidget).filter { collapsed.contains($0) }
     }
 
     // Focus 시계는 띠에서 뺐다. 되살릴 때는 `StripLeading.focusClock`과 함께 아래 블록을 쓴다.
@@ -582,7 +602,11 @@ struct NotchLauncherPanelView: View {
         // 칸을 접으면 도커는 남은 칸에 맞춰 줄어든다. 최소 폭이 검정 띠(노치 + 좌우 상태 영역 + 곡선)를
         // 늘 감싸므로 띠 아이콘·물범은 노치 기준 제자리를 지킨다.
         .frame(minWidth: minWidth)
-        .onAppear { refreshDropFiles() }
+        .onAppear {
+            refreshDropFiles()
+            checkScreenshots()
+        }
+        .onReceive(screenshotCheckTimer) { _ in checkScreenshots() }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
         ) { _ in
@@ -606,11 +630,68 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    /// 스크린샷이 하나도 없어 저절로 접힌 Screenshots 칸. 저장하지 않는다. 스크린샷이 생기면 펼쳐지고,
+    /// 띠 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다(`autoCollapseDismissed`).
+    @State private var screenshotsAutoCollapsed = ScreenshotShelf.initiallyEmpty
+    @State private var autoCollapseDismissed = false
+    private let screenshotCheckTimer = Timer.publish(every: 2, on: .main, in: .common)
+        .autoconnect()
+
+    /// 사용자가 접은 칸 + 비어서 저절로 접힌 칸.
+    private var effectiveCollapsed: [NotchWidget] {
+        var list = reveal.collapsedWidgets
+        if screenshotsAutoCollapsed, !autoCollapseDismissed, !list.contains(.screenshots) {
+            list.append(.screenshots)
+        }
+        return list
+    }
+
+    /// Screenshots 칸이 배치돼 있으면 스크린샷 유무를 확인한다(칸이 접혀 있어도).
+    private func checkScreenshots() {
+        guard slots.contains(where: { $0.collapsibleWidget == .screenshots }) else { return }
+        let apply: ([URL]) -> Void = { shots in
+            let empty = ShelfAutoCollapsePolicy.collapsesScreenshots(count: shots.count)
+            ScreenshotShelf.lastKnownEmpty = empty
+            guard empty != screenshotsAutoCollapsed else { return }
+            if !empty {
+                // 펼쳐질 때는 창을 먼저 넓힌다.
+                if let slot = slots.first(where: { $0.collapsibleWidget == .screenshots }),
+                    !reveal.collapsedWidgets.contains(.screenshots), !autoCollapseDismissed
+                {
+                    onPrepareExpand(width(for: slot) + DS.notchColumnGap)
+                }
+            }
+            DispatchQueue.main.async {
+                withAnimation(.smooth(duration: 0.22)) { screenshotsAutoCollapsed = empty }
+            }
+        }
+        if let preview = ScreenshotShelf.previewOverride {
+            screenshotsAutoCollapsed = ShelfAutoCollapsePolicy.collapsesScreenshots(
+                count: preview.count)
+            return
+        }
+        ScreenshotShelf.recentScreenshotsAsync(completion: apply)
+    }
+
+    /// 접힌 칸 아이콘을 눌렀을 때: 사용자가 접은 칸이면 펼쳐 저장하고, 비어서 접힌 칸이면 이번에만 펼친다.
+    private func expandFromStrip(_ widget: NotchWidget) {
+        if reveal.collapsedWidgets.contains(widget) {
+            setCollapsed(widget, false)
+            return
+        }
+        guard let slot = slots.first(where: { $0.collapsibleWidget == widget }) else { return }
+        onPrepareExpand(width(for: slot) + DS.notchColumnGap)
+        DispatchQueue.main.async {
+            withAnimation(.smooth(duration: 0.22)) { autoCollapseDismissed = true }
+        }
+    }
+
     /// 접힌 칸을 뺀, 위젯 줄에 실제로 그릴 칸들.
     private var visibleSlots: [NotchSlotContent] {
-        slots.filter { slot in
+        let collapsed = effectiveCollapsed
+        return slots.filter { slot in
             guard let widget = slot.collapsibleWidget else { return true }
-            return !reveal.collapsedWidgets.contains(widget)
+            return !collapsed.contains(widget)
         }
     }
 
@@ -686,16 +767,16 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
-                onCollapse: { setCollapsed(.screenshots, true) })
+                onCollapse: { setCollapsed(.screenshots, true) },
+                onEmptyChange: { setShelfEmpty(.screenshots, $0) })
         case .downloads:
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
-                onCollapse: { setCollapsed(.downloads, true) })
+                onCollapse: { setCollapsed(.downloads, true) },
+                onEmptyChange: { setShelfEmpty(.downloads, $0) })
         case .awake:
-            NotchFocusView(
-                palette: widgetPalette, sessionEnd: currentAwakeSessionEnd,
-                isAnimating: reveal.revealed)
+            NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
         }
     }
 
@@ -809,18 +890,21 @@ private struct NotchLauncherRow: View {
     let action: () -> Void
 
     @State private var isHovered = false
-
     var body: some View {
         Button(action: action) {
-            HStack {
+            // 줄 앞 아이콘은 두지 않는다. 칸 제목 아이콘이 이미 종류를 알려 주고, 모든 줄이 같은 기호면
+            // 정보 없이 반복만 된다. 아이콘은 줄마다 다른 정보를 줄 때만 쓴다(Downloads 파일 아이콘, Apps).
+            HStack(spacing: 6) {
                 Text(entry.site.name)
                     // 목록 본문은 Apple 기본 계층대로 regular. 섹션 헤더만
                     // semibold를 유지해 Glass에서 글자가 과하게 무거워지지 않는다.
-                    .font(DS.notchBody)
+                    // 모든 목록 줄은 같은 12pt(`notchRowName`)다.
+                    .font(DS.notchRowName)
                     .foregroundColor(primaryForeground)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
-                Spacer(minLength: DS.spacingSmall)
+                    .truncationMode(.middle)
+                Spacer(minLength: 8)
                 if let key = LauncherListPolicy.shortcutKey(for: entry.site) {
                     NotchKeycap(
                         key: key, isOptionHeld: isOptionHeld,
@@ -1156,7 +1240,8 @@ struct PressedStripShape: Shape {
 
 /// 노치 칸 폭 계산용 글자 측정. 실제 글꼴(13pt 본문, 11pt semibold 제목)로 잰다.
 enum NotchTextMetrics {
-    private static let body = NSFont.systemFont(ofSize: 13)
+    /// 목록 줄 이름(12pt). `DS.notchRowNameSize`와 같다.
+    private static let body = NSFont.systemFont(ofSize: 12)
     private static let label = NSFont.systemFont(ofSize: 11, weight: .semibold)
     private static let meta = NSFont.systemFont(ofSize: 10, weight: .medium)
 
@@ -1174,9 +1259,10 @@ enum NotchTextMetrics {
         ceil((text as NSString).size(withAttributes: [.font: label]).width) + 2
     }
 
-    /// 목록 한 줄: 좌우 여백 6 + 이름 + 최소 간격 8 + 키캡(글자 + 좌우 5).
+    /// 목록 한 줄: 좌우 여백 6 + 이름 + (간격 6 + Spacer 8 + 간격 6 + 키캡).
+    /// 키캡은 ⌥를 눌러도 폭이 변하지 않도록 "⌥키" 폭을 잡고 좌우 4pt 여백을 둔다.
     static func rowWidth(name: String, keycap: String?) -> CGFloat {
-        let keycapWidth = keycap.map { labelWidth($0) - 2 + 8 + 8 } ?? 0
+        let keycapWidth = keycap.map { 20 + metaWidth("⌥\($0)") + 2 + 8 } ?? 0
         return 12 + bodyWidth(name) + keycapWidth
     }
 

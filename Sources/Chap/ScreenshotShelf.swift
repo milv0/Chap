@@ -6,6 +6,10 @@ enum ScreenshotShelf {
     /// 오프스크린 렌더 도구 전용: 설정하면 노치가 파일을 읽는 대신 이 목록을 첫 프레임에 쓴다.
     /// 앱 실행 중에는 항상 nil이다.
     static var previewOverride: [URL]?
+    /// 마지막으로 확인한 "스크린샷 없음" 여부. 노치를 열 때 이 값으로 시작해, 열자마자 칸이 접히며
+    /// 도커가 줄어드는 움직임이 생기지 않게 한다. 렌더 도구는 `previewOverride`가 우선한다.
+    static var lastKnownEmpty = false
+    static var initiallyEmpty: Bool { previewOverride.map(\.isEmpty) ?? lastKnownEmpty }
 
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.screenshots", qos: .utility,

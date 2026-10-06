@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.6.0"
+        ?? "2.7.0"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -243,6 +243,8 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
     case `default` = "default"
     /// SF Symbols bolt.fill 아이콘.
     case lightning = "lightning"
+    /// 픽셀 물범 Chap 실루엣 (`ChapMascot.menuBarSilhouette`).
+    case seal = "seal"
 }
 
 /// 노치 런처 패널의 시각 스타일.

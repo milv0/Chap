@@ -169,6 +169,13 @@ struct StatusBarIconChoiceTests {
         #expect(config.statusBarIcon == .lightning)
     }
 
+    @Test func decodesSealChoice() throws {
+        let json = #"{"statusBarIcon":"seal","sites":[]}"#
+        let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
+
+        #expect(config.statusBarIcon == .seal)
+    }
+
     @Test func decodesDefaultChoice() throws {
         let json = #"{"statusBarIcon":"default","sites":[]}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
@@ -207,8 +214,8 @@ struct StatusBarIconChoiceTests {
         #expect(json?["statusBarIcon"] as? String == "lightning")
     }
 
-    @Test func allCasesContainsBothOptions() {
-        #expect(StatusBarIconChoice.allCases.count == 2)
+    @Test func allCasesContainsEveryOption() {
+        #expect(StatusBarIconChoice.allCases == [.default, .lightning, .seal])
         #expect(StatusBarIconChoice.allCases.contains(.default))
         #expect(StatusBarIconChoice.allCases.contains(.lightning))
     }

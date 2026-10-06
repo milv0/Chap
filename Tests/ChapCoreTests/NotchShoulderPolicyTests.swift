@@ -60,6 +60,12 @@ struct NotchShoulderPolicyTests {
         #expect(size == CGSize(width: 1188, height: 300))
     }
 
+    @Test("Screenshots folds away on its own only while there are none")
+    func screenshotsAutoCollapse() {
+        #expect(ShelfAutoCollapsePolicy.collapsesScreenshots(count: 0))
+        #expect(!ShelfAutoCollapsePolicy.collapsesScreenshots(count: 1))
+    }
+
     @Test("collapsed widgets round-trip through the config and drop bad values")
     func configRoundTrip() throws {
         var config = Config(sites: [])

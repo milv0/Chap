@@ -2,6 +2,37 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.7.0] — 2026-10-06
+
+### Added
+
+- **Seal menu bar icon** — Settings > General now offers Chap the Seal as a menu
+  bar icon, next to the default icon and the lightning bolt. Like the others it
+  follows the menu bar's light or dark look and turns Chap blue during Keep Mac
+  Awake.
+
+### Changed
+
+- **Meet Chap** — The pixel seal now has a name, and it's Chap: the friend from
+  "Hi, I'm your chap." The in-app Q&A introduces it that way.
+- **One row style** — Sites, Finder, and Downloads rows now share one look: a
+  12pt name with the shortcut or age on the right. Icons appear only where they
+  tell rows apart (file icons in Downloads, app icons in Apps), not repeated
+  under a title that already has one.
+- **Tidy empty shelves** — With no screenshots, the Screenshots slot folds into
+  its strip icon on its own and comes back when you take one. An empty Downloads
+  slot says so in one short line and narrows to its title.
+- **A real Chap on button** — Focus is a decision, so the slot is built around
+  it: pick 1h, 4h, or 8h (Chap remembers your last pick), then press one big blue
+  "Chap on" button that presses in and gives a trackpad tap. While it runs you
+  see the time left, a bar of how much remains, and a quiet "Chap off". The slot
+  is slimmer, and Downloads gets the room (200pt) so names show in full.
+- **The seal dives in** — Press Chap on and the seal on the strip hops, splashes
+  into the water, and pops back up, then wags its tail while Focus runs. It
+  holds still with Reduce Motion on.
+- **Seal on the strip** — The seal's place is always the left of the black strip,
+  so the strip is balanced on both sides; the Focus slot shows the bolt and time.
+
 ## [2.6.0] — 2026-10-06
 
 ### Added

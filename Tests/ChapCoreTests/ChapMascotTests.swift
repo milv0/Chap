@@ -134,3 +134,56 @@ struct ChapMascotFocusMoodTests {
         #expect(ChapMascot.sleepZRiseDuration < ChapMascot.sleepZPeriod)
     }
 }
+
+@Suite("ChapMascot – Focus dive")
+struct ChapMascotFocusDiveTests {
+    @Test("the dive water stays below the face")
+    func waterLevel() {
+        let full = ChapMascot.waterPixels(level: ChapMascot.waterLevel, phase: 0)
+        #expect(full.allSatisfy { ChapMascot.waterSpan.contains($0.x) })
+        #expect(full.filter { $0.ink == .crest }.allSatisfy { $0.y == 9 || $0.y == 10 })
+        #expect(full.map(\.y).max() == ChapMascot.waterBottom)
+        #expect(full.allSatisfy { $0.y > 4 })
+    }
+
+    @Test("the waves move one cell per phase and repeat every four")
+    func wavesFlow() {
+        let a = ChapMascot.waterPixels(level: 9, phase: 0)
+        #expect(a != ChapMascot.waterPixels(level: 9, phase: 1))
+        #expect(ChapMascot.waterPixels(level: 9, phase: 4) == a)
+    }
+
+    @Test("the dive hops, splashes in, pops back up, and ends dry in about a second")
+    func diveSequence() {
+        let steps = ChapMascot.focusDiveSequence
+        #expect(steps.first?.offsetY == 1 && steps.first?.waterLevel == nil)
+        #expect(steps.contains { $0.offsetY < 0 && $0.pose == .tailUp && $0.waterLevel == nil })
+        #expect(steps.contains { $0.offsetY > 0 && $0.waterLevel != nil })
+        #expect(steps.filter { !$0.splash.isEmpty }.count >= 3)
+        // 끝은 물 없이 원래 자리: 잠수하거나 헤엄치지 않는다.
+        #expect(steps.last?.offsetY == 0 && steps.last?.waterLevel == nil)
+        #expect(steps.last?.splash.isEmpty == true)
+        let total = Double(steps.count) * ChapMascot.focusDiveFrameDuration
+        #expect(total > 0.6 && total <= 1.0)
+    }
+}
+
+@Suite("ChapMascot – menu bar silhouette")
+struct ChapMascotMenuBarTests {
+    @Test("the silhouette fills the seal but leaves the eyes and mouth open")
+    func faceHoles() {
+        let cells = Set(ChapMascot.menuBarSilhouette.map { [$0.x, $0.y] })
+        #expect(!cells.contains([4, 4]) && !cells.contains([7, 4]))
+        #expect(!cells.contains([5, 6]) && !cells.contains([6, 6]))
+        // 눈 사이 이마와 몸통은 채워져 있다.
+        #expect(cells.contains([5, 4]) && cells.contains([12, 6]))
+        let filled = ChapMascot.rows.joined().filter { $0 != "." }.count
+        #expect(cells.count == filled - ChapMascot.menuBarFaceHoles.count)
+    }
+
+    @Test("the silhouette fits the 28pt status item at one point per cell")
+    func fitsStatusItem() {
+        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<24).contains($0.x) })
+        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<12).contains($0.y) })
+    }
+}

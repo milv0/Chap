@@ -173,11 +173,11 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus가 켜져 있으면 깨어 꼬리를 계속 흔듭니다. Focus 칸에서는 Focus가 꺼져 있으면 자고, 켜면 깨어 꼬리를 흔들며 지키다가 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap입니다. 이 아기 물범이 바로 Chap이에요. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
-                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
                 ),
                 (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
@@ -402,11 +402,11 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and stays awake wagging its tail while Focus runs. In the Focus slot it sleeps while Focus is off, wags its tail while it runs, and gets drowsy (and wags slower) in the last 30 minutes. It is just decoration, so clicking it does nothing."
+                    "That's Chap. The baby seal is Chap itself. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
-                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
+                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

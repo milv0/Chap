@@ -31,6 +31,8 @@ final class KeepAwakeController {
 
     /// 활성 세션의 종료 시각. 비활성이면 nil.
     private(set) var sessionEnd: Date?
+    /// 지금 세션의 전체 길이. 노치 Focus 칸의 진행 막대가 쓴다. 세션이 없으면 nil.
+    private(set) static var currentSessionDuration: TimeInterval?
 
     /// 세션 시작/해제/만료 시 호출. HUD·사운드 피드백과 메뉴 갱신용.
     /// 호출될 때마다 `didChangeNotification`도 함께 보낸다.
@@ -84,6 +86,7 @@ final class KeepAwakeController {
         assertionID = id
         hasAssertion = true
         sessionEnd = Date().addingTimeInterval(preset.duration)
+        Self.currentSessionDuration = preset.duration
         scheduleExpiry(after: preset.duration)
         Log.app.notice(
             "Keep Awake session started (\(Int(preset.duration / 60), privacy: .public)m)")
@@ -132,6 +135,7 @@ final class KeepAwakeController {
     }
 
     private func releaseSession() {
+        Self.currentSessionDuration = nil
         expiryTimer?.cancel()
         expiryTimer = nil
         if hasAssertion {

@@ -90,7 +90,33 @@ extension AppDelegate {
             return Self.accentStatusBarSymbolImage(
                 name: "bolt.fill",
                 accessibilityDescription: "Chap – Keep Awake active")
+        case .seal:
+            let seal = Self.sealStatusBarImage()
+            guard keepAwakeActive else { return seal }
+            return Self.accentTintedStatusBarImage(
+                seal, accessibilityDescription: "Chap – Keep Awake active")
         }
+    }
+
+    /// 픽셀 물범 Chap 실루엣 템플릿 이미지. 1pt = 1칸(24×12pt)을 26×22 캔버스 가운데에 그린다.
+    /// 상태 항목 폭(28pt) 안에 들어가고, 템플릿이라 메뉴 막대 밝기를 따른다.
+    static func sealStatusBarImage() -> NSImage {
+        let canvas = NSSize(width: 26, height: 22)
+        let originX = (canvas.width - CGFloat(ChapMascot.width)) / 2
+        let originY = ((canvas.height - CGFloat(ChapMascot.height)) / 2).rounded()
+        let image = NSImage(size: canvas, flipped: true) { _ in
+            NSColor.black.setFill()
+            for cell in ChapMascot.menuBarSilhouette {
+                NSRect(
+                    x: originX + CGFloat(cell.x), y: originY + CGFloat(cell.y), width: 1,
+                    height: 1
+                ).fill()
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Chap"
+        return image
     }
 
     /// 앱 테마 색 (DS.accent와 동일).

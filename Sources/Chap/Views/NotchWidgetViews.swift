@@ -13,6 +13,13 @@ struct NotchWidgetPalette {
     let subtleSurface: Color
     /// 제목 아이콘 색 (연한 대표 블루). nil이면 제목 색을 쓴다.
     var icon: Color? = nil
+
+    /// 제목 아이콘 색만 바꾼 사본 (Focus가 켜지면 진한 블루).
+    func withIcon(_ color: Color) -> NotchWidgetPalette {
+        var copy = self
+        copy.icon = color
+        return copy
+    }
 }
 
 /// 위젯 칸 상단의 아이콘+제목 줄. 런처 섹션 제목과 같은 모양이다.
@@ -48,16 +55,19 @@ struct NotchFocusView: View {
     let palette: NotchWidgetPalette
     /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
     @State var sessionEnd: Date?
-    /// 도커가 펼쳐져 있는 동안만 물범이 움직인다.
-    var isAnimating = false
 
     /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
     static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
 
+    private var isActive: Bool { (sessionEnd ?? .distantPast) > Date() }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            NotchWidgetHeader(symbol: "bolt.fill", title: "Focus", palette: palette)
+            // 켜져 있으면 제목 번개가 진한 블루로 바뀐다(꺼짐은 다른 칸과 같은 연한 블루).
+            NotchWidgetHeader(
+                symbol: "bolt.fill", title: "Focus",
+                palette: isActive ? palette.withIcon(DS.accent) : palette)
             Group {
                 if let sessionEnd, sessionEnd > Date() {
                     active(until: sessionEnd)
@@ -65,8 +75,8 @@ struct NotchFocusView: View {
                     idle
                 }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: widgetBodyHeight)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: widgetBodyHeight, alignment: .top)
         }
         .onReceive(
             NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
@@ -75,71 +85,143 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 꺼짐: 잠든 물범 + 한 줄 + 시간 버튼 셋.
+    /// 마지막으로 고른 Focus 길이(초). 다음에 열 때 같은 길이가 골라져 있다.
+    @AppStorage("ChapFocusPresetDuration") private var storedDuration =
+        KeepAwakePolicy.defaultFocusPreset.duration
+    /// 켜지는 순간 번개가 튀어 오르게 하는 신호.
+    @State private var startPulse = 0
+
+    private var selectedPreset: KeepAwakePolicy.Preset {
+        KeepAwakePolicy.focusPreset(forStoredDuration: storedDuration)
+    }
+
+    private func start() {
+        // 트랙패드가 "딱" 하고 눌린 느낌을 준다 (권한 없음, 트랙패드가 없으면 아무 일 없음).
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+        startPulse += 1
+        NotificationCenter.default.post(name: Self.activateRequest, object: selectedPreset.duration)
+    }
+
+    /// 꺼짐: 길이 고르기(1h · 4h · 8h) + 큰 "Chap on" 버튼. 마음먹고 한 번 누르는 버튼이라 칸에서 가장 무겁다.
     private var idle: some View {
-        VStack(spacing: 6) {
-            NotchMascotView(
-                pixelSize: ChapMascot.widgetPixelSize, mood: .asleep,
-                isAnimating: isAnimating, zColor: palette.secondary)
-            VStack(spacing: 1) {
-                Text(KeepAwakePolicy.focusIdleLine)
-                    .font(DS.notchLabel)
-                    .foregroundColor(palette.primary)
-                Text(KeepAwakePolicy.focusIdleHint)
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-            }
-            HStack(spacing: 5) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
                 ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
-                    FocusPresetButton(
-                        title: KeepAwakePolicy.shortTitle(of: preset), palette: palette
+                    FocusDurationChip(
+                        title: KeepAwakePolicy.shortTitle(of: preset),
+                        isSelected: preset.duration == selectedPreset.duration,
+                        palette: palette
                     ) {
-                        NotificationCenter.default.post(
-                            name: Self.activateRequest, object: preset.duration)
+                        withAnimation(.smooth(duration: 0.15)) { storedDuration = preset.duration }
                     }
                     .help("Keep your Mac awake for \(preset.title.lowercased())")
                 }
             }
+            Button(action: start) {
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text(KeepAwakePolicy.focusIdleLine)
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 38)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(DS.accent)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(FocusPressStyle())
+            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
+            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
+            Text(KeepAwakePolicy.focusIdleHint)
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
         }
+        .padding(.top, 4)
     }
 
-    /// 켜짐: 깨어 있는 물범(30분 미만이면 졸림) + 남은 시간 + 위트 한 줄 + 끄기.
+    /// 켜짐: 맥박치는 번개 + 큰 남은 시간 + 남은 비율 막대 + 위트 한 줄 + 조용한 끄기.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
-            VStack(spacing: 4) {
-                NotchMascotView(
-                    pixelSize: ChapMascot.widgetPixelSize,
-                    mood: ChapMascot.focusMood(remaining: remaining),
-                    isAnimating: isAnimating, wagsContinuously: true,
-                    zColor: palette.secondary)
-                Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(palette.primary)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(DS.accent)
+                        .symbolEffect(.bounce, value: startPulse)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(palette.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                if let progress = KeepAwakePolicy.focusProgress(
+                    remaining: remaining, duration: KeepAwakeController.currentSessionDuration)
+                {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(palette.subtleSurface)
+                            Capsule().fill(DS.accent)
+                                .frame(width: max(geo.size.width * progress, 4))
+                        }
+                    }
+                    .frame(height: 4)
+                    .accessibilityHidden(true)
+                }
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)
-                FocusPresetButton(
-                    title: KeepAwakePolicy.focusOffTitle, palette: palette, isQuiet: true
-                ) {
+                Spacer(minLength: 0)
+                Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
+                } label: {
+                    Text(KeepAwakePolicy.focusOffTitle)
+                        .font(DS.notchMeta.weight(.semibold))
+                        .foregroundColor(palette.primary.opacity(0.75))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(palette.subtleSurface)
+                        )
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(FocusPressStyle())
                 .help("Turn off Keep Mac Awake")
-                .padding(.top, 2)
             }
-            .accessibilityElement(children: .combine)
+            .padding(.horizontal, 6)
+            .padding(.top, 4)
+            .accessibilityElement(children: .contain)
             .accessibilityLabel(
                 "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
         }
     }
 }
 
-/// Focus 위젯의 작은 캡슐 버튼.
-private struct FocusPresetButton: View {
+/// 누르는 순간 살짝 눌렸다 튀어 오르는 버튼 모양. "딱" 누르는 손맛을 준다.
+private struct FocusPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .brightness(configuration.isPressed ? -0.06 : 0)
+            .animation(
+                .spring(response: 0.22, dampingFraction: 0.55), value: configuration.isPressed)
+    }
+}
+
+/// Focus 길이 고르기 칩. 고른 칩은 블루 테두리와 글자.
+private struct FocusDurationChip: View {
     let title: String
+    let isSelected: Bool
     let palette: NotchWidgetPalette
-    var isQuiet = false
     let action: () -> Void
 
     @State private var isHovered = false
@@ -148,22 +230,25 @@ private struct FocusPresetButton: View {
         Button(action: action) {
             Text(title)
                 .font(DS.notchMeta.weight(.semibold))
-                .foregroundColor(
-                    isQuiet ? palette.secondary : (isHovered ? .white : palette.primary)
-                )
-                .padding(.horizontal, isQuiet ? 8 : 9)
-                .padding(.vertical, 3)
+                .foregroundColor(isSelected ? DS.accent : palette.primary.opacity(0.75))
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
                 .background(
-                    Capsule(style: .continuous)
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
                         .fill(
-                            isQuiet
-                                ? palette.subtleSurface
-                                : (isHovered ? DS.accent : palette.subtleSurface))
+                            isSelected
+                                ? DS.accent.opacity(0.14)
+                                : (isHovered ? palette.hoverBackground : palette.subtleSurface))
                 )
-                .contentShape(Capsule())
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(isSelected ? DS.accent.opacity(0.7) : .clear, lineWidth: 1)
+                )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -674,9 +759,15 @@ struct NotchMascotView: View {
     var wagsContinuously = false
     /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
     var zColor: Color = .secondary
+    /// Focus가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
+    var isFocusing = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pose: ChapMascot.Pose = .rest
+    /// 다이빙 중인 프레임. nil이면 평소 모습.
+    @State private var diveStep: ChapMascot.FocusDiveStep?
+    /// 처음 나타날 때는 이미 켜져 있던 Focus라 뛰어들지 않는다(켜는 순간에만 한다).
+    @State private var didAppear = false
     @State private var isBlinking = false
     @State private var zRisen = false
 
@@ -686,8 +777,38 @@ struct NotchMascotView: View {
         isBlinking && mood != .asleep ? .closed : mood.eyes
     }
 
+    /// 지금 물범 세로 위치(픽셀). 다이빙 중에만 오르내린다.
+    private var offsetY: Int { diveStep?.offsetY ?? 0 }
+
+    /// 지금 수면. 다이빙 중에만 있고, 물범은 이 행보다 아래 부분이 그려지지 않는다.
+    private var surface: (level: Int, phase: Int)? {
+        guard let diveStep, let level = diveStep.waterLevel else { return nil }
+        return (level, diveStep.wavePhase)
+    }
+
+    /// 지금 그릴 물과 물방울 (다이빙 중에만).
+    private var water: [ChapMascot.Pixel] {
+        guard let diveStep else { return [] }
+        guard let level = diveStep.waterLevel else { return diveStep.splash }
+        return ChapMascot.waterPixels(
+            level: level, phase: diveStep.wavePhase, rows: diveStep.waterRows)
+            + diveStep.splash
+    }
+
+    private func play(_ steps: [ChapMascot.FocusDiveStep]) async {
+        for step in steps {
+            diveStep = step
+            pose = step.pose
+            try? await Task.sleep(for: .seconds(ChapMascot.focusDiveFrameDuration))
+            if Task.isCancelled { break }
+        }
+        diveStep = nil
+        pose = .rest
+    }
+
     /// 까딱 한 번을 재생한다. 취소되면 쉬는 자세로 돌아간다.
     private func flick() async {
+        guard diveStep == nil else { return }
         for next in ChapMascot.flickSequence {
             pose = next
             try? await Task.sleep(for: .seconds(ChapMascot.flickFrameDuration))
@@ -702,12 +823,24 @@ struct NotchMascotView: View {
         case .outline: return Color(red: 22 / 255, green: 26 / 255, blue: 48 / 255)
         case .body: return .white
         case .shade: return Color(red: 176 / 255, green: 190 / 255, blue: 216 / 255)
+        // 물: 검정 띠 위에서 물속은 깊은 블루, 마루와 물방울은 밝은 Chap 블루.
+        case .water: return Color(red: 36 / 255, green: 64 / 255, blue: 170 / 255)
+        case .crest: return Color(red: 110 / 255, green: 145 / 255, blue: 255 / 255)
+        case .splash: return Color(red: 160 / 255, green: 185 / 255, blue: 255 / 255)
         }
     }
 
     var body: some View {
         Canvas { context, _ in
             for pixel in ChapMascot.pixels(eyes: eyes, pose: pose) {
+                // 수면 아래로 내려간 부분은 그리지 않는다(물속으로 들어간 모습).
+                if let surface,
+                    pixel.y + offsetY
+                        >= ChapMascot.surfaceRow(
+                            x: pixel.x, level: surface.level, phase: surface.phase)
+                {
+                    continue
+                }
                 let rect = CGRect(
                     x: CGFloat(pixel.x) * pixelSize, y: CGFloat(pixel.y) * pixelSize,
                     width: pixelSize, height: pixelSize)
@@ -718,6 +851,37 @@ struct NotchMascotView: View {
             width: CGFloat(ChapMascot.width) * pixelSize,
             height: CGFloat(ChapMascot.height) * pixelSize
         )
+        .offset(y: CGFloat(offsetY) * pixelSize)
+        // 물과 물방울: 물범이 뛰고 가라앉아도 수면은 제자리다(겹침은 offset 전 레이아웃 기준이라 따라 움직이지 않는다).
+        // 몸보다 넓고 위로 튀는 물방울도 있어 레이아웃 크기에 넣지 않는 겹침 레이어로 그린다.
+        .overlay(alignment: .topLeading) {
+            let pad = 4
+            Canvas { context, _ in
+                for pixel in water {
+                    let rect = CGRect(
+                        x: CGFloat(pixel.x + pad) * pixelSize,
+                        y: CGFloat(pixel.y + pad) * pixelSize,
+                        width: pixelSize, height: pixelSize)
+                    context.fill(Path(rect), with: .color(Self.color(pixel.ink)))
+                }
+            }
+            .frame(
+                width: CGFloat(ChapMascot.width + 2 * pad) * pixelSize,
+                height: CGFloat(ChapMascot.waterBottom + 1 + pad) * pixelSize
+            )
+            .offset(x: -CGFloat(pad) * pixelSize, y: -CGFloat(pad) * pixelSize)
+            .allowsHitTesting(false)
+        }
+        // Focus가 켜지는 순간(꺼짐 → 켜짐) 첨벙 다이빙을 한 번 한다. 이미 켜져 있던 Focus(처음 나타날 때)나
+        // 동작 줄이기·닫힌 노치에서는 하지 않는다.
+        .task(id: isFocusing) {
+            guard didAppear else {
+                didAppear = true
+                return
+            }
+            guard moves, isFocusing else { return }
+            await play(ChapMascot.focusDiveSequence)
+        }
         // z는 레이아웃 크기에 넣지 않고 머리 오른쪽 위에 겹쳐 그린다.
         .overlay(alignment: .topLeading) {
             if mood == .asleep {
@@ -740,7 +904,7 @@ struct NotchMascotView: View {
             if wagsContinuously, let frame = ChapMascot.focusWagFrameDuration(for: mood) {
                 await flick()
                 while !Task.isCancelled {
-                    pose = pose == .rest ? .tailUp : .rest
+                    if diveStep == nil { pose = pose == .rest ? .tailUp : .rest }
                     try? await Task.sleep(for: .seconds(frame))
                 }
                 pose = .rest
