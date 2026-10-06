@@ -102,6 +102,12 @@ enum KeepAwakePolicy {
         focusPresets.first { $0.duration == duration } ?? defaultFocusPreset
     }
 
+    /// 세션 길이를 모를 때(앱이 세션 시작 뒤 다시 그려진 경우 등) 남은 시간을 담을 수 있는 가장 짧은 프리셋 길이.
+    /// 링이 0이나 1로 튀지 않고 그럴듯한 비율을 보이게 한다.
+    static func inferredFocusDuration(remaining: TimeInterval) -> TimeInterval {
+        presets.map(\.duration).first { $0 >= remaining } ?? max(remaining, 1)
+    }
+
     /// 남은 비율(1 → 0). 길이를 모르면 nil이라 진행 막대를 그리지 않는다.
     static func focusProgress(remaining: TimeInterval, duration: TimeInterval?) -> Double? {
         guard let duration, duration > 0 else { return nil }

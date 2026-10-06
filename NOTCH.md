@@ -175,7 +175,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
-| Focus | 132pt (길이 칩 셋 + 큰 Chap on 버튼) |
+| Focus | 116pt (80pt 링 + 길이 칩 셋) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -238,14 +238,13 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
-- "집중할 거야" 하고 한 번 딱 누르는 칸이라, 도커에서 가장 힘이 실린 컨트롤이다(폭 132pt).
-- 꺼짐: 길이 칩 셋 1h·4h·8h(22pt, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`
-  UserDefaults에 기억, 기본 1h) + 큰 "⚡ Chap on" 버튼(높이 38pt, `DS.accent` 채움, 흰 14pt semibold) + 10pt
-  "No sleep, no dimming.". 누르면 `FocusPressStyle`로 0.94배 눌렸다 튀어 오르고, 트랙패드 햅틱
-  (`NSHapticFeedbackManager` `.levelChange`, 권한 없음)이 "딱" 하고 온다.
-- 켜짐: 맥박치는 파란 번개(켜는 순간 bounce) + 22pt 남은 시간 + 남은 비율 막대(4pt, `focusProgress`,
-  `KeepAwakeController.currentSessionDuration`) + 남은 시간에 따른 한 줄(`focusActiveLine`) + 맨 아래 조용한
-  "Chap off" 버튼(회색 면). 켜는 일은 무겁게, 끄는 일은 가볍게.
+- 켜고 끄는 모습이 같은 **하나의 링**이다(지름 80pt, 두께 5pt, `FocusRing`, 칸 폭 116pt). 링 전체가 버튼이다.
+- 꺼짐: 빈 링(본문색 12%) 가운데 블루 번개와 "Chap on". 마우스를 올리면 링이 연한 블루로 차오르고, 누르면
+  `FocusPressStyle`로 눌렸다 튀어 오르며 트랙패드 햅틱(`.levelChange`, 권한 없음)이 온다. 링 아래에 길이 칩 1h·4h·8h
+  (30×18pt 캡슐, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`에 기억, 기본 1h).
+- 켜짐: 같은 링이 남은 비율만큼 블루 호로 12시 방향부터 차 있다가 1초마다 줄어든다(`focusProgress`, 길이를 모르면
+  `inferredFocusDuration`). 가운데 15pt 남은 시간(h:mm:ss), 링 아래 한 줄(`focusActiveLine`). 마우스를 올리면 가운데가
+  "Chap off"로 바뀌고, 누르면 끈다.
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.

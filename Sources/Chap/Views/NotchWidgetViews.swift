@@ -88,23 +88,47 @@ struct NotchFocusView: View {
     /// 마지막으로 고른 Focus 길이(초). 다음에 열 때 같은 길이가 골라져 있다.
     @AppStorage("ChapFocusPresetDuration") private var storedDuration =
         KeepAwakePolicy.defaultFocusPreset.duration
-    /// 켜지는 순간 번개가 튀어 오르게 하는 신호.
-    @State private var startPulse = 0
+    /// 링 위에 마우스가 있는지. 꺼짐: 링이 블루로 차오르며 누를 수 있음을 보여 준다. 켜짐: 가운데가 "Chap off"로 바뀐다.
+    @State private var isRingHovered = false
 
     private var selectedPreset: KeepAwakePolicy.Preset {
         KeepAwakePolicy.focusPreset(forStoredDuration: storedDuration)
     }
 
+    /// 링 지름과 두께. 칸 본문 높이(113pt) 안에 링 + 아래 한 줄이 들어간다.
+    static let ringDiameter: CGFloat = 80
+    static let ringLineWidth: CGFloat = 5
+
+    private var ringTrack: Color { palette.primary.opacity(0.12) }
+
     private func start() {
         // 트랙패드가 "딱" 하고 눌린 느낌을 준다 (권한 없음, 트랙패드가 없으면 아무 일 없음).
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-        startPulse += 1
         NotificationCenter.default.post(name: Self.activateRequest, object: selectedPreset.duration)
     }
 
-    /// 꺼짐: 길이 고르기(1h · 4h · 8h) + 큰 "Chap on" 버튼. 마음먹고 한 번 누르는 버튼이라 칸에서 가장 무겁다.
+    /// 꺼짐: 빈 링 가운데 번개와 "Chap on". 링 전체가 버튼이고, 아래에서 길이(1h · 4h · 8h)를 고른다.
     private var idle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 7) {
+            Button(action: start) {
+                FocusRing(
+                    progress: nil, isHovered: isRingHovered, track: ringTrack,
+                    diameter: Self.ringDiameter, lineWidth: Self.ringLineWidth
+                ) {
+                    VStack(spacing: 3) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(DS.accent)
+                        Text(KeepAwakePolicy.focusIdleLine)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(palette.primary)
+                    }
+                }
+            }
+            .buttonStyle(FocusPressStyle())
+            .onHover { isRingHovered = $0 }
+            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
+            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
             HStack(spacing: 4) {
                 ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
                     FocusDurationChip(
@@ -117,92 +141,87 @@ struct NotchFocusView: View {
                     .help("Keep your Mac awake for \(preset.title.lowercased())")
                 }
             }
-            Button(action: start) {
-                HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 14, weight: .bold))
-                    Text(KeepAwakePolicy.focusIdleLine)
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 38)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(DS.accent)
-                )
-                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .buttonStyle(FocusPressStyle())
-            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
-            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
-            Text(KeepAwakePolicy.focusIdleHint)
-                .font(DS.notchMeta)
-                .foregroundColor(palette.secondary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
         }
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
     }
 
-    /// 켜짐: 맥박치는 번개 + 큰 남은 시간 + 남은 비율 막대 + 위트 한 줄 + 조용한 끄기.
+    /// 켜짐: 같은 링이 남은 비율만큼 블루로 차 있다가 줄어들고, 가운데에 남은 시간. 링을 누르면 끈다
+    /// (마우스를 올리면 가운데가 "Chap off"로 바뀐다). 아래 한 줄은 남은 시간에 따라 바뀌는 문구.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 5) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(DS.accent)
-                        .symbolEffect(.bounce, value: startPulse)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(palette.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                if let progress = KeepAwakePolicy.focusProgress(
-                    remaining: remaining, duration: KeepAwakeController.currentSessionDuration)
-                {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(palette.subtleSurface)
-                            Capsule().fill(DS.accent)
-                                .frame(width: max(geo.size.width * progress, 4))
-                        }
-                    }
-                    .frame(height: 4)
-                    .accessibilityHidden(true)
-                }
-                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-                Spacer(minLength: 0)
+            let duration =
+                KeepAwakeController.currentSessionDuration
+                ?? KeepAwakePolicy.inferredFocusDuration(remaining: remaining)
+            let progress =
+                KeepAwakePolicy.focusProgress(remaining: remaining, duration: duration) ?? 1
+            VStack(spacing: 7) {
                 Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 } label: {
-                    Text(KeepAwakePolicy.focusOffTitle)
-                        .font(DS.notchMeta.weight(.semibold))
-                        .foregroundColor(palette.primary.opacity(0.75))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(palette.subtleSurface)
-                        )
-                        .contentShape(Rectangle())
+                    FocusRing(
+                        progress: progress, isHovered: false, track: ringTrack,
+                        diameter: Self.ringDiameter, lineWidth: Self.ringLineWidth
+                    ) {
+                        if isRingHovered {
+                            Text(KeepAwakePolicy.focusOffTitle)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(palette.primary)
+                        } else {
+                            Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(palette.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(width: Self.ringDiameter - 2 * Self.ringLineWidth - 8)
+                        }
+                    }
                 }
                 .buttonStyle(FocusPressStyle())
+                .onHover { isRingHovered = $0 }
                 .help("Turn off Keep Mac Awake")
+                .accessibilityLabel(
+                    "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
+                )
+                .accessibilityHint("Turns Focus off")
+                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+                    .lineLimit(1)
+                    .frame(height: 18)
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 4)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(
-                "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
+            .frame(maxWidth: .infinity)
         }
+    }
+}
+
+/// Focus 링. 얇은 트랙 위에 남은 비율만큼 블루 호를 12시 방향부터 그린다(`progress` nil이면 호 없음).
+/// 꺼짐 상태에서 마우스를 올리면 트랙 전체가 연한 블루로 차올라 누를 수 있음을 보여 준다.
+private struct FocusRing<Content: View>: View {
+    let progress: Double?
+    let isHovered: Bool
+    let track: Color
+    let diameter: CGFloat
+    let lineWidth: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(isHovered ? DS.accent.opacity(0.55) : track, lineWidth: lineWidth)
+            if let progress {
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(DS.accent, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: progress)
+            }
+            content()
+        }
+        .frame(width: diameter, height: diameter)
+        .animation(.smooth(duration: 0.18), value: isHovered)
+        .contentShape(Circle())
     }
 }
 
@@ -231,10 +250,9 @@ private struct FocusDurationChip: View {
             Text(title)
                 .font(DS.notchMeta.weight(.semibold))
                 .foregroundColor(isSelected ? DS.accent : palette.primary.opacity(0.75))
-                .frame(maxWidth: .infinity)
-                .frame(height: 22)
+                .frame(width: 30, height: 18)
                 .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    Capsule()
                         .fill(
                             isSelected
                                 ? DS.accent.opacity(0.14)
