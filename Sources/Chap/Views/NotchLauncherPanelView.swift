@@ -96,6 +96,8 @@ struct NotchLauncherPanelView: View {
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     /// 칸을 접거나 펼쳤을 때 새 목록. 컨트롤러가 config에 저장한다.
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
+    /// (개발용) 어깨·곡선 구간 경계선을 그린다. 오프스크린 렌더 도구만 켠다.
+    var showsShoulderGuides = false
     @ObservedObject var reveal: NotchRevealModel
 
     /// 원래의 모션: 패널 전체가 노치 상단 기준으로 스프링 확장하고,
@@ -251,6 +253,9 @@ struct NotchLauncherPanelView: View {
             }
             // 어깨: 접힌 Screenshots·Downloads 칸 아이콘. 원래 자리가 노치 왼쪽이면 왼쪽 어깨.
             .overlay(alignment: .topLeading) { shoulderIcons }
+            .overlay(alignment: .topLeading) {
+                if showsShoulderGuides { shoulderGuides }
+            }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
@@ -658,6 +663,43 @@ struct NotchLauncherPanelView: View {
             }
             .transition(.opacity)
         }
+    }
+
+    /// (개발용) 어깨 경계선. 빨강 = 어깨(아이콘 자리), 주황 = 검정 띠 곡선 구간, 파랑 = 노치 plateau.
+    private var shoulderGuides: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let flare = NotchGeometry.dockFlareRadius
+            let plateauLeft = w / 2 - stripPlateauHalfWidth
+            let curveLeft = plateauLeft - NotchGeometry.stripFalloff
+            let iconStart = flare + NotchShoulderPolicy.outerMargin
+            ZStack(alignment: .topLeading) {
+                ForEach([false, true], id: \.self) { mirrored in
+                    let place: (CGFloat, CGFloat) -> CGFloat = { x, width in
+                        mirrored ? w - x - width : x
+                    }
+                    guide(.red, width: curveLeft - flare, height: topInset)
+                        .offset(x: place(flare, curveLeft - flare))
+                    guide(.orange, width: NotchGeometry.stripFalloff, height: topInset)
+                        .offset(x: place(curveLeft, NotchGeometry.stripFalloff))
+                    Rectangle().fill(Color.red.opacity(0.5)).frame(width: 1, height: topInset)
+                        .offset(x: mirrored ? w - iconStart : iconStart)
+                    Text("\(Int(curveLeft - flare))pt")
+                        .font(.system(size: 9, weight: .bold)).foregroundColor(.red)
+                        .offset(x: place(flare + 4, 34), y: topInset + 2)
+                }
+                guide(.blue, width: 2 * stripPlateauHalfWidth, height: topInset)
+                    .offset(x: plateauLeft)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func guide(_ color: Color, width: CGFloat, height: CGFloat) -> some View {
+        Rectangle()
+            .fill(color.opacity(0.10))
+            .overlay(Rectangle().stroke(color, style: StrokeStyle(lineWidth: 1, dash: [3, 2])))
+            .frame(width: max(width, 0), height: height)
     }
 
     static func shoulderSymbol(_ widget: NotchWidget) -> String {

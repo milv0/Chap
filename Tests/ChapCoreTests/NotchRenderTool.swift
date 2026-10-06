@@ -64,6 +64,7 @@ struct NotchRenderTool {
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
             ("notch-custom-collapsed", .custom, .dark, Color(white: 0.55), false),
+            ("notch-guides-collapsed", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
@@ -95,6 +96,7 @@ struct NotchRenderTool {
                 glassMaterial: config.notchGlassMaterial,
                 slots: previewSlots, showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
+                showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
             let view =
                 panel
