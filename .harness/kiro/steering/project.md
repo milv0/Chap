@@ -87,6 +87,7 @@ bump version numbers by hand — the release script owns
 
 - Follow `.harness/shared/rules/brand-voice.md` for any user-facing text; `BRAND.md` is the
   source of truth for Chap's identity (your friend in the menu bar) and voice.
+- `.harness/shared/rules/dev-app-cleanup.md` (run `Scripts/clean-dev-apps.sh` when a task ends)
 
 - Read `FLOW.md` before changing launch, resize, permission, or shortcut behavior;
   its invariants section lists past regressions.

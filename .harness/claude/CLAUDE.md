@@ -146,6 +146,7 @@ Follow the shared rules:
 - `.harness/shared/rules/commit-convention.md`
 - `.harness/shared/rules/architecture-docs.md`
 - `.harness/shared/rules/brand-voice.md` (identity and copy; source of truth is `BRAND.md`)
+- `.harness/shared/rules/dev-app-cleanup.md` (run `Scripts/clean-dev-apps.sh` when a task ends)
 
 Important local expectations:
 

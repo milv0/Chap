@@ -649,6 +649,9 @@ App 윈도우 감지 방식 (AXObserver):
 - Developer ID Application/Installer 서명 + Hardened Runtime + Apple 공증
 - PKG가 기본 설치 파일, DMG가 수동 설치 대안
 - Scripts/release.sh --publish가 버전 범프·검증·dev→main merge·태그·공증·GitHub Release·Pages를 수행
+- Scripts/clean-dev-apps.sh: 작업이 끝날 때마다 /Applications/Chap.app 외 Chap.app(DerivedData Debug,
+  build/release의 xcarchive·export·dmg-root)을 종료·등록 해제·삭제한다. 모든 사본이 ~/.chap.json을 같이 쓰므로
+  남겨 두면 설치본이 못 읽는 값을 저장할 수 있다(2.7.0 seal 아이콘 사고). 설치 파일(pkg·dmg)은 남긴다.
 - docs/appcast.xml은 Sparkle EdDSA 서명 피드
 - docs/index.html의 Product history는 핵심 기능/워크플로가 바뀐 릴리스만 선별 기록
 
