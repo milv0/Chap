@@ -109,58 +109,95 @@ public enum ChapMascot {
 
     // MARK: - Focus 다이빙(몰입)
 
-    /// 물이 차오르는 높이(스프라이트 행). 머리와 등은 물 위, 배와 지느러미는 물속이다.
+    /// 수면 높이(스프라이트 행). 다이빙하는 동안 이 아래가 물이다.
     public static let waterLevel = 9
     /// 물이 깔리는 가로 범위(스프라이트 기준, 몸보다 조금 넓다)와 물속 바닥 행.
     public static let waterSpan = -3...26
     public static let waterBottom = 13
+    /// 잠수한 물범의 세로 위치. 몸 전체가 수면 아래라 그려지지 않는다.
+    public static let submergedOffsetY = 12
 
-    /// 물결: 네 칸마다 두 칸씩 마루가 한 칸 높고, `phase`가 오를 때마다 한 칸씩 흘러간다.
-    /// 물은 물범 위에 그려 몸 아래쪽을 덮는다.
-    public static func waterPixels(level: Int, phase: Int) -> [Pixel] {
+    /// 열 `x`의 수면(마루) 행. 네 칸마다 두 칸씩 한 칸 낮고, `phase`만큼 흘러간다.
+    public static func surfaceRow(x: Int, level: Int, phase: Int) -> Int {
+        level + (((x + phase) % 4 + 4) % 4 < 2 ? 0 : 1)
+    }
+
+    /// 물 픽셀: 마루 한 줄 + 그 아래 `rows`줄(nil이면 바닥까지). `rows` 0이면 얇은 수면 한 줄만.
+    public static func waterPixels(level: Int, phase: Int, rows: Int? = nil) -> [Pixel] {
         waterSpan.flatMap { x -> [Pixel] in
-            let top = level + (((x + phase) % 4 + 4) % 4 < 2 ? 0 : 1)
-            return [Pixel(x: x, y: top, ink: .crest)]
-                + ((top + 1)...max(top + 1, waterBottom)).map { Pixel(x: x, y: $0, ink: .water) }
+            let top = surfaceRow(x: x, level: level, phase: phase)
+            let bottom = rows.map { top + $0 } ?? waterBottom
+            let body =
+                bottom > top ? ((top + 1)...bottom).map { Pixel(x: x, y: $0, ink: .water) } : []
+            return [Pixel(x: x, y: top, ink: .crest)] + body
         }
     }
 
-    /// 다이빙 한 프레임: 물범 세로 위치(픽셀, 아래가 +), 꼬리, 물 높이(nil이면 물 없음), 물결 위상, 물방울.
+    /// 다이빙·떠오르기 한 프레임: 물범 세로 위치(픽셀, 아래가 +), 꼬리, 수면(nil이면 물 없음),
+    /// 물결 위상, 수면 아래 물 줄 수(nil이면 바닥까지, 0이면 수면 한 줄), 물방울.
+    /// 물범은 수면 아래로 내려간 부분이 그려지지 않는다.
     public struct FocusDiveStep: Equatable, Sendable {
         public let offsetY: Int
         public let pose: Pose
         public let waterLevel: Int?
         public let wavePhase: Int
+        public let waterRows: Int?
         public let splash: [Pixel]
 
         init(
-            _ offsetY: Int, _ pose: Pose, water: Int? = nil, phase: Int = 0,
-            splash: [(Int, Int)] = []
+            _ offsetY: Int, _ pose: Pose = .rest, water: Int? = nil, phase: Int = 0,
+            rows: Int? = nil, splash: [(Int, Int)] = []
         ) {
             self.offsetY = offsetY
             self.pose = pose
             self.waterLevel = water
             self.wavePhase = phase
+            self.waterRows = rows
             self.splash = splash.map { Pixel(x: $0.0, y: $0.1, ink: .splash) }
         }
     }
 
-    /// "몰입" 다이빙: 웅크림 → 꼬리를 들고 뛰어오름 → 물이 차오르며 첨벙 → 물방울이 솟았다 떨어짐 → 물 위에 뜸.
-    /// 끝나면 Focus가 켜져 있는 동안 물에 뜬 채 물결이 흐르고 꼬리를 흔든다.
+    /// "몰입" 다이빙: 웅크림 → 꼬리를 들고 뛰어오름 → 첨벙 → 물속으로 가라앉음 → 물이 가라앉아 얇은 수면만 남음.
+    /// Focus가 켜져 있는 동안 물범은 물속에 있고, 수면 위로 가끔 물방울 하나가 올라온다.
     public static let focusDiveSequence: [FocusDiveStep] = [
-        FocusDiveStep(1, .rest),
+        FocusDiveStep(1),
         FocusDiveStep(-3, .tailUp),
         FocusDiveStep(-3, .tailUp),
         FocusDiveStep(0, .tailUp, water: waterLevel + 2, splash: [(-1, 8), (24, 8)]),
         FocusDiveStep(
-            2, .rest, water: waterLevel, phase: 1, splash: [(-2, 5), (-1, 7), (24, 6), (25, 4)]),
-        FocusDiveStep(1, .rest, water: waterLevel, phase: 2, splash: [(-3, 3), (26, 2), (25, 5)]),
-        FocusDiveStep(0, .rest, water: waterLevel, phase: 3, splash: [(-3, 6), (26, 6)]),
-        FocusDiveStep(0, .rest, water: waterLevel, phase: 0),
+            3, water: waterLevel, phase: 1, splash: [(-2, 5), (-1, 7), (24, 6), (25, 4)]),
+        FocusDiveStep(6, water: waterLevel, phase: 2, splash: [(-3, 3), (26, 2), (25, 5)]),
+        FocusDiveStep(9, water: waterLevel, phase: 3, splash: [(-3, 6), (26, 6)]),
+        FocusDiveStep(submergedOffsetY, water: waterLevel, rows: 2),
+        FocusDiveStep(submergedOffsetY, water: waterLevel, rows: 0),
     ]
 
-    /// 다이빙 한 프레임 길이(초). 8프레임 × 0.1 = 0.8초.
+    /// Focus가 끝나 물 위로 올라오기: 물방울 → 물이 차오름 → 머리부터 떠오름 → 튀어 올라 첨벙 → 물이 빠짐.
+    public static let focusSurfaceSequence: [FocusDiveStep] = [
+        FocusDiveStep(submergedOffsetY, water: waterLevel, rows: 0, splash: [(6, 7)]),
+        FocusDiveStep(submergedOffsetY, water: waterLevel, rows: 0, splash: [(6, 6), (8, 7)]),
+        FocusDiveStep(submergedOffsetY, water: waterLevel, rows: nil),
+        FocusDiveStep(6, water: waterLevel, phase: 1),
+        FocusDiveStep(2, water: waterLevel, phase: 2, splash: [(-1, 7), (24, 7)]),
+        FocusDiveStep(
+            -1, .tailUp, water: waterLevel + 1, phase: 3,
+            splash: [(-2, 5), (25, 5), (-1, 3), (24, 3)]),
+        FocusDiveStep(0, water: waterLevel + 2, splash: [(-2, 8), (25, 8)]),
+        FocusDiveStep(0),
+    ]
+
+    /// 다이빙·떠오르기 한 프레임 길이(초). 다이빙 9프레임 0.9초, 떠오르기 8프레임 0.8초.
     public static let focusDiveFrameDuration: Double = 0.1
+
+    /// 잠수 중 수면(얇은 한 줄, 잔잔함).
+    public static let submergedSurface = waterPixels(level: waterLevel, phase: 0, rows: 0)
+
+    /// 잠수 중 가끔 올라오는 물방울 하나의 경로(머리 위 근처, 아래에서 위로)와 한 칸 시간·간격(초).
+    public static let bubblePath: [(x: Int, y: Int)] = [(6, 8), (6, 7), (7, 6), (7, 5)]
+    public static let bubbleStepDuration: Double = 0.3
+    public static let bubbleInterval: ClosedRange<Double> = 10...20
+    /// 움직임이 없을 때(동작 줄이기·닫힌 노치) 잠수 중임을 알리는 고정 물방울.
+    public static let restingBubble = Pixel(x: 7, y: 6, ink: .splash)
 
     public static func pixels(eyes: Eyes, pose: Pose) -> [Pixel] {
         eyes == .open ? pixels(for: pose) : pixels(from: rows(eyes: eyes, pose: pose))

@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 웅크렸다 뛰어올라 물속으로 첨벙 뛰어들고, Focus가 켜져 있는 동안 물결 위에 뜬 채 꼬리를 흔듭니다. 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 뛰어올라 물속으로 잠수하고, Focus가 켜져 있는 동안에는 수면에 가끔 물방울만 올라옵니다. Focus가 끝나면 첨벙 하고 다시 올라옵니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -402,7 +402,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops and dives into the water, then floats on the waves wagging its tail while Focus runs. In the last 30 minutes it gets drowsy and wags slower. It is just decoration, so clicking it does nothing."
+                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops and dives out of sight; while Focus runs only a bubble rises now and then, and it surfaces with a splash when Focus ends. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",

@@ -194,14 +194,15 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
 (Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
 
-물범은 Focus 칸이 보이든 아니든 **늘 띠 왼쪽에 있다**(`NotchLauncherPolicy.stripLeading()`). 그래서 Focus 칸이
-보여도 띠 좌우가 비지 않는다. Focus 칸은 번개와 남은 시간을 맡고, 물범은 띠에서 Focus 상태를 보여 준다.
+물범 자리는 Focus 칸이 보이든 아니든 **늘 띠 왼쪽이다**(`NotchLauncherPolicy.stripLeading()`). Focus 칸은 번개와
+남은 시간을 맡고, 물범은 띠에서 Focus 상태를 보여 준다.
 
-| Focus 세션 | `focusMood` | 띠 물범 |
-|---|---|---|
-| 꺼짐 | `.asleep` → 쉬는 자세 | 눈 뜸, 가끔 까딱(7~12초) |
-| 30분 이상 남음 | `.awake` | 깨어 꼬리를 0.4초 프레임으로 계속 흔듦 |
-| 30분 미만 | `.drowsy` | 졸린 눈꺼풀(`Eyes.drowsy`), 꼬리를 0.7초 프레임으로 느리게 흔듦 |
+| Focus 세션 | 띠 물범 |
+|---|---|
+| 꺼짐 | 엎드려 쉼. 눈 뜸, 가끔 까딱(7~12초), 깜빡임 |
+| 켜는 순간 | 물로 뛰어들어 잠수(아래 "Focus 다이빙") |
+| 켜져 있는 동안 | 물속. 띠에는 잔잔한 수면 한 줄만 있고, 10~20초마다 물방울 하나가 올라온다 |
+| 끝나는 순간 | 물 위로 올라와 첨벙, 물이 빠지고 다시 엎드림 |
 
 - **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
   대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
@@ -215,15 +216,18 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
 깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
 
-**Focus 다이빙(몰입)**: Focus가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 물로 뛰어든다
-(`ChapMascot.focusDiveSequence`, 8프레임 × 0.1초 = 0.8초): 웅크림(아래 1px) → 꼬리를 들고 뛰어오름(위 3px) →
-물이 차오르며 첨벙(물방울이 몸 양옆으로 솟았다 떨어짐) → 물 위에 뜸. Focus가 켜져 있는 동안 배와 지느러미는 물속,
-머리와 등은 물 위에 떠 있고(`waterLevel` 9행, `waterSpan` -3…26, 바닥 13행), 물결 마루가 꼬리 박자(깨어 있음 0.4초,
-졸림 0.7초)로 한 칸씩 흘러간다(`waterPixels(level:phase:)`). 물은 물범 위에 그리는 겹침 레이어라 수면은 제자리이고
-물범만 뛰고 가라앉는다. 이미 켜진 채 노치를 열면 다이빙 없이 물에 떠 있다. 동작 줄이기·닫힌 노치에서도 바로 물에 떠
-있고 물결은 멈춘다. 물속 `#2440AA`, 마루 `#6E91FF`, 물방울 `#A0B9FF`.
+**Focus 다이빙(몰입)**: Focus가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 물로 뛰어들어 잠수한다
+(`ChapMascot.focusDiveSequence`, 9프레임 × 0.1초 = 0.9초): 웅크림(아래 1px) → 꼬리를 들고 뛰어오름(위 3px) → 물이
+차오르며 첨벙(물방울이 몸 양옆으로 솟음) → 3·6·9px씩 가라앉음 → 물이 가라앉아 얇은 수면 한 줄만 남음. 물범은 열마다 수면
+(`surfaceRow`)보다 아래 부분을 그리지 않아 물속으로 들어간 모습이 되고, 잠수 중에는 `submergedOffsetY`(12)라 전부 수면 아래다.
+잠수 중 띠에는 잔잔한 수면 한 줄(`submergedSurface`)만 있고, 10~20초마다 물방울 하나가 머리 위 근처에서 0.3초씩 네 칸
+올라온다(`bubblePath`). 물결은 흐르지 않는다(헤엄치는 모습은 유치해 보여 뺐다).
+Focus가 끝나는 순간에는 물 위로 올라온다(`focusSurfaceSequence`, 8프레임 = 0.8초): 물방울 → 물이 차오름 → 머리부터 떠오름 →
+꼬리를 들고 튀어 올라 첨벙 → 물이 빠지고 엎드림. 처음 나타날 때는 지금 상태 그대로(잠수 중이거나 엎드림)이며, 동작 줄이기·
+닫힌 노치에서는 애니메이션 없이 바로 바뀌고 잠수 중이면 고정 물방울(`restingBubble`) 하나로 물속임을 알린다.
+물은 물범 위에 그리는 겹침 레이어라 수면은 제자리이고 물범만 뛰고 가라앉는다. 물속 `#2440AA`, 마루 `#6E91FF`, 물방울 `#A0B9FF`.
 띠에서는 z가 화면 위 경계에 잘리므로 잠든(`.asleep`) 모습 대신 쉬는 자세를 쓴다. `.asleep`·z·`widgetPixelSize`(2pt)는
-`ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 꼬리 속도는 `ChapMascot.focusWagFrameDuration(for:)`.
+`ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 졸린 눈·꼬리 흔들기 속도(`focusWagFrameDuration`)도 남아 있지만 잠수 중이라 띠에는 보이지 않는다.
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
 ## Focus 칸 (Keep Mac Awake)

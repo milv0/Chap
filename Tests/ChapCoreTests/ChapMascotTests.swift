@@ -137,36 +137,57 @@ struct ChapMascotFocusMoodTests {
 
 @Suite("ChapMascot – Focus dive")
 struct ChapMascotFocusDiveTests {
-    @Test("the water covers the belly but leaves the face and back above the surface")
+    @Test("the water stays below the face and can thin to a single surface line")
     func waterLevel() {
-        let water = ChapMascot.waterPixels(level: ChapMascot.waterLevel, phase: 0)
-        #expect(!water.isEmpty)
-        #expect(water.allSatisfy { ChapMascot.waterSpan.contains($0.x) })
-        // 수면은 물 높이 또는 한 칸 아래, 바닥은 waterBottom.
-        let crests = water.filter { $0.ink == .crest }
-        #expect(crests.allSatisfy { $0.y == 9 || $0.y == 10 })
-        #expect(water.map(\.y).max() == ChapMascot.waterBottom)
-        // 눈(4행)은 물보다 위다.
-        #expect(water.allSatisfy { $0.y > 4 })
+        let full = ChapMascot.waterPixels(level: ChapMascot.waterLevel, phase: 0)
+        #expect(full.allSatisfy { ChapMascot.waterSpan.contains($0.x) })
+        #expect(full.filter { $0.ink == .crest }.allSatisfy { $0.y == 9 || $0.y == 10 })
+        #expect(full.map(\.y).max() == ChapMascot.waterBottom)
+        #expect(full.allSatisfy { $0.y > 4 })
+        let line = ChapMascot.submergedSurface
+        #expect(line.allSatisfy { $0.ink == .crest })
+        #expect(line.count == ChapMascot.waterSpan.count)
     }
 
     @Test("the waves move one cell per phase and repeat every four")
     func wavesFlow() {
         let a = ChapMascot.waterPixels(level: 9, phase: 0)
-        let b = ChapMascot.waterPixels(level: 9, phase: 1)
-        #expect(a != b)
+        #expect(a != ChapMascot.waterPixels(level: 9, phase: 1))
         #expect(ChapMascot.waterPixels(level: 9, phase: 4) == a)
     }
 
-    @Test("the dive crouches, hops, splashes, and floats in under a second")
+    @Test("a submerged seal sits wholly below the surface")
+    func submergedIsHidden() {
+        // 물범 맨 윗줄(0행)도 가장 높은 수면(9행)보다 아래다.
+        #expect(ChapMascot.submergedOffsetY >= ChapMascot.waterLevel + 1)
+    }
+
+    @Test("the dive hops, splashes, sinks, and leaves only a calm line in under a second")
     func diveSequence() {
         let steps = ChapMascot.focusDiveSequence
         #expect(steps.first?.offsetY == 1 && steps.first?.waterLevel == nil)
         #expect(steps.contains { $0.offsetY < 0 && $0.pose == .tailUp })
         #expect(steps.contains { !$0.splash.isEmpty })
-        #expect(steps.last?.waterLevel == ChapMascot.waterLevel)
-        #expect(steps.last?.offsetY == 0 && steps.last?.splash.isEmpty == true)
+        #expect(steps.last?.offsetY == ChapMascot.submergedOffsetY)
+        #expect(steps.last?.waterRows == 0 && steps.last?.splash.isEmpty == true)
         let total = Double(steps.count) * ChapMascot.focusDiveFrameDuration
         #expect(total > 0.5 && total < 1.0)
+    }
+
+    @Test("surfacing starts underwater and ends dry, back on the strip")
+    func surfaceSequence() {
+        let steps = ChapMascot.focusSurfaceSequence
+        #expect(steps.first?.offsetY == ChapMascot.submergedOffsetY)
+        #expect(steps.contains { $0.offsetY < 0 })
+        #expect(steps.last?.offsetY == 0 && steps.last?.waterLevel == nil)
+        let total = Double(steps.count) * ChapMascot.focusDiveFrameDuration
+        #expect(total > 0.5 && total < 1.0)
+    }
+
+    @Test("bubbles rise above the surface and come rarely")
+    func bubbles() {
+        #expect(ChapMascot.bubblePath.first!.y > ChapMascot.bubblePath.last!.y)
+        #expect(ChapMascot.bubblePath.allSatisfy { $0.y < ChapMascot.waterLevel })
+        #expect(ChapMascot.bubbleInterval.lowerBound >= 10)
     }
 }
