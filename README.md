@@ -16,7 +16,7 @@
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when you press Chap on, and wags its tail while Focus runs
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
-- **Focus Mode** — A lightning-bolt notch slot that keeps your Mac awake for 1h, 4h, or 8h with one click and counts down while it runs (the same session as Keep Mac Awake)
+- **Focus Mode** — A Focus ring in the notch: pick 1h, 4h, or 8h, press the ring to start (Chap on), and watch it empty as the time runs out; press it again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
 - **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
