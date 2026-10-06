@@ -177,7 +177,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
-                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 도커 폭은 그대로이며, 아이콘을 누르면 다시 펼쳐집니다."
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
                 ),
                 (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
@@ -406,7 +406,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
-                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. The dock keeps its width; click the icon to expand the slot again."
+                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

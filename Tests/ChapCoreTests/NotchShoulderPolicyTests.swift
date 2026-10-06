@@ -14,10 +14,27 @@ struct NotchShoulderPolicyTests {
         #expect(NotchShoulderPolicy.normalized([.awake, .apps]) == [])
     }
 
-    @Test("the row width is the expanded width that the dock keeps")
-    func rowWidth() {
-        #expect(NotchShoulderPolicy.rowWidth(widths: [100, 50], spacing: 20) == 170)
-        #expect(NotchShoulderPolicy.rowWidth(widths: [], spacing: 20) == 0)
+    @Test("the window grows at once and shrinks after the content animation")
+    func resizeSteps() {
+        let wide = CGSize(width: 1400, height: 300)
+        let narrow = CGSize(width: 1000, height: 300)
+        // 접기: 지금은 그대로, 애니메이션 뒤 줄인다.
+        let collapse = NotchLauncherPolicy.resizeSteps(current: wide, target: narrow)
+        #expect(collapse.immediate == nil)
+        #expect(collapse.deferred == narrow)
+        // 펼치기: 바로 넓힌다.
+        let expand = NotchLauncherPolicy.resizeSteps(current: narrow, target: wide)
+        #expect(expand.immediate == wide)
+        #expect(expand.deferred == nil)
+        // 폭은 줄고 높이는 늘면: 높이만 먼저 키우고, 폭은 나중에 줄인다.
+        let mixed = NotchLauncherPolicy.resizeSteps(
+            current: wide, target: CGSize(width: 1000, height: 420))
+        #expect(mixed.immediate == CGSize(width: 1400, height: 420))
+        #expect(mixed.deferred == CGSize(width: 1000, height: 420))
+        // 같으면 아무것도 안 한다.
+        let same = NotchLauncherPolicy.resizeSteps(current: wide, target: wide)
+        #expect(same.immediate == nil && same.deferred == nil)
+        #expect(NotchLauncherPolicy.shrinkDelay > 0.22)
     }
 
     @Test("collapsed icons mirror the right-side strip tools across the notch")

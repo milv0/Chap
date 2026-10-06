@@ -574,8 +574,9 @@ struct NotchLauncherPanelView: View {
         .padding(.horizontal, DS.padding)
         .padding(.top, topInset + NotchGeometry.contentTopGap)
         .padding(.bottom, DS.paddingSmall)
-        // 칸을 접어도 도커는 펼쳤을 때의 폭을 유지하고, 어깨 아이콘이 검정 곡선에 닿지 않을 만큼은 넓힌다.
-        .frame(minWidth: dockMinimumWidth)
+        // 칸을 접으면 도커는 남은 칸에 맞춰 줄어든다. 최소 폭이 검정 띠(노치 + 좌우 상태 영역 + 곡선)를
+        // 늘 감싸므로 띠 아이콘·물범은 노치 기준 제자리를 지킨다.
+        .frame(minWidth: minWidth)
         .onAppear { refreshDropFiles() }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
@@ -606,15 +607,6 @@ struct NotchLauncherPanelView: View {
             guard let widget = slot.collapsibleWidget else { return true }
             return !reveal.collapsedWidgets.contains(widget)
         }
-    }
-
-    /// 도커 최소 폭: 기본 최소 폭과 펼친 줄 폭 중 큰 값. 칸을 접어도 도커 길이는 그대로다.
-    private var dockMinimumWidth: CGFloat {
-        let row =
-            NotchShoulderPolicy.rowWidth(
-                widths: slots.map(width(for:)), spacing: DS.notchColumnGap)
-            + 2 * DS.padding
-        return max(minWidth, row)
     }
 
     private func setCollapsed(_ widget: NotchWidget, _ collapsed: Bool) {
