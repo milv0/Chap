@@ -455,9 +455,11 @@ public struct Config: Codable {
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         optionShortcutsEnabled =
             try container.decodeIfPresent(Bool.self, forKey: .optionShortcutsEnabled) ?? true
+        // 알 수 없는 아이콘(새 버전에서 추가된 값)은 기본 아이콘으로 취급한다. 한 값 때문에 설정 전체를
+        // 못 읽으면 안 된다(2.6.0이 2.7.0의 "seal"을 못 읽어 설정이 초기화된 사고).
         statusBarIcon =
-            try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
-            ?? .default
+            (try? container.decodeIfPresent(String.self, forKey: .statusBarIcon))
+            .flatMap { $0 }.flatMap(StatusBarIconChoice.init(rawValue:)) ?? .default
         // 키 누락은 빈 집합, 알 수 없는 타입 문자열은 무시한다 (관용 디코딩).
         hiddenMenuLaunchTypes = Set(
             (try container.decodeIfPresent([String].self, forKey: .hiddenMenuLaunchTypes)

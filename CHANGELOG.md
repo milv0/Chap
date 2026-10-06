@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **Settings survive a version mismatch** — An older Chap opening settings saved
+  by a newer one (for example the new Seal menu bar icon) no longer resets
+  everything: unknown icon choices fall back to the default icon and the rest of
+  your settings load. If Chap ever can't read the file at all, it now keeps the
+  original untouched as `~/.chap.json.unreadable-<time>` and tells you where.
+
 ## [2.7.0] — 2026-10-06
 
 ### Added

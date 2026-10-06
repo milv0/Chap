@@ -89,13 +89,23 @@ extension AppDelegate {
             config = .default
         } catch {
             Log.config.error("Config decode error: \(error.localizedDescription, privacy: .public)")
+            var preserved: String?
+            if case ConfigStoreError.decodeFailed(_, let path) = error { preserved = path }
             DispatchQueue.main.async {
                 let alert = NSAlert()
-                alert.messageText = "Config file is corrupted"
+                alert.messageText = "Chap couldn't read your settings"
                 alert.informativeText =
-                    "~/.chap.json을 읽을 수 없어 기본 설정을 사용합니다.\n백업 파일: ~/.chap.json.bak\n\nError: \(error.localizedDescription)"
+                    preserved.map {
+                        "Chap started with default settings. Your original file is kept, untouched, at \(($0 as NSString).abbreviatingWithTildeInPath). Update Chap to the latest version, then rename that file to ~/.chap.json to bring your settings back.\n\nError: \(error.localizedDescription)"
+                    }
+                    ?? "Chap started with default settings.\n\nError: \(error.localizedDescription)"
                 alert.alertStyle = .warning
-                alert.runModal()
+                alert.addButton(withTitle: "OK")
+                if preserved != nil { alert.addButton(withTitle: "Show in Finder") }
+                if alert.runModal() == .alertSecondButtonReturn, let preserved {
+                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: preserved)]
+                    )
+                }
             }
             config = .default
         }

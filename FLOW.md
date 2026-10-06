@@ -23,6 +23,8 @@
 
 ## 1. 불변 규칙 (Invariants)
 
+- **Config forward compatibility (2.7.0 regression)**: every enum read from `~/.chap.json` must decode tolerantly (unknown value → default), so one new value can never reject the whole file. If decoding still fails, `ConfigStore.load` writes the original bytes to `~/.chap.json.unreadable-<time>` before Chap runs on defaults, because later saves rotate `.bak` and would otherwise erase the user's real settings.
+
 깨면 과거에 실제로 발생했던 문제가 재발한다. 변경 전 반드시 확인한다.
 
 | # | 규칙 | 깨질 때 생기는 문제 |
