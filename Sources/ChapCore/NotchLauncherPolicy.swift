@@ -71,6 +71,13 @@ public enum NotchLauncherPolicy {
         return (grown == current ? nil : grown, grown == target ? nil : target)
     }
 
+    /// 칸을 펼치기 직전에 창을 미리 넓힐 크기. 펼친 내용이 창보다 넓은 순간이 생기면 도커 양 끝이
+    /// 창 경계에 잘려 노치가 접혔다 펼쳐지는 것처럼 보이므로, 칸 폭 + 칸 간격만큼 먼저 넓힌다.
+    /// 실제보다 넓으면(최소 폭 안에서 펼친 경우) 레이아웃 뒤 `resizeSteps`가 애니메이션 후에 맞춰 줄인다.
+    public static func preExpandSize(current: CGSize, slotWidth: CGFloat, gap: CGFloat) -> CGSize {
+        CGSize(width: current.width + slotWidth + gap, height: current.height)
+    }
+
     /// 작아지는 창 크기를 맞추기까지의 지연. 칸 접기 애니메이션(0.22초)보다 조금 길다.
     public static let shrinkDelay: Double = 0.26
 

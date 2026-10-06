@@ -96,6 +96,8 @@ struct NotchLauncherPanelView: View {
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     /// 칸을 접거나 펼쳤을 때 새 목록. 컨트롤러가 config에 저장한다.
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
+    /// 칸을 펼치기 직전, 늘어날 폭(칸 폭 + 간격)만큼 창을 미리 넓혀 달라는 요청.
+    var onPrepareExpand: (CGFloat) -> Void = { _ in }
     /// (개발용) 어깨·곡선 구간 경계선을 그린다. 렌더 도구와 Debug 빌드의
     /// `ChapShowShoulderGuides` 기본값으로만 켠다 (Release에서는 항상 꺼짐).
     var showsShoulderGuides = false
@@ -613,8 +615,18 @@ struct NotchLauncherPanelView: View {
         var list = reveal.collapsedWidgets.filter { $0 != widget }
         if collapsed { list.append(widget) }
         list = NotchShoulderPolicy.normalized(list)
-        withAnimation(.smooth(duration: 0.22)) { reveal.collapsedWidgets = list }
-        onCollapsedChange(list)
+        let apply = {
+            withAnimation(.smooth(duration: 0.22)) { reveal.collapsedWidgets = list }
+            onCollapsedChange(list)
+        }
+        // 펼칠 때는 창을 먼저 넓히고 다음 틱에 칸을 펼친다. 같은 틱에 바꾸면 넓어진 내용이 아직 좁은
+        // 창에 잘려 도커가 접혔다 펼쳐지는 것처럼 끊겨 보인다. 접을 때는 창을 나중에 줄인다(`resizeSteps`).
+        if !collapsed, let slot = slots.first(where: { $0.collapsibleWidget == widget }) {
+            onPrepareExpand(width(for: slot) + DS.notchColumnGap)
+            DispatchQueue.main.async(execute: apply)
+        } else {
+            apply()
+        }
     }
 
     /// (개발용) 어깨 경계선. 빨강 = 어깨(아이콘 자리), 주황 = 검정 띠 곡선 구간, 파랑 = 노치 plateau.

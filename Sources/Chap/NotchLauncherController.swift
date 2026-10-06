@@ -113,6 +113,16 @@ final class NotchLauncherController {
             deadline: .now() + NotchLauncherPolicy.shrinkDelay, execute: work)
     }
 
+    /// 칸을 펼치기 직전에 창을 미리 넓힌다. 미뤄 둔 축소가 있으면 취소한다.
+    private func preparePanelToGrow(byWidth added: CGFloat) {
+        guard let current = appliedContentSize else { return }
+        pendingShrink?.cancel()
+        pendingShrink = nil
+        applyPanelContentSize(
+            NotchLauncherPolicy.preExpandSize(
+                current: current, slotWidth: added, gap: 0))
+    }
+
     /// 마지막으로 창에 맞춘 콘텐츠 크기와, 애니메이션 뒤로 미룬 축소 작업.
     private var appliedContentSize: CGSize?
     private var pendingShrink: DispatchWorkItem?
@@ -379,6 +389,9 @@ final class NotchLauncherController {
             },
             onCollapsedChange: { [weak self] widgets in
                 self?.onCollapsedChange(widgets)
+            },
+            onPrepareExpand: { [weak self] added in
+                self?.preparePanelToGrow(byWidth: added)
             },
             showsShoulderGuides: Self.showsShoulderGuides,
             reveal: reveal)

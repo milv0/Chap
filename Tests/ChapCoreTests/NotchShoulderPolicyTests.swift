@@ -53,6 +53,13 @@ struct NotchShoulderPolicyTests {
         #expect(NotchLauncherPolicy.stripMascotCenterOffset(collapsedIconCount: 2) == 86)
     }
 
+    @Test("expanding pre-grows the window by the slot width and gap")
+    func preExpand() {
+        let size = NotchLauncherPolicy.preExpandSize(
+            current: CGSize(width: 1000, height: 300), slotWidth: 160, gap: 28)
+        #expect(size == CGSize(width: 1188, height: 300))
+    }
+
     @Test("collapsed widgets round-trip through the config and drop bad values")
     func configRoundTrip() throws {
         var config = Config(sites: [])
