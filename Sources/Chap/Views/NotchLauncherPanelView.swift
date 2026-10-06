@@ -127,9 +127,31 @@ struct NotchLauncherPanelView: View {
             + 4
     }
 
-    /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
+    /// 읽어 보니 비어 있는 선반. 비면 칸이 제목 폭(+ 접기 버튼)으로 좁아진다.
+    @State private var emptyShelves: Set<NotchWidget> = []
+
+    /// 빈 선반 칸 폭: 제목 + 폴더 화살표(14) + 접기 버튼(22)과 한 줄 안내 중 넓은 쪽.
+    private static func emptyShelfWidth(title: String, message: String) -> CGFloat {
+        let header = NotchTextMetrics.headerWidth(title: title) + 14 + 22
+        let line = NotchTextMetrics.metaWidth(message) + 12
+        return CGFloat(
+            LauncherListPolicy.listColumnWidth(contentWidth: Double(max(header, line))))
+    }
+
+    private func setShelfEmpty(_ widget: NotchWidget, _ empty: Bool) {
+        guard emptyShelves.contains(widget) != empty else { return }
+        withAnimation(.smooth(duration: 0.22)) {
+            if empty { emptyShelves.insert(widget) } else { emptyShelves.remove(widget) }
+        }
+    }
+
+    /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(아이콘 + 이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
     private func width(for slot: NotchSlotContent) -> CGFloat {
         switch slot {
+        case .downloads where emptyShelves.contains(.downloads):
+            return Self.emptyShelfWidth(title: "Downloads", message: "No downloads yet")
+        case .screenshots where emptyShelves.contains(.screenshots):
+            return Self.emptyShelfWidth(title: "Screenshots", message: "No screenshots yet")
         case .launchers(let section) where section.launchType == .app:
             return max(Self.appGridColumnWidth, NotchTextMetrics.headerWidth(title: "Apps"))
         case .launchers(let section):
@@ -294,16 +316,11 @@ struct NotchLauncherPanelView: View {
     /// 메인 도커 왼쪽 plateau의 Keep Awake 상태. 커피 아이콘은 테마 블루,
     /// 시간은 고정 h:mm:ss이며 1초마다 갱신한다. 넓어진 문자열 때문에
     /// 아이콘이 왼쪽으로 밀리지 않도록 광학 위치를 오른쪽으로 보정한다.
-    /// Focus 칸이 위젯 줄에 보이는지. 메모 모드에서는 위젯 줄이 메모장으로 바뀌어 안 보인다.
-    private var focusSlotVisible: Bool {
-        !reveal.isNoteMode
-            && slots.contains(where: { if case .awake = $0 { true } else { false } })
-    }
-
-    /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). Focus 칸이 보이면 물범은 칸 안에 있다.
+    /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). 물범은 늘 여기 있고,
+    /// Focus가 켜져 있으면 깨어 꼬리를 흔든다(Focus 칸은 번개와 남은 시간을 보여 준다).
     @ViewBuilder private var leftStripContent: some View {
         let collapsed = reveal.isNoteMode ? [] : collapsedStripWidgets
-        let leading = NotchLauncherPolicy.stripLeading(focusSlotVisible: focusSlotVisible)
+        let leading = NotchLauncherPolicy.stripLeading()
         let notchHalf = stripPlateauHalfWidth - NotchGeometry.stripPlateauSideWidth
         GeometryReader { geo in
             let notchLeft = geo.size.width / 2 - notchHalf
@@ -686,16 +703,16 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
-                onCollapse: { setCollapsed(.screenshots, true) })
+                onCollapse: { setCollapsed(.screenshots, true) },
+                onEmptyChange: { setShelfEmpty(.screenshots, $0) })
         case .downloads:
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
-                onCollapse: { setCollapsed(.downloads, true) })
+                onCollapse: { setCollapsed(.downloads, true) },
+                onEmptyChange: { setShelfEmpty(.downloads, $0) })
         case .awake:
-            NotchFocusView(
-                palette: widgetPalette, sessionEnd: currentAwakeSessionEnd,
-                isAnimating: reveal.revealed)
+            NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
         }
     }
 
@@ -778,6 +795,7 @@ struct NotchLauncherPanelView: View {
                     entry: entry,
                     isOptionHeld: reveal.isOptionHeld,
                     primaryForeground: primaryForeground,
+                    rowIconForeground: headingForeground,
                     shortcutForeground: keycapForeground,
                     textShadowOpacity: textShadowOpacity,
                     hoverBackground: rowHoverBackground,
@@ -802,6 +820,8 @@ private struct NotchLauncherRow: View {
     let entry: LauncherListEntry
     let isOptionHeld: Bool
     let primaryForeground: Color
+    /// Sites 줄 앞 창 아이콘 색. 칸 제목과 같은 중립 회색이라 이름보다 앞서지 않는다.
+    let rowIconForeground: Color
     let shortcutForeground: Color
     let textShadowOpacity: Double
     let hoverBackground: Color
@@ -809,18 +829,47 @@ private struct NotchLauncherRow: View {
     let action: () -> Void
 
     @State private var isHovered = false
+    @State private var folderIcon: NSImage?
+
+    /// Finder 줄은 폴더의 실제 아이콘(권한 없이 `NSWorkspace`), Sites 줄은 작은 창 기호.
+    @ViewBuilder private var rowIcon: some View {
+        if entry.site.launchType == .finder {
+            Group {
+                if let folderIcon {
+                    Image(nsImage: folderIcon).resizable()
+                } else {
+                    Image(systemName: "folder")
+                        .font(.system(size: 12))
+                        .foregroundColor(rowIconForeground)
+                }
+            }
+            .task(id: entry.site.folderPath) {
+                guard let path = entry.site.folderPath, !path.isEmpty else { return }
+                folderIcon = await AppIconLoader.icon(forAppPath: path)
+            }
+        } else {
+            Image(systemName: LauncherListPolicy.symbolName(for: entry.site.launchType))
+                .font(.system(size: 12))
+                .foregroundColor(rowIconForeground)
+        }
+    }
 
     var body: some View {
         Button(action: action) {
-            HStack {
+            HStack(spacing: 6) {
+                rowIcon
+                    .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
+                    .accessibilityHidden(true)
                 Text(entry.site.name)
                     // 목록 본문은 Apple 기본 계층대로 regular. 섹션 헤더만
                     // semibold를 유지해 Glass에서 글자가 과하게 무거워지지 않는다.
-                    .font(DS.notchBody)
+                    // 모든 목록 줄은 같은 12pt(`notchRowName`)다.
+                    .font(DS.notchRowName)
                     .foregroundColor(primaryForeground)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
-                Spacer(minLength: DS.spacingSmall)
+                    .truncationMode(.middle)
+                Spacer(minLength: 8)
                 if let key = LauncherListPolicy.shortcutKey(for: entry.site) {
                     NotchKeycap(
                         key: key, isOptionHeld: isOptionHeld,
@@ -1156,7 +1205,8 @@ struct PressedStripShape: Shape {
 
 /// 노치 칸 폭 계산용 글자 측정. 실제 글꼴(13pt 본문, 11pt semibold 제목)로 잰다.
 enum NotchTextMetrics {
-    private static let body = NSFont.systemFont(ofSize: 13)
+    /// 목록 줄 이름(12pt). `DS.notchRowNameSize`와 같다.
+    private static let body = NSFont.systemFont(ofSize: 12)
     private static let label = NSFont.systemFont(ofSize: 11, weight: .semibold)
     private static let meta = NSFont.systemFont(ofSize: 10, weight: .medium)
 
@@ -1174,10 +1224,11 @@ enum NotchTextMetrics {
         ceil((text as NSString).size(withAttributes: [.font: label]).width) + 2
     }
 
-    /// 목록 한 줄: 좌우 여백 6 + 이름 + 최소 간격 8 + 키캡(글자 + 좌우 5).
+    /// 목록 한 줄: 좌우 여백 6 + 아이콘 16 + 간격 6 + 이름 + (간격 6 + Spacer 8 + 간격 6 + 키캡).
+    /// 키캡은 ⌥를 눌러도 폭이 변하지 않도록 "⌥키" 폭을 잡고 좌우 4pt 여백을 둔다.
     static func rowWidth(name: String, keycap: String?) -> CGFloat {
-        let keycapWidth = keycap.map { labelWidth($0) - 2 + 8 + 8 } ?? 0
-        return 12 + bodyWidth(name) + keycapWidth
+        let keycapWidth = keycap.map { 20 + metaWidth("⌥\($0)") + 2 + 8 } ?? 0
+        return 12 + 16 + 6 + bodyWidth(name) + keycapWidth
     }
 
     /// 제목 줄: 좌우 여백 6 + 아이콘 약 13 + 간격 5 + 제목.

@@ -97,13 +97,8 @@ struct NotchLauncherPolicyTests {
 
 @Suite("NotchLauncherPolicy – strip leading content")
 struct NotchStripLeadingTests {
-    @Test("a visible Focus slot owns the seal, so the strip leaves it out")
-    func focusSlotVisible() {
-        #expect(NotchLauncherPolicy.stripLeading(focusSlotVisible: true) == .empty)
-    }
-
-    @Test("otherwise the seal rests on the strip; the Focus clock is no longer shown there")
-    func focusSlotHidden() {
-        #expect(NotchLauncherPolicy.stripLeading(focusSlotVisible: false) == .mascot)
+    @Test("the seal always rests on the strip, even beside the Focus slot")
+    func sealAlways() {
+        #expect(NotchLauncherPolicy.stripLeading() == .mascot)
     }
 }

@@ -17,23 +17,18 @@ back.
 
 Chap's mascot is a **baby seal**, drawn as a 24×12 pixel sprite
 (`ChapMascot`, three inks: navy outline, white body, blue-gray shade). It lies
-on the left of the notch's black strip; while Focus runs and the Focus slot
-isn't showing, it stays awake there and wags its tail. It is decoration, never a
+on the left of the notch's black strip, always, and tells the Keep Awake story
+there. It is decoration, never a
 control: it takes no clicks, carries no text, and VoiceOver skips it. Its only
 motions are small: a tail flick when you open the notch and now and then (every
-7–12 s), a blink every few seconds, and a rising z while it sleeps. It holds
+7–12 s), and a blink every few seconds. It holds
 still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
 resting nearby, not a pet asking for attention.
 
-In the **Focus** slot the seal tells the Keep Awake story: it sleeps (closed
-eyes, z) while Focus is off, wakes with a tail flick when Focus starts, gets
-drowsy (heavy eyelids) in the last 30 minutes (Final stretch, Landing soon), and
-falls asleep again when Focus ends. While Focus runs its tail keeps wagging
-(slower once drowsy): the one steady motion Chap allows, because it means "I'm
-keeping your Mac awake". There is only ever one seal on screen: when
-the Focus slot is showing, the seal lives there and leaves the strip; in Quick
-Note mode the slot is hidden, so the seal returns to the strip. The strip no
-longer shows a Focus countdown; the seal's wagging tail is the signal.
+While Focus runs the seal keeps wagging its tail (slower and drowsy in the last
+30 minutes): the one steady motion Chap allows, because it means "I'm keeping
+your Mac awake". The Focus slot shows the bolt and the time left; the seal stays
+on the strip, so there is only ever one seal and the strip never sits empty.
 
 ## The name carries both meanings
 

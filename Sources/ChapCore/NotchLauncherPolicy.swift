@@ -81,21 +81,19 @@ public enum NotchLauncherPolicy {
     /// 작아지는 창 크기를 맞추기까지의 지연. 칸 접기 애니메이션(0.22초)보다 조금 길다.
     public static let shrinkDelay: Double = 0.26
 
-    /// 상단 띠 왼쪽(노치 왼쪽)에 물범을 둘지.
+    /// 상단 띠 왼쪽(노치 왼쪽)에 무엇을 둘지.
     public enum StripLeading: Equatable, Sendable {
         // Focus 시계는 띠에서 뺐다(남은 시간은 Focus 칸과 상태 메뉴에서 본다). 되살릴 때 쓰도록 남겨 둔다.
         // /// 번개 + Focus 남은 시간.
         // case focusClock
         /// Chap 마스코트(물범).
         case mascot
-        /// 비움.
-        case empty
     }
 
-    /// Focus 칸이 위젯 줄에 보이면(배치됨 + 메모 모드 아님) 그 칸이 물범을 맡으므로 띠에는 두지 않는다.
-    /// 그 밖에는 Focus가 켜져 있든 아니든 물범이 띠 왼쪽에 있다(켜져 있으면 깨어 꼬리를 흔든다).
-    public static func stripLeading(focusSlotVisible: Bool) -> StripLeading {
-        focusSlotVisible ? .empty : .mascot
+    /// 띠 왼쪽에는 늘 물범이 있다. Focus 칸은 번개와 남은 시간을 맡고, 물범은 띠에서 Focus 상태를
+    /// 보여 준다(켜짐: 깨어 꼬리를 흔듦, 30분 미만: 졸림). 그래서 Focus 칸이 보여도 띠 좌우가 비지 않는다.
+    public static func stripLeading() -> StripLeading {
+        .mascot
         // 이전 규칙 (Focus 시계 포함):
         // if focusSlotVisible { return .empty }
         // return focusActive ? .focusClock : .mascot

@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus가 켜져 있으면 깨어 꼬리를 계속 흔듭니다. Focus 칸에서는 Focus가 꺼져 있으면 자고, 켜면 깨어 꼬리를 흔들며 지키다가 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap의 마스코트인 아기 물범입니다. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus가 켜져 있으면 깨어 꼬리를 계속 흔듭니다. 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -402,7 +402,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and stays awake wagging its tail while Focus runs. In the Focus slot it sleeps while Focus is off, wags its tail while it runs, and gets drowsy (and wags slower) in the last 30 minutes. It is just decoration, so clicking it does nothing."
+                    "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and stays awake wagging its tail while Focus runs. In the last 30 minutes it gets drowsy and wags slower. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",

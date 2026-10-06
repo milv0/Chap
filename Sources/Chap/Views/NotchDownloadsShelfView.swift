@@ -12,6 +12,8 @@ struct NotchDownloadsShelfView: View {
     let usesSemanticForeground: Bool
     /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
     var onCollapse: (() -> Void)?
+    /// 다 읽은 뒤 비었는지 알린다. 비면 칸이 제목 폭으로 좁아진다.
+    var onEmptyChange: (Bool) -> Void = { _ in }
     @State private var isColumnHovered = false
 
     @State private var urls: [URL] = DownloadsShelf.previewOverride ?? []
@@ -87,9 +89,11 @@ struct NotchDownloadsShelfView: View {
             }
 
             if urls.isEmpty {
-                Text(didLoad ? "No recent downloads" : " ")
-                    .font(DS.notchBody)
+                Text(didLoad ? "No downloads yet" : " ")
+                    .font(DS.notchMeta)
                     .foregroundColor(tertiary)
+                    .lineLimit(1)
+                    .fixedSize()
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
@@ -124,7 +128,13 @@ struct NotchDownloadsShelfView: View {
             }
         }
         .onHover { isColumnHovered = $0 }
-        .onAppear { refresh() }
+        .onAppear {
+            refresh()
+            if didLoad { onEmptyChange(urls.isEmpty) }
+        }
+        .onChange(of: didLoad && urls.isEmpty) { _, empty in
+            if didLoad { onEmptyChange(empty) }
+        }
         // 노치를 열어 둔 채 받은 파일도 몇 초 안에 나타난다.
         .onReceive(refreshTimer) { _ in refresh() }
     }
@@ -167,8 +177,8 @@ struct NotchDownloadsShelfView: View {
 
 /// 다운로드 한 줄: 파일 아이콘(이미지는 썸네일), 가운데를 줄인 파일명, 오른쪽 끝의 받은 시각.
 struct DownloadsShelfRow: View {
-    /// 줄 왼쪽 끝에서 파일명 글자까지: 좌우 여백 6 + 아이콘 20 + 간격 6.
-    static let nameLeadingInset: CGFloat = 32
+    /// 줄 왼쪽 끝에서 파일명 글자까지: 좌우 여백 6 + 아이콘 16 + 간격 6.
+    static let nameLeadingInset: CGFloat = 6 + DS.notchRowIconSize + 6
     let url: URL
     let primary: Color
     let secondary: Color
@@ -186,7 +196,7 @@ struct DownloadsShelfRow: View {
 
     private var isNameTruncated: Bool {
         let ideal = (url.lastPathComponent as NSString).size(withAttributes: [
-            .font: NSFont.systemFont(ofSize: DS.notchFileNameSize)
+            .font: NSFont.systemFont(ofSize: DS.notchRowNameSize)
         ]).width
         return DownloadsShelfPolicy.needsFullName(
             idealWidth: Double(ideal), shownWidth: Double(shownNameWidth))
@@ -228,10 +238,10 @@ struct DownloadsShelfRow: View {
                             .resizable()
                     }
                 }
-                .frame(width: 20, height: 20)
+                .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
 
                 Text(url.lastPathComponent)
-                    .font(DS.notchFileName)
+                    .font(DS.notchRowName)
                     .foregroundColor(primary)
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
@@ -253,8 +263,8 @@ struct DownloadsShelfRow: View {
                     .fixedSize()
             }
             .padding(.horizontal, 6)
-            // 목록 한 줄과 같은 26pt: 아이콘 20 + 위아래 3.
-            .padding(.vertical, 3)
+            // 목록 한 줄과 같은 26pt: 아이콘 16 + 위아래 5.
+            .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? hoverBackground : Color.clear)
@@ -328,7 +338,7 @@ struct DownloadsFullNameLabel: View {
 
     var body: some View {
         Text(name)
-            .font(DS.notchFileName)
+            .font(DS.notchRowName)
             .foregroundColor(.white)
             .lineLimit(2)
             .multilineTextAlignment(.leading)

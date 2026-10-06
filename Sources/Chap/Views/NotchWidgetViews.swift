@@ -48,8 +48,6 @@ struct NotchFocusView: View {
     let palette: NotchWidgetPalette
     /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
     @State var sessionEnd: Date?
-    /// 도커가 펼쳐져 있는 동안만 물범이 움직인다.
-    var isAnimating = false
 
     /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
@@ -75,12 +73,12 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 꺼짐: 잠든 물범 + 한 줄 + 시간 버튼 셋.
+    /// 꺼짐: 흐린 번개 + 한 줄 + 시간 버튼 셋. 물범은 검정 띠에 있다.
     private var idle: some View {
         VStack(spacing: 6) {
-            NotchMascotView(
-                pixelSize: ChapMascot.widgetPixelSize, mood: .asleep,
-                isAnimating: isAnimating, zColor: palette.secondary)
+            Image(systemName: "bolt")
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor((palette.icon ?? palette.primary).opacity(0.7))
             VStack(spacing: 1) {
                 Text(KeepAwakePolicy.focusIdleLine)
                     .font(DS.notchLabel)
@@ -103,20 +101,21 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 켜짐: 깨어 있는 물범(30분 미만이면 졸림) + 남은 시간 + 위트 한 줄 + 끄기.
+    /// 켜짐: 파란 번개(살짝 맥박) + 남은 시간 + 위트 한 줄 + 끄기. 띠 물범은 꼬리를 흔든다.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
             VStack(spacing: 4) {
-                NotchMascotView(
-                    pixelSize: ChapMascot.widgetPixelSize,
-                    mood: ChapMascot.focusMood(remaining: remaining),
-                    isAnimating: isAnimating, wagsContinuously: true,
-                    zColor: palette.secondary)
-                Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(palette.primary)
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(DS.accent)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(palette.primary)
+                }
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)

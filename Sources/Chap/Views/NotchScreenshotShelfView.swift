@@ -12,7 +12,10 @@ struct NotchScreenshotShelfView: View {
     let usesSemanticForeground: Bool
     /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
     var onCollapse: (() -> Void)?
+    /// 다 읽은 뒤 비었는지 알린다. 비면 칸이 제목 폭으로 좁아진다.
+    var onEmptyChange: (Bool) -> Void = { _ in }
     @State private var isColumnHovered = false
+    @State private var didLoad = ScreenshotShelf.previewOverride != nil
 
     @State private var urls: [URL] = ScreenshotShelf.previewOverride ?? []
     @State private var isRefreshing = false
@@ -81,8 +84,10 @@ struct NotchScreenshotShelfView: View {
             }
 
             if urls.isEmpty {
-                Text("No recent screenshots")
-                    .font(DS.notchBody)
+                Text(didLoad ? "No screenshots yet" : " ")
+                    .font(DS.notchMeta)
+                    .lineLimit(1)
+                    .fixedSize()
                     .foregroundColor(
                         usesSemanticForeground ? .secondary : customTertiary
                     )
@@ -97,7 +102,13 @@ struct NotchScreenshotShelfView: View {
             }
         }
         .onHover { isColumnHovered = $0 }
-        .onAppear { refresh() }
+        .onAppear {
+            refresh()
+            if didLoad { onEmptyChange(urls.isEmpty) }
+        }
+        .onChange(of: didLoad && urls.isEmpty) { _, empty in
+            if didLoad { onEmptyChange(empty) }
+        }
         // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
         .onReceive(refreshTimer) { _ in
             refresh()
@@ -164,10 +175,11 @@ struct NotchScreenshotShelfView: View {
     }
 
     private func refresh() {
-        guard !isRefreshing else { return }
+        guard ScreenshotShelf.previewOverride == nil, !isRefreshing else { return }
         isRefreshing = true
         ScreenshotShelf.recentScreenshotsAsync { screenshots in
             urls = screenshots
+            didLoad = true
             isRefreshing = false
         }
     }
