@@ -33,6 +33,7 @@
 - **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
+- **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal silhouette) in Settings > General; it turns Chap blue while Keep Mac Awake runs
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active

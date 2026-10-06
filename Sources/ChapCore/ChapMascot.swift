@@ -258,6 +258,19 @@ public enum ChapMascot {
     /// 열려 있는 동안 다음 까딱까지의 간격(초) 범위. 불규칙해야 기계적으로 보이지 않는다.
     public static let idleFlickInterval: ClosedRange<Double> = 7...12
 
+    // MARK: - 메뉴 막대 아이콘
+
+    /// 메뉴 막대용 한 색 실루엣. 메뉴 막대 아이콘은 템플릿(한 색)이라 윤곽·몸통·그림자를 모두 채우고,
+    /// 눈과 입만 비워 얼굴이 보이게 한다. 1pt = 1칸이면 Retina에서 2픽셀이라 선명하다(24×12pt).
+    public static let menuBarFaceHoles: Set<[Int]> = [[4, 4], [7, 4], [5, 6], [6, 6]]
+
+    public static let menuBarSilhouette: [(x: Int, y: Int)] = rows.enumerated().flatMap { y, row in
+        row.enumerated().compactMap { x, ch -> (x: Int, y: Int)? in
+            guard ch != ".", !menuBarFaceHoles.contains([x, y]) else { return nil }
+            return (x, y)
+        }
+    }
+
     /// 노치 상단 띠에서 한 픽셀의 크기(pt). 1.5pt는 Retina에서 정확히 3픽셀이라 흐려지지 않는다.
     public static let stripPixelSize: CGFloat = 1.5
 }

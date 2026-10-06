@@ -4,6 +4,13 @@ All notable changes to Chap are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **Seal menu bar icon** — Settings > General now offers Chap the Seal as a menu
+  bar icon, next to the default icon and the lightning bolt. Like the others it
+  follows the menu bar's light or dark look and turns Chap blue during Keep Mac
+  Awake.
+
 ### Changed
 
 - **Meet Chap** — The pixel seal now has a name, and it's Chap: the friend from

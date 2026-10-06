@@ -167,3 +167,23 @@ struct ChapMascotFocusDiveTests {
         #expect(total > 0.6 && total <= 1.0)
     }
 }
+
+@Suite("ChapMascot – menu bar silhouette")
+struct ChapMascotMenuBarTests {
+    @Test("the silhouette fills the seal but leaves the eyes and mouth open")
+    func faceHoles() {
+        let cells = Set(ChapMascot.menuBarSilhouette.map { [$0.x, $0.y] })
+        #expect(!cells.contains([4, 4]) && !cells.contains([7, 4]))
+        #expect(!cells.contains([5, 6]) && !cells.contains([6, 6]))
+        // 눈 사이 이마와 몸통은 채워져 있다.
+        #expect(cells.contains([5, 4]) && cells.contains([12, 6]))
+        let filled = ChapMascot.rows.joined().filter { $0 != "." }.count
+        #expect(cells.count == filled - ChapMascot.menuBarFaceHoles.count)
+    }
+
+    @Test("the silhouette fits the 28pt status item at one point per cell")
+    func fitsStatusItem() {
+        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<24).contains($0.x) })
+        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<12).contains($0.y) })
+    }
+}

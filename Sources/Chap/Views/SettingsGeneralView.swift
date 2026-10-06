@@ -223,10 +223,15 @@ private struct StatusBarIconPreview: View {
                 Image(systemName: "bolt.fill")
                     .resizable()
                     .scaledToFit()
+            case .seal:
+                // 메뉴 막대와 같은 실루엣을 1pt = 1칸 그대로(보간 없이) 보여 준다.
+                Image(nsImage: AppDelegate.sealStatusBarImage())
+                    .renderingMode(.template)
+                    .interpolation(.none)
             }
         }
         .foregroundColor(color)
-        .frame(width: 20, height: 20)
+        .frame(width: choice == .seal ? 26 : 20, height: 20)
     }
 }
 
@@ -240,6 +245,7 @@ private struct StatusBarIconChoiceButton: View {
         switch choice {
         case .default: return "Default icon"
         case .lightning: return "Lightning icon"
+        case .seal: return "Seal icon"
         }
     }
 

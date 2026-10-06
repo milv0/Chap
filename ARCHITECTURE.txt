@@ -201,7 +201,7 @@ Config 모델 필드:
   - showGuideWindow: Bool     리사이즈 위치 가이드 윈도우 표시 여부
   - launchAtLogin: Bool       로그인 시 자동 실행
   - optionShortcutsEnabled: Bool  Option 글로벌 단축키 활성 여부. 누락 시 true
-  - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning"). 누락 시 "default"
+  - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning" | "seal"). 누락 시 "default"
   - hiddenMenuLaunchTypes: Set<LaunchType>  메뉴에서 숨길 launch type 섹션.
     누락 시 빈 집합, 알 수 없는 문자열은 무시. 숨겨도 ⌥ 단축키는 동작
   - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false
