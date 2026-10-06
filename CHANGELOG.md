@@ -11,7 +11,6 @@ All notable changes to Chap are documented in this file.
   white icon on the left of the notch's black strip, mirroring Drop, Mirror, and
   Quick Note on the right. The dock keeps its width. Click the icon to bring the
   shelf back. Chap remembers this on this Mac.
-
 - **Full download names** — Rest the pointer on a Downloads row whose name is cut
   short and the full name appears right over it, the way macOS expands a
   truncated cell.
