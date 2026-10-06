@@ -576,6 +576,10 @@ struct NotchQuickNoteView: View {
     @State private var text = ""
     @State private var didLoad = false
     @State private var lastSaved: Date?
+    /// 입력 뒤 아직 파일에 쓰이지 않은 변경이 있는지. 있으면 저장 표시 대신 "Editing"을 보여 준다.
+    @State private var hasPendingEdit = false
+    /// 메모 상자의 화면 위치(창 콘텐츠 좌표). 상자 밖 클릭이면 커서를 풀고 바로 저장한다.
+    @State private var editorFrame: CGRect = .zero
     @FocusState private var isFocused: Bool
     private let store = QuickNoteStore()
     /// @State로 보관해 뷰 구조체가 다시 만들어져도 대기 중인 저장이 취소되지 않는다.
@@ -615,11 +619,22 @@ struct NotchQuickNoteView: View {
             }
             .padding(EdgeInsets(top: 5, leading: 3, bottom: 16, trailing: 3))
             .frame(height: bodyHeight)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { editorFrame = geo.frame(in: .global) }
+                        .onChange(of: geo.frame(in: .global)) { _, frame in editorFrame = frame }
+                }
+            )
             .overlay(alignment: .bottomTrailing) {
-                if let label = QuickNoteStore.savedLabel(for: lastSaved) {
+                // 오른쪽 아래 작은 저장 표시: 쓰는 동안 "Editing", 저장되면 "Saved · 시각/날짜".
+                if let label = hasPendingEdit
+                    ? "Editing" : QuickNoteStore.savedLabel(for: lastSaved)
+                {
                     Text(label)
                         .font(DS.notchMeta)
                         .foregroundColor(palette.secondary)
+                        .monospacedDigit()
                         .padding(EdgeInsets(top: 0, leading: 6, bottom: 4, trailing: 7))
                         .accessibilityLabel(label)
                 }
@@ -632,6 +647,12 @@ struct NotchQuickNoteView: View {
             )
             .padding(.horizontal, 4)
         }
+        // 메모 상자 밖 빈 곳(도구 줄 여백·창 여백)을 누르면 커서를 푼다. 상자와 버튼은 자기 클릭을 먼저 받는다.
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { isFocused = false }
+        )
         .onAppear {
             load()
             if focusesOnAppear {
@@ -646,7 +667,31 @@ struct NotchQuickNoteView: View {
                 text = clamped
                 return
             }
+            hasPendingEdit = true
             debouncer.schedule { save(clamped) }
+        }
+        // 커서가 풀리면(다른 곳 클릭, 다른 앱, Esc) 기다리지 않고 바로 저장한다.
+        .onChange(of: isFocused) { _, focused in
+            if !focused { debouncer.flush() }
+        }
+        // 노치 패널 안에서 메모 상자 밖을 누르면 커서를 푼다. 패널이 key를 잃으면(다른 앱·바탕) 점 없이 온다.
+        .onReceive(
+            NotificationCenter.default.publisher(for: NotchLauncherController.didClickPanel)
+        ) { note in
+            guard isFocused else { return }
+            if let point = note.userInfo?["point"] as? CGPoint, editorFrame.contains(point) {
+                return
+            }
+            isFocused = false
+        }
+        // 분리 창: 다른 창·앱으로 가면 커서를 푼다.
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)
+        ) { note in
+            guard isFocused, let window = note.object as? NSWindow,
+                window is QuickNoteWindowPanelMarker
+            else { return }
+            isFocused = false
         }
         .onDisappear { debouncer.flush() }
         // 창이 정리될 때는 onDisappear가 보장되지 않으므로 닫힘 직전에도 flush한다.
@@ -736,7 +781,10 @@ struct NotchQuickNoteView: View {
             do {
                 try store.save(value)
                 let date = value.isEmpty ? nil : Date()
-                DispatchQueue.main.async { lastSaved = date }
+                DispatchQueue.main.async {
+                    lastSaved = date
+                    hasPendingEdit = false
+                }
             } catch {
                 Log.app.error(
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")
@@ -1056,3 +1104,6 @@ struct NotchStripShelfIcon: View {
         .accessibilityLabel("Show \(title)")
     }
 }
+
+/// 분리된 Quick Note 창 표시. 창이 key를 잃을 때 메모 커서를 풀어 바로 저장하는 데 쓴다.
+protocol QuickNoteWindowPanelMarker: AnyObject {}

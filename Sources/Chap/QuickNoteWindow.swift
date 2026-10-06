@@ -23,7 +23,7 @@ enum QuickNoteWindow {
         let hosting = NSHostingController(rootView: QuickNoteWindowContent())
         // 창 크기는 사용자가 정한다. SwiftUI 내용이 창을 되돌려 키우지 않게 한다.
         hosting.sizingOptions = []
-        let window = NSWindow(contentViewController: hosting)
+        let window = QuickNoteNSWindow(contentViewController: hosting)
         window.title = "Quick Note"
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.level = .floating
@@ -87,3 +87,6 @@ private struct QuickNoteWindowContent: View {
             minHeight: QuickNoteWindow.minimumSize.height)
     }
 }
+
+/// 분리된 Quick Note 창. 표시 프로토콜로 메모 뷰가 이 창이 key를 잃는 순간을 알아본다.
+final class QuickNoteNSWindow: NSWindow, QuickNoteWindowPanelMarker {}

@@ -291,6 +291,15 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
 
+## Quick Note 저장
+
+- 입력하면 0.5초 뒤 저장한다(`SaveDebouncer`, 직렬 큐). 다만 **커서가 풀리는 순간 기다리지 않고 바로 저장**한다
+  (`isFocused`가 false가 되면 flush).
+- 커서가 풀리는 경우: 노치 패널 안에서 메모 상자 밖을 누름(`didClickPanel`의 클릭 좌표가 상자 밖), 패널이 key를
+  잃음(다른 앱·바탕 클릭), 메모 상자 밖 빈 곳 탭, 분리 창(`QuickNoteNSWindow`)이 key를 잃음, Esc·닫기·분리.
+- 상자 오른쪽 아래 10pt 표시: 입력 중 아직 안 쓰였으면 "Editing", 저장되면 "Saved · 6:12 PM"(오늘) /
+  "Saved · Oct 4, 6:12 PM"(올해) / "Saved · Oct 4, 2025, 6:12 PM"(`QuickNoteStore.savedLabel`). 빈 메모는 표시 없음.
+
 ## 모션 기준
 
 모든 노치 표면이 같은 타이밍 기준을 쓴다. 닫힘 관련 값은 전부
