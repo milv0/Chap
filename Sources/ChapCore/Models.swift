@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.7.0"
+        ?? "2.7.1"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -323,27 +323,59 @@ public enum NotchWidget: String, Codable, CaseIterable {
     /// 노치 패널의 고정 칸 수. 위젯 종류가 모두 한 줄에 들어가도록 6칸이다.
     public static let slotCount = 6
 
-    /// 기본 배치: 런처 섹션과 Screenshots, 나머지는 빈 칸.
+    /// 앞쪽 선반 전용 칸 수. 선반(Screenshots·Downloads)은 접으면 검정 띠 **왼쪽** 아이콘이 되므로,
+    /// 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다.
+    public static let shelfSlotCount = 2
+
+    /// 파일 선반 위젯인지. 선반은 앞쪽 선반 칸에만 놓을 수 있다.
+    public var isShelf: Bool { self == .screenshots || self == .downloads }
+
+    /// `index` 칸에 이 위젯을 놓을 수 있는지. 빈 칸은 어디든 된다.
+    public func fits(slot index: Int) -> Bool {
+        guard self != .none else { return true }
+        return isShelf == (index < NotchWidget.shelfSlotCount)
+    }
+
+    /// 기본 배치: 선반 칸에 Screenshots, 나머지 칸에 런처 섹션.
     public static let defaultSlots: [NotchWidget] = normalizedSlots([
-        .sites, .apps, .folders, .screenshots,
+        .screenshots, .none, .sites, .apps, .folders,
     ])
 
     /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다.
-    /// 중복 위젯은 첫 칸만 남긴다. 칸 수를 넘는 뒤쪽 위젯은 버리지 않고 앞쪽 빈 칸에
-    /// 순서대로 당겨 넣는다 (2.1의 12칸 배치를 6칸으로 옮길 때 위젯을 잃지 않게).
+    /// - 중복 위젯은 첫 번째만 남긴다.
+    /// - 선반은 앞쪽 `shelfSlotCount`칸에 나타난 순서대로 모으고, 나머지 위젯은 뒤쪽 칸에 순서(빈 칸 포함)를
+    ///   지켜 둔다. 뒤쪽 칸이 모자라면 빈 칸부터 줄여 위젯을 잃지 않는다(2.1의 12칸 배치, 2.7 이전 자유 배치도
+    ///   선반만 앞으로 옮기고 나머지 순서는 그대로다).
     public static func normalizedSlots(_ widgets: [NotchWidget]) -> [NotchWidget] {
         var seen: Set<NotchWidget> = []
         let unique = widgets.filter { widget in
             widget == .none || seen.insert(widget).inserted
         }
-        var slots = Array(unique.prefix(slotCount))
-        slots += Array(repeating: .none, count: slotCount - slots.count)
-        var overflow = unique.dropFirst(slotCount).filter { $0 != .none }[...]
-        for index in slots.indices where slots[index] == .none {
-            guard let next = overflow.popFirst() else { break }
-            slots[index] = next
+        // 이미 선반 칸 규칙을 지킨 배치는 선반 칸 안의 빈 칸 위치까지 그대로 둔다.
+        let shelfZone = Array(unique.prefix(shelfSlotCount))
+        let shelves: [NotchWidget]
+        let rest: [NotchWidget]
+        if shelfZone.allSatisfy({ $0 == .none || $0.isShelf }),
+            !unique.dropFirst(shelfSlotCount).contains(where: \.isShelf)
+        {
+            shelves = shelfZone
+            rest = Array(unique.dropFirst(shelfSlotCount))
+        } else {
+            shelves = unique.filter(\.isShelf)
+            rest = unique.filter { !$0.isShelf }
         }
-        return slots
+        var shelfSlots = Array(shelves.prefix(shelfSlotCount))
+        shelfSlots += Array(repeating: .none, count: shelfSlotCount - shelfSlots.count)
+
+        let freeCount = slotCount - shelfSlotCount
+        var free = rest
+        // 넘치면 끝의 빈 칸부터, 그래도 넘치면 남은 빈 칸을 빼서 위젯을 앞으로 당긴다.
+        while free.count > freeCount, let last = free.lastIndex(of: .none) {
+            free.remove(at: last)
+        }
+        free = Array(free.prefix(freeCount))
+        free += Array(repeating: .none, count: freeCount - free.count)
+        return shelfSlots + free
     }
 }
 
@@ -455,9 +487,11 @@ public struct Config: Codable {
         launchAtLogin = try container.decodeIfPresent(Bool.self, forKey: .launchAtLogin) ?? false
         optionShortcutsEnabled =
             try container.decodeIfPresent(Bool.self, forKey: .optionShortcutsEnabled) ?? true
+        // 알 수 없는 아이콘(새 버전에서 추가된 값)은 기본 아이콘으로 취급한다. 한 값 때문에 설정 전체를
+        // 못 읽으면 안 된다(2.6.0이 2.7.0의 "seal"을 못 읽어 설정이 초기화된 사고).
         statusBarIcon =
-            try container.decodeIfPresent(StatusBarIconChoice.self, forKey: .statusBarIcon)
-            ?? .default
+            (try? container.decodeIfPresent(String.self, forKey: .statusBarIcon))
+            .flatMap { $0 }.flatMap(StatusBarIconChoice.init(rawValue:)) ?? .default
         // 키 누락은 빈 집합, 알 수 없는 타입 문자열은 무시한다 (관용 디코딩).
         hiddenMenuLaunchTypes = Set(
             (try container.decodeIfPresent([String].self, forKey: .hiddenMenuLaunchTypes)

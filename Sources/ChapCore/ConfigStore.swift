@@ -12,14 +12,15 @@ public struct ConfigLoadResult {
 
 public enum ConfigStoreError: LocalizedError {
     case readFailed(path: String)
-    case decodeFailed(Error)
+    /// 읽지 못한 원본은 `preservedCopyPath`에 그대로 보존된다(기본 설정 저장이 덮어써도 남는다).
+    case decodeFailed(Error, preservedCopyPath: String?)
     case backupFailed(path: String, underlying: Error)
 
     public var errorDescription: String? {
         switch self {
         case .readFailed(let path):
             return "Failed to read config file at \(path)."
-        case .decodeFailed(let error):
+        case .decodeFailed(let error, _):
             return error.localizedDescription
         case .backupFailed(let path, let underlying):
             return "Failed to create config backup at \(path): \(underlying.localizedDescription)"
@@ -87,7 +88,8 @@ public struct ConfigStore {
         do {
             decodedConfig = try JSONDecoder().decode(Config.self, from: data)
         } catch {
-            throw ConfigStoreError.decodeFailed(error)
+            throw ConfigStoreError.decodeFailed(
+                error, preservedCopyPath: preserveUnreadableConfig(data))
         }
 
         var config = decodedConfig
@@ -167,6 +169,22 @@ public struct ConfigStore {
         guard hasLegacyFields else { return false }
         try save(config)
         return true
+    }
+
+    /// 읽지 못한 설정 원본을 `~/.chap.json.unreadable-<시각>`으로 남긴다. 앱은 기본 설정으로 시작하고,
+    /// 이후 저장이 `.chap.json`과 `.bak`을 덮어써도 사용자의 원래 설정은 이 사본에 남는다.
+    func preserveUnreadableConfig(_ data: Data, now: Date = Date()) -> String? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let path = configPath + ".unreadable-" + formatter.string(from: now)
+        guard !FileManager.default.fileExists(atPath: path) else { return path }
+        do {
+            try data.write(to: URL(fileURLWithPath: path), options: .atomic)
+            return path
+        } catch {
+            return nil
+        }
     }
 
     public func save(_ config: Config) throws {

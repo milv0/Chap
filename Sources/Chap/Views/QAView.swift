@@ -180,12 +180,16 @@ struct QAView: View {
                     "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
                 ),
                 (
+                    "Quick Note는 언제 저장되나요?",
+                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다."
+                ),
+                (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에 있는 6칸에 Sites, Apps, Finder, Screenshots, Downloads, Focus를 원하는 칸으로 드래그하세요. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭의 Widgets 보드에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots·Downloads 선반 전용이고(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다), 나머지 네 칸에 Sites, Apps, Finder, Focus를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -193,7 +197,7 @@ struct QAView: View {
                 ),
                 (
                     "Chap Drop은 어떻게 쓰나요?",
-                    "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. 드롭한 파일은 ~/Library/Application Support/Chap/Drop/에 복사되며 원본은 그대로입니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
+                    "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. Chap은 파일을 복사하지 않고 원본을 기억합니다. 원본을 옮기거나 이름을 바꿔도 따라가고, 원본을 지우면 Drop에서도 사라집니다. 브라우저에서 끌어온 이미지처럼 임시 위치의 파일만 ~/Library/Application Support/Chap/Drop/에 복사해 둡니다. Drop에서 지워도 원본은 지워지지 않습니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
@@ -409,12 +413,16 @@ struct QAView: View {
                     "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
                 ),
                 (
+                    "When does Quick Note save?",
+                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today)."
+                ),
+                (
                     "What do the number and letter keycaps in the notch mean?",
                     "They are Option shortcuts. The notch shows just the key for readability; hold Option while it is open and the keycaps turn blue and show the full combination, such as ⌥1."
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "The Widgets board has six slots. Drag Sites, Apps, Finder, Screenshots, Downloads, or Focus into any slot, or use a slot's context menu or VoiceOver actions."
+                    "The Widgets board has six slots. The first two are for the Screenshots and Downloads shelves (a folded shelf becomes an icon left of the notch, so its slot stays on the left); the other four take Sites, Apps, Finder, or Focus. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
@@ -422,7 +430,7 @@ struct QAView: View {
                 ),
                 (
                     "How does Chap Drop work?",
-                    "Drag files toward the notch or its right Drop badge. The main dock shows a translucent Drop here layer and copies accepted items into ~/Library/Application Support/Chap/Drop/ without changing the originals. Open, drag out, or remove them from the bottom file row."
+                    "Drag files toward the notch or its right Drop badge. The main dock shows a translucent Drop here layer and Chap remembers the original files instead of copying them: it follows a moved or renamed file, and a deleted original leaves Chap Drop too. Only items from temporary locations, such as an image dragged from a browser, are copied into ~/Library/Application Support/Chap/Drop/. Removing an item never deletes the original. Open, drag out, or remove them from the bottom file row."
                 ),
                 (
                     "Does the Screenshots widget move my files?",

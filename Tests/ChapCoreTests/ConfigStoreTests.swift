@@ -14,6 +14,48 @@ struct ConfigStoreTests {
         return (ConfigStore(configPath: configPath, legacyConfigPath: legacyPath), directory)
     }
 
+    @Test("an unknown status bar icon from a newer version keeps the rest of the config")
+    func unknownStatusBarIconIsTolerated() throws {
+        let fixture = try makeTemporaryStore()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let json = #"""
+            {"statusBarIcon":"sparkle-from-the-future","notchLauncherEnabled":true,
+             "sites":[{"name":"Keep","url":"https://keep.example","width":800,"height":600}]}
+            """#
+        try Data(json.utf8).write(to: URL(fileURLWithPath: fixture.store.configPath))
+
+        let config = try fixture.store.load(connectedDisplays: []).config
+
+        #expect(config.statusBarIcon == .default)
+        #expect(config.notchLauncherEnabled)
+        #expect(config.sites.map(\.name) == ["Keep"])
+    }
+
+    @Test("an unreadable config is preserved byte for byte before Chap falls back to defaults")
+    func unreadableConfigIsPreserved() throws {
+        let fixture = try makeTemporaryStore()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let original = Data(#"{"sites": "not-an-array", "mine": "precious"}"#.utf8)
+        try original.write(to: URL(fileURLWithPath: fixture.store.configPath))
+
+        var preserved: String?
+        do {
+            _ = try fixture.store.load(connectedDisplays: [])
+            Issue.record("expected a decode failure")
+        } catch ConfigStoreError.decodeFailed(_, let path) {
+            preserved = path
+        }
+
+        let path = try #require(preserved)
+        #expect(path.hasPrefix(fixture.store.configPath + ".unreadable-"))
+        #expect(try Data(contentsOf: URL(fileURLWithPath: path)) == original)
+
+        // 기본 설정을 두 번 저장해 .chap.json과 .bak을 모두 덮어써도 사본은 남는다.
+        try fixture.store.save(.default)
+        try fixture.store.save(.default)
+        #expect(try Data(contentsOf: URL(fileURLWithPath: path)) == original)
+    }
+
     @Test("save writes config and backs up previous file")
     func saveWritesBackup() throws {
         let fixture = try makeTemporaryStore()

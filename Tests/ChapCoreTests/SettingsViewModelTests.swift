@@ -111,7 +111,7 @@ struct SettingsViewModelTests {
 
     @Test func hasChangesDetectsNotchWidgetChange() {
         let vm = SettingsViewModel(sites: baseSites, notchWidgets: NotchWidget.defaultSlots)
-        vm.notchWidgets[0] = .screenshots
+        vm.notchWidgets[1] = .downloads
         #expect(vm.hasChanges == true)
     }
 

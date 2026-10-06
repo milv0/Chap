@@ -179,7 +179,7 @@ struct FocusWidgetTests {
     func widgetRoundTrips() throws {
         let config = try JSONDecoder().decode(
             Config.self, from: Data(#"{"notchWidgets": ["awake"], "sites": []}"#.utf8))
-        #expect(config.notchWidgets.first == .awake)
+        #expect(config.notchWidgets == [.none, .none, .awake, .none, .none, .none])
         #expect(NotchWidget.awake.launchType == nil)
     }
 
@@ -196,5 +196,12 @@ struct FocusWidgetTests {
         #expect(KeepAwakePolicy.focusProgress(remaining: 5000, duration: 3600) == 1)
         #expect(KeepAwakePolicy.focusProgress(remaining: -5, duration: 3600) == 0)
         #expect(KeepAwakePolicy.focusProgress(remaining: 100, duration: nil) == nil)
+    }
+
+    @Test("an unknown session length is inferred from the shortest preset that fits")
+    func inferredDuration() {
+        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 3 * 3600 + 25 * 60) == 4 * 3600)
+        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 20 * 60) == 30 * 60)
+        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 13 * 3600) == 13 * 3600)
     }
 }

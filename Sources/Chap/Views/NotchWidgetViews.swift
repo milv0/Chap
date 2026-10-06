@@ -88,23 +88,47 @@ struct NotchFocusView: View {
     /// 마지막으로 고른 Focus 길이(초). 다음에 열 때 같은 길이가 골라져 있다.
     @AppStorage("ChapFocusPresetDuration") private var storedDuration =
         KeepAwakePolicy.defaultFocusPreset.duration
-    /// 켜지는 순간 번개가 튀어 오르게 하는 신호.
-    @State private var startPulse = 0
+    /// 링 위에 마우스가 있는지. 꺼짐: 링이 블루로 차오르며 누를 수 있음을 보여 준다. 켜짐: 가운데가 "Chap off"로 바뀐다.
+    @State private var isRingHovered = false
 
     private var selectedPreset: KeepAwakePolicy.Preset {
         KeepAwakePolicy.focusPreset(forStoredDuration: storedDuration)
     }
 
+    /// 링 지름과 두께. 칸 본문 높이(113pt) 안에 링 + 아래 한 줄이 들어간다.
+    static let ringDiameter: CGFloat = 80
+    static let ringLineWidth: CGFloat = 5
+
+    private var ringTrack: Color { palette.primary.opacity(0.12) }
+
     private func start() {
         // 트랙패드가 "딱" 하고 눌린 느낌을 준다 (권한 없음, 트랙패드가 없으면 아무 일 없음).
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-        startPulse += 1
         NotificationCenter.default.post(name: Self.activateRequest, object: selectedPreset.duration)
     }
 
-    /// 꺼짐: 길이 고르기(1h · 4h · 8h) + 큰 "Chap on" 버튼. 마음먹고 한 번 누르는 버튼이라 칸에서 가장 무겁다.
+    /// 꺼짐: 빈 링 가운데 번개와 "Chap on". 링 전체가 버튼이고, 아래에서 길이(1h · 4h · 8h)를 고른다.
     private var idle: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(spacing: 7) {
+            Button(action: start) {
+                FocusRing(
+                    progress: nil, isHovered: isRingHovered, track: ringTrack,
+                    diameter: Self.ringDiameter, lineWidth: Self.ringLineWidth
+                ) {
+                    VStack(spacing: 3) {
+                        Image(systemName: "bolt.fill")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(DS.accent)
+                        Text(KeepAwakePolicy.focusIdleLine)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(palette.primary)
+                    }
+                }
+            }
+            .buttonStyle(FocusPressStyle())
+            .onHover { isRingHovered = $0 }
+            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
+            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
             HStack(spacing: 4) {
                 ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
                     FocusDurationChip(
@@ -117,92 +141,85 @@ struct NotchFocusView: View {
                     .help("Keep your Mac awake for \(preset.title.lowercased())")
                 }
             }
-            Button(action: start) {
-                HStack(spacing: 6) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 14, weight: .bold))
-                    Text(KeepAwakePolicy.focusIdleLine)
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 38)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(DS.accent)
-                )
-                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            }
-            .buttonStyle(FocusPressStyle())
-            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
-            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
-            Text(KeepAwakePolicy.focusIdleHint)
-                .font(DS.notchMeta)
-                .foregroundColor(palette.secondary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
         }
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
     }
 
-    /// 켜짐: 맥박치는 번개 + 큰 남은 시간 + 남은 비율 막대 + 위트 한 줄 + 조용한 끄기.
+    /// 켜짐: 같은 링이 남은 비율만큼 블루로 차 있다가 줄어들고, 가운데에 남은 시간. 링을 누르면 끈다
+    /// (마우스를 올리면 가운데가 "Chap off"로 바뀐다).
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 5) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(DS.accent)
-                        .symbolEffect(.bounce, value: startPulse)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                        .font(.system(size: 22, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(palette.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                if let progress = KeepAwakePolicy.focusProgress(
-                    remaining: remaining, duration: KeepAwakeController.currentSessionDuration)
-                {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(palette.subtleSurface)
-                            Capsule().fill(DS.accent)
-                                .frame(width: max(geo.size.width * progress, 4))
-                        }
-                    }
-                    .frame(height: 4)
-                    .accessibilityHidden(true)
-                }
-                Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-                Spacer(minLength: 0)
+            let duration =
+                KeepAwakeController.currentSessionDuration
+                ?? KeepAwakePolicy.inferredFocusDuration(remaining: remaining)
+            let progress =
+                KeepAwakePolicy.focusProgress(remaining: remaining, duration: duration) ?? 1
+            VStack(spacing: 7) {
                 Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 } label: {
-                    Text(KeepAwakePolicy.focusOffTitle)
-                        .font(DS.notchMeta.weight(.semibold))
-                        .foregroundColor(palette.primary.opacity(0.75))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(palette.subtleSurface)
-                        )
-                        .contentShape(Rectangle())
+                    FocusRing(
+                        progress: progress, isHovered: false, track: ringTrack,
+                        diameter: Self.ringDiameter, lineWidth: Self.ringLineWidth
+                    ) {
+                        if isRingHovered {
+                            Text(KeepAwakePolicy.focusOffTitle)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(palette.primary)
+                        } else {
+                            Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(palette.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(width: Self.ringDiameter - 2 * Self.ringLineWidth - 8)
+                        }
+                    }
                 }
                 .buttonStyle(FocusPressStyle())
+                .onHover { isRingHovered = $0 }
                 .help("Turn off Keep Mac Awake")
+                .accessibilityLabel(
+                    "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
+                )
+                .accessibilityHint("Turns Focus off")
+                // 남은 시간 문구(Fully charged 등)는 뺐다. 링과 숫자가 이미 말해 준다. 꺼짐의 칩 줄과 같은 높이를 비워
+                // 켜고 꺼도 링이 제자리에 있다.
+                Color.clear.frame(height: 18)
             }
-            .padding(.horizontal, 6)
-            .padding(.top, 4)
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(
-                "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
+            .frame(maxWidth: .infinity)
         }
+    }
+}
+
+/// Focus 링. 얇은 트랙 위에 남은 비율만큼 블루 호를 12시 방향부터 그린다(`progress` nil이면 호 없음).
+/// 꺼짐 상태에서 마우스를 올리면 트랙 전체가 연한 블루로 차올라 누를 수 있음을 보여 준다.
+private struct FocusRing<Content: View>: View {
+    let progress: Double?
+    let isHovered: Bool
+    let track: Color
+    let diameter: CGFloat
+    let lineWidth: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(isHovered ? DS.accent.opacity(0.55) : track, lineWidth: lineWidth)
+            if let progress {
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(DS.accent, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1), value: progress)
+            }
+            content()
+        }
+        .frame(width: diameter, height: diameter)
+        .animation(.smooth(duration: 0.18), value: isHovered)
+        .contentShape(Circle())
     }
 }
 
@@ -231,10 +248,9 @@ private struct FocusDurationChip: View {
             Text(title)
                 .font(DS.notchMeta.weight(.semibold))
                 .foregroundColor(isSelected ? DS.accent : palette.primary.opacity(0.75))
-                .frame(maxWidth: .infinity)
-                .frame(height: 22)
+                .frame(width: 30, height: 18)
                 .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    Capsule()
                         .fill(
                             isSelected
                                 ? DS.accent.opacity(0.14)
@@ -576,6 +592,10 @@ struct NotchQuickNoteView: View {
     @State private var text = ""
     @State private var didLoad = false
     @State private var lastSaved: Date?
+    /// 입력 뒤 아직 파일에 쓰이지 않은 변경이 있는지. 있으면 저장 표시 대신 "Editing"을 보여 준다.
+    @State private var hasPendingEdit = false
+    /// 메모 상자의 화면 위치(창 콘텐츠 좌표). 상자 밖 클릭이면 커서를 풀고 바로 저장한다.
+    @State private var editorFrame: CGRect = .zero
     @FocusState private var isFocused: Bool
     private let store = QuickNoteStore()
     /// @State로 보관해 뷰 구조체가 다시 만들어져도 대기 중인 저장이 취소되지 않는다.
@@ -615,11 +635,22 @@ struct NotchQuickNoteView: View {
             }
             .padding(EdgeInsets(top: 5, leading: 3, bottom: 16, trailing: 3))
             .frame(height: bodyHeight)
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { editorFrame = geo.frame(in: .global) }
+                        .onChange(of: geo.frame(in: .global)) { _, frame in editorFrame = frame }
+                }
+            )
             .overlay(alignment: .bottomTrailing) {
-                if let label = QuickNoteStore.savedLabel(for: lastSaved) {
+                // 오른쪽 아래 작은 저장 표시: 쓰는 동안 "Editing", 저장되면 "Saved · 시각/날짜".
+                if let label = hasPendingEdit
+                    ? "Editing" : QuickNoteStore.savedLabel(for: lastSaved)
+                {
                     Text(label)
                         .font(DS.notchMeta)
                         .foregroundColor(palette.secondary)
+                        .monospacedDigit()
                         .padding(EdgeInsets(top: 0, leading: 6, bottom: 4, trailing: 7))
                         .accessibilityLabel(label)
                 }
@@ -632,6 +663,12 @@ struct NotchQuickNoteView: View {
             )
             .padding(.horizontal, 4)
         }
+        // 메모 상자 밖 빈 곳(도구 줄 여백·창 여백)을 누르면 커서를 푼다. 상자와 버튼은 자기 클릭을 먼저 받는다.
+        .background(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { isFocused = false }
+        )
         .onAppear {
             load()
             if focusesOnAppear {
@@ -646,7 +683,31 @@ struct NotchQuickNoteView: View {
                 text = clamped
                 return
             }
+            hasPendingEdit = true
             debouncer.schedule { save(clamped) }
+        }
+        // 커서가 풀리면(다른 곳 클릭, 다른 앱, Esc) 기다리지 않고 바로 저장한다.
+        .onChange(of: isFocused) { _, focused in
+            if !focused { debouncer.flush() }
+        }
+        // 노치 패널 안에서 메모 상자 밖을 누르면 커서를 푼다. 패널이 key를 잃으면(다른 앱·바탕) 점 없이 온다.
+        .onReceive(
+            NotificationCenter.default.publisher(for: NotchLauncherController.didClickPanel)
+        ) { note in
+            guard isFocused else { return }
+            if let point = note.userInfo?["point"] as? CGPoint, editorFrame.contains(point) {
+                return
+            }
+            isFocused = false
+        }
+        // 분리 창: 다른 창·앱으로 가면 커서를 푼다.
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)
+        ) { note in
+            guard isFocused, let window = note.object as? NSWindow,
+                window is QuickNoteWindowPanelMarker
+            else { return }
+            isFocused = false
         }
         .onDisappear { debouncer.flush() }
         // 창이 정리될 때는 onDisappear가 보장되지 않으므로 닫힘 직전에도 flush한다.
@@ -736,7 +797,10 @@ struct NotchQuickNoteView: View {
             do {
                 try store.save(value)
                 let date = value.isEmpty ? nil : Date()
-                DispatchQueue.main.async { lastSaved = date }
+                DispatchQueue.main.async {
+                    lastSaved = date
+                    hasPendingEdit = false
+                }
             } catch {
                 Log.app.error(
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")
@@ -1056,3 +1120,6 @@ struct NotchStripShelfIcon: View {
         .accessibilityLabel("Show \(title)")
     }
 }
+
+/// 분리된 Quick Note 창 표시. 창이 key를 잃을 때 메모 커서를 풀어 바로 저장하는 데 쓴다.
+protocol QuickNoteWindowPanelMarker: AnyObject {}

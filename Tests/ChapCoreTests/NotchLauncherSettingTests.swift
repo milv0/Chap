@@ -319,7 +319,7 @@ struct NotchLauncherSettingTests {
     @Test("the notch has six slots")
     func sixSlots() {
         #expect(NotchWidget.slotCount == 6)
-        #expect(NotchWidget.defaultSlots == [.sites, .apps, .folders, .screenshots, .none, .none])
+        #expect(NotchWidget.defaultSlots == [.screenshots, .none, .sites, .apps, .folders, .none])
     }
 
     @Test("a 2.1 twelve-slot layout keeps every widget by moving late ones into gaps")
@@ -331,24 +331,47 @@ struct NotchLauncherSettingTests {
              "sites": []}
             """#)
 
-        #expect(config.notchWidgets == [.screenshots, .sites, .apps, .folders, .none, .none])
+        #expect(config.notchWidgets == [.screenshots, .none, .sites, .apps, .folders, .none])
     }
 
     @Test("widgets beyond the six slots are dropped only when no gap is left")
     func overflowWithoutGapsIsDropped() {
         let slots = NotchWidget.normalizedSlots([
-            .sites, .apps, .folders, .screenshots, .drop, .none, .none,
+            .sites, .apps, .folders, .screenshots, .awake, .drop, .none,
         ])
 
-        #expect(slots == [.sites, .apps, .folders, .screenshots, .drop, .none])
+        // 선반은 앞으로, 뒤쪽 네 칸에 런처·Focus가 순서대로 들어가고 넘친 Drop은 빠진다.
+        #expect(slots == [.screenshots, .none, .sites, .apps, .folders, .awake])
     }
 
-    @Test("a legacy four-slot layout keeps its order with two empty slots")
+    @Test("a legacy layout moves shelves to the shelf slots and keeps the other order")
     func legacyFourSlotsKeepOrder() throws {
         let config = try decodeConfig(
             #"{"notchWidgets": ["sites", "apps", "folders", "screenshots"], "sites": []}"#)
 
-        #expect(config.notchWidgets == [.sites, .apps, .folders, .screenshots, .none, .none])
+        #expect(config.notchWidgets == [.screenshots, .none, .sites, .apps, .folders, .none])
+    }
+
+    @Test("a 2.7 free layout moves both shelves front and keeps the rest in order")
+    func freeLayoutMigrates() {
+        #expect(
+            NotchWidget.normalizedSlots([.downloads, .apps, .folders, .screenshots, .sites, .awake])
+                == [.downloads, .screenshots, .apps, .folders, .sites, .awake])
+    }
+
+    @Test("a layout that already follows the shelf rule keeps its gaps")
+    func validLayoutIsUntouched() {
+        let layout: [NotchWidget] = [.none, .downloads, .sites, .none, .apps, .none]
+        #expect(NotchWidget.normalizedSlots(layout) == layout)
+    }
+
+    @Test("shelves fit only the first two slots and other widgets only the rest")
+    func slotFit() {
+        #expect(NotchWidget.shelfSlotCount == 2)
+        #expect(NotchWidget.screenshots.fits(slot: 0) && NotchWidget.downloads.fits(slot: 1))
+        #expect(!NotchWidget.screenshots.fits(slot: 2))
+        #expect(!NotchWidget.sites.fits(slot: 1) && NotchWidget.sites.fits(slot: 2))
+        #expect(NotchWidget.none.fits(slot: 0) && NotchWidget.none.fits(slot: 5))
     }
 
     @Test("widgets round-trip through encoding")

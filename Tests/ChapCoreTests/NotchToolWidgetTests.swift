@@ -90,16 +90,21 @@ struct QuickNoteStoreTests {
         #expect(store.load().count == QuickNoteStore.maxLength)
     }
 
-    @Test("saved label reads just now, then a short relative time")
-    func savedLabel() {
-        let now = Date(timeIntervalSince1970: 1_000_000)
-        #expect(QuickNoteStore.savedLabel(for: nil, now: now) == nil)
-        #expect(
-            QuickNoteStore.savedLabel(for: now.addingTimeInterval(-20), now: now)
-                == "Saved just now")
-        let tenMinutes = QuickNoteStore.savedLabel(for: now.addingTimeInterval(-600), now: now)
-        #expect(tenMinutes?.hasPrefix("Saved 10 min") == true)
-        #expect(tenMinutes?.hasSuffix("ago") == true)
+    @Test("saved label shows Saved and when: time today, date this year, full date otherwise")
+    func savedLabel() throws {
+        let utc = try #require(TimeZone(identifier: "UTC"))
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = utc
+        let now = try #require(
+            calendar.date(from: DateComponents(year: 2026, month: 10, day: 6, hour: 18, minute: 30))
+        )
+        func label(_ date: Date?) -> String? {
+            QuickNoteStore.savedLabel(for: date, now: now, calendar: calendar, timeZone: utc)
+        }
+        #expect(label(nil) == nil)
+        #expect(label(now.addingTimeInterval(-18 * 60)) == "Saved · 6:12 PM")
+        #expect(label(now.addingTimeInterval(-2 * 86400)) == "Saved · Oct 4, 6:30 PM")
+        #expect(label(now.addingTimeInterval(-400 * 86400)) == "Saved · Sep 1, 2025, 6:30 PM")
     }
 
     @Test("a saved note reports its save date")
@@ -137,8 +142,7 @@ struct NotchToolWidgetDecodingTests {
         let json = #"{"notchWidgets": ["mirror", "note", "sites", "apps"], "sites": []}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(Array(config.notchWidgets.prefix(2)) == [.sites, .apps])
-        #expect(config.notchWidgets.dropFirst(2).allSatisfy { $0 == .none })
+        #expect(config.notchWidgets == [.none, .none, .sites, .apps, .none, .none])
         #expect(config.notchMirrorEnabled)
         #expect(config.notchQuickNoteEnabled)
     }

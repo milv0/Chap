@@ -78,6 +78,7 @@ struct NotchDropFileItem: View {
             .contentShape(Circle())
             .opacity(isHovered ? 1 : 0)
             .allowsHitTesting(isHovered)
+            .help("Remove from Chap Drop. The original file stays where it is.")
             .accessibilityHidden(true)
 
             // 왼쪽 위 공유 버튼: AirDrop·메시지·메일 등 macOS 공유 메뉴.

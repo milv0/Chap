@@ -2,6 +2,37 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.7.1] — 2026-10-06
+
+### Changed
+
+- **Chap Drop remembers originals** — Dropping a file no longer copies it. Chap
+  keeps a reference to the original, so it takes no extra space, follows the file
+  if you move or rename it, and lets it go if you delete it. Items from temporary
+  places (like an image dragged from a browser) are still copied so they don't
+  vanish, and files kept by earlier versions stay. Removing an item from Chap Drop
+  never deletes the original.
+- **Focus ring** — The Focus slot is one ring now. Off, the ring holds the bolt
+  and "Chap on"; press the ring to start (pick 1h, 4h, or 8h below it). On, the
+  same ring fills blue with the time left and empties as it runs, with no extra
+  caption; hover shows "Chap off", press to stop. Calmer than the big button, and
+  the time left is visible at a glance.
+- **Quick Note saves when you click away** — Click anywhere outside the note (or
+  switch apps) and the cursor leaves and the note saves at once. The bottom-right
+  corner shows "Editing" while you type and "Saved" with the time (or date) after.
+- **Shelves stay on the left** — The first two notch slots are now for the
+  Screenshots and Downloads shelves. A folded shelf becomes an icon left of the
+  notch, so it now always opens on the same side. Existing layouts move the
+  shelves to the front and keep everything else in order.
+
+### Fixed
+
+- **Settings survive a version mismatch** — An older Chap opening settings saved
+  by a newer one (for example the new Seal menu bar icon) no longer resets
+  everything: unknown icon choices fall back to the default icon and the rest of
+  your settings load. If Chap ever can't read the file at all, it now keeps the
+  original untouched as `~/.chap.json.unreadable-<time>` and tells you where.
+
 ## [2.7.0] — 2026-10-06
 
 ### Added

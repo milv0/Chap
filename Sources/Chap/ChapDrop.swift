@@ -1,9 +1,9 @@
 import AppKit
 
-/// Chap Drop 보관함. 떨어뜨린 파일을 Chap 고유 폴더에 복사해 두고,
-/// 노치 패널에서 최신 파일을 꺼내 쓸 수 있게 한다.
+/// Chap Drop 보관함. 떨어뜨린 파일은 복사하지 않고 원본을 가리키는 북마크로 기억한다(`DropStore`).
+/// 원본을 옮겨도 따라가고, 지우면 보관함에서도 사라진다. 임시 위치에서 온 파일만 사본을 둔다.
 ///
-/// 위치: `~/Library/Application Support/Chap/Drop/`
+/// 위치: `~/Library/Application Support/Chap/Drop/` (참조 목록 `.references.json` + Chap 사본)
 /// 접근은 노치 UI를 통해서만 이뤄지는 앱 내부 보관함 모델이다.
 enum ChapDrop {
     /// 오프스크린 렌더 도구 전용: 설정하면 노치가 파일을 읽는 대신 이 목록을 첫 프레임에 쓴다.
@@ -59,47 +59,32 @@ enum ChapDrop {
         }
     }
 
-    /// 드롭된 파일을 background queue에서 직렬 복사한다. 이름이 겹치면
-    /// " 2", " 3"…을 붙인다. completion은 메인 큐에서 성공 URL과 실패 수를 받는다.
+    /// 드롭된 파일을 background queue에서 보관함에 넣는다(원본 참조, 임시 파일만 사본).
+    /// completion은 메인 큐에서 넣은 URL과 실패 수를 받는다.
     static func storeAsync(
         _ urls: [URL], completion: @escaping (_ stored: [URL], _ failedCount: Int) -> Void
     ) {
         ioQueue.async {
-            let folder = directory()
-            var stored: [URL] = []
-            var failedCount = 0
-            for source in urls {
-                let destination = availableDestination(
-                    for: source.lastPathComponent, in: folder)
-                do {
-                    try FileManager.default.copyItem(at: source, to: destination)
-                    stored.append(destination)
-                } catch {
-                    failedCount += 1
-                    Log.config.error(
-                        "Chap Drop copy failed: \(error.localizedDescription, privacy: .public)")
-                }
+            let result = store().add(urls)
+            if result.failed > 0 {
+                Log.config.error(
+                    "Chap Drop could not keep \(result.failed, privacy: .public) item(s)")
             }
             DispatchQueue.main.async {
-                if !stored.isEmpty {
+                if !result.stored.isEmpty {
                     NotificationCenter.default.post(name: didChangeNotification, object: nil)
                 }
-                completion(stored, failedCount)
+                completion(result.stored, result.failed)
             }
         }
     }
 
-    /// 보관함 파일을 background queue에서 삭제한다.
+    /// 보관함에서 뺀다. 원본 참조는 목록에서만 지우고 원본 파일은 건드리지 않는다.
     static func removeAsync(_ url: URL, completion: @escaping (Bool) -> Void) {
         ioQueue.async {
-            let removed: Bool
-            do {
-                try FileManager.default.removeItem(at: url)
-                removed = true
-            } catch {
-                removed = false
-                Log.config.error(
-                    "Chap Drop remove failed: \(error.localizedDescription, privacy: .public)")
+            let removed = store().remove(url)
+            if !removed {
+                Log.config.error("Chap Drop remove failed for an item")
             }
             DispatchQueue.main.async {
                 if removed {
@@ -112,44 +97,13 @@ enum ChapDrop {
 
     // MARK: - Synchronous helpers (ioQueue only)
 
+    private static func store() -> DropStore { DropStore(folder: directory()) }
+
     private static func fileCountSynchronously() -> Int {
-        let entries =
-            (try? FileManager.default.contentsOfDirectory(
-                at: directory(), includingPropertiesForKeys: nil,
-                options: [.skipsHiddenFiles])) ?? []
-        return entries.filter { DropPolicy.isCandidate(fileName: $0.lastPathComponent) }.count
+        store().entries().count
     }
 
     private static func recentFilesSynchronously(limit: Int) -> [URL] {
-        let folder = directory()
-        guard
-            let entries = try? FileManager.default.contentsOfDirectory(
-                at: folder, includingPropertiesForKeys: [.contentModificationDateKey],
-                options: [.skipsHiddenFiles])
-        else { return [] }
-
-        let files = entries.map { url in
-            (
-                name: url.lastPathComponent,
-                modified: (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
-                    .contentModificationDate ?? .distantPast
-            )
-        }
-        let selected = DropPolicy.shelfSelection(files: files, limit: limit)
-        return selected.map { folder.appendingPathComponent($0) }
-    }
-
-    /// ioQueue가 호출을 직렬화하므로 fileExists→copy 사이에 내부 경쟁이 없다.
-    private static func availableDestination(for name: String, in folder: URL) -> URL {
-        let base = (name as NSString).deletingPathExtension
-        let ext = (name as NSString).pathExtension
-        var candidate = folder.appendingPathComponent(name)
-        var counter = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
-            let numbered = ext.isEmpty ? "\(base) \(counter)" : "\(base) \(counter).\(ext)"
-            candidate = folder.appendingPathComponent(numbered)
-            counter += 1
-        }
-        return candidate
+        Array(store().entries().prefix(limit).map(\.url))
     }
 }

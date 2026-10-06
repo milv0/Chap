@@ -23,6 +23,8 @@
 
 ## 1. 불변 규칙 (Invariants)
 
+- **Config forward compatibility (2.7.0 regression)**: every enum read from `~/.chap.json` must decode tolerantly (unknown value → default), so one new value can never reject the whole file. If decoding still fails, `ConfigStore.load` writes the original bytes to `~/.chap.json.unreadable-<time>` before Chap runs on defaults, because later saves rotate `.bak` and would otherwise erase the user's real settings.
+
 깨면 과거에 실제로 발생했던 문제가 재발한다. 변경 전 반드시 확인한다.
 
 | # | 규칙 | 깨질 때 생기는 문제 |
@@ -545,7 +547,9 @@ Settings → Notch Launcher on
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
 - URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 2열 아이콘, 필요한 줄만).
 - Screenshots 위젯은 시스템 스크린샷 위치를 2초마다 background scan하며 원본을 이동하지 않는다.
-- Chap Drop 위치는 `~/Library/Application Support/Chap/Drop/`; 사용자가 제거하기 전까지 유지한다.
+- Chap Drop은 원본을 북마크로 참조한다(`DropStore`, 목록은 `~/Library/Application Support/Chap/Drop/.references.json`).
+  원본을 옮기면 따라가고, 지우면 다음 읽기 때 목록에서 빠진다. 임시 위치(`/var/folders`, `/tmp`)에서 온 항목과 2.7 이전
+  복사본만 Drop 폴더에 Chap 사본으로 둔다. **보관함에서 빼기는 참조만 지우고 원본 파일은 절대 삭제하지 않는다**(Chap 사본만 삭제).
 - Custom은 색·불투명도 페이드, Glass는 macOS 26+의 public `glassEffect` API.
   appearance(System/Light/Dark)와 재질(Clear/Regular)을 서로 독립적으로 고르며, System은
   macOS appearance를 따른다.

@@ -33,14 +33,26 @@ public struct QuickNoteStore: Sendable {
             .contentModificationDate
     }
 
-    /// "Saved just now" / "Saved 10 min. ago" 같은 짧은 상대 시각 문구.
-    public static func savedLabel(for date: Date?, now: Date = Date()) -> String? {
+    /// 메모 오른쪽 아래의 저장 표시: "Saved · 6:12 PM"(오늘), "Saved · Oct 4, 6:12 PM"(올해),
+    /// "Saved · Oct 4, 2025, 6:12 PM"(다른 해). 언제 저장됐는지 날짜까지 그대로 보여 준다.
+    public static func savedLabel(
+        for date: Date?, now: Date = Date(), calendar: Calendar = .current,
+        timeZone: TimeZone = .current
+    ) -> String? {
         guard let date else { return nil }
-        if now.timeIntervalSince(date) < 60 { return "Saved just now" }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
+        var calendar = calendar
+        calendar.timeZone = timeZone
+        let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        return "Saved " + formatter.localizedString(for: date, relativeTo: now)
+        formatter.timeZone = timeZone
+        if calendar.isDate(date, inSameDayAs: now) {
+            formatter.dateFormat = "h:mm a"
+        } else if calendar.component(.year, from: date) == calendar.component(.year, from: now) {
+            formatter.dateFormat = "MMM d, h:mm a"
+        } else {
+            formatter.dateFormat = "MMM d, yyyy, h:mm a"
+        }
+        return "Saved · " + formatter.string(from: date)
     }
 
     /// 상한을 넘는 부분은 잘라 저장하고, 실제로 저장한 내용을 돌려준다.

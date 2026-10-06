@@ -93,9 +93,9 @@ enough: a friend who snaps things into place.
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
 | Mascot | Chap the Seal (the seal is Chap) |
-| Focus (idle) | Chap on (the one big button in the notch) |
+| Focus (idle) | Chap on (in the center of the Focus ring) |
 | Focus (stop) | Chap off |
-| Focus (running) | Fully charged → In the zone → Final stretch → Landing soon |
+| Focus (running) | (no caption; the ring and the time left say it) |
 
 ## Do / Don't
 

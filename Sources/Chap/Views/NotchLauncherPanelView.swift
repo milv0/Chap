@@ -115,8 +115,8 @@ struct NotchLauncherPanelView: View {
     static let columnWidth: CGFloat = 160
     /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Focus를 줄여 생긴 폭을 여기 쓴다).
     static let downloadsColumnWidth: CGFloat = 200
-    /// Focus 칸 폭. 큰 "Chap on" 버튼과 길이 칩 셋(1h·4h·8h)이 한 줄에 들어간다.
-    static let focusColumnWidth: CGFloat = 132
+    /// Focus 칸 폭. 80pt 링과 아래 길이 칩 셋(1h·4h·8h)이 들어간다.
+    static let focusColumnWidth: CGFloat = 116
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
     static let noteModeHeight: CGFloat = 200
 
@@ -430,7 +430,7 @@ struct NotchLauncherPanelView: View {
                 if failedCount > 0 {
                     LauncherUtils.showAlert(
                         message: "Some files could not be added",
-                        info: "\(failedCount) item(s) could not be copied to Chap Drop.")
+                        info: "\(failedCount) item(s) could not be added to Chap Drop.")
                 }
             }
             return true
