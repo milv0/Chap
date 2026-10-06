@@ -18,10 +18,9 @@ All notable changes to Chap are documented in this file.
   "Chap on" button that presses in and gives a trackpad tap. While it runs you
   see the time left, a bar of how much remains, and a quiet "Chap off". The slot
   is slimmer, and Downloads gets the room (200pt) so names show in full.
-- **The seal dives in** — Press Chap on and the seal on the strip hops and dives
-  out of sight. While Focus runs you see only a calm water line and the odd
-  bubble; when Focus ends it surfaces with a splash. It holds still with Reduce
-  Motion on.
+- **The seal dives in** — Press Chap on and the seal on the strip hops, splashes
+  into the water, and pops back up, then wags its tail while Focus runs. It
+  holds still with Reduce Motion on.
 - **Seal on the strip** — The seal's place is always the left of the black strip,
   so the strip is balanced on both sides; the Focus slot shows the bolt and time.
 

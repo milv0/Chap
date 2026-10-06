@@ -25,13 +25,14 @@ motions are small: a tail flick when you open the notch and now and then (every
 still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
 resting nearby, not a pet asking for attention.
 
-When you press Chap on, the seal dives in: it crouches, hops, splashes, and
-sinks out of sight (about 0.9 s, once). Focus is immersion, and a seal is at
-home under water. While Focus runs, the strip shows only a calm water line and,
-every 10–20 s, a single bubble: deep in focus, not to be disturbed. No paddling
-or flowing waves; that reads as a toy. When Focus ends the seal surfaces with a
-splash and settles back on the strip, a small "welcome back". The Focus slot
-shows the bolt and the time left.
+When you press Chap on, the seal dives in: it crouches, hops, splashes into the
+water, and pops back up (about 1 s, once). Focus is immersion, and a seal is at
+home in the water, but the dive is the moment of starting, not a scene that
+stays: afterwards the water is gone and the seal rests in its place, wagging its
+tail (slower and drowsy in the last 30 minutes). That wag is the one steady
+motion Chap allows, because it means "I'm keeping your Mac awake". Floating,
+paddling, or staying under water were tried and cut: they read as a toy or hide
+the state. The Focus slot shows the bolt and the time left.
 
 ## The name carries both meanings
 

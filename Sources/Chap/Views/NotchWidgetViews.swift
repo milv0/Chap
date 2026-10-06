@@ -759,15 +759,13 @@ struct NotchMascotView: View {
     var wagsContinuously = false
     /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
     var zColor: Color = .secondary
-    /// Focus가 켜져 있는지. 켜지는 순간 물로 뛰어들어 잠수하고(몰입), 끝나면 물 위로 올라온다.
+    /// Focus가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
     var isFocusing = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pose: ChapMascot.Pose = .rest
-    /// 다이빙·떠오르기 중인 프레임. nil이면 평소 모습(Focus 중이면 잠수).
+    /// 다이빙 중인 프레임. nil이면 평소 모습.
     @State private var diveStep: ChapMascot.FocusDiveStep?
-    /// 잠수 중 지금 올라오는 물방울.
-    @State private var bubble: ChapMascot.Pixel?
     /// 처음 나타날 때는 이미 켜져 있던 Focus라 뛰어들지 않는다(켜는 순간에만 한다).
     @State private var didAppear = false
     @State private var isBlinking = false
@@ -779,30 +777,22 @@ struct NotchMascotView: View {
         isBlinking && mood != .asleep ? .closed : mood.eyes
     }
 
-    /// 지금 물범 세로 위치(픽셀). 잠수 중이면 수면 아래.
-    private var offsetY: Int {
-        diveStep?.offsetY ?? (isFocusing ? ChapMascot.submergedOffsetY : 0)
-    }
+    /// 지금 물범 세로 위치(픽셀). 다이빙 중에만 오르내린다.
+    private var offsetY: Int { diveStep?.offsetY ?? 0 }
 
-    /// 지금 수면(열마다 마루 행). nil이면 물이 없다. 물범은 이 행보다 아래가 그려지지 않는다.
+    /// 지금 수면. 다이빙 중에만 있고, 물범은 이 행보다 아래 부분이 그려지지 않는다.
     private var surface: (level: Int, phase: Int)? {
-        if let diveStep {
-            return diveStep.waterLevel.map { ($0, diveStep.wavePhase) }
-        }
-        return isFocusing ? (ChapMascot.waterLevel, 0) : nil
+        guard let diveStep, let level = diveStep.waterLevel else { return nil }
+        return (level, diveStep.wavePhase)
     }
 
-    /// 지금 그릴 물과 물방울.
+    /// 지금 그릴 물과 물방울 (다이빙 중에만).
     private var water: [ChapMascot.Pixel] {
-        if let diveStep {
-            guard let level = diveStep.waterLevel else { return diveStep.splash }
-            return ChapMascot.waterPixels(
-                level: level, phase: diveStep.wavePhase, rows: diveStep.waterRows)
-                + diveStep.splash
-        }
-        guard isFocusing else { return [] }
-        let resting = moves ? [] : [ChapMascot.restingBubble]
-        return ChapMascot.submergedSurface + (bubble.map { [$0] } ?? resting)
+        guard let diveStep else { return [] }
+        guard let level = diveStep.waterLevel else { return diveStep.splash }
+        return ChapMascot.waterPixels(
+            level: level, phase: diveStep.wavePhase, rows: diveStep.waterRows)
+            + diveStep.splash
     }
 
     private func play(_ steps: [ChapMascot.FocusDiveStep]) async {
@@ -818,7 +808,7 @@ struct NotchMascotView: View {
 
     /// 까딱 한 번을 재생한다. 취소되면 쉬는 자세로 돌아간다.
     private func flick() async {
-        guard diveStep == nil, !isFocusing else { return }
+        guard diveStep == nil else { return }
         for next in ChapMascot.flickSequence {
             pose = next
             try? await Task.sleep(for: .seconds(ChapMascot.flickFrameDuration))
@@ -882,30 +872,15 @@ struct NotchMascotView: View {
             .offset(x: -CGFloat(pad) * pixelSize, y: -CGFloat(pad) * pixelSize)
             .allowsHitTesting(false)
         }
-        // Focus가 켜지는 순간 물로 뛰어들어 잠수하고, 끝나는 순간 물 위로 올라온다. 처음 나타날 때는 지금 상태
-        // 그대로(잠수 중이거나 엎드림)이며, 동작 줄이기·닫힌 노치에서는 애니메이션 없이 바로 바뀐다.
+        // Focus가 켜지는 순간(꺼짐 → 켜짐) 첨벙 다이빙을 한 번 한다. 이미 켜져 있던 Focus(처음 나타날 때)나
+        // 동작 줄이기·닫힌 노치에서는 하지 않는다.
         .task(id: isFocusing) {
             guard didAppear else {
                 didAppear = true
                 return
             }
-            guard moves else { return }
-            await play(isFocusing ? ChapMascot.focusDiveSequence : ChapMascot.focusSurfaceSequence)
-        }
-        // 잠수 중 10~20초마다 물방울 하나가 수면 위로 올라온다.
-        .task(id: "\(moves)-\(isFocusing)") {
-            bubble = nil
             guard moves, isFocusing else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(Double.random(in: ChapMascot.bubbleInterval)))
-                guard !Task.isCancelled, diveStep == nil else { continue }
-                for cell in ChapMascot.bubblePath {
-                    bubble = ChapMascot.Pixel(x: cell.x, y: cell.y, ink: .splash)
-                    try? await Task.sleep(for: .seconds(ChapMascot.bubbleStepDuration))
-                    if Task.isCancelled { break }
-                }
-                bubble = nil
-            }
+            await play(ChapMascot.focusDiveSequence)
         }
         // z는 레이아웃 크기에 넣지 않고 머리 오른쪽 위에 겹쳐 그린다.
         .overlay(alignment: .topLeading) {
