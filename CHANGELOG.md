@@ -14,6 +14,8 @@ All notable changes to Chap are documented in this file.
 
 ### Changed
 
+- **Calmer dock** — Notch slots are no longer split by vertical lines; a wider
+  28pt gap and each slot's title keep them apart.
 - **No strip countdown** — The black strip no longer shows the Focus timer. When
   the Focus slot isn't showing, the strip seal stays awake and wags its tail
   while Focus runs; the time left is in the Focus slot and the status menu.

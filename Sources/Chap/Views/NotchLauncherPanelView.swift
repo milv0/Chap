@@ -499,24 +499,12 @@ struct NotchLauncherPanelView: View {
     private var contentBody: some View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
             // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
-            HStack(alignment: .top, spacing: DS.spacing) {
-                ForEach(Array(visibleSlots.enumerated()), id: \.offset) { column, slot in
+            // 칸 사이에는 구분선 없이 넓은 간격만 둔다. 칸 제목(아이콘 + 이름)이 그룹 경계 역할을 한다.
+            HStack(alignment: .top, spacing: DS.notchColumnGap) {
+                ForEach(Array(visibleSlots.enumerated()), id: \.offset) { _, slot in
                     slotView(slot)
                         .frame(width: width(for: slot), alignment: .leading)
-                        // 모든 칸을 가장 긴 칸 높이로 늘려, 구분선이 내용 길이와 무관하게
-                        // 항상 줄 전체 높이로 그려지게 한다.
                         .frame(maxHeight: .infinity, alignment: .top)
-                        // 섹션 사이 얇은 세로 구분선. 폭 계산에 영향이 없도록 간격 중앙에 겹쳐 그린다.
-                        .overlay(alignment: .leading) {
-                            if column > 0 {
-                                Rectangle()
-                                    .fill(subtleSurface)
-                                    .frame(width: 1)
-                                    .padding(.vertical, 2)
-                                    .offset(x: -DS.spacing / 2)
-                                    .accessibilityHidden(true)
-                            }
-                        }
                 }
             }
             // 칸 높이를 가장 긴 칸의 이상 높이로 고정해 무한 확장을 막는다.
@@ -623,7 +611,8 @@ struct NotchLauncherPanelView: View {
     /// 도커 최소 폭: 기본 최소 폭과 펼친 줄 폭 중 큰 값. 칸을 접어도 도커 길이는 그대로다.
     private var dockMinimumWidth: CGFloat {
         let row =
-            NotchShoulderPolicy.rowWidth(widths: slots.map(width(for:)), spacing: DS.spacing)
+            NotchShoulderPolicy.rowWidth(
+                widths: slots.map(width(for:)), spacing: DS.notchColumnGap)
             + 2 * DS.padding
         return max(minWidth, row)
     }

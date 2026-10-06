@@ -55,6 +55,8 @@ enum DS {
     static let notchMeta = Font.system(size: 10, weight: .medium)
     /// 섹션 제목 줄 높이. 제목 옆 키캡 유무와 관계없이 모든 칸의 첫 줄이 맞는다.
     static let notchHeaderHeight: CGFloat = 16
+    /// 노치 위젯 칸 사이 간격. 구분선 없이 간격과 칸 제목만으로 칸을 나눈다.
+    static let notchColumnGap: CGFloat = 28
     static let monoFont = Font.system(size: 12, design: .monospaced)
 }
 
