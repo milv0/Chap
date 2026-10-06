@@ -12,6 +12,10 @@ All notable changes to Chap are documented in this file.
   Quick Note on the right. The dock keeps its width. Click the icon to bring the
   shelf back. Chap remembers this on this Mac.
 
+- **Full download names** — Rest the pointer on a Downloads row whose name is cut
+  short and the full name appears right over it, the way macOS expands a
+  truncated cell.
+
 ### Changed
 
 - **Calmer dock** — Notch slots are no longer split by vertical lines; a wider

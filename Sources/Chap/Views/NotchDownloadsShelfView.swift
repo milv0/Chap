@@ -102,6 +102,25 @@ struct NotchDownloadsShelfView: View {
                             textShadowOpacity: textShadowOpacity, hoverBackground: hoverBackground)
                     }
                 }
+                // 잘린 파일명은 마우스를 올린 줄 바로 위에 전체 이름으로 띄운다. 스크롤 목록 밖(이 칸)에서
+                // 그려 목록의 잘림·아래 흐림에 가리지 않고, 칸 폭은 그대로라 레이아웃이 흔들리지 않는다.
+                .overlayPreferenceValue(DownloadsFullNameKey.self) { hovered in
+                    if let hovered {
+                        GeometryReader { geo in
+                            let row = geo[hovered.bounds]
+                            // macOS 확장 툴팁처럼 잘린 이름 바로 그 자리에 겹쳐 띄운다(이름 글자 시작에 맞춤).
+                            // 위아래 줄을 가리지 않고, 길면 칸 오른쪽 밖으로 뻗는다.
+                            DownloadsFullNameLabel(name: hovered.name)
+                                .frame(height: row.height, alignment: .leading)
+                                .offset(
+                                    x: row.minX + DownloadsShelfRow.nameLeadingInset
+                                        - DownloadsFullNameLabel.horizontalPadding,
+                                    y: row.minY)
+                        }
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                    }
+                }
             }
         }
         .onHover { isColumnHovered = $0 }
@@ -147,7 +166,9 @@ struct NotchDownloadsShelfView: View {
 }
 
 /// 다운로드 한 줄: 파일 아이콘(이미지는 썸네일), 가운데를 줄인 파일명, 오른쪽 끝의 받은 시각.
-private struct DownloadsShelfRow: View {
+struct DownloadsShelfRow: View {
+    /// 줄 왼쪽 끝에서 파일명 글자까지: 좌우 여백 6 + 아이콘 20 + 간격 6.
+    static let nameLeadingInset: CGFloat = 32
     let url: URL
     let primary: Color
     let secondary: Color
@@ -158,6 +179,24 @@ private struct DownloadsShelfRow: View {
     @State private var added: Date?
     @State private var isHovered = false
     @State private var shareAnchor = ShareAnchor()
+    /// 줄에 보이는 파일명 폭. 실제 글꼴로 잰 전체 폭보다 좁으면 잘린 것이다.
+    @State private var shownNameWidth: CGFloat = .infinity
+    /// 지연 후 전체 파일명 말풍선을 띄우는 중인지.
+    @State private var showsFullName = DownloadsShelf.previewHoveredURL != nil
+
+    private var isNameTruncated: Bool {
+        let ideal = (url.lastPathComponent as NSString).size(withAttributes: [
+            .font: NSFont.systemFont(ofSize: DS.notchFileNameSize)
+        ]).width
+        return DownloadsShelfPolicy.needsFullName(
+            idealWidth: Double(ideal), shownWidth: Double(shownNameWidth))
+    }
+
+    private var publishesFullName: Bool {
+        guard isNameTruncated else { return false }
+        if let preview = DownloadsShelf.previewHoveredURL { return preview == url }
+        return isHovered && showsFullName
+    }
 
     init(
         url: URL, primary: Color, secondary: Color, textShadowOpacity: Double,
@@ -197,6 +236,12 @@ private struct DownloadsShelfRow: View {
                     .shadow(color: .black.opacity(textShadowOpacity), radius: 1.5, y: 0.5)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear
+                                .onAppear { shownNameWidth = geo.size.width }
+                                .onChange(of: geo.size.width) { _, width in shownNameWidth = width }
+                        })
 
                 Spacer(minLength: 4)
 
@@ -219,8 +264,23 @@ private struct DownloadsShelfRow: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        // 잠깐 머물렀을 때만 말풍선을 띄운다. 떠나면 바로 접는다.
+        .task(id: isHovered) {
+            guard DownloadsShelf.previewHoveredURL == nil else { return }
+            guard isHovered else {
+                withAnimation(.easeOut(duration: 0.1)) { showsFullName = false }
+                return
+            }
+            try? await Task.sleep(for: .seconds(DownloadsShelfPolicy.fullNameRevealDelay))
+            guard !Task.isCancelled else { return }
+            withAnimation(.easeOut(duration: 0.15)) { showsFullName = true }
+        }
+        .anchorPreference(key: DownloadsFullNameKey.self, value: .bounds) { anchor in
+            publishesFullName
+                ? DownloadsHoveredName(name: url.lastPathComponent, bounds: anchor) : nil
+        }
         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
-        .help(url.lastPathComponent)
+        // 잘린 이름은 말풍선이 대신 보여 주므로 시스템 툴팁은 잘리지 않은 이름에만 남기지 않는다.
         .contextMenu {
             Button("Open") { NSWorkspace.shared.open(url) }
             Button("Share…") { NotchSharing.present(url, from: shareAnchor) }
@@ -243,5 +303,45 @@ private struct DownloadsShelfRow: View {
     /// 한 칸 오른쪽에 맞는 아주 짧은 시각 ("now", "5m", "3h", "1d", "Sep 24").
     static func shortAge(of date: Date, now: Date = Date()) -> String {
         DownloadsShelfPolicy.shortAge(of: date, now: now)
+    }
+}
+
+/// 마우스를 올린 Downloads 줄의 전체 파일명과 줄 위치.
+struct DownloadsHoveredName {
+    let name: String
+    let bounds: Anchor<CGRect>
+}
+
+/// 목록 안 줄에서 칸으로 올려 보내는 "지금 전체 이름을 보여 줄 줄". 한 번에 하나만.
+struct DownloadsFullNameKey: PreferenceKey {
+    static let defaultValue: DownloadsHoveredName? = nil
+    static func reduce(value: inout DownloadsHoveredName?, nextValue: () -> DownloadsHoveredName?) {
+        value = value ?? nextValue()
+    }
+}
+
+/// 잘린 파일명 위에 뜨는 말풍선. 패널 스타일과 관계없이 검정 띠와 같은 어두운 바탕에 흰 글자라
+/// Mist·Glass 위에서도 같은 대비로 읽힌다.
+struct DownloadsFullNameLabel: View {
+    let name: String
+    static let horizontalPadding: CGFloat = 6
+
+    var body: some View {
+        Text(name)
+            .font(DS.notchFileName)
+            .foregroundColor(.white)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: CGFloat(DownloadsShelfPolicy.fullNameMaxWidth), alignment: .leading)
+            .fixedSize()
+            .padding(.horizontal, Self.horizontalPadding)
+            .padding(.vertical, 3)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(Color.black.opacity(0.86))
+            )
+            .shadow(color: .black.opacity(0.18), radius: 4, y: 1)
+            .accessibilityHidden(true)
     }
 }

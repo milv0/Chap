@@ -8,6 +8,8 @@ import AppKit
 enum DownloadsShelf {
     /// 오프스크린 렌더 도구 전용: 설정하면 노치가 파일을 읽는 대신 이 목록을 첫 프레임에 쓴다.
     static var previewOverride: [URL]?
+    /// (렌더 도구) 마우스를 올린 것처럼 전체 파일명 말풍선을 띄울 파일.
+    static var previewHoveredURL: URL?
 
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.downloads", qos: .utility)

@@ -53,6 +53,7 @@ struct NotchRenderTool {
         defer {
             ScreenshotShelf.previewOverride = nil
             DownloadsShelf.previewOverride = nil
+            DownloadsShelf.previewHoveredURL = nil
             ChapDrop.previewOverride = nil
         }
 
@@ -65,12 +66,16 @@ struct NotchRenderTool {
             ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
             ("notch-custom-collapsed", .custom, .dark, Color(white: 0.55), false),
             ("notch-guides-collapsed", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-download-hover", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
         for (name, style, scheme, backdrop, optionHeld) in variants {
             // 빈 Drop 상태(상자만, 숫자 없음)도 한 장 그린다.
             ChapDrop.previewOverride = name.hasSuffix("empty-drop") ? [] : drops
+            // 마우스를 올린 것처럼 두 번째 다운로드의 전체 파일명 말풍선을 띄운다.
+            DownloadsShelf.previewHoveredURL =
+                name.hasSuffix("download-hover") && downloads.count > 1 ? downloads[1] : nil
             // 비동기로 채우는 이미지를 그리기 직전에 캐시에 넣는다 (NSCache는 언제든 비울 수 있다).
             for site in config.sites where site.launchType == .app {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }

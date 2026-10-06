@@ -76,4 +76,14 @@ struct DownloadsShelfPolicyTests {
         #expect(Array(config.notchWidgets.prefix(2)) == [.downloads, .sites])
         #expect(NotchWidget.downloads.launchType == nil)
     }
+
+    @Test("the full-name bubble shows only for names cut short in the row")
+    func fullNameOnlyWhenTruncated() {
+        #expect(DownloadsShelfPolicy.needsFullName(idealWidth: 140, shownWidth: 92))
+        #expect(!DownloadsShelfPolicy.needsFullName(idealWidth: 60, shownWidth: 92))
+        // 반올림 오차(0.5pt 이내)는 잘린 것으로 보지 않는다.
+        #expect(!DownloadsShelfPolicy.needsFullName(idealWidth: 92.4, shownWidth: 92))
+        #expect(DownloadsShelfPolicy.fullNameRevealDelay > 0.2)
+        #expect(DownloadsShelfPolicy.fullNameRevealDelay < 0.6)
+    }
 }
