@@ -12,8 +12,12 @@ public enum ChapMascot {
         case body
         /// 배 아래 그림자(`s`).
         case shade
-        /// Focus 머리띠(`b`). Focus가 켜져 있는 동안 이마에 묶는다.
-        case band
+        /// Focus 물속(깊은 블루). 몸 아래쪽을 덮어 물에 잠긴 모습이 된다.
+        case water
+        /// 물결 마루(밝은 블루).
+        case crest
+        /// 다이빙 물방울.
+        case splash
     }
 
     /// 한 픽셀. 좌상단이 (0, 0)이다.
@@ -103,79 +107,60 @@ public enum ChapMascot {
         return grid.map { String($0) }
     }
 
-    // MARK: - Focus 머리띠와 돌입 애니메이션
+    // MARK: - Focus 다이빙(몰입)
 
-    /// 머리띠가 지나는 이마 칸(2행 x 4…10, 흰 칸만). 왼쪽부터 묶어 나간다.
-    public static let headbandCells: [(x: Int, y: Int)] = (4...10).map { (x: $0, y: 2) }
+    /// 물이 차오르는 높이(스프라이트 행). 머리와 등은 물 위, 배와 지느러미는 물속이다.
+    public static let waterLevel = 9
+    /// 물이 깔리는 가로 범위(스프라이트 기준, 몸보다 조금 넓다)와 물속 바닥 행.
+    public static let waterSpan = -3...26
+    public static let waterBottom = 13
 
-    /// 뒤통수로 나부끼는 머리띠 끈 두 자세. 꼬리를 흔들 때 같이 펄럭인다.
-    public static func ribbonCells(_ frame: Int) -> [(x: Int, y: Int)] {
-        frame == 1 ? [(12, 2), (13, 1)] : [(12, 2), (13, 2)]
-    }
-
-    /// 머리띠 상태. `cells`개까지 이마에 감고, `ribbon`이 0이면 끈 없음, 1·2는 끈 자세.
-    public struct Headband: Equatable, Sendable {
-        public let cells: Int
-        public let ribbon: Int
-        public init(cells: Int, ribbon: Int) {
-            self.cells = cells
-            self.ribbon = ribbon
-        }
-        /// 다 묶은 머리띠.
-        public static func tied(ribbon: Int) -> Headband {
-            Headband(cells: ChapMascot.headbandCells.count, ribbon: ribbon)
+    /// 물결: 네 칸마다 두 칸씩 마루가 한 칸 높고, `phase`가 오를 때마다 한 칸씩 흘러간다.
+    /// 물은 물범 위에 그려 몸 아래쪽을 덮는다.
+    public static func waterPixels(level: Int, phase: Int) -> [Pixel] {
+        waterSpan.flatMap { x -> [Pixel] in
+            let top = level + (((x + phase) % 4 + 4) % 4 < 2 ? 0 : 1)
+            return [Pixel(x: x, y: top, ink: .crest)]
+                + ((top + 1)...max(top + 1, waterBottom)).map { Pixel(x: x, y: $0, ink: .water) }
         }
     }
 
-    /// 눈·꼬리·머리띠를 합친 격자.
-    public static func rows(eyes: Eyes, pose: Pose, headband: Headband?) -> [String] {
-        var grid = rows(eyes: eyes, pose: pose).map { Array($0) }
-        guard let headband else { return grid.map { String($0) } }
-        for cell in headbandCells.prefix(max(0, headband.cells)) where grid[cell.y][cell.x] == "w" {
-            grid[cell.y][cell.x] = "b"
-        }
-        if headband.ribbon > 0 {
-            for cell in ribbonCells(headband.ribbon) where grid[cell.y][cell.x] == "." {
-                grid[cell.y][cell.x] = "b"
-            }
-        }
-        return grid.map { String($0) }
-    }
-
-    public static func pixels(eyes: Eyes, pose: Pose, headband: Headband?) -> [Pixel] {
-        guard headband != nil else { return pixels(eyes: eyes, pose: pose) }
-        return pixels(from: rows(eyes: eyes, pose: pose, headband: headband))
-    }
-
-    /// Focus 돌입 한 프레임: 세로 위치(픽셀, 아래가 +), 꼬리, 머리띠, 반짝임.
-    public struct FocusEntryStep: Equatable, Sendable {
+    /// 다이빙 한 프레임: 물범 세로 위치(픽셀, 아래가 +), 꼬리, 물 높이(nil이면 물 없음), 물결 위상, 물방울.
+    public struct FocusDiveStep: Equatable, Sendable {
         public let offsetY: Int
         public let pose: Pose
-        public let headband: Headband?
-        public let sparkles: Bool
+        public let waterLevel: Int?
+        public let wavePhase: Int
+        public let splash: [Pixel]
+
+        init(
+            _ offsetY: Int, _ pose: Pose, water: Int? = nil, phase: Int = 0,
+            splash: [(Int, Int)] = []
+        ) {
+            self.offsetY = offsetY
+            self.pose = pose
+            self.waterLevel = water
+            self.wavePhase = phase
+            self.splash = splash.map { Pixel(x: $0.0, y: $0.1, ink: .splash) }
+        }
     }
 
-    /// "집중!" 돌입: 웅크리고(아래로 1) → 뛰어오르며 꼬리를 들고(위로 2) → 내려앉아 머리띠를 묶고 →
-    /// 끈이 휘날리며 양옆에 반짝임. 끝나면 머리띠를 맨 채 꼬리를 흔든다.
-    public static let focusEntrySequence: [FocusEntryStep] = [
-        FocusEntryStep(offsetY: 1, pose: .rest, headband: nil, sparkles: false),
-        FocusEntryStep(offsetY: 1, pose: .rest, headband: nil, sparkles: false),
-        FocusEntryStep(offsetY: -2, pose: .tailUp, headband: nil, sparkles: false),
-        FocusEntryStep(offsetY: -2, pose: .tailUp, headband: nil, sparkles: false),
-        FocusEntryStep(
-            offsetY: 0, pose: .rest, headband: Headband(cells: 3, ribbon: 0), sparkles: false),
-        FocusEntryStep(offsetY: 0, pose: .rest, headband: .tied(ribbon: 1), sparkles: true),
-        FocusEntryStep(offsetY: 0, pose: .tailUp, headband: .tied(ribbon: 2), sparkles: true),
-        FocusEntryStep(offsetY: 0, pose: .rest, headband: .tied(ribbon: 1), sparkles: false),
+    /// "몰입" 다이빙: 웅크림 → 꼬리를 들고 뛰어오름 → 물이 차오르며 첨벙 → 물방울이 솟았다 떨어짐 → 물 위에 뜸.
+    /// 끝나면 Focus가 켜져 있는 동안 물에 뜬 채 물결이 흐르고 꼬리를 흔든다.
+    public static let focusDiveSequence: [FocusDiveStep] = [
+        FocusDiveStep(1, .rest),
+        FocusDiveStep(-3, .tailUp),
+        FocusDiveStep(-3, .tailUp),
+        FocusDiveStep(0, .tailUp, water: waterLevel + 2, splash: [(-1, 8), (24, 8)]),
+        FocusDiveStep(
+            2, .rest, water: waterLevel, phase: 1, splash: [(-2, 5), (-1, 7), (24, 6), (25, 4)]),
+        FocusDiveStep(1, .rest, water: waterLevel, phase: 2, splash: [(-3, 3), (26, 2), (25, 5)]),
+        FocusDiveStep(0, .rest, water: waterLevel, phase: 3, splash: [(-3, 6), (26, 6)]),
+        FocusDiveStep(0, .rest, water: waterLevel, phase: 0),
     ]
 
-    /// 돌입 한 프레임 길이(초). 8프레임 × 0.09 ≈ 0.7초.
-    public static let focusEntryFrameDuration: Double = 0.09
-
-    /// 반짝임 픽셀(스프라이트 기준, 바깥으로 나갈 수 있다). 머리 왼쪽 셋, 꼬리 위 둘.
-    public static let sparkleCells: [(x: Int, y: Int)] = [
-        (-2, 2), (-3, 4), (-2, 6), (25, 1), (26, 3),
-    ]
+    /// 다이빙 한 프레임 길이(초). 8프레임 × 0.1 = 0.8초.
+    public static let focusDiveFrameDuration: Double = 0.1
 
     public static func pixels(eyes: Eyes, pose: Pose) -> [Pixel] {
         eyes == .open ? pixels(for: pose) : pixels(from: rows(eyes: eyes, pose: pose))
@@ -242,7 +227,6 @@ public enum ChapMascot {
                 case "o", "e": return Pixel(x: x, y: y, ink: .outline)
                 case "w": return Pixel(x: x, y: y, ink: .body)
                 case "s": return Pixel(x: x, y: y, ink: .shade)
-                case "b": return Pixel(x: x, y: y, ink: .band)
                 default: return nil
                 }
             }

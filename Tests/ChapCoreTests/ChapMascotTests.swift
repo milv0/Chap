@@ -135,43 +135,38 @@ struct ChapMascotFocusMoodTests {
     }
 }
 
-@Suite("ChapMascot – Focus headband and entry")
-struct ChapMascotFocusEntryTests {
-    @Test("the tied headband crosses the forehead in Chap blue and keeps the grid shape")
-    func tiedHeadband() {
-        let grid = ChapMascot.rows(eyes: .open, pose: .rest, headband: .tied(ribbon: 1))
-        #expect(grid.count == 12 && grid.allSatisfy { $0.count == 24 })
-        #expect(Array(grid[2])[4...10].allSatisfy { $0 == "b" })
-        #expect(Array(grid[1])[13] == "b" && Array(grid[2])[12] == "b")
-        #expect(
-            ChapMascot.pixels(eyes: .open, pose: .rest, headband: .tied(ribbon: 1))
-                .contains { $0.ink == .band })
-        #expect(ChapMascot.pixels(eyes: .open, pose: .rest, headband: nil) == ChapMascot.pixels)
+@Suite("ChapMascot – Focus dive")
+struct ChapMascotFocusDiveTests {
+    @Test("the water covers the belly but leaves the face and back above the surface")
+    func waterLevel() {
+        let water = ChapMascot.waterPixels(level: ChapMascot.waterLevel, phase: 0)
+        #expect(!water.isEmpty)
+        #expect(water.allSatisfy { ChapMascot.waterSpan.contains($0.x) })
+        // 수면은 물 높이 또는 한 칸 아래, 바닥은 waterBottom.
+        let crests = water.filter { $0.ink == .crest }
+        #expect(crests.allSatisfy { $0.y == 9 || $0.y == 10 })
+        #expect(water.map(\.y).max() == ChapMascot.waterBottom)
+        // 눈(4행)은 물보다 위다.
+        #expect(water.allSatisfy { $0.y > 4 })
     }
 
-    @Test("the band never paints over the outline or the eyes")
-    func bandStaysOnWhite() {
-        for ribbon in [1, 2] {
-            let base = ChapMascot.rows(eyes: .open, pose: .rest)
-            let grid = ChapMascot.rows(eyes: .open, pose: .rest, headband: .tied(ribbon: ribbon))
-            for (a, b) in zip(base, grid) {
-                for (ca, cb) in zip(a, b) where ca != cb {
-                    #expect(cb == "b")
-                    #expect(ca == "w" || ca == ".")
-                }
-            }
-        }
+    @Test("the waves move one cell per phase and repeat every four")
+    func wavesFlow() {
+        let a = ChapMascot.waterPixels(level: 9, phase: 0)
+        let b = ChapMascot.waterPixels(level: 9, phase: 1)
+        #expect(a != b)
+        #expect(ChapMascot.waterPixels(level: 9, phase: 4) == a)
     }
 
-    @Test("entering Focus crouches, hops, ties the band, then sparkles, in about 0.7s")
-    func entrySequence() {
-        let steps = ChapMascot.focusEntrySequence
-        #expect(steps.first?.offsetY == 1)
+    @Test("the dive crouches, hops, splashes, and floats in under a second")
+    func diveSequence() {
+        let steps = ChapMascot.focusDiveSequence
+        #expect(steps.first?.offsetY == 1 && steps.first?.waterLevel == nil)
         #expect(steps.contains { $0.offsetY < 0 && $0.pose == .tailUp })
-        #expect(steps.last?.headband == .tied(ribbon: 1))
-        #expect(steps.contains { $0.sparkles })
-        #expect(steps.last?.offsetY == 0)
-        let total = Double(steps.count) * ChapMascot.focusEntryFrameDuration
+        #expect(steps.contains { !$0.splash.isEmpty })
+        #expect(steps.last?.waterLevel == ChapMascot.waterLevel)
+        #expect(steps.last?.offsetY == 0 && steps.last?.splash.isEmpty == true)
+        let total = Double(steps.count) * ChapMascot.focusDiveFrameDuration
         #expect(total > 0.5 && total < 1.0)
     }
 }

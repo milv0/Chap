@@ -18,9 +18,9 @@ All notable changes to Chap are documented in this file.
   "Chap on" button that presses in and gives a trackpad tap. While it runs you
   see the time left, a bar of how much remains, and a quiet "Chap off". The slot
   is slimmer, and Downloads gets the room (200pt) so names show in full.
-- **The seal gets ready** — Press Chap on and the seal on the strip crouches,
-  hops, and ties a blue headband with a little sparkle, then wears it until
-  Focus ends. It holds still with Reduce Motion on.
+- **The seal dives in** — Press Chap on and the seal on the strip crouches, hops,
+  and splashes into the water, then floats on gentle waves until Focus ends. It
+  holds still with Reduce Motion on.
 - **Seal stays on the strip** — The seal now always rests on the left of the
   black strip and wags while Focus runs, so the strip is balanced on both sides.
 

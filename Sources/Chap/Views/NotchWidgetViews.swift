@@ -759,14 +759,16 @@ struct NotchMascotView: View {
     var wagsContinuously = false
     /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
     var zColor: Color = .secondary
-    /// Focus가 켜져 있는지. 켜져 있는 동안 머리띠를 매고, 켜지는 순간 돌입 애니메이션을 한다.
+    /// Focus가 켜져 있는지. 켜지는 순간 물로 뛰어들고(몰입), 켜져 있는 동안 물에 떠 있다.
     var isFocusing = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pose: ChapMascot.Pose = .rest
-    /// 돌입 애니메이션 중인 프레임. nil이면 평소 모습.
-    @State private var entryStep: ChapMascot.FocusEntryStep?
-    /// 처음 나타날 때는 이미 켜져 있던 Focus라 돌입하지 않는다(켜는 순간에만 한다).
+    /// 다이빙 중인 프레임. nil이면 평소 모습.
+    @State private var diveStep: ChapMascot.FocusDiveStep?
+    /// 물결 위상. Focus 중 꼬리 박자에 맞춰 한 칸씩 흐른다.
+    @State private var wavePhase = 0
+    /// 처음 나타날 때는 이미 켜져 있던 Focus라 뛰어들지 않는다(켜는 순간에만 한다).
     @State private var didAppear = false
     @State private var isBlinking = false
     @State private var zRisen = false
@@ -777,22 +779,25 @@ struct NotchMascotView: View {
         isBlinking && mood != .asleep ? .closed : mood.eyes
     }
 
-    /// 지금 그릴 머리띠. 돌입 중이면 그 프레임, 아니면 Focus 중 다 묶은 띠(끈은 꼬리와 같이 펄럭임).
-    private var headband: ChapMascot.Headband? {
-        if let entryStep { return entryStep.headband }
-        guard isFocusing else { return nil }
-        return .tied(ribbon: pose == .tailUp ? 2 : 1)
+    /// 지금 그릴 물. 다이빙 중이면 그 프레임, 아니면 Focus 중 물에 떠 있는 물결.
+    private var water: [ChapMascot.Pixel] {
+        if let diveStep {
+            guard let level = diveStep.waterLevel else { return diveStep.splash }
+            return ChapMascot.waterPixels(level: level, phase: diveStep.wavePhase) + diveStep.splash
+        }
+        guard isFocusing else { return [] }
+        return ChapMascot.waterPixels(level: ChapMascot.waterLevel, phase: wavePhase)
     }
 
-    /// 돌입 애니메이션을 한 번 재생한다.
-    private func playFocusEntry() async {
-        for step in ChapMascot.focusEntrySequence {
-            entryStep = step
+    /// 다이빙을 한 번 재생한다.
+    private func playDive() async {
+        for step in ChapMascot.focusDiveSequence {
+            diveStep = step
             pose = step.pose
-            try? await Task.sleep(for: .seconds(ChapMascot.focusEntryFrameDuration))
+            try? await Task.sleep(for: .seconds(ChapMascot.focusDiveFrameDuration))
             if Task.isCancelled { break }
         }
-        entryStep = nil
+        diveStep = nil
         pose = .rest
     }
 
@@ -812,14 +817,16 @@ struct NotchMascotView: View {
         case .outline: return Color(red: 22 / 255, green: 26 / 255, blue: 48 / 255)
         case .body: return .white
         case .shade: return Color(red: 176 / 255, green: 190 / 255, blue: 216 / 255)
-        // 검정 띠 위에서도 또렷한 밝은 Chap 블루.
-        case .band: return Color(red: 91 / 255, green: 130 / 255, blue: 255 / 255)
+        // 물: 검정 띠 위에서 물속은 깊은 블루, 마루와 물방울은 밝은 Chap 블루.
+        case .water: return Color(red: 36 / 255, green: 64 / 255, blue: 170 / 255)
+        case .crest: return Color(red: 110 / 255, green: 145 / 255, blue: 255 / 255)
+        case .splash: return Color(red: 160 / 255, green: 185 / 255, blue: 255 / 255)
         }
     }
 
     var body: some View {
         Canvas { context, _ in
-            for pixel in ChapMascot.pixels(eyes: eyes, pose: pose, headband: headband) {
+            for pixel in ChapMascot.pixels(eyes: eyes, pose: pose) {
                 let rect = CGRect(
                     x: CGFloat(pixel.x) * pixelSize, y: CGFloat(pixel.y) * pixelSize,
                     width: pixelSize, height: pixelSize)
@@ -830,35 +837,44 @@ struct NotchMascotView: View {
             width: CGFloat(ChapMascot.width) * pixelSize,
             height: CGFloat(ChapMascot.height) * pixelSize
         )
-        .offset(y: CGFloat(entryStep?.offsetY ?? 0) * pixelSize)
-        // 돌입 반짝임: 스프라이트 바깥까지 그리므로 레이아웃 크기에 넣지 않는다.
+        .offset(y: CGFloat(diveStep?.offsetY ?? 0) * pixelSize)
+        // 물과 물방울: 물범 위에 그려 몸 아래쪽을 덮는다. 물범이 뛰어오르고 가라앉아도 수면은 제자리다.
+        // 몸보다 넓고 위로 튀는 물방울도 있어 레이아웃 크기에 넣지 않는 겹침 레이어로 그린다.
         .overlay(alignment: .topLeading) {
-            if entryStep?.sparkles == true {
-                Canvas { context, _ in
-                    for cell in ChapMascot.sparkleCells {
-                        let rect = CGRect(
-                            x: CGFloat(cell.x + 4) * pixelSize, y: CGFloat(cell.y) * pixelSize,
-                            width: pixelSize, height: pixelSize)
-                        context.fill(
-                            Path(rect),
-                            with: .color(Color(red: 137 / 255, green: 163 / 255, blue: 1)))
-                    }
+            let pad = 4
+            Canvas { context, _ in
+                for pixel in water {
+                    let rect = CGRect(
+                        x: CGFloat(pixel.x + pad) * pixelSize,
+                        y: CGFloat(pixel.y + pad) * pixelSize,
+                        width: pixelSize, height: pixelSize)
+                    context.fill(Path(rect), with: .color(Self.color(pixel.ink)))
                 }
-                .frame(
-                    width: CGFloat(ChapMascot.width + 8) * pixelSize,
-                    height: CGFloat(ChapMascot.height) * pixelSize
-                )
-                .offset(x: -4 * pixelSize)
-                .allowsHitTesting(false)
             }
+            .frame(
+                width: CGFloat(ChapMascot.width + 2 * pad) * pixelSize,
+                height: CGFloat(ChapMascot.waterBottom + 1 + pad) * pixelSize
+            )
+            .offset(x: -CGFloat(pad) * pixelSize, y: -CGFloat(pad) * pixelSize)
+            .allowsHitTesting(false)
         }
-        // Focus가 켜지는 순간(꺼짐 → 켜짐) 돌입 애니메이션. 동작 줄이기나 닫힌 노치에서는 머리띠만 바로 맨다.
+        // Focus가 켜지는 순간(꺼짐 → 켜짐) 물로 뛰어든다. 동작 줄이기나 닫힌 노치에서는 바로 물에 떠 있다.
         .task(id: isFocusing) {
             guard isFocusing, moves, didAppear else {
                 didAppear = true
                 return
             }
-            await playFocusEntry()
+            await playDive()
+        }
+        // 물결: Focus 중 꼬리 박자(졸리면 느리게)로 한 칸씩 흐른다.
+        .task(id: "\(moves)-\(isFocusing)-\(mood)") {
+            guard moves, isFocusing,
+                let frame = ChapMascot.focusWagFrameDuration(for: mood)
+            else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(frame))
+                wavePhase = (wavePhase + 1) % 4
+            }
         }
         // z는 레이아웃 크기에 넣지 않고 머리 오른쪽 위에 겹쳐 그린다.
         .overlay(alignment: .topLeading) {
@@ -882,7 +898,7 @@ struct NotchMascotView: View {
             if wagsContinuously, let frame = ChapMascot.focusWagFrameDuration(for: mood) {
                 await flick()
                 while !Task.isCancelled {
-                    if entryStep == nil { pose = pose == .rest ? .tailUp : .rest }
+                    if diveStep == nil { pose = pose == .rest ? .tailUp : .rest }
                     try? await Task.sleep(for: .seconds(frame))
                 }
                 pose = .rest
