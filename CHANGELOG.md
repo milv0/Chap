@@ -13,10 +13,11 @@ All notable changes to Chap are documented in this file.
 - **Tidy empty shelves** — With no screenshots, the Screenshots slot folds into
   its strip icon on its own and comes back when you take one. An empty Downloads
   slot says so in one short line and narrows to its title.
-- **Focus as a list** — The Focus slot now reads like the other slots: "1 Hour",
-  "4 Hours", and "8 Hours" rows, or the time left with a "Chap off" row. The
-  title bolt turns Chap blue while it runs. The slot is narrower, and Downloads
-  gets the room back (200pt) so names show in full more often.
+- **A real Chap on button** — Focus is a decision, so the slot is built around
+  it: pick 1h, 4h, or 8h (Chap remembers your last pick), then press one big blue
+  "Chap on" button that presses in and gives a trackpad tap. While it runs you
+  see the time left, a bar of how much remains, and a quiet "Chap off". The slot
+  is slimmer, and Downloads gets the room (200pt) so names show in full.
 - **Seal stays on the strip** — The seal now always rests on the left of the
   black strip and wags while Focus runs, so the strip is balanced on both sides.
 

@@ -83,7 +83,7 @@ enough: a friend who snaps things into place.
 | Welcome | Hi, I'm your chap. |
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
-| Focus (idle) | Chap on |
+| Focus (idle) | Chap on (the one big button in the notch) |
 | Focus (stop) | Chap off |
 | Focus (running) | Fully charged → In the zone → Final stretch → Landing soon |
 

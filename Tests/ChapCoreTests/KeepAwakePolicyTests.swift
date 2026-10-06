@@ -182,4 +182,19 @@ struct FocusWidgetTests {
         #expect(config.notchWidgets.first == .awake)
         #expect(NotchWidget.awake.launchType == nil)
     }
+
+    @Test("the Focus slot remembers a known duration and falls back to 1 hour")
+    func focusPresetMemory() {
+        #expect(KeepAwakePolicy.defaultFocusPreset.duration == 3600)
+        #expect(KeepAwakePolicy.focusPreset(forStoredDuration: 4 * 3600).title == "4 Hours")
+        #expect(KeepAwakePolicy.focusPreset(forStoredDuration: 1234).title == "1 Hour")
+    }
+
+    @Test("the progress bar shows the share of time left, or nothing without a length")
+    func focusProgress() {
+        #expect(KeepAwakePolicy.focusProgress(remaining: 1800, duration: 3600) == 0.5)
+        #expect(KeepAwakePolicy.focusProgress(remaining: 5000, duration: 3600) == 1)
+        #expect(KeepAwakePolicy.focusProgress(remaining: -5, duration: 3600) == 0)
+        #expect(KeepAwakePolicy.focusProgress(remaining: 100, duration: nil) == nil)
+    }
 }

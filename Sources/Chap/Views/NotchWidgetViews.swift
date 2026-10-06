@@ -85,46 +85,120 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 꺼짐: 다른 목록 칸과 같은 줄 셋(1 Hour · 4 Hours · 8 Hours) + 맨 아래 한 줄 안내.
-    private var idle: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
-                FocusRowButton(title: preset.title, palette: palette) {
-                    NotificationCenter.default.post(
-                        name: Self.activateRequest, object: preset.duration)
-                }
-                .help("Keep your Mac awake for \(preset.title.lowercased())")
-            }
-            Spacer(minLength: 0)
-            Text("\(KeepAwakePolicy.focusIdleLine) · \(KeepAwakePolicy.focusIdleHint)")
-                .font(DS.notchMeta)
-                .foregroundColor(palette.secondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 6)
-        }
+    /// 마지막으로 고른 Focus 길이(초). 다음에 열 때 같은 길이가 골라져 있다.
+    @AppStorage("ChapFocusPresetDuration") private var storedDuration =
+        KeepAwakePolicy.defaultFocusPreset.duration
+    /// 켜지는 순간 번개가 튀어 오르게 하는 신호.
+    @State private var startPulse = 0
+
+    private var selectedPreset: KeepAwakePolicy.Preset {
+        KeepAwakePolicy.focusPreset(forStoredDuration: storedDuration)
     }
 
-    /// 켜짐: 큰 남은 시간 + 위트 한 줄 + 끄기 줄. 띠 물범은 꼬리를 흔든다.
+    private func start() {
+        // 트랙패드가 "딱" 하고 눌린 느낌을 준다 (권한 없음, 트랙패드가 없으면 아무 일 없음).
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+        startPulse += 1
+        NotificationCenter.default.post(name: Self.activateRequest, object: selectedPreset.duration)
+    }
+
+    /// 꺼짐: 길이 고르기(1h · 4h · 8h) + 큰 "Chap on" 버튼. 마음먹고 한 번 누르는 버튼이라 칸에서 가장 무겁다.
+    private var idle: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 4) {
+                ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
+                    FocusDurationChip(
+                        title: KeepAwakePolicy.shortTitle(of: preset),
+                        isSelected: preset.duration == selectedPreset.duration,
+                        palette: palette
+                    ) {
+                        withAnimation(.smooth(duration: 0.15)) { storedDuration = preset.duration }
+                    }
+                    .help("Keep your Mac awake for \(preset.title.lowercased())")
+                }
+            }
+            Button(action: start) {
+                HStack(spacing: 6) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text(KeepAwakePolicy.focusIdleLine)
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 38)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(DS.accent)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(FocusPressStyle())
+            .help("Keep your Mac awake for \(selectedPreset.title.lowercased())")
+            .accessibilityLabel("Chap on for \(selectedPreset.title.lowercased())")
+            Text(KeepAwakePolicy.focusIdleHint)
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(.top, 4)
+    }
+
+    /// 켜짐: 맥박치는 번개 + 큰 남은 시간 + 남은 비율 막대 + 위트 한 줄 + 조용한 끄기.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundColor(palette.primary)
-                    .padding(.horizontal, 6)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(DS.accent)
+                        .symbolEffect(.bounce, value: startPulse)
+                        .symbolEffect(.pulse, options: .repeating)
+                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                        .font(.system(size: 22, weight: .semibold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(palette.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                if let progress = KeepAwakePolicy.focusProgress(
+                    remaining: remaining, duration: KeepAwakeController.currentSessionDuration)
+                {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(palette.subtleSurface)
+                            Capsule().fill(DS.accent)
+                                .frame(width: max(geo.size.width * progress, 4))
+                        }
+                    }
+                    .frame(height: 4)
+                    .accessibilityHidden(true)
+                }
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)
-                    .padding(.horizontal, 6)
                 Spacer(minLength: 0)
-                FocusRowButton(title: KeepAwakePolicy.focusOffTitle, palette: palette) {
+                Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
+                } label: {
+                    Text(KeepAwakePolicy.focusOffTitle)
+                        .font(DS.notchMeta.weight(.semibold))
+                        .foregroundColor(palette.primary.opacity(0.75))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(palette.subtleSurface)
+                        )
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(FocusPressStyle())
                 .help("Turn off Keep Mac Awake")
             }
+            .padding(.horizontal, 6)
+            .padding(.top, 4)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(
                 "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
@@ -132,9 +206,21 @@ struct NotchFocusView: View {
     }
 }
 
-/// Focus 칸의 줄 버튼. 다른 목록 줄과 같은 12pt 이름, 26pt 높이, 호버 면.
-private struct FocusRowButton: View {
+/// 누르는 순간 살짝 눌렸다 튀어 오르는 버튼 모양. "딱" 누르는 손맛을 준다.
+private struct FocusPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .brightness(configuration.isPressed ? -0.06 : 0)
+            .animation(
+                .spring(response: 0.22, dampingFraction: 0.55), value: configuration.isPressed)
+    }
+}
+
+/// Focus 길이 고르기 칩. 고른 칩은 블루 테두리와 글자.
+private struct FocusDurationChip: View {
     let title: String
+    let isSelected: Bool
     let palette: NotchWidgetPalette
     let action: () -> Void
 
@@ -143,21 +229,26 @@ private struct FocusRowButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(DS.notchRowName)
-                .foregroundColor(palette.primary)
-                .shadow(color: .black.opacity(palette.textShadowOpacity), radius: 1.5, y: 0.5)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 5)
+                .font(DS.notchMeta.weight(.semibold))
+                .foregroundColor(isSelected ? DS.accent : palette.primary.opacity(0.75))
+                .frame(maxWidth: .infinity)
+                .frame(height: 22)
                 .background(
-                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                        .fill(isHovered ? palette.hoverBackground : Color.clear)
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(
+                            isSelected
+                                ? DS.accent.opacity(0.14)
+                                : (isHovered ? palette.hoverBackground : palette.subtleSurface))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .strokeBorder(isSelected ? DS.accent.opacity(0.7) : .clear, lineWidth: 1)
                 )
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
