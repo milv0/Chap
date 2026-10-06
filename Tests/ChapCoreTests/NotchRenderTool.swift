@@ -62,6 +62,8 @@ struct NotchRenderTool {
             ("notch-glass-light-note", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
+            ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
+            ("notch-custom-collapsed", .custom, .dark, Color(white: 0.55), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
@@ -81,6 +83,8 @@ struct NotchRenderTool {
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
             reveal.isNoteMode = name.hasSuffix("-note")
+            reveal.collapsedWidgets =
+                name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(

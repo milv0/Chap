@@ -71,6 +71,9 @@ final class NotchLauncherController {
     var onLaunch: (Int) -> Void = { _ in }
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
+    /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
+    var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
+    var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
 
     /// 배지는 메인 패널보다 한 단계 높은 고정 레벨. 같은 `.statusBar`이면
     /// 패널 클릭 시 AppKit이 패널을 앞으로 재정렬해 배지를 덮을 수 있다.
@@ -321,6 +324,7 @@ final class NotchLauncherController {
         let reveal = NotchRevealModel()
         reveal.bottomOpacity = opacityProvider()
         reveal.colorHex = colorProvider()
+        reveal.collapsedWidgets = collapsedWidgetsProvider()
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,
@@ -342,6 +346,9 @@ final class NotchLauncherController {
             onOpenSettings: { [weak self] type in
                 self?.hidePanel()
                 self?.onOpenSettings(type)
+            },
+            onCollapsedChange: { [weak self] widgets in
+                self?.onCollapsedChange(widgets)
             },
             reveal: reveal)
         let hosting = NSHostingView(rootView: content)

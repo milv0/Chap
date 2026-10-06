@@ -10,6 +10,9 @@ struct NotchDownloadsShelfView: View {
     let backgroundHex: String
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
+    /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
+    var onCollapse: (() -> Void)?
+    @State private var isColumnHovered = false
 
     @State private var urls: [URL] = DownloadsShelf.previewOverride ?? []
     @State private var didLoad = DownloadsShelf.previewOverride != nil
@@ -45,6 +48,9 @@ struct NotchDownloadsShelfView: View {
                 NotchContrastPolicy.secondaryTextOpacity(backgroundHex: backgroundHex))
     }
 
+    private var collapseForeground: Color { headingColor }
+    private var collapseHoverBackground: Color { hoverBackground }
+
     private var hoverBackground: Color {
         if usesSemanticForeground { return .primary.opacity(0.08) }
         return usesDarkCustomForeground ? .black.opacity(0.08) : .white.opacity(0.16)
@@ -56,16 +62,29 @@ struct NotchDownloadsShelfView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Button {
-                NotchShelfFolder.open(DownloadsShelf.directory(), name: "Downloads")
-            } label: {
-                header
+            HStack(spacing: 0) {
+                Button {
+                    NotchShelfFolder.open(DownloadsShelf.directory(), name: "Downloads")
+                } label: {
+                    header
+                }
+                .buttonStyle(.plain)
+                .onHover { isHeaderHovered = $0 }
+                .help("Open Downloads in Finder")
+                .accessibilityLabel("Downloads")
+                .accessibilityHint("Opens the Downloads folder in Finder")
+                Spacer(minLength: 4)
+                if let onCollapse {
+                    NotchCollapseButton(
+                        isVisible: isColumnHovered, foreground: collapseForeground,
+                        hoverBackground: collapseHoverBackground, action: onCollapse)
+                }
             }
-            .buttonStyle(.plain)
-            .onHover { isHeaderHovered = $0 }
-            .help("Open Downloads in Finder")
-            .accessibilityLabel("Downloads")
-            .accessibilityHint("Opens the Downloads folder in Finder")
+            .contextMenu {
+                if let onCollapse {
+                    Button("Collapse", action: onCollapse)
+                }
+            }
 
             if urls.isEmpty {
                 Text(didLoad ? "No recent downloads" : " ")
@@ -85,6 +104,7 @@ struct NotchDownloadsShelfView: View {
                 }
             }
         }
+        .onHover { isColumnHovered = $0 }
         .onAppear { refresh() }
         // 노치를 열어 둔 채 받은 파일도 몇 초 안에 나타난다.
         .onReceive(refreshTimer) { _ in refresh() }

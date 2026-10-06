@@ -276,6 +276,24 @@ AirDrop·메시지·메일 등)와 오른쪽 위 빨간 삭제 ×가 보인다. 
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·상단 띠 시계가 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
+## 어깨: 접힌 칸 (Screenshots · Downloads)
+
+어깨는 검정 띠가 plateau 바깥에서 곡선(`stripFalloff` 90pt)으로 얇아진 뒤 도커 양 끝까지 남는
+메뉴 막대 높이의 밝은 띠다(`NotchShoulderPolicy`).
+
+- 선반 칸 제목 줄 오른쪽 끝의 접기 버튼(`chevron.up`, 칸에 마우스를 올렸을 때만 보임)이나 제목의
+  우클릭 "Collapse"로 칸을 접는다. 접힌 칸은 위젯 줄에서 빠지고 어깨에 13pt 아이콘으로 놓인다.
+  아이콘을 누르면 원래 자리에서 다시 펼쳐진다.
+- **도커 폭 유지**: 칸을 접어도 도커는 펼쳤을 때의 줄 폭(`rowWidth`)을 유지하고, 남은 칸은 가운데 정렬된다.
+- **방향**: 펼친 줄에서 칸 가운데가 줄 가운데(= 노치 가운데)보다 왼쪽이면 왼쪽 어깨, 아니면 오른쪽 어깨.
+- **배치**: 도커 바깥 모서리부터 안쪽으로 28pt 간격(플레어 10 + 여백 8 뒤). 왼쪽은 칸 순서대로,
+  오른쪽은 마지막 칸이 가장 바깥이다. 세로 중심은 (노치 높이 + 띠 가장자리 깊이) / 2
+  (Custom 19pt, Glass 16pt). 아이콘이 검정 곡선에 닿지 않도록 필요하면 도커를 넓힌다(`minimumDockWidth`).
+- 아이콘 색은 칸 제목 아이콘과 같은 연한 블루(`DS.notchIconColor`). 검정 띠의 흰 도구 아이콘과 구분된다.
+  새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
+- 접힌 목록은 `Config.notchCollapsedWidgets`에 저장한다. 노치에서만 바꾸는 이 Mac의 표시 선택이라
+  설정창 저장이 덮어쓰지 않는다. 메모 모드에서는 어깨 아이콘을 숨긴다.
+
 ## 선반 스크롤 (Screenshots · Downloads)
 
 두 선반은 최근 12개까지 담고(`maxItems`), 목록 칸 4줄 높이(113pt, `visibleRows` 4)에 고정된

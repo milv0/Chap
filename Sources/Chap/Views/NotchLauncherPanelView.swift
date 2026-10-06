@@ -11,6 +11,15 @@ enum NotchSlotContent {
     /// Focus(Keep Mac Awake) 위젯.
     case awake
 
+    /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
+    var collapsibleWidget: NotchWidget? {
+        switch self {
+        case .screenshots: return .screenshots
+        case .downloads: return .downloads
+        case .launchers, .awake: return nil
+        }
+    }
+
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
     static func slots(widgets: [NotchWidget], sites: [Site]) -> [NotchSlotContent] {
@@ -44,6 +53,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var isOptionHeld = false
     /// 메모 모드: 위젯 줄 자리를 넓은 Quick Note 편집기로 바꾼다. 도커를 열 때마다 꺼진 채 시작한다.
     @Published var isNoteMode = false
+    /// 어깨 아이콘으로 접힌 위젯. 도커를 열 때 config에서 채우고, 접고 펼 때마다 저장한다.
+    @Published var collapsedWidgets: [NotchWidget] = []
 }
 
 /// 노치 아래에 펼쳐지는 런처 목록. 상태바 메뉴와 같은
@@ -83,6 +94,8 @@ struct NotchLauncherPanelView: View {
     var onContentSizeChange: (CGSize) -> Void = { _ in }
     /// 런처 칸 제목을 누르면 그 타입이 선택된 설정창을 연다.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
+    /// 칸을 접거나 펼쳤을 때 새 목록. 컨트롤러가 config에 저장한다.
+    var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
     @ObservedObject var reveal: NotchRevealModel
 
     /// 원래의 모션: 패널 전체가 노치 상단 기준으로 스프링 확장하고,
@@ -133,7 +146,8 @@ struct NotchLauncherPanelView: View {
             let label =
                 ["88 min ago", "Yesterday", "88 hr ago"]
                 .map(NotchTextMetrics.metaWidth).max() ?? 0
-            let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14
+            // 제목 + 폴더 화살표(14) + 접기 버튼(18)과 그 앞 간격(4).
+            let header = NotchTextMetrics.headerWidth(title: "Screenshots") + 14 + 22
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(34 + 6 + label + 6 + 12 + 8, header))))
@@ -235,6 +249,8 @@ struct NotchLauncherPanelView: View {
                     showsNote: showsNote,
                     isNoteMode: $reveal.isNoteMode)
             }
+            // 어깨: 접힌 Screenshots·Downloads 칸 아이콘. 원래 자리가 노치 왼쪽이면 왼쪽 어깨.
+            .overlay(alignment: .topLeading) { shoulderIcons }
             // 파일 드래그 중에는 도커 전체를 덮는 반투명 Drop here 레이어.
             .overlay { dropOverlay }
             // 상단은 화면 모서리에 밀착해야 하므로 좌우·하단에만 그림자 여백을 둔다.
@@ -445,7 +461,7 @@ struct NotchLauncherPanelView: View {
         VStack(alignment: .leading, spacing: DS.spacingSmall) {
             // 위젯 칸을 좌우로 나란히 배치해 패널이 아래가 아니라 옆으로 길어진다.
             HStack(alignment: .top, spacing: DS.spacing) {
-                ForEach(Array(slots.enumerated()), id: \.offset) { column, slot in
+                ForEach(Array(visibleSlots.enumerated()), id: \.offset) { column, slot in
                     slotView(slot)
                         .frame(width: width(for: slot), alignment: .leading)
                         // 모든 칸을 가장 긴 칸 높이로 늘려, 구분선이 내용 길이와 무관하게
@@ -531,7 +547,8 @@ struct NotchLauncherPanelView: View {
         .padding(.horizontal, DS.padding)
         .padding(.top, topInset + NotchGeometry.contentTopGap)
         .padding(.bottom, DS.paddingSmall)
-        .frame(minWidth: minWidth)
+        // 칸을 접어도 도커는 펼쳤을 때의 폭을 유지하고, 어깨 아이콘이 검정 곡선에 닿지 않을 만큼은 넓힌다.
+        .frame(minWidth: dockMinimumWidth)
         .onAppear { refreshDropFiles() }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
@@ -556,6 +573,101 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    /// 접힌 칸을 뺀, 위젯 줄에 실제로 그릴 칸들.
+    private var visibleSlots: [NotchSlotContent] {
+        slots.filter { slot in
+            guard let widget = slot.collapsibleWidget else { return true }
+            return !reveal.collapsedWidgets.contains(widget)
+        }
+    }
+
+    /// 펼친 상태 기준 칸별 어깨 방향 (노치 왼쪽 → 왼쪽 어깨).
+    private var slotSides: [NotchShoulderPolicy.Side] {
+        NotchShoulderPolicy.sides(widths: slots.map(width(for:)), spacing: DS.spacing)
+    }
+
+    /// 어깨에 올라간 접힌 칸들. 바깥(도커 모서리)부터 칸 순서대로.
+    private var shoulderItems:
+        [(slot: NotchSlotContent, side: NotchShoulderPolicy.Side, index: Int)]
+    {
+        var leftCount = 0
+        var right: [(NotchSlotContent, NotchShoulderPolicy.Side)] = []
+        var items: [(slot: NotchSlotContent, side: NotchShoulderPolicy.Side, index: Int)] = []
+        for (slot, side) in zip(slots, slotSides) {
+            guard let widget = slot.collapsibleWidget, reveal.collapsedWidgets.contains(widget)
+            else { continue }
+            if side == .left {
+                items.append((slot, .left, leftCount))
+                leftCount += 1
+            } else {
+                right.append((slot, .right))
+            }
+        }
+        // 오른쪽 어깨는 오른쪽 끝에서 안쪽으로 놓으므로 마지막 칸이 가장 바깥이다.
+        for (offset, entry) in right.reversed().enumerated() {
+            items.append((entry.0, entry.1, offset))
+        }
+        return items
+    }
+
+    /// 도커 최소 폭: 기본 최소 폭, 펼친 줄 폭(접어도 유지), 어깨 아이콘 자리 중 가장 큰 값.
+    private var dockMinimumWidth: CGFloat {
+        let row =
+            NotchShoulderPolicy.rowWidth(widths: slots.map(width(for:)), spacing: DS.spacing)
+            + 2 * DS.padding
+        let items = shoulderItems
+        let perSide = max(
+            items.filter { $0.side == .left }.count, items.filter { $0.side == .right }.count)
+        let shoulder = NotchShoulderPolicy.minimumDockWidth(
+            iconsPerSide: perSide, plateauHalfWidth: stripPlateauHalfWidth)
+        return max(minWidth, row, shoulder)
+    }
+
+    private func setCollapsed(_ widget: NotchWidget, _ collapsed: Bool) {
+        var list = reveal.collapsedWidgets.filter { $0 != widget }
+        if collapsed { list.append(widget) }
+        list = NotchShoulderPolicy.normalized(list)
+        withAnimation(.smooth(duration: 0.22)) { reveal.collapsedWidgets = list }
+        onCollapsedChange(list)
+    }
+
+    /// 어깨(검정 띠 곡선 바깥의 밝은 띠)에 놓는 접힌 칸 아이콘들.
+    @ViewBuilder private var shoulderIcons: some View {
+        let items = shoulderItems
+        if !items.isEmpty, !reveal.isNoteMode {
+            GeometryReader { geo in
+                let y = NotchShoulderPolicy.iconCenterY(
+                    topInset: topInset,
+                    edgeDepth: usesSemanticGlass ? 0 : NotchGeometry.stripEdgeDepth)
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    if let widget = item.slot.collapsibleWidget {
+                        NotchShoulderIcon(
+                            symbol: Self.shoulderSymbol(widget),
+                            title: Self.shoulderTitle(widget),
+                            foreground: iconForeground,
+                            hoverBackground: rowHoverBackground
+                        ) {
+                            setCollapsed(widget, false)
+                        }
+                        .position(
+                            x: NotchShoulderPolicy.iconCenterX(
+                                side: item.side, index: item.index, dockWidth: geo.size.width),
+                            y: y)
+                    }
+                }
+            }
+            .transition(.opacity)
+        }
+    }
+
+    static func shoulderSymbol(_ widget: NotchWidget) -> String {
+        widget == .screenshots ? "camera.viewfinder" : "arrow.down.circle"
+    }
+
+    static func shoulderTitle(_ widget: NotchWidget) -> String {
+        widget == .screenshots ? "Screenshots" : "Downloads"
+    }
+
     @ViewBuilder
     private func slotView(_ slot: NotchSlotContent) -> some View {
         switch slot {
@@ -564,11 +676,13 @@ struct NotchLauncherPanelView: View {
         case .screenshots:
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
-                usesSemanticForeground: usesSemanticGlass)
+                usesSemanticForeground: usesSemanticGlass,
+                onCollapse: { setCollapsed(.screenshots, true) })
         case .downloads:
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
-                usesSemanticForeground: usesSemanticGlass)
+                usesSemanticForeground: usesSemanticGlass,
+                onCollapse: { setCollapsed(.downloads, true) })
         case .awake:
             NotchFocusView(
                 palette: widgetPalette, sessionEnd: currentAwakeSessionEnd,

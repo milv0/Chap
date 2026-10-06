@@ -293,6 +293,12 @@ extension AppDelegate {
         notchLauncher.quickNoteEnabledProvider = { [weak self] in
             self?.config.notchQuickNoteEnabled ?? false
         }
+        notchLauncher.collapsedWidgetsProvider = { [weak self] in
+            self?.config.notchCollapsedWidgets ?? []
+        }
+        notchLauncher.onCollapsedChange = { [weak self] widgets in
+            self?.saveCollapsedWidgets(widgets)
+        }
         notchLauncher.styleProvider = { [weak self] in
             self?.config.notchPanelStyle ?? .custom
         }
@@ -390,6 +396,24 @@ extension AppDelegate {
     @objc func reportBug() {
         if let url = URL(string: "https://github.com/milv0/Chap/issues/new") {
             NSWorkspace.shared.open(url)
+        }
+    }
+}
+
+extension AppDelegate {
+    /// 노치에서 접고 편 칸을 저장한다. 실패해도 이번 세션 표시는 그대로 두고 로그만 남긴다.
+    func saveCollapsedWidgets(_ widgets: [NotchWidget]) {
+        let normalized = NotchShoulderPolicy.normalized(widgets)
+        guard normalized != config.notchCollapsedWidgets else { return }
+        var updated = config
+        updated.notchCollapsedWidgets = normalized
+        do {
+            try configStore.save(updated)
+            config = updated
+        } catch {
+            Log.config.error(
+                "Failed to save collapsed notch slots: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 }

@@ -198,7 +198,9 @@ extension AppDelegate {
                 }
                 return false
             }
-            let newConfig = validationConfig
+            var newConfig = validationConfig
+            // 접힌 칸은 노치에서만 바꾸는 이 Mac의 표시 선택이라 설정 저장이 덮어쓰지 않는다.
+            newConfig.notchCollapsedWidgets = self.config.notchCollapsedWidgets
             let previousMenu = MenuConfigurationSnapshot(sites: self.config.sites)
             let previousLoginSetting = self.config.launchAtLogin
             let previousOptionShortcutsEnabled = self.config.optionShortcutsEnabled

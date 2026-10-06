@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Collapsible shelves** — Collapse Screenshots or Downloads from the chevron at
+  the end of its title (or right-click → Collapse) and it folds into a small icon
+  on the dock's shoulder, the light band beside the black strip: left of the
+  notch goes to the left shoulder, right goes right. The dock keeps its width.
+  Click the icon to bring the shelf back. Chap remembers this on this Mac.
+
 ## [2.5.0] — 2026-10-05
 
 ### Added

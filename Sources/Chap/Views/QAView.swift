@@ -176,6 +176,10 @@ struct QAView: View {
                     "Chap의 마스코트인 아기 물범입니다. Focus가 꺼져 있을 때 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 그 자리를 남은 시간에 양보합니다. Focus 칸에서는 Focus가 꺼져 있으면 자고, 켜면 깨어 꼬리를 흔들며 지키다가 마지막 30분에는 졸려 꼬리도 느려집니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
+                    "Screenshots·Downloads 칸을 접을 수 있나요?",
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 검정 띠 옆 밝은 어깨에 작은 아이콘으로 올라가고, 노치 왼쪽 칸은 왼쪽 어깨, 오른쪽 칸은 오른쪽 어깨로 갑니다. 도커 폭은 그대로이며, 아이콘을 누르면 다시 펼쳐집니다."
+                ),
+                (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
@@ -399,6 +403,10 @@ struct QAView: View {
                 (
                     "Who is the seal on the left of the notch?",
                     "That's Chap's mascot, a baby seal. It rests on the left of the notch's black strip while Focus is off, flicks its tail when you open the notch (it stays still with Reduce Motion on), and gives the spot to the Focus timer while Focus runs. In the Focus slot it sleeps while Focus is off, wags its tail while it runs, and gets drowsy (and wags slower) in the last 30 minutes. It is just decoration, so clicking it does nothing."
+                ),
+                (
+                    "Can I collapse the Screenshots or Downloads slot?",
+                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small icon on the dock's shoulder beside the black strip: slots left of the notch go to the left shoulder, slots on the right go right. The dock keeps its width; click the icon to expand the slot again."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",

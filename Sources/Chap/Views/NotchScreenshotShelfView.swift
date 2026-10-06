@@ -10,6 +10,9 @@ struct NotchScreenshotShelfView: View {
     let backgroundHex: String
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
+    /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
+    var onCollapse: (() -> Void)?
+    @State private var isColumnHovered = false
 
     @State private var urls: [URL] = ScreenshotShelf.previewOverride ?? []
     @State private var isRefreshing = false
@@ -39,6 +42,9 @@ struct NotchScreenshotShelfView: View {
                 NotchContrastPolicy.tertiaryTextOpacity(backgroundHex: backgroundHex))
     }
 
+    private var collapseForeground: Color { headingColor }
+    private var collapseHoverBackground: Color { rowHoverBackground }
+
     private var rowHoverBackground: Color {
         usesSemanticForeground
             ? .primary.opacity(0.08)
@@ -50,16 +56,29 @@ struct NotchScreenshotShelfView: View {
             // 제목을 누르면 시스템 스크린샷 저장 폴더를 Finder로 연다.
             // 경로는 `com.apple.screencapture location` 설정에서 오므로
             // 스크린샷을 한 장도 찍기 전에도 동작한다.
-            Button {
-                NotchShelfFolder.open(ScreenshotShelf.directory(), name: "Screenshots")
-            } label: {
-                header
+            HStack(spacing: 0) {
+                Button {
+                    NotchShelfFolder.open(ScreenshotShelf.directory(), name: "Screenshots")
+                } label: {
+                    header
+                }
+                .buttonStyle(.plain)
+                .onHover { isHeaderHovered = $0 }
+                .help("Open the screenshot folder in Finder")
+                .accessibilityLabel("Screenshots")
+                .accessibilityHint("Opens the screenshot folder in Finder")
+                Spacer(minLength: 4)
+                if let onCollapse {
+                    NotchCollapseButton(
+                        isVisible: isColumnHovered, foreground: collapseForeground,
+                        hoverBackground: collapseHoverBackground, action: onCollapse)
+                }
             }
-            .buttonStyle(.plain)
-            .onHover { isHeaderHovered = $0 }
-            .help("Open the screenshot folder in Finder")
-            .accessibilityLabel("Screenshots")
-            .accessibilityHint("Opens the screenshot folder in Finder")
+            .contextMenu {
+                if let onCollapse {
+                    Button("Collapse", action: onCollapse)
+                }
+            }
 
             if urls.isEmpty {
                 Text("No recent screenshots")
@@ -77,6 +96,7 @@ struct NotchScreenshotShelfView: View {
                 }
             }
         }
+        .onHover { isColumnHovered = $0 }
         .onAppear { refresh() }
         // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
         .onReceive(refreshTimer) { _ in

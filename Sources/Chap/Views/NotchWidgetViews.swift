@@ -840,3 +840,60 @@ enum NotchShelfFolder {
         NotificationCenter.default.post(name: openRequest, object: url, userInfo: ["name": name])
     }
 }
+
+/// 선반 제목 줄 오른쪽 끝의 접기 버튼. 칸에 마우스를 올렸을 때만 보인다.
+/// 누르면 칸이 도커 어깨(검정 띠 옆 밝은 띠)의 아이콘으로 접힌다.
+struct NotchCollapseButton: View {
+    let isVisible: Bool
+    let foreground: Color
+    let hoverBackground: Color
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.up")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundColor(foreground)
+                .frame(width: 18, height: DS.notchHeaderHeight)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                        .fill(isHovered ? hoverBackground : Color.clear)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .opacity(isVisible ? 1 : 0)
+        .help("Collapse")
+        .accessibilityLabel("Collapse")
+    }
+}
+
+/// 어깨에 놓인 접힌 칸 아이콘. 누르면 원래 자리에서 다시 펼쳐진다.
+struct NotchShoulderIcon: View {
+    let symbol: String
+    let title: String
+    let foreground: Color
+    let hoverBackground: Color
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(foreground)
+                .frame(width: NotchShoulderPolicy.iconPitch - 4, height: 22)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                        .fill(isHovered ? hoverBackground : Color.clear)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help("Show \(title)")
+        .accessibilityLabel("Show \(title)")
+    }
+}
