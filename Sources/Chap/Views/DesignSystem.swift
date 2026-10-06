@@ -49,7 +49,7 @@ enum DS {
     /// 목록 줄 이름(Sites·Finder·Downloads). 모든 목록이 같은 크기라 칸끼리 한 표처럼 읽힌다.
     static let notchRowName = Font.system(size: notchRowNameSize)
     static let notchRowNameSize: CGFloat = 12
-    /// 목록 줄 앞 아이콘 한 변. 줄 높이 26pt = 아이콘 16 + 위아래 5.
+    /// 목록 줄 앞 아이콘 한 변(Downloads 파일 아이콘). 줄 높이 26pt = 아이콘 16 + 위아래 5.
     static let notchRowIconSize: CGFloat = 16
     /// 섹션 제목·키캡.
     static let notchLabel = Font.system(size: 11, weight: .semibold)

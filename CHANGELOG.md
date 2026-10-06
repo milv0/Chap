@@ -7,10 +7,12 @@ All notable changes to Chap are documented in this file.
 ### Changed
 
 - **One row style** — Sites, Finder, and Downloads rows now share one look: a
-  small icon, a 12pt name, and the shortcut or age on the right. Finder rows
-  show each folder's own icon; Sites rows a small window icon.
-- **Tidy empty shelves** — An empty Screenshots or Downloads slot says so in one
-  short line and narrows to its title.
+  12pt name with the shortcut or age on the right. Icons appear only where they
+  tell rows apart (file icons in Downloads, app icons in Apps), not repeated
+  under a title that already has one.
+- **Tidy empty shelves** — With no screenshots, the Screenshots slot folds into
+  its strip icon on its own and comes back when you take one. An empty Downloads
+  slot says so in one short line and narrows to its title.
 - **Seal stays on the strip** — The seal now always rests on the left of the
   black strip and wags while Focus runs, so the strip is balanced on both sides.
   The Focus slot goes back to the bolt and the time left.

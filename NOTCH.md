@@ -147,10 +147,14 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 
 글자 크기: 목록 줄 이름 12pt(`DS.notchRowName`), 메모 본문 13pt(`DS.notchBody`), 제목·키캡 11pt semibold(`DS.notchLabel`),
 보조 정보 10pt medium(`DS.notchMeta`, 노치 최소 크기).
-**목록 줄 통일**: Sites·Finder·Downloads 줄은 모두 "16pt 아이콘(`DS.notchRowIconSize`) + 간격 6 + 12pt 이름 + 오른쪽 보조
-정보(키캡·받은 시각)"이고 높이 26pt(아이콘 16 + 위아래 5)다. Sites는 작은 창 기호(`macwindow`, 칸 제목과 같은 회색),
-Finder는 폴더의 실제 아이콘(`NSWorkspace`, 권한 없음, `AppIconLoader`로 비동기 캐시), Downloads는 파일 아이콘·썸네일.
-긴 이름은 가운데를 줄인다. 칸 폭은 `NotchTextMetrics.rowWidth`가 아이콘·키캡("⌥키" 폭)까지 재서 잡는다.
+**목록 줄 통일**: Sites·Finder·Downloads 줄은 모두 12pt 이름(`DS.notchRowName`) + 오른쪽 보조 정보(키캡·받은 시각),
+높이 26pt다. **줄 앞 아이콘은 줄마다 다른 정보를 줄 때만** 둔다: Downloads는 파일 아이콘·썸네일(16pt,
+`DS.notchRowIconSize`), Apps는 앱 아이콘 격자. Sites·Finder는 모든 줄이 같은 기호가 되고 칸 제목 아이콘과 겹치므로
+아이콘 없이 이름만 둔다. 긴 이름은 가운데를 줄인다. 칸 폭은 `NotchTextMetrics.rowWidth`가 키캡("⌥키" 폭)까지 재서 잡는다.
+**스크린샷 없음 → 저절로 접힘**: 스크린샷이 하나도 없으면 Screenshots 칸은 검정 띠 왼쪽 아이콘으로 저절로 접힌다
+(`ShelfAutoCollapsePolicy.collapsesScreenshots`, 저장하지 않음). 열려 있는 동안 2초마다 확인해 스크린샷이 생기면
+펼쳐진다. 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다. 마지막 확인값(`ScreenshotShelf.lastKnownEmpty`)으로 시작해
+열자마자 도커가 줄어드는 움직임이 없다.
 **빈 선반**: 다 읽은 뒤 비어 있으면 "No screenshots yet" / "No downloads yet"를 10pt 한 줄로 쓰고, 칸은 제목 + 폴더
 화살표 + 접기 버튼 폭으로 좁아진다(`emptyShelfWidth`). 파일이 생기면 원래 폭으로 돌아간다. 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
 목록·스크린샷 행은 26pt로 같아 가로로 줄이 맞는다. 스크린샷 행은 잘리는 파일명 대신 34×22pt 썸네일(왼쪽)과
