@@ -13,6 +13,13 @@ struct NotchWidgetPalette {
     let subtleSurface: Color
     /// 제목 아이콘 색 (연한 대표 블루). nil이면 제목 색을 쓴다.
     var icon: Color? = nil
+
+    /// 제목 아이콘 색만 바꾼 사본 (Focus가 켜지면 진한 블루).
+    func withIcon(_ color: Color) -> NotchWidgetPalette {
+        var copy = self
+        copy.icon = color
+        return copy
+    }
 }
 
 /// 위젯 칸 상단의 아이콘+제목 줄. 런처 섹션 제목과 같은 모양이다.
@@ -53,9 +60,14 @@ struct NotchFocusView: View {
     static let activateRequest = Notification.Name("ChapFocusActivate")
     static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
 
+    private var isActive: Bool { (sessionEnd ?? .distantPast) > Date() }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            NotchWidgetHeader(symbol: "bolt.fill", title: "Focus", palette: palette)
+            // 켜져 있으면 제목 번개가 진한 블루로 바뀐다(꺼짐은 다른 칸과 같은 연한 블루).
+            NotchWidgetHeader(
+                symbol: "bolt.fill", title: "Focus",
+                palette: isActive ? palette.withIcon(DS.accent) : palette)
             Group {
                 if let sessionEnd, sessionEnd > Date() {
                     active(until: sessionEnd)
@@ -63,8 +75,8 @@ struct NotchFocusView: View {
                     idle
                 }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: widgetBodyHeight)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: widgetBodyHeight, alignment: .top)
         }
         .onReceive(
             NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
@@ -73,72 +85,57 @@ struct NotchFocusView: View {
         }
     }
 
-    /// 꺼짐: 흐린 번개 + 한 줄 + 시간 버튼 셋. 물범은 검정 띠에 있다.
+    /// 꺼짐: 다른 목록 칸과 같은 줄 셋(1 Hour · 4 Hours · 8 Hours) + 맨 아래 한 줄 안내.
     private var idle: some View {
-        VStack(spacing: 6) {
-            Image(systemName: "bolt")
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundColor((palette.icon ?? palette.primary).opacity(0.7))
-            VStack(spacing: 1) {
-                Text(KeepAwakePolicy.focusIdleLine)
-                    .font(DS.notchLabel)
-                    .foregroundColor(palette.primary)
-                Text(KeepAwakePolicy.focusIdleHint)
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-            }
-            HStack(spacing: 5) {
-                ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
-                    FocusPresetButton(
-                        title: KeepAwakePolicy.shortTitle(of: preset), palette: palette
-                    ) {
-                        NotificationCenter.default.post(
-                            name: Self.activateRequest, object: preset.duration)
-                    }
-                    .help("Keep your Mac awake for \(preset.title.lowercased())")
+        VStack(alignment: .leading, spacing: 3) {
+            ForEach(KeepAwakePolicy.focusPresets, id: \.title) { preset in
+                FocusRowButton(title: preset.title, palette: palette) {
+                    NotificationCenter.default.post(
+                        name: Self.activateRequest, object: preset.duration)
                 }
+                .help("Keep your Mac awake for \(preset.title.lowercased())")
             }
+            Spacer(minLength: 0)
+            Text("\(KeepAwakePolicy.focusIdleLine) · \(KeepAwakePolicy.focusIdleHint)")
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 6)
         }
     }
 
-    /// 켜짐: 파란 번개(살짝 맥박) + 남은 시간 + 위트 한 줄 + 끄기. 띠 물범은 꼬리를 흔든다.
+    /// 켜짐: 큰 남은 시간 + 위트 한 줄 + 끄기 줄. 띠 물범은 꼬리를 흔든다.
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = end.timeIntervalSince(context.date)
-            VStack(spacing: 4) {
-                HStack(spacing: 5) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(DS.accent)
-                        .symbolEffect(.pulse, options: .repeating)
-                    Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(palette.primary)
-                }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(palette.primary)
+                    .padding(.horizontal, 6)
                 Text(KeepAwakePolicy.focusActiveLine(remaining: remaining))
                     .font(DS.notchMeta)
                     .foregroundColor(palette.secondary)
-                FocusPresetButton(
-                    title: KeepAwakePolicy.focusOffTitle, palette: palette, isQuiet: true
-                ) {
+                    .padding(.horizontal, 6)
+                Spacer(minLength: 0)
+                FocusRowButton(title: KeepAwakePolicy.focusOffTitle, palette: palette) {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 }
                 .help("Turn off Keep Mac Awake")
-                .padding(.top, 2)
             }
-            .accessibilityElement(children: .combine)
+            .accessibilityElement(children: .contain)
             .accessibilityLabel(
                 "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left")
         }
     }
 }
 
-/// Focus 위젯의 작은 캡슐 버튼.
-private struct FocusPresetButton: View {
+/// Focus 칸의 줄 버튼. 다른 목록 줄과 같은 12pt 이름, 26pt 높이, 호버 면.
+private struct FocusRowButton: View {
     let title: String
     let palette: NotchWidgetPalette
-    var isQuiet = false
     let action: () -> Void
 
     @State private var isHovered = false
@@ -146,20 +143,18 @@ private struct FocusPresetButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(DS.notchMeta.weight(.semibold))
-                .foregroundColor(
-                    isQuiet ? palette.secondary : (isHovered ? .white : palette.primary)
-                )
-                .padding(.horizontal, isQuiet ? 8 : 9)
-                .padding(.vertical, 3)
+                .font(DS.notchRowName)
+                .foregroundColor(palette.primary)
+                .shadow(color: .black.opacity(palette.textShadowOpacity), radius: 1.5, y: 0.5)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 5)
                 .background(
-                    Capsule(style: .continuous)
-                        .fill(
-                            isQuiet
-                                ? palette.subtleSurface
-                                : (isHovered ? DS.accent : palette.subtleSurface))
+                    RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                        .fill(isHovered ? palette.hoverBackground : Color.clear)
                 )
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }

@@ -174,8 +174,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
-| Downloads | 160pt (10pt 파일명, 20자 안팎) |
-| Focus | 150pt |
+| Downloads | 200pt (12pt 파일명, 20자 안팎) |
+| Focus | 112pt (목록 줄) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -223,9 +223,10 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
-- 꺼짐: 흐린 `bolt` + "Chap on" / "No sleep, no dimming." + 1h·4h·8h 캡슐 버튼(`focusPresets`, 호버 시 액센트).
-- 켜짐: 맥박치는 파란 `bolt.fill` + 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone →
-  Final stretch → Landing soon, `focusActiveLine`) + "Chap off"(끄기).
+- 다른 칸과 같은 왼쪽 정렬 목록이다. 큰 번개는 없고, 제목 번개가 켜지면 진한 블루(`DS.accent`)로 바뀐다.
+- 꺼짐: 목록 줄 셋 "1 Hour" · "4 Hours" · "8 Hours"(`focusPresets`, 12pt, 26pt 줄, 호버 면) + 맨 아래 10pt "Chap on · No sleep, no dimming.".
+- 켜짐: 20pt 남은 시간(h:mm:ss) + 남은 시간에 따른 한 줄(Fully charged → In the zone → Final stretch → Landing soon,
+  `focusActiveLine`) + 맨 아래 "Chap off" 줄(끄기).
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
 
