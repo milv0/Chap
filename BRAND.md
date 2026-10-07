@@ -38,6 +38,8 @@ tail (slower and drowsy in the last 30 minutes). That wag is the one steady
 motion Chap allows, because it means "I'm keeping your Mac awake". Floating,
 paddling, or staying under water were tried and cut: they read as a toy or hide
 the state. The Focus slot shows the bolt and the time left.
+When you check off a to-do, the seal flicks its tail once: a friend noticing,
+not a pet asking for attention.
 
 ## The name carries both meanings
 
