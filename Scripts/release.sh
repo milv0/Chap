@@ -380,6 +380,12 @@ replacements: list[tuple[Path, str, str, bool]] = [
      f"Chap {old} · macOS",
      f"Chap {new} · macOS",
      True),
+
+    # --- docs/index.html: header version badge ---
+    (Path("docs/index.html"),
+     f'<span class="brand-version">{old}</span>',
+     f'<span class="brand-version">{new}</span>',
+     True),
 ]
 
 # Pass 1: validate all targets before mutating any file.

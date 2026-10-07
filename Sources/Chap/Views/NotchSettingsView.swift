@@ -20,9 +20,8 @@ struct NotchSettingsView: View {
     }
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
-    private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .screenshots, .downloads, .awake,
-    ]
+    /// 끌어다 놓는 위젯. 선반(Screenshots·Downloads)은 고정 칸에서 켜고 끄기만 하므로 팔레트에 없다.
+    private static let paletteWidgets: [NotchWidget] = [.sites, .apps, .folders, .awake]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
     static var supportsLiquidGlass: Bool {
@@ -113,8 +112,8 @@ struct NotchSettingsView: View {
                         Section("Widgets") {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(
-                                    "Drag a widget into a slot. The first two slots hold Screenshots "
-                                        + "and Downloads, so a folded shelf and its slot sit on the same side."
+                                    "Drag a widget into slots 3–6. Screenshots and Downloads stay in "
+                                        + "the first two slots; click one to turn it on or off."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
@@ -122,11 +121,22 @@ struct NotchSettingsView: View {
                                 // 노치 패널의 6칸을 그대로 본뜬 드롭 보드. 앞 두 칸은 선반 전용으로 잠겨 있다.
                                 HStack(alignment: .bottom, spacing: 6) {
                                     ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
-                                        WidgetSlotBox(
-                                            index: index,
-                                            widget: slotWidget(index),
-                                            onAssign: { assign($0, to: index) },
-                                            onClear: { _ = assign(.none, to: index) })
+                                        if index < NotchWidget.shelfSlotCount {
+                                            let shelf = NotchWidget.shelfSlots[index]
+                                            ShelfSlotToggle(
+                                                index: index, shelf: shelf,
+                                                isOn: slotWidget(index) == shelf
+                                            ) {
+                                                vm.notchWidgets[index] =
+                                                    slotWidget(index) == shelf ? .none : shelf
+                                            }
+                                        } else {
+                                            WidgetSlotBox(
+                                                index: index,
+                                                widget: slotWidget(index),
+                                                onAssign: { assign($0, to: index) },
+                                                onClear: { _ = assign(.none, to: index) })
+                                        }
                                     }
                                 }
                                 // 선반 칸과 위젯 칸 그룹 라벨.
@@ -308,6 +318,62 @@ struct NotchSettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.surfaceBg)
+    }
+}
+
+/// 고정 선반 칸. 끌어 옮기거나 다른 위젯을 놓을 수 없고, 누르면 켜고 끈다.
+private struct ShelfSlotToggle: View {
+    let index: Int
+    let shelf: NotchWidget
+    let isOn: Bool
+    let toggle: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: toggle) {
+            VStack(spacing: 5) {
+                Image(systemName: NotchSettingsView.widgetSymbol(shelf))
+                    .font(.system(size: 16))
+                    .foregroundColor(isOn ? DS.accent : DS.textTertiary)
+                Text(NotchSettingsView.widgetName(shelf))
+                    .font(DS.captionFont)
+                    .foregroundColor(isOn ? DS.textPrimary : DS.textTertiary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(isOn ? "On" : "Off")
+                    .font(.caption2)
+                    .foregroundColor(isOn ? DS.accent : DS.textTertiary)
+            }
+            .padding(.horizontal, 3)
+            .frame(width: 76, height: 64)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isOn ? DS.accentSoft : (isHovered ? DS.border.opacity(0.25) : .clear))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .strokeBorder(
+                        DS.border, style: StrokeStyle(lineWidth: 1, dash: isOn ? [] : [4, 3]))
+            )
+            .overlay(alignment: .topTrailing) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 8))
+                    .foregroundColor(DS.textTertiary)
+                    .padding(4)
+                    .accessibilityHidden(true)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(
+            "\(NotchSettingsView.widgetName(shelf)) always sits in slot \(index + 1). "
+                + "Click to turn it \(isOn ? "off" : "on")."
+        )
+        .accessibilityLabel("\(NotchSettingsView.widgetName(shelf)) shelf, slot \(index + 1)")
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityAddTraits(.isToggle)
     }
 }
 

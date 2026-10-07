@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.7.2] — 2026-10-07
+
+### Changed
+
+- **Fixed shelf slots** — Screenshots always sits in slot 1 and Downloads in slot 2.
+  In Settings → Notch they can no longer be dragged or swapped; click either to
+  turn it on or off. The other four slots work as before.
+- **Website demo** — The homepage notch demo now shows Chap the Seal on the strip
+  and a working Focus ring, in the app's slot order.
+
 ## [2.7.1] — 2026-10-06
 
 ### Changed

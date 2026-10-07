@@ -116,7 +116,7 @@
     .drop-badge-icon svg { display: block; height: 100%; width: 100%; }
     .drop-count { background: var(--blue); border-radius: 999px; color: white; font-size: max(7px, calc(8 * var(--pt))); font-weight: 700; left: 100%; line-height: 1.25; padding: 0 calc(3.5 * var(--pt)); position: absolute; top: 0; transform: translate(-40%, -45%); }
 
-    .notch-dock { color: var(--mac-primary); left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.4); transform-origin: top center; transition: opacity 180ms ease, transform 180ms ease; width: calc(728 * var(--pt)); z-index: 10; }
+    .notch-dock { color: var(--mac-primary); left: 50%; opacity: 0; pointer-events: none; position: absolute; top: 0; transform: translateX(-50%) scaleY(.4); transform-origin: top center; transition: opacity 180ms ease, transform 180ms ease; width: calc(800 * var(--pt)); z-index: 10; }
     .mac-stage.demo-open .notch-dock { opacity: 1; pointer-events: auto; transform: translateX(-50%) scaleY(1); transition: opacity 120ms ease, transform 300ms cubic-bezier(.2,.9,.22,1.08); }
     .notch-dock::before, .notch-dock::after { backdrop-filter: blur(22px) saturate(180%); background: var(--glass); content: ""; height: calc(10 * var(--pt)); position: absolute; top: 0; width: calc(10 * var(--pt)); }
     .notch-dock::before { left: 0; -webkit-mask: radial-gradient(circle calc(10 * var(--pt)) at 0 100%, transparent 97%, #000 100%); mask: radial-gradient(circle calc(10 * var(--pt)) at 0 100%, transparent 97%, #000 100%); }
@@ -128,7 +128,34 @@
     .dock-awake svg { color: var(--blue); flex: none; height: max(8px, calc(12 * var(--pt))); width: max(8px, calc(12 * var(--pt))); }
     /* Chap 2.5.1+: the notch strip no longer shows the Focus countdown (it lives in the Focus slot). */
     .dock-awake { display: none; }
-    .dock-columns { display: grid; gap: calc(16 * var(--pt)); grid-template-columns: repeat(4, calc(160 * var(--pt))); }
+    /* Chap the Seal: the 24x12 pixel mascot on the strip's left, 1.5pt per pixel, like the app. */
+    .dock-seal { height: calc(18 * var(--pt)); image-rendering: pixelated; left: calc(149.5 * var(--pt)); position: absolute; top: calc(7 * var(--pt)); width: calc(36 * var(--pt)); z-index: 3; }
+    .dock-seal .tail-up { display: none; }
+    .mac-stage.awake-on.demo-open .dock-seal .tail-rest { animation: seal-wag-rest .8s steps(1) infinite; }
+    .mac-stage.awake-on.demo-open .dock-seal .tail-up { animation: seal-wag-up .8s steps(1) infinite; display: inline; }
+    @keyframes seal-wag-rest { 0% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes seal-wag-up { 0% { opacity: 0; } 50% { opacity: 1; } }
+    .focus-section { align-items: center; }
+    .focus-section .dock-heading { align-self: stretch; }
+    .focus-ring { --ring: calc(80 * var(--pt)); align-items: center; background: transparent; border: 0; border-radius: 50%; color: inherit; cursor: pointer; display: grid; height: var(--ring); justify-items: center; margin-top: calc(4 * var(--pt)); padding: 0; position: relative; width: var(--ring); }
+    .focus-ring svg.ring { height: 100%; left: 0; position: absolute; top: 0; transform: rotate(-90deg); width: 100%; }
+    .focus-ring .track { fill: none; stroke: rgb(0 0 0 / .12); stroke-width: 5; }
+    .focus-ring .fill { fill: none; stroke: var(--blue); stroke-linecap: round; stroke-width: 5; transition: stroke-dashoffset 1s linear; }
+    .focus-ring:hover .track { stroke: rgb(54 100 255 / .55); }
+    .mac-stage.awake-on .focus-ring:hover .track { stroke: rgb(0 0 0 / .12); }
+    .focus-center { display: grid; font-weight: 600; gap: calc(3 * var(--pt)); justify-items: center; position: relative; }
+    .focus-center svg { color: var(--blue); height: calc(17 * var(--pt)); width: calc(17 * var(--pt)); }
+    .focus-center .on-label { font-size: max(9px, calc(12 * var(--pt))); }
+    .focus-center .time { font-size: max(10px, calc(15 * var(--pt))); font-variant-numeric: tabular-nums; }
+    .focus-center .off-label { display: none; font-size: max(9px, calc(12 * var(--pt))); }
+    .mac-stage:not(.awake-on) .focus-center .time, .mac-stage.awake-on .focus-center .idle { display: none; }
+    .mac-stage.awake-on .focus-ring:hover .time { display: none; }
+    .mac-stage.awake-on .focus-ring:hover .off-label { display: block; }
+    .focus-chips { display: flex; gap: calc(4 * var(--pt)); margin-top: calc(7 * var(--pt)); }
+    .mac-stage.awake-on .focus-chips { visibility: hidden; }
+    .focus-chip { background: rgb(0 0 0 / .08); border: 1px solid transparent; border-radius: 999px; color: var(--mac-secondary); cursor: pointer; font: 600 max(8px, calc(10 * var(--pt)))/1 var(--mac-font); height: calc(18 * var(--pt)); padding: 0; width: calc(30 * var(--pt)); }
+    .focus-chip[aria-pressed="true"] { background: rgb(54 100 255 / .14); border-color: rgb(54 100 255 / .7); color: var(--blue); }
+    .dock-columns { display: grid; gap: calc(28 * var(--pt)); grid-template-columns: calc(150 * var(--pt)) calc(116 * var(--pt)) repeat(3, calc(120 * var(--pt))); }
     .dock-section { display: flex; flex-direction: column; gap: calc(3 * var(--pt)); min-width: 0; }
     .dock-heading { align-items: center; color: var(--mac-secondary); display: flex; font-size: max(9px, calc(11 * var(--pt))); font-weight: 600; gap: calc(5 * var(--pt)); line-height: 1.25; padding: 0 calc(6 * var(--pt)) calc(1 * var(--pt)); white-space: nowrap; }
     .dock-heading svg { color: var(--blue); flex: none; height: 1em; width: 1em; }
@@ -415,7 +442,7 @@
     <nav class="shell nav" aria-label="Main navigation">
       <a class="brand" href="/Chap/" aria-label="Chap home">
         <img src="assets/chap-icon-rounded.png" alt="" width="32" height="32">
-        <span>Chap</span><span class="brand-version">2.0</span>
+        <span>Chap</span><span class="brand-version">2.7.2</span>
       </a>
       <div class="nav-links">
         <a class="nav-link" href="#features">Features</a>
@@ -433,11 +460,11 @@
           <h1 id="hero-title"><span class="hero-line-muted">Open anything.</span><span class="hero-line-bright"><span class="chap-word">Chap.</span> Centered.</span></h1>
           <p class="hero-summary">Press an Option shortcut or hover the notch. Your site, app, or folder opens — and <em>chap</em>, the window snaps to the center of your display at exactly the size you chose. Screenshots, dropped files, and Keep Awake live one hover away.</p>
           <div class="hero-actions">
-            <a class="button-primary" href="https://github.com/milv0/Chap/releases/download/v2.7.1/Chap-2.7.1-50.pkg" rel="noreferrer">
+            <a class="button-primary" href="https://github.com/milv0/Chap/releases/download/v2.7.2/Chap-2.7.2-51.pkg" rel="noreferrer">
               Install Chap
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15 7.5 10.5M5 20h14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
             </a>
-            <a class="button-secondary" href="https://github.com/milv0/Chap/releases/download/v2.7.1/Chap-2.7.1-50.dmg" rel="noreferrer">Manual install · DMG</a>
+            <a class="button-secondary" href="https://github.com/milv0/Chap/releases/download/v2.7.2/Chap-2.7.2-51.dmg" rel="noreferrer">Manual install · DMG</a>
           </div>
           <p class="hero-note">Apple notarized · macOS 14+ · Glass requires macOS 26+</p>
         </div>
@@ -505,6 +532,7 @@
           <div class="notch-dock" id="notch-dock-demo" data-dock role="group" aria-label="Chap notch launcher" inert>
             <div class="dock-body">
               <svg class="dock-cap" viewBox="0 0 708 32" preserveAspectRatio="none" aria-hidden="true"><path d="M61.5 0H646.5C606 0 596 32 556.5 32H151.5C112 32 102 0 61.5 0Z"/></svg>
+              <svg class="dock-seal" viewBox="0 0 24 12" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="0" width="1" height="1" fill="#161A30"/><rect x="6" y="0" width="1" height="1" fill="#161A30"/><rect x="7" y="0" width="1" height="1" fill="#161A30"/><rect x="8" y="0" width="1" height="1" fill="#161A30"/><rect x="4" y="1" width="1" height="1" fill="#161A30"/><rect x="5" y="1" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="1" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="1" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="1" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="1" width="1" height="1" fill="#161A30"/><rect x="10" y="1" width="1" height="1" fill="#161A30"/><rect x="3" y="2" width="1" height="1" fill="#161A30"/><rect x="4" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="2" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="2" width="1" height="1" fill="#161A30"/><rect x="2" y="3" width="1" height="1" fill="#161A30"/><rect x="3" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="3" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="3" width="1" height="1" fill="#161A30"/><rect x="13" y="3" width="1" height="1" fill="#161A30"/><rect x="14" y="3" width="1" height="1" fill="#161A30"/><rect x="15" y="3" width="1" height="1" fill="#161A30"/><rect x="2" y="4" width="1" height="1" fill="#161A30"/><rect x="3" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="4" width="1" height="1" fill="#161A30"/><rect x="5" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="4" width="1" height="1" fill="#161A30"/><rect x="8" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="4" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="4" width="1" height="1" fill="#161A30"/><rect x="17" y="4" width="1" height="1" fill="#161A30"/><rect x="2" y="5" width="1" height="1" fill="#161A30"/><rect x="3" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="17" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="2" y="6" width="1" height="1" fill="#161A30"/><rect x="3" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="6" width="1" height="1" fill="#161A30"/><rect x="6" y="6" width="1" height="1" fill="#161A30"/><rect x="7" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="17" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="1" y="7" width="1" height="1" fill="#161A30"/><rect x="2" y="7" width="1" height="1" fill="#B0BED8"/><rect x="3" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="4" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="17" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="0" y="8" width="1" height="1" fill="#161A30"/><rect x="1" y="8" width="1" height="1" fill="#B0BED8"/><rect x="2" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="3" y="8" width="1" height="1" fill="#B0BED8"/><rect x="4" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="5" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="6" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="7" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="8" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="17" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="0" y="9" width="1" height="1" fill="#161A30"/><rect x="1" y="9" width="1" height="1" fill="#B0BED8"/><rect x="2" y="9" width="1" height="1" fill="#B0BED8"/><rect x="3" y="9" width="1" height="1" fill="#161A30"/><rect x="4" y="9" width="1" height="1" fill="#161A30"/><rect x="5" y="9" width="1" height="1" fill="#B0BED8"/><rect x="6" y="9" width="1" height="1" fill="#B0BED8"/><rect x="7" y="9" width="1" height="1" fill="#B0BED8"/><rect x="8" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="9" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="10" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="11" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="12" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="13" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="14" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="15" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="16" y="9" width="1" height="1" fill="#B0BED8"/><rect x="17" y="9" width="1" height="1" fill="#B0BED8"/><rect x="1" y="10" width="1" height="1" fill="#161A30"/><rect x="2" y="10" width="1" height="1" fill="#161A30"/><rect x="5" y="10" width="1" height="1" fill="#161A30"/><rect x="6" y="10" width="1" height="1" fill="#161A30"/><rect x="7" y="10" width="1" height="1" fill="#B0BED8"/><rect x="8" y="10" width="1" height="1" fill="#B0BED8"/><rect x="9" y="10" width="1" height="1" fill="#B0BED8"/><rect x="10" y="10" width="1" height="1" fill="#B0BED8"/><rect x="11" y="10" width="1" height="1" fill="#B0BED8"/><rect x="12" y="10" width="1" height="1" fill="#B0BED8"/><rect x="13" y="10" width="1" height="1" fill="#B0BED8"/><rect x="14" y="10" width="1" height="1" fill="#B0BED8"/><rect x="15" y="10" width="1" height="1" fill="#B0BED8"/><rect x="16" y="10" width="1" height="1" fill="#161A30"/><rect x="17" y="10" width="1" height="1" fill="#161A30"/><rect x="7" y="11" width="1" height="1" fill="#161A30"/><rect x="8" y="11" width="1" height="1" fill="#161A30"/><rect x="9" y="11" width="1" height="1" fill="#161A30"/><rect x="10" y="11" width="1" height="1" fill="#161A30"/><rect x="11" y="11" width="1" height="1" fill="#161A30"/><rect x="12" y="11" width="1" height="1" fill="#161A30"/><rect x="13" y="11" width="1" height="1" fill="#161A30"/><rect x="14" y="11" width="1" height="1" fill="#161A30"/><rect x="15" y="11" width="1" height="1" fill="#161A30"/><g class="tail-rest"><rect x="18" y="5" width="1" height="1" fill="#161A30"/><rect x="18" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="6" width="1" height="1" fill="#161A30"/><rect x="22" y="6" width="1" height="1" fill="#161A30"/><rect x="23" y="6" width="1" height="1" fill="#161A30"/><rect x="18" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="20" y="7" width="1" height="1" fill="#161A30"/><rect x="21" y="7" width="1" height="1" fill="#161A30"/><rect x="22" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="23" y="7" width="1" height="1" fill="#161A30"/><rect x="18" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="20" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="21" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="22" y="8" width="1" height="1" fill="#161A30"/><rect x="18" y="9" width="1" height="1" fill="#B0BED8"/><rect x="19" y="9" width="1" height="1" fill="#B0BED8"/><rect x="20" y="9" width="1" height="1" fill="#B0BED8"/><rect x="21" y="9" width="1" height="1" fill="#B0BED8"/><rect x="22" y="9" width="1" height="1" fill="#FFFFFF"/><rect x="23" y="9" width="1" height="1" fill="#161A30"/><rect x="18" y="10" width="1" height="1" fill="#161A30"/><rect x="19" y="10" width="1" height="1" fill="#161A30"/><rect x="20" y="10" width="1" height="1" fill="#161A30"/><rect x="21" y="10" width="1" height="1" fill="#161A30"/><rect x="22" y="10" width="1" height="1" fill="#161A30"/></g><g class="tail-up"><rect x="21" y="4" width="1" height="1" fill="#161A30"/><rect x="22" y="4" width="1" height="1" fill="#161A30"/><rect x="18" y="5" width="1" height="1" fill="#161A30"/><rect x="20" y="5" width="1" height="1" fill="#161A30"/><rect x="21" y="5" width="1" height="1" fill="#FFFFFF"/><rect x="22" y="5" width="1" height="1" fill="#161A30"/><rect x="18" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="6" width="1" height="1" fill="#161A30"/><rect x="20" y="6" width="1" height="1" fill="#161A30"/><rect x="21" y="6" width="1" height="1" fill="#FFFFFF"/><rect x="22" y="6" width="1" height="1" fill="#161A30"/><rect x="18" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="20" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="21" y="7" width="1" height="1" fill="#FFFFFF"/><rect x="22" y="7" width="1" height="1" fill="#161A30"/><rect x="18" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="19" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="20" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="21" y="8" width="1" height="1" fill="#FFFFFF"/><rect x="22" y="8" width="1" height="1" fill="#161A30"/><rect x="18" y="9" width="1" height="1" fill="#B0BED8"/><rect x="19" y="9" width="1" height="1" fill="#B0BED8"/><rect x="20" y="9" width="1" height="1" fill="#B0BED8"/><rect x="21" y="9" width="1" height="1" fill="#B0BED8"/><rect x="22" y="9" width="1" height="1" fill="#B0BED8"/><rect x="23" y="9" width="1" height="1" fill="#161A30"/><rect x="18" y="10" width="1" height="1" fill="#161A30"/><rect x="19" y="10" width="1" height="1" fill="#161A30"/><rect x="20" y="10" width="1" height="1" fill="#161A30"/><rect x="21" y="10" width="1" height="1" fill="#161A30"/><rect x="22" y="10" width="1" height="1" fill="#161A30"/></g></svg>
               <div class="dock-awake" data-dock-awake><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M3 5h11v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V5Zm11 1.5h1.2a2.6 2.6 0 0 1 0 5.2H13.6ZM2 16.5h13v1.4H2Z"/></svg><span data-awake-clock>3:59:59</span></div>
               <div class="dock-columns">
                 <div class="dock-section" role="group" aria-label="Screenshots">
@@ -513,6 +541,11 @@
                   <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.38.17 AM.png" data-kind="screenshot"><span class="shot-thumb shot-b" aria-hidden="true"></span><span class="dock-label">Screensh…17 AM.png</span></button>
                   <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.30.44 AM.png" data-kind="screenshot"><span class="shot-thumb shot-c" aria-hidden="true"></span><span class="dock-label">Screensh…44 AM.png</span></button>
                   <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.12.09 AM.png" data-kind="screenshot"><span class="shot-thumb shot-d" aria-hidden="true"></span><span class="dock-label">Screensh…09 AM.png</span></button>
+                </div>
+                <div class="dock-section focus-section" role="group" aria-label="Focus">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M11.6 1.5 4 11h5l-1.4 7.5L16 9h-5.2l.8-7.5Z"/></svg>Focus</div>
+                  <button class="focus-ring" type="button" data-focus-ring aria-label="Chap on"><svg class="ring" viewBox="0 0 80 80" aria-hidden="true"><circle class="track" cx="40" cy="40" r="37.5"/><circle class="fill" data-focus-fill cx="40" cy="40" r="37.5" stroke-dasharray="235.6" stroke-dashoffset="235.6"/></svg><span class="focus-center"><span class="idle"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M11.6 1.5 4 11h5l-1.4 7.5L16 9h-5.2l.8-7.5Z"/></svg></span><span class="idle on-label">Chap on</span><span class="time" data-focus-time>4:00:00</span><span class="off-label">Chap off</span></span></button>
+                  <div class="focus-chips" role="group" aria-label="Focus length"><button class="focus-chip" type="button" data-focus-minutes="60" aria-pressed="false">1h</button><button class="focus-chip" type="button" data-focus-minutes="240" aria-pressed="true">4h</button><button class="focus-chip" type="button" data-focus-minutes="480" aria-pressed="false">8h</button></div>
                 </div>
                 <div class="dock-section" role="group" aria-label="Apps">
                   <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Apps</div>
@@ -629,13 +662,14 @@
     </section>
   </main>
 
-  <footer class="footer"><div class="shell footer-inner"><span>Chap 2.7.1 · macOS</span><div class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer">GitHub</a><a href="https://github.com/milv0/Chap#license" rel="noreferrer">MIT License</a></div></div></footer>
+  <footer class="footer"><div class="shell footer-inner"><span>Chap 2.7.2 · macOS</span><div class="footer-links"><a href="https://github.com/milv0/Chap" rel="noreferrer">GitHub</a><a href="https://github.com/milv0/Chap#license" rel="noreferrer">MIT License</a></div></div></footer>
 
   <script>
     (() => {
       const stage = document.querySelector("[data-notch-demo]");
       if (!stage) return;
       const $ = (selector) => stage.querySelector(selector);
+      const $$ = (selector) => [...stage.querySelectorAll(selector)];
       const notch = $("[data-notch]");
       const dock = $("[data-dock]");
       const badge = $("[data-drop-badge]");
@@ -648,6 +682,9 @@
       const awakeOffSep = $("[data-awake-off-sep]");
       const awakeTitle = $("[data-awake-title]");
       const awakeClock = $("[data-awake-clock]");
+      const focusRing = $("[data-focus-ring]");
+      const focusFill = $("[data-focus-fill]");
+      const focusTime = $("[data-focus-time]");
       const dropSection = $("[data-drop-section]");
       const dropRow = $("[data-drop-row]");
       const dropOverlay = $("[data-drop-overlay]");
@@ -663,6 +700,8 @@
       let dragDepth = 0;
       let dragLeaveTimer = null;
       let awakeEnd = Date.now() + 4 * 3600 * 1000;
+      let awakeLength = 4 * 3600;
+      let focusPick = 240;
       const dropFiles = [];
 
       const showToast = (message) => {
@@ -723,6 +762,11 @@
         if (awakeEnd && seconds === 0) { awakeEnd = null; showToast("Keep Awake Off"); }
         stage.classList.toggle("awake-on", Boolean(awakeEnd));
         awakeClock.textContent = `${Math.floor(seconds / 3600)}:${pad(Math.floor((seconds % 3600) / 60))}:${pad(seconds % 60)}`;
+        // Focus ring mirrors the app: the blue arc is the share of time left; the center shows h:mm:ss.
+        focusTime.textContent = awakeClock.textContent;
+        const share = awakeEnd ? Math.min(1, seconds / awakeLength) : 0;
+        focusFill.style.strokeDashoffset = String(235.6 * (1 - share));
+        focusRing.setAttribute("aria-label", awakeEnd ? `Focus on, ${awakeClock.textContent} left. Press to turn off.` : "Chap on");
         menuClock.textContent = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date()).replace(/,/g, "");
         if (!statusMenu.hidden) updateAwakeMenu();
       };
@@ -1082,10 +1126,30 @@
       awakeMenu.querySelectorAll("[data-awake-minutes]").forEach((preset) => {
         preset.addEventListener("click", () => {
           awakeEnd = Date.now() + Number(preset.dataset.awakeMinutes) * 60 * 1000;
+          awakeLength = Number(preset.dataset.awakeMinutes) * 60;
           setStatusMenu(false);
           tick();
           showToast(`Keep Awake · ${preset.textContent}`);
           statusButton.focus({ preventScroll: true });
+        });
+      });
+      focusRing.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (awakeEnd) {
+          awakeEnd = null;
+          showToast("Chap off");
+        } else {
+          awakeEnd = Date.now() + focusPick * 60 * 1000;
+          awakeLength = focusPick * 60;
+          showToast(`Chap on · ${focusPick / 60}h`);
+        }
+        tick();
+      });
+      $$("[data-focus-minutes]").forEach((chip) => {
+        chip.addEventListener("click", (event) => {
+          event.stopPropagation();
+          focusPick = Number(chip.dataset.focusMinutes);
+          $$("[data-focus-minutes]").forEach((other) => other.setAttribute("aria-pressed", String(other === chip)));
         });
       });
       awakeOff.addEventListener("click", () => {
