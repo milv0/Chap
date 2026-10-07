@@ -297,10 +297,10 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 (`TodoStore`, `~/Library/Application Support/Chap/Todos.json`, 권한·동기화 없음, 설정 Export/Import에 안 섞임).
 
 - 줄: 다른 목록과 같은 26pt, 16pt 체크 동그라미(완료는 블루 `checkmark.circle.fill`) + 12pt 문구(`DS.notchRowName`).
-  완료 항목은 보조색 + 취소선. 한 번에 4줄, 나머지는 스크롤(`NotchShelfScrollList`, 스크롤바 없음).
+  완료 항목은 보조색 + 취소선. 최대 4개(`maxItems`)라 항목 + 추가 줄이 늘 4줄 이하로, 스크롤 없이 목록 칸 높이(113pt)에 맞는다.
 - 추가: 맨 아래 "＋ Add a to-do"(항목이 있으면 "＋ Add") 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
   항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
-  문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 20개(`maxItems`)가 차면 추가 줄을 숨긴다.
+  문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 4개가 차면 추가 줄을 숨기고, 완료 항목을 지우면(Clear Completed·Delete) 다시 보인다.
 - 완료: 동그라미를 누르면 체크·취소선, 0.6초 뒤 완료 항목이 아래로 내려간다(`ordered`: 할 일은 넣은 순, 완료는 완료한 순).
 - 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제), 우클릭에 Mark Done/Edit/Delete. 제목 우클릭 → Clear Completed.
 - 제목 옆 10pt 숫자는 남은 할 일 수다(열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다).

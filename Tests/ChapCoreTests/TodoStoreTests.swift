@@ -16,17 +16,21 @@ struct TodoStoreTests {
         #expect(TodoStore.cleanedTitle(long)?.count == TodoStore.maxTitleLength)
     }
 
-    @Test("adding appends, ignores blanks, and stops at twenty items")
+    @Test("adding appends, ignores blanks, and stops at four items")
     func adding() {
         var items: [TodoItem] = []
         items = TodoStore.adding("One", to: items, now: start)
         items = TodoStore.adding("  ", to: items, now: start)
         #expect(items.map(\.title) == ["One"])
-        for index in 0..<30 {
+        for index in 0..<10 {
             items = TodoStore.adding("Item \(index)", to: items, now: start)
         }
-        #expect(items.count == TodoStore.maxItems)
+        #expect(TodoStore.maxItems == 4)
+        #expect(items.count == 4)
         #expect(!TodoStore.canAdd(items))
+        // 완료 항목을 지우면 다시 더할 수 있다.
+        let done = TodoStore.toggling(items[0].id, in: items)
+        #expect(TodoStore.canAdd(TodoStore.clearingCompleted(done)))
     }
 
     @Test("toggling marks done with a time and back again")

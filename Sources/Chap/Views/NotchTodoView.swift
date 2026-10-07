@@ -5,6 +5,7 @@ import SwiftUI
 ///   다른 앱으로 가면 입력이 끝나며 쓴 내용이 저장된다(Quick Note와 같은 규칙).
 /// - 완료: 동그라미를 누르면 체크·취소선, 잠시 뒤 목록 아래로 내려간다.
 /// - 수정·삭제: 문구를 더블클릭해 고치고, 우클릭으로 지운다. 제목 우클릭 → Clear Completed.
+/// 최대 4개라 스크롤 없이 한눈에 보이고, 꽉 차면 추가 줄이 사라진다(완료 항목을 지우면 다시 생긴다).
 /// 저장은 `TodoStore`(Chap 안에만, 권한 없음)이며 바뀔 때마다 직렬 큐로 바로 쓴다.
 struct NotchTodoView: View {
     let palette: NotchWidgetPalette
@@ -34,10 +35,8 @@ struct NotchTodoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             header
-            NotchShelfScrollList(
-                itemCount: items.count + (TodoStore.canAdd(items) ? 1 : 0),
-                visibleRows: TodoStore.visibleRows
-            ) {
+            // 항목과 추가 줄을 합쳐도 4줄을 넘지 않아 스크롤 없이 다른 목록 칸과 높이가 같다.
+            VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
                 ForEach(items) { item in
                     row(item)
                 }
@@ -45,6 +44,7 @@ struct NotchTodoView: View {
                     addRow
                 }
             }
+            .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
         }
         .onAppear(perform: load)
         // 칸 밖(노치 안 다른 곳)을 누르면 입력을 끝낸다. 패널이 key를 잃으면 점 없이 온다.

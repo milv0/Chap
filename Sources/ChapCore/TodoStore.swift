@@ -21,11 +21,12 @@ public struct TodoItem: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
-/// 노치 할 일 목록의 규칙과 저장소. Chap 안에만 저장하고(권한 없음, 동기화 없음) 설정 Export/Import에
+/// 노치 할 일 목록의 규칙과 저장소. 최대 4개. Chap 안에만 저장하고(권한 없음, 동기화 없음) 설정 Export/Import에
 /// 섞이지 않는다. 위치: `~/Library/Application Support/Chap/Todos.json`.
 public struct TodoStore: Sendable {
-    /// 담을 수 있는 최대 항목 수. 노치 한 칸을 짧게 유지한다.
-    public static let maxItems = 20
+    /// 담을 수 있는 최대 항목 수. 다른 목록 칸과 같은 4줄이라 스크롤 없이 한눈에 보인다.
+    /// 꽉 차면 추가 줄이 사라지고, 완료 항목을 지우면 다시 생긴다.
+    public static let maxItems = 4
     /// 한 항목 문구의 최대 길이(문자).
     public static let maxTitleLength = 200
     /// 스크롤 없이 보이는 줄 수. 다른 목록 칸과 같은 4줄.

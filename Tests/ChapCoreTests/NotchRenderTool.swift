@@ -46,7 +46,7 @@ struct NotchRenderTool {
         let previewSlots = NotchSlotContent.slots(widgets: previewWidgets, sites: config.sites)
         // 할 일 칸 미리보기: 마지막 위젯 칸을 To-do로 바꾼다 (설정 파일은 바꾸지 않는다).
         var todoWidgets = previewWidgets
-        todoWidgets[NotchWidget.slotCount - 1] = .todo
+        if !todoWidgets.contains(.todo) { todoWidgets[NotchWidget.slotCount - 1] = .todo }
         let todoSlots = NotchSlotContent.slots(widgets: todoWidgets, sites: config.sites)
         let now = Date()
         NotchTodoView.previewItems = [
