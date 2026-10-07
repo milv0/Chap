@@ -118,7 +118,7 @@ struct NotchLauncherPanelView: View {
     static let columnWidth: CGFloat = 160
     /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Focus를 줄여 생긴 폭을 여기 쓴다).
     static let downloadsColumnWidth: CGFloat = 200
-    /// Focus 칸 폭. 80pt 링과 아래 길이 칩 셋(1h·4h·8h)이 들어간다.
+    /// Focus 칸 폭. 104pt 다이얼이 들어간다.
     static let focusColumnWidth: CGFloat = 116
     /// 할 일 칸 폭. 12pt 문구가 20자 안팎까지 보인다.
     static let todoColumnWidth: CGFloat = 170

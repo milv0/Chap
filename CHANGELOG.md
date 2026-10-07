@@ -6,6 +6,10 @@ All notable changes to Chap are documented in this file.
 
 ### Added
 
+- **Focus dial** — Focus is now a dial: a long arc with a flat, open bottom.
+  Drag around it to set 1 to 12 hours (Chap remembers your last setting) and click
+  the center to start. While Focus runs, the same arc winds down with the time left;
+  click the center to stop.
 - **To-do slot** — A short checklist for the notch. Place it in slot 3–6, click
   Add and type, press Enter to add the next one, and click a circle to check it
   off; finished items stay in place, checked, until you clear them. Double-click to edit;

@@ -239,13 +239,17 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
-- 켜고 끄는 모습이 같은 **하나의 링**이다(지름 80pt, 두께 5pt, `FocusRing`, 칸 폭 116pt). 링 전체가 버튼이다.
-- 꺼짐: 빈 링(본문색 12%) 가운데 블루 번개와 "Chap on". 마우스를 올리면 링이 연한 블루로 차오르고, 누르면
-  `FocusPressStyle`로 눌렸다 튀어 오르며 트랙패드 햅틱(`.levelChange`, 권한 없음)이 온다. 링 아래에 길이 칩 1h·4h·8h
-  (30×18pt 캡슐, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`에 기억, 기본 1h).
-- 켜짐: 같은 링이 남은 비율만큼 블루 호로 12시 방향부터 차 있다가 1초마다 줄어든다(`focusProgress`, 길이를 모르면
-  `inferredFocusDuration`). 가운데 15pt 남은 시간(h:mm:ss). 링 아래 문구는 두지 않는다(링과 숫자로 충분하다). 마우스를 올리면 가운데가
-  "Chap off"로 바뀌고, 누르면 끈다.
+- 켜고 끄는 모습이 같은 **다이얼**이다(`FocusDial`, 104×92pt, 칸 폭 116pt). 반원보다 긴 240° 호가 위를 감싸고
+  아래 120°는 평평하게 열려 있다(`focusDialSweep`). 눈금은 0~12시간 하나(`focusDialFraction`), 3·6·9시간에 점, 양 끝
+  아래에 "0"과 "12h".
+- 꺼짐: 호(테두리 띠)를 끌면 1시간 단위(1~12시간, `focusDialHours(dx:dy:)`, 아래 빈 곳은 가까운 끝)로 맞추고, 한 칸
+  넘어갈 때마다 트랙패드가 똑(`.alignment`) 한다. 고른 시간까지 블루 호 + 흰 손잡이, 가운데 20pt "4h"와 "⚡ Chap on"
+  캡슐. 가운데를 누르면 `FocusPressStyle`로 눌렸다 튀어 오르며 햅틱(`.levelChange`)과 함께 켠다. 마지막 시간은
+  `ChapFocusPresetDuration`에 기억(기본 1시간). VoiceOver는 조절 동작(올리기·내리기)으로 바꾼다.
+- 켜짐: 같은 눈금에서 남은 시간까지 블루 호가 1초마다 줄어든다(주방 타이머처럼, 끌 수 없음). 가운데 15pt 남은 시간과
+  "Chap off" 캡슐(마우스를 올리면 빨강). 가운데를 누르면 끈다.
+- 다이얼 길이는 `KeepAwakePolicy.focusPreset(hours:)` 세션이 되고, 앱은 메뉴 프리셋이나 1~12시간 정수만 받는다
+  (`focusPreset(forRequestedDuration:)`).
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
