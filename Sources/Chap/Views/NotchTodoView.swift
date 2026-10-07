@@ -25,6 +25,12 @@ struct NotchTodoView: View {
     @State private var isAdding = false
     /// 추가 줄 위에 마우스가 있는지. 있을 때만 "Add a to-do" 글자가 보인다.
     @State private var isAddHovered = false
+    /// 방금 비운 항목. 몇 초 동안 "Undo"로 되돌릴 수 있다.
+    @State private var lastCleared: [TodoItem] = []
+    /// "All done." 화면 대신 목록을 다시 보여 달라고 했는지(완료를 되돌리고 싶을 때).
+    @State private var showsDoneList = false
+    /// 되돌리기 줄이 사라질 때까지의 시간(초).
+    private static let undoWindow: Double = 6
     /// 마우스가 올라간 줄. 그 줄 오른쪽 끝에 삭제 버튼이 보인다.
     @State private var hoveredID: UUID? = NotchTodoView.previewHoveredIndex.flatMap { index in
         NotchTodoView.previewItems.flatMap { $0.indices.contains(index) ? $0[index].id : nil }
@@ -49,7 +55,9 @@ struct NotchTodoView: View {
             header
             // 항목과 추가 줄을 합쳐도 4줄을 넘지 않아 스크롤 없이 다른 목록 칸과 높이가 같다.
             Group {
-                if TodoStore.isAllDone(items) {
+                if !lastCleared.isEmpty {
+                    undoBanner
+                } else if TodoStore.isAllDone(items) && !showsDoneList {
                     allDone
                 } else {
                     VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
@@ -80,6 +88,16 @@ struct NotchTodoView: View {
         ) { _ in
             finishEditing()
         }
+        .onChange(of: TodoStore.isAllDone(items)) { _, allDone in
+            if !allDone { showsDoneList = false }
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NotchLauncherController.willHidePanel)
+        ) { _ in
+            // 노치를 닫으면 되돌리기 기회도 끝난다.
+            lastCleared = []
+            showsDoneList = false
+        }
         .onChange(of: focus) { old, new in
             // 커서가 풀리면(Esc, 다른 앱, 다른 칸) 쓰던 내용을 확정한다.
             if old != nil, new == nil { finishEditing() }
@@ -101,7 +119,7 @@ struct NotchTodoView: View {
         }
         .contentShape(Rectangle())
         .contextMenu {
-            Button("Clear Completed") { update(TodoStore.clearingCompleted(items)) }
+            Button("Clear Completed", action: clearCompleted)
                 .disabled(!items.contains(where: \.isDone))
         }
     }
@@ -242,26 +260,74 @@ struct NotchTodoView: View {
             Text("All done.")
                 .font(DS.notchLabel)
                 .foregroundColor(palette.primary)
-            Button {
-                withAnimation(.smooth(duration: 0.2)) {
-                    update(TodoStore.clearingCompleted(items))
+            HStack(spacing: 6) {
+                // 목록을 다시 보여 준다: 체크를 풀어 되살리고 싶을 때.
+                capsuleButton("Show", tint: palette.secondary, fill: palette.subtleSurface) {
+                    withAnimation(.smooth(duration: 0.2)) { showsDoneList = true }
                 }
-            } label: {
-                Text("Clear")
-                    .font(DS.notchMeta.weight(.semibold))
-                    .foregroundColor(DS.accent)
-                    .padding(.horizontal, 10)
-                    .frame(height: 18)
-                    .background(Capsule().fill(DS.accent.opacity(0.12)))
-                    .contentShape(Capsule())
+                .help("Show the finished to-dos")
+                capsuleButton("Clear", tint: DS.accent, fill: DS.accent.opacity(0.12)) {
+                    clearCompleted()
+                }
+                .help("Clear finished to-dos. You can undo right after.")
             }
-            .buttonStyle(.plain)
-            .help("Clear finished to-dos")
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("All done")
+    }
+
+    /// 방금 비운 직후: "Cleared 3" + Undo. 몇 초 뒤 사라지고, 노치를 닫아도 사라진다.
+    private var undoBanner: some View {
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            Text(lastCleared.count == 1 ? "Cleared 1 to-do" : "Cleared \(lastCleared.count) to-dos")
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+            capsuleButton("Undo", tint: DS.accent, fill: DS.accent.opacity(0.12), action: undoClear)
+                .help("Bring the cleared to-dos back")
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .task(id: lastCleared.map(\.id)) {
+            try? await Task.sleep(for: .seconds(Self.undoWindow))
+            guard !Task.isCancelled else { return }
+            withAnimation(.smooth(duration: 0.2)) { lastCleared = [] }
+        }
+    }
+
+    private func capsuleButton(
+        _ title: String, tint: Color, fill: Color, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(DS.notchMeta.weight(.semibold))
+                .foregroundColor(tint)
+                .padding(.horizontal, 10)
+                .frame(height: 18)
+                .background(Capsule().fill(fill))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// 완료 항목을 비우고, 잠시 되돌릴 수 있게 기억한다.
+    private func clearCompleted() {
+        let cleared = items.filter(\.isDone)
+        guard !cleared.isEmpty else { return }
+        withAnimation(.smooth(duration: 0.2)) {
+            lastCleared = cleared
+            showsDoneList = false
+            update(TodoStore.clearingCompleted(items))
+        }
+    }
+
+    private func undoClear() {
+        withAnimation(.smooth(duration: 0.2)) {
+            update(TodoStore.restoring(lastCleared, into: items))
+            lastCleared = []
+        }
     }
 
     private var fieldFrameReader: some View {

@@ -118,6 +118,15 @@ public struct TodoStore: Sendable {
         items.filter { !$0.isDone }
     }
 
+    /// 비운 항목을 되돌린다. 그사이 새로 넣은 항목은 지키고, 넣은 순서대로 다시 놓는다.
+    /// 한도(4개)를 넘으면 되돌린 항목 중 앞쪽부터 채운다.
+    public static func restoring(_ cleared: [TodoItem], into items: [TodoItem]) -> [TodoItem] {
+        let existing = Set(items.map(\.id))
+        let back = cleared.filter { !existing.contains($0.id) }
+        let room = max(maxItems - items.count, 0)
+        return ordered(items + back.prefix(room))
+    }
+
     /// 보여 줄 순서: 넣은 순 그대로다. 완료해도 자리를 옮기지 않는다(체크·취소선만 바뀐다).
     public static func ordered(_ items: [TodoItem]) -> [TodoItem] {
         items.enumerated()

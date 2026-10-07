@@ -91,6 +91,28 @@ struct TodoStoreTests {
         #expect(TodoStore.isAllDone(items))
     }
 
+    @Test("undo puts cleared items back in their place without dropping new ones")
+    func restoreCleared() {
+        let a = TodoItem(title: "A", created: start)
+        let b = TodoItem(title: "B", created: start.addingTimeInterval(1))
+        let c = TodoItem(title: "C", created: start.addingTimeInterval(2))
+        var items = [a, b, c]
+        items = TodoStore.toggling(a.id, in: items)
+        items = TodoStore.toggling(c.id, in: items)
+        let cleared = items.filter(\.isDone)
+        var left = TodoStore.clearingCompleted(items)
+        #expect(left.map(\.title) == ["B"])
+        #expect(TodoStore.restoring(cleared, into: left).map(\.title) == ["A", "B", "C"])
+        // 그사이 새로 넣은 항목은 지키고, 한도를 넘는 만큼은 되돌리지 않는다.
+        left = TodoStore.adding("D", to: left, now: start.addingTimeInterval(9))
+        left = TodoStore.adding("E", to: left, now: start.addingTimeInterval(10))
+        let restored = TodoStore.restoring(cleared, into: left)
+        #expect(restored.count == TodoStore.maxItems)
+        #expect(restored.map(\.title) == ["A", "B", "D", "E"])
+        // 이미 있는 항목은 두 번 넣지 않는다.
+        #expect(TodoStore.restoring(cleared, into: items).map(\.title) == ["A", "B", "C"])
+    }
+
     @Test("the list round-trips through its file and a missing file is empty")
     func persistence() throws {
         let directory = FileManager.default.temporaryDirectory

@@ -316,7 +316,10 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 - 체크하는 순간: 동그라미가 체크로 바뀌며 한 번 튀고(`.symbolEffect(.bounce)`), 취소선이 글자 폭만큼 왼쪽에서
   오른쪽으로 0.28초에 그어진다. 트랙패드 햅틱(`.levelChange`)과 함께 `NotchTodoView.didCompleteNotification`을 보내
   검정 띠의 물범이 꼬리를 한 번 까딱한다(동작 줄이기·닫힌 노치에서는 까딱하지 않음). 체크를 풀 때는 조용하다.
-- 다 끝냈을 때(`isAllDone`): 목록 대신 블루 체크, "All done.", "Clear" 캡슐 하나. 축하는 이 정도로만 한다.
+- 다 끝냈을 때(`isAllDone`): 목록 대신 블루 체크, "All done.", 캡슐 둘. "Show"는 목록을 다시 보여 줘 체크를 풀 수
+  있게 하고, "Clear"는 완료 항목을 비운다. 저절로 지우지는 않는다. 축하는 이 정도로만 한다.
+- 비우기 되돌리기: Clear·Clear Completed 직후 6초 동안 "Cleared N to-dos" + "Undo"가 뜬다(`restoring`, 그사이 넣은
+  항목은 지키고 4개 한도 안에서 되돌림). 노치를 닫으면 되돌리기도 끝난다. 줄 하나를 Delete한 것은 되돌리지 않는다.
 - 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
 ## Quick Note 저장
