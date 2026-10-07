@@ -116,6 +116,18 @@ struct NotchTodoView: View {
                     .accessibilityLabel("\(items.filter(\.isDone).count) of \(items.count) done")
             }
             Spacer(minLength: 0)
+            // 끝낸 항목이 있으면 제목 줄 오른쪽에 작은 Clear. All done 화면에서 Back으로 돌아와도 바로 비울 수 있다.
+            if items.contains(where: \.isDone), lastCleared.isEmpty,
+                !(TodoStore.isAllDone(items) && !showsDoneList)
+            {
+                Button("Clear", action: clearCompleted)
+                    .buttonStyle(.plain)
+                    .font(DS.notchMeta.weight(.semibold))
+                    .foregroundColor(DS.accent)
+                    .padding(.trailing, 6)
+                    .help("Clear finished to-dos. You can undo right after.")
+                    .transition(.opacity)
+            }
         }
         .contentShape(Rectangle())
         .contextMenu {
@@ -262,10 +274,10 @@ struct NotchTodoView: View {
                 .foregroundColor(palette.primary)
             HStack(spacing: 6) {
                 // 목록을 다시 보여 준다: 체크를 풀어 되살리고 싶을 때.
-                capsuleButton("Show", tint: palette.secondary, fill: palette.subtleSurface) {
+                capsuleButton("Back", tint: palette.secondary, fill: palette.subtleSurface) {
                     withAnimation(.smooth(duration: 0.2)) { showsDoneList = true }
                 }
-                .help("Show the finished to-dos")
+                .help("Back to the list")
                 capsuleButton("Clear", tint: DS.accent, fill: DS.accent.opacity(0.12)) {
                     clearCompleted()
                 }

@@ -24,8 +24,8 @@ All notable changes to Chap are documented in this file.
 - **A satisfying check** — Checking off a to-do bounces the circle into a check,
   draws the strikethrough across, taps the trackpad, and the seal on the strip
   flicks its tail. A small ring by the title fills as you finish items, and when
-  everything is done the slot says "All done." with Show (to uncheck something)
-  and Clear. Nothing clears on its own, and right after you clear, Undo brings
+  everything is done the slot says "All done." with Back (to uncheck something)
+  and Clear; a small Clear also sits by the title whenever something is done. Nothing clears on its own, and right after you clear, Undo brings
   the items back for a few seconds.
 - **To-do slot** — A short checklist for the notch. Place it in slot 3–6, click
   Add and type, press Enter to add the next one, and click a circle to check it
