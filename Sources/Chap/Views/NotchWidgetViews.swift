@@ -290,7 +290,12 @@ private struct FocusDial<Center: View>: View {
                 },
             including: onPick == nil ? .subviews : .all
         )
+        // 제목 줄과 호 꼭대기 사이 숨 쉴 틈. 끌기 좌표는 이 여백 안쪽 다이얼 기준 그대로다.
+        .padding(.top, Self.topGap)
     }
+
+    /// 제목과 호 꼭대기 사이 간격. 다이얼(92pt) + 간격이 칸 본문 높이(113pt) 안에 들어간다.
+    static var topGap: CGFloat { 9 }
 }
 
 /// 누르는 순간 살짝 눌렸다 튀어 오르는 버튼 모양. "딱" 누르는 손맛을 준다.
