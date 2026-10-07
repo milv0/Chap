@@ -311,7 +311,12 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 - 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제). 줄에 마우스를 올리면 줄이 옅게 강조되고 오른쪽 끝에 16pt ×
   (`TodoDeleteButton`, 보조색, 버튼에 올리면 `DS.danger` 원)가 나타나 바로 지운다. 숨어 있을 때도 자리를 잡아 문구가
   밀리지 않는다. 우클릭에 Mark Done/Edit/Delete, VoiceOver는 줄의 Delete 동작. 제목 우클릭 → Clear Completed.
-- 제목 옆 10pt 숫자는 남은 할 일 수다(열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다).
+- 제목 옆 10pt 진행률 원(`TodoProgressRing`, `TodoStore.progress`): 끝낸 비율만큼 블루로 차고, 다 끝나면 가득 찬 원
+  (Things의 프로젝트 원). 열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다.
+- 체크하는 순간: 동그라미가 체크로 바뀌며 한 번 튀고(`.symbolEffect(.bounce)`), 취소선이 글자 폭만큼 왼쪽에서
+  오른쪽으로 0.28초에 그어진다. 트랙패드 햅틱(`.levelChange`)과 함께 `NotchTodoView.didCompleteNotification`을 보내
+  검정 띠의 물범이 꼬리를 한 번 까딱한다(동작 줄이기·닫힌 노치에서는 까딱하지 않음). 체크를 풀 때는 조용하다.
+- 다 끝냈을 때(`isAllDone`): 목록 대신 블루 체크, "All done.", "Clear" 캡슐 하나. 축하는 이 정도로만 한다.
 - 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
 ## Quick Note 저장

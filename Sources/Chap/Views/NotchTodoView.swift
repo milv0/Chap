@@ -14,6 +14,9 @@ struct NotchTodoView: View {
     /// (렌더 도구) 설정하면 파일 대신 이 목록을 첫 프레임에 쓴다. 앱 실행 중에는 항상 nil이다.
     static var previewItems: [TodoItem]?
 
+    /// 할 일을 하나 끝냈을 때 보낸다. 검정 띠의 물범이 꼬리를 한 번 까딱해 함께 기뻐한다.
+    static let didCompleteNotification = Notification.Name("ChapTodoDidComplete")
+
     @State private var items: [TodoItem] = NotchTodoView.previewItems ?? []
     @State private var didLoad = NotchTodoView.previewItems != nil
     @State private var draft = ""
@@ -45,12 +48,18 @@ struct NotchTodoView: View {
         VStack(alignment: .leading, spacing: 3) {
             header
             // 항목과 추가 줄을 합쳐도 4줄을 넘지 않아 스크롤 없이 다른 목록 칸과 높이가 같다.
-            VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
-                ForEach(items) { item in
-                    row(item)
-                }
-                if TodoStore.canAdd(items) {
-                    addRow
+            Group {
+                if TodoStore.isAllDone(items) {
+                    allDone
+                } else {
+                    VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
+                        ForEach(items) { item in
+                            row(item)
+                        }
+                        if TodoStore.canAdd(items) {
+                            addRow
+                        }
+                    }
                 }
             }
             .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
@@ -82,12 +91,11 @@ struct NotchTodoView: View {
     private var header: some View {
         HStack(spacing: 5) {
             NotchWidgetHeader(symbol: "checklist", title: "To-do", palette: palette)
-            if let count = TodoStore.remainingLabel(items) {
-                Text(count)
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-                    .monospacedDigit()
-                    .accessibilityLabel("\(count) left")
+            // Things의 프로젝트 원처럼: 끝낸 비율만큼 차는 작은 원. 숫자보다 조용하게 진행을 보여 준다.
+            if let progress = TodoStore.progress(items) {
+                TodoProgressRing(progress: progress, palette: palette)
+                    .help("\(items.filter(\.isDone).count) of \(items.count) done")
+                    .accessibilityLabel("\(items.filter(\.isDone).count) of \(items.count) done")
             }
             Spacer(minLength: 0)
         }
@@ -108,6 +116,9 @@ struct NotchTodoView: View {
                 Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 14))
                     .foregroundColor(item.isDone ? DS.accent : palette.secondary)
+                    // 동그라미가 체크로 바뀌며 한 번 튄다(체크할 때만).
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, value: item.isDone)
                     .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
                     .contentShape(Rectangle())
             }
@@ -126,9 +137,16 @@ struct NotchTodoView: View {
                 Text(item.title)
                     .font(DS.notchRowName)
                     .foregroundColor(item.isDone ? palette.secondary : palette.primary)
-                    .strikethrough(item.isDone, color: palette.secondary)
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    // 취소선은 글자 위로 왼쪽에서 오른쪽으로 그어진다(글자 폭만큼).
+                    .overlay(alignment: .leading) {
+                        Rectangle()
+                            .fill(palette.secondary)
+                            .frame(height: 1)
+                            .scaleEffect(x: item.isDone ? 1 : 0, anchor: .leading)
+                            .animation(.easeOut(duration: 0.28), value: item.isDone)
+                    }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { beginEditing(item) }
@@ -213,6 +231,39 @@ struct NotchTodoView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    /// 다 끝냈을 때: 차분한 한 줄과 비우기. 축하는 이 정도로만 한다(관심을 조르지 않는다).
+    private var allDone: some View {
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 22))
+                .foregroundColor(DS.accent)
+                .symbolEffect(.bounce, value: items.count)
+            Text("All done.")
+                .font(DS.notchLabel)
+                .foregroundColor(palette.primary)
+            Button {
+                withAnimation(.smooth(duration: 0.2)) {
+                    update(TodoStore.clearingCompleted(items))
+                }
+            } label: {
+                Text("Clear")
+                    .font(DS.notchMeta.weight(.semibold))
+                    .foregroundColor(DS.accent)
+                    .padding(.horizontal, 10)
+                    .frame(height: 18)
+                    .background(Capsule().fill(DS.accent.opacity(0.12)))
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .help("Clear finished to-dos")
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("All done")
+    }
+
     private var fieldFrameReader: some View {
         GeometryReader { geo in
             Color.clear
@@ -268,9 +319,14 @@ struct NotchTodoView: View {
 
     /// 완료를 켜고 끈다. 항목은 제자리에 있고 체크·취소선만 바뀐다.
     private func toggle(_ item: TodoItem) {
+        let completing = !item.isDone
         withAnimation(.easeOut(duration: 0.15)) {
             update(TodoStore.toggling(item.id, in: items))
         }
+        guard completing else { return }
+        // 끝냈을 때만: 트랙패드가 "딱", 띠의 물범이 꼬리를 까딱.
+        NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
+        NotificationCenter.default.post(name: Self.didCompleteNotification, object: nil)
     }
 
     // MARK: - Storage
@@ -325,5 +381,26 @@ private struct TodoDeleteButton: View {
         .help("Delete")
         // VoiceOver는 줄의 Delete 동작을 쓴다.
         .accessibilityHidden(true)
+    }
+}
+
+/// 제목 옆 진행률 원. 끝낸 비율만큼 Chap 블루로 차고, 다 끝나면 가득 찬 원이 된다.
+private struct TodoProgressRing: View {
+    let progress: Double
+    let palette: NotchWidgetPalette
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(palette.secondary.opacity(0.35), lineWidth: 1.5)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(DS.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.3), value: progress)
+            if progress >= 1 {
+                Circle().fill(DS.accent).padding(2.5)
+            }
+        }
+        .frame(width: 10, height: 10)
     }
 }

@@ -995,6 +995,13 @@ struct NotchMascotView: View {
         }
         .accessibilityHidden(true)
         .allowsHitTesting(false)
+        // 할 일을 하나 끝내면 꼬리를 한 번 까딱해 함께 기뻐한다(동작 줄이기·닫힌 노치에서는 하지 않는다).
+        .onReceive(
+            NotificationCenter.default.publisher(for: NotchTodoView.didCompleteNotification)
+        ) { _ in
+            guard moves, diveStep == nil else { return }
+            Task { await flick() }
+        }
         // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
         // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
         .task(id: "\(moves)-\(mood)-\(wagsContinuously)") {

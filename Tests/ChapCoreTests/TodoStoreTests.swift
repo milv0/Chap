@@ -76,6 +76,21 @@ struct TodoStoreTests {
                 }) == nil)
     }
 
+    @Test("progress fills with finished items and all-done needs at least one item")
+    func progressAndAllDone() {
+        #expect(TodoStore.progress([]) == nil)
+        #expect(!TodoStore.isAllDone([]))
+        var items = TodoStore.adding("A", to: [], now: start)
+        items = TodoStore.adding("B", to: items, now: start)
+        #expect(TodoStore.progress(items) == 0)
+        items = TodoStore.toggling(items[0].id, in: items)
+        #expect(TodoStore.progress(items) == 0.5)
+        #expect(!TodoStore.isAllDone(items))
+        items = TodoStore.toggling(items[1].id, in: items)
+        #expect(TodoStore.progress(items) == 1)
+        #expect(TodoStore.isAllDone(items))
+    }
+
     @Test("the list round-trips through its file and a missing file is empty")
     func persistence() throws {
         let directory = FileManager.default.temporaryDirectory

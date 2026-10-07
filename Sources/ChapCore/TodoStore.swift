@@ -128,6 +128,17 @@ public struct TodoStore: Sendable {
             .map(\.element)
     }
 
+    /// 완료 비율(0…1). 항목이 없으면 nil이라 진행률 원을 그리지 않는다.
+    public static func progress(_ items: [TodoItem]) -> Double? {
+        guard !items.isEmpty else { return nil }
+        return Double(items.filter(\.isDone).count) / Double(items.count)
+    }
+
+    /// 모든 항목을 끝냈는지(항목이 하나 이상일 때만).
+    public static func isAllDone(_ items: [TodoItem]) -> Bool {
+        !items.isEmpty && items.allSatisfy(\.isDone)
+    }
+
     /// 칸 제목 옆 짧은 개수: 남은 할 일 수. 없으면 nil.
     public static func remainingLabel(_ items: [TodoItem]) -> String? {
         let open = items.filter { !$0.isDone }.count

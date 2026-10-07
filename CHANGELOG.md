@@ -21,6 +21,10 @@ All notable changes to Chap are documented in this file.
   Drag around it to set 1 to 12 hours (Chap remembers your last setting) and click
   the center to start. While Focus runs, the same arc winds down with the time left;
   click the center to stop.
+- **A satisfying check** — Checking off a to-do bounces the circle into a check,
+  draws the strikethrough across, taps the trackpad, and the seal on the strip
+  flicks its tail. A small ring by the title fills as you finish items, and when
+  everything is done the slot says "All done." with a Clear button.
 - **To-do slot** — A short checklist for the notch. Place it in slot 3–6, click
   Add and type, press Enter to add the next one, and click a circle to check it
   off; finished items stay in place, checked, until you clear them. Double-click to edit;
