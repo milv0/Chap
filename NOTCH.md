@@ -176,6 +176,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
+| To-do | 170pt (12pt 문구, 20자 안팎) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -289,6 +290,21 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 글자 시작(줄 왼쪽에서 32pt)에 맞추고, 어두운 바탕(검정 86%)에 흰 10pt라 Mist·Glass에서도 대비가 같다.
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
+
+## To-do 칸
+
+위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 170pt). Chap 안에만 저장한다
+(`TodoStore`, `~/Library/Application Support/Chap/Todos.json`, 권한·동기화 없음, 설정 Export/Import에 안 섞임).
+
+- 줄: 다른 목록과 같은 26pt, 16pt 체크 동그라미(완료는 블루 `checkmark.circle.fill`) + 12pt 문구(`DS.notchRowName`).
+  완료 항목은 보조색 + 취소선. 한 번에 4줄, 나머지는 스크롤(`NotchShelfScrollList`, 스크롤바 없음).
+- 추가: 맨 아래 "＋ Add a to-do"(항목이 있으면 "＋ Add") 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
+  항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
+  문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 20개(`maxItems`)가 차면 추가 줄을 숨긴다.
+- 완료: 동그라미를 누르면 체크·취소선, 0.6초 뒤 완료 항목이 아래로 내려간다(`ordered`: 할 일은 넣은 순, 완료는 완료한 순).
+- 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제), 우클릭에 Mark Done/Edit/Delete. 제목 우클릭 → Clear Completed.
+- 제목 옆 10pt 숫자는 남은 할 일 수다(열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다).
+- 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
 ## Quick Note 저장
 

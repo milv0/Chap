@@ -56,6 +56,7 @@ Sources/
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
+│       ├── NotchTodoView.swift    ← 노치 To-do 칸 (추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
 │       ├── NotchWidgetViews.swift ← Focus(Keep Awake) 위젯, 마스코트(NotchMascotView), 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
@@ -90,6 +91,7 @@ Sources/
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
 │   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
+│   ├── TodoStore.swift        ← 노치 할 일 목록 저장소·규칙 (Application Support/Chap/Todos.json, 20개)
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
@@ -134,6 +136,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── DownloadsShelfPolicyTests.swift
     ├── NotchLauncherPolicyTests.swift
     ├── NotchToolWidgetTests.swift
+    ├── TodoStoreTests.swift
     ├── ChapMascotTests.swift
     ├── ShelfFolderLaunchTests.swift
     ├── NotchShoulderPolicyTests.swift

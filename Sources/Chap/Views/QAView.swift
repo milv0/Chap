@@ -180,6 +180,10 @@ struct QAView: View {
                     "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
                 ),
                 (
+                    "To-do 칸은 어떻게 쓰나요?",
+                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 완료되어 아래로 내려가고, 문구를 더블클릭하면 고칩니다. 우클릭으로 지우거나 제목 우클릭 → Clear Completed로 완료 항목을 한 번에 지웁니다. 최대 20개이며 이 Mac에만 저장됩니다(권한·동기화 없음)."
+                ),
+                (
                     "Quick Note는 언제 저장되나요?",
                     "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다."
                 ),
@@ -189,7 +193,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭의 Widgets 보드에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -413,6 +417,10 @@ struct QAView: View {
                     "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
                 ),
                 (
+                    "How does the To-do slot work?",
+                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off and it sinks below; double-click a title to edit it. Right-click to delete, or right-click the title and choose Clear Completed. It holds up to twenty items and stays on this Mac (no permissions, no sync)."
+                ),
+                (
                     "When does Quick Note save?",
                     "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today)."
                 ),
@@ -422,7 +430,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "The Widgets board has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, or Focus. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "The Widgets board has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, or To-do. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

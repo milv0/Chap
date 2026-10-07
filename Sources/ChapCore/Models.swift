@@ -299,6 +299,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case awake = "awake"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
+    /// 할 일 목록: Chap 안에만 저장하는 짧은 체크리스트(`TodoStore`).
+    case todo = "todo"
     /// 빈 칸.
     case none = "none"
 
@@ -308,7 +310,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .none: return nil
+        case .screenshots, .downloads, .awake, .drop, .todo, .none: return nil
         }
     }
 

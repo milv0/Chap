@@ -82,7 +82,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  six slots (Sites, Apps, Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
+  six slots (Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is additive —
   the status-bar menu is always available, including on notchless Macs. Chap Drop
   keeps bookmark references to dropped originals (`DropStore`; only temporary-location
   items are copied into `~/Library/Application Support/Chap/Drop/`, and removing never

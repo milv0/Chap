@@ -10,13 +10,15 @@ enum NotchSlotContent {
     case downloads
     /// Focus(Keep Mac Awake) 위젯.
     case awake
+    /// 할 일 목록 위젯.
+    case todo
 
     /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
     var collapsibleWidget: NotchWidget? {
         switch self {
         case .screenshots: return .screenshots
         case .downloads: return .downloads
-        case .launchers, .awake: return nil
+        case .launchers, .awake, .todo: return nil
         }
     }
 
@@ -33,6 +35,7 @@ enum NotchSlotContent {
             case .screenshots: return .screenshots
             case .downloads: return .downloads
             case .awake: return .awake
+            case .todo: return .todo
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
@@ -117,6 +120,8 @@ struct NotchLauncherPanelView: View {
     static let downloadsColumnWidth: CGFloat = 200
     /// Focus 칸 폭. 80pt 링과 아래 길이 칩 셋(1h·4h·8h)이 들어간다.
     static let focusColumnWidth: CGFloat = 116
+    /// 할 일 칸 폭. 12pt 문구가 20자 안팎까지 보인다.
+    static let todoColumnWidth: CGFloat = 170
     /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
     static let noteModeHeight: CGFloat = 200
 
@@ -166,6 +171,8 @@ struct NotchLauncherPanelView: View {
                     contentWidth: Double(max(rows.max() ?? 0, header))))
         case .awake:
             return Self.focusColumnWidth
+        case .todo:
+            return Self.todoColumnWidth
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -777,6 +784,8 @@ struct NotchLauncherPanelView: View {
                 onEmptyChange: { setShelfEmpty(.downloads, $0) })
         case .awake:
             NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
+        case .todo:
+            NotchTodoView(palette: widgetPalette)
         }
     }
 

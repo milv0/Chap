@@ -59,7 +59,7 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
-  Finder, Screenshots, Downloads, or Focus; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
+  Finder, Screenshots, Downloads, Focus, or To-do; Mirror and Quick Note are icons in the black top strip beside the Drop badge); the status menu stays available, including
   on notchless Macs. Chap Drop keeps bookmark references to dropped originals
   (`DropStore`; only temporary-location items are copied into
   `~/Library/Application Support/Chap/Drop/`, and removing never deletes an original); the Screenshot

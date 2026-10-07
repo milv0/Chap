@@ -15,6 +15,7 @@
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when you press Chap on, and wags its tail while Focus runs
+- **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off; finished items sink below and stay until you clear them. Up to twenty items, kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A Focus ring in the notch: pick 1h, 4h, or 8h, press the ring to start (Chap on), and watch it empty as the time runs out; press it again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
@@ -147,7 +148,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, or Focus into the board (the first two slots belong to the Screenshots and Downloads shelves, in that order; turn each on or off in place, and a folded shelf and its slot stay on the left); context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do into the board (the first two slots belong to the Screenshots and Downloads shelves, in that order; turn each on or off in place, and a folded shelf and its slot stay on the left); context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
