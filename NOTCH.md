@@ -302,7 +302,9 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
   문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 4개가 차면 추가 줄을 숨기고, 완료 항목을 지우면(Clear Completed·Delete) 다시 보인다.
 - 완료: 동그라미를 누르면 체크·취소선. 항목은 제자리에 있다(아래로 옮기지 않는다, `ordered`는 넣은 순).
-- 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제), 우클릭에 Mark Done/Edit/Delete. 제목 우클릭 → Clear Completed.
+- 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제). 줄에 마우스를 올리면 줄이 옅게 강조되고 오른쪽 끝에 16pt ×
+  (`TodoDeleteButton`, 보조색, 버튼에 올리면 `DS.danger` 원)가 나타나 바로 지운다. 숨어 있을 때도 자리를 잡아 문구가
+  밀리지 않는다. 우클릭에 Mark Done/Edit/Delete, VoiceOver는 줄의 Delete 동작. 제목 우클릭 → Clear Completed.
 - 제목 옆 10pt 숫자는 남은 할 일 수다(열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다).
 - 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 

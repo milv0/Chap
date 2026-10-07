@@ -111,6 +111,7 @@ struct NotchRenderTool {
             reveal.isNoteMode = name.hasSuffix("-note")
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
+            NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
