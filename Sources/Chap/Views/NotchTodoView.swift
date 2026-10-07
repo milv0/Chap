@@ -290,10 +290,11 @@ struct NotchTodoView: View {
                     withAnimation(.smooth(duration: 0.2)) { showsDoneList = true }
                 }
                 .help("Back to the list")
+                // 다 끝내고 비우는 건 마무리라 되돌리기를 남기지 않는다. 다시 보고 싶으면 Back.
                 capsuleButton("Clear", tint: DS.accent, fill: DS.accent.opacity(0.12)) {
-                    clearCompleted()
+                    clearCompleted(undoable: false)
                 }
-                .help("Clear finished to-dos. You can undo right after.")
+                .help("Clear finished to-dos")
             }
             Spacer(minLength: 0)
         }
@@ -317,12 +318,14 @@ struct NotchTodoView: View {
         .buttonStyle(.plain)
     }
 
-    /// 완료 항목을 비우고, 잠시 되돌릴 수 있게 기억한다.
-    private func clearCompleted() {
+    /// 완료 항목을 비운다. `undoable`이면 잠시 되돌릴 수 있게 기억한다(일부만 비울 때).
+    private func clearCompleted() { clearCompleted(undoable: true) }
+
+    private func clearCompleted(undoable: Bool) {
         let cleared = items.filter(\.isDone)
         guard !cleared.isEmpty else { return }
         withAnimation(.smooth(duration: 0.2)) {
-            lastCleared = cleared
+            lastCleared = undoable ? cleared : []
             showsDoneList = false
             update(TodoStore.clearingCompleted(items))
         }
