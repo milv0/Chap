@@ -30,7 +30,7 @@ struct NotchTodoView: View {
     /// "All done." 화면 대신 목록을 다시 보여 달라고 했는지(완료를 되돌리고 싶을 때).
     @State private var showsDoneList = false
     /// 되돌리기 줄이 사라질 때까지의 시간(초).
-    private static let undoWindow: Double = 6
+    private static let undoWindow: Double = 4
     /// 마우스가 올라간 줄. 그 줄 오른쪽 끝에 삭제 버튼이 보인다.
     @State private var hoveredID: UUID? = NotchTodoView.previewHoveredIndex.flatMap { index in
         NotchTodoView.previewItems.flatMap { $0.indices.contains(index) ? $0[index].id : nil }
