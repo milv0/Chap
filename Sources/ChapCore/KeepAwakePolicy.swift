@@ -93,6 +93,9 @@ enum KeepAwakePolicy {
     static let focusIdleHint = "No sleep, no dimming."
     /// 켜져 있을 때 끄는 버튼.
     static let focusOffTitle = "Chap off"
+    /// 다이얼 가운데 숫자 아래의 짧은 말. 숫자가 주인공이라 "Chap" 없이 On/Off만 쓴다.
+    static let focusDialOnLabel = "On"
+    static let focusDialOffLabel = "Off"
 
     /// Focus 위젯이 처음 고르고 있는 시간. 마지막으로 켠 시간을 기억하되, 목록에 없으면 이 값.
     static let defaultFocusPreset = focusPresets[0]

@@ -120,16 +120,15 @@ struct NotchFocusView: View {
         ) {
             // 다이얼 안쪽 원 전체가 켜기 스위치다. 따로 버튼 모양을 두지 않고, 마우스를 올리면 안쪽이 옅게 물든다.
             Button(action: start) {
-                // 가운데는 "Chap on" 한 마디뿐. 다이얼을 끄는 동안만 고른 시간이 잠깐 보인다.
+                // 가운데는 고른 시간 숫자와 그 아래 작은 "On". 숫자가 주인공이다.
                 FocusDialInner(isHovered: isCenterHovered, hoverTint: DS.accent.opacity(0.10)) {
-                    if isPicking {
+                    VStack(spacing: 2) {
                         Text("\(dialHours)h")
                             .font(.system(size: 20, weight: .semibold, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(palette.primary)
-                    } else {
-                        Text(KeepAwakePolicy.focusIdleLine)
-                            .font(.system(size: 13, weight: .semibold))
+                        Text(KeepAwakePolicy.focusDialOnLabel)
+                            .font(.system(size: 10, weight: .semibold))
                             .foregroundColor(DS.accent)
                     }
                 }
@@ -165,13 +164,21 @@ struct NotchFocusView: View {
                 Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 } label: {
-                    // 가운데는 "Chap off" 한 마디뿐. 남은 시간은 호가 보여 주고, 마우스를 올리면 툴팁으로도 나온다.
+                    // 가운데는 남은 시간 숫자와 그 아래 작은 "Off"(마우스를 올리면 빨강).
                     FocusDialInner(
                         isHovered: isCenterHovered, hoverTint: palette.primary.opacity(0.06)
                     ) {
-                        Text(KeepAwakePolicy.focusOffTitle)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isCenterHovered ? DS.danger : palette.primary)
+                        VStack(spacing: 2) {
+                            Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(palette.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            Text(KeepAwakePolicy.focusDialOffLabel)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(isCenterHovered ? DS.danger : palette.secondary)
+                        }
                     }
                 }
                 .buttonStyle(FocusPressStyle())
