@@ -181,7 +181,7 @@ struct QAView: View {
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
-                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 완료되어 아래로 내려가고, 문구를 더블클릭하면 고칩니다. 우클릭으로 지우거나 제목 우클릭 → Clear Completed로 완료 항목을 한 번에 지웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
+                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 체크되고(자리는 그대로), 문구를 더블클릭하면 고칩니다. 우클릭으로 지우거나 제목 우클릭 → Clear Completed로 완료 항목을 한 번에 지웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
@@ -418,7 +418,7 @@ struct QAView: View {
                 ),
                 (
                     "How does the To-do slot work?",
-                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off and it sinks below; double-click a title to edit it. Right-click to delete, or right-click the title and choose Clear Completed. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
+                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off (it stays in place); double-click a title to edit it. Right-click to delete, or right-click the title and choose Clear Completed. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
                 ),
                 (
                     "When does Quick Note save?",

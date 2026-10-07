@@ -8,7 +8,7 @@ All notable changes to Chap are documented in this file.
 
 - **To-do slot** — A short checklist for the notch. Place it in slot 3–6, click
   Add and type, press Enter to add the next one, and click a circle to check it
-  off; finished items sink below until you clear them. Double-click to edit,
+  off; finished items stay in place, checked, until you clear them. Double-click to edit,
   right-click to delete. Up to four items, so it fits at a glance; clear finished
   ones to make room. Kept only on this Mac.
 

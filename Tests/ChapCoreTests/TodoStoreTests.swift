@@ -44,7 +44,7 @@ struct TodoStoreTests {
         #expect(undone.first?.isDone == false && undone.first?.completed == nil)
     }
 
-    @Test("open items keep their order and finished ones sink below in finish order")
+    @Test("finished items stay where they are, in the order they were added")
     func ordered() {
         let a = TodoItem(title: "A", created: start)
         let b = TodoItem(title: "B", created: start.addingTimeInterval(1))
@@ -52,7 +52,9 @@ struct TodoStoreTests {
         var items = [a, b, c]
         items = TodoStore.toggling(a.id, in: items, now: start.addingTimeInterval(20))
         items = TodoStore.toggling(c.id, in: items, now: start.addingTimeInterval(10))
-        #expect(TodoStore.ordered(items).map(\.title) == ["B", "C", "A"])
+        #expect(items.map(\.title) == ["A", "B", "C"])
+        #expect(TodoStore.ordered(items).map(\.title) == ["A", "B", "C"])
+        #expect(TodoStore.ordered([c, a, b]).map(\.title) == ["A", "B", "C"])
     }
 
     @Test("renaming to blank deletes; clearing completed keeps open items")

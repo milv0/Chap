@@ -3,7 +3,7 @@ import SwiftUI
 /// 노치 할 일(To-do) 칸. 다른 목록 칸과 같은 26pt 줄에 체크 동그라미 + 12pt 문구, 맨 아래 "Add a to-do" 줄.
 /// - 추가: 맨 아래 줄을 누르면 바로 입력, Enter로 더하고 다음 항목을 이어서 쓴다. 칸 밖을 누르거나
 ///   다른 앱으로 가면 입력이 끝나며 쓴 내용이 저장된다(Quick Note와 같은 규칙).
-/// - 완료: 동그라미를 누르면 체크·취소선, 잠시 뒤 목록 아래로 내려간다.
+/// - 완료: 동그라미를 누르면 체크·취소선. 항목은 제자리에 있다(아래로 옮기지 않는다).
 /// - 수정·삭제: 문구를 더블클릭해 고치고, 우클릭으로 지운다. 제목 우클릭 → Clear Completed.
 /// 최대 4개라 스크롤 없이 한눈에 보이고, 꽉 차면 추가 줄이 사라진다(완료 항목을 지우면 다시 생긴다).
 /// 저장은 `TodoStore`(Chap 안에만, 권한 없음)이며 바뀔 때마다 직렬 큐로 바로 쓴다.
@@ -228,15 +228,10 @@ struct NotchTodoView: View {
         if focus != nil { focus = nil }
     }
 
+    /// 완료를 켜고 끈다. 항목은 제자리에 있고 체크·취소선만 바뀐다.
     private func toggle(_ item: TodoItem) {
         withAnimation(.easeOut(duration: 0.15)) {
             update(TodoStore.toggling(item.id, in: items))
-        }
-        // 체크 표시를 잠깐 보여 준 뒤 완료 항목을 아래로 내린다.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            let ordered = TodoStore.ordered(items)
-            guard ordered != items else { return }
-            withAnimation(.smooth(duration: 0.25)) { update(ordered) }
         }
     }
 

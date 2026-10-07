@@ -118,13 +118,14 @@ public struct TodoStore: Sendable {
         items.filter { !$0.isDone }
     }
 
-    /// 보여 줄 순서: 할 일은 넣은 순, 그 아래 완료 항목은 완료한 순.
+    /// 보여 줄 순서: 넣은 순 그대로다. 완료해도 자리를 옮기지 않는다(체크·취소선만 바뀐다).
     public static func ordered(_ items: [TodoItem]) -> [TodoItem] {
-        let open = items.filter { !$0.isDone }.sorted { $0.created < $1.created }
-        let done = items.filter(\.isDone).sorted {
-            ($0.completed ?? $0.created) < ($1.completed ?? $1.created)
-        }
-        return open + done
+        items.enumerated()
+            .sorted { lhs, rhs in
+                lhs.element.created == rhs.element.created
+                    ? lhs.offset < rhs.offset : lhs.element.created < rhs.element.created
+            }
+            .map(\.element)
     }
 
     /// 칸 제목 옆 짧은 개수: 남은 할 일 수. 없으면 nil.
