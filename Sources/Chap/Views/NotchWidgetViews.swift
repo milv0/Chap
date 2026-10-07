@@ -113,26 +113,23 @@ struct NotchFocusView: View {
             fraction: KeepAwakePolicy.focusDialFraction(hours: Double(dialHours)),
             isRunning: false, palette: palette, onPick: setDialHours
         ) {
+            // 다이얼 안쪽 원 전체가 켜기 스위치다. 따로 버튼 모양을 두지 않고, 마우스를 올리면 안쪽이 옅게 물든다.
             Button(action: start) {
-                VStack(spacing: 1) {
-                    Text("\(dialHours)h")
-                        .font(.system(size: 20, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(palette.primary)
-                    HStack(spacing: 3) {
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 9, weight: .bold))
-                        Text(KeepAwakePolicy.focusIdleLine)
-                            .font(.system(size: 10, weight: .semibold))
+                FocusDialInner(isHovered: isCenterHovered, hoverTint: DS.accent.opacity(0.10)) {
+                    VStack(spacing: 2) {
+                        Text("\(dialHours)h")
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(palette.primary)
+                        HStack(spacing: 3) {
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: 9, weight: .bold))
+                            Text(KeepAwakePolicy.focusIdleLine)
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .foregroundColor(DS.accent)
                     }
-                    .foregroundColor(isCenterHovered ? .white : DS.accent)
-                    .padding(.horizontal, 7)
-                    .frame(height: 17)
-                    .background(
-                        Capsule().fill(isCenterHovered ? DS.accent : DS.accent.opacity(0.12)))
                 }
-                .frame(width: 76, height: 50)
-                .contentShape(Rectangle())
             }
             .buttonStyle(FocusPressStyle())
             .onHover { isCenterHovered = $0 }
@@ -154,7 +151,7 @@ struct NotchFocusView: View {
     }
 
     /// 켜짐: 같은 다이얼에서 남은 시간만큼의 호가 줄어들고(같은 0~12시간 눈금), 가운데에 남은 시간.
-    /// 가운데를 누르면 끈다(마우스를 올리면 "Chap off").
+    /// 안쪽 원을 누르면 끈다(마우스를 올리면 "Chap off"가 빨강).
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = max(end.timeIntervalSince(context.date), 0)
@@ -165,24 +162,21 @@ struct NotchFocusView: View {
                 Button {
                     NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
                 } label: {
-                    VStack(spacing: 2) {
-                        Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundColor(palette.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                        Text(KeepAwakePolicy.focusOffTitle)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(isCenterHovered ? .white : palette.secondary)
-                            .padding(.horizontal, 7)
-                            .frame(height: 17)
-                            .background(
-                                Capsule().fill(
-                                    isCenterHovered ? DS.danger : palette.subtleSurface))
+                    FocusDialInner(
+                        isHovered: isCenterHovered, hoverTint: palette.primary.opacity(0.06)
+                    ) {
+                        VStack(spacing: 2) {
+                            Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(palette.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            Text(KeepAwakePolicy.focusOffTitle)
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(isCenterHovered ? DS.danger : palette.secondary)
+                        }
                     }
-                    .frame(width: 76, height: 50)
-                    .contentShape(Rectangle())
                 }
                 .buttonStyle(FocusPressStyle())
                 .onHover { isCenterHovered = $0 }
@@ -193,6 +187,26 @@ struct NotchFocusView: View {
                 .accessibilityHint("Turns Focus off")
             }
         }
+    }
+}
+
+/// 다이얼 안쪽 원(누르는 자리). 호 안쪽을 거의 채우는 원이 통째로 스위치이고, 마우스를 올리면 옅게 물든다.
+private struct FocusDialInner<Content: View>: View {
+    let isHovered: Bool
+    let hoverTint: Color
+    @ViewBuilder let content: () -> Content
+
+    /// 호(반지름 44, 두께 6) 안쪽에 6pt 여유를 둔 원.
+    static var diameter: CGFloat { 2 * (44 - 3 - 6) }
+
+    var body: some View {
+        content()
+            // 아래가 열린 호라 보이는 호의 가운데가 원 중심보다 위에 있다. 글자를 조금 올려 눈으로 가운데에 맞춘다.
+            .offset(y: -4)
+            .frame(width: Self.diameter, height: Self.diameter)
+            .background(Circle().fill(isHovered ? hoverTint : Color.clear))
+            .contentShape(Circle())
+            .animation(.easeOut(duration: 0.12), value: isHovered)
     }
 }
 
@@ -269,7 +283,7 @@ private struct FocusDial<Center: View>: View {
             Text("12h")
                 .position(x: point(at: 1, radius: Self.radius).x, y: Self.size.height - 5)
             center()
-                .position(x: Self.centerPoint.x, y: Self.centerPoint.y + 4)
+                .position(x: Self.centerPoint.x, y: Self.centerPoint.y)
         }
         .font(.system(size: 9, weight: .medium))
         .foregroundColor(palette.secondary)
