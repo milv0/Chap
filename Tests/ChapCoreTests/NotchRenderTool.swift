@@ -138,6 +138,35 @@ struct NotchRenderTool {
         }
     }
 
+    /// Settings → Notch 화면을 그린다 (라이트·다크). 노치가 없는 Mac에서도 세부 설정까지 보이도록
+    /// `previewForcesNotch`를 켠다.
+    @Test("render the Notch settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderNotchSettings() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        NotchSettingsView.previewForcesNotch = true
+        defer { NotchSettingsView.previewForcesNotch = false }
+        for (name, scheme) in [
+            ("settings-notch-light", ColorScheme.light), ("settings-notch-dark", .dark),
+        ] {
+            let vm = SettingsViewModel(
+                sites: config.sites, notchLauncherEnabled: true,
+                notchPanelStyle: config.notchPanelStyle,
+                notchGlassAppearance: config.notchGlassAppearance,
+                notchGlassMaterial: config.notchGlassMaterial,
+                notchPanelOpacity: config.notchPanelOpacity,
+                notchPanelColorHex: config.notchPanelColorHex,
+                notchMirrorEnabled: config.notchMirrorEnabled,
+                notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+                notchWidgets: config.notchWidgets)
+            let view = NotchSettingsView(vm: vm, onSave: {})
+                .frame(width: 600, height: 720)
+                .environment(\.colorScheme, scheme)
+            let png = try Self.renderPNG(view)
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
     /// 메모 모드를 켜고 끌 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.
     /// 실제 앱처럼 창 안에 올린 뒤 모드를 바꾸고, 보고된 높이가 늘었다 줄어드는지 본다.
     @Test(
