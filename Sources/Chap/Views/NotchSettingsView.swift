@@ -136,7 +136,7 @@ struct NotchSettingsView: View {
                         Section {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(alignment: .top, spacing: 14) {
-                                    slotGroup(title: "Shelves", systemImage: "lock.fill") {
+                                    slotGroup(title: "Default", systemImage: "lock.fill") {
                                         ForEach(0..<NotchWidget.shelfSlotCount, id: \.self) {
                                             index in
                                             let shelf = NotchWidget.shelfSlots[index]
@@ -184,7 +184,7 @@ struct NotchSettingsView: View {
                             Text("Layout")
                         } footer: {
                             Text(
-                                "Click a shelf to turn it on or off. Drag widgets onto slots 3–6, "
+                                "Click Screenshots or Downloads to turn it on or off. Drag widgets onto slots 3–6, "
                                     + "or right-click a slot."
                             )
                             .font(.caption)
@@ -388,7 +388,7 @@ private struct ShelfSlotToggle: View {
             "\(NotchSettingsView.widgetName(shelf)) always sits in slot \(index + 1). "
                 + "Click to turn it \(isOn ? "off" : "on")."
         )
-        .accessibilityLabel("\(NotchSettingsView.widgetName(shelf)) shelf, slot \(index + 1)")
+        .accessibilityLabel("\(NotchSettingsView.widgetName(shelf)), slot \(index + 1)")
         .accessibilityValue(isOn ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
     }
@@ -425,7 +425,7 @@ private struct WidgetSlotBox: View {
             .foregroundColor(isEmpty ? DS.textTertiary : DS.accent)
             Text(
                 isEmpty
-                    ? (isShelfSlot ? "Shelf" : "Empty")
+                    ? (isShelfSlot ? "Off" : "Empty")
                     : NotchSettingsView.widgetName(widget)
             )
             .font(DS.captionFont)
@@ -490,9 +490,9 @@ private struct WidgetSlotBox: View {
             isDropTargeted = $0
         }
         .accessibilityLabel(
-            "\(isShelfSlot ? "Shelf slot" : "Slot") \(index + 1): \(NotchSettingsView.widgetName(widget))"
+            "Slot \(index + 1): \(NotchSettingsView.widgetName(widget))"
         )
-        .help(isShelfSlot ? "Shelf slot: Screenshots or Downloads" : "Widget slot")
+        .help(isShelfSlot ? "Default slot: Screenshots or Downloads" : "Widget slot")
     }
 }
 

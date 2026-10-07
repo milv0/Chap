@@ -184,7 +184,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
-되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Layout(선반 두 칸 · 위젯 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
+되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Layout("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
 Top Strip(Mirror·Quick Note 토글), Appearance 세 묶음이다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈

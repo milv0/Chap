@@ -8,8 +8,8 @@ All notable changes to Chap are documented in this file.
 
 - **Even strip icons** — Every icon in the black strip (folded shelves, Drop,
   Mirror, Quick Note) now shares one size and weight, a touch larger than before.
-- **Calmer Notch settings** — Settings → Notch is grouped into Layout (shelves and
-  widget slots side by side, with only the widgets you haven't placed below), Top
+- **Calmer Notch settings** — Settings → Notch is grouped into Layout (the Default
+  Screenshots and Downloads slots and the widget slots side by side, with only the widgets you haven't placed below), Top
   Strip (Mirror and Quick Note, each with one line of help), and Appearance, with
   shorter notes.
 - **Quieter Add row** — The To-do add row shows only a faint + until you point at
