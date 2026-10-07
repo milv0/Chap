@@ -55,9 +55,7 @@ struct NotchTodoView: View {
             header
             // 항목과 추가 줄을 합쳐도 4줄을 넘지 않아 스크롤 없이 다른 목록 칸과 높이가 같다.
             Group {
-                if !lastCleared.isEmpty {
-                    undoBanner
-                } else if TodoStore.isAllDone(items) && !showsDoneList {
+                if TodoStore.isAllDone(items) && !showsDoneList {
                     allDone
                 } else {
                     VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
@@ -117,7 +115,21 @@ struct NotchTodoView: View {
             }
             Spacer(minLength: 0)
             // 끝낸 항목이 있으면 제목 줄 오른쪽에 작은 Clear. All done 화면에서 Back으로 돌아와도 바로 비울 수 있다.
-            if items.contains(where: \.isDone), lastCleared.isEmpty,
+            if !lastCleared.isEmpty {
+                // 비운 직후 몇 초 동안만: 목록은 바로 비고, 되돌리기는 제목 줄 오른쪽 작은 Undo로 남긴다.
+                Button("Undo", action: undoClear)
+                    .buttonStyle(.plain)
+                    .font(DS.notchMeta.weight(.semibold))
+                    .foregroundColor(DS.accent)
+                    .padding(.trailing, 6)
+                    .help("Bring the cleared to-dos back")
+                    .transition(.opacity)
+                    .task(id: lastCleared.map(\.id)) {
+                        try? await Task.sleep(for: .seconds(Self.undoWindow))
+                        guard !Task.isCancelled else { return }
+                        withAnimation(.smooth(duration: 0.2)) { lastCleared = [] }
+                    }
+            } else if items.contains(where: \.isDone),
                 !(TodoStore.isAllDone(items) && !showsDoneList)
             {
                 Button("Clear", action: clearCompleted)
@@ -288,25 +300,6 @@ struct NotchTodoView: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("All done")
-    }
-
-    /// 방금 비운 직후: "Cleared 3" + Undo. 몇 초 뒤 사라지고, 노치를 닫아도 사라진다.
-    private var undoBanner: some View {
-        VStack(spacing: 8) {
-            Spacer(minLength: 0)
-            Text(lastCleared.count == 1 ? "Cleared 1 to-do" : "Cleared \(lastCleared.count) to-dos")
-                .font(DS.notchMeta)
-                .foregroundColor(palette.secondary)
-            capsuleButton("Undo", tint: DS.accent, fill: DS.accent.opacity(0.12), action: undoClear)
-                .help("Bring the cleared to-dos back")
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity)
-        .task(id: lastCleared.map(\.id)) {
-            try? await Task.sleep(for: .seconds(Self.undoWindow))
-            guard !Task.isCancelled else { return }
-            withAnimation(.smooth(duration: 0.2)) { lastCleared = [] }
-        }
     }
 
     private func capsuleButton(
