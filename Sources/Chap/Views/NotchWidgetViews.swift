@@ -136,7 +136,7 @@ struct NotchFocusView: View {
             .buttonStyle(FocusPressStyle())
             .onHover { isCenterHovered = $0 }
             .help("Keep your Mac awake for \(dialHours) h. Drag the dial to change.")
-            .accessibilityLabel("Chap on for \(dialHours) hours")
+            .accessibilityLabel("Turn on for \(dialHours) hours")
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Focus length")
@@ -183,10 +183,7 @@ struct NotchFocusView: View {
                 }
                 .buttonStyle(FocusPressStyle())
                 .onHover { isCenterHovered = $0 }
-                .help(
-                    "\(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date)) left. "
-                        + "Click to turn off."
-                )
+                .help("Turn off Keep Mac Awake")
                 .accessibilityLabel(
                     "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
                 )
@@ -207,8 +204,7 @@ private struct FocusDialInner<Content: View>: View {
 
     var body: some View {
         content()
-            // 아래가 열린 호라 보이는 호의 가운데가 원 중심보다 위에 있다. 글자를 조금 올려 눈으로 가운데에 맞춘다.
-            .offset(y: -4)
+            // 숫자 + On/Off 두 줄은 원 중심에 그대로 둔다(올리면 숫자가 위로 쏠려 보인다).
             .frame(width: Self.diameter, height: Self.diameter)
             .background(Circle().fill(isHovered ? hoverTint : Color.clear))
             .contentShape(Circle())
