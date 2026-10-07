@@ -244,11 +244,11 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   아래 120°는 평평하게 열려 있다(`focusDialSweep`). 눈금은 0~12시간 하나(`focusDialFraction`), 3·6·9시간에 점, 양 끝
   아래에 "0"과 "12h".
 - 꺼짐: 호(테두리 띠)를 끌면 1시간 단위(1~12시간, `focusDialHours(dx:dy:)`, 아래 빈 곳은 가까운 끝)로 맞추고, 한 칸
-  넘어갈 때마다 트랙패드가 똑(`.alignment`) 한다. 고른 시간까지 블루 호 + 흰 손잡이, 가운데 20pt "4h"와 블루 "⚡ Chap on" 글자. 따로 버튼 모양은
-  없고 **호 안쪽 원 전체(`FocusDialInner`, 지름 70pt)가 스위치**다(마우스를 올리면 옅게 물듦). 누르면 `FocusPressStyle`로 눌렸다 튀어 오르며 햅틱(`.levelChange`)과 함께 켠다. 마지막 시간은
+  넘어갈 때마다 트랙패드가 똑(`.alignment`) 한다. 고른 시간까지 블루 호 + 흰 손잡이, 가운데에는 블루 13pt "Chap on" 한 마디만 있다(호를 끄는 동안만 고른
+  시간 "4h"가 잠깐 뜬다). 따로 버튼 모양은 없고 **호 안쪽 원 전체(`FocusDialInner`, 지름 70pt)가 스위치**다(마우스를 올리면 옅게 물듦). 누르면 `FocusPressStyle`로 눌렸다 튀어 오르며 햅틱(`.levelChange`)과 함께 켠다. 마지막 시간은
   `ChapFocusPresetDuration`에 기억(기본 1시간). VoiceOver는 조절 동작(올리기·내리기)으로 바꾼다.
-- 켜짐: 같은 눈금에서 남은 시간까지 블루 호가 1초마다 줄어든다(주방 타이머처럼, 끌 수 없음). 가운데 15pt 남은 시간과
-  "Chap off" 글자(마우스를 올리면 빨강). 안쪽 원을 누르면 끈다.
+- 켜짐: 같은 눈금에서 남은 시간까지 블루 호가 1초마다 줄어든다(주방 타이머처럼, 끌 수 없음). 가운데에는 "Chap off" 한
+  마디만 있다(마우스를 올리면 빨강, 툴팁에 남은 시간). 남은 시간은 호가 보여 준다. 안쪽 원을 누르면 끈다.
 - 다이얼 길이는 `KeepAwakePolicy.focusPreset(hours:)` 세션이 되고, 앱은 메뉴 프리셋이나 1~12시간 정수만 받는다
   (`focusPreset(forRequestedDuration:)`).
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
