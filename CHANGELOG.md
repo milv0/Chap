@@ -4,6 +4,13 @@ All notable changes to Chap are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Even strip icons** — Every icon in the black strip (folded shelves, Drop,
+  Mirror, Quick Note) now shares one size and weight, a touch larger than before.
+- **Quieter Add row** — The To-do add row shows only a faint + until you point at
+  it (or the list is empty).
+
 ### Added
 
 - **Focus dial** — Focus is now a dial: a long arc with a flat, open bottom.

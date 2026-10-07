@@ -212,7 +212,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 | 30분 이상 남음 | 꼬리를 0.4초 프레임으로 계속 흔듦 |
 | 30분 미만 | 졸린 눈꺼풀(`Eyes.drowsy`), 꼬리를 0.7초 프레임으로 느리게 흔듦 |
 
-- **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
+- **접힌 선반 아이콘**: 흰 14pt medium(`DS.notchStripIconFont`, 띠 아이콘 공용, `DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
   대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
   읽히도록 마지막 칸이 노치에 가장 가깝다. 메모 모드에서는 숨긴다.
 - **물범 자리**: 아이콘이 없으면 왼쪽 상태 영역 가운데(노치에서 55pt), 있으면 바깥쪽으로 비켜 86pt
@@ -302,7 +302,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 - 줄: 다른 목록과 같은 26pt, 16pt 체크 동그라미(완료는 블루 `checkmark.circle.fill`) + 12pt 문구(`DS.notchRowName`).
   완료 항목은 보조색 + 취소선. 최대 4개(`maxItems`)라 항목 + 추가 줄이 늘 4줄 이하로, 스크롤 없이 목록 칸 높이(113pt)에 맞는다.
-- 추가: 맨 아래 "＋ Add a to-do"(항목이 있으면 "＋ Add") 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
+- 추가: 맨 아래 추가 줄은 평소에 체크 동그라미 자리의 옅은 ＋(보조색 55%)만 보이고, 마우스를 올리거나 목록이
+  비어 있을 때만 "Add a to-do"가 나타난다(목록을 방해하지 않게). 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
   항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
   문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 4개가 차면 추가 줄을 숨기고, 완료 항목을 지우면(Clear Completed·Delete) 다시 보인다.
 - 완료: 동그라미를 누르면 체크·취소선. 항목은 제자리에 있다(아래로 옮기지 않는다, `ordered`는 넣은 순).

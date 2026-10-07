@@ -20,6 +20,8 @@ struct NotchTodoView: View {
     @State private var editingID: UUID?
     @State private var editDraft = ""
     @State private var isAdding = false
+    /// 추가 줄 위에 마우스가 있는지. 있을 때만 "Add a to-do" 글자가 보인다.
+    @State private var isAddHovered = false
     /// 마우스가 올라간 줄. 그 줄 오른쪽 끝에 삭제 버튼이 보인다.
     @State private var hoveredID: UUID? = NotchTodoView.previewHoveredIndex.flatMap { index in
         NotchTodoView.previewItems.flatMap { $0.indices.contains(index) ? $0[index].id : nil }
@@ -172,11 +174,14 @@ struct NotchTodoView: View {
         .accessibilityAction(named: "Delete") { update(TodoStore.removing(item.id, from: items)) }
     }
 
+    /// 추가 줄. 목록을 방해하지 않도록 평소에는 체크 동그라미 자리에 옅은 ＋만 두고, 마우스를 올리거나
+    /// 목록이 비어 있을 때만 "Add a to-do" 글자를 보여 준다.
     private var addRow: some View {
-        HStack(spacing: 6) {
+        let showsLabel = isAddHovered || items.isEmpty
+        return HStack(spacing: 6) {
             Image(systemName: "plus")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(palette.secondary)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(palette.secondary.opacity(isAddHovered || isAdding ? 1 : 0.55))
                 .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
             if isAdding {
                 TextField("Add a to-do", text: $draft)
@@ -187,9 +192,10 @@ struct NotchTodoView: View {
                     .onSubmit(commitDraft)
                     .background(fieldFrameReader)
             } else {
-                Text(items.isEmpty ? "Add a to-do" : "Add")
+                Text("Add a to-do")
                     .font(DS.notchRowName)
-                    .foregroundColor(palette.secondary)
+                    .foregroundColor(palette.secondary.opacity(0.8))
+                    .opacity(showsLabel ? 1 : 0)
                 Spacer(minLength: 0)
             }
         }
@@ -197,6 +203,9 @@ struct NotchTodoView: View {
         .padding(.vertical, 5)
         .frame(height: NotchAppIconTile.listRowHeight)
         .contentShape(Rectangle())
+        .onHover { inside in
+            withAnimation(.easeOut(duration: 0.12)) { isAddHovered = inside }
+        }
         .onTapGesture { beginAdding() }
         .disabled(!didLoad)
         .accessibilityElement(children: .combine)

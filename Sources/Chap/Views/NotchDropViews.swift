@@ -206,7 +206,7 @@ struct NotchDropBadgeView: View {
             // 카운트 칩이 플레어가 깎아낸 투명 모서리로 나가지 않게 한다.
             // 아이콘과 숫자 배지를 한 덩어리로 묶어 광학 보정도 함께 움직인다.
             Image(systemName: "tray.fill")
-                .font(.system(size: 12))
+                .font(DS.notchStripIconFont)
                 .foregroundColor(DS.notchStripIconColor())
                 .overlay(alignment: .topTrailing) {
                     Text("\(min(count, 99))")

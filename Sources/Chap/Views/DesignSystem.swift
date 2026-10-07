@@ -25,6 +25,10 @@ enum DS {
 
     /// 검정 노치 띠 위 위젯 아이콘(Drop·Mirror·Quick Note) 색. 하드웨어 노치와 이어지는 띠라
     /// 흰색을 쓰고, 호버 시 한 단계 밝아진다. 켜진 도구만 액센트 블루로 바뀐다.
+    /// 검정 띠 아이콘(접힌 선반, Drop 상자, Mirror, Quick Note) 공용 글꼴. 크기와 굵기를 하나로 맞춰
+    /// 노치 양쪽 아이콘이 같은 무게로 보이게 한다.
+    static let notchStripIconFont = Font.system(size: 14, weight: .medium)
+
     static func notchStripIconColor(isHovered: Bool = false) -> Color {
         .white.opacity(isHovered ? 1 : 0.85)
     }

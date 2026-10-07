@@ -350,7 +350,7 @@ struct NotchMirrorStripControl: View {
     private var stripButton: some View {
         Button(action: tapped) {
             Image(systemName: symbol)
-                .font(.system(size: 13, weight: .medium))
+                .font(DS.notchStripIconFont)
                 .foregroundColor(isOpen ? DS.accent : DS.notchStripIconColor(isHovered: isHovered))
                 .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                 .contentShape(Rectangle())
@@ -467,7 +467,7 @@ struct NotchStripTools: View {
                 if showsEmptyDropBox {
                     // Drop 배지와 같은 아이콘·크기·광학 위치 (배지 아이콘은 본체 중앙에서 왼쪽 4pt, 아래 1pt).
                     Image(systemName: "tray.fill")
-                        .font(.system(size: 12))
+                        .font(DS.notchStripIconFont)
                         .foregroundColor(DS.notchStripIconColor())
                         .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                         .position(
@@ -549,7 +549,7 @@ struct NotchQuickNoteStripButton: View {
             }
         } label: {
             Image(systemName: "note.text")
-                .font(.system(size: 13, weight: .medium))
+                .font(DS.notchStripIconFont)
                 .foregroundColor(
                     isNoteMode ? DS.accent : DS.notchStripIconColor(isHovered: isHovered)
                 )
@@ -1145,7 +1145,7 @@ struct NotchStripShelfIcon: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 13))
+                .font(DS.notchStripIconFont)
                 .foregroundColor(DS.notchStripIconColor(isHovered: isHovered))
                 .frame(width: NotchLauncherPolicy.stripToolPitch, height: height)
                 .contentShape(Rectangle())
