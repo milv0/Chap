@@ -176,6 +176,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
+| To-do | 170pt (12pt 문구, 20자 안팎) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -183,7 +184,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
-되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 보드의 선반 칸(`ShelfSlotToggle`)은 자물쇠가
+되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Layout("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
+Top Strip(Mirror·Quick Note 토글), Appearance 세 묶음이다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈
 Downloads 칸 · Sites · Apps · Finder · 빈 칸.
@@ -211,7 +213,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 | 30분 이상 남음 | 꼬리를 0.4초 프레임으로 계속 흔듦 |
 | 30분 미만 | 졸린 눈꺼풀(`Eyes.drowsy`), 꼬리를 0.7초 프레임으로 느리게 흔듦 |
 
-- **접힌 선반 아이콘**: 흰 13pt(`DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
+- **접힌 선반 아이콘**: 흰 14pt medium(`DS.notchStripIconFont`, 띠 아이콘 공용, `DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
   대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
   읽히도록 마지막 칸이 노치에 가장 가깝다. 메모 모드에서는 숨긴다.
 - **물범 자리**: 아이콘이 없으면 왼쪽 상태 영역 가운데(노치에서 55pt), 있으면 바깥쪽으로 비켜 86pt
@@ -238,13 +240,17 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
-- 켜고 끄는 모습이 같은 **하나의 링**이다(지름 80pt, 두께 5pt, `FocusRing`, 칸 폭 116pt). 링 전체가 버튼이다.
-- 꺼짐: 빈 링(본문색 12%) 가운데 블루 번개와 "Chap on". 마우스를 올리면 링이 연한 블루로 차오르고, 누르면
-  `FocusPressStyle`로 눌렸다 튀어 오르며 트랙패드 햅틱(`.levelChange`, 권한 없음)이 온다. 링 아래에 길이 칩 1h·4h·8h
-  (30×18pt 캡슐, 고른 칩은 블루 테두리·글자, 마지막 선택을 `ChapFocusPresetDuration`에 기억, 기본 1h).
-- 켜짐: 같은 링이 남은 비율만큼 블루 호로 12시 방향부터 차 있다가 1초마다 줄어든다(`focusProgress`, 길이를 모르면
-  `inferredFocusDuration`). 가운데 15pt 남은 시간(h:mm:ss). 링 아래 문구는 두지 않는다(링과 숫자로 충분하다). 마우스를 올리면 가운데가
-  "Chap off"로 바뀌고, 누르면 끈다.
+- 켜고 끄는 모습이 같은 **다이얼**이다(`FocusDial`, 104×92pt, 제목 아래 9pt 띄움 `topGap`, 칸 폭 116pt). 반원보다 긴 240° 호가 위를 감싸고
+  아래 120°는 평평하게 열려 있다(`focusDialSweep`). 눈금은 0~12시간 하나(`focusDialFraction`), 3·6·9시간에 점, 양 끝
+  아래에 "0"과 "12h".
+- 꺼짐: 호(테두리 띠)를 끌면 1시간 단위(1~12시간, `focusDialHours(dx:dy:)`, 아래 빈 곳은 가까운 끝)로 맞추고, 한 칸
+  넘어갈 때마다 트랙패드가 똑(`.alignment`) 한다. 고른 시간까지 블루 호 + 흰 손잡이, 가운데에는 20pt 고른 시간("4h")과 그 아래 블루 10pt "On"
+  (`focusDialOnLabel`, "Chap" 없이). 따로 버튼 모양은 없고 **호 안쪽 원 전체(`FocusDialInner`, 지름 70pt)가 스위치**다(마우스를 올리면 옅게 물듦). 누르면 `FocusPressStyle`로 눌렸다 튀어 오르며 햅틱(`.levelChange`)과 함께 켠다. 마지막 시간은
+  `ChapFocusPresetDuration`에 기억(기본 1시간). VoiceOver는 조절 동작(올리기·내리기)으로 바꾼다.
+- 켜짐: 같은 눈금에서 남은 시간까지 블루 호가 1초마다 줄어든다(주방 타이머처럼, 끌 수 없음). 가운데에는 15pt 남은
+  시간(h:mm:ss)과 그 아래 10pt "Off"(`focusDialOffLabel`, 마우스를 올리면 빨강). 안쪽 원을 누르면 끈다.
+- 다이얼 길이는 `KeepAwakePolicy.focusPreset(hours:)` 세션이 되고, 앱은 메뉴 프리셋이나 1~12시간 정수만 받는다
+  (`focusPreset(forRequestedDuration:)`).
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
@@ -289,6 +295,34 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 글자 시작(줄 왼쪽에서 32pt)에 맞추고, 어두운 바탕(검정 86%)에 흰 10pt라 Mist·Glass에서도 대비가 같다.
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
+
+## To-do 칸
+
+위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 170pt). Chap 안에만 저장한다
+(`TodoStore`, `~/Library/Application Support/Chap/Todos.json`, 권한·동기화 없음, 설정 Export/Import에 안 섞임).
+
+- 줄: 다른 목록과 같은 26pt, 16pt 체크 동그라미(완료는 블루 `checkmark.circle.fill`) + 12pt 문구(`DS.notchRowName`).
+  완료 항목은 보조색 + 취소선. 최대 4개(`maxItems`)라 항목 + 추가 줄이 늘 4줄 이하로, 스크롤 없이 목록 칸 높이(113pt)에 맞는다.
+- 추가: 맨 아래 추가 줄은 평소에 체크 동그라미 자리의 옅은 ＋(보조색 55%)만 보이고, 마우스를 올리거나 목록이
+  비어 있을 때만 "Add a to-do"가 나타난다(목록을 방해하지 않게). 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
+  항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
+  문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 4개가 차면 추가 줄을 숨기고, 완료 항목을 지우면(Clear Completed·Delete) 다시 보인다.
+- 완료: 동그라미를 누르면 체크·취소선. 항목은 제자리에 있다(아래로 옮기지 않는다, `ordered`는 넣은 순).
+- 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제). 줄에 마우스를 올리면 줄이 옅게 강조되고 오른쪽 끝에 16pt ×
+  (`TodoDeleteButton`, 보조색, 버튼에 올리면 `DS.danger` 원)가 나타나 바로 지운다. 숨어 있을 때도 자리를 잡아 문구가
+  밀리지 않는다. 우클릭에 Mark Done/Edit/Delete, VoiceOver는 줄의 Delete 동작. 제목 우클릭 → Clear Completed.
+- 제목 옆 10pt 진행률 원(`TodoProgressRing`, `TodoStore.progress`): 끝낸 비율만큼 블루로 차고, 다 끝나면 가득 찬 원
+  (Things의 프로젝트 원). 열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다.
+- 체크하는 순간: 동그라미가 체크로 바뀌며 한 번 튀고(`.symbolEffect(.bounce)`), 취소선이 글자 폭만큼 왼쪽에서
+  오른쪽으로 0.28초에 그어진다. 트랙패드 햅틱(`.levelChange`)과 함께 `NotchTodoView.didCompleteNotification`을 보내
+  검정 띠의 물범이 꼬리를 한 번 까딱한다(동작 줄이기·닫힌 노치에서는 까딱하지 않음). 체크를 풀 때는 조용하다.
+- 다 끝냈을 때(`isAllDone`): 목록 대신 블루 체크, "All done.", 캡슐 둘. "Back"은 목록으로 돌아가 체크를 풀 수
+  있게 하고, "Clear"는 완료 항목을 비운다. 끝낸 항목이 하나라도 있으면 제목 줄 오른쪽에 작은 "Clear"가 있어
+  Back으로 돌아온 뒤에도 체크를 풀었다 다시 누를 필요 없이 바로 비운다. 저절로 지우지는 않는다. 축하는 이 정도로만 한다.
+- 비우기 되돌리기: "All done." 화면의 Clear는 마무리라 바로 빈 "Add a to-do" 화면으로 돌아가고 되돌리기를 남기지
+  않는다(다시 보려면 그 전에 Back). 목록에서 일부만 비울 때(제목 줄 Clear·Clear Completed)는 목록이 바로 비고
+  4초 동안 제목 줄 오른쪽 작은 "Undo"로 되돌릴 수 있다(`restoring`, 그사이 넣은 항목은 지키고 4개 한도 안에서 되돌림). 노치를 닫으면 되돌리기도 끝난다. 줄 하나를 Delete한 것은 되돌리지 않는다.
+- 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
 ## Quick Note 저장
 

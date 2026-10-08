@@ -38,6 +38,8 @@ tail (slower and drowsy in the last 30 minutes). That wag is the one steady
 motion Chap allows, because it means "I'm keeping your Mac awake". Floating,
 paddling, or staying under water were tried and cut: they read as a toy or hide
 the state. The Focus slot shows the bolt and the time left.
+When you check off a to-do, the seal flicks its tail once: a friend noticing,
+not a pet asking for attention.
 
 ## The name carries both meanings
 
@@ -93,9 +95,9 @@ enough: a friend who snaps things into place.
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
 | Mascot | Chap the Seal (the seal is Chap) |
-| Focus (idle) | Chap on (in the center of the Focus ring) |
+| Focus dial | the number, with a small On / Off under it (no "Chap": the number leads) |
 | Focus (stop) | Chap off |
-| Focus (running) | (no caption; the ring and the time left say it) |
+| Focus (running) | (no caption; the dial and the time left say it) |
 
 ## Do / Don't
 

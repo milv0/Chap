@@ -93,6 +93,9 @@ enum KeepAwakePolicy {
     static let focusIdleHint = "No sleep, no dimming."
     /// 켜져 있을 때 끄는 버튼.
     static let focusOffTitle = "Chap off"
+    /// 다이얼 가운데 숫자 아래의 짧은 말. 숫자가 주인공이라 "Chap" 없이 On/Off만 쓴다.
+    static let focusDialOnLabel = "On"
+    static let focusDialOffLabel = "Off"
 
     /// Focus 위젯이 처음 고르고 있는 시간. 마지막으로 켠 시간을 기억하되, 목록에 없으면 이 값.
     static let defaultFocusPreset = focusPresets[0]
@@ -100,6 +103,55 @@ enum KeepAwakePolicy {
     /// 저장된 길이(초)를 Focus 선택지로 되돌린다. 목록에 없거나 없으면 기본값.
     static func focusPreset(forStoredDuration duration: Double) -> Preset {
         focusPresets.first { $0.duration == duration } ?? defaultFocusPreset
+    }
+
+    // MARK: - Focus 다이얼
+
+    /// 다이얼로 고를 수 있는 시간(시간 단위). 1시간 간격.
+    static let focusDialHours: ClosedRange<Int> = 1...12
+    /// 처음 고르고 있는 시간.
+    static let defaultFocusDialHours = 1
+    /// 다이얼 호가 차지하는 각도. 반원(180°)보다 길고 아래가 평평하게 열린다(아래 120° 빈 곳).
+    static let focusDialSweep: Double = 240
+
+    /// 저장된 길이(초)를 다이얼 시간으로. 범위 밖이면 가장 가까운 끝, 값이 없으면 기본값.
+    static func focusDialHours(forStoredDuration duration: Double) -> Int {
+        guard duration > 0 else { return defaultFocusDialHours }
+        let hours = Int((duration / 3600).rounded())
+        return min(max(hours, focusDialHours.lowerBound), focusDialHours.upperBound)
+    }
+
+    /// 다이얼 위 비율(0…1). 0시간이 호의 왼쪽 끝, 12시간이 오른쪽 끝인 하나의 눈금이라 켜진 뒤에도 남은 시간이
+    /// 같은 눈금 위에서 줄어든다(주방 타이머처럼).
+    static func focusDialFraction(hours: Double) -> Double {
+        min(max(hours / Double(focusDialHours.upperBound), 0), 1)
+    }
+
+    /// 다이얼 가운데 기준 점(아래가 +y)을 시간으로. 12시 방향이 호의 가운데, 시계 방향이 늘어나는 쪽이다.
+    /// 아래 빈 곳의 점은 가까운 끝으로 붙는다.
+    static func focusDialHours(dx: Double, dy: Double) -> Int {
+        let angle = atan2(dx, -dy) * 180 / .pi  // -180…180, 0 = 12시
+        let half = focusDialSweep / 2
+        let clamped = min(max(angle, -half), half)
+        let fraction = (clamped + half) / focusDialSweep
+        let hours = Int((fraction * Double(focusDialHours.upperBound)).rounded())
+        return min(max(hours, focusDialHours.lowerBound), focusDialHours.upperBound)
+    }
+
+    /// 다이얼로 고른 시간의 세션. 메뉴 프리셋과 같은 길이면 그 이름을 쓴다.
+    static func focusPreset(hours: Int) -> Preset {
+        let clamped = min(max(hours, focusDialHours.lowerBound), focusDialHours.upperBound)
+        let duration = TimeInterval(clamped * 3600)
+        return presets.first { $0.duration == duration }
+            ?? Preset(title: "\(clamped) Hours", duration: duration)
+    }
+
+    /// 노치 Focus 요청의 길이를 세션으로. 메뉴 프리셋이나 다이얼 시간(1~12시간 정수)만 받는다.
+    static func focusPreset(forRequestedDuration duration: TimeInterval) -> Preset? {
+        if let preset = presets.first(where: { $0.duration == duration }) { return preset }
+        let hours = duration / 3600
+        guard hours == hours.rounded(), focusDialHours.contains(Int(hours)) else { return nil }
+        return focusPreset(hours: Int(hours))
     }
 
     /// 세션 길이를 모를 때(앱이 세션 시작 뒤 다시 그려진 경우 등) 남은 시간을 담을 수 있는 가장 짧은 프리셋 길이.

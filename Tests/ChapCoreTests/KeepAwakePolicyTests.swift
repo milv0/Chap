@@ -204,4 +204,39 @@ struct FocusWidgetTests {
         #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 20 * 60) == 30 * 60)
         #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 13 * 3600) == 13 * 3600)
     }
+
+    @Test("the dial maps the arc to 1-12 hours, with the gap snapping to the nearest end")
+    func dialAngles() {
+        // 12시 방향 = 호의 가운데 = 6시간.
+        #expect(KeepAwakePolicy.focusDialHours(dx: 0, dy: -40) == 6)
+        // 왼쪽 끝(-120°) 근처 = 최소 1시간, 오른쪽 끝(+120°) = 12시간.
+        #expect(KeepAwakePolicy.focusDialHours(dx: -34.6, dy: 20) == 1)
+        #expect(KeepAwakePolicy.focusDialHours(dx: 34.6, dy: 20) == 12)
+        // 3시 방향(+90°) = 0.875 × 12 ≈ 10.5 → 11시간(반올림).
+        #expect(KeepAwakePolicy.focusDialHours(dx: 40, dy: 0) == 11)
+        // 아래 빈 곳은 가까운 끝으로 붙는다.
+        #expect(KeepAwakePolicy.focusDialHours(dx: -1, dy: 40) == 1)
+        #expect(KeepAwakePolicy.focusDialHours(dx: 1, dy: 40) == 12)
+    }
+
+    @Test("the dial remembers the last length within 1-12 hours")
+    func dialMemory() {
+        #expect(KeepAwakePolicy.focusDialHours(forStoredDuration: 4 * 3600) == 4)
+        #expect(KeepAwakePolicy.focusDialHours(forStoredDuration: 30 * 60) == 1)
+        #expect(KeepAwakePolicy.focusDialHours(forStoredDuration: 20 * 3600) == 12)
+        #expect(KeepAwakePolicy.focusDialHours(forStoredDuration: 0) == 1)
+        #expect(KeepAwakePolicy.focusDialFraction(hours: 3) == 0.25)
+        #expect(KeepAwakePolicy.focusDialFraction(hours: 15) == 1)
+    }
+
+    @Test("dial lengths become sessions; menu lengths keep their names")
+    func dialPresets() {
+        #expect(KeepAwakePolicy.focusPreset(hours: 4).title == "4 Hours")
+        #expect(KeepAwakePolicy.focusPreset(hours: 3).title == "3 Hours")
+        #expect(KeepAwakePolicy.focusPreset(hours: 3).duration == 3 * 3600)
+        #expect(KeepAwakePolicy.focusPreset(forRequestedDuration: 3 * 3600)?.title == "3 Hours")
+        #expect(KeepAwakePolicy.focusPreset(forRequestedDuration: 30 * 60)?.title == "30 Minutes")
+        #expect(KeepAwakePolicy.focusPreset(forRequestedDuration: 5400) == nil)
+        #expect(KeepAwakePolicy.focusPreset(forRequestedDuration: 13 * 3600) == nil)
+    }
 }

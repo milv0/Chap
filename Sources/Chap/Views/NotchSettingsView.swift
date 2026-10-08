@@ -8,10 +8,14 @@ struct NotchSettingsView: View {
     let onSave: () -> Void
 
     /// 연결된 화면 중 하나라도 노치가 있으면 true. 판별 규칙은 ChapCore 정책을 따른다.
+    /// (렌더 도구) 노치가 없는 환경에서도 세부 설정을 그린다.
+    static var previewForcesNotch = false
+
     private static var hasNotchScreen: Bool {
-        NSScreen.screens.contains { screen in
-            NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
-        }
+        previewForcesNotch
+            || NSScreen.screens.contains { screen in
+                NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+            }
     }
 
     /// 실시간 프리뷰용 컨트롤러. 설정 창은 AppDelegate가 소유한 컨트롤러를 빌린다.
@@ -21,7 +25,7 @@ struct NotchSettingsView: View {
 
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     /// 끌어다 놓는 위젯. 선반(Screenshots·Downloads)은 고정 칸에서 켜고 끄기만 하므로 팔레트에 없다.
-    private static let paletteWidgets: [NotchWidget] = [.sites, .apps, .folders, .awake]
+    private static let paletteWidgets: [NotchWidget] = [.sites, .apps, .folders, .awake, .todo]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
     static var supportsLiquidGlass: Bool {
@@ -56,6 +60,23 @@ struct NotchSettingsView: View {
         return true
     }
 
+    /// 보드의 칸 묶음: 작은 제목 + 칸들. 선반과 위젯 칸을 떨어뜨려 노치 왼쪽부터의 순서를 그대로 보여 준다.
+    private func slotGroup<Content: View>(
+        title: String, systemImage: String?, @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 3) {
+                if let systemImage {
+                    Image(systemName: systemImage).font(.system(size: 8))
+                }
+                Text(title)
+            }
+            .font(.caption2.weight(.medium))
+            .foregroundColor(DS.textTertiary)
+            HStack(spacing: 6) { content() }
+        }
+    }
+
     static func widgetName(_ widget: NotchWidget) -> String {
         switch widget {
         case .sites: return "Sites"
@@ -64,6 +85,7 @@ struct NotchSettingsView: View {
         case .screenshots: return "Screenshots"
         case .downloads: return "Downloads"
         case .awake: return "Focus"
+        case .todo: return "To-do"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
@@ -77,6 +99,7 @@ struct NotchSettingsView: View {
         case .screenshots: return "camera.viewfinder"
         case .downloads: return "arrow.down.circle"
         case .awake: return "bolt.fill"
+        case .todo: return "checklist"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
         }
@@ -109,19 +132,13 @@ struct NotchSettingsView: View {
 
                     // 세부 설정은 활성화 상태에서만 펼쳐진다.
                     if Self.hasNotchScreen && vm.notchLauncherEnabled {
-                        Section("Widgets") {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(
-                                    "Drag a widget into slots 3–6. Screenshots and Downloads stay in "
-                                        + "the first two slots; click one to turn it on or off."
-                                )
-                                .font(.caption)
-                                .foregroundColor(DS.textSecondary)
-
-                                // 노치 패널의 6칸을 그대로 본뜬 드롭 보드. 앞 두 칸은 선반 전용으로 잠겨 있다.
-                                HStack(alignment: .bottom, spacing: 6) {
-                                    ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
-                                        if index < NotchWidget.shelfSlotCount {
+                        // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
+                        Section {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(alignment: .top, spacing: 14) {
+                                    slotGroup(title: "Default", systemImage: "lock.fill") {
+                                        ForEach(0..<NotchWidget.shelfSlotCount, id: \.self) {
+                                            index in
                                             let shelf = NotchWidget.shelfSlots[index]
                                             ShelfSlotToggle(
                                                 index: index, shelf: shelf,
@@ -130,7 +147,13 @@ struct NotchSettingsView: View {
                                                 vm.notchWidgets[index] =
                                                     slotWidget(index) == shelf ? .none : shelf
                                             }
-                                        } else {
+                                        }
+                                    }
+                                    slotGroup(title: "Widgets", systemImage: nil) {
+                                        ForEach(
+                                            NotchWidget.shelfSlotCount..<NotchWidget.slotCount,
+                                            id: \.self
+                                        ) { index in
                                             WidgetSlotBox(
                                                 index: index,
                                                 widget: slotWidget(index),
@@ -139,56 +162,58 @@ struct NotchSettingsView: View {
                                         }
                                     }
                                 }
-                                // 선반 칸과 위젯 칸 그룹 라벨.
-                                HStack(spacing: 6) {
-                                    Label("Shelves", systemImage: "lock.fill")
-                                        .frame(width: 76 * 2 + 6, alignment: .leading)
-                                    Text("Widgets")
-                                }
-                                .font(.caption2)
-                                .foregroundColor(DS.textTertiary)
-                                .labelStyle(.titleAndIcon)
 
-                                // 배치 가능한 위젯 팔레트. 이미 배치된 위젯은 흐리게.
-                                // 칩이 설정 폭을 넘지 않도록 세 개씩 두 줄로 놓는다.
-                                VStack(alignment: .leading, spacing: 6) {
-                                    ForEach(
-                                        Array(
-                                            stride(from: 0, to: Self.paletteWidgets.count, by: 3)),
-                                        id: \.self
-                                    ) { start in
-                                        HStack(spacing: 8) {
-                                            ForEach(
-                                                Self.paletteWidgets[
-                                                    start..<min(
-                                                        start + 3, Self.paletteWidgets.count)],
-                                                id: \.self
-                                            ) { widget in
-                                                WidgetPaletteChip(
-                                                    widget: widget,
-                                                    isPlaced: vm.notchWidgets.contains(widget))
-                                            }
+                                // 아직 놓지 않은 위젯만 한 줄로. 다 놓았으면 줄 자체가 없다.
+                                let unplaced = Self.paletteWidgets.filter {
+                                    !vm.notchWidgets.contains($0)
+                                }
+                                if !unplaced.isEmpty {
+                                    HStack(spacing: 6) {
+                                        Text("Add")
+                                            .font(.caption)
+                                            .foregroundColor(DS.textSecondary)
+                                        ForEach(unplaced, id: \.self) { widget in
+                                            WidgetPaletteChip(widget: widget, isPlaced: false)
                                         }
                                     }
                                 }
                             }
+                            .padding(.vertical, 4)
                             .onChange(of: vm.notchWidgets) { _, _ in onSave() }
+                        } header: {
+                            Text("Layout")
+                        } footer: {
+                            Text(
+                                "Click Screenshots or Downloads to turn it on or off. Drag widgets onto slots 3–6, "
+                                    + "or right-click a slot."
+                            )
+                            .font(.caption)
+                            .foregroundColor(DS.textSecondary)
+                        }
 
-                            // Mirror는 칸이 아니라 도커 아래 줄 오른쪽 끝의 아이콘이다.
-                            Toggle("Show Mirror Icon", isOn: $vm.notchMirrorEnabled)
-                                .help(
-                                    "Show a camera mirror icon at the end of the notch's bottom row. "
-                                        + "The camera turns on only when you click it."
-                                )
-                                .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
+                        // 검정 띠 오른쪽 도구 아이콘. 칸이 아니라 띠에 붙는 아이콘이라 따로 묶는다.
+                        Section("Top Strip") {
+                            Toggle(isOn: $vm.notchMirrorEnabled) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Mirror")
+                                    Text("Check your camera. It turns on only when you click it.")
+                                        .font(.caption)
+                                        .foregroundColor(DS.textSecondary)
+                                }
+                            }
+                            .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
 
-                            Toggle("Show Quick Note Icon", isOn: $vm.notchQuickNoteEnabled)
-                                .help(
-                                    "Show a note icon next to Mirror in the notch's top strip. "
-                                        + "Click it to write across the notch, or open the note "
-                                        + "in its own window from there."
-                                )
-                                .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
+                            Toggle(isOn: $vm.notchQuickNoteEnabled) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Quick Note")
+                                    Text(
+                                        "Write across the notch, or pop the note into its own window."
+                                    )
+                                    .font(.caption)
+                                    .foregroundColor(DS.textSecondary)
+                                }
+                            }
+                            .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {
@@ -233,10 +258,8 @@ struct NotchSettingsView: View {
                                     notchController?.previewGlassMaterial()
                                 }
 
-                                Label(
-                                    "Appearance sets light or dark tinting; System follows macOS. "
-                                        + "Clear is more transparent, Regular adds contrast.",
-                                    systemImage: "info.circle"
+                                Text(
+                                    "System follows macOS. Clear is see-through; Regular adds contrast."
                                 )
                                 .font(.caption)
                                 .foregroundColor(DS.textSecondary)
@@ -300,13 +323,9 @@ struct NotchSettingsView: View {
                                     notchController?.previewCustomColor(newValue)
                                 }
 
-                                Label(
-                                    "Opacity and color changes preview live under the notch. "
-                                        + "The menu bar strip stays black as part of the notch.",
-                                    systemImage: "info.circle"
-                                )
-                                .font(.caption)
-                                .foregroundColor(DS.textSecondary)
+                                Text("Changes preview live under the notch.")
+                                    .font(.caption)
+                                    .foregroundColor(DS.textSecondary)
                             }
                         }
                     }
@@ -341,12 +360,9 @@ private struct ShelfSlotToggle: View {
                     .foregroundColor(isOn ? DS.textPrimary : DS.textTertiary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                Text(isOn ? "On" : "Off")
-                    .font(.caption2)
-                    .foregroundColor(isOn ? DS.accent : DS.textTertiary)
             }
             .padding(.horizontal, 3)
-            .frame(width: 76, height: 64)
+            .frame(width: 72, height: 58)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isOn ? DS.accentSoft : (isHovered ? DS.border.opacity(0.25) : .clear))
@@ -357,9 +373,10 @@ private struct ShelfSlotToggle: View {
                         DS.border, style: StrokeStyle(lineWidth: 1, dash: isOn ? [] : [4, 3]))
             )
             .overlay(alignment: .topTrailing) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 8))
-                    .foregroundColor(DS.textTertiary)
+                // 켜져 있으면 체크, 꺼져 있으면 빈 동그라미. 누르면 바뀐다.
+                Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 11))
+                    .foregroundColor(isOn ? DS.accent : DS.textTertiary)
                     .padding(4)
                     .accessibilityHidden(true)
             }
@@ -371,7 +388,7 @@ private struct ShelfSlotToggle: View {
             "\(NotchSettingsView.widgetName(shelf)) always sits in slot \(index + 1). "
                 + "Click to turn it \(isOn ? "off" : "on")."
         )
-        .accessibilityLabel("\(NotchSettingsView.widgetName(shelf)) shelf, slot \(index + 1)")
+        .accessibilityLabel("\(NotchSettingsView.widgetName(shelf)), slot \(index + 1)")
         .accessibilityValue(isOn ? "On" : "Off")
         .accessibilityAddTraits(.isToggle)
     }
@@ -393,7 +410,9 @@ private struct WidgetSlotBox: View {
     private var isShelfSlot: Bool { index < NotchWidget.shelfSlotCount }
     /// 이 칸에 놓을 수 있는 위젯(메뉴·VoiceOver 동작).
     private var choices: [NotchWidget] {
-        [.sites, .apps, .folders, .screenshots, .downloads, .awake].filter { $0.fits(slot: index) }
+        [.sites, .apps, .folders, .screenshots, .downloads, .awake, .todo].filter {
+            $0.fits(slot: index)
+        }
     }
 
     var body: some View {
@@ -406,7 +425,7 @@ private struct WidgetSlotBox: View {
             .foregroundColor(isEmpty ? DS.textTertiary : DS.accent)
             Text(
                 isEmpty
-                    ? (isShelfSlot ? "Shelf" : "Slot \(index + 1)")
+                    ? (isShelfSlot ? "Off" : "Empty")
                     : NotchSettingsView.widgetName(widget)
             )
             .font(DS.captionFont)
@@ -415,7 +434,7 @@ private struct WidgetSlotBox: View {
             .minimumScaleFactor(0.8)
         }
         .padding(.horizontal, 3)
-        .frame(width: 76, height: 64)
+        .frame(width: 72, height: 58)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                 .fill(
@@ -471,9 +490,9 @@ private struct WidgetSlotBox: View {
             isDropTargeted = $0
         }
         .accessibilityLabel(
-            "\(isShelfSlot ? "Shelf slot" : "Slot") \(index + 1): \(NotchSettingsView.widgetName(widget))"
+            "Slot \(index + 1): \(NotchSettingsView.widgetName(widget))"
         )
-        .help(isShelfSlot ? "Shelf slot: Screenshots or Downloads" : "Widget slot")
+        .help(isShelfSlot ? "Default slot: Screenshots or Downloads" : "Widget slot")
     }
 }
 

@@ -2,6 +2,38 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.8.0] — 2026-10-08
+
+### Changed
+
+- **Even strip icons** — Every icon in the black strip (folded shelves, Drop,
+  Mirror, Quick Note) now shares one size and weight, a touch larger than before.
+- **Calmer Notch settings** — Settings → Notch is grouped into Layout (the Default
+  Screenshots and Downloads slots and the widget slots side by side, with only the widgets you haven't placed below), Top
+  Strip (Mirror and Quick Note, each with one line of help), and Appearance, with
+  shorter notes.
+- **Quieter Add row** — The To-do add row shows only a faint + until you point at
+  it (or the list is empty).
+
+### Added
+
+- **Focus dial** — Focus is now a dial: a long arc with a flat, open bottom.
+  Drag around it to set 1 to 12 hours (Chap remembers your last setting) and click
+  the center to start. While Focus runs, the same arc winds down with the time left;
+  click the center to stop.
+- **A satisfying check** — Checking off a to-do bounces the circle into a check,
+  draws the strikethrough across, taps the trackpad, and the seal on the strip
+  flicks its tail. A small ring by the title fills as you finish items, and when
+  everything is done the slot says "All done." with Back (to uncheck something)
+  and Clear; a small Clear also sits by the title whenever something is done. Nothing clears on its own. Clearing from All done goes straight back to an
+  empty list; clearing only some items leaves a small Undo by the title for a few
+  seconds.
+- **To-do slot** — A short checklist for the notch. Place it in slot 3–6, click
+  Add and type, press Enter to add the next one, and click a circle to check it
+  off; finished items stay in place, checked, until you clear them. Double-click to edit;
+  hover a row and click × (or right-click) to delete. Up to four items, so it fits at a glance; clear finished
+  ones to make room. Kept only on this Mac.
+
 ## [2.7.2] — 2026-10-07
 
 ### Changed

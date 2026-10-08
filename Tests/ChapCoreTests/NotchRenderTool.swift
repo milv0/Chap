@@ -44,6 +44,18 @@ struct NotchRenderTool {
             previewWidgets[gap] = .awake
         }
         let previewSlots = NotchSlotContent.slots(widgets: previewWidgets, sites: config.sites)
+        // 할 일 칸 미리보기: 마지막 위젯 칸을 To-do로 바꾼다 (설정 파일은 바꾸지 않는다).
+        var todoWidgets = previewWidgets
+        if !todoWidgets.contains(.todo) { todoWidgets[NotchWidget.slotCount - 1] = .todo }
+        let todoSlots = NotchSlotContent.slots(widgets: todoWidgets, sites: config.sites)
+        let now = Date()
+        NotchTodoView.previewItems = [
+            TodoItem(title: "Send the Q4 deck to Jun", created: now),
+            TodoItem(title: "Book dentist", created: now.addingTimeInterval(1)),
+            TodoItem(
+                title: "Review Chap 2.8 notes", isDone: true, created: now.addingTimeInterval(2),
+                completed: now),
+        ]
         let drops = await withCheckedContinuation { continuation in
             ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) {
                 continuation.resume(returning: $0)
@@ -52,6 +64,7 @@ struct NotchRenderTool {
         ChapDrop.previewOverride = drops
         defer {
             ScreenshotShelf.previewOverride = nil
+            NotchTodoView.previewItems = nil
             DownloadsShelf.previewOverride = nil
             DownloadsShelf.previewHoveredURL = nil
             ChapDrop.previewOverride = nil
@@ -68,6 +81,8 @@ struct NotchRenderTool {
             ("notch-guides-collapsed", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-download-hover", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-empty-shelves", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-todo", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-todo", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
@@ -96,6 +111,7 @@ struct NotchRenderTool {
             reveal.isNoteMode = name.hasSuffix("-note")
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
+            NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -104,7 +120,8 @@ struct NotchRenderTool {
                 awakeSessionEnd: name.hasSuffix("focus-on")
                     ? Date().addingTimeInterval(3 * 3600 + 25 * 60) : nil, style: style,
                 glassMaterial: config.notchGlassMaterial,
-                slots: previewSlots, showsMirror: config.notchMirrorEnabled,
+                slots: name.hasSuffix("-todo") ? todoSlots : previewSlots,
+                showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
                 showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
@@ -116,6 +133,35 @@ struct NotchRenderTool {
                 .environment(\.colorScheme, scheme)
             // ImageRenderer는 AppKit 기반 뷰가 섞이면 전체를 대체 이미지로 그린다.
             // 화면 밖 창에 NSHostingView를 올려 레이어를 직접 비트맵으로 그린다.
+            let png = try Self.renderPNG(view)
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    /// Settings → Notch 화면을 그린다 (라이트·다크). 노치가 없는 Mac에서도 세부 설정까지 보이도록
+    /// `previewForcesNotch`를 켠다.
+    @Test("render the Notch settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderNotchSettings() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        NotchSettingsView.previewForcesNotch = true
+        defer { NotchSettingsView.previewForcesNotch = false }
+        for (name, scheme) in [
+            ("settings-notch-light", ColorScheme.light), ("settings-notch-dark", .dark),
+        ] {
+            let vm = SettingsViewModel(
+                sites: config.sites, notchLauncherEnabled: true,
+                notchPanelStyle: config.notchPanelStyle,
+                notchGlassAppearance: config.notchGlassAppearance,
+                notchGlassMaterial: config.notchGlassMaterial,
+                notchPanelOpacity: config.notchPanelOpacity,
+                notchPanelColorHex: config.notchPanelColorHex,
+                notchMirrorEnabled: config.notchMirrorEnabled,
+                notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+                notchWidgets: config.notchWidgets)
+            let view = NotchSettingsView(vm: vm, onSave: {})
+                .frame(width: 600, height: 720)
+                .environment(\.colorScheme, scheme)
             let png = try Self.renderPNG(view)
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }

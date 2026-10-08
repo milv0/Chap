@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.7.2-orange)
+![Version](https://img.shields.io/badge/version-2.8.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -15,8 +15,9 @@
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when you press Chap on, and wags its tail while Focus runs
+- **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off, or hover a row and click × to delete it; finished items stay in place, checked off, until you clear them. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
-- **Focus Mode** — A Focus ring in the notch: pick 1h, 4h, or 8h, press the ring to start (Chap on), and watch it empty as the time runs out; press it again to stop (the same session as Keep Mac Awake)
+- **Focus Mode** — A Focus dial in the notch: drag the arc to set 1–12 hours (your last setting is remembered), click the center to start, and watch the arc wind down; click again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
 - **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
@@ -147,7 +148,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, or Focus into the board (the first two slots belong to the Screenshots and Downloads shelves, in that order; turn each on or off in place, and a folded shelf and its slot stay on the left); context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do into the board (the first two slots belong to the Screenshots and Downloads shelves, in that order; turn each on or off in place, and a folded shelf and its slot stay on the left); context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
@@ -191,11 +192,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.7.2
+Scripts/release.sh 2.8.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.7.2 --publish
+Scripts/release.sh 2.8.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

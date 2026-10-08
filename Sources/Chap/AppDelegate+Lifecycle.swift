@@ -35,7 +35,7 @@ extension AppDelegate {
                 forName: NotchFocusView.activateRequest, object: nil, queue: .main
             ) { [weak self] note in
                 guard let duration = note.object as? TimeInterval,
-                    let preset = KeepAwakePolicy.presets.first(where: { $0.duration == duration })
+                    let preset = KeepAwakePolicy.focusPreset(forRequestedDuration: duration)
                 else { return }
                 self?.keepAwake.activate(preset: preset)
             },
