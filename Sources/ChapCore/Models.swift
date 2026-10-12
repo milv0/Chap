@@ -65,8 +65,9 @@ public enum WindowSizePresets {
     public static let workspace = WindowSizePreset(
         id: "workspace", label: "Workspace", widthRatio: 0.86, heightRatio: 0.86,
         aspectRatio: nil)
+    /// 높이는 보이는 영역(메뉴 막대·Dock 제외)을 꽉 채운다. 위아래 여백 없이 쓰라는 프리셋이다.
     public static let max = WindowSizePreset(
-        id: "max", label: "Max", widthRatio: 0.94, heightRatio: 0.92, aspectRatio: nil)
+        id: "max", label: "Max", widthRatio: 0.94, heightRatio: 1.0, aspectRatio: nil)
 
     public static let all = [compact, focus, standard, comfortable, wide, tall, workspace, max]
 

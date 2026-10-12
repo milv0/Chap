@@ -133,3 +133,24 @@ struct AppKitFrameTests {
         #expect(rect.origin.y == 250)  // 900 - top(250) - 400; top = (900-400)/2 = 250
     }
 }
+
+@Suite("Size presets")
+struct SizePresetTests {
+    @Test("Max fills the visible height so there is no gap above or below")
+    func maxFillsHeight() {
+        let preset = WindowSizePresets.max
+        #expect(preset.heightRatio == 1.0)
+
+        // 1512pt 너비 화면에서 메뉴 막대·Dock을 뺀 보이는 영역이 900pt 높이일 때.
+        let size = windowSizeFromRatio(
+            widthRatio: preset.widthRatio, heightRatio: preset.heightRatio,
+            aspectRatio: preset.aspectRatio, visibleWidth: 1512, visibleHeight: 900)
+        #expect(size.height == 900)
+        #expect(size.width == 1421)
+    }
+
+    @Test("Max reads as 94x100% in the picker")
+    func maxRatioText() {
+        #expect(WindowSizePresets.max.ratioText == "94x100%")
+    }
+}
