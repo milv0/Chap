@@ -46,25 +46,6 @@ struct NotchSettingsView: View {
 
     /// 위젯을 슬롯에 배치한다. 같은 위젯이 다른 슬롯에 있으면 자리를 맞바꿔
     /// 중복 배치를 막는다. 선반은 앞쪽 선반 칸에만, 다른 위젯은 뒤쪽 칸에만 놓인다(`fits(slot:)`).
-    /// Quick Note 키가 사이트·예약키와 겹칠 때의 한 줄 안내.
-    private var quickNoteConflictMessage: String? {
-        guard let key = vm.notchQuickNoteShortcut,
-            let conflict = QuickNoteShortcutPolicy.conflict(for: key, sites: vm.sites)
-        else { return nil }
-        return QuickNoteShortcutPolicy.conflictMessage(conflict, key: key)
-    }
-
-    /// Lights Out 키가 사이트·예약키·Quick Note 키와 겹칠 때의 한 줄 안내.
-    private var lightsOutConflictMessage: String? {
-        guard let key = vm.lightsOutShortcut,
-            let conflict = LightsOutPolicy.conflict(
-                for: key, sites: vm.sites,
-                quickNoteKey: vm.notchLauncherEnabled && vm.notchQuickNoteEnabled
-                    ? vm.notchQuickNoteShortcut : nil)
-        else { return nil }
-        return QuickNoteShortcutPolicy.conflictMessage(conflict, key: key)
-    }
-
     @discardableResult
     private func assign(_ widget: NotchWidget, to index: Int) -> Bool {
         guard vm.notchWidgets.indices.contains(index), widget.fits(slot: index) else {
@@ -125,256 +106,217 @@ struct NotchSettingsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer(minLength: 0)
-                Form {
-                    Section("Notch Launcher") {
-                        Toggle("Show Launchers Under the Notch", isOn: $vm.notchLauncherEnabled)
-                            .help(
-                                "Show the launcher list in a panel under the notch. "
-                                    + "The status bar menu keeps working either way."
-                            )
-                            .onChange(of: vm.notchLauncherEnabled) { _, _ in onSave() }
+        SettingsFormPage {
+            Section {
+                SettingsToggleRow(
+                    title: "Show Launchers Under the Notch",
+                    subtitle: Self.hasNotchScreen
+                        ? "Hover the notch to open the dock."
+                        : "No notch here: point at the middle of the menu bar.",
+                    help: "The status bar menu keeps working either way.",
+                    isOn: $vm.notchLauncherEnabled
+                )
+                .onChange(of: vm.notchLauncherEnabled) { _, _ in onSave() }
+            } header: {
+                SettingsSectionHeader(title: "Notch Launcher", systemImage: "macbook")
+            }
 
-                        if !Self.hasNotchScreen {
-                            Label(
-                                "This Mac has no notch, so nothing sits at the top until "
-                                    + "you point at the middle of the menu bar.",
-                                systemImage: "info.circle"
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
-                        }
-                    }
-
-                    // 세부 설정은 활성화 상태에서만 펼쳐진다.
-                    if vm.notchLauncherEnabled {
-                        // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
-                        Section {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack(alignment: .top, spacing: 14) {
-                                    slotGroup(title: "Default", systemImage: "lock.fill") {
-                                        ForEach(0..<NotchWidget.shelfSlotCount, id: \.self) {
-                                            index in
-                                            let shelf = NotchWidget.shelfSlots[index]
-                                            ShelfSlotToggle(
-                                                index: index, shelf: shelf,
-                                                isOn: slotWidget(index) == shelf
-                                            ) {
-                                                vm.notchWidgets[index] =
-                                                    slotWidget(index) == shelf ? .none : shelf
-                                            }
-                                        }
-                                    }
-                                    slotGroup(title: "Widgets", systemImage: nil) {
-                                        ForEach(
-                                            NotchWidget.shelfSlotCount..<NotchWidget.slotCount,
-                                            id: \.self
-                                        ) { index in
-                                            WidgetSlotBox(
-                                                index: index,
-                                                widget: slotWidget(index),
-                                                onAssign: { assign($0, to: index) },
-                                                onClear: { _ = assign(.none, to: index) })
-                                        }
-                                    }
-                                }
-
-                                // 아직 놓지 않은 위젯만 한 줄로. 다 놓았으면 줄 자체가 없다.
-                                let unplaced = Self.paletteWidgets.filter {
-                                    !vm.notchWidgets.contains($0)
-                                }
-                                if !unplaced.isEmpty {
-                                    HStack(spacing: 6) {
-                                        Text("Add")
-                                            .font(.caption)
-                                            .foregroundColor(DS.textSecondary)
-                                        ForEach(unplaced, id: \.self) { widget in
-                                            WidgetPaletteChip(widget: widget, isPlaced: false)
-                                        }
+            // 세부 설정은 활성화 상태에서만 펼쳐진다.
+            if vm.notchLauncherEnabled {
+                // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .top, spacing: 14) {
+                            slotGroup(title: "Default", systemImage: "lock.fill") {
+                                ForEach(0..<NotchWidget.shelfSlotCount, id: \.self) {
+                                    index in
+                                    let shelf = NotchWidget.shelfSlots[index]
+                                    ShelfSlotToggle(
+                                        index: index, shelf: shelf,
+                                        isOn: slotWidget(index) == shelf
+                                    ) {
+                                        vm.notchWidgets[index] =
+                                            slotWidget(index) == shelf ? .none : shelf
                                     }
                                 }
                             }
-                            .padding(.vertical, 4)
-                            .onChange(of: vm.notchWidgets) { _, _ in onSave() }
-                        } header: {
-                            Text("Layout")
-                        } footer: {
-                            Text(
-                                "Click Screenshots or Downloads to turn it on or off. Drag widgets onto slots 3–6, "
-                                    + "or right-click a slot."
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
+                            slotGroup(title: "Widgets", systemImage: nil) {
+                                ForEach(
+                                    NotchWidget.shelfSlotCount..<NotchWidget.slotCount,
+                                    id: \.self
+                                ) { index in
+                                    WidgetSlotBox(
+                                        index: index,
+                                        widget: slotWidget(index),
+                                        onAssign: { assign($0, to: index) },
+                                        onClear: { _ = assign(.none, to: index) })
+                                }
+                            }
                         }
 
-                        // 검정 띠 오른쪽 도구 아이콘. 칸이 아니라 띠에 붙는 아이콘이라 따로 묶는다.
-                        Section("Top Strip") {
-                            Toggle(isOn: $vm.notchMirrorEnabled) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Mirror")
-                                    Text("Check your camera. It turns on only when you click it.")
-                                        .font(.caption)
-                                        .foregroundColor(DS.textSecondary)
-                                }
-                            }
-                            .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
-
-                            // 켜기와 ⌥ 단축키를 한 줄에. Quick Note 단축키는 아이콘을 끄면 함께 쉰다.
-                            ToggleWithShortcutRow(
-                                title: "Quick Note",
-                                subtitle: "Opens a note window right under the notch.",
-                                isOn: $vm.notchQuickNoteEnabled,
-                                key: $vm.notchQuickNoteShortcut,
-                                conflictMessage: quickNoteConflictMessage,
-                                help: "Press ⌥ and this key anywhere to open Quick Note. "
-                                    + "Clear the key to turn the shortcut off.",
-                                keyAccessibilityLabel: "Quick Note shortcut key"
-                            )
-                            .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
-                            .onChange(of: vm.notchQuickNoteShortcut) { _, _ in onSave() }
-
-                            // Lights Out은 메뉴바 기능이라, 스위치(띠 아이콘)를 꺼도 ⌥ 단축키는 그대로 쓴다.
-                            ToggleWithShortcutRow(
-                                title: "Lights Out",
-                                subtitle: "Covers your screens. Press "
-                                    + "\(LightsOutPolicy.label(for: vm.lightsOutUnlockKey)) to come back.",
-                                isOn: $vm.notchLightsOutEnabled,
-                                key: $vm.lightsOutShortcut,
-                                conflictMessage: lightsOutConflictMessage,
-                                keyFollowsToggle: false,
-                                help:
-                                    "The switch shows the moon icon in the strip. Press ⌥ and the "
-                                    + "key anywhere to cover your screens, even with the icon off. "
-                                    + "Clear the key to turn the shortcut off.",
-                                keyAccessibilityLabel: "Lights Out shortcut key"
-                            )
-                            .onChange(of: vm.notchLightsOutEnabled) { _, _ in onSave() }
-                            .onChange(of: vm.lightsOutShortcut) { _, _ in onSave() }
+                        // 아직 놓지 않은 위젯만 한 줄로. 다 놓았으면 줄 자체가 없다.
+                        let unplaced = Self.paletteWidgets.filter {
+                            !vm.notchWidgets.contains($0)
                         }
-
-                        Section("Appearance") {
-                            Picker("Style", selection: $vm.notchPanelStyle) {
-                                Text("Custom").tag(NotchPanelStyle.custom)
-                                if Self.supportsLiquidGlass {
-                                    Text("Glass").tag(NotchPanelStyle.glass)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            .onChange(of: vm.notchPanelStyle) { _, _ in
-                                notchController?.endOpacityPreview()
-                                onSave()
-                            }
-
-                            if vm.notchPanelStyle == .glass {
-                                Picker(
-                                    "Glass Appearance",
-                                    selection: $vm.notchGlassAppearance
-                                ) {
-                                    Text("System").tag(NotchGlassAppearance.system)
-                                    Text("Light").tag(NotchGlassAppearance.light)
-                                    Text("Dark").tag(NotchGlassAppearance.dark)
-                                }
-                                .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassAppearance) { _, _ in
-                                    onSave()
-                                    notchController?.previewGlassAppearance()
-                                }
-
-                                // 재질은 appearance와 독립적으로 사용자가 고른다.
-                                Picker(
-                                    "Glass Material",
-                                    selection: $vm.notchGlassMaterial
-                                ) {
-                                    Text("Clear").tag(NotchGlassMaterial.clear)
-                                    Text("Regular").tag(NotchGlassMaterial.regular)
-                                }
-                                .pickerStyle(.segmented)
-                                .onChange(of: vm.notchGlassMaterial) { _, _ in
-                                    onSave()
-                                    notchController?.previewGlassMaterial()
-                                }
-
-                                Text(
-                                    "System follows macOS. Clear is see-through; Regular adds contrast."
-                                )
-                                .font(.caption)
-                                .foregroundColor(DS.textSecondary)
-                            } else {
-                                HStack {
-                                    Text("Panel Opacity")
-                                    Slider(
-                                        value: $vm.notchPanelOpacity,
-                                        in: Config.notchPanelOpacityRange
-                                    ) { editing in
-                                        // 드래그 시작 시 패널을 띄워 고정하고,
-                                        // 놓는 순간 고정을 풀고 저장한다.
-                                        if editing {
-                                            notchController?.beginOpacityPreview()
-                                        } else {
-                                            notchController?.endOpacityPreview()
-                                            onSave()
-                                        }
-                                    }
-                                    Text("\(Int(vm.notchPanelOpacity * 100))%")
-                                        .font(.caption)
-                                        .foregroundColor(DS.textSecondary)
-                                        .frame(width: 38, alignment: .trailing)
-                                        .monospacedDigit()
-                                }
-                                .onChange(of: vm.notchPanelOpacity) { _, newValue in
-                                    // 드래그 중 실시간 반영.
-                                    notchController?.updateOpacityPreview(newValue)
-                                }
-
-                                HStack {
-                                    Text("Panel Color")
-                                    Spacer()
-                                    // 기본 프리셋: 검정(노치 연장)과 밝은 Mist(#E8ECF8).
-                                    ForEach(Self.colorPresets, id: \.hex) { preset in
-                                        ColorPresetSwatch(
-                                            name: preset.name, hex: preset.hex,
-                                            isSelected: vm.notchPanelColorHex == preset.hex
-                                        ) {
-                                            vm.notchPanelColorHex = preset.hex
-                                        }
-                                    }
-                                    ColorPicker(
-                                        "",
-                                        selection: Binding(
-                                            get: {
-                                                NotchDockStyle.color(
-                                                    fromHex: vm.notchPanelColorHex)
-                                            },
-                                            set: {
-                                                vm.notchPanelColorHex = NotchDockStyle.hex(
-                                                    from: $0)
-                                            }
-                                        ),
-                                        supportsOpacity: false
-                                    )
-                                    .labelsHidden()
-                                }
-                                .onChange(of: vm.notchPanelColorHex) { _, newValue in
-                                    onSave()
-                                    notchController?.previewCustomColor(newValue)
-                                }
-
-                                Text("Changes preview live under the notch.")
+                        if !unplaced.isEmpty {
+                            HStack(spacing: 6) {
+                                Text("Add")
                                     .font(.caption)
                                     .foregroundColor(DS.textSecondary)
+                                ForEach(unplaced, id: \.self) { widget in
+                                    WidgetPaletteChip(widget: widget, isPlaced: false)
+                                }
                             }
                         }
                     }
+                    .padding(.vertical, 4)
+                    .onChange(of: vm.notchWidgets) { _, _ in onSave() }
+                } header: {
+                    SettingsSectionHeader(
+                        title: "Layout", systemImage: "rectangle.split.3x1",
+                        note: "Click a shelf to turn it on or off. Drag widgets onto slots 3–6, "
+                            + "or right-click a slot.")
                 }
-                .formStyle(.grouped)
-                .frame(maxWidth: 560)
-                Spacer(minLength: 0)
+
+                // 검정 띠 오른쪽 도구 아이콘: 보일지 말지만 정한다. 단축키·동작은 Tools 탭에 있다.
+                Section {
+                    SettingsToggleRow(
+                        title: "Mirror", subtitle: "Camera check beside the notch.",
+                        isOn: $vm.notchMirrorEnabled
+                    )
+                    .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
+
+                    SettingsToggleRow(
+                        title: "Quick Note", subtitle: "Opens the note window.",
+                        help: "The ⌥ shortcut lives in Tools and works with the icon off.",
+                        isOn: $vm.notchQuickNoteEnabled
+                    )
+                    .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
+
+                    SettingsToggleRow(
+                        title: "Lights Out", subtitle: "Covers your screens.",
+                        help: "The ⌥ shortcut and the unlock key live in Tools; "
+                            + "the menu bar item stays either way.",
+                        isOn: $vm.notchLightsOutEnabled
+                    )
+                    .onChange(of: vm.notchLightsOutEnabled) { _, _ in onSave() }
+                } header: {
+                    SettingsSectionHeader(
+                        title: "Top Strip", systemImage: "rectangle.topthird.inset.filled",
+                        note: "Icons on the black strip, right of the Drop box.")
+                }
+
+                Section {
+                    Picker("Style", selection: $vm.notchPanelStyle) {
+                        Text("Custom").tag(NotchPanelStyle.custom)
+                        if Self.supportsLiquidGlass {
+                            Text("Glass").tag(NotchPanelStyle.glass)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: vm.notchPanelStyle) { _, _ in
+                        notchController?.endOpacityPreview()
+                        onSave()
+                    }
+
+                    if vm.notchPanelStyle == .glass {
+                        Picker(
+                            "Glass Appearance",
+                            selection: $vm.notchGlassAppearance
+                        ) {
+                            Text("System").tag(NotchGlassAppearance.system)
+                            Text("Light").tag(NotchGlassAppearance.light)
+                            Text("Dark").tag(NotchGlassAppearance.dark)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: vm.notchGlassAppearance) { _, _ in
+                            onSave()
+                            notchController?.previewGlassAppearance()
+                        }
+
+                        // 재질은 appearance와 독립적으로 사용자가 고른다.
+                        Picker(
+                            "Glass Material",
+                            selection: $vm.notchGlassMaterial
+                        ) {
+                            Text("Clear").tag(NotchGlassMaterial.clear)
+                            Text("Regular").tag(NotchGlassMaterial.regular)
+                        }
+                        .pickerStyle(.segmented)
+                        .onChange(of: vm.notchGlassMaterial) { _, _ in
+                            onSave()
+                            notchController?.previewGlassMaterial()
+                        }
+                        .help("System follows macOS. Clear is see-through; Regular adds contrast.")
+
+                    } else {
+                        HStack {
+                            Text("Panel Opacity")
+                            Slider(
+                                value: $vm.notchPanelOpacity,
+                                in: Config.notchPanelOpacityRange
+                            ) { editing in
+                                // 드래그 시작 시 패널을 띄워 고정하고,
+                                // 놓는 순간 고정을 풀고 저장한다.
+                                if editing {
+                                    notchController?.beginOpacityPreview()
+                                } else {
+                                    notchController?.endOpacityPreview()
+                                    onSave()
+                                }
+                            }
+                            Text("\(Int(vm.notchPanelOpacity * 100))%")
+                                .font(.caption)
+                                .foregroundColor(DS.textSecondary)
+                                .frame(width: 38, alignment: .trailing)
+                                .monospacedDigit()
+                        }
+                        .onChange(of: vm.notchPanelOpacity) { _, newValue in
+                            // 드래그 중 실시간 반영.
+                            notchController?.updateOpacityPreview(newValue)
+                        }
+
+                        HStack {
+                            Text("Panel Color")
+                            Spacer()
+                            // 기본 프리셋: 검정(노치 연장)과 밝은 Mist(#E8ECF8).
+                            ForEach(Self.colorPresets, id: \.hex) { preset in
+                                ColorPresetSwatch(
+                                    name: preset.name, hex: preset.hex,
+                                    isSelected: vm.notchPanelColorHex == preset.hex
+                                ) {
+                                    vm.notchPanelColorHex = preset.hex
+                                }
+                            }
+                            ColorPicker(
+                                "",
+                                selection: Binding(
+                                    get: {
+                                        NotchDockStyle.color(
+                                            fromHex: vm.notchPanelColorHex)
+                                    },
+                                    set: {
+                                        vm.notchPanelColorHex = NotchDockStyle.hex(
+                                            from: $0)
+                                    }
+                                ),
+                                supportsOpacity: false
+                            )
+                            .labelsHidden()
+                        }
+                        .onChange(of: vm.notchPanelColorHex) { _, newValue in
+                            onSave()
+                            notchController?.previewCustomColor(newValue)
+                        }
+
+                    }
+                } header: {
+                    SettingsSectionHeader(
+                        title: "Appearance", systemImage: "paintpalette",
+                        note: "Changes preview live under the notch.")
+                }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DS.surfaceBg)
     }
 }
 

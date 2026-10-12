@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.9.4-orange)
+![Version](https://img.shields.io/badge/version-2.10.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -36,7 +36,7 @@
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal silhouette) in Settings > General; it turns Chap blue while Keep Mac Awake runs
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen (on the built-in display with the notch), and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
-- **Lights Out** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, Esc brings you back (pick another key in Settings > General), and pressing any key five times quickly lifts it if you forget. It holds the display awake on its own, so it works with or without a Keep Mac Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
+- **Lights Out** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, Esc brings you back (pick another key in Settings > Tools), and pressing any key five times quickly lifts it if you forget. It holds the display awake on its own, so it works with or without a Keep Mac Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
@@ -81,8 +81,8 @@ causes the next launch to create and link a new window.
 | `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
-| `⌥N` | Open Quick Note (change or turn off in Settings → Notch; a site using the same key wins) |
-| `⌥L` | Lights Out (change or turn off in Settings → Notch → Top Strip or Settings → General; a site or Quick Note using the same key wins) |
+| `⌥N` | Open Quick Note (change or turn off in Settings → Tools; a site using the same key wins) |
+| `⌥L` | Lights Out (change or turn off in Settings → Tools; a site or Quick Note using the same key wins) |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |
@@ -162,9 +162,9 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Lights Out** is a moon icon right of Quick Note. Click it and the dock folds while every screen goes black; press Esc (or your chosen key) to come back. Once the screens are covered the notch is covered too, so come back with the key, not the icon. In Settings → Notch → Top Strip, the Lights Out row holds both the icon switch and the ⌥ key; turning the icon off keeps ⌥L and the menu bar item.
+**Lights Out** is a moon icon right of Quick Note. Click it and the dock folds while every screen goes black; press Esc (or your chosen key) to come back. Once the screens are covered the notch is covered too, so come back with the key, not the icon. The icon switch is in Settings → Notch → Top Strip; the ⌥ key and the unlock key are in Settings → Tools, and turning the icon off keeps ⌥L and the menu bar item.
 
-**Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Press **Esc** to close it; whatever you typed is saved first. Change or clear the shortcut under **Settings → Notch → Top Strip**; it works while the notch launcher and the Quick Note icon are on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
+**Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Press **Esc** to close it; whatever you typed is saved first. Change or clear the shortcut under **Settings → Tools**; it works whether or not the notch launcher is on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
 
 Before overwriting the note, Chap keeps the previous version in `~/Library/Application Support/Chap/QuickNote Backups/` at most every 10 minutes, and right away when a long note loses more than half its text (for example after Select All → Delete). The newest ten backups are kept. If the note file ever can't be read, Chap moves it to the same folder as `QuickNote.unreadable-<time>.txt` instead of treating it as empty; if it can't even move it, the note stays read-only so the file is never overwritten.
 
@@ -202,11 +202,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.9.4
+Scripts/release.sh 2.10.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.9.4 --publish
+Scripts/release.sh 2.10.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

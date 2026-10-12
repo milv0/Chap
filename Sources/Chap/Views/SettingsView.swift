@@ -7,6 +7,7 @@ private enum SettingsTab: Hashable {
     case launchables
     case general
     case notch
+    case tools
 }
 
 private struct SettingsTabButton: View {
@@ -25,7 +26,7 @@ private struct SettingsTabButton: View {
                     .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
             }
             .foregroundColor(isSelected ? .white : DS.textSecondary)
-            .frame(width: 124, height: 28)
+            .frame(width: 104, height: 28)
             .background(
                 isSelected
                     ? DS.accent
@@ -89,6 +90,12 @@ struct SettingsView: View {
                         .allowsHitTesting(selectedTab == .notch)
                         .disabled(selectedTab != .notch)
                         .accessibilityHidden(selectedTab != .notch)
+
+                    toolsTab
+                        .opacity(selectedTab == .tools ? 1 : 0)
+                        .allowsHitTesting(selectedTab == .tools)
+                        .disabled(selectedTab != .tools)
+                        .accessibilityHidden(selectedTab != .tools)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background {
@@ -182,6 +189,11 @@ struct SettingsView: View {
                 icon: "macbook",
                 isSelected: selectedTab == .notch,
                 action: { selectedTab = .notch })
+            SettingsTabButton(
+                title: "Tools",
+                icon: "wand.and.stars",
+                isSelected: selectedTab == .tools,
+                action: { selectedTab = .tools })
         }
         .padding(2)
         .background(DS.border.opacity(0.18))
@@ -198,6 +210,10 @@ struct SettingsView: View {
 
     private var notchTab: some View {
         NotchSettingsView(vm: vm, onSave: saveGlobals)
+    }
+
+    private var toolsTab: some View {
+        ToolsSettingsView(vm: vm, onSave: saveGlobals)
     }
 
     // MARK: - Sidebar

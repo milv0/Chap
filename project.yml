@@ -38,8 +38,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap
-        MARKETING_VERSION: "2.9.4"
-        CURRENT_PROJECT_VERSION: "63"
+        MARKETING_VERSION: "2.10.0"
+        CURRENT_PROJECT_VERSION: "64"
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_IDENTITY: "-"
         INFOPLIST_KEY_LSUIElement: true

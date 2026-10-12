@@ -378,12 +378,10 @@ extension AppDelegate {
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
 
-    /// Quick Note 단축키로 실제 등록할 키 (노치·아이콘이 켜져 있고 사이트와 겹치지 않을 때만).
+    /// Quick Note 단축키로 실제 등록할 키 (예약키·사이트와 겹치지 않을 때만. 노치 상태와 무관).
     var registeredQuickNoteKey: String? {
         QuickNoteShortcutPolicy.registeredKey(
-            shortcut: config.notchQuickNoteShortcut,
-            notchLauncherEnabled: config.notchLauncherEnabled,
-            quickNoteEnabled: config.notchQuickNoteEnabled, sites: config.sites)
+            shortcut: config.notchQuickNoteShortcut, sites: config.sites)
     }
 
     /// Lights Out 단축키로 실제 등록할 키 (예약키·사이트·Quick Note와 겹치지 않을 때만).

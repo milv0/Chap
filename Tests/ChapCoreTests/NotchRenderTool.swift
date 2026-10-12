@@ -198,9 +198,24 @@ struct NotchRenderTool {
             sites: config.sites, lightsOutUnlockKey: config.lightsOutUnlockKey,
             lightsOutShortcut: config.lightsOutShortcut)
         let view = GeneralSettingsView(vm: vm, updateController: UpdateController(), onSave: {})
-            .frame(width: 600, height: 900)
+            .frame(width: 600, height: 720)
             .environment(\.colorScheme, .light)
         try Self.renderPNG(view).write(to: directory.appendingPathComponent("settings-general.png"))
+    }
+
+    /// Settings → Tools 화면을 그린다.
+    @Test("render the Tools settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderToolsSettings() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        let vm = SettingsViewModel(
+            sites: config.sites, notchQuickNoteShortcut: config.notchQuickNoteShortcut,
+            lightsOutUnlockKey: config.lightsOutUnlockKey,
+            lightsOutShortcut: config.lightsOutShortcut)
+        let view = ToolsSettingsView(vm: vm, onSave: {})
+            .frame(width: 600, height: 760)
+            .environment(\.colorScheme, .light)
+        try Self.renderPNG(view).write(to: directory.appendingPathComponent("settings-tools.png"))
     }
 
     /// Lights Out 가림막 모습을 PNG로 남긴다. 검정 위에서 물범·시간·안내가 읽히는지 본다.

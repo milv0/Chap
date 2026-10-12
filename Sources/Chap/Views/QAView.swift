@@ -135,7 +135,7 @@ struct QAView: View {
                 ),
                 (
                     "Guide Window가 뭔가요?",
-                    "사이트 실행 시 윈도우가 열릴 위치를 반투명 테두리로 미리 보여주는 기능입니다. Settings 하단의 \"Guide Window\" 토글로 켜고 끌 수 있습니다."
+                    "사이트 실행 시 윈도우가 열릴 위치를 반투명 테두리로 미리 보여주는 기능입니다. Settings → General → Startup의 \"Guide Window\" 스위치로 켜고 끌 수 있습니다."
                 ),
                 (
                     "윈도우 크기가 모니터보다 크면 어떻게 되나요?",
@@ -185,7 +185,7 @@ struct QAView: View {
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
-                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고(단축키는 Settings → Notch → Top Strip에서 바꾸거나 끌 수 있습니다). Esc를 누르면 창이 닫히고, 그때까지 쓴 내용은 먼저 저장됩니다., 그다음엔 원하는 곳으로 옮길 수 있습니다."
+                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고(단축키는 Settings → Tools에서 바꾸거나 끌 수 있습니다). Esc를 누르면 창이 닫히고, 그때까지 쓴 내용은 먼저 저장됩니다., 그다음엔 원하는 곳으로 옮길 수 있습니다."
                 ),
                 (
                     "Quick Note를 실수로 지웠어요.",
@@ -242,7 +242,7 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Lights Out, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(⌥L 단축키는 Settings → Notch → Top Strip의 Lights Out 줄이나 Settings → General → Lights Out에서 바꾸거나 끌 수 있고, 해제 키는 General에서 바꿉니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Lights Out, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(⌥L 단축키와 해제 키는 Settings → Tools → Lights Out에서 바꿀 수 있습니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
                 ),
                 (
                     "Lights Out이 화면을 잠그는 건가요?",
@@ -250,7 +250,7 @@ struct QAView: View {
                 ),
                 (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
-                    "Settings → General → Menu에서 URL/App/Finder 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
+                    "Settings → General → Menu Bar에서 URL/App/Finder 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
                 ),
                 (
                     "섹션을 숨기면 그 사이트들은 단축키로도 실행 안 되나요?",
@@ -388,7 +388,7 @@ struct QAView: View {
                 ),
                 (
                     "What is the Guide Window?",
-                    "It shows a translucent outline where the window will appear when launching a site. Toggle it with the \"Guide Window\" switch at the bottom of Settings."
+                    "It shows a translucent outline where the window will appear when launching a site. Toggle it with the \"Guide Window\" switch in Settings → General → Startup."
                 ),
                 (
                     "What if the window is larger than the monitor?",
@@ -438,7 +438,7 @@ struct QAView: View {
                 ),
                 (
                     "When does Quick Note save?",
-                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Notch → Top Strip). Press Esc to close it; whatever you typed is saved first.; drag it anywhere after that."
+                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Tools). Press Esc to close it; whatever you typed is saved first.; drag it anywhere after that."
                 ),
                 (
                     "I deleted my Quick Note by accident.",
@@ -495,7 +495,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Lights Out, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Press Esc to come back, or pick another key in Settings → General → Lights Out, and change or turn off ⌥L there or in the Lights Out row of Settings → Notch → Top Strip. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
+                    "Press ⌥L, click the menubar icon → Lights Out, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Press Esc to come back, or pick another key in Settings → Tools → Lights Out, where you can also change or turn off ⌥L. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
                 ),
                 (
                     "Does Lights Out lock my Mac?",
@@ -503,7 +503,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I shorten the menu's site list?",
-                    "In Settings → General → Menu, click the URL/App/Finder chips to hide that launch type's section from the menu."
+                    "In Settings → General → Menu Bar, click the URL/App/Finder chips to hide that launch type's section from the menu."
                 ),
                 (
                     "If I hide a section, do those sites lose their shortcuts too?",
