@@ -918,6 +918,8 @@ struct NotchMascotView: View {
     var zColor: Color = .secondary
     /// Focus가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
     var isFocusing = false
+    /// 잠든 동안에도 가끔 꿈꾸듯 꼬리를 한 번 까딱한다 (Lights Out 화면). 노치 띠에서는 쓰지 않는다.
+    var dreams = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pose: ChapMascot.Pose = .rest
@@ -1061,8 +1063,22 @@ struct NotchMascotView: View {
         }
         // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
         // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
-        .task(id: "\(moves)-\(mood)-\(wagsContinuously)") {
+        .task(id: "\(moves)-\(mood)-\(wagsContinuously)-\(dreams)") {
             pose = .rest
+            // 잠든 채 꿈꾸기: 드물게 한 번만 까딱한다.
+            if moves, mood == .asleep, dreams {
+                while !Task.isCancelled {
+                    try? await Task.sleep(
+                        for: .seconds(Double.random(in: ChapMascot.dreamFlickInterval)))
+                    if Task.isCancelled { break }
+                    for next in ChapMascot.dreamFlickSequence {
+                        pose = next
+                        try? await Task.sleep(for: .seconds(ChapMascot.flickFrameDuration * 2))
+                    }
+                }
+                pose = .rest
+                return
+            }
             guard moves, mood != .asleep else { return }
             try? await Task.sleep(for: .seconds(ChapMascot.openFlickDelay))
             if wagsContinuously, let frame = ChapMascot.focusWagFrameDuration(for: mood) {

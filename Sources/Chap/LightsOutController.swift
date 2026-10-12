@@ -207,18 +207,29 @@ struct LightsOutView: View {
     let hint: String
 
     @State private var showsHint = true
+    /// 숨: 들숨이면 true. 밝기만 오르내린다.
+    @State private var inhales = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var sealOpacity: Double {
+        guard !reduceMotion else { return LightsOutPolicy.sealOpacity }
+        let range = LightsOutPolicy.sealBreathOpacity
+        return inhales ? range.upperBound : range.lowerBound
+    }
 
     var body: some View {
         ZStack {
             Color.black
             if showsClock {
                 VStack(spacing: 24) {
-                    // HUD와 같은 자는 물범. 어두운 방에서도 눈이 부시지 않을 만큼만 밝게 둔다.
-                    Image(
-                        nsImage: ChapMascotImage.image(
-                            pixelSize: 6, eyes: .closed, pose: .rest, showsSleepZ: true)
+                    // 노치와 같은 물범이 잔다: z가 하나씩 떠올라 흐려지고, 가끔 꿈꾸듯 꼬리를 까딱하며,
+                    // 숨 쉬듯 밝기가 오르내린다. 물범 자리는 그대로이고 z는 머리 위 여백에서만 움직인다.
+                    NotchMascotView(
+                        pixelSize: 6, mood: .asleep, isAnimating: true, zColor: .white, dreams: true
                     )
-                    .opacity(LightsOutPolicy.sealOpacity)
+                    // z가 머리 위(최대 9칸)로 떠오를 자리. 레이아웃에 넣어 시계와 겹치지 않게 한다.
+                    .padding(.top, 9 * 6)
+                    .opacity(sealOpacity)
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(context.date, format: .dateTime.hour().minute())
                             .font(.system(size: 64, weight: .thin, design: .rounded))
@@ -238,6 +249,13 @@ struct LightsOutView: View {
         .task {
             try? await Task.sleep(for: .seconds(LightsOutPolicy.hintDuration))
             showsHint = false
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(
+                .easeInOut(duration: LightsOutPolicy.sealBreathDuration)
+                    .repeatForever(autoreverses: true)
+            ) { inhales = true }
         }
         .accessibilityElement()
         .accessibilityLabel("Lights out. \(hint)")
