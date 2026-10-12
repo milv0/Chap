@@ -10,9 +10,28 @@ public enum NotchLauncherPolicy {
         topSafeAreaInset > 0
     }
 
-    /// 사용자가 켰고 노치가 있을 때만 표시한다. 둘 중 하나라도 없으면 상태바 메뉴만 쓴다.
-    public static func shouldPresent(enabled: Bool, topSafeAreaInset: CGFloat) -> Bool {
-        enabled && hasNotch(topSafeAreaInset: topSafeAreaInset)
+    /// 사용자가 켜면 표시한다. 노치가 없는 Mac에서는 가짜 노치를 그리지 않고,
+    /// 화면 위쪽 가운데의 보이지 않는 구역(`hoverZone`)에 마우스를 올리면 같은 도커가 펼쳐진다.
+    public static func shouldPresent(enabled: Bool) -> Bool { enabled }
+
+    /// 노치가 없는 화면에서 쓰는 가짜 노치 폭. 하드웨어 노치 폭을 못 읽을 때의 폴백과 같은 값이라
+    /// 도커 실루엣이 같다.
+    public static let syntheticNotchWidth: CGFloat = 200
+
+    /// 검정 띠(상단바 구간) 높이. 노치가 있으면 노치 높이, 없으면 메뉴 막대 높이를 쓴다.
+    /// 노치 없는 화면에서도 띠가 메뉴 막대를 정확히 덮어 도커가 화면 위에서 자라난 것처럼 보인다.
+    public static func stripInset(topSafeAreaInset: CGFloat, menuBarHeight: CGFloat) -> CGFloat {
+        hasNotch(topSafeAreaInset: topSafeAreaInset) ? topSafeAreaInset : max(menuBarHeight, 24)
+    }
+
+    /// 노치가 없을 때 마우스를 올리면 도커가 열리는 구역. 가짜 노치 자리에 해당하며
+    /// 창을 띄우지 않으므로 메뉴 막대를 가리거나 클릭을 가로채지 않는다.
+    public static func hoverZone(screenFrame: CGRect, stripInset: CGFloat) -> CGRect {
+        CGRect(
+            x: screenFrame.midX - syntheticNotchWidth / 2,
+            y: screenFrame.maxY - stripInset,
+            width: syntheticNotchWidth,
+            height: stripInset)
     }
 
     /// 일반 hover는 표시할 슬롯이 있어야 하지만, 파일 드래그는 슬롯이 없어도

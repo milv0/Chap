@@ -154,7 +154,6 @@ struct NotchSettingsView: View {
                 Form {
                     Section("Notch Launcher") {
                         Toggle("Show Launchers Under the Notch", isOn: $vm.notchLauncherEnabled)
-                            .disabled(!Self.hasNotchScreen)
                             .help(
                                 "Show the launcher list in a panel under the notch. "
                                     + "The status bar menu keeps working either way."
@@ -163,8 +162,8 @@ struct NotchSettingsView: View {
 
                         if !Self.hasNotchScreen {
                             Label(
-                                "This Mac has no notch display, so the notch launcher "
-                                    + "is unavailable.",
+                                "This Mac has no notch, so nothing sits at the top until "
+                                    + "you point at the middle of the menu bar.",
                                 systemImage: "info.circle"
                             )
                             .font(.caption)
@@ -173,7 +172,7 @@ struct NotchSettingsView: View {
                     }
 
                     // 세부 설정은 활성화 상태에서만 펼쳐진다.
-                    if Self.hasNotchScreen && vm.notchLauncherEnabled {
+                    if vm.notchLauncherEnabled {
                         // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
                         Section {
                             VStack(alignment: .leading, spacing: 12) {

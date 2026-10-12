@@ -19,7 +19,7 @@ Sources/
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이 (픽셀 물범 + 문구)
-│   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (HUD 등 AppKit 자리)
+│   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (z 여백 고정, HUD 등 AppKit 자리)
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
@@ -85,7 +85,7 @@ Sources/
 │   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
-│   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책
+│   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책·노치 없는 화면의 띠 높이·hover 구역
 │   ├── DropStore.swift        ← Chap Drop 원본 북마크 참조·임시 위치 사본·빼기(원본 미삭제) 규칙
 │   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
@@ -230,7 +230,7 @@ Config 모델 필드:
   - statusBarIcon: StatusBarIconChoice  상태바 아이콘 ("default" | "lightning" | "seal"). 누락 시 "default"
   - hiddenMenuLaunchTypes: Set<LaunchType>  메뉴에서 숨길 launch type 섹션.
     누락 시 빈 집합, 알 수 없는 문자열은 무시. 숨겨도 ⌥ 단축키는 동작
-  - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false
+  - notchLauncherEnabled: Bool  노치 런처 on/off. 누락 시 false (노치 없는 Mac에서도 쓸 수 있다)
   - notchPanelStyle: NotchPanelStyle  custom | glass. 과거 black/iceberg는 custom으로 마이그레이션. Glass는 macOS 26+
   - notchGlassAppearance: NotchGlassAppearance  system | light | dark. 누락/unknown은 system
   - notchGlassMaterial: NotchGlassMaterial  clear | regular. 누락/unknown은 regular.
@@ -289,6 +289,9 @@ Config 모델 필드:
   - 성공 시 일반 저장 경로를 사용해 Login Item 상태와 메뉴를 즉시 반영
 - Legacy displayName: unique name만 UUID 보강; connected UUID는 displayName 보강/갱신;
   stale UUID 갱신, ambiguous/disconnected는 재선택 안내
+- 노치 없는 Mac: 상단에 창을 띄우지 않고 마우스 위치만 150ms 폴링해(화면 위쪽 가운데 200pt ×
+  메뉴 막대 높이) 구역에 들어오는 순간 도커를 연다. 검정 띠 높이는 메뉴 막대 높이를 쓰고, Drop 배지는
+  두지 않는다. 투명 창을 메뉴 막대에 올리면 그 자리의 클릭을 삼켜 앱 메뉴를 못 열기 때문이다
 - 디스플레이 해상도·배치·연결·clamshell 변경 알림을 150ms debounce해 노치 hotzone/배지
   프레임을 재계산하며 노치 화면이 사라지면 관련 창을 tearDown
 - Settings/QA/Welcome 중 마지막 관리 창 종료 시 activation policy를 accessory로 복원
@@ -331,6 +334,7 @@ Config 모델 필드:
   - Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
   - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
     HUD 그림은 앱 아이콘·노치와 같은 픽셀 물범이다 (켜면 깨어 꼬리를 든 Chap, 끄면 눈 감고 z를 띄운 Chap).
+    물범 자리는 두 모습에서 같고 z는 머리 위 여백만 채운다. HUD는 노치가 있는 내장 화면에만 띄운다.
     노치에서는 Focus 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
 - 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
   `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
@@ -524,7 +528,7 @@ App 윈도우 감지 방식 (AXObserver):
   - 상태는 메모리에만 있고 config에 저장하지 않는다
   - 만료는 벽시계 기준이다: DispatchSourceTimer를 wallDeadline으로 걸어 잠든 시간도 세며,
     시스템/화면 wake 알림과 상태바 메뉴 열림 때 expireIfNeeded()로 다시 확인한다
-  - 시작/종료 시 사운드(Purr/Pop)와 중앙 물범 HUD로 피드백한다. 다만 잠든 사이 만료돼
+  - 시작/종료 시 사운드(Purr/Pop)와 중앙 물범 HUD(노치 있는 내장 화면 한정)로 피드백한다. 다만 잠든 사이 만료돼
     깨어난 뒤 정리되는 세션(expiredWhileAsleep, lateExpiryTolerance 초과)은 사운드·HUD 없이
     메뉴와 상태 아이콘만 조용히 되돌린다
 

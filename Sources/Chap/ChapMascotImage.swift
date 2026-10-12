@@ -17,14 +17,17 @@ enum ChapMascotImage {
         }
     }
 
-    /// 한 칸을 `pixelSize`pt 정사각형으로 그린 물범. 잠든 모습이면 머리 위에 z도 함께.
+    /// z가 들어갈 머리 위 여백(칸). z를 그리든 안 그리든 늘 비워 두어, 자고 깨는 두 모습에서
+    /// 물범이 같은 자리에 있다(여백만 채워지고 물범은 움직이지 않는다).
+    static let sleepZRowSpan = 4
+
+    /// 한 칸을 `pixelSize`pt 정사각형으로 그린 물범. 잠든 모습이면 머리 위 여백에 z를 채운다.
     /// 칸 크기를 정수 pt로 주면 Retina에서도 칸 경계가 또렷하다.
     static func image(
         pixelSize: CGFloat, eyes: ChapMascot.Eyes = .open, pose: ChapMascot.Pose = .rest,
         showsSleepZ: Bool = false
     ) -> NSImage {
-        // z는 머리 오른쪽 위에 겹치므로 위로 4칸, 오른쪽은 격자 안에 들어간다.
-        let topPadding = showsSleepZ ? 4 : 0
+        let topPadding = sleepZRowSpan
         let size = NSSize(
             width: CGFloat(ChapMascot.width) * pixelSize,
             height: CGFloat(ChapMascot.height + topPadding) * pixelSize)

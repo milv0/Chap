@@ -238,7 +238,7 @@ struct QAView: View {
                 ),
                 (
                     "켜고 끌 때 화면 가운데에 뜨는 물범은 뭔가요?",
-                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. Chap(물범)이 켤 때는 깨어서 꼬리를 들고, 끌 때는 눈을 감고 z를 띄웁니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
+                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. Chap(물범)이 켤 때는 깨어서 꼬리를 들고, 끌 때는 눈을 감고 z를 띄웁니다. 노치가 있는 내장 화면 가운데에만 뜹니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
                 ),
                 (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
@@ -414,7 +414,7 @@ struct QAView: View {
             [
                 (
                     "How do I enable the Notch Launcher?",
-                    "Open Settings → Notch. It is available only on a MacBook with a hardware notch. The classic status menu and Option shortcuts keep working when it is off or when the Mac has no notch."
+                    "Open Settings → Notch. On a MacBook with a notch, hover the notch to open it. It also works on a Mac without a notch: point at the top middle of the menu bar and the same dock opens (nothing is drawn there until you do, so the menu bar stays clear). The classic status menu and Option shortcuts keep working either way."
                 ),
                 (
                     "Who is the seal on the left of the notch?",
@@ -483,7 +483,7 @@ struct QAView: View {
                 ),
                 (
                     "What is the seal that briefly appears in the middle of the screen?",
-                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring). Chap is awake with its tail up when a session starts and asleep with a z when it ends, along with a subtle sound. While active, Chap also turns the status bar icon theme blue."
+                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring). Chap is awake with its tail up when a session starts and asleep with a z when it ends, along with a subtle sound. It appears in the middle of the built-in display with the notch, and nowhere else. While active, Chap also turns the status bar icon theme blue."
                 ),
                 (
                     "How do I shorten the menu's site list?",

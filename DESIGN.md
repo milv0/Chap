@@ -49,6 +49,13 @@ The center HUD uses the same seal: awake with its tail up when Focus starts,
 eyes closed with a z when it ends. The seal sits on an accent `#3664FF` tile
 (radius 16) because its white body would wash out on the light HUD material.
 
+The sprite always reserves four rows above the seal
+(`ChapMascotImage.sleepZRowSpan`), so the z fills that margin instead of pushing
+the seal down: the two states differ only by the z and the eyes. The HUD is
+shown on the built-in display with the notch and nowhere else, because the seal
+belongs to the notch; on a notchless Mac the sound and the blue status icon
+carry the feedback.
+
 ## App icon
 
 The app icon is the same sprite, so the icon and the seal on the strip are one
