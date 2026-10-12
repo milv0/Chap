@@ -198,7 +198,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
 되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Layout("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
-Top Strip(Mirror·Quick Note·Lights Out 토글), Appearance 세 묶음이다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
+Top Strip(Mirror·Quick Note·Lights Out 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈
 Downloads 칸 · Sites · Apps · Finder · 빈 칸.
@@ -217,9 +217,8 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 - **Lights Out**(`NotchLightsOutStripButton`, `moon.fill`): 누르면 도커를 접고 가림막을 친다(메뉴바 항목과 같은 경로).
   가림막이 노치까지 덮으므로 끄는 것은 이 아이콘이 아니라 해제 키(기본 Esc)·연타다. 이미 켜져 있으면 무시한다.
-  Top Strip의 Lights Out 한 줄에 스위치(`notchLightsOutEnabled`, 기본 켬)와 ⌥ 키(`lightsOutShortcut`, 기본 L)가 함께 있다.
-  스위치는 띠 아이콘만 숨기고, ⌥ 단축키와 메뉴바 항목은 그대로 쓴다(그래서 키 칸은 흐려지지 않는다).
-  같은 키는 Settings → General → Lights Out에서도 바꿀 수 있다(노치를 쓰지 않는 Mac용).
+  Top Strip의 스위치(`notchLightsOutEnabled`, 기본 켬)는 띠 아이콘만 숨긴다. ⌥ 키(`lightsOutShortcut`, 기본 L)와
+  해제 키는 Settings → Tools에 있고, 아이콘을 꺼도 ⌥L과 메뉴바 항목은 그대로 쓴다.
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
@@ -355,8 +354,8 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 - 열 때마다 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다(`QuickNotePlacement.origin`, 보이는 영역 밖이면 안으로
   당김). 그다음엔 자유롭게 옮긴다. 크기는 `ChapQuickNoteWindow` frame autosave로 기억하고 자리는 기억하지 않는다.
   노치 화면이 없으면 커서 화면 가운데.
-- ⌥N도 같은 동작이다. Settings → Notch → Top Strip의 Quick Note 한 줄(`ToggleWithShortcutRow`: 제목·설명 | ⌥ [키] | 스위치)에서
-  키를 바꾸거나 비워서 끈다. 스위치를 끄면 키 칸도 흐려지고 단축키도 쉰다. 노치 런처와 Quick Note 아이콘이
+- ⌥N도 같은 동작이다. 키는 Settings → Tools → Quick Note에서 바꾸거나 비워서 끈다. 노치 런처·띠 아이콘 상태와
+  무관하게 등록된다(노치 없는 Mac도 ⌥N으로 메모를 연다). 노치 런처와 Quick Note 아이콘이
   켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).

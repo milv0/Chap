@@ -42,14 +42,12 @@ public enum QuickNoteShortcutPolicy {
         return nil
     }
 
-    /// 실제로 등록할 키. 노치 런처와 Quick Note 아이콘이 켜져 있고, 키가 있고, 겹치지 않을 때만.
-    /// 노치를 쓰지 않는 사람에게서 ⌥N(키보드 배열에 따라 ˜ 등의 입력)을 가져가지 않는다.
-    public static func registeredKey(
-        shortcut: String?, notchLauncherEnabled: Bool, quickNoteEnabled: Bool, sites: [Site]
-    ) -> String? {
-        guard notchLauncherEnabled, quickNoteEnabled, let key = normalized(shortcut),
-            conflict(for: key, sites: sites) == nil
-        else { return nil }
+    /// 실제로 등록할 키. 키가 있고 예약키·사이트와 겹치지 않을 때. Quick Note는 Tools 설정의 독립 기능이라
+    /// 노치 런처·띠 아이콘 상태를 보지 않는다(노치 없는 Mac도 ⌥N으로 메모를 연다). 끄려면 키를 비운다.
+    public static func registeredKey(shortcut: String?, sites: [Site]) -> String? {
+        guard let key = normalized(shortcut), conflict(for: key, sites: sites) == nil else {
+            return nil
+        }
         return key
     }
 

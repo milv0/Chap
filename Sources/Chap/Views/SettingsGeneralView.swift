@@ -3,7 +3,8 @@ import SwiftUI
 
 // MARK: - General Tab
 
-/// Settings > General 탭. Behavior/Appearance/Menu/Updates 설정과 앱 버전 표시를 담당한다.
+/// Settings > General 탭. 앱 자체에 관한 것만: Startup / Shortcuts / Menu Bar, 그리고 버전 표시.
+/// 기능(Quick Note·Lights Out·Mirror) 설정은 Tools 탭, 노치 모양은 Notch 탭에 있다.
 struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
@@ -33,170 +34,87 @@ struct GeneralSettingsView: View {
         }
     }
 
-    /// 키 캡슐 + 동작 설명 한 쌍. Behavior 섹션의 상시 단축키 안내에 쓰인다.
-    private func shortcutHint(key: String, action: String) -> some View {
-        HStack(spacing: 6) {
-            Text(key)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundColor(DS.textSecondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(DS.border.opacity(0.25))
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-            Text(action)
-                .font(.caption)
-                .foregroundColor(DS.textSecondary)
-        }
-    }
-
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer(minLength: 0)
-                Form {
-                    Section("Behavior") {
-                        Toggle("Guide Window", isOn: $vm.showGuideWindow)
-                            .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
+            SettingsFormPage {
+                Section {
+                    SettingsToggleRow(
+                        title: "Open at Login", subtitle: "Start Chap when you sign in.",
+                        isOn: $vm.launchAtLogin
+                    )
+                    .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
 
-                        Toggle("Open at Login", isOn: $vm.launchAtLogin)
-                            .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
+                    SettingsToggleRow(
+                        title: "Guide Window",
+                        subtitle: "Shows where a window will land while it opens.",
+                        isOn: $vm.showGuideWindow
+                    )
+                    .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
 
-                        Toggle(
-                            "Enable Chap Option-Key Triggers",
-                            isOn: $vm.optionShortcutsEnabled
-                        )
-                        .help(
-                            "Disable when another workflow needs Chap's Option-key combinations."
-                        )
-                        .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
-
-                        Label(
-                            "Turn this off temporarily when another app or workflow needs "
-                                + "Option-key combinations.",
-                            systemImage: "info.circle"
-                        )
-                        .font(.caption)
-                        .foregroundColor(DS.textSecondary)
-
-                        HStack(spacing: 16) {
-                            shortcutHint(key: "⌥ .", action: "Open menu")
-                            shortcutHint(key: "⌥ ,", action: "Open Settings")
-                            shortcutHint(key: "⌥ (key)", action: "Launch site")
-                        }
-                        .padding(.top, 2)
-                    }
-
-                    Section("Appearance") {
-                        HStack(alignment: .center) {
-                            Text("Status Bar Icon")
-                            Spacer()
-                            HStack(spacing: 8) {
-                                ForEach(
-                                    StatusBarIconChoice.allCases,
-                                    id: \.self
-                                ) { choice in
-                                    StatusBarIconChoiceButton(
-                                        choice: choice,
-                                        isSelected: vm.statusBarIcon == choice,
-                                        action: { vm.statusBarIcon = choice })
-                                }
-                            }
-                        }
-                        .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
-                    }
-
-                    // Lights Out: 자리 비울 때 화면을 덮는 가림막. 잠금이 아니므로 그렇게 적지 않는다.
-                    Section {
-                        OptionShortcutRow(
-                            title: "Shortcut", key: $vm.lightsOutShortcut,
-                            conflictMessage: vm.lightsOutShortcut.flatMap { key in
-                                LightsOutPolicy.conflict(
-                                    for: key, sites: vm.sites,
-                                    quickNoteKey: vm.notchLauncherEnabled
-                                        && vm.notchQuickNoteEnabled
-                                        ? vm.notchQuickNoteShortcut : nil
-                                ).map { QuickNoteShortcutPolicy.conflictMessage($0, key: key) }
-                            },
-                            help: "Press ⌥ and this key anywhere to cover your screens. "
-                                + "Clear it to turn it off.",
-                            accessibilityLabel: "Lights Out shortcut key"
-                        )
-                        .onChange(of: vm.lightsOutShortcut) { _, _ in onSave() }
-
-                        HStack(spacing: 6) {
-                            Text("Come Back With")
-                            Spacer(minLength: 8)
-                            TextField(
-                                "",
-                                text: Binding(
-                                    get: { LightsOutPolicy.label(for: vm.lightsOutUnlockKey) },
-                                    set: { newValue in
-                                        vm.lightsOutUnlockKey = LightsOutPolicy.keyAfterEditing(
-                                            currentKey: vm.lightsOutUnlockKey, newText: newValue)
-                                    }),
-                                prompt: Text("Esc")
-                            )
-                            .keyCapField(width: 48)
-                            .accessibilityLabel("Lights Out unlock key")
-                        }
-                        .help(
-                            "Type a letter to change the key, or clear it for Esc. "
-                                + "Forgot the key? Press any key five times quickly."
-                        )
-                        .onChange(of: vm.lightsOutUnlockKey) { _, _ in onSave() }
-                    } header: {
-                        Text("Lights Out")
-                    } footer: {
-                        Text(
-                            "Keeps your screens dark while you're on break. It is a cover, not a lock: "
-                                + "use macOS Lock Screen (⌃⌘Q) to secure your Mac."
-                        )
-                        .font(.caption)
-                        .foregroundColor(DS.textSecondary)
-                    }
-
-                    Section("Menu") {
-                        HStack(alignment: .center) {
-                            Text("Sections")
-                            Spacer()
-                            HStack(spacing: 6) {
-                                ForEach(LaunchType.allCases, id: \.self) { type in
-                                    MenuSectionChip(
-                                        title: Self.menuSectionName(type),
-                                        isOn: !vm.hiddenMenuLaunchTypes.contains(type),
-                                        action: { toggleMenuSection(type) })
-                                }
-                            }
-                        }
-                        Label(
-                            "Hidden sections stay launchable with their Option shortcuts.",
-                            systemImage: "info.circle"
-                        )
-                        .font(.caption)
-                        .foregroundColor(DS.textSecondary)
-                    }
-
-                    Section("Updates") {
-                        Toggle(
-                            "Check for Updates Automatically",
-                            isOn: Binding(
-                                get: {
-                                    updateController.automaticallyChecksForUpdates
-                                },
-                                set: {
-                                    updateController.setAutomaticallyChecksForUpdates($0)
-                                }
-                            )
-                        )
-                        .disabled(!updateController.canCheckForUpdates)
-                        .help("Check once per day and notify when an update is available.")
-                    }
+                    SettingsToggleRow(
+                        title: "Check for Updates Automatically",
+                        subtitle: "Once a day. You decide when to install.",
+                        help: "Checks once per day and notifies you when an update is available.",
+                        isOn: Binding(
+                            get: { updateController.automaticallyChecksForUpdates },
+                            set: { updateController.setAutomaticallyChecksForUpdates($0) })
+                    )
+                    .disabled(!updateController.canCheckForUpdates)
+                } header: {
+                    SettingsSectionHeader(title: "Startup", systemImage: "power")
                 }
-                .formStyle(.grouped)
-                .frame(maxWidth: 560)
-                Spacer(minLength: 0)
+
+                Section {
+                    SettingsToggleRow(
+                        title: "Option-Key Triggers",
+                        subtitle: "⌥. opens the menu, ⌥, opens Settings, ⌥(key) launches a site.",
+                        help:
+                            "Turn this off temporarily when another app needs Option-key combinations. "
+                            + "Quick Note and Lights Out shortcuts pause too.",
+                        isOn: $vm.optionShortcutsEnabled
+                    )
+                    .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
+                } header: {
+                    SettingsSectionHeader(
+                        title: "Shortcuts", systemImage: "option",
+                        note:
+                            "Per-site keys live in Launchers; Quick Note and Lights Out keys in Tools."
+                    )
+                }
+
+                Section {
+                    SettingsRow(
+                        title: "Status Bar Icon",
+                        subtitle: "Turns Chap blue while Keep Mac Awake runs."
+                    ) {
+                        HStack(spacing: 8) {
+                            ForEach(StatusBarIconChoice.allCases, id: \.self) { choice in
+                                StatusBarIconChoiceButton(
+                                    choice: choice,
+                                    isSelected: vm.statusBarIcon == choice,
+                                    action: { vm.statusBarIcon = choice })
+                            }
+                        }
+                    }
+                    .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
+
+                    SettingsRow(
+                        title: "Menu Sections",
+                        subtitle: "Hidden sections stay launchable with their ⌥ keys."
+                    ) {
+                        HStack(spacing: 6) {
+                            ForEach(LaunchType.allCases, id: \.self) { type in
+                                MenuSectionChip(
+                                    title: Self.menuSectionName(type),
+                                    isOn: !vm.hiddenMenuLaunchTypes.contains(type),
+                                    action: { toggleMenuSection(type) })
+                            }
+                        }
+                    }
+                } header: {
+                    SettingsSectionHeader(title: "Menu Bar", systemImage: "menubar.rectangle")
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             HStack(spacing: 8) {
                 Button(action: showAbout) {

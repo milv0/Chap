@@ -591,80 +591,6 @@ struct OptionKeyField: View {
     }
 }
 
-/// ⌥ 단축키 한 줄: 제목 · (겹칠 때만 빨간 짧은 안내) · ⌥ · 한 글자 칸.
-/// 설명은 줄 아래에 쌓지 않고 툴팁으로 둔다.
-struct OptionShortcutRow: View {
-    let title: String
-    @Binding var key: String?
-    /// 사이트·다른 기능과 겹칠 때의 안내. nil이면 겹치지 않는다.
-    var conflictMessage: String?
-    /// 마우스를 올렸을 때 보이는 설명.
-    var help: String
-    var accessibilityLabel: String
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(title)
-            Spacer(minLength: 8)
-            if let conflictMessage {
-                Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
-                    .labelStyle(.titleAndIcon)
-                    .font(.caption)
-                    .foregroundColor(DS.danger)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .help(conflictMessage)
-            }
-            OptionKeyField(key: $key, accessibilityLabel: accessibilityLabel)
-        }
-        .help(help)
-    }
-}
-
-/// 켜기와 ⌥ 단축키를 한 줄에 담은 설정: 제목·한 줄 설명 | ⌥ [키] | 스위치.
-/// 키가 겹치면 설명 자리에 빨간 안내가 대신 뜬다 (줄 수는 그대로).
-struct ToggleWithShortcutRow: View {
-    let title: String
-    let subtitle: String
-    @Binding var isOn: Bool
-    @Binding var key: String?
-    var conflictMessage: String?
-    /// 스위치를 끄면 단축키도 쓰지 않는 기능인지. true면 꺼져 있을 때 키 칸을 흐리게 한다.
-    var keyFollowsToggle = true
-    var help: String
-    var keyAccessibilityLabel: String
-
-    var body: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                if let conflictMessage {
-                    Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
-                        .font(.caption)
-                        .foregroundColor(DS.danger)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .help(conflictMessage)
-                } else {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundColor(DS.textSecondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-            }
-            Spacer(minLength: 8)
-            OptionKeyField(key: $key, accessibilityLabel: keyAccessibilityLabel)
-                .disabled(keyFollowsToggle && !isOn)
-                .opacity(keyFollowsToggle && !isOn ? 0.45 : 1)
-            Toggle(title, isOn: $isOn)
-                .labelsHidden()
-                .toggleStyle(.switch)
-        }
-        .help(help)
-    }
-}
-
 extension View {
     /// 한 글자 키 입력 칸. `.roundedBorder`는 Form 줄 안에서 아래로 밀려 줄을 두 배로 키우므로,
     /// 평범한 칸에 상자를 직접 그린다 (높이가 글자 줄과 같아 한 줄에 맞는다).
@@ -684,5 +610,101 @@ extension View {
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
                     .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Settings page building blocks
+
+/// General·Notch·Tools 탭이 함께 쓰는 페이지 틀: 가운데 정렬된 grouped Form(최대 560pt).
+struct SettingsFormPage<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        HStack {
+            Spacer(minLength: 0)
+            Form { content() }
+                .formStyle(.grouped)
+                .frame(maxWidth: 560)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DS.surfaceBg)
+    }
+}
+
+/// 섹션 제목: 아이콘 + 이름, 그 아래 한 줄 설명. 설명은 섹션당 하나만 둔다.
+struct SettingsSectionHeader: View {
+    let title: String
+    var systemImage: String?
+    var note: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Label {
+                Text(title)
+            } icon: {
+                if let systemImage {
+                    Image(systemName: systemImage).foregroundColor(DS.accent)
+                }
+            }
+            if let note {
+                Text(note)
+                    .font(.caption)
+                    .foregroundColor(DS.textSecondary)
+                    .textCase(nil)
+            }
+        }
+    }
+}
+
+/// 설정 한 줄: 왼쪽에 제목과 한 줄 설명(겹침 안내가 있으면 그것으로 대체), 오른쪽에 컨트롤.
+/// 모든 탭이 같은 줄 모양을 써서 설정이 늘어도 한눈에 읽힌다. 긴 설명은 툴팁(`help`)으로 보낸다.
+struct SettingsRow<Control: View>: View {
+    let title: String
+    var subtitle: String?
+    /// 단축키가 사이트·다른 기능과 겹칠 때. 있으면 설명 자리에 빨간 글씨로 대신 뜬다.
+    var conflictMessage: String?
+    var help: String?
+    @ViewBuilder let control: () -> Control
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let conflictMessage {
+                    Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(DS.danger)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .help(conflictMessage)
+                } else if let subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(DS.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            Spacer(minLength: 8)
+            control()
+        }
+        .help(help ?? "")
+    }
+}
+
+/// 켜고 끄는 설정 한 줄 (`SettingsRow` + 스위치).
+struct SettingsToggleRow: View {
+    let title: String
+    var subtitle: String?
+    var help: String?
+    @Binding var isOn: Bool
+
+    var body: some View {
+        SettingsRow(title: title, subtitle: subtitle, help: help) {
+            Toggle(title, isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+        }
     }
 }

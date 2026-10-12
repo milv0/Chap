@@ -30,19 +30,15 @@ struct QuickNoteShortcutTests {
         #expect(QuickNoteShortcutPolicy.conflict(for: nil, sites: sites) == nil)
     }
 
-    @Test("the key is registered only with the notch and the note icon on, and no conflict")
+    @Test("the key is registered whenever it is set and free; the notch does not matter")
     func registeredKey() {
-        func key(_ shortcut: String?, notch: Bool = true, note: Bool = true, sites: [Site] = [])
-            -> String?
-        {
-            QuickNoteShortcutPolicy.registeredKey(
-                shortcut: shortcut, notchLauncherEnabled: notch, quickNoteEnabled: note,
-                sites: sites)
+        func key(_ shortcut: String?, sites: [Site] = []) -> String? {
+            QuickNoteShortcutPolicy.registeredKey(shortcut: shortcut, sites: sites)
         }
         #expect(key("N") == "N")
-        #expect(key("N", notch: false) == nil)
-        #expect(key("N", note: false) == nil)
         #expect(key(nil) == nil)
+        #expect(key("") == nil)
+        #expect(key(".") == nil)
         #expect(key("N", sites: [site("Notes", "N")]) == nil)
     }
 
