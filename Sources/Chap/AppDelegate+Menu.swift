@@ -268,17 +268,17 @@ extension AppDelegate {
         menu.addItem(keepAwakeItem)
         keepAwakeMenuItem = keepAwakeItem
 
-        // Lights Out — 자리 비울 때 화면을 덮는 가림막 (Keep Awake와 독립, config 미저장)
-        let lightsOut = NSMenuItem(
-            title: lightsOutController.isOn
-                ? LightsOutPolicy.menuTitleOn : LightsOutPolicy.menuTitleOff,
-            action: #selector(toggleLightsOut), keyEquivalent: "")
-        lightsOut.image = NSImage(
-            systemSymbolName: lightsOutController.isOn ? "lightbulb.fill" : "lightbulb.slash",
-            accessibilityDescription: LightsOutPolicy.menuTitleOff)
-        lightsOut.target = self
-        lightsOut.toolTip = LightsOutPolicy.subtitle
-        menu.addItem(lightsOut)
+        // Cover Screens — 자리 비울 때 화면을 덮는 가림막 (Keep Awake와 독립, config 미저장)
+        let coverScreens = NSMenuItem(
+            title: coverScreensController.isOn
+                ? CoverScreensPolicy.menuTitleOn : CoverScreensPolicy.menuTitleOff,
+            action: #selector(toggleCoverScreens), keyEquivalent: "")
+        coverScreens.image = NSImage(
+            systemSymbolName: coverScreensController.isOn ? "lightbulb.fill" : "lightbulb.slash",
+            accessibilityDescription: CoverScreensPolicy.menuTitleOff)
+        coverScreens.target = self
+        coverScreens.toolTip = CoverScreensPolicy.subtitle
+        menu.addItem(coverScreens)
         menu.addItem(.separator())
 
         let settings = NSMenuItem(
@@ -331,8 +331,8 @@ extension AppDelegate {
         notchLauncher.quickNoteEnabledProvider = { [weak self] in
             self?.config.notchQuickNoteEnabled ?? false
         }
-        notchLauncher.lightsOutEnabledProvider = { [weak self] in
-            self?.config.notchLightsOutEnabled ?? false
+        notchLauncher.coverScreensEnabledProvider = { [weak self] in
+            self?.config.notchCoverScreensEnabled ?? false
         }
         notchLauncher.collapsedWidgetsProvider = { [weak self] in
             self?.config.notchCollapsedWidgets ?? []
@@ -370,7 +370,7 @@ extension AppDelegate {
         }
         // 가림막 아래에서 도커가 열리면 보이지 않는 채로 포커스를 가져간다 (노치 없는 Mac의 hover 포함).
         notchLauncher.isSuppressedProvider = { [weak self] in
-            self?.lightsOutController.isOn ?? false
+            self?.coverScreensController.isOn ?? false
         }
         notchLauncher.onOpenSettings = { [weak self] type in
             self?.showSettings(focusing: type)
@@ -384,10 +384,10 @@ extension AppDelegate {
             shortcut: config.notchQuickNoteShortcut, sites: config.sites)
     }
 
-    /// Lights Out 단축키로 실제 등록할 키 (예약키·사이트·Quick Note와 겹치지 않을 때만).
-    var registeredLightsOutKey: String? {
-        LightsOutPolicy.registeredShortcut(
-            config.lightsOutShortcut, sites: config.sites, quickNoteKey: registeredQuickNoteKey)
+    /// Cover Screens 단축키로 실제 등록할 키 (예약키·사이트·Quick Note와 겹치지 않을 때만).
+    var registeredCoverScreensKey: String? {
+        CoverScreensPolicy.registeredShortcut(
+            config.coverScreensShortcut, sites: config.sites, quickNoteKey: registeredQuickNoteKey)
     }
 
     func configureGlobalHotKeys() {
@@ -396,7 +396,7 @@ extension AppDelegate {
             sites: config.sites,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
             quickNoteKey: registeredQuickNoteKey,
-            lightsOutKey: registeredLightsOutKey
+            coverScreensKey: registeredCoverScreensKey
         ) { [weak self] action in
             self?.handleGlobalHotKeyAction(action)
         }
@@ -405,7 +405,7 @@ extension AppDelegate {
     private func handleGlobalHotKeyAction(_ action: GlobalHotKeyAction) {
         // 가림막이 떠 있는 동안은 아무것도 열지 않는다. 열린 창(메뉴·Quick Note·사이트)은 가림막
         // 아래에 숨어 보이지 않으면서 키 포커스만 가져간다.
-        guard !lightsOutController.isOn else { return }
+        guard !coverScreensController.isOn else { return }
         switch action {
         case .openMenu:
             openStatusMenu()
@@ -419,19 +419,19 @@ extension AppDelegate {
             NotificationCenter.default.post(
                 name: NotchLauncherController.requestClose, object: nil)
             QuickNoteWindow.show()
-        case .lightsOut:
-            // 위에서 덮여 있으면 이미 돌아왔다. 걷는 것은 해제 키(기본 Esc)가 맡는다.
-            toggleLightsOut()
+        case .coverScreens:
+            // 덮여 있는 동안에는 위에서 이미 돌아왔다. 걷는 것은 ⌥ 한 번(또는 10연타)이 맡는다.
+            toggleCoverScreens()
         }
     }
 
-    @objc func toggleLightsOut() {
-        lightsOutController.unlockKeyProvider = { [weak self] in
-            self?.config.lightsOutUnlockKey ?? LightsOutPolicy.escapeKey
+    @objc func toggleCoverScreens() {
+        coverScreensController.messageProvider = { [weak self] in
+            self?.config.coverScreensMessage
         }
         // 열린 도커는 먼저 접는다 (가림막 아래에 남아 포커스를 쥐지 않게).
         NotificationCenter.default.post(name: NotchLauncherController.requestClose, object: nil)
-        lightsOutController.toggle()
+        coverScreensController.toggle()
     }
 
     private func openStatusMenu() {

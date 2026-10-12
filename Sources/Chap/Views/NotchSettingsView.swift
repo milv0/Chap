@@ -209,15 +209,15 @@ struct NotchSettingsView: View {
                     .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
 
                     SettingsToggleRow(
-                        title: "Lights Out", subtitle: "Covers your screens.",
-                        help: "The ⌥ shortcut and the unlock key live in Tools; "
+                        title: "Cover Screens", subtitle: "Covers your screens.",
+                        help: "The ⌥L shortcut and the cover message live in Tools; "
                             + "the menu bar item stays either way.",
-                        isOn: $vm.notchLightsOutEnabled
+                        isOn: $vm.notchCoverScreensEnabled
                     )
-                    .onChange(of: vm.notchLightsOutEnabled) { _, _ in onSave() }
+                    .onChange(of: vm.notchCoverScreensEnabled) { _, _ in onSave() }
                 } header: {
                     SettingsSectionHeader(
-                        title: "Top Strip", systemImage: "rectangle.topthird.inset.filled",
+                        title: "Notch Icons", systemImage: "rectangle.topthird.inset.filled",
                         note: "Icons on the black strip, right of the Drop box.")
                 }
 

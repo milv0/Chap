@@ -242,10 +242,10 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Lights Out, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(⌥L 단축키와 해제 키는 Settings → Tools → Lights Out에서 바꿀 수 있습니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
                 ),
                 (
-                    "Lights Out이 화면을 잠그는 건가요?",
+                    "Cover Screens가 화면을 잠그는 건가요?",
                     "아닙니다. 가림막일 뿐이고 암호를 묻지 않습니다. Chap이 종료되면 걷히고, 화면 공유나 녹화에는 덮인 검정이 그대로 담깁니다. 자리를 길게 비우거나 보안이 필요하면 macOS 화면 잠금(⌃⌘Q)을 쓰세요."
                 ),
                 (
@@ -495,10 +495,10 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Lights Out, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Press Esc to come back, or pick another key in Settings → Tools → Lights Out, where you can also change or turn off ⌥L. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
+                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
                 ),
                 (
-                    "Does Lights Out lock my Mac?",
+                    "Does Cover Screens lock my Mac?",
                     "No. It is a cover, not a lock: it asks for no password, quitting Chap lifts it, and screen sharing or recording simply captures the black cover. For a real lock, use macOS Lock Screen (⌃⌘Q)."
                 ),
                 (

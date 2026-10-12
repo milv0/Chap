@@ -7,7 +7,7 @@ enum GlobalHotKeyAction: Equatable {
     case openSettings
     case launchSite(index: Int)
     case openQuickNote
-    case lightsOut
+    case coverScreens
 }
 
 struct GlobalHotKeyRegistration: Equatable {
@@ -21,7 +21,7 @@ func globalHotKeyRegistrations(
     for sites: [Site],
     optionShortcutsEnabled: Bool,
     quickNoteKey: String? = nil,
-    lightsOutKey: String? = nil
+    coverScreensKey: String? = nil
 ) -> [GlobalHotKeyRegistration] {
     guard optionShortcutsEnabled else { return [] }
     let sanitizedSites = sanitizedShortcuts(for: sites)
@@ -39,8 +39,9 @@ func globalHotKeyRegistrations(
         registrations.append(
             GlobalHotKeyRegistration(character: quickNoteKey, action: .openQuickNote))
     }
-    if let lightsOutKey {
-        registrations.append(GlobalHotKeyRegistration(character: lightsOutKey, action: .lightsOut))
+    if let coverScreensKey {
+        registrations.append(
+            GlobalHotKeyRegistration(character: coverScreensKey, action: .coverScreens))
     }
     return registrations
 }
@@ -73,7 +74,7 @@ final class GlobalHotKeyManager: NSObject {
         sites: [Site],
         optionShortcutsEnabled: Bool,
         quickNoteKey: String? = nil,
-        lightsOutKey: String? = nil,
+        coverScreensKey: String? = nil,
         actionHandler: @escaping (GlobalHotKeyAction) -> Void
     ) {
         precondition(Thread.isMainThread)
@@ -84,7 +85,7 @@ final class GlobalHotKeyManager: NSObject {
         self.actionHandler = actionHandler
         registrations = globalHotKeyRegistrations(
             for: sites, optionShortcutsEnabled: optionShortcutsEnabled, quickNoteKey: quickNoteKey,
-            lightsOutKey: lightsOutKey)
+            coverScreensKey: coverScreensKey)
         isConfigured = true
         unregisterAllHotKeys()
         registeredKeyboardLayoutIdentifier = nil
