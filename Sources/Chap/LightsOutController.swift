@@ -213,21 +213,23 @@ struct LightsOutView: View {
             Color.black
             if showsClock {
                 VStack(spacing: 24) {
-                    // HUD와 같은 자는 물범. 불을 끈 화면이라 아주 흐리게 둔다.
+                    // HUD와 같은 자는 물범. 어두운 방에서도 눈이 부시지 않을 만큼만 밝게 둔다.
                     Image(
                         nsImage: ChapMascotImage.image(
                             pixelSize: 6, eyes: .closed, pose: .rest, showsSleepZ: true)
                     )
-                    .opacity(0.22)
+                    .opacity(LightsOutPolicy.sealOpacity)
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         Text(context.date, format: .dateTime.hour().minute())
                             .font(.system(size: 64, weight: .thin, design: .rounded))
                             .monospacedDigit()
-                            .foregroundColor(.white.opacity(0.26))
+                            .foregroundColor(.white.opacity(LightsOutPolicy.clockOpacity))
                     }
                     Text(hint)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(showsHint ? 0.3 : 0))
+                        .foregroundColor(
+                            .white.opacity(showsHint ? LightsOutPolicy.hintOpacity : 0)
+                        )
                         .animation(.easeOut(duration: 0.8), value: showsHint)
                 }
             }

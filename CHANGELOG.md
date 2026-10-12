@@ -2,6 +2,13 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.9.2] — 2026-10-12
+
+### Changed
+
+- **Brighter Lights Out** — The napping seal, the time, and the "Press Esc"
+  hint on the cover are now easy to read instead of barely visible.
+
 ## [2.9.1] — 2026-10-12
 
 ### Added
