@@ -59,10 +59,9 @@ carry the feedback.
 ### Extra screens
 
 When more than one screen is covered, the built-in screen keeps the napping seal
-and clock, and every other screen shows the seal swimming along a waterline at
-62% of the screen height, right to left, at 8pt per sprite pixel. Only the head
-and back stay above the wave crest (`#6E91FF`) and the water rows below
-(`#2440AA`); seal and water sit at 0.6 and 0.45 opacity so the cover stays dark.
+and clock, and every other screen shows the strip's awake seal in the middle at
+8pt per sprite pixel and 0.6 opacity. It blinks and flicks its tail now and then
+(every 7–12 s), exactly like the notch strip.
 
 ## App icon
 

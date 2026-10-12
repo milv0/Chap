@@ -109,7 +109,7 @@ final class CoverScreensController {
     // MARK: - 화면
 
     /// 화면마다 창을 하나씩. 내장 화면(없으면 첫 화면)에는 시계·낮잠 물범·문구를, 나머지 화면에는
-    /// 헤엄치는 물범을 그린다. 시계 화면의 창이 key가 되어 입력을 받는다.
+    /// 가끔 꼬리를 까딱하는 물범을 그린다. 시계 화면의 창이 key가 되어 입력을 받는다.
     private func installWindows() {
         windows.forEach { $0.orderOut(nil) }
         let screens = NSScreen.screens
@@ -131,9 +131,7 @@ final class CoverScreensController {
                         showsClock: true, hint: CoverScreensPolicy.hint, message: messageProvider())
                 )
             } else {
-                // 화면마다 출발점을 엇갈려, 여러 대여도 같은 자리에서 같이 헤엄치지 않게 한다.
-                window.contentView = NSHostingView(
-                    rootView: CoverScreensSwimView(startOffset: Double(index) * 37))
+                window.contentView = NSHostingView(rootView: CoverScreensCompanionView())
             }
             window.orderFrontRegardless()
             return window
@@ -309,87 +307,20 @@ struct CoverScreensView: View {
     }
 }
 
-/// 보조 화면의 가림막: 검정 위 수면을 따라 물범이 천천히 헤엄친다. 머리와 등만 물 위에 보이고,
-/// 꼬리로 물을 차며 한 칸씩 오르내린다. 동작 줄이기가 켜져 있으면 가운데에 떠 있기만 한다.
-/// 칸 단위로만 그려 픽셀이 흐려지지 않는다.
-struct CoverScreensSwimView: View {
-    /// 출발점(칸). 화면마다 다르게 준다.
-    var startOffset: Double = 0
-    /// 한 칸 크기(pt). 큰 외장 모니터에서도 물범이 보이도록 낮잠 화면(6pt)보다 크게.
+/// 보조 화면의 가림막: 검정 가운데에 노치 띠의 물범이 깨어 있다. 가끔 눈을 깜빡이고 꼬리를 까딱한다
+/// (노치와 같은 `NotchMascotView`, 같은 간격). 동작 줄이기가 켜져 있으면 가만히 있다.
+struct CoverScreensCompanionView: View {
+    /// 한 칸 크기(pt). 큰 외장 모니터에서도 보이도록 낮잠 화면(6pt)보다 조금 크게.
     var pixelSize: CGFloat = 8
-    /// (렌더 도구) 고정 시각. 주면 그 순간 한 장만 그린다.
-    var frozenElapsed: TimeInterval?
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var start = Date()
-
-    private static let outline = Color(red: 22 / 255, green: 26 / 255, blue: 48 / 255)
-    private static let shade = Color(red: 176 / 255, green: 190 / 255, blue: 216 / 255)
-    private static let crest = Color(red: 110 / 255, green: 145 / 255, blue: 255 / 255)
-    private static let water = Color(red: 36 / 255, green: 64 / 255, blue: 170 / 255)
-
-    private static func color(_ ink: ChapMascot.Ink) -> Color {
-        switch ink {
-        case .outline: return outline
-        case .body: return .white
-        case .shade: return shade
-        case .water: return water
-        case .crest: return crest
-        case .splash: return crest
-        }
-    }
 
     var body: some View {
-        GeometryReader { geo in
-            TimelineView(.periodic(from: start, by: ChapMascot.Swim.frameDuration)) { context in
-                let lane = Int(geo.size.width / pixelSize)
-                let frame: ChapMascot.SwimFrame =
-                    reduceMotion
-                    ? ChapMascot.restingSwimFrame(laneCells: lane)
-                    : ChapMascot.swimFrame(
-                        elapsed: frozenElapsed ?? context.date.timeIntervalSince(start),
-                        laneCells: lane, startOffset: startOffset)
-                Canvas { canvas, _ in draw(frame, lane: lane, height: geo.size.height, in: canvas) }
-            }
+        ZStack {
+            Color.black
+            NotchMascotView(pixelSize: pixelSize, mood: .awake, isAnimating: true)
+                .opacity(CoverScreensPolicy.companionSealOpacity)
         }
-        .background(Color.black)
         .ignoresSafeArea()
         .accessibilityElement()
         .accessibilityLabel("Screens covered")
-    }
-
-    private func draw(
-        _ frame: ChapMascot.SwimFrame, lane: Int, height: CGFloat, in canvas: GraphicsContext
-    ) {
-        let level = Int((height / pixelSize * CoverScreensPolicy.swimWaterlineFraction).rounded())
-        func cell(_ x: Int, _ y: Int) -> Path {
-            Path(
-                CGRect(
-                    x: CGFloat(x) * pixelSize, y: CGFloat(y) * pixelSize, width: pixelSize,
-                    height: pixelSize))
-        }
-        func surface(_ x: Int) -> Int {
-            ChapMascot.surfaceRow(x: x, level: level, phase: frame.wavePhase)
-        }
-        // 물범: 수면보다 위에 있는 칸만. 스프라이트의 waterline 행이 수면에 오도록 놓는다.
-        let top = level - ChapMascot.Swim.waterline + frame.bob
-        var seal = canvas
-        seal.opacity = CoverScreensPolicy.swimSealOpacity
-        for pixel in ChapMascot.pixels(eyes: .open, pose: frame.pose) {
-            let x = frame.x + pixel.x
-            let y = top + pixel.y
-            guard (0..<lane).contains(x), y < surface(x) else { continue }
-            seal.fill(cell(x, y), with: .color(Self.color(pixel.ink)))
-        }
-        // 물: 화면 끝에서 끝까지 물결 한 줄과 그 아래 몇 줄.
-        var water = canvas
-        water.opacity = CoverScreensPolicy.swimWaterOpacity
-        for x in 0..<max(lane, 0) {
-            let crest = surface(x)
-            water.fill(cell(x, crest), with: .color(Self.crest))
-            for y in (crest + 1)...(crest + ChapMascot.Swim.waterRows) {
-                water.fill(cell(x, y), with: .color(Self.water))
-            }
-        }
     }
 }

@@ -91,16 +91,13 @@ public enum CoverScreensPolicy {
 
     /// 시계·물범 낮잠·문구·안내를 그릴 화면. 내장 화면(노치가 있는 MacBook 화면)이 있으면 그 화면,
     /// 없으면(덮개를 닫은 채 외장 모니터만 쓸 때 등) 첫 화면(메뉴 막대가 있는 화면).
-    /// 나머지 화면에서는 물범이 헤엄친다.
+    /// 나머지 화면에는 노치 띠의 물범처럼 깨어서 가끔 꼬리를 까딱하는 물범만 둔다.
     public static func clockScreenIndex(builtIn: [Bool]) -> Int {
         builtIn.firstIndex(of: true) ?? 0
     }
 
-    /// 보조 화면 물범과 물의 밝기. 낮잠 물범과 같은 결로 어둡게 둔다.
-    public static let swimSealOpacity: Double = 0.6
-    public static let swimWaterOpacity: Double = 0.45
-    /// 보조 화면 수면 높이(화면 높이에 대한 비율, 위에서부터).
-    public static let swimWaterlineFraction: Double = 0.62
+    /// 보조 화면 물범의 밝기. 낮잠 물범과 같은 결로 어둡게 둔다.
+    public static let companionSealOpacity: Double = 0.6
 
     // MARK: - 화면 문구
 
