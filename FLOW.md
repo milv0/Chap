@@ -585,7 +585,8 @@ Settings → Notch Launcher on
       ├ IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep, "Chap Cover Screens")
       │   → Keep Awake 어써션과 별개. 둘 중 하나가 풀려도 다른 쪽은 유지된다
       ├ NSScreen.screens마다 검정 창 1개 (.screenSaver, canJoinAllSpaces, 불투명)
-      │   → 첫 창만 key (NSApp.activate + makeKeyAndOrderFront), 주 화면에만 물범·시간·안내
+      │   → clockScreenIndex(내장 화면, 없으면 첫 화면)의 창만 key, 그 화면에 낮잠 물범·시간·문구·안내
+      │   → 나머지 화면은 CoverScreensSwimView: 0.12초마다 ChapMascot.swimFrame으로 물범이 헤엄친다
       ├ 켜기 직전 frontmostApplication 기억 (Chap 자신이면 nil)
       ├ OptionTap(optionHeldAtStart: 켤 때 ⌥가 눌려 있었는지) — ⌥L을 떼는 순간 걷히지 않게
       ├ 로컬 keyDown·flagsChanged 모니터:

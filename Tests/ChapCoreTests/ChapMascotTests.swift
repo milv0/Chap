@@ -197,3 +197,48 @@ struct ChapMascotMenuBarTests {
         #expect(ChapMascot.dreamFlickInterval.lowerBound > ChapMascot.idleFlickInterval.lowerBound)
     }
 }
+
+@Suite("ChapMascot – swimming on extra screens")
+struct ChapMascotSwimTests {
+    @Test("the seal enters from the right and swims left at a steady pace")
+    func swimsLeft() {
+        let start = ChapMascot.swimFrame(elapsed: 0, laneCells: 200)
+        #expect(start.x == 200)  // 오른쪽 끝 바로 밖
+        let later = ChapMascot.swimFrame(elapsed: 10, laneCells: 200)
+        #expect(later.x == 200 - Int(10 * ChapMascot.Swim.speed))
+    }
+
+    @Test("after leaving the left edge it comes back from the right")
+    func wrapsAround() {
+        let lane = 100
+        let loop = Double(lane + ChapMascot.width) / ChapMascot.Swim.speed
+        #expect(ChapMascot.swimFrame(elapsed: loop, laneCells: lane).x == lane)
+        // 거의 한 바퀴 돌았을 때는 왼쪽 밖에 있다(스프라이트 폭만큼).
+        let nearlyOut = ChapMascot.swimFrame(elapsed: loop - 0.01, laneCells: lane)
+        #expect(nearlyOut.x <= -ChapMascot.width + 1)
+    }
+
+    @Test("it bobs one cell and paddles with its tail")
+    func bobsAndPaddles() {
+        let bobs = Set(
+            (0..<20).map { ChapMascot.swimFrame(elapsed: Double($0) * 0.5, laneCells: 100).bob })
+        #expect(bobs == [0, 1])
+        let poses = Set(
+            (0..<10).map { ChapMascot.swimFrame(elapsed: Double($0) * 0.15, laneCells: 100).pose })
+        #expect(poses == [.rest, .tailUp])
+    }
+
+    @Test("screens start at different places")
+    func offsetsDiffer() {
+        let one = ChapMascot.swimFrame(elapsed: 3, laneCells: 200, startOffset: 0)
+        let two = ChapMascot.swimFrame(elapsed: 3, laneCells: 200, startOffset: 37)
+        #expect(one.x != two.x)
+    }
+
+    @Test("with Reduce Motion it floats still in the middle")
+    func restsInMiddle() {
+        let frame = ChapMascot.restingSwimFrame(laneCells: 200)
+        #expect(frame.x == (200 - ChapMascot.width) / 2)
+        #expect(frame.bob == 0 && frame.pose == .rest)
+    }
+}

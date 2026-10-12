@@ -56,6 +56,14 @@ shown on the built-in display with the notch and nowhere else, because the seal
 belongs to the notch; on a notchless Mac the sound and the blue status icon
 carry the feedback.
 
+### Extra screens
+
+When more than one screen is covered, the built-in screen keeps the napping seal
+and clock, and every other screen shows the seal swimming along a waterline at
+62% of the screen height, right to left, at 8pt per sprite pixel. Only the head
+and back stay above the wave crest (`#6E91FF`) and the water rows below
+(`#2440AA`); seal and water sit at 0.6 and 0.45 opacity so the cover stays dark.
+
 ## App icon
 
 The app icon is the same sprite, so the icon and the seal on the strip are one
