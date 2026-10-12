@@ -112,7 +112,9 @@ struct GeneralSettingsView: View {
                             conflictMessage: vm.lightsOutShortcut.flatMap { key in
                                 LightsOutPolicy.conflict(
                                     for: key, sites: vm.sites,
-                                    quickNoteKey: vm.notchQuickNoteShortcut
+                                    quickNoteKey: vm.notchLauncherEnabled
+                                        && vm.notchQuickNoteEnabled
+                                        ? vm.notchQuickNoteShortcut : nil
                                 ).map { QuickNoteShortcutPolicy.conflictMessage($0, key: key) }
                             },
                             help: "Press ⌥ and this key anywhere to cover your screens. "

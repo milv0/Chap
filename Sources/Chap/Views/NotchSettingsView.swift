@@ -46,17 +46,23 @@ struct NotchSettingsView: View {
 
     /// 위젯을 슬롯에 배치한다. 같은 위젯이 다른 슬롯에 있으면 자리를 맞바꿔
     /// 중복 배치를 막는다. 선반은 앞쪽 선반 칸에만, 다른 위젯은 뒤쪽 칸에만 놓인다(`fits(slot:)`).
-    /// Quick Note ⌥ 단축키 한 줄. 사이트·예약키와 겹치면 빨간 짧은 안내만 띄우고 등록하지 않는다.
-    private var quickNoteShortcutRow: some View {
-        let key = vm.notchQuickNoteShortcut
-        let conflict = QuickNoteShortcutPolicy.conflict(for: key, sites: vm.sites)
-        return OptionShortcutRow(
-            title: "Quick Note Shortcut", key: $vm.notchQuickNoteShortcut,
-            conflictMessage: key.flatMap { key in
-                conflict.map { QuickNoteShortcutPolicy.conflictMessage($0, key: key) }
-            },
-            help: "Press ⌥ and this key anywhere to open Quick Note. Clear it to turn it off.",
-            accessibilityLabel: "Quick Note shortcut key")
+    /// Quick Note 키가 사이트·예약키와 겹칠 때의 한 줄 안내.
+    private var quickNoteConflictMessage: String? {
+        guard let key = vm.notchQuickNoteShortcut,
+            let conflict = QuickNoteShortcutPolicy.conflict(for: key, sites: vm.sites)
+        else { return nil }
+        return QuickNoteShortcutPolicy.conflictMessage(conflict, key: key)
+    }
+
+    /// Lights Out 키가 사이트·예약키·Quick Note 키와 겹칠 때의 한 줄 안내.
+    private var lightsOutConflictMessage: String? {
+        guard let key = vm.lightsOutShortcut,
+            let conflict = LightsOutPolicy.conflict(
+                for: key, sites: vm.sites,
+                quickNoteKey: vm.notchLauncherEnabled && vm.notchQuickNoteEnabled
+                    ? vm.notchQuickNoteShortcut : nil)
+        else { return nil }
+        return QuickNoteShortcutPolicy.conflictMessage(conflict, key: key)
     }
 
     @discardableResult
@@ -215,32 +221,37 @@ struct NotchSettingsView: View {
                             }
                             .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
 
-                            Toggle(isOn: $vm.notchQuickNoteEnabled) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Quick Note")
-                                    Text("Opens a note window right under the notch.")
-                                        .font(.caption)
-                                        .foregroundColor(DS.textSecondary)
-                                }
-                            }
+                            // 켜기와 ⌥ 단축키를 한 줄에. Quick Note 단축키는 아이콘을 끄면 함께 쉰다.
+                            ToggleWithShortcutRow(
+                                title: "Quick Note",
+                                subtitle: "Opens a note window right under the notch.",
+                                isOn: $vm.notchQuickNoteEnabled,
+                                key: $vm.notchQuickNoteShortcut,
+                                conflictMessage: quickNoteConflictMessage,
+                                help: "Press ⌥ and this key anywhere to open Quick Note. "
+                                    + "Clear the key to turn the shortcut off.",
+                                keyAccessibilityLabel: "Quick Note shortcut key"
+                            )
                             .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
+                            .onChange(of: vm.notchQuickNoteShortcut) { _, _ in onSave() }
 
-                            quickNoteShortcutRow
-                                .disabled(!vm.notchQuickNoteEnabled)
-                                .onChange(of: vm.notchQuickNoteShortcut) { _, _ in onSave() }
-
-                            Toggle(isOn: $vm.notchLightsOutEnabled) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Lights Out")
-                                    Text(
-                                        "Covers your screens while you're on break. "
-                                            + "Press \(LightsOutPolicy.label(for: vm.lightsOutUnlockKey)) to come back."
-                                    )
-                                    .font(.caption)
-                                    .foregroundColor(DS.textSecondary)
-                                }
-                            }
+                            // Lights Out은 메뉴바 기능이라, 스위치(띠 아이콘)를 꺼도 ⌥ 단축키는 그대로 쓴다.
+                            ToggleWithShortcutRow(
+                                title: "Lights Out",
+                                subtitle: "Covers your screens. Press "
+                                    + "\(LightsOutPolicy.label(for: vm.lightsOutUnlockKey)) to come back.",
+                                isOn: $vm.notchLightsOutEnabled,
+                                key: $vm.lightsOutShortcut,
+                                conflictMessage: lightsOutConflictMessage,
+                                keyFollowsToggle: false,
+                                help:
+                                    "The switch shows the moon icon in the strip. Press ⌥ and the "
+                                    + "key anywhere to cover your screens, even with the icon off. "
+                                    + "Clear the key to turn the shortcut off.",
+                                keyAccessibilityLabel: "Lights Out shortcut key"
+                            )
                             .onChange(of: vm.notchLightsOutEnabled) { _, _ in onSave() }
+                            .onChange(of: vm.lightsOutShortcut) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {

@@ -566,8 +566,33 @@ struct MinimapSwiftUI: View {
     }
 }
 
+/// "⌥ [키]" 입력. 새로 친 글자 하나로 바뀌고, 비우면 끈다(prompt "Off").
+struct OptionKeyField: View {
+    @Binding var key: String?
+    var accessibilityLabel: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("⌥")
+                .foregroundColor(DS.textSecondary)
+            TextField(
+                "",
+                text: Binding(
+                    get: { key ?? "" },
+                    set: { newValue in
+                        // 마지막에 친 글자로 바꾼다(칸에 한 글자만 남는다). 비우면 끈다.
+                        key = QuickNoteShortcutPolicy.normalized(newValue.last.map(String.init))
+                    }),
+                prompt: Text("Off")
+            )
+            .keyCapField(width: 40)
+            .accessibilityLabel(accessibilityLabel)
+        }
+    }
+}
+
 /// ⌥ 단축키 한 줄: 제목 · (겹칠 때만 빨간 짧은 안내) · ⌥ · 한 글자 칸.
-/// 설명은 줄 아래에 쌓지 않고 툴팁으로 둔다. 칸을 비우면 끈다(prompt "Off").
+/// 설명은 줄 아래에 쌓지 않고 툴팁으로 둔다.
 struct OptionShortcutRow: View {
     let title: String
     @Binding var key: String?
@@ -590,20 +615,51 @@ struct OptionShortcutRow: View {
                     .truncationMode(.tail)
                     .help(conflictMessage)
             }
-            Text("⌥")
-                .foregroundColor(DS.textSecondary)
-            TextField(
-                "",
-                text: Binding(
-                    get: { key ?? "" },
-                    set: { newValue in
-                        // 마지막에 친 글자로 바꾼다(칸에 한 글자만 남는다). 비우면 끈다.
-                        key = QuickNoteShortcutPolicy.normalized(newValue.last.map(String.init))
-                    }),
-                prompt: Text("Off")
-            )
-            .keyCapField(width: 40)
-            .accessibilityLabel(accessibilityLabel)
+            OptionKeyField(key: $key, accessibilityLabel: accessibilityLabel)
+        }
+        .help(help)
+    }
+}
+
+/// 켜기와 ⌥ 단축키를 한 줄에 담은 설정: 제목·한 줄 설명 | ⌥ [키] | 스위치.
+/// 키가 겹치면 설명 자리에 빨간 안내가 대신 뜬다 (줄 수는 그대로).
+struct ToggleWithShortcutRow: View {
+    let title: String
+    let subtitle: String
+    @Binding var isOn: Bool
+    @Binding var key: String?
+    var conflictMessage: String?
+    /// 스위치를 끄면 단축키도 쓰지 않는 기능인지. true면 꺼져 있을 때 키 칸을 흐리게 한다.
+    var keyFollowsToggle = true
+    var help: String
+    var keyAccessibilityLabel: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                if let conflictMessage {
+                    Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundColor(DS.danger)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .help(conflictMessage)
+                } else {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(DS.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            Spacer(minLength: 8)
+            OptionKeyField(key: $key, accessibilityLabel: keyAccessibilityLabel)
+                .disabled(keyFollowsToggle && !isOn)
+                .opacity(keyFollowsToggle && !isOn ? 0.45 : 1)
+            Toggle(title, isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
         }
         .help(help)
     }
@@ -614,10 +670,12 @@ extension View {
     /// 평범한 칸에 상자를 직접 그린다 (높이가 글자 줄과 같아 한 줄에 맞는다).
     func keyCapField(width: CGFloat) -> some View {
         textFieldStyle(.plain)
+            // Form 안의 TextField는 빈 제목이라도 제목 자리를 잡아 글자를 아래로 민다. 제목을 숨긴다.
+            .labelsHidden()
             .multilineTextAlignment(.center)
-            .padding(.vertical, 2)
             .padding(.horizontal, 6)
-            .frame(width: width)
+            // 높이를 고정한다. 두 줄짜리 제목 옆에 놓이면 칸이 줄 높이만큼 늘어난다.
+            .frame(width: width, height: 22)
             .background(
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
                     .fill(Color(nsColor: .textBackgroundColor))

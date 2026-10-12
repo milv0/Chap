@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.9.3-orange)
+![Version](https://img.shields.io/badge/version-2.9.4-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -82,7 +82,7 @@ causes the next launch to create and link a new window.
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
 | `⌥N` | Open Quick Note (change or turn off in Settings → Notch; a site using the same key wins) |
-| `⌥L` | Lights Out (change or turn off in Settings → General; a site or Quick Note using the same key wins) |
+| `⌥L` | Lights Out (change or turn off in Settings → Notch → Top Strip or Settings → General; a site or Quick Note using the same key wins) |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |
@@ -162,7 +162,7 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Lights Out** is a moon icon right of Quick Note. Click it and the dock folds while every screen goes black; press Esc (or your chosen key) to come back. Once the screens are covered the notch is covered too, so come back with the key, not the icon. Turn the icon off in Settings → Notch → Top Strip; the menu bar item stays either way.
+**Lights Out** is a moon icon right of Quick Note. Click it and the dock folds while every screen goes black; press Esc (or your chosen key) to come back. Once the screens are covered the notch is covered too, so come back with the key, not the icon. In Settings → Notch → Top Strip, the Lights Out row holds both the icon switch and the ⌥ key; turning the icon off keeps ⌥L and the menu bar item.
 
 **Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Press **Esc** to close it; whatever you typed is saved first. Change or clear the shortcut under **Settings → Notch → Top Strip**; it works while the notch launcher and the Quick Note icon are on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
 
@@ -202,11 +202,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.9.3
+Scripts/release.sh 2.9.4
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.9.3 --publish
+Scripts/release.sh 2.9.4 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

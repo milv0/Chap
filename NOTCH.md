@@ -217,7 +217,9 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 - **Lights Out**(`NotchLightsOutStripButton`, `moon.fill`): 누르면 도커를 접고 가림막을 친다(메뉴바 항목과 같은 경로).
   가림막이 노치까지 덮으므로 끄는 것은 이 아이콘이 아니라 해제 키(기본 Esc)·연타다. 이미 켜져 있으면 무시한다.
-  `notchLightsOutEnabled`(기본 켬)로 숨길 수 있고, 숨겨도 메뉴바 항목은 남는다.
+  Top Strip의 Lights Out 한 줄에 스위치(`notchLightsOutEnabled`, 기본 켬)와 ⌥ 키(`lightsOutShortcut`, 기본 L)가 함께 있다.
+  스위치는 띠 아이콘만 숨기고, ⌥ 단축키와 메뉴바 항목은 그대로 쓴다(그래서 키 칸은 흐려지지 않는다).
+  같은 키는 Settings → General → Lights Out에서도 바꿀 수 있다(노치를 쓰지 않는 Mac용).
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
@@ -353,7 +355,8 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 - 열 때마다 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다(`QuickNotePlacement.origin`, 보이는 영역 밖이면 안으로
   당김). 그다음엔 자유롭게 옮긴다. 크기는 `ChapQuickNoteWindow` frame autosave로 기억하고 자리는 기억하지 않는다.
   노치 화면이 없으면 커서 화면 가운데.
-- ⌥N(Settings → Notch → Top Strip → Quick Note Shortcut 한 줄에서 바꾸거나 비워서 끔)도 같은 동작이다. 노치 런처와 Quick Note 아이콘이
+- ⌥N도 같은 동작이다. Settings → Notch → Top Strip의 Quick Note 한 줄(`ToggleWithShortcutRow`: 제목·설명 | ⌥ [키] | 스위치)에서
+  키를 바꾸거나 비워서 끈다. 스위치를 끄면 키 칸도 흐려지고 단축키도 쉰다. 노치 런처와 Quick Note 아이콘이
   켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
