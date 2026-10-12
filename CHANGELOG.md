@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.9.1] — 2026-10-12
+
+### Added
+
+- **Lights Out from the notch** — A moon icon at the right end of the notch's
+  black strip, beside Quick Note, turns Lights Out on. The notch is covered once
+  the screens go dark, so you come back with Esc (or your chosen key) as before.
+  Hide the icon in Settings → Notch → Top Strip; the menu bar item stays.
+
 ## [2.9.0] — 2026-10-12
 
 ### Added
