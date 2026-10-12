@@ -267,6 +267,18 @@ extension AppDelegate {
         keepAwakeItem.submenu = keepAwakeMenu
         menu.addItem(keepAwakeItem)
         keepAwakeMenuItem = keepAwakeItem
+
+        // Lights Out — 자리 비울 때 화면을 덮는 가림막 (Keep Awake와 독립, config 미저장)
+        let lightsOut = NSMenuItem(
+            title: lightsOutController.isOn
+                ? LightsOutPolicy.menuTitleOn : LightsOutPolicy.menuTitleOff,
+            action: #selector(toggleLightsOut), keyEquivalent: "")
+        lightsOut.image = NSImage(
+            systemSymbolName: lightsOutController.isOn ? "lightbulb.fill" : "lightbulb.slash",
+            accessibilityDescription: LightsOutPolicy.menuTitleOff)
+        lightsOut.target = self
+        lightsOut.toolTip = LightsOutPolicy.subtitle
+        menu.addItem(lightsOut)
         menu.addItem(.separator())
 
         let settings = NSMenuItem(
@@ -353,6 +365,10 @@ extension AppDelegate {
                 AppLauncher.open(site)
             }
         }
+        // 가림막 아래에서 도커가 열리면 보이지 않는 채로 포커스를 가져간다 (노치 없는 Mac의 hover 포함).
+        notchLauncher.isSuppressedProvider = { [weak self] in
+            self?.lightsOutController.isOn ?? false
+        }
         notchLauncher.onOpenSettings = { [weak self] type in
             self?.showSettings(focusing: type)
         }
@@ -379,6 +395,9 @@ extension AppDelegate {
     }
 
     private func handleGlobalHotKeyAction(_ action: GlobalHotKeyAction) {
+        // 가림막이 떠 있는 동안은 아무것도 열지 않는다. 열린 창(메뉴·Quick Note·사이트)은 가림막
+        // 아래에 숨어 보이지 않으면서 키 포커스만 가져간다.
+        guard !lightsOutController.isOn else { return }
         switch action {
         case .openMenu:
             openStatusMenu()
@@ -393,6 +412,15 @@ extension AppDelegate {
                 name: NotchLauncherController.requestClose, object: nil)
             QuickNoteWindow.show()
         }
+    }
+
+    @objc func toggleLightsOut() {
+        lightsOutController.unlockKeyProvider = { [weak self] in
+            self?.config.lightsOutUnlockKey ?? LightsOutPolicy.escapeKey
+        }
+        // 열린 도커는 먼저 접는다 (가림막 아래에 남아 포커스를 쥐지 않게).
+        NotificationCenter.default.post(name: NotchLauncherController.requestClose, object: nil)
+        lightsOutController.toggle()
     }
 
     private func openStatusMenu() {

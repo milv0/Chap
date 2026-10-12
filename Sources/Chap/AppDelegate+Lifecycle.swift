@@ -44,6 +44,12 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
+            // Lights Out이 켜지거나 걷히면 메뉴 문구를 바꾼다 (스스로 걷히는 비상 해제 포함).
+            NotificationCenter.default.addObserver(
+                forName: LightsOutController.didChangeNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.buildMenu()
+            },
             // 선반 제목: Standard 크기로 커서 화면 가운데에 폴더를 연다.
             NotificationCenter.default.addObserver(
                 forName: NotchShelfFolder.openRequest, object: nil, queue: .main
@@ -163,6 +169,7 @@ extension AppDelegate {
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
             notchQuickNoteShortcut: config.notchQuickNoteShortcut,
+            lightsOutUnlockKey: config.lightsOutUnlockKey,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -182,6 +189,7 @@ extension AppDelegate {
                 notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
                 notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
+                lightsOutUnlockKey: payload.lightsOutUnlockKey,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)

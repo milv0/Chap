@@ -16,6 +16,7 @@ public struct SettingsPayload {
     public let notchMirrorEnabled: Bool
     public let notchQuickNoteEnabled: Bool
     public let notchQuickNoteShortcut: String?
+    public let lightsOutUnlockKey: String
     public let notchWidgets: [NotchWidget]
 }
 
@@ -35,6 +36,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchMirrorEnabled: Bool
     @Published public var notchQuickNoteEnabled: Bool
     @Published public var notchQuickNoteShortcut: String?
+    @Published public var lightsOutUnlockKey: String
     @Published public var notchWidgets: [NotchWidget]
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
@@ -52,6 +54,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchMirrorEnabled: Bool
     @Published public var originalNotchQuickNoteEnabled: Bool
     @Published public var originalNotchQuickNoteShortcut: String?
+    @Published public var originalLightsOutUnlockKey: String
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -72,6 +75,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchMirrorEnabled != originalNotchMirrorEnabled
             || notchQuickNoteEnabled != originalNotchQuickNoteEnabled
             || notchQuickNoteShortcut != originalNotchQuickNoteShortcut
+            || lightsOutUnlockKey != originalLightsOutUnlockKey
     }
 
     public func markSaved() {
@@ -97,6 +101,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchMirrorEnabled = notchMirrorEnabled
         originalNotchQuickNoteEnabled = notchQuickNoteEnabled
         originalNotchQuickNoteShortcut = notchQuickNoteShortcut
+        originalLightsOutUnlockKey = lightsOutUnlockKey
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -118,6 +123,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchMirrorEnabled: self.notchMirrorEnabled,
                 notchQuickNoteEnabled: self.notchQuickNoteEnabled,
                 notchQuickNoteShortcut: self.notchQuickNoteShortcut,
+                lightsOutUnlockKey: self.lightsOutUnlockKey,
                 notchWidgets: self.notchWidgets,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
@@ -152,6 +158,7 @@ public final class SettingsViewModel: ObservableObject {
                     notchMirrorEnabled: notchMirrorEnabled,
                     notchQuickNoteEnabled: notchQuickNoteEnabled,
                     notchQuickNoteShortcut: notchQuickNoteShortcut,
+                    lightsOutUnlockKey: lightsOutUnlockKey,
                     notchWidgets: notchWidgets)) ?? true
         if saved { markSaved() }
         return saved
@@ -172,6 +179,7 @@ public final class SettingsViewModel: ObservableObject {
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
+        lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
@@ -190,6 +198,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
+        self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.originalSites = sites
         self.originalGuide = showGuideWindow
@@ -207,6 +216,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchQuickNoteEnabled = notchQuickNoteEnabled
         self.originalNotchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(
             notchQuickNoteShortcut)
+        self.originalLightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.saveDebouncer = saveDebouncer
     }

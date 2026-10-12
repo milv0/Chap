@@ -26,6 +26,7 @@ enum SettingsConfigTransfer {
             notchMirrorEnabled: vm.notchMirrorEnabled,
             notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
             notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
+            lightsOutUnlockKey: vm.lightsOutUnlockKey,
             notchWidgets: vm.notchWidgets,
             sites: vm.sites)
     }
@@ -187,6 +188,7 @@ enum SettingsConfigTransfer {
                         notchMirrorEnabled: vm.notchMirrorEnabled,
                         notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
                         notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
+                        lightsOutUnlockKey: vm.lightsOutUnlockKey,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 

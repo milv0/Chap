@@ -780,6 +780,7 @@ struct SettingsView: View {
                     notchMirrorEnabled: vm.notchMirrorEnabled,
                     notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
                     notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
+                    lightsOutUnlockKey: vm.lightsOutUnlockKey,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.

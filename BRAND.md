@@ -99,6 +99,9 @@ enough: a friend who snaps things into place.
 | About | Your chap in the menu bar — always close, never in the way. |
 | Mascot | Chap the Seal (the seal is Chap) |
 | Focus dial | the number, with a small On / Off under it (no "Chap": the number leads) |
+| Lights Out (menu) | Lights Out / Lights On |
+| Lights Out (help) | Keeps your screens dark while you're on break. |
+| Lights Out (cover) | Press Esc to come back |
 | Focus (stop) | Off (tooltip "Turn off Keep Mac Awake") |
 | Focus (running) | (no caption; the dial and the time left say it) |
 
@@ -111,6 +114,7 @@ enough: a friend who snaps things into place.
 | "No downloads yet" | "Oops, nothing here yet 😢" |
 | "Off" under the time left (with tooltip "Turn off Keep Mac Awake") | "Wind down", "Terminate session" |
 | One friendly aside per screen | A pun in every label |
+| "Lights Out" for the screen cover | "Lock", "Password", "Secure" — it locks nothing |
 
 ## Checklist for new copy
 

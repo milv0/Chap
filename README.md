@@ -36,6 +36,7 @@
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal silhouette) in Settings > General; it turns Chap blue while Keep Mac Awake runs
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen (on the built-in display with the notch), and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
+- **Lights Out** — Cover every screen in black while you're on break: the menu bar item turns it on, Esc brings you back (pick another key in Settings > General), and pressing any key five times quickly lifts it if you forget. It holds the display awake on its own, so it works with or without a Keep Mac Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
@@ -113,6 +114,7 @@ Stored at `~/.chap.json`:
   "notchMirrorEnabled": true,
   "notchQuickNoteEnabled": true,
   "notchQuickNoteShortcut": "N",
+  "lightsOutUnlockKey": "esc",
   "notchCollapsedWidgets": [],
   "sites": [
     {
