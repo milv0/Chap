@@ -532,7 +532,8 @@ Settings → Notch Launcher on
     새 창이면 autosave 크기 복원 → QuickNotePlacement.origin으로 노치 바로 아래 가운데 배치. 열려 있으면 앞으로만.
     메모 로드: saveQueue에서 QuickNoteStore.loadResult — text / preserved(원본을 Backups로 옮김, 빈 메모로 시작) /
     locked(편집 금지, 원본 보존). 저장: saveQueue에서 이전 내용 백업(QuickNoteBackupPolicy) → atomic write.
-    창 닫기 시 flushRequest, 종료 시 flushRequest + drainPendingSaves로 마지막 입력을 파일에 쓴다
+    창 닫기(Esc 또는 닫기 버튼) 시 willClose → flushRequest, 종료 시 flushRequest + drainPendingSaves로
+    마지막 입력을 파일에 쓴다. Esc는 QuickNoteWindow.handleKeyDown(local key monitor)이 TextEditor보다 먼저 받아 삼킨다
   → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
     MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
   → Focus 칸(다이얼): 호를 끌어 1~12시간 → UserDefaults ChapFocusPresetDuration에 기억.

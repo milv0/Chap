@@ -185,7 +185,7 @@ struct QAView: View {
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
-                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고(단축키는 Settings → Notch → Top Strip에서 바꾸거나 끌 수 있습니다), 그다음엔 원하는 곳으로 옮길 수 있습니다."
+                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고(단축키는 Settings → Notch → Top Strip에서 바꾸거나 끌 수 있습니다). Esc를 누르면 창이 닫히고, 그때까지 쓴 내용은 먼저 저장됩니다., 그다음엔 원하는 곳으로 옮길 수 있습니다."
                 ),
                 (
                     "Quick Note를 실수로 지웠어요.",
@@ -430,7 +430,7 @@ struct QAView: View {
                 ),
                 (
                     "When does Quick Note save?",
-                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Notch → Top Strip); drag it anywhere after that."
+                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Notch → Top Strip). Press Esc to close it; whatever you typed is saved first.; drag it anywhere after that."
                 ),
                 (
                     "I deleted my Quick Note by accident.",

@@ -333,13 +333,15 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
+- **Esc로 닫는다**(`QuickNoteWindow.handleKeyDown`, local key monitor). 메모 상자에서 타이핑 중이어도 TextEditor보다
+  먼저 받아 삼킨다. 닫힘 경로가 하나(`willClose`)라 Esc로 닫아도 마지막 입력이 flush되어 저장된다.
 
 ## Quick Note 저장
 
 - 입력하면 0.5초 뒤 저장한다(`SaveDebouncer`, 직렬 큐). 다만 **커서가 풀리는 순간 기다리지 않고 바로 저장**한다
   (`isFocused`가 false가 되면 flush).
 - 커서가 풀리는 경우: 노치 패널 안에서 메모 상자 밖을 누름(`didClickPanel`의 클릭 좌표가 상자 밖), 패널이 key를
-  잃음(다른 앱·바탕 클릭), 메모 상자 밖 빈 곳 탭, 메모 창(`QuickNoteNSWindow`)이 key를 잃음, 창 닫기.
+  잃음(다른 앱·바탕 클릭), 메모 상자 밖 빈 곳 탭, 메모 창(`QuickNoteNSWindow`)이 key를 잃음, 창 닫기(Esc·닫기 버튼).
 - 상자 오른쪽 아래 10pt 표시: 입력 중 아직 안 쓰였으면 "Editing", 저장되면 "Saved · 6:12 PM"(오늘) /
   "Saved · Oct 4, 6:12 PM"(올해) / "Saved · Oct 4, 2025, 6:12 PM"(`QuickNoteStore.savedLabel`). 빈 메모는 표시 없음.
   저장이 실패하면 "Couldn't save"(입력은 화면에 남는다).

@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.8.2-orange)
+![Version](https://img.shields.io/badge/version-2.8.3-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -158,7 +158,7 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Change or clear the shortcut under **Settings → Notch → Top Strip**; it works while the notch launcher and the Quick Note icon are on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
+**Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Press **Esc** to close it; whatever you typed is saved first. Change or clear the shortcut under **Settings → Notch → Top Strip**; it works while the notch launcher and the Quick Note icon are on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
 
 Before overwriting the note, Chap keeps the previous version in `~/Library/Application Support/Chap/QuickNote Backups/` at most every 10 minutes, and right away when a long note loses more than half its text (for example after Select All → Delete). The newest ten backups are kept. If the note file ever can't be read, Chap moves it to the same folder as `QuickNote.unreadable-<time>.txt` instead of treating it as empty; if it can't even move it, the note stays read-only so the file is never overwritten.
 
@@ -196,11 +196,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.8.2
+Scripts/release.sh 2.8.3
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.8.2 --publish
+Scripts/release.sh 2.8.3 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

@@ -7,6 +7,7 @@ import SwiftUI
 enum QuickNoteWindow {
     private static var window: NSWindow?
     private static var closeObserver: NSObjectProtocol?
+    private static var escapeMonitor: Any?
 
     static let defaultSize = NSSize(width: 420, height: 320)
     static let minimumSize = NSSize(width: 280, height: 180)
@@ -44,11 +45,25 @@ enum QuickNoteWindow {
             NotificationCenter.default.post(name: NotchQuickNoteView.flushRequest, object: nil)
             if let closeObserver { NotificationCenter.default.removeObserver(closeObserver) }
             closeObserver = nil
+            if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
+            escapeMonitor = nil
             Self.window = nil
+        }
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handleKeyDown(event)
         }
         Self.window = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// Esc로 창을 닫는다. 메모 상자에서 타이핑 중이어도(TextEditor가 Esc를 먹기 전에) 받는다.
+    /// 닫힘 경로가 하나라 `willClose`의 flush가 마지막 입력을 그대로 저장한다.
+    /// - Returns: 삼켰으면 nil, 아니면 그대로 흘려보낼 이벤트.
+    static func handleKeyDown(_ event: NSEvent) -> NSEvent? {
+        guard event.keyCode == 53, let open = window, event.window === open else { return event }
+        open.close()
+        return nil
     }
 
     /// 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다. 노치 화면이 없으면 커서 화면 가운데.
