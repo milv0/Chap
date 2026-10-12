@@ -2,6 +2,16 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.10.1] — 2026-10-12
+
+### Changed
+
+- **Settings, sorted by what each one is about** — General now reads App (Open
+  at Login, updates), Launching (Option-key triggers, Guide Window), and Menu Bar.
+  Mirror moved out of Tools: it lives only in the notch, so its switch and a
+  Camera Access button share one row in Notch → Top Strip. Tools now holds just
+  the features that work without the notch, Quick Note and Lights Out.
+
 ## [2.10.0] — 2026-10-12
 
 ### Changed
