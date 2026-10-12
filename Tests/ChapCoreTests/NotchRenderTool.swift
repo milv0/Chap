@@ -12,7 +12,7 @@ import Testing
 /// `notch-glass-light.png`, `notch-glass-dark.png`, `notch-custom.png`를 저장한다.
 /// Liquid Glass 재질과 NSView 기반 뷰(메모 입력칸, 카메라 미리보기)는 오프스크린에서
 /// 그려지지 않으므로 Glass는 비슷한 밝기의 배경 위 투명 도커로 근사한다.
-@Suite("Notch render tool")
+@Suite("Notch render tool", .serialized)
 @MainActor
 struct NotchRenderTool {
     static let outputDirectory = ProcessInfo.processInfo.environment["CHAP_NOTCH_RENDER_DIR"]
@@ -162,6 +162,25 @@ struct NotchRenderTool {
                 .frame(width: 600, height: 720)
                 .environment(\.colorScheme, scheme)
             let png = try Self.renderPNG(view)
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    /// Keep Awake 중앙 HUD(켜짐·꺼짐) 모습을 PNG로 남긴다. 물범이 파란 타일 위에서 읽히는지 본다.
+    @Test(
+        "render the Keep Awake HUD", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    @MainActor
+    func renderKeepAwakeHUD() throws {
+        let directory = URL(fileURLWithPath: try #require(NotchRenderTool.outputDirectory))
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        for (name, focusOn, message) in [
+            ("hud-focus-on", true, "Keep Awake · 4 Hours"),
+            ("hud-focus-off", false, "Keep Awake Off"),
+        ] {
+            let view = KeepAwakeHUD.makeContentView(message: message, focusOn: focusOn)
+            let rep = try #require(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+            view.cacheDisplay(in: view.bounds, to: rep)
+            let png = try #require(rep.representation(using: .png, properties: [:]))
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
     }

@@ -14,19 +14,19 @@ extension AppDelegate {
         keepAwake.deactivate()
     }
 
-    /// Keep Awake 상태 변화 피드백: 사운드 + 중앙 커피 HUD + 메뉴 재구성.
+    /// Keep Awake 상태 변화 피드백: 사운드 + 중앙 물범 HUD + 메뉴 재구성.
     func handleKeepAwakeEvent(_ event: KeepAwakeController.Event) {
         switch event {
         case .started(let presetTitle):
             NSSound(named: "Purr")?.play()
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
-                symbolName: "cup.and.saucer.fill")
+                focusOn: true)
         case .ended:
             NSSound(named: "Pop")?.play()
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessageEnded,
-                symbolName: "cup.and.saucer")
+                focusOn: false)
         case .expiredWhileAsleep:
             // 깨어난 직후라 사운드·HUD 없이 메뉴와 상태 아이콘만 되돌린다.
             break

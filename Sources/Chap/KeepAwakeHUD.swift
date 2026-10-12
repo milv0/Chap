@@ -3,6 +3,7 @@ import Cocoa
 /// Keep Awake 상태 변화를 화면 중앙에 잠깐 보여주는 HUD 오버레이.
 ///
 /// GuideWindow와 같은 토큰 방식으로 빠른 연속 토글 시 유령 창을 막는다.
+/// 그림은 앱 아이콘·노치와 같은 픽셀 물범이다: 켜면 꼬리를 든 깨어 있는 Chap, 끄면 잠든 Chap.
 /// 표시 후 잠시 뒤 스스로 페이드아웃하며, 마우스 이벤트를 가로채지 않는다.
 /// 모든 호출은 내부에서 메인 큐로 직렬화된다.
 enum KeepAwakeHUD {
@@ -15,8 +16,9 @@ enum KeepAwakeHUD {
     private static let accent = NSColor(
         red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
 
-    /// 심볼과 문구로 HUD를 띄운다. 이전 HUD가 떠 있으면 즉시 교체한다.
-    static func show(message: String, symbolName: String) {
+    /// 문구와 Focus 상태로 HUD를 띄운다. 이전 HUD가 떠 있으면 즉시 교체한다.
+    /// - Parameter focusOn: 켜는 중이면 깨어 있는 물범, 끄는 중이면 잠든 물범을 그린다.
+    static func show(message: String, focusOn: Bool) {
         DispatchQueue.main.async {
             lastToken += 1
             let token = lastToken
@@ -43,7 +45,7 @@ enum KeepAwakeHUD {
             hud.hasShadow = false
             hud.ignoresMouseEvents = true
             hud.collectionBehavior = [.canJoinAllSpaces, .transient]
-            hud.contentView = makeContentView(message: message, symbolName: symbolName)
+            hud.contentView = makeContentView(message: message, focusOn: focusOn)
 
             hud.alphaValue = 0
             hud.orderFrontRegardless()
@@ -74,7 +76,8 @@ enum KeepAwakeHUD {
             })
     }
 
-    private static func makeContentView(message: String, symbolName: String) -> NSView {
+    /// (개발용) 렌더 도구가 HUD 모습을 PNG로 뽑을 때도 쓴다.
+    static func makeContentView(message: String, focusOn: Bool) -> NSView {
         // GuideWindow와 같은 컬러감: 밝은 반투명 바탕 + 테마색 틴트/테두리.
         let container = NSVisualEffectView(
             frame: NSRect(origin: .zero, size: hudSize))
@@ -92,14 +95,24 @@ enum KeepAwakeHUD {
         tint.layer?.backgroundColor = accent.withAlphaComponent(0.1).cgColor
         tint.autoresizingMask = [.width, .height]
 
-        let symbolConfig = NSImage.SymbolConfiguration(pointSize: 44, weight: .medium)
-        let imageView = NSImageView(
-            frame: NSRect(x: 0, y: 52, width: hudSize.width, height: 66))
-        imageView.image = NSImage(
-            systemSymbolName: symbolName, accessibilityDescription: message)?
-            .withSymbolConfiguration(symbolConfig)
-        imageView.contentTintColor = accent
+        // 물범은 흰 몸통이라 밝은 HUD 바탕에서는 묻힌다. 앱 아이콘과 같은 파란 타일에 올린다.
+        let plate = NSView(
+            frame: NSRect(x: (hudSize.width - 132) / 2, y: 54, width: 132, height: 72))
+        plate.wantsLayer = true
+        plate.layer?.backgroundColor = accent.cgColor
+        plate.layer?.cornerRadius = 16
+        plate.layer?.masksToBounds = true
+
+        // 켜짐: 깨어 꼬리를 든 Chap. 꺼짐: 눈 감고 z를 띄운 Chap.
+        let seal = ChapMascotImage.image(
+            pixelSize: 4, eyes: focusOn ? .open : .closed, pose: focusOn ? .tailUp : .rest,
+            showsSleepZ: !focusOn)
+        let imageView = NSImageView(frame: plate.bounds)
+        imageView.image = seal
+        imageView.imageScaling = .scaleNone
         imageView.imageAlignment = .alignCenter
+        imageView.autoresizingMask = [.width, .height]
+        plate.addSubview(imageView)
 
         let label = NSTextField(labelWithString: message)
         label.font = .systemFont(ofSize: 14, weight: .semibold)
@@ -108,7 +121,7 @@ enum KeepAwakeHUD {
         label.frame = NSRect(x: 8, y: 22, width: hudSize.width - 16, height: 20)
 
         container.addSubview(tint)
-        container.addSubview(imageView)
+        container.addSubview(plate)
         container.addSubview(label)
         return container
     }
