@@ -359,11 +359,20 @@ extension AppDelegate {
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
 
-    private func configureGlobalHotKeys() {
+    /// Quick Note 단축키로 실제 등록할 키 (노치·아이콘이 켜져 있고 사이트와 겹치지 않을 때만).
+    var registeredQuickNoteKey: String? {
+        QuickNoteShortcutPolicy.registeredKey(
+            shortcut: config.notchQuickNoteShortcut,
+            notchLauncherEnabled: config.notchLauncherEnabled,
+            quickNoteEnabled: config.notchQuickNoteEnabled, sites: config.sites)
+    }
+
+    func configureGlobalHotKeys() {
         guard !isRunningTests else { return }
         globalHotKeyManager.configure(
             sites: config.sites,
-            optionShortcutsEnabled: config.optionShortcutsEnabled
+            optionShortcutsEnabled: config.optionShortcutsEnabled,
+            quickNoteKey: registeredQuickNoteKey
         ) { [weak self] action in
             self?.handleGlobalHotKeyAction(action)
         }
@@ -378,6 +387,11 @@ extension AppDelegate {
         case .launchSite(let index):
             guard config.sites.indices.contains(index) else { return }
             launchSite(config.sites[index])
+        case .openQuickNote:
+            // 열려 있는 노치 도커가 창 자리(노치 아래)를 덮지 않게 먼저 접는다.
+            NotificationCenter.default.post(
+                name: NotchLauncherController.requestClose, object: nil)
+            QuickNoteWindow.show()
         }
     }
 

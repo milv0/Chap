@@ -46,6 +46,48 @@ struct NotchSettingsView: View {
 
     /// 위젯을 슬롯에 배치한다. 같은 위젯이 다른 슬롯에 있으면 자리를 맞바꿔
     /// 중복 배치를 막는다. 선반은 앞쪽 선반 칸에만, 다른 위젯은 뒤쪽 칸에만 놓인다(`fits(slot:)`).
+    /// Quick Note ⌥ 단축키 입력. 새로 친 글자 하나로 바뀌고, 지우면 끈다. 사이트·예약키와 겹치면 안내만 하고
+    /// 등록하지 않는다(사이트 단축키가 먼저다).
+    private var quickNoteShortcutRow: some View {
+        let key = vm.notchQuickNoteShortcut
+        let conflict = QuickNoteShortcutPolicy.conflict(for: key, sites: vm.sites)
+        return VStack(alignment: .leading, spacing: 2) {
+            LabeledContent("Shortcut") {
+                HStack(spacing: 4) {
+                    Text("⌥")
+                        .foregroundColor(DS.textSecondary)
+                    TextField(
+                        "",
+                        text: Binding(
+                            get: { vm.notchQuickNoteShortcut ?? "" },
+                            set: { newValue in
+                                // 마지막에 친 글자로 바꾼다(필드에 한 글자만 남는다).
+                                vm.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(
+                                    newValue.last.map(String.init))
+                            }),
+                        prompt: Text("Off")
+                    )
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 36)
+                    .accessibilityLabel("Quick Note shortcut key")
+                }
+            }
+            if let key, let conflict {
+                Text(QuickNoteShortcutPolicy.conflictMessage(conflict, key: key))
+                    .font(.caption)
+                    .foregroundColor(DS.danger)
+            } else {
+                Text(
+                    key.map { "Press ⌥\($0) anywhere to open Quick Note. Clear it to turn off." }
+                        ?? "No shortcut. Type a letter to add one."
+                )
+                .font(.caption)
+                .foregroundColor(DS.textSecondary)
+            }
+        }
+    }
+
     @discardableResult
     private func assign(_ widget: NotchWidget, to index: Int) -> Bool {
         guard vm.notchWidgets.indices.contains(index), widget.fits(slot: index) else {
@@ -206,14 +248,16 @@ struct NotchSettingsView: View {
                             Toggle(isOn: $vm.notchQuickNoteEnabled) {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Quick Note")
-                                    Text(
-                                        "Write across the notch, or pop the note into its own window."
-                                    )
-                                    .font(.caption)
-                                    .foregroundColor(DS.textSecondary)
+                                    Text("Opens a note window right under the notch.")
+                                        .font(.caption)
+                                        .foregroundColor(DS.textSecondary)
                                 }
                             }
                             .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
+
+                            quickNoteShortcutRow
+                                .disabled(!vm.notchQuickNoteEnabled)
+                                .onChange(of: vm.notchQuickNoteShortcut) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {

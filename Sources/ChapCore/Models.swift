@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.8.1"
+        ?? "2.8.2"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -406,6 +406,9 @@ public struct Config: Codable {
     public var notchMirrorEnabled: Bool
     /// 상단 띠 Quick Note 아이콘 표시 여부. 누르면 메모가 띠 아래로 펼쳐진다.
     public var notchQuickNoteEnabled: Bool
+    /// Quick Note 창을 여는 ⌥ 키(한 글자, 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥N.
+    /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
+    public var notchQuickNoteShortcut: String?
     public var notchWidgets: [NotchWidget]
     /// 어깨 아이콘으로 접어 둔 위젯(Screenshots·Downloads). 노치에서 접고 펴며, 이 Mac의
     /// 표시 선택이라 설정창 저장·가져오기가 바꾸지 않는다. `NotchShoulderPolicy.normalized`로 정리한다.
@@ -440,7 +443,7 @@ public struct Config: Codable {
         case statusBarIcon, hiddenMenuLaunchTypes, notchLauncherEnabled, notchPanelStyle
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
-        case notchQuickNoteEnabled, notchCollapsedWidgets
+        case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
         case sites
     }
 
@@ -458,6 +461,7 @@ public struct Config: Codable {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
+        notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -476,6 +480,7 @@ public struct Config: Codable {
             ?? Config.notchPanelColorHexDefault
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
+        self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -533,6 +538,13 @@ public struct Config: Codable {
             (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
         notchQuickNoteEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchQuickNoteEnabled)) ?? true
+        // 키가 없으면(이전 버전 설정) 기본 ⌥N, ""이면 끔.
+        if let stored = try? container.decodeIfPresent(String.self, forKey: .notchQuickNoteShortcut)
+        {
+            notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(stored)
+        } else {
+            notchQuickNoteShortcut = QuickNoteShortcutPolicy.defaultKey
+        }
         // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -592,6 +604,7 @@ public struct Config: Codable {
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
+        try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
         try container.encode(
             notchCollapsedWidgets.map(\.rawValue), forKey: .notchCollapsedWidgets)
         try container.encode(sites, forKey: .sites)

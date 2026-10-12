@@ -527,7 +527,8 @@ Settings → Notch Launcher on
     → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
-  → Quick Note 아이콘: requestClose로 도커 닫기 → QuickNoteWindow.show()
+  → Quick Note 아이콘 또는 ⌥N(GlobalHotKeyAction.openQuickNote): requestClose로 도커 닫기 → QuickNoteWindow.show()
+    ⌥ 키는 QuickNoteShortcutPolicy.registeredKey: 노치 런처·아이콘 on + 사이트/예약키와 안 겹칠 때만 등록
     새 창이면 autosave 크기 복원 → QuickNotePlacement.origin으로 노치 바로 아래 가운데 배치. 열려 있으면 앞으로만.
     메모 로드: saveQueue에서 QuickNoteStore.loadResult — text / preserved(원본을 Backups로 옮김, 빈 메모로 시작) /
     locked(편집 금지, 원본 보존). 저장: saveQueue에서 이전 내용 백업(QuickNoteBackupPolicy) → atomic write.

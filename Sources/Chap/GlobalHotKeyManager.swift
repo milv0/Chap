@@ -6,6 +6,7 @@ enum GlobalHotKeyAction: Equatable {
     case openMenu
     case openSettings
     case launchSite(index: Int)
+    case openQuickNote
 }
 
 struct GlobalHotKeyRegistration: Equatable {
@@ -13,9 +14,12 @@ struct GlobalHotKeyRegistration: Equatable {
     let action: GlobalHotKeyAction
 }
 
+/// - Parameter quickNoteKey: Quick Note 창을 여는 키. `QuickNoteShortcutPolicy.registeredKey`가 고른,
+///   사이트·예약키와 겹치지 않는 키만 넘긴다. nil이면 등록하지 않는다.
 func globalHotKeyRegistrations(
     for sites: [Site],
-    optionShortcutsEnabled: Bool
+    optionShortcutsEnabled: Bool,
+    quickNoteKey: String? = nil
 ) -> [GlobalHotKeyRegistration] {
     guard optionShortcutsEnabled else { return [] }
     let sanitizedSites = sanitizedShortcuts(for: sites)
@@ -29,6 +33,10 @@ func globalHotKeyRegistrations(
             return GlobalHotKeyRegistration(
                 character: shortcut, action: .launchSite(index: index))
         })
+    if let quickNoteKey {
+        registrations.append(
+            GlobalHotKeyRegistration(character: quickNoteKey, action: .openQuickNote))
+    }
     return registrations
 }
 
@@ -59,6 +67,7 @@ final class GlobalHotKeyManager: NSObject {
     func configure(
         sites: [Site],
         optionShortcutsEnabled: Bool,
+        quickNoteKey: String? = nil,
         actionHandler: @escaping (GlobalHotKeyAction) -> Void
     ) {
         precondition(Thread.isMainThread)
@@ -68,7 +77,7 @@ final class GlobalHotKeyManager: NSObject {
         }
         self.actionHandler = actionHandler
         registrations = globalHotKeyRegistrations(
-            for: sites, optionShortcutsEnabled: optionShortcutsEnabled)
+            for: sites, optionShortcutsEnabled: optionShortcutsEnabled, quickNoteKey: quickNoteKey)
         isConfigured = true
         unregisterAllHotKeys()
         registeredKeyboardLayoutIdentifier = nil
