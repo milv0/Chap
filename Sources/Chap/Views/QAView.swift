@@ -242,7 +242,7 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Lights Out, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(Settings → General → Lights Out에서 해제 키와 ⌥L 단축키를 바꾸거나 단축키를 끌 수 있습니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Lights Out, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(⌥L 단축키는 Settings → Notch → Top Strip의 Lights Out 줄이나 Settings → General → Lights Out에서 바꾸거나 끌 수 있고, 해제 키는 General에서 바꿉니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
                 ),
                 (
                     "Lights Out이 화면을 잠그는 건가요?",
@@ -495,7 +495,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Lights Out, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Press Esc to come back, or pick another key in Settings → General → Lights Out, where you can also change or turn off ⌥L. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
+                    "Press ⌥L, click the menubar icon → Lights Out, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Press Esc to come back, or pick another key in Settings → General → Lights Out, and change or turn off ⌥L there or in the Lights Out row of Settings → Notch → Top Strip. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
                 ),
                 (
                     "Does Lights Out lock my Mac?",
