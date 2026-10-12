@@ -184,9 +184,7 @@ struct IsolatedCopyImageTests {
         return rep
     }
 
-    @Test(
-        "on Retina the eyes and mouth stay two pixels, one pixel to the right, while the outline thickens"
-    )
+    @Test("on Retina the eyes and mouth stay two pixels, one pixel right and down")
     func faceStaysThin() throws {
         let rep = try sealBitmap(scale: 2)
         // 26×22 캔버스에서 격자의 원점은 (1, 5)pt. Retina에서 칸 (x, y)는 픽셀 (2(x+1), 2(y+5))부터 2×2.
@@ -196,20 +194,23 @@ struct IsolatedCopyImageTests {
         let outline = Set(ChapMascot.menuBarOutline.map { [$0.x, $0.y] })
         for face in ChapMascot.menuBarFace {
             let (x, y) = (face[0], face[1])
-            // 얼굴 칸은 오른쪽으로 1픽셀 옮겨 dx 1~2에 칠해진다.
-            #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 0) > 0.99, "face \(face) is drawn")
-            #expect(alpha(cellX: x, cellY: y, dx: 2, dy: 1) > 0.99, "face \(face) is drawn")
-            // 왼쪽 이웃이 빈 칸이면 원래 자리 첫 픽셀(dx 0)은 비어 있다 = 옮겨졌다.
+            // 얼굴 칸은 오른쪽·아래로 1픽셀씩 옮겨 dx 1~2, dy 1~2에 칠해진다.
+            #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 1) > 0.99, "face \(face) is drawn")
+            #expect(alpha(cellX: x, cellY: y, dx: 2, dy: 2) > 0.99, "face \(face) is drawn")
+            // 왼쪽 이웃이 빈 칸이면 dx 0은 비어 있다 = 오른쪽으로 옮겨졌다.
             if !outline.contains([x - 1, y]) {
-                #expect(alpha(cellX: x, cellY: y, dx: 0, dy: 0) < 0.01, "face \(face) moved right")
+                #expect(alpha(cellX: x, cellY: y, dx: 0, dy: 1) < 0.01, "face \(face) moved right")
             }
-            // 오른쪽 이웃이 빈 칸이면 dx 3은 비어 있다 = 굵히지 않았다(2픽셀 그대로).
+            // 위 이웃이 빈 칸이면 dy 0은 비어 있다 = 아래로 옮겨졌다.
+            if !outline.contains([x, y - 1]) {
+                #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 0) < 0.01, "face \(face) moved down")
+            }
+            // 오른쪽·아래 이웃이 빈 칸이면 dx 3·dy 3은 비어 있다 = 굵히지 않았다(2픽셀 그대로).
             if !outline.contains([x + 1, y]) {
-                #expect(alpha(cellX: x, cellY: y, dx: 3, dy: 0) < 0.01, "face \(face) stays thin")
+                #expect(alpha(cellX: x, cellY: y, dx: 3, dy: 1) < 0.01, "face \(face) stays thin")
             }
-            // 아래로는 늘리지 않는다.
             if !outline.contains([x, y + 1]) {
-                #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 2) < 0.01, "face \(face) not taller")
+                #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 3) < 0.01, "face \(face) not taller")
             }
         }
         // 윤곽 칸 하나(머리 꼭대기 (5, 0))는 오른쪽 아래 1픽셀이 더 칠해져 있다.
