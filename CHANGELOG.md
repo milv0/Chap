@@ -2,6 +2,33 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.8.1] — 2026-10-12
+
+### Changed
+
+- **Quick Note opens under the notch** — Clicking the note icon in the black strip
+  now folds the dock and opens the floating note window attached just below the
+  notch, instead of turning the widget row into a note. Drag it anywhere after
+  that; Chap remembers its size and starts under the notch each time.
+- **Focus dial on the website** — The homepage notch demo now uses the same dial
+  as the app.
+
+### Added
+
+- **Quick Note backups** — Before saving over your note, Chap keeps the previous
+  version in `~/Library/Application Support/Chap/QuickNote Backups/` (at most
+  every 10 minutes, and right away when a long note loses more than half its
+  text, such as after Select All → Delete). The newest ten are kept. Show Backups
+  in the note window opens the folder.
+
+### Fixed
+
+- **A note Chap can't read is never overwritten** — If the note file can't be
+  read, Chap moves it to `QuickNote Backups/QuickNote.unreadable-<time>.txt`
+  instead of showing an empty note you could type over; if it can't move it, the
+  note stays read-only. A failed save now shows "Couldn't save" instead of
+  "Editing".
+
 ## [2.8.0] — 2026-10-08
 
 ### Changed

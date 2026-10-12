@@ -205,8 +205,7 @@ public enum ChapMascot {
         }
     }
 
-    /// 남은 시간으로 물범 상태를 정한다. 경계는 `KeepAwakePolicy.focusActiveLine`의
-    /// Final stretch(30분)와 같다.
+    /// 남은 시간으로 물범 상태를 정한다. 마지막 30분은 졸린다.
     public static func focusMood(remaining: TimeInterval?) -> FocusMood {
         guard let remaining, remaining > 0 else { return .asleep }
         return remaining < 30 * 60 ? .drowsy : .awake

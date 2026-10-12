@@ -323,7 +323,7 @@ final class NotchLauncherController {
 
     /// 노치 rect. 노치 좌우의 auxiliary area 사이 간격이 노치 폭이다.
     /// auxiliary API가 값을 주지 않으면 중앙 200pt로 폴백한다.
-    private static func notchRect(on screen: NSScreen) -> NSRect {
+    static func notchRect(on screen: NSScreen) -> NSRect {
         let inset = screen.safeAreaInsets.top
         let top = screen.frame.maxY - inset
         if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
@@ -333,7 +333,7 @@ final class NotchLauncherController {
         return NSRect(x: screen.frame.midX - 100, y: top, width: 200, height: inset)
     }
 
-    private static func notchScreen() -> NSScreen? {
+    static func notchScreen() -> NSScreen? {
         NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
     }
 

@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap입니다. 이 아기 물범이 바로 Chap이에요. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Chap on을 누르면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap입니다. 이 아기 물범이 바로 Chap이에요. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. To-do를 체크하면 꼬리를 한 번 까딱합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -181,11 +181,15 @@ struct QAView: View {
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
-                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 체크되고(자리는 그대로), 문구를 더블클릭하면 고칩니다. 줄에 마우스를 올리면 오른쪽 끝에 나오는 ×를 눌러(또는 우클릭) 지우고, 제목 우클릭 → Clear Completed로 완료 항목을 한 번에 지웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
+                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 체크되고(자리는 그대로), 문구를 더블클릭하면 고칩니다. 줄에 마우스를 올리면 오른쪽 끝에 나오는 ×를 눌러(또는 우클릭) 지우고, 끝낸 항목이 있으면 제목 옆에 나오는 Clear(또는 제목 우클릭 → Clear Completed)로 한 번에 지웁니다. 일부만 비웠다면 잠깐 Undo로 되돌릴 수 있습니다. 모두 끝내면 \"All done.\"이 나오고 Back으로 목록을 다시 보거나 Clear로 비웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
-                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다."
+                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고, 그다음엔 원하는 곳으로 옮길 수 있습니다."
+                ),
+                (
+                    "Quick Note를 실수로 지웠어요.",
+                    "Chap은 메모를 덮어쓰기 전에 이전 내용을 백업합니다(최대 10분에 한 번, 긴 메모가 절반 넘게 줄면 바로). 메모 창 도구 줄의 시계 아이콘(Show Backups)을 누르면 백업 폴더가 열리고, 최근 10개가 시각 이름으로 남아 있습니다. 메모 파일을 읽을 수 없게 되면 Chap은 그 파일을 빈 메모로 덮어쓰지 않고 같은 폴더에 따로 옮겨 둡니다."
                 ),
                 (
                     "노치의 숫자·글자 키캡은 무엇인가요?",
@@ -193,7 +197,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭의 Widgets 보드에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -223,6 +227,10 @@ struct QAView: View {
                 (
                     "세션을 끄고 싶으면?",
                     "메뉴에서 Keep Mac Awake를 다시 열면 남은 시간과 함께 Turn Off 항목이 보입니다. 클릭하면 즉시 해제됩니다."
+                ),
+                (
+                    "노치의 Focus 다이얼은 어떻게 쓰나요?",
+                    "Settings → Notch에서 Focus를 3~6번 칸에 놓으세요. 다이얼의 호를 끌어 1~12시간을 고르고(마지막 값을 기억합니다) 가운데 원을 누르면 켜집니다. 켜진 동안 호가 남은 시간만큼 줄어들고, 가운데를 다시 누르면 끕니다. 메뉴의 Keep Mac Awake와 같은 세션입니다."
                 ),
                 (
                     "Chap을 종료하거나 재시작하면 세션은?",
@@ -410,7 +418,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap. The baby seal is Chap itself. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when you press Chap on it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. It is just decoration, so clicking it does nothing."
+                    "That's Chap. The baby seal is Chap itself. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when Focus starts it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. When you check off a to-do it flicks its tail once. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
@@ -418,11 +426,15 @@ struct QAView: View {
                 ),
                 (
                     "How does the To-do slot work?",
-                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off (it stays in place); double-click a title to edit it. Hover a row and click × at its right end (or right-click) to delete, or right-click the title and choose Clear Completed. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
+                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off (it stays in place); double-click a title to edit it. Hover a row and click × at its right end (or right-click) to delete. When something is done, a small Clear appears by the title (or right-click the title and choose Clear Completed); if only some items were cleared, Undo brings them back for a few seconds. When everything is done the slot says \"All done.\" with Back to see the list again and Clear to empty it. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
                 ),
                 (
                     "When does Quick Note save?",
-                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today)."
+                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon opens the note window attached just below the notch; drag it anywhere after that."
+                ),
+                (
+                    "I deleted my Quick Note by accident.",
+                    "Before overwriting the note, Chap keeps the previous version (at most every 10 minutes, and right away when a long note loses more than half its text). Click the clock icon (Show Backups) in the note window's toolbar to open the backup folder; the newest ten are kept, named by time. If the note file ever can't be read, Chap moves it to the same folder instead of overwriting it with an empty note."
                 ),
                 (
                     "What do the number and letter keycaps in the notch mean?",
@@ -430,7 +442,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "The Widgets board has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, or To-do. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, or To-do. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
@@ -460,6 +472,10 @@ struct QAView: View {
                 (
                     "How do I turn a session off early?",
                     "Open Keep Mac Awake again; it shows the remaining time along with a Turn Off item. Clicking it releases the session immediately."
+                ),
+                (
+                    "How does the notch Focus dial work?",
+                    "Place Focus in slot 3–6 in Settings → Notch. Drag the arc to pick 1 to 12 hours (Chap remembers your last setting) and click the center to start. While it runs, the arc winds down with the time left; click the center again to stop. It is the same session as Keep Mac Awake in the menu."
                 ),
                 (
                     "What happens to a session if I quit or restart Chap?",

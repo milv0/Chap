@@ -521,18 +521,27 @@ Settings → Notch Launcher on
 
 노치 hover
   → showPanel(forDrop:false)
-  → LauncherListPolicy 기반 위젯 6칸(빈 칸 제외 한 줄) + 조건부 Drop 파일 행
+  → LauncherListPolicy 기반 위젯 6칸(빈 칸·접힌 선반 제외 한 줄) + 조건부 Drop 파일 행
+     1·2번 칸은 Screenshots·Downloads 선반 고정, 접힌 선반은 검정 띠 왼쪽 아이콘(notchCollapsedWidgets)
   → 런처 칸 제목 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
     → Launchables 탭 + 그 타입 첫 항목 선택
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
-  → Quick Note 아이콘: reveal.isNoteMode 토글 → 위젯 줄 자리에 넓은 편집기, 도커가 잰 크기(NotchContentSizeKey)로 resizePanel(toContentSize:).
-    분리 버튼: flush → QuickNoteWindow.show() → requestClose로 도커 닫기. 분리 창이 열려 있으면 아이콘은 창을 앞으로.
-    종료 시 flushRequest + drainPendingSaves로 마지막 입력을 파일에 쓴다
+  → Quick Note 아이콘: requestClose로 도커 닫기 → QuickNoteWindow.show()
+    새 창이면 autosave 크기 복원 → QuickNotePlacement.origin으로 노치 바로 아래 가운데 배치. 열려 있으면 앞으로만.
+    메모 로드: saveQueue에서 QuickNoteStore.loadResult — text / preserved(원본을 Backups로 옮김, 빈 메모로 시작) /
+    locked(편집 금지, 원본 보존). 저장: saveQueue에서 이전 내용 백업(QuickNoteBackupPolicy) → atomic write.
+    창 닫기 시 flushRequest, 종료 시 flushRequest + drainPendingSaves로 마지막 입력을 파일에 쓴다
   → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
     MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
-  → Quick Note 칸: 패널이 key가 되어 입력. 커서가 메모에 있으면 visibility 판정이 닫지 않음.
-    Esc(keyDown 로컬 모니터) 또는 key 상실 후 일반 규칙. 닫히기 직전 willHidePanel → 메모 flush·카메라 stop
+  → Focus 칸(다이얼): 호를 끌어 1~12시간 → UserDefaults ChapFocusPresetDuration에 기억.
+    안쪽 원 클릭 → NotchFocusView.activateRequest(duration) → AppDelegate가
+    KeepAwakePolicy.focusPreset(forRequestedDuration:)으로 검증(프리셋 또는 1~12 정수 시간만) → keepAwake.activate.
+    켜진 동안 다시 클릭 → deactivateRequest → keepAwake.deactivate (메뉴 Keep Mac Awake와 같은 세션)
+  → To-do 칸: 변경마다 TodoStore 순수 함수로 새 배열 → @State 갱신 → utility 직렬 큐에서 Todos.json atomic write.
+    체크 시 NotchTodoView.didCompleteNotification → 띠의 물범이 꼬리를 한 번 까딱
+  → To-do 입력: 패널이 key가 되어 입력. 커서가 텍스트에 있으면 visibility 판정이 닫지 않음.
+    Esc(keyDown 로컬 모니터) 또는 key 상실 후 일반 규칙. 닫히기 직전 willHidePanel → 카메라 stop
   → 80ms common-mode mouse polling
   → 노치·패널·배지 영역 밖 200ms → 180ms 접힘 후 orderOut
 
@@ -540,13 +549,16 @@ Settings → Notch Launcher on
   → showPanel(forDrop:true)       빈 위젯이어도 패널 생성
   → revealModel.isDropTargetActive = true
   → 메인 도커 위 반투명 "Drop here" overlay
-  → ChapDrop.storeAsync           utility serial queue에서 collision-safe copy
+  → ChapDrop.storeAsync           utility serial queue에서 원본 북마크 참조 저장
+                                   (임시 위치 항목만 Drop 폴더에 collision-safe copy)
   → main에서 didChangeNotification → Drop 행·count 배지 비동기 갱신
 ```
 
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
 - URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 2열 아이콘, 필요한 줄만).
-- Screenshots 위젯은 시스템 스크린샷 위치를 2초마다 background scan하며 원본을 이동하지 않는다.
+- Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
+  원본을 이동하지 않는다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
+- To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.
 - Chap Drop은 원본을 북마크로 참조한다(`DropStore`, 목록은 `~/Library/Application Support/Chap/Drop/.references.json`).
   원본을 옮기면 따라가고, 지우면 다음 읽기 때 목록에서 빠진다. 임시 위치(`/var/folders`, `/tmp`)에서 온 항목과 2.7 이전
   복사본만 Drop 폴더에 Chap 사본으로 둔다. **보관함에서 빼기는 참조만 지우고 원본 파일은 절대 삭제하지 않는다**(Chap 사본만 삭제).
@@ -570,8 +582,11 @@ Settings → Notch Launcher on
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 | Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
-| Chap Drop copy/delete/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |
+| Chap Drop 참조 저장/빼기/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |
 | Screenshot folder scan | concurrent utility queue | 패널 표시 중 2초 주기, 중복 scan 방지 |
+| Downloads folder scan (`DownloadsShelf`) | serial utility queue | 칸 표시 중 2초 주기, 결과만 main으로 복귀 |
+| To-do 저장 (`NotchTodoView.saveQueue`) | serial utility queue | 칸이 처음 보일 때 같은 큐에서 1회 읽고, 변경마다 atomic write |
+| Focus 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
 | Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
 
 `AppDelegate › quitApp()`은 항상 Cancel을 기본 버튼으로 한 종료 확인창을 띄우고, 사용자가 Quit을
