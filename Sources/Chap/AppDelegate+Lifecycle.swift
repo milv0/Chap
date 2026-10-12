@@ -44,6 +44,13 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
+            // 노치 띠의 Lights Out 아이콘: 메뉴바 항목과 같은 경로로 가림막을 친다.
+            NotificationCenter.default.addObserver(
+                forName: NotchLightsOutStripButton.request, object: nil, queue: .main
+            ) { [weak self] _ in
+                guard let self, !self.lightsOutController.isOn else { return }
+                self.toggleLightsOut()
+            },
             // Lights Out이 켜지거나 걷히면 메뉴 문구를 바꾼다 (스스로 걷히는 비상 해제 포함).
             NotificationCenter.default.addObserver(
                 forName: LightsOutController.didChangeNotification, object: nil, queue: .main
@@ -168,6 +175,7 @@ extension AppDelegate {
             notchPanelColorHex: config.notchPanelColorHex,
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+            notchLightsOutEnabled: config.notchLightsOutEnabled,
             notchQuickNoteShortcut: config.notchQuickNoteShortcut,
             lightsOutUnlockKey: config.lightsOutUnlockKey,
             notchWidgets: config.notchWidgets)
@@ -188,6 +196,7 @@ extension AppDelegate {
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
+                notchLightsOutEnabled: payload.notchLightsOutEnabled,
                 notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
                 lightsOutUnlockKey: payload.lightsOutUnlockKey,
                 notchWidgets: payload.notchWidgets,
@@ -225,6 +234,7 @@ extension AppDelegate {
             let previousNotchWidgets = self.config.notchWidgets
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
+            let previousNotchLightsOutEnabled = self.config.notchLightsOutEnabled
             let previousQuickNoteKey = self.registeredQuickNoteKey
             do {
                 try self.configStore.save(newConfig)
@@ -266,6 +276,7 @@ extension AppDelegate {
                 || previousNotchWidgets != newConfig.notchWidgets
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
                 || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
+                || previousNotchLightsOutEnabled != newConfig.notchLightsOutEnabled
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }

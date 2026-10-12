@@ -257,6 +257,19 @@ struct NotchSettingsView: View {
                             quickNoteShortcutRow
                                 .disabled(!vm.notchQuickNoteEnabled)
                                 .onChange(of: vm.notchQuickNoteShortcut) { _, _ in onSave() }
+
+                            Toggle(isOn: $vm.notchLightsOutEnabled) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Lights Out")
+                                    Text(
+                                        "Covers your screens while you're on break. "
+                                            + "Press \(LightsOutPolicy.label(for: vm.lightsOutUnlockKey)) to come back."
+                                    )
+                                    .font(.caption)
+                                    .foregroundColor(DS.textSecondary)
+                                }
+                            }
+                            .onChange(of: vm.notchLightsOutEnabled) { _, _ in onSave() }
                         }
 
                         Section("Appearance") {

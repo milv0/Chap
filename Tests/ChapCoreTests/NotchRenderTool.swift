@@ -120,7 +120,8 @@ struct NotchRenderTool {
                 glassMaterial: config.notchGlassMaterial,
                 slots: name.hasSuffix("-todo") ? todoSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
-                showsNote: config.notchQuickNoteEnabled, onLaunch: { _ in },
+                showsNote: config.notchQuickNoteEnabled,
+                showsLightsOut: config.notchLightsOutEnabled, onLaunch: { _ in },
                 showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
             let view =
@@ -156,6 +157,7 @@ struct NotchRenderTool {
                 notchPanelColorHex: config.notchPanelColorHex,
                 notchMirrorEnabled: config.notchMirrorEnabled,
                 notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+                notchLightsOutEnabled: config.notchLightsOutEnabled,
                 notchQuickNoteShortcut: config.notchQuickNoteShortcut,
                 lightsOutUnlockKey: config.lightsOutUnlockKey,
                 notchWidgets: config.notchWidgets)

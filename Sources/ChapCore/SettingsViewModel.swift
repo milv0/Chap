@@ -15,6 +15,7 @@ public struct SettingsPayload {
     public let notchPanelColorHex: String
     public let notchMirrorEnabled: Bool
     public let notchQuickNoteEnabled: Bool
+    public let notchLightsOutEnabled: Bool
     public let notchQuickNoteShortcut: String?
     public let lightsOutUnlockKey: String
     public let notchWidgets: [NotchWidget]
@@ -35,6 +36,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchPanelColorHex: String
     @Published public var notchMirrorEnabled: Bool
     @Published public var notchQuickNoteEnabled: Bool
+    @Published public var notchLightsOutEnabled: Bool
     @Published public var notchQuickNoteShortcut: String?
     @Published public var lightsOutUnlockKey: String
     @Published public var notchWidgets: [NotchWidget]
@@ -53,6 +55,7 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchWidgets: [NotchWidget]
     @Published public var originalNotchMirrorEnabled: Bool
     @Published public var originalNotchQuickNoteEnabled: Bool
+    @Published public var originalNotchLightsOutEnabled: Bool
     @Published public var originalNotchQuickNoteShortcut: String?
     @Published public var originalLightsOutUnlockKey: String
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
@@ -74,6 +77,7 @@ public final class SettingsViewModel: ObservableObject {
             || notchWidgets != originalNotchWidgets
             || notchMirrorEnabled != originalNotchMirrorEnabled
             || notchQuickNoteEnabled != originalNotchQuickNoteEnabled
+            || notchLightsOutEnabled != originalNotchLightsOutEnabled
             || notchQuickNoteShortcut != originalNotchQuickNoteShortcut
             || lightsOutUnlockKey != originalLightsOutUnlockKey
     }
@@ -100,6 +104,7 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchWidgets = notchWidgets
         originalNotchMirrorEnabled = notchMirrorEnabled
         originalNotchQuickNoteEnabled = notchQuickNoteEnabled
+        originalNotchLightsOutEnabled = notchLightsOutEnabled
         originalNotchQuickNoteShortcut = notchQuickNoteShortcut
         originalLightsOutUnlockKey = lightsOutUnlockKey
     }
@@ -122,6 +127,7 @@ public final class SettingsViewModel: ObservableObject {
                 notchPanelColorHex: self.notchPanelColorHex,
                 notchMirrorEnabled: self.notchMirrorEnabled,
                 notchQuickNoteEnabled: self.notchQuickNoteEnabled,
+                notchLightsOutEnabled: self.notchLightsOutEnabled,
                 notchQuickNoteShortcut: self.notchQuickNoteShortcut,
                 lightsOutUnlockKey: self.lightsOutUnlockKey,
                 notchWidgets: self.notchWidgets,
@@ -157,6 +163,7 @@ public final class SettingsViewModel: ObservableObject {
                     notchPanelColorHex: notchPanelColorHex,
                     notchMirrorEnabled: notchMirrorEnabled,
                     notchQuickNoteEnabled: notchQuickNoteEnabled,
+                    notchLightsOutEnabled: notchLightsOutEnabled,
                     notchQuickNoteShortcut: notchQuickNoteShortcut,
                     lightsOutUnlockKey: lightsOutUnlockKey,
                     notchWidgets: notchWidgets)) ?? true
@@ -178,6 +185,7 @@ public final class SettingsViewModel: ObservableObject {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
+        notchLightsOutEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -197,6 +205,7 @@ public final class SettingsViewModel: ObservableObject {
         self.notchPanelColorHex = notchPanelColorHex
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
+        self.notchLightsOutEnabled = notchLightsOutEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
@@ -214,6 +223,7 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchPanelColorHex = notchPanelColorHex
         self.originalNotchMirrorEnabled = notchMirrorEnabled
         self.originalNotchQuickNoteEnabled = notchQuickNoteEnabled
+        self.originalNotchLightsOutEnabled = notchLightsOutEnabled
         self.originalNotchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(
             notchQuickNoteShortcut)
         self.originalLightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)

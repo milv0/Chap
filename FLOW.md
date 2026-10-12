@@ -579,8 +579,8 @@ Settings → Notch Launcher on
 ### 9.6 Lights Out (화면 가림막)
 
 ```
-메뉴바 Lights Out
-  └ LightsOutController.turnOn()
+메뉴바 Lights Out  또는  노치 띠 달 아이콘(NotchLightsOutStripButton.request → AppDelegate, 이미 켜져 있으면 무시)
+  └ toggleLightsOut(): requestClose로 도커 접기 → LightsOutController.turnOn()
       ├ IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep, "Chap Lights Out")
       │   → Keep Awake 어써션과 별개. 둘 중 하나가 풀려도 다른 쪽은 유지된다
       ├ NSScreen.screens마다 검정 창 1개 (.screenSaver, canJoinAllSpaces, 불투명)

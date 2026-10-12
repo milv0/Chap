@@ -88,6 +88,25 @@ struct LightsOutPolicyTests {
         #expect(LightsOutPolicy.menuTitleOn == "Lights On")
     }
 
+    @Test("the notch strip icon is on by default and its setting round-trips")
+    func stripIconSetting() throws {
+        let missing = try JSONDecoder().decode(Config.self, from: Data(#"{"sites": []}"#.utf8))
+        #expect(missing.notchLightsOutEnabled)
+
+        let off = Config(notchLightsOutEnabled: false, sites: [])
+        let decoded = try JSONDecoder().decode(Config.self, from: JSONEncoder().encode(off))
+        #expect(decoded.notchLightsOutEnabled == false)
+    }
+
+    @Test("with Mirror, Quick Note, and Lights Out, the last icon stays on the flat strip")
+    func threeStripToolsFit() {
+        let offsets = NotchLauncherPolicy.stripToolCenterOffsets(besideDropBadge: true, count: 3)
+        #expect(offsets.count == 3)
+        // 아이콘 글자(14pt)의 절반 이상 여유를 두고 평평한 띠(110pt) 안에 들어온다.
+        let last = offsets.last ?? .infinity
+        #expect(last + 12 <= NotchGeometry.stripPlateauSideWidth)
+    }
+
     @Test("an older config gets Esc, and the key round-trips")
     func configRoundTrip() throws {
         let missing = try JSONDecoder().decode(Config.self, from: Data(#"{"sites": []}"#.utf8))
