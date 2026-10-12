@@ -74,6 +74,12 @@ public enum LightsOutPolicy {
         "Press \(label(for: unlockKey)) to come back"
     }
 
+    /// 가림막 위 물범·시간·안내의 밝기(불투명도). 검정 위에서 또렷이 읽히되 눈부시지 않게 둔다.
+    /// 처음 값(0.22·0.26·0.3)은 너무 흐려 알아보기 어려웠다.
+    public static let sealOpacity: Double = 0.6
+    public static let clockOpacity: Double = 0.65
+    public static let hintOpacity: Double = 0.55
+
     /// 안내가 보이는 시간(초). 이후에는 검정과 자는 물범, 시간만 남는다.
     public static let hintDuration: TimeInterval = 4
 
