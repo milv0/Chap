@@ -329,6 +329,8 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 - 열 때마다 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다(`QuickNotePlacement.origin`, 보이는 영역 밖이면 안으로
   당김). 그다음엔 자유롭게 옮긴다. 크기는 `ChapQuickNoteWindow` frame autosave로 기억하고 자리는 기억하지 않는다.
   노치 화면이 없으면 커서 화면 가운데.
+- ⌥N(Settings → Notch → Top Strip → Shortcut에서 바꾸거나 비워서 끔)도 같은 동작이다. 노치 런처와 Quick Note 아이콘이
+  켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
 

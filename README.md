@@ -80,6 +80,7 @@ causes the next launch to create and link a new window.
 | `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
+| `⌥N` | Open Quick Note (change or turn off in Settings → Notch; a site using the same key wins) |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |
@@ -111,6 +112,7 @@ Stored at `~/.chap.json`:
   "notchWidgets": ["screenshots", "none", "sites", "apps", "folders", "none"],
   "notchMirrorEnabled": true,
   "notchQuickNoteEnabled": true,
+  "notchQuickNoteShortcut": "N",
   "notchCollapsedWidgets": [],
   "sites": [
     {
@@ -156,7 +158,7 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Quick Note** is a note icon right of Mirror in the black strip. Click it and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
+**Quick Note** is a note icon right of Mirror in the black strip. Click it, or press **⌥N** anywhere, and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. Change or clear the shortcut under **Settings → Notch → Top Strip**; it works while the notch launcher and the Quick Note icon are on, and if a site already uses the key, the site keeps it. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
 
 Before overwriting the note, Chap keeps the previous version in `~/Library/Application Support/Chap/QuickNote Backups/` at most every 10 minutes, and right away when a long note loses more than half its text (for example after Select All → Delete). The newest ten backups are kept. If the note file ever can't be read, Chap moves it to the same folder as `QuickNote.unreadable-<time>.txt` instead of treating it as empty; if it can't even move it, the note stays read-only so the file is never overwritten.
 

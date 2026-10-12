@@ -156,6 +156,7 @@ struct NotchRenderTool {
                 notchPanelColorHex: config.notchPanelColorHex,
                 notchMirrorEnabled: config.notchMirrorEnabled,
                 notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+                notchQuickNoteShortcut: config.notchQuickNoteShortcut,
                 notchWidgets: config.notchWidgets)
             let view = NotchSettingsView(vm: vm, onSave: {})
                 .frame(width: 600, height: 720)

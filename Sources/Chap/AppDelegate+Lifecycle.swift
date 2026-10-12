@@ -162,6 +162,7 @@ extension AppDelegate {
             notchPanelColorHex: config.notchPanelColorHex,
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+            notchQuickNoteShortcut: config.notchQuickNoteShortcut,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -180,6 +181,7 @@ extension AppDelegate {
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
+                notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -215,6 +217,7 @@ extension AppDelegate {
             let previousNotchWidgets = self.config.notchWidgets
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
+            let previousQuickNoteKey = self.registeredQuickNoteKey
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -239,6 +242,8 @@ extension AppDelegate {
                     keepAwakeActive: self.keepAwake.isActive)
             }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
+            // 메뉴를 다시 만들면 단축키도 다시 등록하지만, 그렇지 않을 때도 Quick Note 키가 바뀌면 다시 등록한다.
+            let quickNoteKeyChanged = previousQuickNoteKey != self.registeredQuickNoteKey
             if previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
@@ -256,6 +261,12 @@ extension AppDelegate {
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }
+            }
+            if quickNoteKeyChanged, previousMenu == newMenu,
+                previousOptionShortcutsEnabled == newConfig.optionShortcutsEnabled,
+                previousHiddenMenuLaunchTypes == newConfig.hiddenMenuLaunchTypes
+            {
+                DispatchQueue.main.async { self.configureGlobalHotKeys() }
             }
             return true
         }

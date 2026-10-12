@@ -93,6 +93,7 @@ Sources/
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
 │   ├── TodoStore.swift        ← 노치 할 일 목록 저장소·규칙 (Application Support/Chap/Todos.json, 최대 4개)
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)·백업 정책·읽기 실패 보존
+│   ├── QuickNoteShortcutPolicy.swift ← Quick Note ⌥ 키 정규화·사이트/예약키 충돌·등록 조건 (순수 로직)
 │   ├── QuickNotePlacement.swift ← Quick Note 창 첫 자리: 노치 아랫변에 붙여 가운데 정렬 (순수 로직)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책
@@ -138,6 +139,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── NotchLauncherPolicyTests.swift
     ├── NotchToolWidgetTests.swift
     ├── TodoStoreTests.swift
+    ├── QuickNoteShortcutTests.swift
     ├── ChapMascotTests.swift
     ├── ShelfFolderLaunchTests.swift
     ├── NotchShoulderPolicyTests.swift
@@ -233,6 +235,7 @@ Config 모델 필드:
   - notchPanelOpacity/notchPanelColorHex: 비-Glass 콘텐츠 박스 배경 설정
   - notchMirrorEnabled: Bool     상단 띠 Mirror 아이콘 표시 여부. 누락 시 true
   - notchQuickNoteEnabled: Bool  상단 띠 Quick Note 아이콘 표시 여부. 누락 시 true
+  - notchQuickNoteShortcut: String?  Quick Note ⌥ 키(한 글자 대문자). 누락 시 "N", ""는 끔
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (sites | apps | folders | screenshots |
                                  downloads | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
                                  선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, sites, apps,
@@ -369,6 +372,8 @@ Config 모델 필드:
   ⌥.         메뉴 열기
   ⌥(커스텀키)  사이트 실행 (사이트별 설정, optional)
   ⌥,         설정 열기
+  ⌥N         Quick Note 창 열기 (Settings → Notch에서 키 변경·끄기. 노치 런처·Quick Note 아이콘이 켜져 있고
+             사이트 단축키와 겹치지 않을 때만 등록, 겹치면 사이트가 우선)
 
 설정 창 내:
   ⌘1~9   사이트 선택
