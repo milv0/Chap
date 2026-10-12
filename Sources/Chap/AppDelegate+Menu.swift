@@ -103,7 +103,8 @@ extension AppDelegate {
     ///
     /// 선 굵기: 한 칸은 Retina에서 2픽셀이라 선이 가늘다. 크기는 그대로 두고, 윤곽 칸마다 오른쪽·아래로
     /// 장치 픽셀 1개만큼 더 칠해 선을 3픽셀로 굵힌다. 늘리는 양이 정확히 1픽셀이라 경계가 픽셀에 맞아
-    /// 흐려지지 않는다. 눈·입(`ChapMascot.menuBarFace`)은 2픽셀 그대로 둬 얼굴이 뭉치지 않게 한다.
+    /// 흐려지지 않는다. 눈·입(`ChapMascot.menuBarFace`)은 2픽셀 그대로 둬 얼굴이 뭉치지 않게 하고,
+    /// 대신 오른쪽으로 장치 픽셀 1개만큼 옮긴다. 윤곽이 오른쪽으로 굵어진 만큼 얼굴이 왼쪽에 붙어 보이기 때문이다.
     /// 1배 화면에서는 반 칸을 칠하면 흐려지므로 늘리지 않는다.
     static func sealStatusBarImage() -> NSImage {
         let canvas = NSSize(width: 26, height: 22)
@@ -114,9 +115,12 @@ extension AppDelegate {
             let extra: CGFloat = scale >= 2 ? 1 / scale : 0
             NSColor.black.setFill()
             for cell in ChapMascot.menuBarOutline {
-                let grow = ChapMascot.menuBarFace.contains([cell.x, cell.y]) ? 0 : extra
+                let isFace = ChapMascot.menuBarFace.contains([cell.x, cell.y])
+                let grow = isFace ? 0 : extra
+                // 얼굴은 굵히지 않고 굵어진 윤곽 쪽(오른쪽)으로 같은 1픽셀만큼 옮긴다.
+                let shiftX = isFace ? extra : 0
                 NSRect(
-                    x: originX + CGFloat(cell.x), y: originY + CGFloat(cell.y),
+                    x: originX + CGFloat(cell.x) + shiftX, y: originY + CGFloat(cell.y),
                     width: 1 + grow, height: 1 + grow
                 ).fill()
             }

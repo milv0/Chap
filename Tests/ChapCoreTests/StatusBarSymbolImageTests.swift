@@ -184,20 +184,32 @@ struct IsolatedCopyImageTests {
         return rep
     }
 
-    @Test("on Retina the eyes and mouth stay two pixels while the outline thickens")
+    @Test(
+        "on Retina the eyes and mouth stay two pixels, one pixel to the right, while the outline thickens"
+    )
     func faceStaysThin() throws {
         let rep = try sealBitmap(scale: 2)
         // 26×22 캔버스에서 격자의 원점은 (1, 5)pt. Retina에서 칸 (x, y)는 픽셀 (2(x+1), 2(y+5))부터 2×2.
         func alpha(cellX: Int, cellY: Int, dx: Int, dy: Int) -> CGFloat {
             rep.colorAt(x: 2 * (cellX + 1) + dx, y: 2 * (cellY + 5) + dy)?.alphaComponent ?? 0
         }
+        let outline = Set(ChapMascot.menuBarOutline.map { [$0.x, $0.y] })
         for face in ChapMascot.menuBarFace {
             let (x, y) = (face[0], face[1])
-            #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 1) > 0.99, "face \(face) is drawn")
-            // 오른쪽 이웃이 몸통(빈 칸)인 얼굴 칸은 그 자리가 비어 있어야 한다 = 늘리지 않았다.
-            let rightIsEmpty = !ChapMascot.menuBarOutline.contains { $0.x == x + 1 && $0.y == y }
-            if rightIsEmpty {
-                #expect(alpha(cellX: x, cellY: y, dx: 2, dy: 0) < 0.01, "face \(face) stays thin")
+            // 얼굴 칸은 오른쪽으로 1픽셀 옮겨 dx 1~2에 칠해진다.
+            #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 0) > 0.99, "face \(face) is drawn")
+            #expect(alpha(cellX: x, cellY: y, dx: 2, dy: 1) > 0.99, "face \(face) is drawn")
+            // 왼쪽 이웃이 빈 칸이면 원래 자리 첫 픽셀(dx 0)은 비어 있다 = 옮겨졌다.
+            if !outline.contains([x - 1, y]) {
+                #expect(alpha(cellX: x, cellY: y, dx: 0, dy: 0) < 0.01, "face \(face) moved right")
+            }
+            // 오른쪽 이웃이 빈 칸이면 dx 3은 비어 있다 = 굵히지 않았다(2픽셀 그대로).
+            if !outline.contains([x + 1, y]) {
+                #expect(alpha(cellX: x, cellY: y, dx: 3, dy: 0) < 0.01, "face \(face) stays thin")
+            }
+            // 아래로는 늘리지 않는다.
+            if !outline.contains([x, y + 1]) {
+                #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 2) < 0.01, "face \(face) not taller")
             }
         }
         // 윤곽 칸 하나(머리 꼭대기 (5, 0))는 오른쪽 아래 1픽셀이 더 칠해져 있다.
