@@ -21,15 +21,23 @@ public enum QuickNoteShortcutPolicy {
         case reserved
         /// 이 이름의 사이트가 이미 쓰고 있다.
         case site(name: String)
+        /// 다른 Chap 기능(예: Quick Note)이 이미 쓰고 있다.
+        case feature(name: String)
     }
 
-    public static func conflict(for key: String?, sites: [Site]) -> Conflict? {
+    /// - Parameter taken: 먼저 키를 가져간 다른 기능 (키, 기능 이름). 사이트 다음으로 우선한다.
+    public static func conflict(
+        for key: String?, sites: [Site], taken: [(key: String, name: String)] = []
+    ) -> Conflict? {
         guard let key = normalized(key) else { return nil }
         if reservedShortcutKeys.contains(key) { return .reserved }
         if let site = sanitizedShortcuts(for: sites).first(where: {
             $0.shortcut?.uppercased() == key
         }) {
             return .site(name: site.name)
+        }
+        if let feature = taken.first(where: { normalized($0.key) == key }) {
+            return .feature(name: feature.name)
         }
         return nil
     }
@@ -50,6 +58,7 @@ public enum QuickNoteShortcutPolicy {
         switch conflict {
         case .reserved: return "⌥\(key) is reserved by Chap."
         case .site(let name): return "⌥\(key) already opens \(name). Pick another key."
+        case .feature(let name): return "⌥\(key) already opens \(name). Pick another key."
         }
     }
 }

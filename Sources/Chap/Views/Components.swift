@@ -565,3 +565,66 @@ struct MinimapSwiftUI: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 }
+
+/// ⌥ 단축키 한 줄: 제목 · (겹칠 때만 빨간 짧은 안내) · ⌥ · 한 글자 칸.
+/// 설명은 줄 아래에 쌓지 않고 툴팁으로 둔다. 칸을 비우면 끈다(prompt "Off").
+struct OptionShortcutRow: View {
+    let title: String
+    @Binding var key: String?
+    /// 사이트·다른 기능과 겹칠 때의 안내. nil이면 겹치지 않는다.
+    var conflictMessage: String?
+    /// 마우스를 올렸을 때 보이는 설명.
+    var help: String
+    var accessibilityLabel: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(title)
+            Spacer(minLength: 8)
+            if let conflictMessage {
+                Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
+                    .labelStyle(.titleAndIcon)
+                    .font(.caption)
+                    .foregroundColor(DS.danger)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help(conflictMessage)
+            }
+            Text("⌥")
+                .foregroundColor(DS.textSecondary)
+            TextField(
+                "",
+                text: Binding(
+                    get: { key ?? "" },
+                    set: { newValue in
+                        // 마지막에 친 글자로 바꾼다(칸에 한 글자만 남는다). 비우면 끈다.
+                        key = QuickNoteShortcutPolicy.normalized(newValue.last.map(String.init))
+                    }),
+                prompt: Text("Off")
+            )
+            .keyCapField(width: 40)
+            .accessibilityLabel(accessibilityLabel)
+        }
+        .help(help)
+    }
+}
+
+extension View {
+    /// 한 글자 키 입력 칸. `.roundedBorder`는 Form 줄 안에서 아래로 밀려 줄을 두 배로 키우므로,
+    /// 평범한 칸에 상자를 직접 그린다 (높이가 글자 줄과 같아 한 줄에 맞는다).
+    func keyCapField(width: CGFloat) -> some View {
+        textFieldStyle(.plain)
+            .multilineTextAlignment(.center)
+            .padding(.vertical, 2)
+            .padding(.horizontal, 6)
+            .frame(width: width)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+            )
+    }
+}

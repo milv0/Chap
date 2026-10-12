@@ -43,6 +43,30 @@ public enum LightsOutPolicy {
         return characters?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == key
     }
 
+    // MARK: - 켜는 단축키
+
+    /// 가림막을 치는 ⌥ 키. 기본 ⌥L(Lights). 사이트 단축키와 Quick Note 키가 먼저다.
+    public static let defaultShortcut = "L"
+
+    /// 실제로 등록할 키. 키가 있고, 예약키·사이트·Quick Note와 겹치지 않을 때만.
+    /// 노치와 무관하다(메뉴바 기능이라 노치가 없거나 꺼져 있어도 쓴다).
+    public static func registeredShortcut(
+        _ shortcut: String?, sites: [Site], quickNoteKey: String?
+    ) -> String? {
+        guard let key = QuickNoteShortcutPolicy.normalized(shortcut),
+            conflict(for: key, sites: sites, quickNoteKey: quickNoteKey) == nil
+        else { return nil }
+        return key
+    }
+
+    public static func conflict(for key: String?, sites: [Site], quickNoteKey: String?)
+        -> QuickNoteShortcutPolicy.Conflict?
+    {
+        QuickNoteShortcutPolicy.conflict(
+            for: key, sites: sites,
+            taken: quickNoteKey.map { [(key: $0, name: "Quick Note")] } ?? [])
+    }
+
     // MARK: - 해제 키를 잊었을 때
 
     /// 아무 키나 이 횟수만큼 빠르게 누르면 걷힌다. 외울 것이 없고, 지나가다 눌리지도 않는다.
@@ -77,6 +101,10 @@ public enum LightsOutPolicy {
     /// 가림막 위 물범·시간·안내의 밝기(불투명도). 검정 위에서 또렷이 읽히되 눈부시지 않게 둔다.
     /// 처음 값(0.22·0.26·0.3)은 너무 흐려 알아보기 어려웠다.
     public static let sealOpacity: Double = 0.6
+    /// 자는 물범이 숨 쉬듯 밝아졌다 어두워지는 범위와 한 번의 들숨(초). 픽셀 그림이 흐려지지 않도록
+    /// 크기나 위치 대신 밝기만 바꾼다. 동작 줄이기가 켜져 있으면 `sealOpacity`에 머문다.
+    public static let sealBreathOpacity: ClosedRange<Double> = 0.5...0.72
+    public static let sealBreathDuration: Double = 2.2
     public static let clockOpacity: Double = 0.65
     public static let hintOpacity: Double = 0.55
 

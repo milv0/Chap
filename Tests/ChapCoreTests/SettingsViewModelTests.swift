@@ -155,6 +155,7 @@ struct SettingsViewModelTests {
                 notchLightsOutEnabled: vm.notchLightsOutEnabled,
                 notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
                 lightsOutUnlockKey: vm.lightsOutUnlockKey,
+                lightsOutShortcut: vm.lightsOutShortcut,
                 notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)

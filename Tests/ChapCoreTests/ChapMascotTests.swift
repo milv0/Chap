@@ -178,4 +178,10 @@ struct ChapMascotMenuBarTests {
         #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<24).contains($0.x) })
         #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<12).contains($0.y) })
     }
+
+    @Test("a dreaming seal flicks once, and less often than an awake one")
+    func dreamFlick() {
+        #expect(ChapMascot.dreamFlickSequence == [.tailUp, .rest])
+        #expect(ChapMascot.dreamFlickInterval.lowerBound > ChapMascot.idleFlickInterval.lowerBound)
+    }
 }

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 import Testing
 
 @testable import Chap
@@ -80,6 +81,63 @@ struct LightsOutPolicyTests {
     func hintNamesKey() {
         #expect(LightsOutPolicy.hint(unlockKey: "esc") == "Press Esc to come back")
         #expect(LightsOutPolicy.hint(unlockKey: "k") == "Press K to come back")
+    }
+
+    @Test("the seal breathes around its resting brightness, never fading out")
+    func breathRange() {
+        let range = LightsOutPolicy.sealBreathOpacity
+        #expect(range.contains(LightsOutPolicy.sealOpacity))
+        #expect(range.lowerBound >= 0.4)
+        #expect(range.upperBound <= 0.8)
+        #expect(LightsOutPolicy.sealBreathDuration >= 1.5)
+    }
+
+    @Test("⌥L is the default shortcut; older configs get it, and clearing it turns it off")
+    func shortcutConfig() throws {
+        let missing = try JSONDecoder().decode(Config.self, from: Data(#"{"sites": []}"#.utf8))
+        #expect(missing.lightsOutShortcut == "L")
+
+        let off = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"lightsOutShortcut": "", "sites": []}"#.utf8))
+        #expect(off.lightsOutShortcut == nil)
+
+        for value in ["K", nil] as [String?] {
+            let config = Config(lightsOutShortcut: value, sites: [])
+            let decoded = try JSONDecoder().decode(
+                Config.self, from: JSONEncoder().encode(config))
+            #expect(decoded.lightsOutShortcut == value)
+        }
+    }
+
+    @Test("sites and Quick Note keep their keys; Lights Out steps aside")
+    func shortcutConflicts() {
+        let site = Site(
+            name: "Linear", url: "https://linear.app", width: 800, height: 600, shortcut: "L")
+        #expect(
+            LightsOutPolicy.registeredShortcut("L", sites: [], quickNoteKey: "N") == "L")
+        #expect(
+            LightsOutPolicy.registeredShortcut("L", sites: [site], quickNoteKey: "N") == nil)
+        #expect(
+            LightsOutPolicy.conflict(for: "L", sites: [site], quickNoteKey: nil)
+                == .site(name: "Linear"))
+        #expect(
+            LightsOutPolicy.registeredShortcut("N", sites: [], quickNoteKey: "N") == nil)
+        #expect(
+            LightsOutPolicy.conflict(for: "N", sites: [], quickNoteKey: "N")
+                == .feature(name: "Quick Note"))
+        #expect(LightsOutPolicy.registeredShortcut(nil, sites: [], quickNoteKey: nil) == nil)
+        #expect(LightsOutPolicy.registeredShortcut(".", sites: [], quickNoteKey: nil) == nil)
+    }
+
+    @Test("⌥L registers after Quick Note")
+    func hotKeyOrder() {
+        let registrations = globalHotKeyRegistrations(
+            for: [], optionShortcutsEnabled: true, quickNoteKey: "N", lightsOutKey: "L")
+        #expect(
+            registrations.suffix(2) == [
+                GlobalHotKeyRegistration(character: "N", action: .openQuickNote),
+                GlobalHotKeyRegistration(character: "L", action: .lightsOut),
+            ])
     }
 
     @Test("the menu reads Lights Out and Lights On, like Focus on and off")
@@ -174,6 +232,33 @@ struct LightsOutControllerTests {
         #expect(
             try controller.handleKeyDown(key(0, "a"), now: start.addingTimeInterval(1.8)))
         #expect(controller.isOn == false)
+    }
+
+    /// 물범이 정말 움직이는지: 같은 화면을 시간차로 두 번 찍어 픽셀이 바뀌었는지 본다(숨·z).
+    @Test("the napping seal is animated, not a still image")
+    func sealMoves() throws {
+        let hosting = NSHostingView(
+            rootView: LightsOutView(showsClock: true, hint: "Press Esc to come back")
+                .frame(width: 600, height: 420))
+        let window = NSWindow(
+            contentRect: CGRect(x: -10_000, y: -10_000, width: 600, height: 420),
+            styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        defer { window.orderOut(nil) }
+
+        func snapshot() throws -> Data {
+            let rep = try #require(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
+            hosting.cacheDisplay(in: hosting.bounds, to: rep)
+            // 시계 줄(아래쪽)은 분이 바뀌면 달라질 수 있으니 물범이 있는 위쪽 절반만 비교한다.
+            let data = try #require(rep.bitmapData)
+            return Data(bytes: data, count: rep.bytesPerRow * rep.pixelsHigh / 2)
+        }
+        RunLoop.main.run(until: Date().addingTimeInterval(0.4))
+        let first = try snapshot()
+        RunLoop.main.run(until: Date().addingTimeInterval(1.6))
+        let second = try snapshot()
+        #expect(first != second)
     }
 
     @Test("the chosen letter lifts it directly")
