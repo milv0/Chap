@@ -73,7 +73,6 @@ struct NotchRenderTool {
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
             ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-empty-drop", .glass, .light, Color(white: 0.92), false),
-            ("notch-glass-light-note", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
@@ -108,7 +107,6 @@ struct NotchRenderTool {
             let reveal = NotchRevealModel()
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
-            reveal.isNoteMode = name.hasSuffix("-note")
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
@@ -167,14 +165,16 @@ struct NotchRenderTool {
         }
     }
 
-    /// 메모 모드를 켜고 끌 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.
-    /// 실제 앱처럼 창 안에 올린 뒤 모드를 바꾸고, 보고된 높이가 늘었다 줄어드는지 본다.
+    /// 선반을 접고 펼 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.
+    /// 실제 앱처럼 창 안에 올린 뒤 접고, 보고된 폭이 줄었다 돌아오는지 본다.
     @Test(
-        "note mode reports a taller dock size and returns when closed",
+        "folding shelves reports a narrower dock size and returns when unfolded",
         .enabled(if: NotchRenderTool.outputDirectory != nil))
-    func noteModeReportsSize() throws {
+    func collapseReportsSize() throws {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
-        let slots = NotchSlotContent.slots(widgets: config.notchWidgets, sites: config.sites)
+        let slots = NotchSlotContent.slots(
+            widgets: [.screenshots, .downloads, .sites, .apps, .folders, .none], sites: config.sites
+        )
         let reveal = NotchRevealModel()
         reveal.revealed = true
         var reported: [CGSize] = []
@@ -196,15 +196,15 @@ struct NotchRenderTool {
 
         settle()
         let normal = try #require(reported.last)
-        reveal.isNoteMode = true
+        reveal.collapsedWidgets = [.screenshots, .downloads]
         settle()
-        let note = try #require(reported.last)
-        reveal.isNoteMode = false
+        let folded = try #require(reported.last)
+        reveal.collapsedWidgets = []
         settle()
         let back = try #require(reported.last)
 
-        #expect(note.height > normal.height + 50, "normal \(normal) note \(note)")
-        #expect(back.height == normal.height, "normal \(normal) back \(back)")
+        #expect(folded.width < normal.width, "normal \(normal) folded \(folded)")
+        #expect(back.width == normal.width, "normal \(normal) back \(back)")
     }
 
     /// 실제 앱처럼 Drop 파일 목록이 창을 연 뒤에 비동기로 채워질 때, 도커가 창 크기에 눌리지

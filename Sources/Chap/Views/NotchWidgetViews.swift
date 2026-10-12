@@ -477,8 +477,6 @@ struct NotchStripTools: View {
     var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
-    /// Quick Note 아이콘이 켜고 끄는 도커 메모 모드.
-    @Binding var isNoteMode: Bool
 
     private enum Tool: Equatable { case mirror, note }
     @State private var openTool: Tool?
@@ -512,8 +510,7 @@ struct NotchStripTools: View {
                             isOpen: binding(for: .mirror))
                     case .note:
                         NotchQuickNoteStripButton(
-                            iconCenterX: centerX, stripHeight: stripHeight,
-                            isNoteMode: $isNoteMode)
+                            iconCenterX: centerX, stripHeight: stripHeight)
                     }
                 }
             }
@@ -530,7 +527,7 @@ struct NotchStripTools: View {
                 // 클릭 위치를 이 오버레이의 좌표로 옮긴 뒤, 같은 좌표의 팝업 영역과 비교한다.
                 let origin = geo.frame(in: .global).origin
                 let local = CGPoint(x: click.x - origin.x, y: click.y - origin.y)
-                // 팝업으로 뜨는 도구는 Mirror뿐이다 (Quick Note는 도커 메모 모드로 펼친다).
+                // 팝업으로 뜨는 도구는 Mirror뿐이다 (Quick Note는 노치 아래 창으로 연다).
                 let size = NotchMirrorStripControl.previewSize
                 let center = NotchLauncherPolicy.stripPopupCenter(
                     iconCenterX: geo.size.width / 2 + notchRightEdge + offsets[index],
@@ -554,37 +551,31 @@ struct NotchStripTools: View {
     }
 }
 
-/// 상단 띠의 Quick Note 아이콘. 누르면 위젯 줄 자리가 넓은 메모장으로 바뀐다(메모 모드).
-/// 메모를 창으로 분리해 둔 상태면 그 창을 앞으로 가져온다.
+/// 상단 띠의 Quick Note 아이콘. 누르면 도커를 접고 노치 바로 아래에 Quick Note 창을 띄운다.
+/// 창이 이미 열려 있으면 그 창을 앞으로 가져온다.
 struct NotchQuickNoteStripButton: View {
     let iconCenterX: CGFloat
     let stripHeight: CGFloat
-    @Binding var isNoteMode: Bool
 
     @State private var isHovered = false
 
     var body: some View {
         Button {
-            if QuickNoteWindow.isOpen {
-                QuickNoteWindow.show()
-                NotificationCenter.default.post(
-                    name: NotchLauncherController.requestClose, object: nil)
-            } else {
-                isNoteMode.toggle()
-            }
+            // 도커가 창 자리(노치 아래)를 덮지 않도록 먼저 접는다.
+            NotificationCenter.default.post(
+                name: NotchLauncherController.requestClose, object: nil)
+            QuickNoteWindow.show()
         } label: {
             Image(systemName: "note.text")
                 .font(DS.notchStripIconFont)
-                .foregroundColor(
-                    isNoteMode ? DS.accent : DS.notchStripIconColor(isHovered: isHovered)
-                )
+                .foregroundColor(DS.notchStripIconColor(isHovered: isHovered))
                 .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help(isNoteMode ? "Back to widgets" : "Quick Note")
-        .accessibilityLabel(isNoteMode ? "Close Quick Note" : "Quick Note")
+        .help("Quick Note")
+        .accessibilityLabel("Quick Note")
         .position(x: iconCenterX, y: stripHeight / 2)
     }
 }
@@ -621,16 +612,8 @@ private struct MirrorPreview: NSViewRepresentable {
 
 // MARK: - Quick Note
 
-/// 넓게 펼친 메모(도커 메모 모드, 분리 창)의 상단 도구 줄 동작.
-struct NotchQuickNoteToolbar {
-    /// 메모를 떠 있는 창으로 분리한다. nil이면 버튼을 숨긴다(이미 창인 경우).
-    var onDetach: (() -> Void)?
-    /// 메모 모드를 닫고 위젯으로 돌아간다. nil이면 버튼을 숨긴다.
-    var onClose: (() -> Void)?
-}
-
-/// 노치에서 바로 적는 한 장짜리 메모. 입력은 잠시 멈추면 저장되고,
-/// 칸이 사라질 때 남은 변경을 즉시 저장한다.
+/// Quick Note 창(`QuickNoteWindow`)의 한 장짜리 메모. 입력은 잠시 멈추면 저장되고,
+/// 커서가 풀리거나 창이 닫힐 때 남은 변경을 즉시 저장한다. 덮어쓰기 전 백업은 `QuickNoteStore`가 맡는다.
 struct NotchQuickNoteView: View {
     /// 대기 중인 저장을 즉시 쓰라는 요청 (분리 창 닫힘, 앱 종료).
     static let flushRequest = Notification.Name("ChapQuickNoteFlush")
@@ -641,12 +624,9 @@ struct NotchQuickNoteView: View {
     }
 
     let palette: NotchWidgetPalette
-    var showsHeader = true
     var bodyHeight: CGFloat = widgetBodyHeight
-    /// 띠에서 펼칠 때는 바로 입력할 수 있게 커서를 넣는다.
+    /// 창이 뜨면 바로 입력할 수 있게 커서를 넣는다.
     var focusesOnAppear = false
-    /// 넓은 메모의 도구 줄(제목·글자 수·복사·분리·닫기). 주면 헤더 대신 그린다.
-    var toolbar: NotchQuickNoteToolbar?
 
     @State private var didCopy = false
 
@@ -655,6 +635,10 @@ struct NotchQuickNoteView: View {
     @State private var lastSaved: Date?
     /// 입력 뒤 아직 파일에 쓰이지 않은 변경이 있는지. 있으면 저장 표시 대신 "Editing"을 보여 준다.
     @State private var hasPendingEdit = false
+    /// 마지막 저장이 실패했는지. 실패하면 "Couldn't save"를 보여 준다(입력은 화면에 남아 있다).
+    @State private var saveFailed = false
+    /// 메모 파일을 읽지 못했을 때 빈 상자 대신 보여 줄 안내.
+    @State private var loadNotice: String?
     /// 메모 상자의 화면 위치(창 콘텐츠 좌표). 상자 밖 클릭이면 커서를 풀고 바로 저장한다.
     @State private var editorFrame: CGRect = .zero
     @FocusState private var isFocused: Bool
@@ -667,16 +651,12 @@ struct NotchQuickNoteView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            if let toolbar {
-                toolbarRow(toolbar)
-            } else if showsHeader {
-                NotchWidgetHeader(symbol: "note.text", title: "Quick Note", palette: palette)
-            }
+            toolbarRow
             // 목록 본문과 같은 13pt. 회색 상자 대신 옅은 테두리만 두고,
             // 저장 시각은 상자 안 오른쪽 아래에 넣어 칸 높이를 늘리지 않는다.
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
-                    Text("What's on your mind?")
+                    Text(loadNotice ?? "What's on your mind?")
                         .font(DS.notchBody)
                         .foregroundColor(palette.secondary)
                         // TextEditor 본문 인셋(가로 5pt)에 맞춘다.
@@ -705,8 +685,9 @@ struct NotchQuickNoteView: View {
             )
             .overlay(alignment: .bottomTrailing) {
                 // 오른쪽 아래 작은 저장 표시: 쓰는 동안 "Editing", 저장되면 "Saved · 시각/날짜".
-                if let label = hasPendingEdit
-                    ? "Editing" : QuickNoteStore.savedLabel(for: lastSaved)
+                if let label = saveFailed
+                    ? "Couldn't save"
+                    : hasPendingEdit ? "Editing" : QuickNoteStore.savedLabel(for: lastSaved)
                 {
                     Text(label)
                         .font(DS.notchMeta)
@@ -745,6 +726,7 @@ struct NotchQuickNoteView: View {
                 return
             }
             hasPendingEdit = true
+            loadNotice = nil
             debouncer.schedule { save(clamped) }
         }
         // 커서가 풀리면(다른 곳 클릭, 다른 앱, Esc) 기다리지 않고 바로 저장한다.
@@ -782,7 +764,7 @@ struct NotchQuickNoteView: View {
         }
     }
 
-    private func toolbarRow(_ toolbar: NotchQuickNoteToolbar) -> some View {
+    private var toolbarRow: some View {
         HStack(spacing: 6) {
             Image(systemName: "note.text")
                 .font(DS.notchLabel)
@@ -800,16 +782,8 @@ struct NotchQuickNoteView: View {
                 label: didCopy ? "Copied" : "Copy note", action: copyAll
             )
             .disabled(text.isEmpty)
-            if let onDetach = toolbar.onDetach {
-                toolButton(symbol: "macwindow.on.rectangle", label: "Open in a window") {
-                    // 분리 창이 최신 내용을 읽도록 먼저 저장한다 (같은 직렬 큐라 순서가 보장된다).
-                    debouncer.flush()
-                    onDetach()
-                }
-            }
-            if let onClose = toolbar.onClose {
-                toolButton(symbol: "xmark", label: "Back to widgets", action: onClose)
-            }
+            toolButton(
+                symbol: "clock.arrow.circlepath", label: "Show Backups", action: showBackups)
         }
         .padding(.horizontal, 6)
         .frame(height: DS.notchHeaderHeight)
@@ -837,17 +811,37 @@ struct NotchQuickNoteView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { didCopy = false }
     }
 
+    /// 이전 메모 백업 폴더를 Finder로 연다 (아직 없으면 만든다).
+    private func showBackups() {
+        let folder = store.backupDirectoryURL
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        NSWorkspace.shared.open(folder)
+    }
+
     private func load() {
         guard !didLoad else { return }
         let store = store
-        // 저장과 같은 직렬 큐에서 읽어, 방금 flush한 내용(분리 직전 입력)을 놓치지 않는다.
+        // 저장과 같은 직렬 큐에서 읽어, 방금 flush한 내용(창을 닫기 직전 입력)을 놓치지 않는다.
         Self.saveQueue.async {
-            let saved = store.load()
-            let date = saved.isEmpty ? nil : store.lastSavedDate()
+            let result = store.loadResult()
+            let date = store.lastSavedDate()
             DispatchQueue.main.async {
-                text = saved
-                lastSaved = date
-                didLoad = true
+                switch result {
+                case .text(let saved):
+                    text = saved
+                    lastSaved = saved.isEmpty ? nil : date
+                    didLoad = true
+                case .preserved(let url):
+                    // 원본은 백업 폴더로 옮겼으니 빈 메모로 새로 시작해도 잃는 것이 없다.
+                    Log.app.error(
+                        "Quick Note was unreadable; moved to \(url.path, privacy: .public)")
+                    loadNotice = "Couldn't read your last note. It's kept in Backups."
+                    didLoad = true
+                case .locked:
+                    // 원본을 읽지도 옮기지도 못했다. 덮어쓰지 않도록 편집을 막고, 다음에 열 때 다시 읽는다.
+                    Log.app.error("Quick Note file could not be read; editing is off")
+                    loadNotice = "Can't open the note file, so Chap won't change it."
+                }
             }
         }
     }
@@ -861,10 +855,12 @@ struct NotchQuickNoteView: View {
                 DispatchQueue.main.async {
                     lastSaved = date
                     hasPendingEdit = false
+                    saveFailed = false
                 }
             } catch {
                 Log.app.error(
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")
+                DispatchQueue.main.async { saveFailed = true }
             }
         }
     }

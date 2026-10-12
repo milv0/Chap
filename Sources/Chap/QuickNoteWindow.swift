@@ -1,9 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// 노치에서 분리한 Quick Note 창. 노치를 닫아도 다른 창 위에 떠 있고, 크기·위치를 기억한다.
-/// 노치 메모와 같은 파일(`QuickNoteStore`)을 쓰며, 창이 열려 있는 동안 노치의 메모 아이콘은
-/// 이 창을 앞으로 가져온다 (두 편집기가 동시에 같은 파일을 고치지 않게 한다).
+/// 노치 상단 띠의 Quick Note 아이콘이 여는 메모 창. 열 때마다 노치 바로 아래에 붙어서 뜨고,
+/// 그다음엔 자유롭게 옮길 수 있다. 크기는 기억한다. 노치를 닫아도 다른 창 위에 떠 있다.
+/// 창이 열려 있는 동안 아이콘은 이 창을 앞으로 가져온다 (편집기는 언제나 하나다).
 enum QuickNoteWindow {
     private static var window: NSWindow?
     private static var closeObserver: NSObjectProtocol?
@@ -31,10 +31,11 @@ enum QuickNoteWindow {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.contentMinSize = minimumSize
         window.setContentSize(defaultSize)
-        if !window.setFrameUsingName(autosaveName) {
-            centerOnCursorScreen(window)
-        }
+        // 지난번 크기만 되살리고, 자리는 늘 노치 아래에서 시작한다. autosave 이름을 먼저 달아야
+        // 이름을 다는 순간 저장된 프레임이 다시 적용돼 자리가 덮이는 일이 없다.
         window.setFrameAutosaveName(autosaveName)
+        window.setFrameUsingName(autosaveName)
+        placeUnderNotch(window)
 
         closeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification, object: window, queue: .main
@@ -48,6 +49,19 @@ enum QuickNoteWindow {
         Self.window = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다. 노치 화면이 없으면 커서 화면 가운데.
+    private static func placeUnderNotch(_ window: NSWindow) {
+        guard let screen = NotchLauncherController.notchScreen() else {
+            centerOnCursorScreen(window)
+            return
+        }
+        window.setFrameOrigin(
+            QuickNotePlacement.origin(
+                windowSize: window.frame.size,
+                notchRect: NotchLauncherController.notchRect(on: screen),
+                visibleFrame: screen.visibleFrame))
     }
 
     private static func centerOnCursorScreen(_ window: NSWindow) {
@@ -66,7 +80,7 @@ enum QuickNoteWindow {
     }
 }
 
-/// 분리 창의 내용: 시스템 색으로 그린 넓은 메모 편집기와 복사 버튼.
+/// 창의 내용: 시스템 색으로 그린 메모 편집기와 도구 줄(글자 수·복사·백업).
 private struct QuickNoteWindowContent: View {
     private static let palette = NotchWidgetPalette(
         primary: .primary, secondary: .secondary, accent: DS.accent, heading: .secondary,
@@ -76,10 +90,9 @@ private struct QuickNoteWindowContent: View {
     var body: some View {
         GeometryReader { geo in
             NotchQuickNoteView(
-                palette: Self.palette, showsHeader: false,
+                palette: Self.palette,
                 bodyHeight: max(geo.size.height - DS.notchHeaderHeight - 7, 80),
-                focusesOnAppear: true,
-                toolbar: NotchQuickNoteToolbar(onDetach: nil, onClose: nil))
+                focusesOnAppear: true)
         }
         .padding(12)
         .frame(
@@ -88,5 +101,5 @@ private struct QuickNoteWindowContent: View {
     }
 }
 
-/// 분리된 Quick Note 창. 표시 프로토콜로 메모 뷰가 이 창이 key를 잃는 순간을 알아본다.
+/// Quick Note 창. 표시 프로토콜로 메모 뷰가 이 창이 key를 잃는 순간을 알아본다.
 final class QuickNoteNSWindow: NSWindow, QuickNoteWindowPanelMarker {}

@@ -14,8 +14,8 @@
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when you press Chap on, and wags its tail while Focus runs
-- **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off, or hover a row and click × to delete it; finished items stay in place, checked off, until you clear them. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
+- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
+- **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A Focus dial in the notch: drag the arc to set 1–12 hours (your last setting is remembered), click the center to start, and watch the arc wind down; click again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
@@ -108,7 +108,7 @@ Stored at `~/.chap.json`:
   "notchGlassMaterial": "regular",
   "notchPanelOpacity": 0.6,
   "notchPanelColorHex": "#000000",
-  "notchWidgets": ["sites", "apps", "folders", "screenshots", "none", "none"],
+  "notchWidgets": ["screenshots", "none", "sites", "apps", "folders", "none"],
   "notchMirrorEnabled": true,
   "notchQuickNoteEnabled": true,
   "notchCollapsedWidgets": [],
@@ -148,7 +148,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Arrange six slots by dragging Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do into the board (the first two slots belong to the Screenshots and Downloads shelves, in that order; turn each on or off in place, and a folded shelf and its slot stay on the left); context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Sites, Apps, Finder, Focus, or To-do into the other four; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
@@ -156,7 +156,9 @@ The **Apps** widget shows up to six apps as a two-column grid of icons. Shortcut
 
 **Mirror** sits as a webcam icon in the black strip beside the notch, just right of the Drop box (the open notch always shows the box; the count appears only when files are kept). Click it and your built-in camera, flipped like a mirror, pops open just below the strip; it turns off when you close the dock or click ×. Turn the icon off with **Show Mirror Icon** in Settings → Notch. The green camera light shows while it runs; nothing is recorded or saved. Chap asks for camera access only the first time you click the Mirror icon.
 
-**Quick Note** is a note icon right of Mirror in the black strip. Click it and the widget row turns into a wide note (the notch grows to about 600 × 180) with a character count, a copy button, and an **Open in a window** button that detaches the note into a floating, resizable window you can keep open while the notch is closed. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export. Click × or the note icon to go back to your widgets.
+**Quick Note** is a note icon right of Mirror in the black strip. Click it and the dock folds away while a floating, resizable note window opens attached just below the notch; drag it anywhere afterwards (Chap remembers its size, and it stays open while the notch is closed). The window has a character count, a copy button, and **Show Backups**. The note saves as you type, and right away when you click anywhere else; the bottom-right corner shows "Saved" with the time or date. It lives at `~/Library/Application Support/Chap/QuickNote.txt` (up to 20,000 characters); it is not part of config export.
+
+Before overwriting the note, Chap keeps the previous version in `~/Library/Application Support/Chap/QuickNote Backups/` at most every 10 minutes, and right away when a long note loses more than half its text (for example after Select All → Delete). The newest ten backups are kept. If the note file ever can't be read, Chap moves it to the same folder as `QuickNote.unreadable-<time>.txt` instead of treating it as empty; if it can't even move it, the note stays read-only so the file is never overwritten.
 
 Dropping a file on the notch or Drop badge opens the main dock with a translucent **Drop here** layer. Chap keeps a reference to each original instead of a copy, so it takes no extra disk space; if you move or rename the file, Chap follows it, and if you delete it, it leaves Chap Drop too. Only items from temporary locations (such as a picture dragged from a browser) are copied into `~/Library/Application Support/Chap/Drop/` so they don't vanish. Removing an item from Chap Drop never deletes the original. Hover a file to share it (AirDrop, Messages, Mail, …) or remove it; right-click for the same actions plus Show in Finder. Drop files remain until you remove them from Chap. Import preserves the destination Mac's device-specific notch choices, while Export records the complete current config.
 

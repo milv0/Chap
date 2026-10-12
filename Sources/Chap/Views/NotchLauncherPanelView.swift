@@ -54,8 +54,6 @@ final class NotchRevealModel: ObservableObject {
     @Published var isDropTargetActive = false
     /// ⌥를 누르고 있는 동안. 키캡이 강조되고 "⌥1"처럼 수식키를 함께 보여준다.
     @Published var isOptionHeld = false
-    /// 메모 모드: 위젯 줄 자리를 넓은 Quick Note 편집기로 바꾼다. 도커를 열 때마다 꺼진 채 시작한다.
-    @Published var isNoteMode = false
     /// 어깨 아이콘으로 접힌 위젯. 도커를 열 때 config에서 채우고, 접고 펼 때마다 저장한다.
     @Published var collapsedWidgets: [NotchWidget] = []
 }
@@ -122,8 +120,6 @@ struct NotchLauncherPanelView: View {
     static let focusColumnWidth: CGFloat = 116
     /// 할 일 칸 폭. 12pt 문구가 20자 안팎까지 보인다.
     static let todoColumnWidth: CGFloat = 170
-    /// 메모 모드의 위젯 줄 높이. 도구 줄을 빼면 13pt 본문이 약 11줄 보인다.
-    static let noteModeHeight: CGFloat = 200
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
@@ -284,8 +280,7 @@ struct NotchLauncherPanelView: View {
                     besideDropBadge: true,
                     showsEmptyDropBox: dropFiles.isEmpty,
                     showsMirror: showsMirror,
-                    showsNote: showsNote,
-                    isNoteMode: $reveal.isNoteMode)
+                    showsNote: showsNote)
             }
             .overlay(alignment: .topLeading) {
                 if showsShoulderGuides { shoulderGuides }
@@ -321,13 +316,10 @@ struct NotchLauncherPanelView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
-    /// 메인 도커 왼쪽 plateau의 Keep Awake 상태. 커피 아이콘은 테마 블루,
-    /// 시간은 고정 h:mm:ss이며 1초마다 갱신한다. 넓어진 문자열 때문에
-    /// 아이콘이 왼쪽으로 밀리지 않도록 광학 위치를 오른쪽으로 보정한다.
     /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). 물범은 늘 여기 있고,
-    /// Focus가 켜져 있으면 깨어 꼬리를 흔든다(Focus 칸은 번개와 남은 시간을 보여 준다).
+    /// Focus가 켜져 있으면 깨어 꼬리를 흔든다(Focus 칸은 다이얼과 남은 시간을 보여 준다).
     @ViewBuilder private var leftStripContent: some View {
-        let collapsed = reveal.isNoteMode ? [] : collapsedStripWidgets
+        let collapsed = collapsedStripWidgets
         let leading = NotchLauncherPolicy.stripLeading()
         let notchHalf = stripPlateauHalfWidth - NotchGeometry.stripPlateauSideWidth
         GeometryReader { geo in
@@ -375,37 +367,6 @@ struct NotchLauncherPanelView: View {
         let collapsed = effectiveCollapsed
         return slots.compactMap(\.collapsibleWidget).filter { collapsed.contains($0) }
     }
-
-    // Focus 시계는 띠에서 뺐다. 되살릴 때는 `StripLeading.focusClock`과 함께 아래 블록을 쓴다.
-    // @ViewBuilder private var awakeStripClock: some View {
-    //     if let awakeSessionEnd = currentAwakeSessionEnd, awakeSessionEnd > Date() {
-    //         let sideWidth = NotchGeometry.stripPlateauSideWidth
-    //         let notchHalf = stripPlateauHalfWidth - sideWidth
-    //         GeometryReader { geo in
-    //             TimelineView(.periodic(from: .now, by: 1)) { context in
-    //                 HStack(spacing: 5) {
-    //                     // Focus 위젯과 같은 번개. 켜져 있는 동안 상단 띠 왼쪽에 남은 시간과 함께 보인다.
-    //                     Image(systemName: "bolt.fill")
-    //                         .font(.system(size: 12))
-    //                         .foregroundColor(DS.accent)
-    //                     Text(
-    //                         KeepAwakePolicy.remainingClockLabel(
-    //                             until: awakeSessionEnd, now: context.date)
-    //                     )
-    //                     .font(.system(size: 13, weight: .medium))
-    //                     .monospacedDigit()
-    //                     .foregroundColor(.white.opacity(0.9))
-    //                 }
-    //                 .frame(width: sideWidth, height: topInset)
-    //                 .position(
-    //                     x: geo.size.width / 2 - notchHalf - sideWidth / 2
-    //                         + NotchGeometry.awakeStatusOffsetX,
-    //                     y: topInset / 2)
-    //             }
-    //         }
-    //         .allowsHitTesting(false)
-    //     }
-    // }
 
     @State private var dropTargeted = false
 
@@ -543,30 +504,6 @@ struct NotchLauncherPanelView: View {
             .fixedSize(horizontal: false, vertical: true)
             // 도커가 최소 폭보다 좁은 내용을 담으면 위젯 줄을 가운데에 둔다.
             .frame(maxWidth: .infinity, alignment: .center)
-            // 메모 모드: 위젯 줄 자리를 도커 폭 전체의 넓은 메모장으로 바꾼다. 높이가 늘면
-            // 컨트롤러가 창을 다시 맞춘다 (`resizePanelToFit`).
-            .frame(minHeight: reveal.isNoteMode ? Self.noteModeHeight : 0, alignment: .top)
-            .opacity(reveal.isNoteMode ? 0 : 1)
-            .allowsHitTesting(!reveal.isNoteMode)
-            .accessibilityHidden(reveal.isNoteMode)
-            .overlay {
-                if reveal.isNoteMode {
-                    GeometryReader { geo in
-                        NotchQuickNoteView(
-                            palette: widgetPalette, showsHeader: false,
-                            bodyHeight: max(geo.size.height - DS.notchHeaderHeight - 7, 60),
-                            focusesOnAppear: true,
-                            toolbar: NotchQuickNoteToolbar(
-                                onDetach: {
-                                    QuickNoteWindow.show()
-                                    NotificationCenter.default.post(
-                                        name: NotchLauncherController.requestClose, object: nil)
-                                },
-                                onClose: { reveal.isNoteMode = false }))
-                    }
-                    .transition(.opacity)
-                }
-            }
 
             // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
             // 도커는 원래 크기로 돌아간다.

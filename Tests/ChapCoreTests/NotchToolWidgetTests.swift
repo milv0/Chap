@@ -128,6 +128,113 @@ struct QuickNoteStoreTests {
         #expect(QuickNoteStore.characterCountLabel(18_000) == "18,000 / 20,000 chars")
     }
 
+    @Test("a note that isn't text is moved to Backups instead of being treated as empty")
+    func unreadableNoteIsPreserved() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(
+            at: store.fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let garbage = Data([0xFF, 0xFE, 0xFD, 0x00, 0xC3])
+        try garbage.write(to: store.fileURL)
+
+        let result = store.loadResult()
+
+        guard case .preserved(let url) = result else {
+            Issue.record("expected .preserved, got \(result)")
+            return
+        }
+        #expect(url.deletingLastPathComponent() == store.backupDirectoryURL)
+        #expect(url.lastPathComponent.hasPrefix("QuickNote.unreadable-"))
+        #expect(try Data(contentsOf: url) == garbage)
+        #expect(!FileManager.default.fileExists(atPath: store.fileURL.path))
+        // 옮겨 둔 원본은 백업 개수에 세지 않아 정리되지 않는다.
+        #expect(store.backupURLs().isEmpty)
+    }
+
+    @Test("a missing note and a readable note load as text")
+    func readableResults() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        #expect(store.loadResult() == .text(""))
+
+        try store.save("hello")
+
+        #expect(store.loadResult() == .text("hello"))
+    }
+
+    @Test("the first overwrite backs up the previous note; empty notes are never backed up")
+    func firstOverwriteBacksUp() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+        try store.save("", now: now)
+        try store.save("first", now: now)
+        #expect(store.backupURLs().isEmpty)
+
+        try store.save("second", now: now.addingTimeInterval(1))
+
+        let backups = store.backupURLs()
+        #expect(backups.count == 1)
+        #expect(try String(contentsOf: backups[0], encoding: .utf8) == "first")
+    }
+
+    @Test("deleting most of a long note backs it up right away")
+    func largeLossBacksUp() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let long = String(repeating: "meeting notes ", count: 10)
+
+        try store.save("draft", now: now)
+        try store.save(long, now: now.addingTimeInterval(1))  // 첫 백업: "draft"
+        try store.save("", now: now.addingTimeInterval(2))  // 간격 안이지만 크게 줄었다
+
+        let contents = try store.backupURLs().map { try String(contentsOf: $0, encoding: .utf8) }
+        #expect(contents == ["draft", long])
+        #expect(store.load().isEmpty)
+    }
+
+    @Test("old backups are pruned to the newest ten")
+    func backupsArePruned() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+
+        for index in 0...12 {
+            try store.save(
+                "note \(index)",
+                now: start.addingTimeInterval(Double(index) * QuickNoteBackupPolicy.interval))
+        }
+
+        let contents = try store.backupURLs().map { try String(contentsOf: $0, encoding: .utf8) }
+        #expect(contents.count == QuickNoteBackupPolicy.maxBackups)
+        #expect(contents.first == "note 2")
+        #expect(contents.last == "note 11")
+    }
+
+    @Test("backups are spaced out unless the note shrinks a lot")
+    func backupPolicy() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let recent = now.addingTimeInterval(-60)
+        let old = now.addingTimeInterval(-QuickNoteBackupPolicy.interval)
+        let long = String(repeating: "x", count: 100)
+        func should(_ previous: String, _ next: String, _ last: Date?) -> Bool {
+            QuickNoteBackupPolicy.shouldBackUp(
+                previous: previous, next: next, lastBackup: last, now: now)
+        }
+        #expect(should("a", "ab", nil))
+        #expect(!should("a", "ab", recent))
+        #expect(should("a", "ab", old))
+        #expect(!should("same", "same", nil))
+        #expect(!should("  \n", "text", nil))
+        #expect(should(long, "", recent))
+        #expect(should(long, String(long.prefix(49)), recent))
+        #expect(!should(long, String(long.prefix(60)), recent))
+        // 짧은 메모는 지울 때마다 백업하지 않는다.
+        #expect(!should("short note", "", recent))
+    }
+
     @Test("the default note lives in Chap's Application Support folder")
     func defaultLocation() {
         let path = QuickNoteStore.defaultFileURL.path
@@ -227,5 +334,35 @@ struct StripPopupDismissalTests {
         let nearEdge = NotchLauncherPolicy.stripPopupCenter(
             iconCenterX: 880, popupSize: size, containerWidth: 900, stripHeight: strip)
         #expect(nearEdge.x == 768, "got \(nearEdge.x)")
+    }
+}
+
+@Suite("Quick Note window placement")
+struct QuickNotePlacementTests {
+    // 1512×982 MacBook 화면, 노치 높이 38pt, 메뉴 막대 아래가 보이는 영역의 윗변.
+    let screen = CGRect(x: 0, y: 0, width: 1512, height: 982)
+    var notch: CGRect { CGRect(x: 663, y: 944, width: 186, height: 38) }
+    var visible: CGRect { CGRect(x: 0, y: 70, width: 1512, height: 874) }
+
+    @Test("the window hangs from the notch, centered on it")
+    func hangsFromNotch() {
+        let origin = QuickNotePlacement.origin(
+            windowSize: CGSize(width: 420, height: 348), notchRect: notch, visibleFrame: visible)
+        #expect(origin == CGPoint(x: 546, y: 596))
+        #expect(origin.y + 348 == notch.minY)
+    }
+
+    @Test("a window taller than the room left is kept on screen")
+    func tallWindowStaysOnScreen() {
+        let origin = QuickNotePlacement.origin(
+            windowSize: CGSize(width: 420, height: 2000), notchRect: notch, visibleFrame: visible)
+        #expect(origin.y == visible.minY)
+    }
+
+    @Test("a wide window is pulled back inside the screen edges")
+    func wideWindowStaysInside() {
+        let origin = QuickNotePlacement.origin(
+            windowSize: CGSize(width: 1600, height: 300), notchRect: notch, visibleFrame: visible)
+        #expect(origin.x == visible.minX)
     }
 }

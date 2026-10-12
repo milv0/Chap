@@ -32,9 +32,8 @@
   도커 위에 반투명 "Drop here" 레이어가 덮인다. Drop 파일들은 메인 도커
   하단의 가로 아이콘 행(파일이 있을 때만 표시)으로 보여준다.
 - **왼쪽 상태 영역**: 별도 배지 창은 두지 않는다. Keep Awake 시작/종료는
-  상단바 아이콘 색과 중앙 HUD가 담당하고, 메인 도커가 열렸을 때만 왼쪽
-  plateau 안에 파란 번개(bolt.fill) 아이콘 + h:mm:ss 남은 시간을 1초마다 렌더링한다.
-  묶음은 영역 중심에서 오른쪽으로 `awakeStatusOffsetX`만큼 보정한다.
+  상단바 아이콘 색과 중앙 HUD가 담당한다. 남은 시간은 Focus 칸 다이얼이 보여 주고,
+  띠 왼쪽에는 물범(과 접힌 선반 아이콘)이 있다.
 
 ## 실루엣 문법: 오목 플레어
 
@@ -61,7 +60,6 @@
 | 이름 | 값 | 의미 |
 |---|---|---|
 | `stripPlateauSideWidth` | 110 | 노치 좌우의 평평한 검정 상태 영역 폭 |
-| `awakeStatusOffsetX` | -2 | 왼쪽 상태 영역 안의 h:mm:ss 번개+시간 묶음 좌측 광학 보정 |
 | `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
 | `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
 | `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
@@ -201,7 +199,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap(아기 물범 마스코트, 이름이 곧 Chap이다,
 `ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
-(Focus 칸과 상태 메뉴에서 본다). 시계 코드는 `awakeStripClock`·`StripLeading.focusClock` 주석으로 남겨 두었다.
+(Focus 칸 다이얼과 상태 메뉴에서 본다).
 
 물범 자리는 Focus 칸이 보이든 아니든 **늘 띠 왼쪽이다**(`NotchLauncherPolicy.stripLeading()`). Focus 칸은 번개와
 남은 시간을 맡고, 물범은 띠에서 Focus 상태를 보여 준다.
@@ -215,7 +213,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
 
 - **접힌 선반 아이콘**: 흰 14pt medium(`DS.notchStripIconFont`, 띠 아이콘 공용, `DS.notchStripIconColor`, 호버 100%), 오른쪽 띠 도구와 노치를 기준으로
   대칭인 자리(노치 왼쪽 끝에서 13pt, 41pt, `leftStripIconCenterOffsets`). 왼쪽에서 오른쪽으로 칸 순서가
-  읽히도록 마지막 칸이 노치에 가장 가깝다. 메모 모드에서는 숨긴다.
+  읽히도록 마지막 칸이 노치에 가장 가깝다.
 - **물범 자리**: 아이콘이 없으면 왼쪽 상태 영역 가운데(노치에서 55pt), 있으면 바깥쪽으로 비켜 86pt
   (`stripMascotCenterOffset`). 아이콘 두 개(노치에서 55pt까지)와 물범(68~104pt)이 겹치지 않는다.
 
@@ -264,7 +262,7 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   검정 띠(노치 + 좌우 상태 영역 110pt씩 + 곡선 90pt)를 늘 감싸고, 띠 아이콘·물범은 노치 기준이라 제자리다.
   창은 커질 때 바로, 작아질 때는 칸 애니메이션 뒤(0.26초, `NotchLauncherPolicy.resizeSteps`/`shrinkDelay`)
   맞춰 내용이 창 밖으로 잘리지 않는다. 펼칠 때는 칸 폭 + 간격만큼 창을 먼저 넓히고(`preExpandSize`) 다음 틱에
-  칸을 펼친다. 같은 틱에 바꾸면 넓어진 도커 양 끝이 좁은 창에 잘려 노치가 접혔다 펼쳐지는 것처럼 끊겨 보였다. 메모 모드를 닫을 때도 같은 규칙이다.
+  칸을 펼친다. 같은 틱에 바꾸면 넓어진 도커 양 끝이 좁은 창에 잘려 노치가 접혔다 펼쳐지는 것처럼 끊겨 보였다.
 - 새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
 - 접힌 목록은 `Config.notchCollapsedWidgets`에 저장한다. 노치에서만 바꾸는 이 Mac의 표시 선택이라
   설정창 저장이 덮어쓰지 않는다.
@@ -324,14 +322,31 @@ utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시�
   4초 동안 제목 줄 오른쪽 작은 "Undo"로 되돌릴 수 있다(`restoring`, 그사이 넣은 항목은 지키고 4개 한도 안에서 되돌림). 노치를 닫으면 되돌리기도 끝난다. 줄 하나를 Delete한 것은 되돌리지 않는다.
 - 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
+## Quick Note 창
+
+- 상단 띠의 메모 아이콘은 도커를 접고(`requestClose`) Quick Note 창(`QuickNoteWindow`, floating, 크기 조절 가능)을 연다.
+  도커 안 메모 모드는 없다.
+- 열 때마다 창 윗변을 노치 아랫변에 붙이고 노치 가운데에 맞춘다(`QuickNotePlacement.origin`, 보이는 영역 밖이면 안으로
+  당김). 그다음엔 자유롭게 옮긴다. 크기는 `ChapQuickNoteWindow` frame autosave로 기억하고 자리는 기억하지 않는다.
+  노치 화면이 없으면 커서 화면 가운데.
+- 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
+- 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
+
 ## Quick Note 저장
 
 - 입력하면 0.5초 뒤 저장한다(`SaveDebouncer`, 직렬 큐). 다만 **커서가 풀리는 순간 기다리지 않고 바로 저장**한다
   (`isFocused`가 false가 되면 flush).
 - 커서가 풀리는 경우: 노치 패널 안에서 메모 상자 밖을 누름(`didClickPanel`의 클릭 좌표가 상자 밖), 패널이 key를
-  잃음(다른 앱·바탕 클릭), 메모 상자 밖 빈 곳 탭, 분리 창(`QuickNoteNSWindow`)이 key를 잃음, Esc·닫기·분리.
+  잃음(다른 앱·바탕 클릭), 메모 상자 밖 빈 곳 탭, 메모 창(`QuickNoteNSWindow`)이 key를 잃음, 창 닫기.
 - 상자 오른쪽 아래 10pt 표시: 입력 중 아직 안 쓰였으면 "Editing", 저장되면 "Saved · 6:12 PM"(오늘) /
   "Saved · Oct 4, 6:12 PM"(올해) / "Saved · Oct 4, 2025, 6:12 PM"(`QuickNoteStore.savedLabel`). 빈 메모는 표시 없음.
+  저장이 실패하면 "Couldn't save"(입력은 화면에 남는다).
+- 백업(`QuickNoteBackupPolicy`): 덮어쓰기 직전 이전 내용을 `QuickNote Backups/QuickNote-yyyyMMdd-HHmmss.txt`로 남긴다.
+  평소엔 10분에 한 번, 40자 이상 메모가 절반 넘게 줄면 바로. 빈 메모·같은 내용은 남기지 않고, 최신 10개만 둔다.
+  백업 실패는 저장을 막지 않는다.
+- 읽기 실패(`QuickNoteStore.loadResult`): 파일이 있는데 UTF-8이 아니면 원본을 백업 폴더의
+  `QuickNote.unreadable-<시각>.txt`로 옮기고(개수 정리 대상 아님) 빈 메모로 시작하며 안내를 띄운다. 파일을 열지도
+  옮기지도 못하면 편집을 막아 원본을 덮어쓰지 않고, 다음에 열 때 다시 읽는다.
 
 ## 모션 기준
 
