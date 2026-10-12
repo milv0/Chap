@@ -60,7 +60,7 @@ public enum NotchLauncherPolicy {
     }
 
     /// 도커 창 크기를 바꿀 때 커지는 쪽은 바로, 작아지는 쪽은 내용 애니메이션이 끝난 뒤에 맞춘다.
-    /// 그래야 칸이 빠지거나 메모 모드가 닫히는 동안 아직 넓은 내용이 창 밖으로 잘리지 않는다.
+    /// 그래야 칸이 빠지는 동안 아직 넓은 내용이 창 밖으로 잘리지 않는다.
     /// - Returns: `immediate`는 지금 맞출 크기(현재와 목표의 각 변 최댓값), `deferred`는
     ///   `shrinkDelay` 뒤 맞출 최종 크기. 바꿀 것이 없으면 nil.
     public static func resizeSteps(current: CGSize, target: CGSize) -> (

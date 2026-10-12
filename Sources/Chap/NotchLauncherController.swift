@@ -96,7 +96,7 @@ final class NotchLauncherController {
     private static let dwellMargin: CGFloat = 6
 
     /// 토글/노치 유무에 따라 핫존을 켜거나 끈다. 조건이 안 되면 전부 내린다.
-    /// 열린 도커 창을 SwiftUI가 잰 콘텐츠 크기에 맞춘다 (메모 모드 전환 등).
+    /// 열린 도커 창을 SwiftUI가 잰 콘텐츠 크기에 맞춘다 (칸을 접거나 Drop 줄이 생길 때 등).
     /// 상단은 항상 화면 최상단에 붙인다. 계산은 `showPanel`과 같은 규칙을 쓴다.
     private func resizePanel(toContentSize size: CGSize) {
         guard panel != nil, size.height > 0 else { return }

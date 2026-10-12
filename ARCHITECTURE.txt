@@ -186,7 +186,6 @@ Config Files:
 ├── AGENTS.md                      ← Codex 지침 (→ .harness/codex/AGENTS.md)
 ├── .claude/                       ← Claude Code 지침 링크 (→ .harness/claude)
 ├── .kiro/                         ← Kiro 지침 링크 (→ .harness/kiro)
-├── logs/                          ← 과거 로컬 리사이즈 로그 (.gitignore 대상)
 └── .harness/                      ← AI 어시스턴트 하네스
     ├── shared/rules/              ← 공통 규칙 (Swift, 테스트, 커밋, 아키텍처)
     ├── shared/hooks/              ← 공통 훅 (swift-format.sh)
