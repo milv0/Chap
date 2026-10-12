@@ -202,6 +202,48 @@ struct NotchRenderTool {
         try Self.renderPNG(view).write(to: directory.appendingPathComponent("settings-general.png"))
     }
 
+    /// 메뉴 막대의 물범 아이콘을 밝은·어두운 막대 위에서 크게 그린다. 템플릿 이미지라 macOS가 하듯
+    /// 밝은 막대에는 검정, 어두운 막대에는 흰색으로 칠해 본다.
+    @Test("render the seal status bar icon", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    @MainActor
+    func renderSealStatusIcon() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let icon = AppDelegate.sealStatusBarImage()
+        #expect(icon.isTemplate)
+        let scale: CGFloat = 8
+        let size = NSSize(
+            width: 2 * icon.size.width * scale + 3 * 16, height: icon.size.height * scale + 32)
+        let rep = try #require(
+            NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height),
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSGraphicsContext.current?.imageInterpolation = .none
+        for (index, (bar, ink)) in [
+            (NSColor(white: 0.93, alpha: 1), NSColor.black),
+            (NSColor(white: 0.12, alpha: 1), NSColor.white),
+        ].enumerated() {
+            let x = 16 + CGFloat(index) * (icon.size.width * scale + 16)
+            let frame = NSRect(
+                x: x, y: 16, width: icon.size.width * scale, height: icon.size.height * scale)
+            bar.setFill()
+            frame.insetBy(dx: -8, dy: -8).fill()
+            // 템플릿을 한 색으로 칠한다: 이미지 모양을 마스크로 쓰고 그 위를 잉크로 덮는다.
+            let tinted = NSImage(size: icon.size, flipped: false) { rect in
+                icon.draw(in: rect)
+                ink.set()
+                rect.fill(using: .sourceAtop)
+                return true
+            }
+            tinted.draw(in: frame)
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        let png = try #require(rep.representation(using: .png, properties: [:]))
+        try png.write(to: directory.appendingPathComponent("status-seal.png"))
+    }
+
     /// Settings → Tools 화면을 그린다.
     @Test("render the Tools settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
     func renderToolsSettings() throws {

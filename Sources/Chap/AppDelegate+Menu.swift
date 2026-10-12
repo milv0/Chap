@@ -98,7 +98,7 @@ extension AppDelegate {
         }
     }
 
-    /// 픽셀 물범 Chap 실루엣 템플릿 이미지. 1pt = 1칸(24×12pt)을 26×22 캔버스 가운데에 그린다.
+    /// 픽셀 물범 Chap 선 그림 템플릿 이미지(윤곽·눈·입만). 1pt = 1칸(24×12pt)을 26×22 캔버스 가운데에 그린다.
     /// 상태 항목 폭(28pt) 안에 들어가고, 템플릿이라 메뉴 막대 밝기를 따른다.
     static func sealStatusBarImage() -> NSImage {
         let canvas = NSSize(width: 26, height: 22)
@@ -106,7 +106,7 @@ extension AppDelegate {
         let originY = ((canvas.height - CGFloat(ChapMascot.height)) / 2).rounded()
         let image = NSImage(size: canvas, flipped: true) { _ in
             NSColor.black.setFill()
-            for cell in ChapMascot.menuBarSilhouette {
+            for cell in ChapMascot.menuBarOutline {
                 NSRect(
                     x: originX + CGFloat(cell.x), y: originY + CGFloat(cell.y), width: 1,
                     height: 1
