@@ -100,16 +100,22 @@ extension AppDelegate {
 
     /// 픽셀 물범 Chap 선 그림 템플릿 이미지(윤곽·눈·입만). 1pt = 1칸(24×12pt)을 26×22 캔버스 가운데에 그린다.
     /// 상태 항목 폭(28pt) 안에 들어가고, 템플릿이라 메뉴 막대 밝기를 따른다.
+    ///
+    /// 선 굵기: 한 칸은 Retina에서 2픽셀이라 선이 가늘다. 크기는 그대로 두고, 칸마다 오른쪽·아래로
+    /// 장치 픽셀 1개만큼 더 칠해 선을 3픽셀로 굵힌다. 늘리는 양이 정확히 1픽셀이라 경계가 픽셀에 맞아
+    /// 흐려지지 않는다. 1배 화면에서는 반 칸을 칠하면 흐려지므로 늘리지 않는다.
     static func sealStatusBarImage() -> NSImage {
         let canvas = NSSize(width: 26, height: 22)
         let originX = (canvas.width - CGFloat(ChapMascot.width)) / 2
         let originY = ((canvas.height - CGFloat(ChapMascot.height)) / 2).rounded()
         let image = NSImage(size: canvas, flipped: true) { _ in
+            let scale = NSGraphicsContext.current?.cgContext.userSpaceToDeviceSpaceTransform.a ?? 1
+            let extra: CGFloat = scale >= 2 ? 1 / scale : 0
             NSColor.black.setFill()
             for cell in ChapMascot.menuBarOutline {
                 NSRect(
-                    x: originX + CGFloat(cell.x), y: originY + CGFloat(cell.y), width: 1,
-                    height: 1
+                    x: originX + CGFloat(cell.x), y: originY + CGFloat(cell.y),
+                    width: 1 + extra, height: 1 + extra
                 ).fill()
             }
             return true
