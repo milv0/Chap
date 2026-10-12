@@ -3,9 +3,8 @@ import SwiftUI
 
 // MARK: - Tools Tab
 
-/// Settings > Tools 탭. Chap이 하는 "일"들의 설정: Quick Note, Lights Out, Mirror.
-/// 노치 탭은 노치 모양·배치만 다루고, 기능의 단축키·동작은 모두 여기에 모은다
-/// (노치가 없는 Mac에서도 같은 설정을 쓴다).
+/// Settings > Tools 탭. 노치 없이도 쓰는 기능(⌥ 단축키·메뉴바로 여는 것)의 설정: Quick Note, Lights Out.
+/// 노치에서만 쓰는 기능(Mirror 등)은 Notch 탭에 둔다. 빈 섹션은 만들지 않는다.
 struct ToolsSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     let onSave: () -> Void
@@ -96,27 +95,6 @@ struct ToolsSettingsView: View {
                         + "Use macOS Lock Screen (⌃⌘Q) to secure your Mac.")
             }
 
-            Section {
-                SettingsRow(
-                    title: "Camera",
-                    subtitle: "Turns on only while the mirror is open. Nothing is recorded.",
-                    help: "macOS asks for camera access the first time you open the mirror."
-                ) {
-                    Button("Privacy Settings…") {
-                        if let url = URL(
-                            string:
-                                "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
-                        ) {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }
-                    .controlSize(.small)
-                }
-            } header: {
-                SettingsSectionHeader(
-                    title: "Mirror", systemImage: "web.camera",
-                    note: "Check your camera from the notch strip before a call.")
-            }
         }
     }
 }

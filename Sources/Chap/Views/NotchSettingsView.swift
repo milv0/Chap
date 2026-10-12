@@ -180,10 +180,25 @@ struct NotchSettingsView: View {
 
                 // 검정 띠 오른쪽 도구 아이콘: 보일지 말지만 정한다. 단축키·동작은 Tools 탭에 있다.
                 Section {
-                    SettingsToggleRow(
-                        title: "Mirror", subtitle: "Camera check beside the notch.",
-                        isOn: $vm.notchMirrorEnabled
-                    )
+                    // Mirror는 노치에서만 쓰므로 설정 전부(표시·카메라 권한)를 여기에 둔다.
+                    SettingsRow(
+                        title: "Mirror",
+                        subtitle: "Camera check. On only while open; nothing is recorded.",
+                        help: "macOS asks for camera access the first time you open the mirror."
+                    ) {
+                        Button("Camera Access…") {
+                            if let url = URL(
+                                string:
+                                    "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
+                            ) {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .controlSize(.small)
+                        Toggle("Mirror", isOn: $vm.notchMirrorEnabled)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                    }
                     .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
 
                     SettingsToggleRow(

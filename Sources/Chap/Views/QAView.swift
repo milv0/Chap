@@ -135,7 +135,7 @@ struct QAView: View {
                 ),
                 (
                     "Guide Window가 뭔가요?",
-                    "사이트 실행 시 윈도우가 열릴 위치를 반투명 테두리로 미리 보여주는 기능입니다. Settings → General → Startup의 \"Guide Window\" 스위치로 켜고 끌 수 있습니다."
+                    "사이트 실행 시 윈도우가 열릴 위치를 반투명 테두리로 미리 보여주는 기능입니다. Settings → General → Launching의 \"Guide Window\" 스위치로 켜고 끌 수 있습니다."
                 ),
                 (
                     "윈도우 크기가 모니터보다 크면 어떻게 되나요?",
@@ -388,7 +388,7 @@ struct QAView: View {
                 ),
                 (
                     "What is the Guide Window?",
-                    "It shows a translucent outline where the window will appear when launching a site. Toggle it with the \"Guide Window\" switch in Settings → General → Startup."
+                    "It shows a translucent outline where the window will appear when launching a site. Toggle it with the \"Guide Window\" switch in Settings → General → Launching."
                 ),
                 (
                     "What if the window is larger than the monitor?",

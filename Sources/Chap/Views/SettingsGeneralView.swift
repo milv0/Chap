@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - General Tab
 
-/// Settings > General 탭. 앱 자체에 관한 것만: Startup / Shortcuts / Menu Bar, 그리고 버전 표시.
+/// Settings > General 탭. 앱 자체에 관한 것만: App / Launching / Menu Bar, 그리고 버전 표시.
 /// 기능(Quick Note·Lights Out·Mirror) 설정은 Tools 탭, 노치 모양은 Notch 탭에 있다.
 struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
@@ -37,19 +37,13 @@ struct GeneralSettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             SettingsFormPage {
+                // 앱 자체: 언제 켜지고 어떻게 업데이트되는지.
                 Section {
                     SettingsToggleRow(
                         title: "Open at Login", subtitle: "Start Chap when you sign in.",
                         isOn: $vm.launchAtLogin
                     )
                     .onChange(of: vm.launchAtLogin) { _, _ in onSave() }
-
-                    SettingsToggleRow(
-                        title: "Guide Window",
-                        subtitle: "Shows where a window will land while it opens.",
-                        isOn: $vm.showGuideWindow
-                    )
-                    .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
 
                     SettingsToggleRow(
                         title: "Check for Updates Automatically",
@@ -61,9 +55,10 @@ struct GeneralSettingsView: View {
                     )
                     .disabled(!updateController.canCheckForUpdates)
                 } header: {
-                    SettingsSectionHeader(title: "Startup", systemImage: "power")
+                    SettingsSectionHeader(title: "App", systemImage: "app.badge")
                 }
 
+                // 사이트를 여는 방식: 단축키와 창 위치 미리보기.
                 Section {
                     SettingsToggleRow(
                         title: "Option-Key Triggers",
@@ -74,9 +69,16 @@ struct GeneralSettingsView: View {
                         isOn: $vm.optionShortcutsEnabled
                     )
                     .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
+
+                    SettingsToggleRow(
+                        title: "Guide Window",
+                        subtitle: "Shows where a window will land while it opens.",
+                        isOn: $vm.showGuideWindow
+                    )
+                    .onChange(of: vm.showGuideWindow) { _, _ in onSave() }
                 } header: {
                     SettingsSectionHeader(
-                        title: "Shortcuts", systemImage: "option",
+                        title: "Launching", systemImage: "arrow.up.forward.app",
                         note:
                             "Per-site keys live in Launchers; Quick Note and Lights Out keys in Tools."
                     )

@@ -49,8 +49,8 @@ Sources/
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
-│       ├── SettingsGeneralView.swift ← General 탭 (Startup/Shortcuts/Menu Bar: 앱 자체 설정만)
-│       ├── SettingsToolsView.swift ← Tools 탭 (Quick Note·Lights Out·Mirror 기능 설정)
+│       ├── SettingsGeneralView.swift ← General 탭 (App/Launching/Menu Bar: 앱 자체 설정만)
+│       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Lights Out)
 │       ├── SettingsConfigTransfer.swift ← Settings config import/export/apply 로직
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
 │       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
@@ -280,8 +280,9 @@ Config 모델 필드:
   - URL·Finder는 최대 4개, App은 최대 6개(노치 2열 × 3줄 아이콘). 추가 UI·저장·Import에서 동일하게 차단
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환. 네 탭(Launchers·General·Notch·Tools)이
   같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
-  Launchers는 실행 항목 편집, General은 Startup(로그인 실행·가이드·업데이트 확인)·Shortcuts(Option 토글)·Menu Bar(상태바 아이콘·메뉴 섹션),
-  Tools는 기능별 설정(Quick Note ⌥키·백업 폴더, Lights Out ⌥키·해제 키, Mirror 카메라 권한)을 모아 둔다.
+  Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),
+  Tools는 노치 없이도 쓰는 기능의 설정(Quick Note ⌥키·백업 폴더, Lights Out ⌥키·해제 키)을 모아 둔다.
+  노치에서만 쓰는 Mirror는 Notch → Top Strip의 한 줄에 표시 스위치와 카메라 권한 버튼을 함께 둔다.
   Notch는 노치 런처 on/off, Layout(고정 선반 2칸 + 위젯 4칸), Top Strip(Mirror·Quick Note·Lights Out 아이콘 표시 여부만),
   Appearance(Custom/Glass 스타일, Glass 재질·appearance) 설정을
   제공한다. Glass appearance(System/Light/Dark)와 재질(Clear/Regular)은 서로 독립적으로
