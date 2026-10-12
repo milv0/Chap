@@ -2,6 +2,25 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.8.6] — 2026-10-12
+
+### Added
+
+- **The notch launcher works without a notch** — On a Mac with no notch, point at
+  the top middle of the menu bar and the same dock opens. Nothing is drawn up
+  there until you do, so the menu bar stays clear and its clicks still belong to
+  your apps; the black strip takes the height of the menu bar, and the Chap Drop
+  badge stays off on those screens.
+
+### Fixed
+
+- **The Focus HUD seal holds still** — The z no longer pushes the seal down when
+  a session ends; it fills the margin above the seal, so starting and ending a
+  session show Chap in the same place.
+- **The Focus HUD belongs to the notch** — The overlay now appears only on the
+  built-in display with the notch. On a notchless Mac the sound and the blue
+  status icon carry the feedback.
+
 ## [2.8.5] — 2026-10-12
 
 ### Fixed
