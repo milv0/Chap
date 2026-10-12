@@ -386,12 +386,19 @@ extension AppDelegate {
             quickNoteEnabled: config.notchQuickNoteEnabled, sites: config.sites)
     }
 
+    /// Lights Out 단축키로 실제 등록할 키 (예약키·사이트·Quick Note와 겹치지 않을 때만).
+    var registeredLightsOutKey: String? {
+        LightsOutPolicy.registeredShortcut(
+            config.lightsOutShortcut, sites: config.sites, quickNoteKey: registeredQuickNoteKey)
+    }
+
     func configureGlobalHotKeys() {
         guard !isRunningTests else { return }
         globalHotKeyManager.configure(
             sites: config.sites,
             optionShortcutsEnabled: config.optionShortcutsEnabled,
-            quickNoteKey: registeredQuickNoteKey
+            quickNoteKey: registeredQuickNoteKey,
+            lightsOutKey: registeredLightsOutKey
         ) { [weak self] action in
             self?.handleGlobalHotKeyAction(action)
         }
@@ -414,6 +421,9 @@ extension AppDelegate {
             NotificationCenter.default.post(
                 name: NotchLauncherController.requestClose, object: nil)
             QuickNoteWindow.show()
+        case .lightsOut:
+            // 위에서 덮여 있으면 이미 돌아왔다. 걷는 것은 해제 키(기본 Esc)가 맡는다.
+            toggleLightsOut()
         }
     }
 

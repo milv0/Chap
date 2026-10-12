@@ -414,6 +414,9 @@ public struct Config: Codable {
     public var notchQuickNoteShortcut: String?
     /// Lights Out 가림막을 걷는 키. "esc"(기본) 또는 한 글자(대문자). 잠금이 아니라 가림막이다.
     public var lightsOutUnlockKey: String
+    /// Lights Out을 켜는 ⌥ 키(한 글자 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥L.
+    /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
+    public var lightsOutShortcut: String?
     public var notchWidgets: [NotchWidget]
     /// 어깨 아이콘으로 접어 둔 위젯(Screenshots·Downloads). 노치에서 접고 펴며, 이 Mac의
     /// 표시 선택이라 설정창 저장·가져오기가 바꾸지 않는다. `NotchShoulderPolicy.normalized`로 정리한다.
@@ -449,7 +452,7 @@ public struct Config: Codable {
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
-        case lightsOutUnlockKey, notchLightsOutEnabled
+        case lightsOutUnlockKey, notchLightsOutEnabled, lightsOutShortcut
         case sites
     }
 
@@ -470,6 +473,7 @@ public struct Config: Codable {
         notchLightsOutEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
+        lightsOutShortcut: String? = LightsOutPolicy.defaultShortcut,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -491,6 +495,7 @@ public struct Config: Codable {
         self.notchLightsOutEnabled = notchLightsOutEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
+        self.lightsOutShortcut = QuickNoteShortcutPolicy.normalized(lightsOutShortcut)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -560,6 +565,12 @@ public struct Config: Codable {
         // 키가 없거나 알 수 없는 값이면 Esc로 둔다. 해제할 길은 늘 있어야 한다.
         lightsOutUnlockKey = LightsOutPolicy.normalized(
             try? container.decodeIfPresent(String.self, forKey: .lightsOutUnlockKey))
+        // 키가 없으면(이전 버전 설정) 기본 ⌥L, ""이면 끔.
+        if let stored = try? container.decodeIfPresent(String.self, forKey: .lightsOutShortcut) {
+            lightsOutShortcut = QuickNoteShortcutPolicy.normalized(stored)
+        } else {
+            lightsOutShortcut = LightsOutPolicy.defaultShortcut
+        }
         // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -622,6 +633,7 @@ public struct Config: Codable {
         try container.encode(notchLightsOutEnabled, forKey: .notchLightsOutEnabled)
         try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
         try container.encode(lightsOutUnlockKey, forKey: .lightsOutUnlockKey)
+        try container.encode(lightsOutShortcut ?? "", forKey: .lightsOutShortcut)
         try container.encode(
             notchCollapsedWidgets.map(\.rawValue), forKey: .notchCollapsedWidgets)
         try container.encode(sites, forKey: .sites)

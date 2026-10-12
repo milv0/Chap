@@ -28,6 +28,7 @@ enum SettingsConfigTransfer {
             notchLightsOutEnabled: vm.notchLightsOutEnabled,
             notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
             lightsOutUnlockKey: vm.lightsOutUnlockKey,
+            lightsOutShortcut: vm.lightsOutShortcut,
             notchWidgets: vm.notchWidgets,
             sites: vm.sites)
     }
@@ -191,6 +192,7 @@ enum SettingsConfigTransfer {
                         notchLightsOutEnabled: vm.notchLightsOutEnabled,
                         notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
                         lightsOutUnlockKey: vm.lightsOutUnlockKey,
+                        lightsOutShortcut: vm.lightsOutShortcut,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 

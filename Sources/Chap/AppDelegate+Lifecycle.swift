@@ -178,6 +178,7 @@ extension AppDelegate {
             notchLightsOutEnabled: config.notchLightsOutEnabled,
             notchQuickNoteShortcut: config.notchQuickNoteShortcut,
             lightsOutUnlockKey: config.lightsOutUnlockKey,
+            lightsOutShortcut: config.lightsOutShortcut,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -199,6 +200,7 @@ extension AppDelegate {
                 notchLightsOutEnabled: payload.notchLightsOutEnabled,
                 notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
                 lightsOutUnlockKey: payload.lightsOutUnlockKey,
+                lightsOutShortcut: payload.lightsOutShortcut,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -236,6 +238,7 @@ extension AppDelegate {
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
             let previousNotchLightsOutEnabled = self.config.notchLightsOutEnabled
             let previousQuickNoteKey = self.registeredQuickNoteKey
+            let previousLightsOutKey = self.registeredLightsOutKey
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -261,7 +264,9 @@ extension AppDelegate {
             }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
             // 메뉴를 다시 만들면 단축키도 다시 등록하지만, 그렇지 않을 때도 Quick Note 키가 바뀌면 다시 등록한다.
-            let quickNoteKeyChanged = previousQuickNoteKey != self.registeredQuickNoteKey
+            let quickNoteKeyChanged =
+                previousQuickNoteKey != self.registeredQuickNoteKey
+                || previousLightsOutKey != self.registeredLightsOutKey
             if previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes

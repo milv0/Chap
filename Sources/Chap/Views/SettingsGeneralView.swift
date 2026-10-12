@@ -106,40 +106,51 @@ struct GeneralSettingsView: View {
                     }
 
                     // Lights Out: 자리 비울 때 화면을 덮는 가림막. 잠금이 아니므로 그렇게 적지 않는다.
-                    Section("Lights Out") {
-                        VStack(alignment: .leading, spacing: 2) {
-                            LabeledContent("Come Back With") {
-                                TextField(
-                                    "",
-                                    text: Binding(
-                                        get: { LightsOutPolicy.label(for: vm.lightsOutUnlockKey) },
-                                        set: { newValue in
-                                            vm.lightsOutUnlockKey = LightsOutPolicy.keyAfterEditing(
-                                                currentKey: vm.lightsOutUnlockKey, newText: newValue
-                                            )
-                                        }),
-                                    prompt: Text("Esc")
-                                )
-                                .textFieldStyle(.roundedBorder)
-                                .multilineTextAlignment(.center)
-                                .frame(width: 48)
-                                .accessibilityLabel("Lights Out unlock key")
-                            }
-                            Text(
-                                LightsOutPolicy.subtitle
-                                    + " Type a letter to change the key, or clear it for Esc."
-                                    + " Forgot the key? Press any key five times quickly."
+                    Section {
+                        OptionShortcutRow(
+                            title: "Shortcut", key: $vm.lightsOutShortcut,
+                            conflictMessage: vm.lightsOutShortcut.flatMap { key in
+                                LightsOutPolicy.conflict(
+                                    for: key, sites: vm.sites,
+                                    quickNoteKey: vm.notchQuickNoteShortcut
+                                ).map { QuickNoteShortcutPolicy.conflictMessage($0, key: key) }
+                            },
+                            help: "Press ⌥ and this key anywhere to cover your screens. "
+                                + "Clear it to turn it off.",
+                            accessibilityLabel: "Lights Out shortcut key"
+                        )
+                        .onChange(of: vm.lightsOutShortcut) { _, _ in onSave() }
+
+                        HStack(spacing: 6) {
+                            Text("Come Back With")
+                            Spacer(minLength: 8)
+                            TextField(
+                                "",
+                                text: Binding(
+                                    get: { LightsOutPolicy.label(for: vm.lightsOutUnlockKey) },
+                                    set: { newValue in
+                                        vm.lightsOutUnlockKey = LightsOutPolicy.keyAfterEditing(
+                                            currentKey: vm.lightsOutUnlockKey, newText: newValue)
+                                    }),
+                                prompt: Text("Esc")
                             )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
-                            Text(
-                                "This is a cover, not a lock: it asks for no password, and quitting "
-                                    + "Chap lifts it. Use macOS Lock Screen (⌃⌘Q) to secure your Mac."
-                            )
-                            .font(.caption)
-                            .foregroundColor(DS.textSecondary)
+                            .keyCapField(width: 48)
+                            .accessibilityLabel("Lights Out unlock key")
                         }
+                        .help(
+                            "Type a letter to change the key, or clear it for Esc. "
+                                + "Forgot the key? Press any key five times quickly."
+                        )
                         .onChange(of: vm.lightsOutUnlockKey) { _, _ in onSave() }
+                    } header: {
+                        Text("Lights Out")
+                    } footer: {
+                        Text(
+                            "Keeps your screens dark while you're on break. It is a cover, not a lock: "
+                                + "use macOS Lock Screen (⌃⌘Q) to secure your Mac."
+                        )
+                        .font(.caption)
+                        .foregroundColor(DS.textSecondary)
                     }
 
                     Section("Menu") {

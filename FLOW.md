@@ -579,6 +579,7 @@ Settings → Notch Launcher on
 ### 9.6 Lights Out (화면 가림막)
 
 ```
+⌥L(GlobalHotKeyAction.lightsOut, LightsOutPolicy.registeredShortcut: 예약키·사이트·Quick Note 키와 겹치면 미등록)
 메뉴바 Lights Out  또는  노치 띠 달 아이콘(NotchLightsOutStripButton.request → AppDelegate, 이미 켜져 있으면 무시)
   └ toggleLightsOut(): requestClose로 도커 접기 → LightsOutController.turnOn()
       ├ IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep, "Chap Lights Out")
