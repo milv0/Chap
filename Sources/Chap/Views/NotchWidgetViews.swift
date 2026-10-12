@@ -477,12 +477,16 @@ struct NotchStripTools: View {
     var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
+    /// Lights Out 아이콘. Quick Note 오른쪽(띠 도구의 끝)에 둔다.
+    var showsLightsOut = false
 
-    private enum Tool: Equatable { case mirror, note }
+    private enum Tool: Equatable { case mirror, note, lightsOut }
     @State private var openTool: Tool?
 
     var body: some View {
-        let tools: [Tool] = (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
+        let tools: [Tool] =
+            (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
+            + (showsLightsOut ? [.lightsOut] : [])
         let offsets = NotchLauncherPolicy.stripToolCenterOffsets(
             besideDropBadge: besideDropBadge, count: tools.count)
         GeometryReader { geo in
@@ -510,6 +514,9 @@ struct NotchStripTools: View {
                             isOpen: binding(for: .mirror))
                     case .note:
                         NotchQuickNoteStripButton(
+                            iconCenterX: centerX, stripHeight: stripHeight)
+                    case .lightsOut:
+                        NotchLightsOutStripButton(
                             iconCenterX: centerX, stripHeight: stripHeight)
                     }
                 }
@@ -576,6 +583,35 @@ struct NotchQuickNoteStripButton: View {
         .onHover { isHovered = $0 }
         .help("Quick Note")
         .accessibilityLabel("Quick Note")
+        .position(x: iconCenterX, y: stripHeight / 2)
+    }
+}
+
+/// 상단 띠의 Lights Out 아이콘. 누르면 도커를 접고 모든 화면을 가림막으로 덮는다.
+/// 덮인 뒤에는 노치가 가려지므로 여기서 끌 수 없다. 돌아올 때는 해제 키(기본 Esc)를 누른다.
+struct NotchLightsOutStripButton: View {
+    /// 눌렀을 때 AppDelegate가 가림막을 친다 (메뉴바의 Lights Out과 같은 동작).
+    static let request = Notification.Name("ChapLightsOutRequest")
+
+    let iconCenterX: CGFloat
+    let stripHeight: CGFloat
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            NotificationCenter.default.post(name: Self.request, object: nil)
+        } label: {
+            Image(systemName: "moon.fill")
+                .font(DS.notchStripIconFont)
+                .foregroundColor(DS.notchStripIconColor(isHovered: isHovered))
+                .frame(width: NotchLauncherPolicy.stripToolPitch, height: stripHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help("Lights Out: cover your screens. Press Esc to come back.")
+        .accessibilityLabel(LightsOutPolicy.menuTitleOff)
         .position(x: iconCenterX, y: stripHeight / 2)
     }
 }

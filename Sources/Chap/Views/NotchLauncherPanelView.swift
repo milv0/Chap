@@ -89,6 +89,8 @@ struct NotchLauncherPanelView: View {
     var showsMirror = false
     /// 상단 검정 띠에 Quick Note 아이콘을 둘지. Mirror 오른쪽에 둔다.
     var showsNote = false
+    /// 상단 검정 띠에 Lights Out 아이콘을 둘지. Quick Note 오른쪽에 둔다.
+    var showsLightsOut = false
     let onLaunch: (Int) -> Void
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
     /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
@@ -280,7 +282,8 @@ struct NotchLauncherPanelView: View {
                     besideDropBadge: true,
                     showsEmptyDropBox: dropFiles.isEmpty,
                     showsMirror: showsMirror,
-                    showsNote: showsNote)
+                    showsNote: showsNote,
+                    showsLightsOut: showsLightsOut)
             }
             .overlay(alignment: .topLeading) {
                 if showsShoulderGuides { shoulderGuides }

@@ -779,6 +779,7 @@ struct SettingsView: View {
                     notchPanelColorHex: vm.notchPanelColorHex,
                     notchMirrorEnabled: vm.notchMirrorEnabled,
                     notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
+                    notchLightsOutEnabled: vm.notchLightsOutEnabled,
                     notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
                     lightsOutUnlockKey: vm.lightsOutUnlockKey,
                     notchWidgets: vm.notchWidgets)) ?? true

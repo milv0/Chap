@@ -331,6 +331,9 @@ extension AppDelegate {
         notchLauncher.quickNoteEnabledProvider = { [weak self] in
             self?.config.notchQuickNoteEnabled ?? false
         }
+        notchLauncher.lightsOutEnabledProvider = { [weak self] in
+            self?.config.notchLightsOutEnabled ?? false
+        }
         notchLauncher.collapsedWidgetsProvider = { [weak self] in
             self?.config.notchCollapsedWidgets ?? []
         }

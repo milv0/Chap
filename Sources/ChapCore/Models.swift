@@ -407,6 +407,8 @@ public struct Config: Codable {
     public var notchMirrorEnabled: Bool
     /// 상단 띠 Quick Note 아이콘 표시 여부. 누르면 메모가 띠 아래로 펼쳐진다.
     public var notchQuickNoteEnabled: Bool
+    /// 상단 띠 Lights Out 아이콘 표시 여부. 누르면 가림막을 친다. 누락 시 true.
+    public var notchLightsOutEnabled: Bool
     /// Quick Note 창을 여는 ⌥ 키(한 글자, 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥N.
     /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
     public var notchQuickNoteShortcut: String?
@@ -447,7 +449,7 @@ public struct Config: Codable {
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
-        case lightsOutUnlockKey
+        case lightsOutUnlockKey, notchLightsOutEnabled
         case sites
     }
 
@@ -465,6 +467,7 @@ public struct Config: Codable {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
+        notchLightsOutEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
@@ -485,6 +488,7 @@ public struct Config: Codable {
             ?? Config.notchPanelColorHexDefault
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
+        self.notchLightsOutEnabled = notchLightsOutEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
@@ -544,6 +548,8 @@ public struct Config: Codable {
             (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
         notchQuickNoteEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchQuickNoteEnabled)) ?? true
+        notchLightsOutEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchLightsOutEnabled)) ?? true
         // 키가 없으면(이전 버전 설정) 기본 ⌥N, ""이면 끔.
         if let stored = try? container.decodeIfPresent(String.self, forKey: .notchQuickNoteShortcut)
         {
@@ -613,6 +619,7 @@ public struct Config: Codable {
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
+        try container.encode(notchLightsOutEnabled, forKey: .notchLightsOutEnabled)
         try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
         try container.encode(lightsOutUnlockKey, forKey: .lightsOutUnlockKey)
         try container.encode(

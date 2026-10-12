@@ -82,7 +82,7 @@ Other surfaces:
 
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-  six slots (Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do; Mirror and Quick Note are icons in the black top strip beside the Drop badge). On a screen
+  six slots (Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do; Mirror, Quick Note, and Lights Out are icons in the black top strip beside the Drop badge). On a screen
   without a notch it draws no window at the top: a 150ms pointer poll over the
   top-center `hoverZone` opens the same dock, and the Drop badge is suppressed, because a
   transparent window over the menu bar swallows the clicks that belong to it. It is additive —

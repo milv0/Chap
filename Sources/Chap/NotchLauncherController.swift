@@ -61,6 +61,7 @@ final class NotchLauncherController {
     var mirrorEnabledProvider: () -> Bool = { false }
     /// 상단 띠 Quick Note 아이콘 표시 여부.
     var quickNoteEnabledProvider: () -> Bool = { false }
+    var lightsOutEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -415,7 +416,7 @@ final class NotchLauncherController {
         let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !slots.isEmpty || mirrorEnabledProvider()
+                hasSlots: !slots.isEmpty || mirrorEnabledProvider() || lightsOutEnabledProvider()
                     || quickNoteEnabledProvider(), forDrop: forDrop)
         else { return }
 
@@ -439,6 +440,7 @@ final class NotchLauncherController {
             slots: slots,
             showsMirror: mirrorEnabledProvider(),
             showsNote: quickNoteEnabledProvider(),
+            showsLightsOut: lightsOutEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
