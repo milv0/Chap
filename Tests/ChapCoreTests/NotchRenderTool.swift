@@ -192,9 +192,17 @@ struct NotchRenderTool {
         .enabled(if: NotchRenderTool.outputDirectory != nil))
     func collapseReportsSize() throws {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        // 여섯 칸을 모두 채워 도커가 최소 폭보다 넉넉히 넓게 만든다. 최소 폭에 걸리면 접어도 줄어들 수 없다.
         let slots = NotchSlotContent.slots(
-            widgets: [.screenshots, .downloads, .sites, .apps, .folders, .none], sites: config.sites
-        )
+            widgets: [.screenshots, .downloads, .sites, .apps, .folders, .todo],
+            sites: config.sites)
+        // 선반이 비면 Screenshots가 저절로 접혀 "펼친 상태"가 아니게 된다. 파일이 있는 상태로 고정한다.
+        ScreenshotShelf.previewOverride = [URL(fileURLWithPath: "/tmp/chap-shot.png")]
+        DownloadsShelf.previewOverride = [URL(fileURLWithPath: "/tmp/chap-download.pdf")]
+        defer {
+            ScreenshotShelf.previewOverride = nil
+            DownloadsShelf.previewOverride = nil
+        }
         let reveal = NotchRevealModel()
         reveal.revealed = true
         var reported: [CGSize] = []

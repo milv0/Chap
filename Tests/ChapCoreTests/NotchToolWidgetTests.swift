@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 
@@ -364,5 +365,26 @@ struct QuickNotePlacementTests {
         let origin = QuickNotePlacement.origin(
             windowSize: CGSize(width: 1600, height: 300), notchRect: notch, visibleFrame: visible)
         #expect(origin.x == visible.minX)
+    }
+}
+
+@Suite("Keep Awake HUD seal")
+@MainActor
+struct KeepAwakeHUDSealTests {
+    /// 자고 깨는 두 모습에서 물범이 움직이면 HUD가 깜빡이는 것처럼 보인다. z 자리는 늘 비워 둔다.
+    @Test("the seal keeps its place whether or not the z is drawn")
+    func sealDoesNotMoveForTheZ() {
+        let awake = ChapMascotImage.image(pixelSize: 4, eyes: .open, pose: .tailUp)
+        let asleep = ChapMascotImage.image(
+            pixelSize: 4, eyes: .closed, pose: .rest, showsSleepZ: true)
+
+        #expect(awake.size == asleep.size)
+        // 격자 12줄 + z 여백 4줄, 칸 4pt.
+        #expect(awake.size == NSSize(width: 96, height: 64))
+    }
+
+    @Test("the z sits in the margin above the seal, not in the sprite rows")
+    func zUsesTheMargin() {
+        #expect(ChapMascotImage.sleepZRowSpan == ChapMascot.sleepZRows.count)
     }
 }

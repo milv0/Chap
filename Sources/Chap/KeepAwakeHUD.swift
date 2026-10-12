@@ -3,7 +3,9 @@ import Cocoa
 /// Keep Awake 상태 변화를 화면 중앙에 잠깐 보여주는 HUD 오버레이.
 ///
 /// GuideWindow와 같은 토큰 방식으로 빠른 연속 토글 시 유령 창을 막는다.
-/// 그림은 앱 아이콘·노치와 같은 픽셀 물범이다: 켜면 꼬리를 든 깨어 있는 Chap, 끄면 잠든 Chap.
+/// 그림은 앱 아이콘·노치와 같은 픽셀 물범이다: 켜면 꼬리를 든 깨어 있는 Chap, 끄면 눈 감고 z를 띄운 Chap.
+/// 물범은 두 모습에서 같은 자리에 있고, z는 머리 위 여백만 채운다.
+/// 노치가 있는 내장 화면에만 띄운다. 노치가 없는 Mac에서는 사운드와 상태바 아이콘 색이 알림 역할을 한다.
 /// 표시 후 잠시 뒤 스스로 페이드아웃하며, 마우스 이벤트를 가로채지 않는다.
 /// 모든 호출은 내부에서 메인 큐로 직렬화된다.
 enum KeepAwakeHUD {
@@ -27,7 +29,8 @@ enum KeepAwakeHUD {
                 old.orderOut(nil)
                 window = nil
             }
-            guard let screen = NSScreen.main ?? NSScreen.screens.first else { return }
+            // Chap(물범)은 노치의 친구다. HUD도 노치가 있는 내장 화면 가운데에만 띄운다.
+            guard let screen = NotchLauncherController.notchScreen() else { return }
 
             let visible = screen.visibleFrame
             let origin = NSPoint(
