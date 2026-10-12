@@ -14,7 +14,7 @@
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
-- **Chap the Seal** — A little pixel seal rests on the left of the notch's black strip, flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
+- **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
 - **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus Mode** — A Focus dial in the notch: drag the arc to set 1–12 hours (your last setting is remembered), click the center to start, and watch the arc wind down; click again to stop (the same session as Keep Mac Awake)
@@ -24,7 +24,7 @@
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
-- **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, or Custom
+- **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max (fills the full height left by the menu bar and Dock), or Custom
 - **Display Minimap** — In normal mode, click a display to select the site target; in Follow Cursor, click a display to configure that monitor's size
 - **Global Hotkeys** — Only registered `⌥` combinations reach Chap; normal typing bypasses it
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
@@ -35,7 +35,7 @@
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal silhouette) in Settings > General; it turns Chap blue while Keep Mac Awake runs
-- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
+- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen, and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable

@@ -615,7 +615,7 @@ private struct MirrorPreview: NSViewRepresentable {
 /// Quick Note 창(`QuickNoteWindow`)의 한 장짜리 메모. 입력은 잠시 멈추면 저장되고,
 /// 커서가 풀리거나 창이 닫힐 때 남은 변경을 즉시 저장한다. 덮어쓰기 전 백업은 `QuickNoteStore`가 맡는다.
 struct NotchQuickNoteView: View {
-    /// 대기 중인 저장을 즉시 쓰라는 요청 (분리 창 닫힘, 앱 종료).
+    /// 대기 중인 저장을 즉시 쓰라는 요청 (메모 창 닫힘, 앱 종료).
     static let flushRequest = Notification.Name("ChapQuickNoteFlush")
 
     /// 대기 중인 저장이 파일에 다 쓰일 때까지 기다린다 (앱 종료 직전).
@@ -743,7 +743,7 @@ struct NotchQuickNoteView: View {
             }
             isFocused = false
         }
-        // 분리 창: 다른 창·앱으로 가면 커서를 푼다.
+        // 메모 창: 다른 창·앱으로 가면 커서를 푼다.
         .onReceive(
             NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)
         ) { note in

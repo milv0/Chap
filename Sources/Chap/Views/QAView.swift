@@ -123,7 +123,7 @@ struct QAView: View {
                 ),
                 (
                     "Size Preset은 어떻게 동작하나요?",
-                    "Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
+                    "Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Max는 메뉴 막대와 Dock을 뺀 높이를 꽉 채우므로 위아래 여백이 없습니다(너비는 94%). Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
                 ),
                 (
                     "Follow Cursor에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
@@ -173,7 +173,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap입니다. 이 아기 물범이 바로 Chap이에요. 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. To-do를 체크하면 꼬리를 한 번 까딱합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap입니다. 이 아기 물범이 바로 Chap이에요(앱 아이콘과 같은 그림입니다). 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. To-do를 체크하면 꼬리를 한 번 까딱합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -237,8 +237,8 @@ struct QAView: View {
                     "Quit을 선택하면 항상 종료 확인창이 나타나며 Cancel이 기본 선택입니다. Quit을 명시적으로 선택하면 종료하고, Keep Awake가 활성 중이었다면 세션도 함께 해제됩니다. 다음 실행 시 Keep Awake는 꺼진 상태로 시작합니다."
                 ),
                 (
-                    "켜고 끌 때 화면에 뜨는 커피 아이콘은 뭔가요?",
-                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
+                    "켜고 끌 때 화면 가운데에 뜨는 물범은 뭔가요?",
+                    "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. Chap(물범)이 켤 때는 깨어서 꼬리를 들고, 끌 때는 눈을 감고 z를 띄웁니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
                 ),
                 (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
@@ -368,7 +368,7 @@ struct QAView: View {
                 ),
                 (
                     "How do Size Presets work?",
-                    "Choose Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, or Max to recalculate the size for the screen at launch time. Editing Width or Height switches the item to Custom and saves that exact size."
+                    "Choose Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, or Max to recalculate the size for the screen at launch time. Max fills the full height left by the menu bar and Dock, so there is no gap above or below (width stays at 94%). Editing Width or Height switches the item to Custom and saves that exact size."
                 ),
                 (
                     "What size reference does Follow Cursor use on external monitors?",
@@ -418,7 +418,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap. The baby seal is Chap itself. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when Focus starts it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. When you check off a to-do it flicks its tail once. It is just decoration, so clicking it does nothing."
+                    "That's Chap. The baby seal is Chap itself, the same drawing as the app icon. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when Focus starts it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. When you check off a to-do it flicks its tail once. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
@@ -482,8 +482,8 @@ struct QAView: View {
                     "Chap always asks for confirmation before quitting, with Cancel as the default. Choosing Quit exits Chap and releases any active Keep Awake session. Keep Awake starts off next time."
                 ),
                 (
-                    "What is the coffee cup that briefly appears on screen?",
-                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring), along with a subtle sound. While active, Chap also turns the status bar icon theme blue."
+                    "What is the seal that briefly appears in the middle of the screen?",
+                    "It's a short overlay shown whenever a session starts or ends (manually or by expiring). Chap is awake with its tail up when a session starts and asleep with a z when it ends, along with a subtle sound. While active, Chap also turns the status bar icon theme blue."
                 ),
                 (
                     "How do I shorten the menu's site list?",
