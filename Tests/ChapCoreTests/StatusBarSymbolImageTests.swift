@@ -167,6 +167,43 @@ struct IsolatedCopyImageTests {
         #expect(copyB?.size == NSSize(width: 8, height: 8))
     }
 
+    /// 물범 아이콘을 그린 비트맵 (위가 y=0).
+    private func sealBitmap(scale: Int) throws -> NSBitmapImageRep {
+        let image = AppDelegate.sealStatusBarImage()
+        let rep = try #require(
+            NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(image.size.width) * scale,
+                pixelsHigh: Int(image.size.height) * scale, bitsPerSample: 8, samplesPerPixel: 4,
+                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                bitsPerPixel: 0))
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
+        return rep
+    }
+
+    @Test("on Retina the eyes and mouth stay two pixels while the outline thickens")
+    func faceStaysThin() throws {
+        let rep = try sealBitmap(scale: 2)
+        // 26×22 캔버스에서 격자의 원점은 (1, 5)pt. Retina에서 칸 (x, y)는 픽셀 (2(x+1), 2(y+5))부터 2×2.
+        func alpha(cellX: Int, cellY: Int, dx: Int, dy: Int) -> CGFloat {
+            rep.colorAt(x: 2 * (cellX + 1) + dx, y: 2 * (cellY + 5) + dy)?.alphaComponent ?? 0
+        }
+        for face in ChapMascot.menuBarFace {
+            let (x, y) = (face[0], face[1])
+            #expect(alpha(cellX: x, cellY: y, dx: 1, dy: 1) > 0.99, "face \(face) is drawn")
+            // 오른쪽 이웃이 몸통(빈 칸)인 얼굴 칸은 그 자리가 비어 있어야 한다 = 늘리지 않았다.
+            let rightIsEmpty = !ChapMascot.menuBarOutline.contains { $0.x == x + 1 && $0.y == y }
+            if rightIsEmpty {
+                #expect(alpha(cellX: x, cellY: y, dx: 2, dy: 0) < 0.01, "face \(face) stays thin")
+            }
+        }
+        // 윤곽 칸 하나(머리 꼭대기 (5, 0))는 오른쪽 아래 1픽셀이 더 칠해져 있다.
+        #expect(alpha(cellX: 8, cellY: 0, dx: 2, dy: 2) > 0.99)
+    }
+
     /// 물범 아이콘을 2배(Retina)로 그려 픽셀을 센다.
     private func sealPixels(scale: Int) throws -> (opaque: Int, partial: Int) {
         let image = AppDelegate.sealStatusBarImage()
