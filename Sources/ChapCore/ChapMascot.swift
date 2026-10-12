@@ -264,14 +264,12 @@ public enum ChapMascot {
 
     // MARK: - 메뉴 막대 아이콘
 
-    /// 메뉴 막대용 한 색 실루엣. 메뉴 막대 아이콘은 템플릿(한 색)이라 윤곽·몸통·그림자를 모두 채우고,
-    /// 눈과 입만 비워 얼굴이 보이게 한다. 1pt = 1칸이면 Retina에서 2픽셀이라 선명하다(24×12pt).
-    public static let menuBarFaceHoles: Set<[Int]> = [[4, 4], [7, 4], [5, 6], [6, 6]]
-
-    public static let menuBarSilhouette: [(x: Int, y: Int)] = rows.enumerated().flatMap { y, row in
+    /// 메뉴 막대용 선 그림: 윤곽과 눈·입(`o`, `e`)만 칠하고 몸통·그림자는 비운다.
+    /// 템플릿(한 색) 이미지라 macOS가 메뉴 막대에 맞춰 선 색을 정한다(밝은 막대는 검정, 어두운 막대는 흰색).
+    /// 몸통을 칠하면 선이 몸통에 묻혀 덩어리로 보이므로 선만 둔다. 1pt = 1칸이면 Retina에서 2픽셀이다(24×12pt).
+    public static let menuBarOutline: [(x: Int, y: Int)] = rows.enumerated().flatMap { y, row in
         row.enumerated().compactMap { x, ch -> (x: Int, y: Int)? in
-            guard ch != ".", !menuBarFaceHoles.contains([x, y]) else { return nil }
-            return (x, y)
+            ch == "o" || ch == "e" ? (x, y) : nil
         }
     }
 

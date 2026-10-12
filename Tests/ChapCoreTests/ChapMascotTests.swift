@@ -160,23 +160,25 @@ struct ChapMascotFocusDiveTests {
     }
 }
 
-@Suite("ChapMascot – menu bar silhouette")
+@Suite("ChapMascot – menu bar outline")
 struct ChapMascotMenuBarTests {
-    @Test("the silhouette fills the seal but leaves the eyes and mouth open")
-    func faceHoles() {
-        let cells = Set(ChapMascot.menuBarSilhouette.map { [$0.x, $0.y] })
-        #expect(!cells.contains([4, 4]) && !cells.contains([7, 4]))
-        #expect(!cells.contains([5, 6]) && !cells.contains([6, 6]))
-        // 눈 사이 이마와 몸통은 채워져 있다.
-        #expect(cells.contains([5, 4]) && cells.contains([12, 6]))
-        let filled = ChapMascot.rows.joined().filter { $0 != "." }.count
-        #expect(cells.count == filled - ChapMascot.menuBarFaceHoles.count)
+    @Test("the outline draws the lines, eyes, and mouth, and leaves the body empty")
+    func outlineOnly() {
+        let cells = Set(ChapMascot.menuBarOutline.map { [$0.x, $0.y] })
+        // 눈과 입은 칠한다.
+        #expect(cells.contains([4, 4]) && cells.contains([7, 4]))
+        #expect(cells.contains([5, 6]) && cells.contains([6, 6]))
+        // 이마와 몸통(흰 칸), 배 그림자는 비운다.
+        #expect(!cells.contains([5, 4]) && !cells.contains([12, 6]))
+        #expect(!cells.contains([1, 8]))
+        let lines = ChapMascot.rows.joined().filter { $0 == "o" || $0 == "e" }.count
+        #expect(cells.count == lines)
     }
 
-    @Test("the silhouette fits the 28pt status item at one point per cell")
+    @Test("the outline fits the 28pt status item at one point per cell")
     func fitsStatusItem() {
-        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<24).contains($0.x) })
-        #expect(ChapMascot.menuBarSilhouette.allSatisfy { (0..<12).contains($0.y) })
+        #expect(ChapMascot.menuBarOutline.allSatisfy { (0..<24).contains($0.x) })
+        #expect(ChapMascot.menuBarOutline.allSatisfy { (0..<12).contains($0.y) })
     }
 
     @Test("a dreaming seal flicks once, and less often than an awake one")

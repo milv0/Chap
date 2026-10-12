@@ -244,7 +244,7 @@ public enum StatusBarIconChoice: String, Codable, CaseIterable {
     case `default` = "default"
     /// SF Symbols bolt.fill 아이콘.
     case lightning = "lightning"
-    /// 픽셀 물범 Chap 실루엣 (`ChapMascot.menuBarSilhouette`).
+    /// 픽셀 물범 Chap 선 그림 (`ChapMascot.menuBarOutline`).
     case seal = "seal"
 }
 
