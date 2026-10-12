@@ -76,36 +76,11 @@ enum KeepAwakePolicy {
     /// 모든 Quit 확인창에 사용하는 간결한 본문.
     static let quitConfirmationInfo = "Are you sure you want to quit Chap?"
 
-    // MARK: - Focus 위젯 (노치)
+    // MARK: - Focus 다이얼 (노치)
 
-    /// 노치 Focus 위젯의 빠른 선택지. 메뉴 프리셋 중 자주 쓰는 셋.
-    static let focusPresets: [Preset] = [presets[1], presets[2], presets[3]]
-
-    /// 버튼에 들어갈 짧은 이름 ("1h", "4h", "8h").
-    static func shortTitle(of preset: Preset) -> String {
-        let hours = Int(preset.duration / 3600)
-        return hours > 0 ? "\(hours)h" : "\(Int(preset.duration / 60))m"
-    }
-
-    /// 꺼져 있을 때의 한 줄. "chap"은 창이 제자리에 딱 붙는 소리다: 딱 켜고 딱 끈다.
-    static let focusIdleLine = "Chap on"
-    /// 꺼져 있을 때의 보조 문구.
-    static let focusIdleHint = "No sleep, no dimming."
-    /// 켜져 있을 때 끄는 버튼.
-    static let focusOffTitle = "Chap off"
     /// 다이얼 가운데 숫자 아래의 짧은 말. 숫자가 주인공이라 "Chap" 없이 On/Off만 쓴다.
     static let focusDialOnLabel = "On"
     static let focusDialOffLabel = "Off"
-
-    /// Focus 위젯이 처음 고르고 있는 시간. 마지막으로 켠 시간을 기억하되, 목록에 없으면 이 값.
-    static let defaultFocusPreset = focusPresets[0]
-
-    /// 저장된 길이(초)를 Focus 선택지로 되돌린다. 목록에 없거나 없으면 기본값.
-    static func focusPreset(forStoredDuration duration: Double) -> Preset {
-        focusPresets.first { $0.duration == duration } ?? defaultFocusPreset
-    }
-
-    // MARK: - Focus 다이얼
 
     /// 다이얼로 고를 수 있는 시간(시간 단위). 1시간 간격.
     static let focusDialHours: ClosedRange<Int> = 1...12
@@ -152,27 +127,5 @@ enum KeepAwakePolicy {
         let hours = duration / 3600
         guard hours == hours.rounded(), focusDialHours.contains(Int(hours)) else { return nil }
         return focusPreset(hours: Int(hours))
-    }
-
-    /// 세션 길이를 모를 때(앱이 세션 시작 뒤 다시 그려진 경우 등) 남은 시간을 담을 수 있는 가장 짧은 프리셋 길이.
-    /// 링이 0이나 1로 튀지 않고 그럴듯한 비율을 보이게 한다.
-    static func inferredFocusDuration(remaining: TimeInterval) -> TimeInterval {
-        presets.map(\.duration).first { $0 >= remaining } ?? max(remaining, 1)
-    }
-
-    /// 남은 비율(1 → 0). 길이를 모르면 nil이라 진행 막대를 그리지 않는다.
-    static func focusProgress(remaining: TimeInterval, duration: TimeInterval?) -> Double? {
-        guard let duration, duration > 0 else { return nil }
-        return min(max(remaining / duration, 0), 1)
-    }
-
-    /// 켜져 있을 때 남은 시간에 따라 바뀌는 한 줄. 끝으로 갈수록 톤이 가벼워진다.
-    static func focusActiveLine(remaining: TimeInterval) -> String {
-        switch remaining {
-        case ..<(5 * 60): return "Landing soon"
-        case ..<(30 * 60): return "Final stretch"
-        case ..<(2 * 3600): return "In the zone"
-        default: return "Fully charged"
-        }
     }
 }

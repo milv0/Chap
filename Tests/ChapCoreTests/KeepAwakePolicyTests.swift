@@ -152,27 +152,10 @@ struct KeepAwakePolicyTests {
 
 @Suite("Focus widget")
 struct FocusWidgetTests {
-    @Test("Focus switches with Chap on and Chap off")
-    func chapWording() {
-        #expect(KeepAwakePolicy.focusIdleLine == "Chap on")
-        #expect(KeepAwakePolicy.focusOffTitle == "Chap off")
-    }
-
-    @Test("the notch offers 1h, 4h, and 8h")
-    func quickPresets() {
-        #expect(
-            KeepAwakePolicy.focusPresets.map(KeepAwakePolicy.shortTitle(of:)) == ["1h", "4h", "8h"])
-        #expect(KeepAwakePolicy.shortTitle(of: KeepAwakePolicy.presets[0]) == "30m")
-    }
-
-    @Test(
-        "the active line lightens as the session winds down",
-        arguments: [
-            (TimeInterval(3 * 3600), "Fully charged"), (3600, "In the zone"),
-            (20 * 60, "Final stretch"), (2 * 60, "Landing soon"),
-        ])
-    func activeLine(remaining: TimeInterval, expected: String) {
-        #expect(KeepAwakePolicy.focusActiveLine(remaining: remaining) == expected)
+    @Test("the dial center says On or Off under the number")
+    func dialWording() {
+        #expect(KeepAwakePolicy.focusDialOnLabel == "On")
+        #expect(KeepAwakePolicy.focusDialOffLabel == "Off")
     }
 
     @Test("Focus is a placeable widget that round-trips")
@@ -181,28 +164,6 @@ struct FocusWidgetTests {
             Config.self, from: Data(#"{"notchWidgets": ["awake"], "sites": []}"#.utf8))
         #expect(config.notchWidgets == [.none, .none, .awake, .none, .none, .none])
         #expect(NotchWidget.awake.launchType == nil)
-    }
-
-    @Test("the Focus slot remembers a known duration and falls back to 1 hour")
-    func focusPresetMemory() {
-        #expect(KeepAwakePolicy.defaultFocusPreset.duration == 3600)
-        #expect(KeepAwakePolicy.focusPreset(forStoredDuration: 4 * 3600).title == "4 Hours")
-        #expect(KeepAwakePolicy.focusPreset(forStoredDuration: 1234).title == "1 Hour")
-    }
-
-    @Test("the progress bar shows the share of time left, or nothing without a length")
-    func focusProgress() {
-        #expect(KeepAwakePolicy.focusProgress(remaining: 1800, duration: 3600) == 0.5)
-        #expect(KeepAwakePolicy.focusProgress(remaining: 5000, duration: 3600) == 1)
-        #expect(KeepAwakePolicy.focusProgress(remaining: -5, duration: 3600) == 0)
-        #expect(KeepAwakePolicy.focusProgress(remaining: 100, duration: nil) == nil)
-    }
-
-    @Test("an unknown session length is inferred from the shortest preset that fits")
-    func inferredDuration() {
-        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 3 * 3600 + 25 * 60) == 4 * 3600)
-        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 20 * 60) == 30 * 60)
-        #expect(KeepAwakePolicy.inferredFocusDuration(remaining: 13 * 3600) == 13 * 3600)
     }
 
     @Test("the dial maps the arc to 1-12 hours, with the gap snapping to the nearest end")

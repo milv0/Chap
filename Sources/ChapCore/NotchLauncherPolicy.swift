@@ -83,20 +83,14 @@ public enum NotchLauncherPolicy {
 
     /// 상단 띠 왼쪽(노치 왼쪽)에 무엇을 둘지.
     public enum StripLeading: Equatable, Sendable {
-        // Focus 시계는 띠에서 뺐다(남은 시간은 Focus 칸과 상태 메뉴에서 본다). 되살릴 때 쓰도록 남겨 둔다.
-        // /// 번개 + Focus 남은 시간.
-        // case focusClock
         /// Chap 마스코트(물범).
         case mascot
     }
 
-    /// 띠 왼쪽에는 늘 물범이 있다. Focus 칸은 번개와 남은 시간을 맡고, 물범은 띠에서 Focus 상태를
+    /// 띠 왼쪽에는 늘 물범이 있다. Focus 칸은 다이얼과 남은 시간을 맡고, 물범은 띠에서 Focus 상태를
     /// 보여 준다(켜짐: 깨어 꼬리를 흔듦, 30분 미만: 졸림). 그래서 Focus 칸이 보여도 띠 좌우가 비지 않는다.
     public static func stripLeading() -> StripLeading {
         .mascot
-        // 이전 규칙 (Focus 시계 포함):
-        // if focusSlotVisible { return .empty }
-        // return focusActive ? .focusClock : .mascot
     }
 
     /// 접힌 선반 아이콘 중심의 노치 왼쪽 끝 기준 거리(왼쪽으로). 오른쪽 띠 도구

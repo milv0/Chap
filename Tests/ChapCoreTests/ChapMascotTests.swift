@@ -77,14 +77,6 @@ struct ChapMascotFocusMoodTests {
         #expect(ChapMascot.focusMood(remaining: 8 * 3600) == .awake)
     }
 
-    @Test("the drowsy boundary matches the Final stretch line")
-    func drowsyMatchesCopy() {
-        #expect(KeepAwakePolicy.focusActiveLine(remaining: 1799) == "Final stretch")
-        #expect(ChapMascot.focusMood(remaining: 1799) == .drowsy)
-        #expect(KeepAwakePolicy.focusActiveLine(remaining: 1800) == "In the zone")
-        #expect(ChapMascot.focusMood(remaining: 1800) == .awake)
-    }
-
     @Test("each mood has its own eyes")
     func moodEyes() {
         #expect(ChapMascot.FocusMood.asleep.eyes == .closed)
