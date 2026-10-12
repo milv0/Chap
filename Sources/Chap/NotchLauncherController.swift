@@ -23,6 +23,12 @@ final class NotchLauncherController {
     static let requestClose = Notification.Name("ChapNotchRequestClose")
 
     private var hotzoneWindow: NSWindow?
+    /// 노치가 없는 화면에서 hover를 감지하는 타이머. 투명 창을 띄우면 메뉴 막대 클릭을
+    /// 가로채므로, 창 대신 마우스 위치만 본다.
+    private var pointerWatchTimer: Timer?
+    /// 직전 검사에서 마우스가 hover 구역 안이었는지. 들어오는 순간에만 열어, 닫은 뒤에도
+    /// 마우스가 그 자리에 있으면 다시 열리지 않는다 (노치 Mac의 tracking area와 같은 동작).
+    private var pointerWasInZone = false
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
     /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
@@ -129,8 +135,8 @@ final class NotchLauncherController {
 
     private func applyPanelContentSize(_ size: CGSize) {
         appliedContentSize = size
-        guard let panel, let screen = Self.notchScreen() else { return }
-        let inset = screen.safeAreaInsets.top
+        guard let panel, let screen = Self.dockScreen() else { return }
+        let inset = Self.stripInset(on: screen)
         var frame = NotchLauncherPolicy.panelFrame(
             screenFrame: screen.frame,
             topSafeAreaInset: inset,
@@ -143,9 +149,7 @@ final class NotchLauncherController {
     }
 
     func update(enabled: Bool) {
-        guard let screen = Self.notchScreen(),
-            NotchLauncherPolicy.shouldPresent(
-                enabled: enabled, topSafeAreaInset: screen.safeAreaInsets.top)
+        guard let screen = Self.dockScreen(), NotchLauncherPolicy.shouldPresent(enabled: enabled)
         else {
             tearDown()
             return
@@ -166,6 +170,7 @@ final class NotchLauncherController {
         panel = nil
         hotzoneWindow?.orderOut(nil)
         hotzoneWindow = nil
+        stopPointerWatch()
         badgeWindow?.orderOut(nil)
         badgeWindow = nil
         if let dropObserver {
@@ -196,8 +201,10 @@ final class NotchLauncherController {
     }
 
     private func renderDropBadge(count: Int) {
+        // 노치가 없는 화면에는 배지를 두지 않는다. 늘 떠 있는 검정 배지가 메뉴 막대를 가리고
+        // 그 자리의 클릭을 삼킨다. 보관 파일은 도커를 열면 보인다.
         guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
-            hotzoneWindow != nil, let screen = Self.notchScreen()
+            hotzoneWindow != nil, let screen = Self.dockScreen()
         else {
             badgeWindow?.orderOut(nil)
             badgeWindow = nil
@@ -285,6 +292,15 @@ final class NotchLauncherController {
 
     private func installHotzone(on screen: NSScreen) {
         hotzoneWindow?.orderOut(nil)
+        hotzoneWindow = nil
+        stopPointerWatch()
+
+        // 노치가 없으면 창을 띄우지 않는다. 메뉴 막대 위의 투명 창은 그 자리의 클릭을 삼켜
+        // 앱 메뉴를 못 열게 만든다. 대신 마우스 위치만 지켜본다.
+        guard NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top) else {
+            startPointerWatch()
+            return
+        }
 
         // 인식 범위는 노치보다 hoverMargin만큼 넓다 (상단은 화면 끝이라 그대로).
         let notch = Self.notchRect(on: screen)
@@ -321,20 +337,66 @@ final class NotchLauncherController {
         hotzoneWindow = window
     }
 
+    /// 노치가 없는 화면용 hover 감지. 화면 위쪽 가운데 구역에 마우스가 들어오면 도커를 연다.
+    /// 간격은 열린 동안의 폴링(80ms)보다 느슨해도 충분하다.
+    private func startPointerWatch() {
+        let timer = Timer(timeInterval: 0.15, repeats: true) { [weak self] _ in
+            self?.checkPointerForHover()
+        }
+        // 메뉴를 열어 둔 동안에도 멈추지 않게 common 모드에 넣는다.
+        RunLoop.main.add(timer, forMode: .common)
+        pointerWatchTimer = timer
+    }
+
+    private func stopPointerWatch() {
+        pointerWatchTimer?.invalidate()
+        pointerWatchTimer = nil
+    }
+
+    private func checkPointerForHover() {
+        guard let screen = Self.dockScreen(),
+            !NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+        else { return }
+        let zone = NotchLauncherPolicy.hoverZone(
+            screenFrame: screen.frame, stripInset: Self.stripInset(on: screen))
+        let inside = zone.contains(NSEvent.mouseLocation)
+        defer { pointerWasInZone = inside }
+        guard inside, !pointerWasInZone, panel == nil, Date() >= hoverOpenSuppressedUntil
+        else { return }
+        showPanel()
+    }
+
     /// 노치 rect. 노치 좌우의 auxiliary area 사이 간격이 노치 폭이다.
-    /// auxiliary API가 값을 주지 않으면 중앙 200pt로 폴백한다.
+    /// auxiliary API가 값을 주지 않거나 노치가 없으면 화면 가운데 가짜 노치 폭으로 폴백한다.
     static func notchRect(on screen: NSScreen) -> NSRect {
-        let inset = screen.safeAreaInsets.top
+        let inset = stripInset(on: screen)
         let top = screen.frame.maxY - inset
-        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+        if NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top),
+            let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea
+        {
             return NSRect(
                 x: left.maxX, y: top, width: right.minX - left.maxX, height: inset)
         }
-        return NSRect(x: screen.frame.midX - 100, y: top, width: 200, height: inset)
+        return NotchLauncherPolicy.hoverZone(screenFrame: screen.frame, stripInset: inset)
     }
 
+    /// 검정 띠 높이. 노치가 있으면 노치 높이, 없으면 그 화면의 메뉴 막대 높이.
+    static func stripInset(on screen: NSScreen) -> CGFloat {
+        NotchLauncherPolicy.stripInset(
+            topSafeAreaInset: screen.safeAreaInsets.top,
+            menuBarHeight: screen.frame.maxY - screen.visibleFrame.maxY)
+    }
+
+    /// 하드웨어 노치가 있는 화면. 노치 전용 연출(중앙 HUD)에만 쓴다.
     static func notchScreen() -> NSScreen? {
-        NSScreen.screens.first { $0.safeAreaInsets.top > 0 }
+        NSScreen.screens.first {
+            NotchLauncherPolicy.hasNotch(topSafeAreaInset: $0.safeAreaInsets.top)
+        }
+    }
+
+    /// 도커를 띄울 화면: 노치가 있으면 그 화면, 없으면 메뉴 막대가 있는 주 화면.
+    static func dockScreen() -> NSScreen? {
+        notchScreen() ?? NSScreen.screens.first
     }
 
     /// 눌린 검정 띠의 plateau 반폭: 노치 반폭 + 좌우 상태 영역.
@@ -346,7 +408,7 @@ final class NotchLauncherController {
     // MARK: - Panel
 
     private func showPanel(forDrop: Bool = false) {
-        guard panel == nil, let screen = Self.notchScreen() else { return }
+        guard panel == nil, let screen = Self.dockScreen() else { return }
 
         let slots = slotsProvider()
         guard
@@ -357,7 +419,7 @@ final class NotchLauncherController {
 
         // 노치보다 넓게 잡아야 "노치가 자라난" 실루엣이 된다.
         // 최종 폭은 가로로 배치된 섹션 수에 따라 자연 크기로 커진다.
-        let inset = screen.safeAreaInsets.top
+        let inset = Self.stripInset(on: screen)
         let notchWidth = Self.notchRect(on: screen).width
         let minWidth = NotchLauncherPolicy.dockMinWidth(notchWidth: notchWidth)
 
@@ -619,6 +681,8 @@ final class NotchLauncherController {
 
     /// 닫히기 직전 공통 정리: 카메라를 끄고 입력 중인 메모를 저장하게 한다.
     private func prepareForPanelHide() {
+        // 닫은 자리에 마우스가 그대로 있으면 다시 열지 않는다 (한 번 벗어나야 한다).
+        pointerWasInZone = true
         pendingShrink?.cancel()
         pendingShrink = nil
         appliedContentSize = nil

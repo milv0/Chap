@@ -15,12 +15,28 @@ struct NotchLauncherPolicyTests {
         #expect(NotchLauncherPolicy.hasNotch(topSafeAreaInset: 0) == false)
     }
 
-    @Test("presentation requires both the toggle and notch hardware")
-    func requiresToggleAndHardware() {
-        #expect(NotchLauncherPolicy.shouldPresent(enabled: true, topSafeAreaInset: 32))
-        #expect(NotchLauncherPolicy.shouldPresent(enabled: false, topSafeAreaInset: 32) == false)
-        #expect(NotchLauncherPolicy.shouldPresent(enabled: true, topSafeAreaInset: 0) == false)
-        #expect(NotchLauncherPolicy.shouldPresent(enabled: false, topSafeAreaInset: 0) == false)
+    @Test("the toggle alone decides whether the dock is presented")
+    func toggleDecidesPresentation() {
+        // 노치가 없는 Mac도 켜면 쓸 수 있다 (보이지 않는 hover 구역으로 연다).
+        #expect(NotchLauncherPolicy.shouldPresent(enabled: true))
+        #expect(NotchLauncherPolicy.shouldPresent(enabled: false) == false)
+    }
+
+    @Test("the black strip is the notch on a notched screen and the menu bar without one")
+    func stripInsetFollowsHardware() {
+        #expect(NotchLauncherPolicy.stripInset(topSafeAreaInset: 38, menuBarHeight: 24) == 38)
+        #expect(NotchLauncherPolicy.stripInset(topSafeAreaInset: 0, menuBarHeight: 24) == 24)
+        // 메뉴 막대 높이를 못 읽으면 24pt로 둔다 (띠가 0pt로 사라지지 않게).
+        #expect(NotchLauncherPolicy.stripInset(topSafeAreaInset: 0, menuBarHeight: 0) == 24)
+    }
+
+    @Test("the hover zone sits at the top center, the width of a notch")
+    func hoverZoneIsTopCenter() {
+        let zone = NotchLauncherPolicy.hoverZone(
+            screenFrame: CGRect(x: 0, y: 0, width: 1512, height: 982), stripInset: 24)
+        #expect(zone == CGRect(x: 656, y: 958, width: 200, height: 24))
+        #expect(zone.maxY == 982)
+        #expect(zone.width == NotchLauncherPolicy.syntheticNotchWidth)
     }
 
     @Test("the panel wraps the notch by reaching the screen top")

@@ -11,7 +11,7 @@
 
 ## Features
 
-- **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; the classic status menu always remains available
+- **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; on a Mac without a notch it opens when you point at the middle of the menu bar, and the classic status menu always remains available
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
@@ -35,7 +35,7 @@
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal silhouette) in Settings > General; it turns Chap blue while Keep Mac Awake runs
-- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen, and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
+- **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen (on the built-in display with the notch), and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
@@ -43,7 +43,7 @@
 ## Requirements
 
 - macOS 14.0+ (Sonoma)
-- A MacBook notch for the optional Notch Launcher; all classic menu and Option-shortcut features work without one
+- A MacBook notch for the Notch Launcher's hardware look; without one the launcher still opens from the middle of the menu bar, and all classic menu and Option-shortcut features work either way
 - macOS 26+ (Tahoe) for Liquid Glass; Custom style works on macOS 14+
 - Google Chrome (for URL launch type)
 - Accessibility permission (for URL/app window resizing)

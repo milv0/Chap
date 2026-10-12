@@ -43,9 +43,10 @@
 | I12 | 관리 창(Settings/QA/Welcome) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
 | I13 | 글로벌 단축키는 `RegisterEventHotKey`로 **정확한 Option 조합만** 등록. 전체 keyDown event tap 금지 | Chap 메인 스레드 정체가 일반 키 입력 전달을 막는다 |
 | I14 | URL 창 재사용은 해당 launchable이 **현재 Chap/Chrome 세션에서 직접 만든 window ID 1개**만 활성화·리사이즈. 사용자 탭 URL 검색과 focused 창 폴백은 금지 | 다른 Chrome 작업 창이 이동된다 |
-| I15 | 노치 런처는 상태바 NSMenu를 대체하지 않는 opt-in 표면. 노치 없음/토글 off에서도 메뉴·Option 단축키 유지 | 노치 없는 Mac에서 핵심 기능을 잃는다 |
-| I16 | Chap Drop 복사·삭제·폴더 스캔·썸네일 디코딩은 메인 스레드에서 실행하지 않는다 | 큰 파일/복잡한 Desktop에서 UI가 멈춘다 |
-| I17 | Glass 상단 띠는 하드웨어 노치와 합쳐지는 순검정, 콘텐츠만 Liquid Glass. macOS 26 미만은 Custom 검정 폴백 | 노치 실루엣이 끊기거나 콘텐츠가 투명해진다 |
+| I15 | 노치 런처는 상태바 NSMenu를 대체하지 않는 opt-in 표면. 토글 off에서도 메뉴·Option 단축키 유지 | 노치 없는 Mac에서 핵심 기능을 잃는다 |
+| I16 | 노치 없는 화면에서는 상단에 **창을 띄우지 않는다**(hover는 마우스 위치 폴링, Drop 배지 없음) | 메뉴 막대를 가리고 그 자리의 클릭을 삼킨다 |
+| I17 | Chap Drop 복사·삭제·폴더 스캔·썸네일 디코딩은 메인 스레드에서 실행하지 않는다 | 큰 파일/복잡한 Desktop에서 UI가 멈춘다 |
+| I18 | Glass 상단 띠는 하드웨어 노치와 합쳐지는 순검정, 콘텐츠만 Liquid Glass. macOS 26 미만은 Custom 검정 폴백 | 노치 실루엣이 끊기거나 콘텐츠가 투명해진다 |
 
 ---
 
@@ -515,9 +516,11 @@ hidden menu와 노치 설정도 모두 포함한다. 기본 위치 `~/Downloads`
 ```
 Settings → Notch Launcher on
   └ NotchLauncherController.update
-      ├ safeAreaInsets.top > 0 화면 탐색
-      ├ 투명 hotzone을 하드웨어 노치에 배치
-      └ Chap Drop 파일이 있으면 우측 count 배지 표시
+      ├ dockScreen(): 노치 화면 → 없으면 메뉴 막대가 있는 주 화면
+      ├ 노치 있음: 투명 hotzone 창을 하드웨어 노치에 배치 + Drop 파일이 있으면 우측 count 배지
+      └ 노치 없음: 창을 띄우지 않고 150ms 마우스 위치 폴링(hoverZone = 화면 위쪽 가운데 200pt ×
+        메뉴 막대 높이). 구역에 "들어오는 순간"에만 열고, 닫은 뒤에는 한 번 벗어나야 다시 열린다.
+        배지도 두지 않는다 (메뉴 막대를 가리지 않기 위해)
 
 노치 hover
   → showPanel(forDrop:false)

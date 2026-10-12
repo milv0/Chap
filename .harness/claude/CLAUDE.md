@@ -109,9 +109,11 @@ search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-six slots (Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do; Mirror and Quick Note are icons in the black top strip beside the Drop badge). It is an additive
-surface — the status-bar `NSMenu` is always available, including on notchless
-Macs. Chap Drop keeps bookmark references to dropped originals (`DropStore`; only
+six slots (Sites, Apps, Finder, Screenshots, Downloads, Focus, or To-do; Mirror and Quick Note are icons in the black top strip beside the Drop badge). On a screen without
+a notch it draws no window at the top: a 150ms pointer poll over the top-center
+`hoverZone` opens the same dock and the Drop badge is suppressed, because a transparent
+window over the menu bar swallows the clicks that belong to it. It is an additive
+surface — the status-bar `NSMenu` is always available. Chap Drop keeps bookmark references to dropped originals (`DropStore`; only
 temporary-location items are copied into `~/Library/Application Support/Chap/Drop/`,
 and removing never deletes an original) and the
 Screenshot Shelf reads the system screenshot folder in place. Notch geometry is
