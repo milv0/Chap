@@ -208,8 +208,22 @@ struct NotchRenderTool {
     @MainActor
     func renderSealStatusIcon() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
-        let icon = AppDelegate.sealStatusBarImage()
-        #expect(icon.isTemplate)
+        let template = AppDelegate.sealStatusBarImage()
+        #expect(template.isTemplate)
+        // 실제 메뉴 막대처럼 Retina(2배)로 한 번 그린 뒤, 그 픽셀을 그대로 크게 늘려 보여 준다.
+        let retina = try #require(
+            NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(template.size.width) * 2,
+                pixelsHigh: Int(template.size.height) * 2, bitsPerSample: 8, samplesPerPixel: 4,
+                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                bitsPerPixel: 0))
+        retina.size = template.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: retina)
+        template.draw(in: NSRect(origin: .zero, size: template.size))
+        NSGraphicsContext.restoreGraphicsState()
+        let icon = NSImage(size: template.size)
+        icon.addRepresentation(retina)
         let scale: CGFloat = 8
         let size = NSSize(
             width: 2 * icon.size.width * scale + 3 * 16, height: icon.size.height * scale + 32)

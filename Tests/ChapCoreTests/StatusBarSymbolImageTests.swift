@@ -166,4 +166,46 @@ struct IsolatedCopyImageTests {
         #expect(copyA?.size == NSSize(width: 22, height: 22))
         #expect(copyB?.size == NSSize(width: 8, height: 8))
     }
+
+    /// 물범 아이콘을 2배(Retina)로 그려 픽셀을 센다.
+    private func sealPixels(scale: Int) throws -> (opaque: Int, partial: Int) {
+        let image = AppDelegate.sealStatusBarImage()
+        let rep = try #require(
+            NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: Int(image.size.width) * scale,
+                pixelsHigh: Int(image.size.height) * scale, bitsPerSample: 8, samplesPerPixel: 4,
+                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                bitsPerPixel: 0))
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
+        var opaque = 0
+        var partial = 0
+        for y in 0..<rep.pixelsHigh {
+            for x in 0..<rep.pixelsWide {
+                let alpha = rep.colorAt(x: x, y: y)?.alphaComponent ?? 0
+                if alpha > 0.99 { opaque += 1 } else if alpha > 0.01 { partial += 1 }
+            }
+        }
+        return (opaque, partial)
+    }
+
+    @Test("on Retina the seal's lines are three pixels thick and stay crisp")
+    func sealLinesAreThickAndCrisp() throws {
+        let retina = try sealPixels(scale: 2)
+        // 칸마다 2×2픽셀이던 선이 3×3픽셀이 된다(겹침이 있어 정확히 9/4배는 아니다).
+        let oneCellOnly = ChapMascot.menuBarOutline.count * 4
+        #expect(retina.opaque > oneCellOnly * 3 / 2)
+        // 반투명 픽셀이 없다 = 경계가 장치 픽셀에 맞아 흐려지지 않는다.
+        #expect(retina.partial == 0)
+    }
+
+    @Test("on a 1x screen the seal keeps one-pixel lines rather than going blurry")
+    func sealStaysCrispAt1x() throws {
+        let standard = try sealPixels(scale: 1)
+        #expect(standard.opaque == ChapMascot.menuBarOutline.count)
+        #expect(standard.partial == 0)
+    }
 }
