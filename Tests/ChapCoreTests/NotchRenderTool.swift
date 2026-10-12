@@ -121,7 +121,7 @@ struct NotchRenderTool {
                 slots: name.hasSuffix("-todo") ? todoSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
-                showsLightsOut: config.notchLightsOutEnabled, onLaunch: { _ in },
+                showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
                 showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
             let view =
@@ -157,10 +157,10 @@ struct NotchRenderTool {
                 notchPanelColorHex: config.notchPanelColorHex,
                 notchMirrorEnabled: config.notchMirrorEnabled,
                 notchQuickNoteEnabled: config.notchQuickNoteEnabled,
-                notchLightsOutEnabled: config.notchLightsOutEnabled,
+                notchCoverScreensEnabled: config.notchCoverScreensEnabled,
                 notchQuickNoteShortcut: config.notchQuickNoteShortcut,
-                lightsOutUnlockKey: config.lightsOutUnlockKey,
-                lightsOutShortcut: config.lightsOutShortcut,
+                coverScreensShortcut: config.coverScreensShortcut,
+                coverScreensMessage: config.coverScreensMessage,
                 notchWidgets: config.notchWidgets)
             let view = NotchSettingsView(vm: vm, onSave: {})
                 .frame(width: 600, height: 720)
@@ -189,14 +189,13 @@ struct NotchRenderTool {
         }
     }
 
-    /// Settings → General 화면(Lights Out 단축키 줄 포함)을 그린다.
+    /// Settings → General 화면(Cover Screens 단축키 줄 포함)을 그린다.
     @Test("render the General settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
     func renderGeneralSettings() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
         let vm = SettingsViewModel(
-            sites: config.sites, lightsOutUnlockKey: config.lightsOutUnlockKey,
-            lightsOutShortcut: config.lightsOutShortcut)
+            sites: config.sites, coverScreensShortcut: config.coverScreensShortcut)
         let view = GeneralSettingsView(vm: vm, updateController: UpdateController(), onSave: {})
             .frame(width: 600, height: 720)
             .environment(\.colorScheme, .light)
@@ -210,24 +209,25 @@ struct NotchRenderTool {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
         let vm = SettingsViewModel(
             sites: config.sites, notchQuickNoteShortcut: config.notchQuickNoteShortcut,
-            lightsOutUnlockKey: config.lightsOutUnlockKey,
-            lightsOutShortcut: config.lightsOutShortcut)
+            coverScreensShortcut: config.coverScreensShortcut)
         let view = ToolsSettingsView(vm: vm, onSave: {})
             .frame(width: 600, height: 760)
             .environment(\.colorScheme, .light)
         try Self.renderPNG(view).write(to: directory.appendingPathComponent("settings-tools.png"))
     }
 
-    /// Lights Out 가림막 모습을 PNG로 남긴다. 검정 위에서 물범·시간·안내가 읽히는지 본다.
-    @Test("render the Lights Out cover", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    /// Cover Screens 가림막 모습을 PNG로 남긴다. 검정 위에서 물범·시간·안내가 읽히는지 본다.
+    @Test("render the Cover Screens cover", .enabled(if: NotchRenderTool.outputDirectory != nil))
     @MainActor
-    func renderLightsOut() throws {
+    func renderCoverScreens() throws {
         let directory = URL(fileURLWithPath: try #require(NotchRenderTool.outputDirectory))
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let view = LightsOutView(showsClock: true, hint: LightsOutPolicy.hint(unlockKey: "esc"))
-            .frame(width: 900, height: 560)
+        let view = CoverScreensView(
+            showsClock: true, hint: CoverScreensPolicy.hint, message: "Back in 10 minutes"
+        )
+        .frame(width: 900, height: 560)
         let png = try Self.renderPNG(view)
-        try png.write(to: directory.appendingPathComponent("lights-out.png"))
+        try png.write(to: directory.appendingPathComponent("cover-screens.png"))
     }
 
     /// 선반을 접고 펼 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.

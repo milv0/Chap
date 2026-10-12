@@ -25,10 +25,10 @@ enum SettingsConfigTransfer {
             notchPanelColorHex: vm.notchPanelColorHex,
             notchMirrorEnabled: vm.notchMirrorEnabled,
             notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-            notchLightsOutEnabled: vm.notchLightsOutEnabled,
+            notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
             notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-            lightsOutUnlockKey: vm.lightsOutUnlockKey,
-            lightsOutShortcut: vm.lightsOutShortcut,
+            coverScreensShortcut: vm.coverScreensShortcut,
+            coverScreensMessage: vm.coverScreensMessage,
             notchWidgets: vm.notchWidgets,
             sites: vm.sites)
     }
@@ -189,10 +189,10 @@ enum SettingsConfigTransfer {
                         notchPanelColorHex: vm.notchPanelColorHex,
                         notchMirrorEnabled: vm.notchMirrorEnabled,
                         notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                        notchLightsOutEnabled: vm.notchLightsOutEnabled,
+                        notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
                         notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-                        lightsOutUnlockKey: vm.lightsOutUnlockKey,
-                        lightsOutShortcut: vm.lightsOutShortcut,
+                        coverScreensShortcut: vm.coverScreensShortcut,
+                        coverScreensMessage: vm.coverScreensMessage,
                         notchWidgets: vm.notchWidgets)) ?? false
             guard saved else { return false }
 

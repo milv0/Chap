@@ -198,7 +198,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
 되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Layout("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
-Top Strip(Mirror·Quick Note·Lights Out 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
+Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈
 Downloads 칸 · Sites · Apps · Finder · 빈 칸.
@@ -210,15 +210,15 @@ Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
 
-## 상단 띠 오른쪽: Drop · Mirror · Quick Note · Lights Out
+## 상단 띠 오른쪽: Drop · Mirror · Quick Note · Cover Screens
 
-Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서는 Mirror → Quick Note → Lights Out
+Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서는 Mirror → Quick Note → Cover Screens
 (`stripToolCenterOffsets`, 노치 오른쪽 끝에서 41·69·97pt). 셋 다 켜도 마지막 아이콘이 평평한 띠(110pt) 안에 들어온다.
 
-- **Lights Out**(`NotchLightsOutStripButton`, `moon.fill`): 누르면 도커를 접고 가림막을 친다(메뉴바 항목과 같은 경로).
-  가림막이 노치까지 덮으므로 끄는 것은 이 아이콘이 아니라 해제 키(기본 Esc)·연타다. 이미 켜져 있으면 무시한다.
-  Top Strip의 스위치(`notchLightsOutEnabled`, 기본 켬)는 띠 아이콘만 숨긴다. ⌥ 키(`lightsOutShortcut`, 기본 L)와
-  해제 키는 Settings → Tools에 있고, 아이콘을 꺼도 ⌥L과 메뉴바 항목은 그대로 쓴다.
+- **Cover Screens**(`NotchCoverScreensStripButton`, `moon.fill`): 누르면 도커를 접고 가림막을 친다(메뉴바 항목과 같은 경로).
+  가림막이 노치까지 덮으므로 끄는 것은 이 아이콘이 아니라 ⌥ 한 번(또는 아무 키 10연타)이다. 이미 켜져 있으면 무시한다.
+  Notch Icons의 스위치(`notchCoverScreensEnabled`, 기본 켬)는 띠 아이콘만 숨긴다. ⌥ 키(`coverScreensShortcut`, 기본 L)와
+  가림막 문구는 Settings → Tools에 있고, 아이콘을 꺼도 ⌥L과 메뉴바 항목은 그대로 쓴다.
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 

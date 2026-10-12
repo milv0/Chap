@@ -2,37 +2,41 @@ import AppKit
 import IOKit.pwr_mgt
 import SwiftUI
 
-/// Lights Out: 자리를 비울 때 모든 화면을 검정으로 덮는 가림막.
+/// Cover Screens: 자리를 비울 때 모든 화면을 검정으로 덮는 가림막.
 ///
 /// **잠금이 아니다.** 비밀번호를 묻지 않고, Chap이 끝나면 걷힌다. 어깨너머 시선을 가리는
 /// 용도이며 진짜 보안은 macOS 화면 잠금(⌃⌘Q)이 맡는다.
 ///
-/// 입력: 덮여 있는 동안 Chap이 키 포커스를 갖는다. 다른 앱이 활성화되면(⌘Tab 등) 곧바로 되찾는다.
-/// 그래도 키가 다른 앱으로 간 경우를 위해 전역 키 모니터(접근성 권한이 있을 때)로 해제 키와
-/// 연타를 계속 본다 — 해제 경로가 포커스에 매이지 않게 하기 위해서다(FLOW I19).
+/// 걷기: ⌥(Option)만 한 번 눌렀다 떼면 된다(`CoverScreensPolicy.OptionTap`). 잊었으면 아무 키나 15번 빠르게.
+/// 덮여 있는 동안 Chap이 키 포커스를 갖고, 다른 앱이 활성화되면(⌘Tab 등) 곧바로 되찾는다.
+/// 그래도 키가 다른 앱으로 간 경우를 위해 전역 모니터(접근성 권한이 있을 때)로 ⌥와 연타를 계속 본다
+/// — 걷는 길이 포커스에 매이지 않게 하기 위해서다(FLOW I19).
 ///
 /// Keep Mac Awake와 독립이다. 가림막은 켜져 있는 동안 자기 몫의 IOKit 어써션을 들기 때문에,
 /// Keep Awake가 꺼져 있어도 화면이 꺼지지 않고, Keep Awake 세션이 끝나도 가림막은 그대로다.
 /// 상태는 메모리에만 있다(다음 실행은 늘 꺼진 상태로 시작한다). 메인 스레드 전제이며,
 /// AppDelegate(메인 스레드)에서만 호출한다.
-final class LightsOutController {
+final class CoverScreensController {
     /// 켜지거나 꺼질 때 메뉴를 다시 그리도록 알린다.
-    static let didChangeNotification = Notification.Name("ChapLightsOutDidChange")
+    static let didChangeNotification = Notification.Name("ChapCoverScreensDidChange")
 
     private var windows: [NSWindow] = []
     private var assertionID = IOPMAssertionID(0)
     private var hasAssertion = false
     private var keyMonitor: Any?
-    /// Chap이 키 포커스를 잃었을 때도 해제 키·연타를 보는 전역 모니터 (접근성 권한 필요, 삼키지 못함).
+    /// Chap이 키 포커스를 잃었을 때도 ⌥·연타를 보는 전역 모니터 (접근성 권한 필요, 삼키지 못함).
     private var globalKeyMonitor: Any?
+    /// ⌥ 탭 판정. 켤 때 ⌥가 눌려 있었는지로 시작한다(⌥L을 떼는 순간 걷히지 않게).
     private var screenObserver: NSObjectProtocol?
     private var resignObserver: NSObjectProtocol?
     /// 켜기 직전 앞에 있던 앱. 걷은 뒤 그 앱으로 돌려준다(안 그러면 입력이 창 없는 Chap에 간다).
     private var previousApp: NSRunningApplication?
+    private var optionTap = CoverScreensPolicy.OptionTap(optionHeldAtStart: false)
     /// 비상 해제 판정용 최근 키 입력 시각.
     private var recentPresses: [Date] = []
-    /// 해제 키를 읽는다. AppDelegate가 config를 넘겨준다.
-    var unlockKeyProvider: () -> String = { LightsOutPolicy.escapeKey }
+
+    /// 가림막에 띄울 사용자 문구. AppDelegate가 config를 넘겨준다.
+    var messageProvider: () -> String? = { nil }
 
     private(set) var isOn = false
 
@@ -42,6 +46,8 @@ final class LightsOutController {
         guard !isOn else { return }
         isOn = true
         recentPresses = []
+        optionTap = CoverScreensPolicy.OptionTap(
+            optionHeldAtStart: NSEvent.modifierFlags.contains(.option))
         let frontmost = NSWorkspace.shared.frontmostApplication
         previousApp =
             frontmost?.processIdentifier == ProcessInfo.processInfo.processIdentifier
@@ -104,7 +110,7 @@ final class LightsOutController {
     private func installWindows() {
         windows.forEach { $0.orderOut(nil) }
         windows = NSScreen.screens.enumerated().map { index, screen in
-            let window = LightsOutWindow(
+            let window = CoverScreensWindow(
                 contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false)
             window.setFrame(screen.frame, display: true)
             // 노치 도커(.statusBar)와 HUD보다 위에 와야 아무것도 비치지 않는다.
@@ -115,10 +121,9 @@ final class LightsOutController {
             window.ignoresMouseEvents = false
             window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
             window.contentView = NSHostingView(
-                rootView: LightsOutView(
-                    showsClock: index == 0,
-                    hint: LightsOutPolicy.hint(
-                        unlockKey: unlockKeyProvider())))
+                rootView: CoverScreensView(
+                    showsClock: index == 0, hint: CoverScreensPolicy.hint,
+                    message: messageProvider()))
             window.orderFrontRegardless()
             return window
         }
@@ -129,37 +134,46 @@ final class LightsOutController {
 
     // MARK: - 입력
 
-    /// 가림막이 떠 있는 동안의 키 입력. 해제 키 또는 빠른 연타면 걷고, 그 외에는 삼킨다
-    /// (가려진 앱에 눈먼 입력이 들어가지 않게).
+    /// 가림막이 떠 있는 동안의 입력. ⌥ 탭이나 빠른 연타면 걷고, 그 외 키는 삼킨다
+    /// (가려진 앱에 눈먼 입력이 들어가지 않게). ⌥는 일반 키가 아니라 수식키 변화(flagsChanged)로 온다.
     private func installKeyMonitor() {
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .flagsChanged]) {
+            [weak self] event in
             guard let self, self.isOn else { return event }
-            self.handleKeyDown(event)
+            self.handle(event)
             return nil
         }
         // 다른 앱이 키를 가져간 경우의 대비. 접근성 권한이 없으면 아무것도 오지 않을 뿐 해롭지 않다.
-        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) {
+        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .flagsChanged]) {
             [weak self] event in
             guard let self, self.isOn else { return }
-            self.handleKeyDown(event)
+            self.handle(event)
             self.reclaimFocus()
         }
     }
 
-    /// 키 하나를 처리한다. 걷었으면 true. (테스트에서 직접 부른다.)
+    /// 입력 하나를 처리한다. 걷었으면 true. (테스트에서 직접 부른다.)
     @discardableResult
-    func handleKeyDown(_ event: NSEvent, now: Date = Date()) -> Bool {
-        if LightsOutPolicy.unlocks(
-            isEscape: event.keyCode == 53, characters: event.charactersIgnoringModifiers,
-            unlockKey: unlockKeyProvider())
-        {
+    func handle(_ event: NSEvent, now: Date = Date()) -> Bool {
+        if event.type == .flagsChanged {
+            let flags = event.modifierFlags
+            let others: NSEvent.ModifierFlags = [.command, .control, .shift, .function]
+            guard
+                optionTap.modifiersChanged(
+                    optionDown: flags.contains(.option),
+                    otherModifiersDown: !flags.intersection(others).isEmpty)
+            else { return false }
             turnOff()
             return true
         }
-        // 해제 키를 잊었을 때: 아무 키나 빠르게 다섯 번. 누르고 있는 자동 반복은 세지 않는다.
-        guard LightsOutPolicy.countsAsPress(isRepeat: event.isARepeat) else { return false }
-        recentPresses = LightsOutPolicy.recentPresses(recentPresses + [now], now: now)
-        guard LightsOutPolicy.isRapidEscape(presses: recentPresses, now: now) else { return false }
+        // ⌥를 누른 채 다른 키를 치면 그 ⌥는 탭이 아니다.
+        optionTap.otherKeyPressed()
+        // ⌥를 잊었을 때: 아무 키나 빠르게 15번. 누르고 있는 자동 반복은 세지 않는다.
+        guard CoverScreensPolicy.countsAsPress(isRepeat: event.isARepeat) else { return false }
+        recentPresses = CoverScreensPolicy.recentPresses(recentPresses + [now], now: now)
+        guard CoverScreensPolicy.isRapidEscape(presses: recentPresses, now: now) else {
+            return false
+        }
         turnOff()
         return true
     }
@@ -172,11 +186,11 @@ final class LightsOutController {
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Chap Lights Out" as CFString,
+            "Chap Cover Screens" as CFString,
             &id)
         guard result == kIOReturnSuccess else {
             // 어써션이 없으면 화면이 꺼질 수 있다. 가림막 자체는 그대로 둔다.
-            Log.app.error("Lights Out assertion failed: \(result, privacy: .public)")
+            Log.app.error("Cover Screens assertion failed: \(result, privacy: .public)")
             return
         }
         assertionID = id
@@ -192,7 +206,7 @@ final class LightsOutController {
 }
 
 /// 가림막 창. 활성화 정책이 accessory여도 key가 되어 입력을 받아야 한다.
-final class LightsOutWindow: NSWindow {
+final class CoverScreensWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
     /// 클릭은 삼킨다. 가려진 앱이 눈먼 클릭을 받지 않게.
@@ -201,10 +215,12 @@ final class LightsOutWindow: NSWindow {
 
 /// 가림막 내용: 검정 바탕에 자는 물범, 시간, 그리고 잠깐 떴다 사라지는 안내.
 /// (개발용) 렌더 도구가 모습을 PNG로 뽑을 때도 쓴다.
-struct LightsOutView: View {
+struct CoverScreensView: View {
     /// 주 화면에만 시간과 안내를 둔다. 나머지 화면은 검정만.
     let showsClock: Bool
     let hint: String
+    /// 사용자가 설정한 문구. 시계 아래에 계속 보인다(안내와 달리 사라지지 않는다). nil이면 없음.
+    var message: String?
 
     @State private var showsHint = true
     /// 숨: 들숨이면 true. 밝기만 오르내린다.
@@ -212,8 +228,8 @@ struct LightsOutView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var sealOpacity: Double {
-        guard !reduceMotion else { return LightsOutPolicy.sealOpacity }
-        let range = LightsOutPolicy.sealBreathOpacity
+        guard !reduceMotion else { return CoverScreensPolicy.sealOpacity }
+        let range = CoverScreensPolicy.sealBreathOpacity
         return inhales ? range.upperBound : range.lowerBound
     }
 
@@ -234,12 +250,20 @@ struct LightsOutView: View {
                         Text(context.date, format: .dateTime.hour().minute())
                             .font(.system(size: 64, weight: .thin, design: .rounded))
                             .monospacedDigit()
-                            .foregroundColor(.white.opacity(LightsOutPolicy.clockOpacity))
+                            .foregroundColor(.white.opacity(CoverScreensPolicy.clockOpacity))
+                    }
+                    if let message {
+                        Text(message)
+                            .font(.system(size: 20, weight: .regular, design: .rounded))
+                            .foregroundColor(.white.opacity(CoverScreensPolicy.clockOpacity))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .frame(maxWidth: 640)
                     }
                     Text(hint)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(
-                            .white.opacity(showsHint ? LightsOutPolicy.hintOpacity : 0)
+                            .white.opacity(showsHint ? CoverScreensPolicy.hintOpacity : 0)
                         )
                         .animation(.easeOut(duration: 0.8), value: showsHint)
                 }
@@ -247,17 +271,17 @@ struct LightsOutView: View {
         }
         .ignoresSafeArea()
         .task {
-            try? await Task.sleep(for: .seconds(LightsOutPolicy.hintDuration))
+            try? await Task.sleep(for: .seconds(CoverScreensPolicy.hintDuration))
             showsHint = false
         }
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(
-                .easeInOut(duration: LightsOutPolicy.sealBreathDuration)
+                .easeInOut(duration: CoverScreensPolicy.sealBreathDuration)
                     .repeatForever(autoreverses: true)
             ) { inhales = true }
         }
         .accessibilityElement()
-        .accessibilityLabel("Lights out. \(hint)")
+        .accessibilityLabel("Screens covered. \(message.map { "\($0). " } ?? "")\(hint)")
     }
 }

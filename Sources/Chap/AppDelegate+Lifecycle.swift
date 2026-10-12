@@ -44,16 +44,16 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
-            // 노치 띠의 Lights Out 아이콘: 메뉴바 항목과 같은 경로로 가림막을 친다.
+            // 노치 띠의 Cover Screens 아이콘: 메뉴바 항목과 같은 경로로 가림막을 친다.
             NotificationCenter.default.addObserver(
-                forName: NotchLightsOutStripButton.request, object: nil, queue: .main
+                forName: NotchCoverScreensStripButton.request, object: nil, queue: .main
             ) { [weak self] _ in
-                guard let self, !self.lightsOutController.isOn else { return }
-                self.toggleLightsOut()
+                guard let self, !self.coverScreensController.isOn else { return }
+                self.toggleCoverScreens()
             },
-            // Lights Out이 켜지거나 걷히면 메뉴 문구를 바꾼다 (스스로 걷히는 비상 해제 포함).
+            // Cover Screens가 켜지거나 걷히면 메뉴 문구를 바꾼다 (스스로 걷히는 비상 해제 포함).
             NotificationCenter.default.addObserver(
-                forName: LightsOutController.didChangeNotification, object: nil, queue: .main
+                forName: CoverScreensController.didChangeNotification, object: nil, queue: .main
             ) { [weak self] _ in
                 self?.buildMenu()
             },
@@ -175,10 +175,10 @@ extension AppDelegate {
             notchPanelColorHex: config.notchPanelColorHex,
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
-            notchLightsOutEnabled: config.notchLightsOutEnabled,
+            notchCoverScreensEnabled: config.notchCoverScreensEnabled,
             notchQuickNoteShortcut: config.notchQuickNoteShortcut,
-            lightsOutUnlockKey: config.lightsOutUnlockKey,
-            lightsOutShortcut: config.lightsOutShortcut,
+            coverScreensShortcut: config.coverScreensShortcut,
+            coverScreensMessage: config.coverScreensMessage,
             notchWidgets: config.notchWidgets)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
@@ -197,10 +197,10 @@ extension AppDelegate {
                 notchPanelColorHex: payload.notchPanelColorHex,
                 notchMirrorEnabled: payload.notchMirrorEnabled,
                 notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
-                notchLightsOutEnabled: payload.notchLightsOutEnabled,
+                notchCoverScreensEnabled: payload.notchCoverScreensEnabled,
                 notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
-                lightsOutUnlockKey: payload.lightsOutUnlockKey,
-                lightsOutShortcut: payload.lightsOutShortcut,
+                coverScreensShortcut: payload.coverScreensShortcut,
+                coverScreensMessage: payload.coverScreensMessage,
                 notchWidgets: payload.notchWidgets,
                 sites: payload.sites)
             let result = validateConfig(validationConfig)
@@ -236,9 +236,9 @@ extension AppDelegate {
             let previousNotchWidgets = self.config.notchWidgets
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
-            let previousNotchLightsOutEnabled = self.config.notchLightsOutEnabled
+            let previousNotchCoverScreensEnabled = self.config.notchCoverScreensEnabled
             let previousQuickNoteKey = self.registeredQuickNoteKey
-            let previousLightsOutKey = self.registeredLightsOutKey
+            let previousCoverScreensKey = self.registeredCoverScreensKey
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -266,7 +266,7 @@ extension AppDelegate {
             // 메뉴를 다시 만들면 단축키도 다시 등록하지만, 그렇지 않을 때도 Quick Note 키가 바뀌면 다시 등록한다.
             let quickNoteKeyChanged =
                 previousQuickNoteKey != self.registeredQuickNoteKey
-                || previousLightsOutKey != self.registeredLightsOutKey
+                || previousCoverScreensKey != self.registeredCoverScreensKey
             if previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
@@ -281,7 +281,7 @@ extension AppDelegate {
                 || previousNotchWidgets != newConfig.notchWidgets
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
                 || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
-                || previousNotchLightsOutEnabled != newConfig.notchLightsOutEnabled
+                || previousNotchCoverScreensEnabled != newConfig.notchCoverScreensEnabled
             {
                 // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
                 DispatchQueue.main.async { self.refreshNotchLauncher() }

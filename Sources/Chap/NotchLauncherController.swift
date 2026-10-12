@@ -61,7 +61,7 @@ final class NotchLauncherController {
     var mirrorEnabledProvider: () -> Bool = { false }
     /// 상단 띠 Quick Note 아이콘 표시 여부.
     var quickNoteEnabledProvider: () -> Bool = { false }
-    var lightsOutEnabledProvider: () -> Bool = { false }
+    var coverScreensEnabledProvider: () -> Bool = { false }
     /// 패널 시각 스타일 공급자.
     var styleProvider: () -> NotchPanelStyle = { .custom }
     /// Liquid Glass System/Light/Dark appearance 공급자.
@@ -80,7 +80,7 @@ final class NotchLauncherController {
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
-    /// true면 도커를 열지 않는다 (Lights Out 가림막이 떠 있는 동안).
+    /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
     var isSuppressedProvider: () -> Bool = { false }
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
 
@@ -416,7 +416,7 @@ final class NotchLauncherController {
         let slots = slotsProvider()
         guard
             NotchLauncherPolicy.shouldBuildPanel(
-                hasSlots: !slots.isEmpty || mirrorEnabledProvider() || lightsOutEnabledProvider()
+                hasSlots: !slots.isEmpty || mirrorEnabledProvider() || coverScreensEnabledProvider()
                     || quickNoteEnabledProvider(), forDrop: forDrop)
         else { return }
 
@@ -440,7 +440,7 @@ final class NotchLauncherController {
             slots: slots,
             showsMirror: mirrorEnabledProvider(),
             showsNote: quickNoteEnabledProvider(),
-            showsLightsOut: lightsOutEnabledProvider(),
+            showsCoverScreens: coverScreensEnabledProvider(),
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)

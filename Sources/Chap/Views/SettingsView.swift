@@ -795,10 +795,10 @@ struct SettingsView: View {
                     notchPanelColorHex: vm.notchPanelColorHex,
                     notchMirrorEnabled: vm.notchMirrorEnabled,
                     notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                    notchLightsOutEnabled: vm.notchLightsOutEnabled,
+                    notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
                     notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-                    lightsOutUnlockKey: vm.lightsOutUnlockKey,
-                    lightsOutShortcut: vm.lightsOutShortcut,
+                    coverScreensShortcut: vm.coverScreensShortcut,
+                    coverScreensMessage: vm.coverScreensMessage,
                     notchWidgets: vm.notchWidgets)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.

@@ -477,16 +477,16 @@ struct NotchStripTools: View {
     var showsEmptyDropBox = false
     let showsMirror: Bool
     let showsNote: Bool
-    /// Lights Out 아이콘. Quick Note 오른쪽(띠 도구의 끝)에 둔다.
-    var showsLightsOut = false
+    /// Cover Screens 아이콘. Quick Note 오른쪽(띠 도구의 끝)에 둔다.
+    var showsCoverScreens = false
 
-    private enum Tool: Equatable { case mirror, note, lightsOut }
+    private enum Tool: Equatable { case mirror, note, coverScreens }
     @State private var openTool: Tool?
 
     var body: some View {
         let tools: [Tool] =
             (showsMirror ? [.mirror] : []) + (showsNote ? [.note] : [])
-            + (showsLightsOut ? [.lightsOut] : [])
+            + (showsCoverScreens ? [.coverScreens] : [])
         let offsets = NotchLauncherPolicy.stripToolCenterOffsets(
             besideDropBadge: besideDropBadge, count: tools.count)
         GeometryReader { geo in
@@ -515,8 +515,8 @@ struct NotchStripTools: View {
                     case .note:
                         NotchQuickNoteStripButton(
                             iconCenterX: centerX, stripHeight: stripHeight)
-                    case .lightsOut:
-                        NotchLightsOutStripButton(
+                    case .coverScreens:
+                        NotchCoverScreensStripButton(
                             iconCenterX: centerX, stripHeight: stripHeight)
                     }
                 }
@@ -587,11 +587,11 @@ struct NotchQuickNoteStripButton: View {
     }
 }
 
-/// 상단 띠의 Lights Out 아이콘. 누르면 도커를 접고 모든 화면을 가림막으로 덮는다.
-/// 덮인 뒤에는 노치가 가려지므로 여기서 끌 수 없다. 돌아올 때는 해제 키(기본 Esc)를 누른다.
-struct NotchLightsOutStripButton: View {
-    /// 눌렀을 때 AppDelegate가 가림막을 친다 (메뉴바의 Lights Out과 같은 동작).
-    static let request = Notification.Name("ChapLightsOutRequest")
+/// 상단 띠의 Cover Screens 아이콘. 누르면 도커를 접고 모든 화면을 가림막으로 덮는다.
+/// 덮인 뒤에는 노치가 가려지므로 여기서 끌 수 없다. 돌아올 때는 ⌥만 한 번 누른다.
+struct NotchCoverScreensStripButton: View {
+    /// 눌렀을 때 AppDelegate가 가림막을 친다 (메뉴바의 Cover Screens와 같은 동작).
+    static let request = Notification.Name("ChapCoverScreensRequest")
 
     let iconCenterX: CGFloat
     let stripHeight: CGFloat
@@ -610,8 +610,8 @@ struct NotchLightsOutStripButton: View {
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help("Lights Out: cover your screens. Press Esc to come back.")
-        .accessibilityLabel(LightsOutPolicy.menuTitleOff)
+        .help("Cover Screens. Tap ⌥ Option to come back.")
+        .accessibilityLabel(CoverScreensPolicy.menuTitleOff)
         .position(x: iconCenterX, y: stripHeight / 2)
     }
 }
@@ -918,7 +918,7 @@ struct NotchMascotView: View {
     var zColor: Color = .secondary
     /// Focus가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
     var isFocusing = false
-    /// 잠든 동안에도 가끔 꿈꾸듯 꼬리를 한 번 까딱한다 (Lights Out 화면). 노치 띠에서는 쓰지 않는다.
+    /// 잠든 동안에도 가끔 꿈꾸듯 꼬리를 한 번 까딱한다 (Cover Screens 화면). 노치 띠에서는 쓰지 않는다.
     var dreams = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

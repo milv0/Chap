@@ -4,7 +4,7 @@ import SwiftUI
 // MARK: - General Tab
 
 /// Settings > General 탭. 앱 자체에 관한 것만: App / Launching / Menu Bar, 그리고 버전 표시.
-/// 기능(Quick Note·Lights Out·Mirror) 설정은 Tools 탭, 노치 모양은 Notch 탭에 있다.
+/// 기능(Quick Note·Cover Screens·Mirror) 설정은 Tools 탭, 노치 모양은 Notch 탭에 있다.
 struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
@@ -65,7 +65,7 @@ struct GeneralSettingsView: View {
                         subtitle: "⌥. opens the menu, ⌥, opens Settings, ⌥(key) launches a site.",
                         help:
                             "Turn this off temporarily when another app needs Option-key combinations. "
-                            + "Quick Note and Lights Out shortcuts pause too.",
+                            + "Quick Note and Cover Screens shortcuts pause too.",
                         isOn: $vm.optionShortcutsEnabled
                     )
                     .onChange(of: vm.optionShortcutsEnabled) { _, _ in onSave() }
@@ -80,7 +80,7 @@ struct GeneralSettingsView: View {
                     SettingsSectionHeader(
                         title: "Launching", systemImage: "arrow.up.forward.app",
                         note:
-                            "Per-site keys live in Launchers; Quick Note and Lights Out keys in Tools."
+                            "Per-site keys live in Launchers; Quick Note and Cover Screens keys in Tools."
                     )
                 }
 

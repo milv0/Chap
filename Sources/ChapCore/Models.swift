@@ -407,16 +407,18 @@ public struct Config: Codable {
     public var notchMirrorEnabled: Bool
     /// 상단 띠 Quick Note 아이콘 표시 여부. 누르면 메모가 띠 아래로 펼쳐진다.
     public var notchQuickNoteEnabled: Bool
-    /// 상단 띠 Lights Out 아이콘 표시 여부. 누르면 가림막을 친다. 누락 시 true.
-    public var notchLightsOutEnabled: Bool
+    /// 노치 띠 Cover Screens 아이콘 표시 여부. 누르면 가림막을 친다. 누락 시 true.
+    /// 2.10.1까지는 `notchLightsOutEnabled`로 저장했다(읽을 때 옮긴다).
+    public var notchCoverScreensEnabled: Bool
     /// Quick Note 창을 여는 ⌥ 키(한 글자, 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥N.
     /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
     public var notchQuickNoteShortcut: String?
-    /// Lights Out 가림막을 걷는 키. "esc"(기본) 또는 한 글자(대문자). 잠금이 아니라 가림막이다.
-    public var lightsOutUnlockKey: String
-    /// Lights Out을 켜는 ⌥ 키(한 글자 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥L.
-    /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
-    public var lightsOutShortcut: String?
+    /// Cover Screens를 켜는 ⌥ 키(한 글자 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥L.
+    /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다. 2.10.1까지는 `lightsOutShortcut`.
+    /// 걷는 법은 ⌥ 한 번이라 설정할 키가 없다(예전 `lightsOutUnlockKey`는 읽지 않고 버린다).
+    public var coverScreensShortcut: String?
+    /// 가림막 시계 아래에 보이는 사용자 문구. nil이면 없음. `CoverScreensPolicy.cleanedMessage`로 정리한다.
+    public var coverScreensMessage: String?
     public var notchWidgets: [NotchWidget]
     /// 어깨 아이콘으로 접어 둔 위젯(Screenshots·Downloads). 노치에서 접고 펴며, 이 Mac의
     /// 표시 선택이라 설정창 저장·가져오기가 바꾸지 않는다. `NotchShoulderPolicy.normalized`로 정리한다.
@@ -452,8 +454,13 @@ public struct Config: Codable {
         case notchGlassAppearance, notchGlassMaterial
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
-        case lightsOutUnlockKey, notchLightsOutEnabled, lightsOutShortcut
+        case notchCoverScreensEnabled, coverScreensShortcut, coverScreensMessage
         case sites
+    }
+
+    /// 2.10.1까지의 이름. 읽기만 하고 다시 쓰지 않는다.
+    private enum LegacyCodingKeys: String, CodingKey {
+        case notchLightsOutEnabled, lightsOutShortcut
     }
 
     public init(
@@ -470,10 +477,10 @@ public struct Config: Codable {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
-        notchLightsOutEnabled: Bool = true,
+        notchCoverScreensEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
-        lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
-        lightsOutShortcut: String? = LightsOutPolicy.defaultShortcut,
+        coverScreensShortcut: String? = CoverScreensPolicy.defaultShortcut,
+        coverScreensMessage: String? = nil,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         sites: [Site]
     ) {
@@ -492,10 +499,10 @@ public struct Config: Codable {
             ?? Config.notchPanelColorHexDefault
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
-        self.notchLightsOutEnabled = notchLightsOutEnabled
+        self.notchCoverScreensEnabled = notchCoverScreensEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
-        self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
-        self.lightsOutShortcut = QuickNoteShortcutPolicy.normalized(lightsOutShortcut)
+        self.coverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
+        self.coverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.sites = sites
     }
@@ -553,8 +560,11 @@ public struct Config: Codable {
             (try? container.decodeIfPresent(Bool.self, forKey: .notchMirrorEnabled)) ?? true
         notchQuickNoteEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchQuickNoteEnabled)) ?? true
-        notchLightsOutEnabled =
-            (try? container.decodeIfPresent(Bool.self, forKey: .notchLightsOutEnabled)) ?? true
+        // 새 이름이 없으면 2.10.1까지의 이름에서 옮긴다.
+        let legacy = try decoder.container(keyedBy: LegacyCodingKeys.self)
+        notchCoverScreensEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchCoverScreensEnabled))
+            ?? (try? legacy.decodeIfPresent(Bool.self, forKey: .notchLightsOutEnabled)) ?? true
         // 키가 없으면(이전 버전 설정) 기본 ⌥N, ""이면 끔.
         if let stored = try? container.decodeIfPresent(String.self, forKey: .notchQuickNoteShortcut)
         {
@@ -563,14 +573,17 @@ public struct Config: Codable {
             notchQuickNoteShortcut = QuickNoteShortcutPolicy.defaultKey
         }
         // 키가 없거나 알 수 없는 값이면 Esc로 둔다. 해제할 길은 늘 있어야 한다.
-        lightsOutUnlockKey = LightsOutPolicy.normalized(
-            try? container.decodeIfPresent(String.self, forKey: .lightsOutUnlockKey))
         // 키가 없으면(이전 버전 설정) 기본 ⌥L, ""이면 끔.
-        if let stored = try? container.decodeIfPresent(String.self, forKey: .lightsOutShortcut) {
-            lightsOutShortcut = QuickNoteShortcutPolicy.normalized(stored)
+        if let stored =
+            (try? container.decodeIfPresent(String.self, forKey: .coverScreensShortcut))
+            ?? (try? legacy.decodeIfPresent(String.self, forKey: .lightsOutShortcut))
+        {
+            coverScreensShortcut = QuickNoteShortcutPolicy.normalized(stored)
         } else {
-            lightsOutShortcut = LightsOutPolicy.defaultShortcut
+            coverScreensShortcut = CoverScreensPolicy.defaultShortcut
         }
+        coverScreensMessage = CoverScreensPolicy.cleanedMessage(
+            try? container.decodeIfPresent(String.self, forKey: .coverScreensMessage))
         // 알 수 없는 위젯 이름은 버리고 항상 6칸으로 정규화한다 (관용 디코딩).
         if let rawWidgets = (try? container.decodeIfPresent([String].self, forKey: .notchWidgets))
             .flatMap({ $0 })
@@ -630,10 +643,10 @@ public struct Config: Codable {
         try container.encode(notchWidgets.map(\.rawValue), forKey: .notchWidgets)
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
-        try container.encode(notchLightsOutEnabled, forKey: .notchLightsOutEnabled)
+        try container.encode(notchCoverScreensEnabled, forKey: .notchCoverScreensEnabled)
         try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
-        try container.encode(lightsOutUnlockKey, forKey: .lightsOutUnlockKey)
-        try container.encode(lightsOutShortcut ?? "", forKey: .lightsOutShortcut)
+        try container.encode(coverScreensShortcut ?? "", forKey: .coverScreensShortcut)
+        try container.encodeIfPresent(coverScreensMessage, forKey: .coverScreensMessage)
         try container.encode(
             notchCollapsedWidgets.map(\.rawValue), forKey: .notchCollapsedWidgets)
         try container.encode(sites, forKey: .sites)

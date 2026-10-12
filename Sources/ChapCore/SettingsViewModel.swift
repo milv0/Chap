@@ -15,10 +15,10 @@ public struct SettingsPayload {
     public let notchPanelColorHex: String
     public let notchMirrorEnabled: Bool
     public let notchQuickNoteEnabled: Bool
-    public let notchLightsOutEnabled: Bool
+    public let notchCoverScreensEnabled: Bool
     public let notchQuickNoteShortcut: String?
-    public let lightsOutUnlockKey: String
-    public let lightsOutShortcut: String?
+    public let coverScreensShortcut: String?
+    public let coverScreensMessage: String?
     public let notchWidgets: [NotchWidget]
 }
 
@@ -37,10 +37,10 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchPanelColorHex: String
     @Published public var notchMirrorEnabled: Bool
     @Published public var notchQuickNoteEnabled: Bool
-    @Published public var notchLightsOutEnabled: Bool
+    @Published public var notchCoverScreensEnabled: Bool
     @Published public var notchQuickNoteShortcut: String?
-    @Published public var lightsOutUnlockKey: String
-    @Published public var lightsOutShortcut: String?
+    @Published public var coverScreensShortcut: String?
+    @Published public var coverScreensMessage: String?
     @Published public var notchWidgets: [NotchWidget]
     @Published public var originalSites: [Site]
     @Published public var originalGuide: Bool
@@ -57,10 +57,10 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchWidgets: [NotchWidget]
     @Published public var originalNotchMirrorEnabled: Bool
     @Published public var originalNotchQuickNoteEnabled: Bool
-    @Published public var originalNotchLightsOutEnabled: Bool
+    @Published public var originalNotchCoverScreensEnabled: Bool
     @Published public var originalNotchQuickNoteShortcut: String?
-    @Published public var originalLightsOutUnlockKey: String
-    @Published public var originalLightsOutShortcut: String?
+    @Published public var originalCoverScreensShortcut: String?
+    @Published public var originalCoverScreensMessage: String?
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
     private let saveDebouncer: SaveDebouncer
@@ -80,10 +80,10 @@ public final class SettingsViewModel: ObservableObject {
             || notchWidgets != originalNotchWidgets
             || notchMirrorEnabled != originalNotchMirrorEnabled
             || notchQuickNoteEnabled != originalNotchQuickNoteEnabled
-            || notchLightsOutEnabled != originalNotchLightsOutEnabled
+            || notchCoverScreensEnabled != originalNotchCoverScreensEnabled
             || notchQuickNoteShortcut != originalNotchQuickNoteShortcut
-            || lightsOutUnlockKey != originalLightsOutUnlockKey
-            || lightsOutShortcut != originalLightsOutShortcut
+            || coverScreensShortcut != originalCoverScreensShortcut
+            || coverScreensMessage != originalCoverScreensMessage
     }
 
     public func markSaved() {
@@ -108,10 +108,10 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchWidgets = notchWidgets
         originalNotchMirrorEnabled = notchMirrorEnabled
         originalNotchQuickNoteEnabled = notchQuickNoteEnabled
-        originalNotchLightsOutEnabled = notchLightsOutEnabled
+        originalNotchCoverScreensEnabled = notchCoverScreensEnabled
         originalNotchQuickNoteShortcut = notchQuickNoteShortcut
-        originalLightsOutUnlockKey = lightsOutUnlockKey
-        originalLightsOutShortcut = lightsOutShortcut
+        originalCoverScreensShortcut = coverScreensShortcut
+        originalCoverScreensMessage = coverScreensMessage
     }
 
     /// 유효한 현재 편집 상태를 debounce해 자동 저장한다.
@@ -132,10 +132,10 @@ public final class SettingsViewModel: ObservableObject {
                 notchPanelColorHex: self.notchPanelColorHex,
                 notchMirrorEnabled: self.notchMirrorEnabled,
                 notchQuickNoteEnabled: self.notchQuickNoteEnabled,
-                notchLightsOutEnabled: self.notchLightsOutEnabled,
+                notchCoverScreensEnabled: self.notchCoverScreensEnabled,
                 notchQuickNoteShortcut: self.notchQuickNoteShortcut,
-                lightsOutUnlockKey: self.lightsOutUnlockKey,
-                lightsOutShortcut: self.lightsOutShortcut,
+                coverScreensShortcut: self.coverScreensShortcut,
+                coverScreensMessage: self.coverScreensMessage,
                 notchWidgets: self.notchWidgets,
                 sites: self.sites)
             guard validateConfig(config).isValid else { return }
@@ -169,10 +169,10 @@ public final class SettingsViewModel: ObservableObject {
                     notchPanelColorHex: notchPanelColorHex,
                     notchMirrorEnabled: notchMirrorEnabled,
                     notchQuickNoteEnabled: notchQuickNoteEnabled,
-                    notchLightsOutEnabled: notchLightsOutEnabled,
+                    notchCoverScreensEnabled: notchCoverScreensEnabled,
                     notchQuickNoteShortcut: notchQuickNoteShortcut,
-                    lightsOutUnlockKey: lightsOutUnlockKey,
-                    lightsOutShortcut: lightsOutShortcut,
+                    coverScreensShortcut: coverScreensShortcut,
+                    coverScreensMessage: coverScreensMessage,
                     notchWidgets: notchWidgets)) ?? true
         if saved { markSaved() }
         return saved
@@ -192,10 +192,10 @@ public final class SettingsViewModel: ObservableObject {
         notchPanelColorHex: String = Config.notchPanelColorHexDefault,
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
-        notchLightsOutEnabled: Bool = true,
+        notchCoverScreensEnabled: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
-        lightsOutUnlockKey: String = LightsOutPolicy.escapeKey,
-        lightsOutShortcut: String? = LightsOutPolicy.defaultShortcut,
+        coverScreensShortcut: String? = CoverScreensPolicy.defaultShortcut,
+        coverScreensMessage: String? = nil,
         notchWidgets: [NotchWidget] = NotchWidget.defaultSlots,
         saveDebouncer: SaveDebouncer = SaveDebouncer()
     ) {
@@ -213,10 +213,10 @@ public final class SettingsViewModel: ObservableObject {
         self.notchPanelColorHex = notchPanelColorHex
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
-        self.notchLightsOutEnabled = notchLightsOutEnabled
+        self.notchCoverScreensEnabled = notchCoverScreensEnabled
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
-        self.lightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
-        self.lightsOutShortcut = QuickNoteShortcutPolicy.normalized(lightsOutShortcut)
+        self.coverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
+        self.coverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
         self.notchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.originalSites = sites
         self.originalGuide = showGuideWindow
@@ -232,11 +232,11 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchPanelColorHex = notchPanelColorHex
         self.originalNotchMirrorEnabled = notchMirrorEnabled
         self.originalNotchQuickNoteEnabled = notchQuickNoteEnabled
-        self.originalNotchLightsOutEnabled = notchLightsOutEnabled
+        self.originalNotchCoverScreensEnabled = notchCoverScreensEnabled
         self.originalNotchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(
             notchQuickNoteShortcut)
-        self.originalLightsOutUnlockKey = LightsOutPolicy.normalized(lightsOutUnlockKey)
-        self.originalLightsOutShortcut = QuickNoteShortcutPolicy.normalized(lightsOutShortcut)
+        self.originalCoverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
+        self.originalCoverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
         self.originalNotchWidgets = NotchWidget.normalizedSlots(notchWidgets)
         self.saveDebouncer = saveDebouncer
     }
