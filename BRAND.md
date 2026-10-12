@@ -41,6 +41,9 @@ the state. The Focus dial shows the time left.
 When you check off a to-do, the seal flicks its tail once: a friend noticing,
 not a pet asking for attention.
 
+The app icon is the same seal, resting on a thin waterline. Icon, notch strip,
+and the Seal menu bar choice are one character, never three drawings.
+
 ## The name carries both meanings
 
 | Meaning | Where it comes from | What it gives Chap |
