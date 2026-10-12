@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.12.2] — 2026-10-13
+
+### Changed
+
+- **A livelier companion** — On extra screens under Cover Screens, Chap now flicks
+  its tail every few seconds instead of every 7–12, so you can tell it is there.
+  The seal on the notch strip keeps its calmer pace.
+
 ## [2.12.1] — 2026-10-13
 
 ### Changed

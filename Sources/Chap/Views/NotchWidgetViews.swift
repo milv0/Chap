@@ -920,6 +920,8 @@ struct NotchMascotView: View {
     var isFocusing = false
     /// 잠든 동안에도 가끔 꿈꾸듯 꼬리를 한 번 까딱한다 (Cover Screens 화면). 노치 띠에서는 쓰지 않는다.
     var dreams = false
+    /// 깨어 있을 때 꼬리를 까딱하는 간격(초). 노치 띠는 기본값, Cover Screens 보조 화면은 더 짧게.
+    var flickInterval: ClosedRange<Double> = ChapMascot.idleFlickInterval
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var pose: ChapMascot.Pose = .rest
@@ -1063,7 +1065,7 @@ struct NotchMascotView: View {
         }
         // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
         // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
-        .task(id: "\(moves)-\(mood)-\(wagsContinuously)-\(dreams)") {
+        .task(id: "\(moves)-\(mood)-\(wagsContinuously)-\(dreams)-\(flickInterval)") {
             pose = .rest
             // 잠든 채 꿈꾸기: 드물게 한 번만 까딱한다.
             if moves, mood == .asleep, dreams {
@@ -1092,7 +1094,7 @@ struct NotchMascotView: View {
             }
             while !Task.isCancelled {
                 await flick()
-                let wait = Double.random(in: ChapMascot.idleFlickInterval)
+                let wait = Double.random(in: flickInterval)
                 try? await Task.sleep(for: .seconds(wait))
             }
             pose = .rest

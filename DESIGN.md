@@ -61,7 +61,7 @@ carry the feedback.
 When more than one screen is covered, the built-in screen keeps the napping seal
 and clock, and every other screen shows the strip's awake seal in the middle at
 8pt per sprite pixel and 0.6 opacity. It blinks and flicks its tail now and then
-(every 7–12 s), exactly like the notch strip.
+every 2–4 s, more often than the notch strip (7–12 s) because it is the only thing on screen.
 
 ## App icon
 
