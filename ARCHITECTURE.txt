@@ -18,7 +18,8 @@ Sources/
 │   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
-│   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이
+│   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이 (픽셀 물범 + 문구)
+│   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (HUD 등 AppKit 자리)
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
@@ -168,7 +169,10 @@ Resources/                          ← 앱 아이콘/상태바 이미지 리소
 └── StatusBarIcon.png
 assets/                             ← 배포·디자인용 원본 아이콘 에셋
 └── icons/
-    ├── icon-orange.svg
+    ├── make-app-icon.swift     ← 앱 아이콘(픽셀 물범) 생성기. ChapMascot 격자를 그대로 쓴다
+    ├── app-icon-1024.png       ← 아이콘 마스터. 여기서 AppIcon.icns·웹 파비콘을 굽는다
+    ├── README.md               ← 다시 굽는 명령
+    ├── icon-orange.svg         ← 2.8 이전 번개 마크 (참고용)
     └── icon-purple.svg
 
 Config Files:
@@ -295,6 +299,7 @@ Config 모델 필드:
 - 멀티 모니터 지원 + Display Picker로 고정 디스플레이 선택, Follow Cursor로 커서 화면 실행
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
 - 크기 프리셋: Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, Custom
+  (Max는 높이 비율 1.0으로 보이는 영역을 꽉 채워 위아래 여백이 없다. 너비는 94%)
 - Follow Cursor 디스플레이 프리셋은 내장 화면 기준 크기로 계산 후 커서 화면에 맞춤
 - 화면별 size override: Follow Cursor에서만 적용한다. All Displays에서 편집 대상으로 고른 화면의 preset/custom size는 해당 화면 override로 저장되며, explicit display target 모드의 size edit는 site 전체 size를 갱신한다.
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
@@ -326,6 +331,7 @@ Config 모델 필드:
 - 상태바 아이콘 선택 (Default/Lightning/Seal) — Settings > General > Appearance에서 변경, config에 저장·재시작 유지
   - Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
   - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
+    HUD 그림은 앱 아이콘·노치와 같은 픽셀 물범이다 (켜면 깨어 꼬리를 든 Chap, 끄면 눈 감고 z를 띄운 Chap).
     노치에서는 Focus 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
 - 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
   `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
@@ -519,7 +525,7 @@ App 윈도우 감지 방식 (AXObserver):
   - 상태는 메모리에만 있고 config에 저장하지 않는다
   - 만료는 벽시계 기준이다: DispatchSourceTimer를 wallDeadline으로 걸어 잠든 시간도 세며,
     시스템/화면 wake 알림과 상태바 메뉴 열림 때 expireIfNeeded()로 다시 확인한다
-  - 시작/종료 시 사운드(Purr/Pop)와 중앙 커피 HUD로 피드백한다. 다만 잠든 사이 만료돼
+  - 시작/종료 시 사운드(Purr/Pop)와 중앙 물범 HUD로 피드백한다. 다만 잠든 사이 만료돼
     깨어난 뒤 정리되는 세션(expiredWhileAsleep, lateExpiryTolerance 초과)은 사운드·HUD 없이
     메뉴와 상태 아이콘만 조용히 되돌린다
 

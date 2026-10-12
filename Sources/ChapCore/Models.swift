@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.8.3"
+        ?? "2.8.4"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -65,8 +65,9 @@ public enum WindowSizePresets {
     public static let workspace = WindowSizePreset(
         id: "workspace", label: "Workspace", widthRatio: 0.86, heightRatio: 0.86,
         aspectRatio: nil)
+    /// 높이는 보이는 영역(메뉴 막대·Dock 제외)을 꽉 채운다. 위아래 여백 없이 쓰라는 프리셋이다.
     public static let max = WindowSizePreset(
-        id: "max", label: "Max", widthRatio: 0.94, heightRatio: 0.92, aspectRatio: nil)
+        id: "max", label: "Max", widthRatio: 0.94, heightRatio: 1.0, aspectRatio: nil)
 
     public static let all = [compact, focus, standard, comfortable, wide, tall, workspace, max]
 
