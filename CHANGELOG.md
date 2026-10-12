@@ -2,6 +2,22 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.9.0] — 2026-10-12
+
+### Added
+
+- **Lights Out** — Step away and cover every screen in black. Turn it on from the
+  menu bar; press Esc to come back, or pick another key in Settings > General. If
+  you forget the key, pressing any key five times quickly lifts the cover. While
+  it is up, Chap keeps the display awake on its own, so it works with or without a
+  Keep Mac Awake session and stays up after a session ends. Keys and clicks are
+  swallowed so nothing lands in the apps underneath, ⌘Tab can't bring another app
+  forward behind it, and Chap's own shortcuts and the notch dock stay closed until
+  you come back, at which point the app you were using is in front again. The
+  main screen shows the time with Chap napping. It is a cover, not a lock: it asks
+  for no password, and quitting Chap lifts it — use macOS Lock Screen (⌃⌘Q) to
+  secure your Mac.
+
 ## [2.8.6] — 2026-10-12
 
 ### Added
