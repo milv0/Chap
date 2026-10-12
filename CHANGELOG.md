@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.12.1] — 2026-10-13
+
+### Changed
+
+- **Chap keeps you company instead of swimming** — On extra screens under Cover
+  Screens, the swimming seal is replaced by the notch strip's seal, resting in the
+  middle and flicking its tail now and then.
+
 ## [2.12.0] — 2026-10-13
 
 ### Added

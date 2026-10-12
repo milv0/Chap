@@ -258,17 +258,13 @@ struct NotchRenderTool {
         try png.write(to: directory.appendingPathComponent("status-seal.png"))
     }
 
-    /// 보조 화면 가림막(헤엄치는 물범)을 몇 순간 그려 남긴다.
-    @Test("render the swimming seal", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    /// 보조 화면 가림막(꼬리를 까딱하는 물범)을 그려 남긴다.
+    @Test("render the companion seal", .enabled(if: NotchRenderTool.outputDirectory != nil))
     @MainActor
-    func renderSwim() throws {
+    func renderCompanion() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
-        // 1600pt 폭 = 200칸. 물범이 화면 안쪽에 보이는 순간들.
-        for (name, elapsed) in [("cover-swim-a", 20.0), ("cover-swim-b", 20.4)] {
-            let view = CoverScreensSwimView(frozenElapsed: elapsed)
-                .frame(width: 1600, height: 900)
-            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
-        }
+        let view = CoverScreensCompanionView().frame(width: 1600, height: 900)
+        try Self.renderPNG(view).write(to: directory.appendingPathComponent("cover-companion.png"))
     }
 
     /// Settings → Tools 화면을 그린다.

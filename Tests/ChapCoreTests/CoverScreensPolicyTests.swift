@@ -90,7 +90,7 @@ struct CoverScreensPolicyTests {
         #expect(CoverScreensPolicy.countsAsPress(isRepeat: true) == false)
     }
 
-    @Test("the clock goes on the built-in screen; the others get the swimming seal")
+    @Test("the clock goes on the built-in screen; the others get the resting seal")
     func clockScreenChoice() {
         // 외장 모니터가 첫 화면(메뉴 막대)이어도 내장 화면이 시계를 맡는다.
         #expect(CoverScreensPolicy.clockScreenIndex(builtIn: [false, true]) == 1)
@@ -319,28 +319,6 @@ struct CoverScreensControllerTests {
         #expect(controller.isOn)
         #expect(try controller.handle(key(0, "a"), now: start.addingTimeInterval(3.9)))
         #expect(controller.isOn == false)
-    }
-
-    /// 보조 화면의 물범이 정말 헤엄치는지: 같은 화면을 시간차로 찍어 픽셀이 바뀌었는지 본다.
-    @Test("the seal on extra screens swims, not a still image")
-    func swimMoves() throws {
-        let hosting = NSHostingView(rootView: CoverScreensSwimView().frame(width: 800, height: 450))
-        let window = NSWindow(
-            contentRect: CGRect(x: -10_000, y: -10_000, width: 800, height: 450),
-            styleMask: [.borderless], backing: .buffered, defer: false)
-        window.contentView = hosting
-        window.orderFrontRegardless()
-        defer { window.orderOut(nil) }
-        func snapshot() throws -> Data {
-            let rep = try #require(hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds))
-            hosting.cacheDisplay(in: hosting.bounds, to: rep)
-            let data = try #require(rep.bitmapData)
-            return Data(bytes: data, count: rep.bytesPerRow * rep.pixelsHigh)
-        }
-        RunLoop.main.run(until: Date().addingTimeInterval(0.3))
-        let first = try snapshot()
-        RunLoop.main.run(until: Date().addingTimeInterval(1.0))
-        #expect(try snapshot() != first)
     }
 
     /// 물범이 정말 움직이는지: 같은 화면을 시간차로 두 번 찍어 픽셀이 바뀌었는지 본다(숨·z).

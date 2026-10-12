@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.12.0-orange)
+![Version](https://img.shields.io/badge/version-2.12.1-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -36,7 +36,7 @@
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal drawn in outline) in Settings > General; it turns Chap blue while Keep Mac Awake runs
 - **Keep Mac Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen (on the built-in display with the notch), and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
-- **Cover Screens** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, a tap of ⌥ Option brings you back, and pressing any key 10 times quickly lifts it if you forget. Set a line to show under the clock ("Back in 10 minutes") in Settings > Tools. With more than one screen, the clock stays on the built-in display and Chap swims across the others. It holds the display awake on its own, so it works with or without a Keep Mac Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
+- **Cover Screens** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, a tap of ⌥ Option brings you back, and pressing any key 10 times quickly lifts it if you forget. Set a line to show under the clock ("Back in 10 minutes") in Settings > Tools. With more than one screen, the clock stays on the built-in display and Chap keeps you company on the others, flicking its tail now and then. It holds the display awake on its own, so it works with or without a Keep Mac Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
@@ -201,11 +201,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.12.0
+Scripts/release.sh 2.12.1
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.12.0 --publish
+Scripts/release.sh 2.12.1 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
