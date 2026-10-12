@@ -308,7 +308,8 @@ struct CoverScreensView: View {
 }
 
 /// 보조 화면의 가림막: 검정 가운데에 노치 띠의 물범이 깨어 있다. 가끔 눈을 깜빡이고 꼬리를 까딱한다
-/// (노치와 같은 `NotchMascotView`, 같은 간격). 동작 줄이기가 켜져 있으면 가만히 있다.
+/// (노치와 같은 `NotchMascotView`). 볼 것이 물범뿐이라 노치 띠(7~12초)보다 자주, 2~4초마다 까딱한다.
+/// 동작 줄이기가 켜져 있으면 가만히 있다.
 struct CoverScreensCompanionView: View {
     /// 한 칸 크기(pt). 큰 외장 모니터에서도 보이도록 낮잠 화면(6pt)보다 조금 크게.
     var pixelSize: CGFloat = 8
@@ -316,8 +317,11 @@ struct CoverScreensCompanionView: View {
     var body: some View {
         ZStack {
             Color.black
-            NotchMascotView(pixelSize: pixelSize, mood: .awake, isAnimating: true)
-                .opacity(CoverScreensPolicy.companionSealOpacity)
+            NotchMascotView(
+                pixelSize: pixelSize, mood: .awake, isAnimating: true,
+                flickInterval: ChapMascot.companionFlickInterval
+            )
+            .opacity(CoverScreensPolicy.companionSealOpacity)
         }
         .ignoresSafeArea()
         .accessibilityElement()

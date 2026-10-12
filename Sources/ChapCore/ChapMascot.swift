@@ -256,6 +256,9 @@ public enum ChapMascot {
 
     /// 열려 있는 동안 다음 까딱까지의 간격(초) 범위. 불규칙해야 기계적으로 보이지 않는다.
     public static let idleFlickInterval: ClosedRange<Double> = 7...12
+    /// Cover Screens 보조 화면의 까딱 간격(초). 볼 것이 물범뿐이라 노치 띠보다 자주 움직여야
+    /// 살아 있는 줄 안다. 그래도 정신없지 않게 몇 초씩은 쉰다.
+    public static let companionFlickInterval: ClosedRange<Double> = 2...4
 
     /// 잠든 물범이 꿈꾸듯 꼬리를 한 번 까딱하는 간격(초). 깨어 있을 때보다 드물고, 한 번만 든다.
     /// 깨어 있는 듯 보이면 안 되므로 `flickSequence`(두 번) 대신 `dreamFlickSequence`(한 번)를 쓴다.

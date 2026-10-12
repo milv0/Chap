@@ -586,7 +586,7 @@ Settings → Notch Launcher on
       │   → Keep Awake 어써션과 별개. 둘 중 하나가 풀려도 다른 쪽은 유지된다
       ├ NSScreen.screens마다 검정 창 1개 (.screenSaver, canJoinAllSpaces, 불투명)
       │   → clockScreenIndex(내장 화면, 없으면 첫 화면)의 창만 key, 그 화면에 낮잠 물범·시간·문구·안내
-      │   → 나머지 화면은 CoverScreensCompanionView: 노치 띠와 같은 물범이 7~12초마다 꼬리를 까딱한다
+      │   → 나머지 화면은 CoverScreensCompanionView: 노치 띠와 같은 물범이 2~4초마다 꼬리를 까딱한다 (노치 띠는 7~12초)
       ├ 켜기 직전 frontmostApplication 기억 (Chap 자신이면 nil)
       ├ OptionTap(optionHeldAtStart: 켤 때 ⌥가 눌려 있었는지) — ⌥L을 떼는 순간 걷히지 않게
       ├ 로컬 keyDown·flagsChanged 모니터:

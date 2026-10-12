@@ -197,3 +197,16 @@ struct ChapMascotMenuBarTests {
         #expect(ChapMascot.dreamFlickInterval.lowerBound > ChapMascot.idleFlickInterval.lowerBound)
     }
 }
+
+@Suite("ChapMascot – Cover Screens companion")
+struct ChapMascotCompanionTests {
+    @Test("the companion seal flicks more often than the strip seal, but still rests between")
+    func companionFlicksOften() {
+        let companion = ChapMascot.companionFlickInterval
+        #expect(companion.upperBound < ChapMascot.idleFlickInterval.lowerBound)
+        // 꼬리 한 번(4프레임 × 0.14초 ≈ 0.56초)보다 충분히 쉰다.
+        #expect(
+            companion.lowerBound > Double(ChapMascot.flickSequence.count)
+                * ChapMascot.flickFrameDuration * 2)
+    }
+}
