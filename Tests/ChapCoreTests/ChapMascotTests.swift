@@ -175,6 +175,16 @@ struct ChapMascotMenuBarTests {
         #expect(cells.count == lines)
     }
 
+    @Test("the face cells are the eyes and mouth, and are part of the outline")
+    func faceCells() {
+        let outline = Set(ChapMascot.menuBarOutline.map { [$0.x, $0.y] })
+        #expect(ChapMascot.menuBarFace.isSubset(of: outline))
+        let eyes = ChapMascot.rows.enumerated().flatMap { y, row in
+            row.enumerated().compactMap { x, ch in ch == "e" ? [x, y] : nil }
+        }
+        #expect(Set(eyes).isSubset(of: ChapMascot.menuBarFace))
+    }
+
     @Test("the outline fits the 28pt status item at one point per cell")
     func fitsStatusItem() {
         #expect(ChapMascot.menuBarOutline.allSatisfy { (0..<24).contains($0.x) })

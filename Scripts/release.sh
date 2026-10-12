@@ -202,8 +202,10 @@ if $resume; then
     appcast_notes_path="docs/Chap-${version}-${dmg_path##*-}"
     appcast_notes_path="${appcast_notes_path%.dmg}.md"
     cp "$release_notes_file" "$appcast_notes_path"
+    # Drop notes the appcast no longer links to and old release-notes (stages the deletions).
+    Scripts/prune-release-notes.sh "$version"
     git add -- docs/appcast.xml "$appcast_notes_path"
-    git diff --staged --quiet -- docs/appcast.xml "$appcast_notes_path" || {
+    git diff --staged --quiet -- docs/ release-notes/ || {
       git commit -m "docs(appcast): add v$version update entry"
       git push origin main
       main_commit="$(git rev-parse HEAD)"
@@ -477,8 +479,10 @@ if [[ -n "${SPARKLE_BIN_DIR:-}" || -n "${SPARKLE_GENERATE_APPCAST:-}" ]]; then
   appcast_notes_path="docs/Chap-${version}-${dmg_path##*-}"
   appcast_notes_path="${appcast_notes_path%.dmg}.md"
   cp "$release_notes_file" "$appcast_notes_path"
+  # Drop notes the appcast no longer links to and old release-notes (stages the deletions).
+  Scripts/prune-release-notes.sh "$version"
   git add -- docs/appcast.xml "$appcast_notes_path"
-  git diff --staged --quiet -- docs/appcast.xml "$appcast_notes_path" || {
+  git diff --staged --quiet -- docs/ release-notes/ || {
     git commit -m "docs(appcast): add v$version update entry"
     git push origin main
     main_commit="$(git rev-parse HEAD)"

@@ -2,6 +2,13 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.11.3] — 2026-10-12
+
+### Changed
+
+- **A lighter face on the Seal menu bar icon** — The outline stays bold, but the
+  eyes and mouth go back to thin lines so the face does not clump together.
+
 ## [2.11.2] — 2026-10-12
 
 ### Changed

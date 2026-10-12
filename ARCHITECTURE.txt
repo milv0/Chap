@@ -162,12 +162,13 @@ Scripts/                            ← 릴리스·공증·appcast 스크립트
 ├── generate-appcast.sh            ← Sparkle EdDSA 서명 enclosure를 docs/appcast.xml에 추가
 ├── verify-sparkle-signatures.sh   ← 앱 번들 안 Sparkle 구성요소 서명 검증
 ├── clean-dev-apps.sh              ← /Applications 외 개발용 Chap.app 정리
+├── prune-release-notes.sh         ← appcast가 가리키지 않는 docs 노트·최신 10개 밖의 release-notes 삭제 (배포 때 자동)
 └── ExportOptions-DeveloperID.plist ← xcodebuild -exportArchive 옵션 (Developer ID)
 docs/                               ← GitHub Pages 웹사이트
 ├── index.html                     ← 제품 페이지 (노치 데모·Product history)
 ├── appcast.xml                    ← Sparkle 서명 피드
-└── Chap-<version>-<build>.md      ← Sparkle 업데이트 창 릴리스 노트
-release-notes/<version>.md          ← GitHub Release 본문
+└── Chap-<version>-<build>.md      ← Sparkle 업데이트 창 릴리스 노트 (appcast가 가리키는 것만 남긴다)
+release-notes/<version>.md          ← GitHub Release 본문 (최신 10개만 남긴다. 지난 본문은 GitHub Release와 git 기록에 있다)
 Resources/                          ← 앱 아이콘/상태바 이미지 리소스
 ├── AppIcon.icns
 └── StatusBarIcon.png

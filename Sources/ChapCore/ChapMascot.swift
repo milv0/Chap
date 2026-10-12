@@ -267,6 +267,10 @@ public enum ChapMascot {
     /// 메뉴 막대용 선 그림: 윤곽과 눈·입(`o`, `e`)만 칠하고 몸통·그림자는 비운다.
     /// 템플릿(한 색) 이미지라 macOS가 메뉴 막대에 맞춰 선 색을 정한다(밝은 막대는 검정, 어두운 막대는 흰색).
     /// 몸통을 칠하면 선이 몸통에 묻혀 덩어리로 보이므로 선만 둔다. 1pt = 1칸이면 Retina에서 2픽셀이다(24×12pt).
+    /// 얼굴(눈 두 칸 `e`, 입 두 칸). 메뉴 막대에서 윤곽은 굵게 그리지만 얼굴은 가늘게 둬서
+    /// 눈과 입이 서로·윤곽에 붙어 뭉치지 않게 한다.
+    public static let menuBarFace: Set<[Int]> = [[4, 4], [7, 4], [5, 6], [6, 6]]
+
     public static let menuBarOutline: [(x: Int, y: Int)] = rows.enumerated().flatMap { y, row in
         row.enumerated().compactMap { x, ch -> (x: Int, y: Int)? in
             ch == "o" || ch == "e" ? (x, y) : nil
