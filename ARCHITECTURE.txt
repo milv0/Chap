@@ -17,6 +17,7 @@ Sources/
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
 │   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
+│   ├── LightsOutController.swift  ← Lights Out 가림막: 모든 화면 검정 덮개·해제 키·연타 비상 해제·자체 어써션
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이 (픽셀 물범 + 문구)
 │   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (z 여백 고정, HUD 등 AppKit 자리)
@@ -81,6 +82,7 @@ Sources/
 │   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
+│   ├── LightsOutPolicy.swift      ← Lights Out 해제 키 정규화·연타 판정·문구 (순수 로직)
 │   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료·Focus 다이얼 각도↔시간 (순수 로직)
 │   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
@@ -130,6 +132,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── MinimumSizeNoticePolicyTests.swift
     ├── ChromeReuseRetryPolicyTests.swift
     ├── KeepAwakePolicyTests.swift
+    ├── LightsOutPolicyTests.swift
     ├── HiddenMenuLaunchTypesTests.swift
     ├── LauncherListPolicyTests.swift
     ├── SiteCountLimitPolicyTests.swift
@@ -239,6 +242,8 @@ Config 모델 필드:
   - notchMirrorEnabled: Bool     상단 띠 Mirror 아이콘 표시 여부. 누락 시 true
   - notchQuickNoteEnabled: Bool  상단 띠 Quick Note 아이콘 표시 여부. 누락 시 true
   - notchQuickNoteShortcut: String?  Quick Note ⌥ 키(한 글자 대문자). 누락 시 "N", ""는 끔
+  - lightsOutUnlockKey: String  Lights Out 해제 키. "esc"(기본) 또는 한 글자 대문자.
+    빈 값·알 수 없는 값은 "esc" (해제할 길은 늘 있어야 한다)
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (sites | apps | folders | screenshots |
                                  downloads | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
                                  선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, sites, apps,
@@ -336,6 +341,15 @@ Config 모델 필드:
     HUD 그림은 앱 아이콘·노치와 같은 픽셀 물범이다 (켜면 깨어 꼬리를 든 Chap, 끄면 눈 감고 z를 띄운 Chap).
     물범 자리는 두 모습에서 같고 z는 머리 위 여백만 채운다. HUD는 노치가 있는 내장 화면에만 띄운다.
     노치에서는 Focus 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
+- Lights Out(가림막): 메뉴바 항목으로 모든 화면을 검정 창(.screenSaver 레벨, 모든 Space)으로 덮는다.
+  켜져 있는 동안 자체 IOKit 어써션을 들어 Keep Awake와 독립이다(Keep Awake가 꺼져 있어도 화면이
+  꺼지지 않고, Keep Awake 세션이 끝나도 가림막은 남는다). 해제는 설정 키(기본 Esc) 또는 아무 키나
+  2초 안에 5번 연타. 그 외 키·클릭은 삼켜 가려진 앱에 눈먼 입력이 들어가지 않는다.
+  주 화면에만 자는 물범·시간·안내(4초 후 사라짐)를 흐리게 그린다. 상태는 메모리에만 둔다.
+  덮여 있는 동안 다른 앱이 활성화되면(⌘Tab) 포커스를 되찾고, 전역 키 모니터(접근성 권한 시)가 해제 키·연타를
+  계속 본다. Chap 글로벌 단축키와 노치 도커는 열지 않는다(가림막 아래에서 보이지 않게 포커스만 가져가므로).
+  걷으면 켜기 전 앞에 있던 앱으로 돌아간다.
+  **잠금이 아니다**: 암호를 묻지 않고 Chap이 끝나면 걷힌다(문서·설정·Q&A에 명시)
 - 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
   `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
 - 노치 To-do 칸: 3~6번 칸에 놓는 최대 4개 체크리스트. 추가·체크(자리 유지)·더블클릭 수정·×/우클릭 삭제,
@@ -354,6 +368,7 @@ Config 모델 필드:
   [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
   ────────
   Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
+  Lights Out / Lights On  (화면 가림막. Keep Awake와 독립)
   ────────
   Settings...   (⌥,)
   Q&A

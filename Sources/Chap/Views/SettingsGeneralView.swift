@@ -105,6 +105,43 @@ struct GeneralSettingsView: View {
                         .onChange(of: vm.statusBarIcon) { _, _ in onSave() }
                     }
 
+                    // Lights Out: 자리 비울 때 화면을 덮는 가림막. 잠금이 아니므로 그렇게 적지 않는다.
+                    Section("Lights Out") {
+                        VStack(alignment: .leading, spacing: 2) {
+                            LabeledContent("Come Back With") {
+                                TextField(
+                                    "",
+                                    text: Binding(
+                                        get: { LightsOutPolicy.label(for: vm.lightsOutUnlockKey) },
+                                        set: { newValue in
+                                            vm.lightsOutUnlockKey = LightsOutPolicy.keyAfterEditing(
+                                                currentKey: vm.lightsOutUnlockKey, newText: newValue
+                                            )
+                                        }),
+                                    prompt: Text("Esc")
+                                )
+                                .textFieldStyle(.roundedBorder)
+                                .multilineTextAlignment(.center)
+                                .frame(width: 48)
+                                .accessibilityLabel("Lights Out unlock key")
+                            }
+                            Text(
+                                LightsOutPolicy.subtitle
+                                    + " Type a letter to change the key, or clear it for Esc."
+                                    + " Forgot the key? Press any key five times quickly."
+                            )
+                            .font(.caption)
+                            .foregroundColor(DS.textSecondary)
+                            Text(
+                                "This is a cover, not a lock: it asks for no password, and quitting "
+                                    + "Chap lifts it. Use macOS Lock Screen (⌃⌘Q) to secure your Mac."
+                            )
+                            .font(.caption)
+                            .foregroundColor(DS.textSecondary)
+                        }
+                        .onChange(of: vm.lightsOutUnlockKey) { _, _ in onSave() }
+                    }
+
                     Section("Menu") {
                         HStack(alignment: .center) {
                             Text("Sections")

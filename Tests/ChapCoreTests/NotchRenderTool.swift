@@ -157,6 +157,7 @@ struct NotchRenderTool {
                 notchMirrorEnabled: config.notchMirrorEnabled,
                 notchQuickNoteEnabled: config.notchQuickNoteEnabled,
                 notchQuickNoteShortcut: config.notchQuickNoteShortcut,
+                lightsOutUnlockKey: config.lightsOutUnlockKey,
                 notchWidgets: config.notchWidgets)
             let view = NotchSettingsView(vm: vm, onSave: {})
                 .frame(width: 600, height: 720)
@@ -183,6 +184,18 @@ struct NotchRenderTool {
             let png = try #require(rep.representation(using: .png, properties: [:]))
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
+    }
+
+    /// Lights Out 가림막 모습을 PNG로 남긴다. 검정 위에서 물범·시간·안내가 읽히는지 본다.
+    @Test("render the Lights Out cover", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    @MainActor
+    func renderLightsOut() throws {
+        let directory = URL(fileURLWithPath: try #require(NotchRenderTool.outputDirectory))
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let view = LightsOutView(showsClock: true, hint: LightsOutPolicy.hint(unlockKey: "esc"))
+            .frame(width: 900, height: 560)
+        let png = try Self.renderPNG(view)
+        try png.write(to: directory.appendingPathComponent("lights-out.png"))
     }
 
     /// 선반을 접고 펼 때 도커가 SwiftUI로 잰 크기를 컨트롤러에 알리는지 확인한다.

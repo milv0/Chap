@@ -47,6 +47,8 @@
 | I16 | 노치 없는 화면에서는 상단에 **창을 띄우지 않는다**(hover는 마우스 위치 폴링, Drop 배지 없음) | 메뉴 막대를 가리고 그 자리의 클릭을 삼킨다 |
 | I17 | Chap Drop 복사·삭제·폴더 스캔·썸네일 디코딩은 메인 스레드에서 실행하지 않는다 | 큰 파일/복잡한 Desktop에서 UI가 멈춘다 |
 | I18 | Glass 상단 띠는 하드웨어 노치와 합쳐지는 순검정, 콘텐츠만 Liquid Glass. macOS 26 미만은 Custom 검정 폴백 | 노치 실루엣이 끊기거나 콘텐츠가 투명해진다 |
+| I19 | Lights Out은 **걷을 길을 반드시 둔다**: 설정 키 + 아무 키 5연타. 해제 경로를 지우거나 조건부로 만들지 않는다 | 화면이 덮인 채 빠져나올 수 없다 |
+| I20 | Lights Out은 자체 전원 어써션을 들고 Keep Awake 상태를 보지 않는다 | Keep Awake가 끝나면 화면이 꺼져 가림막이 무의미해진다 |
 
 ---
 
@@ -574,6 +576,35 @@ Settings → Notch Launcher on
 
 ---
 
+### 9.6 Lights Out (화면 가림막)
+
+```
+메뉴바 Lights Out
+  └ LightsOutController.turnOn()
+      ├ IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep, "Chap Lights Out")
+      │   → Keep Awake 어써션과 별개. 둘 중 하나가 풀려도 다른 쪽은 유지된다
+      ├ NSScreen.screens마다 검정 창 1개 (.screenSaver, canJoinAllSpaces, 불투명)
+      │   → 첫 창만 key (NSApp.activate + makeKeyAndOrderFront), 주 화면에만 물범·시간·안내
+      ├ 켜기 직전 frontmostApplication 기억 (Chap 자신이면 nil)
+      ├ 로컬 keyDown 모니터: 해제 키(LightsOutPolicy.unlocks) → turnOff
+      │   그 외 키는 삼키고, 자동 반복(isARepeat)이 아닌 입력만 모아 2초 안 5연타면 turnOff (비상 해제)
+      ├ 전역 keyDown 모니터: Chap이 포커스를 잃었을 때도 같은 판정 + 포커스 회수 (접근성 권한 필요)
+      ├ didResignActive → 다음 틱에 NSApp.activate + 첫 창 makeKey (⌘Tab으로 뒤의 앱에 입력이 가지 않게)
+      └ didChangeScreenParameters → 창 재배치 (새로 연결한 화면도 덮는다)
+
+덮여 있는 동안: handleGlobalHotKeyAction은 아무것도 하지 않고, 노치 showPanel은
+isSuppressedProvider로 막는다 (가림막 아래에 보이지 않는 창이 포커스를 가져가는 것을 막기 위해).
+
+turnOff() → 모니터·관찰자 제거, 창 orderOut, 어써션 해제, 이전 앱 activate, 메뉴 문구 갱신
+Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
+```
+
+- 클릭도 삼킨다(`LightsOutWindow.mouseDown`). 가려진 앱이 눈먼 입력을 받지 않게 한다.
+- 잠금이 아니다. 암호를 묻지 않고, 화면 공유·녹화는 덮인 검정을 그대로 담는다.
+- 상태는 메모리에만 둔다. 다음 실행은 늘 꺼진 상태로 시작한다.
+
+---
+
 ## 10. 스레드 · 큐 지도
 
 | 작업 | 실행 컨텍스트 | 비고 |
@@ -585,6 +616,7 @@ Settings → Notch Launcher on
 | Finder `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
+| Lights Out 창·키 모니터 (`LightsOutController`) | main | 화면마다 창 1개, 로컬 keyDown 모니터 1개. 자체 IOKit 어써션을 들고 Keep Awake와 독립 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 | Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
 | Chap Drop 참조 저장/빼기/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |

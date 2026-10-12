@@ -18,6 +18,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var welcomeWindow: NSWindow?
     var settingsVM: SettingsViewModel?
     let globalHotKeyManager = GlobalHotKeyManager()
+    /// Lights Out 가림막. 상태는 메모리에만 있고 Keep Awake와 독립이다.
+    let lightsOutController = LightsOutController()
     let updateController = UpdateController()
     lazy var accessibilityController = AccessibilityStateController(
         suppressesInteractivePrompts: isRunningTests)

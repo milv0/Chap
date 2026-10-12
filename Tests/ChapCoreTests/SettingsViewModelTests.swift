@@ -153,6 +153,7 @@ struct SettingsViewModelTests {
                 notchMirrorEnabled: vm.notchMirrorEnabled,
                 notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
                 notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
+                lightsOutUnlockKey: vm.lightsOutUnlockKey,
                 notchWidgets: vm.notchWidgets))
 
         #expect(savedSites?.count == 2)

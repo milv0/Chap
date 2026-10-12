@@ -241,6 +241,14 @@ struct QAView: View {
                     "세션이 시작·종료(수동 해제 또는 자동 만료)될 때마다 잠깐 표시되는 알림입니다. Chap(물범)이 켤 때는 깨어서 꼬리를 들고, 끌 때는 눈을 감고 z를 띄웁니다. 노치가 있는 내장 화면 가운데에만 뜹니다. 짧은 알림음도 함께 재생되며, 활성 중에는 상태바 아이콘도 테마 블루로 바뀝니다."
                 ),
                 (
+                    "자리 비울 때 화면을 가릴 수 있나요?",
+                    "메뉴바 아이콘 → Lights Out을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 Esc를 누르세요(Settings → General → Lights Out에서 다른 키로 바꿀 수 있습니다). 키를 잊었다면 아무 키나 빠르게 다섯 번 누르면 걷힙니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                ),
+                (
+                    "Lights Out이 화면을 잠그는 건가요?",
+                    "아닙니다. 가림막일 뿐이고 암호를 묻지 않습니다. Chap이 종료되면 걷히고, 화면 공유나 녹화에는 덮인 검정이 그대로 담깁니다. 자리를 길게 비우거나 보안이 필요하면 macOS 화면 잠금(⌃⌘Q)을 쓰세요."
+                ),
+                (
                     "메뉴에 있는 사이트 목록을 줄이고 싶어요.",
                     "Settings → General → Menu에서 URL/App/Finder 칩을 클릭해 원하는 타입의 메뉴 섹션을 숨길 수 있습니다."
                 ),
@@ -484,6 +492,14 @@ struct QAView: View {
                 (
                     "What is the seal that briefly appears in the middle of the screen?",
                     "It's a short overlay shown whenever a session starts or ends (manually or by expiring). Chap is awake with its tail up when a session starts and asleep with a z when it ends, along with a subtle sound. It appears in the middle of the built-in display with the notch, and nowhere else. While active, Chap also turns the status bar icon theme blue."
+                ),
+                (
+                    "Can I cover my screens while I step away?",
+                    "Click the menubar icon → Lights Out and every connected screen goes black. Press Esc to come back, or pick another key in Settings → General → Lights Out. Forgot the key? Press any key five times quickly. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
+                ),
+                (
+                    "Does Lights Out lock my Mac?",
+                    "No. It is a cover, not a lock: it asks for no password, quitting Chap lifts it, and screen sharing or recording simply captures the black cover. For a real lock, use macOS Lock Screen (⌃⌘Q)."
                 ),
                 (
                     "How do I shorten the menu's site list?",

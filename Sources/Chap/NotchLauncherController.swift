@@ -79,6 +79,8 @@ final class NotchLauncherController {
     var onOpenSettings: (LaunchType) -> Void = { _ in }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
+    /// true면 도커를 열지 않는다 (Lights Out 가림막이 떠 있는 동안).
+    var isSuppressedProvider: () -> Bool = { false }
     var onCollapsedChange: ([NotchWidget]) -> Void = { _ in }
 
     /// (개발용) Debug 빌드에서만 어깨 경계선을 그린다.
@@ -408,7 +410,7 @@ final class NotchLauncherController {
     // MARK: - Panel
 
     private func showPanel(forDrop: Bool = false) {
-        guard panel == nil, let screen = Self.dockScreen() else { return }
+        guard panel == nil, !isSuppressedProvider(), let screen = Self.dockScreen() else { return }
 
         let slots = slotsProvider()
         guard
