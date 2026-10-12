@@ -43,6 +43,29 @@ pixel, at 1.5pt per pixel in the notch strip (3 Retina pixels, so edges stay cri
 The seal lives on the black strip at 1.5pt per pixel. (The 2pt Focus-slot size and
 sleep z from 2.5.0 remain in `ChapMascot` but are not drawn.)
 
+## Keep Awake HUD
+
+The center HUD uses the same seal: awake with its tail up when Focus starts,
+eyes closed with a z when it ends. The seal sits on an accent `#3664FF` tile
+(radius 16) because its white body would wash out on the light HUD material.
+
+## App icon
+
+The app icon is the same sprite, so the icon and the seal on the strip are one
+drawing. It is generated, not hand-drawn: `assets/icons/make-app-icon.swift`
+renders the resting pose at 38px per sprite pixel on a rounded square (radius
+225/1024) and bakes `Resources/AppIcon.icns` plus the website favicon.
+
+| Layer | Value |
+|---|---|
+| Sky gradient | `#4C78FF` → `#244CDC`, top to bottom |
+| Wave crest | `#6E91FF`, one row, stepping every two columns |
+| Water below the crest | `#2440AA`, one row |
+| Seal | mascot inks above (outline `#161A30`, body `#FFFFFF`, shade `#B0BED8`) |
+
+At 16px the sprite becomes a blur; that is accepted because the menu bar uses
+its own `StatusBarIcon.png` and the Seal status icon, not this file.
+
 ## Notch panel presets
 
 Custom style offers two one-click panel colors; the color picker covers the rest.
