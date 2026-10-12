@@ -2,6 +2,13 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.11.5] — 2026-10-13
+
+### Changed
+
+- **Seal icon face, lowered** — The eyes and mouth on the Seal menu bar icon also
+  sit one pixel lower, so the face sits in the middle of the bolder outline.
+
 ## [2.11.4] — 2026-10-13
 
 ### Changed
