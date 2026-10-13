@@ -82,6 +82,10 @@ final class NotchLauncherController {
     var onOpenWorkspace: (UUID) -> Void = { _ in }
     /// Workspaces 칸에서 현재 창 배치를 캡처한다.
     var onCaptureWorkspace: () -> Void = {}
+    /// Workspaces 칸 우클릭 Remove.
+    var onRemoveWorkspace: (UUID) -> Void = { _ in }
+    /// Workspaces 칸 우클릭 Edit.
+    var onEditWorkspace: (UUID) -> Void = { _ in }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
@@ -456,6 +460,15 @@ final class NotchLauncherController {
             onCaptureWorkspace: { [weak self] in
                 self?.hidePanel()
                 self?.onCaptureWorkspace()
+            },
+            onRemoveWorkspace: { [weak self] id in
+                // 확인 창이 도커 뒤에 깔리지 않게 먼저 접는다.
+                self?.hidePanel()
+                DispatchQueue.main.async { self?.onRemoveWorkspace(id) }
+            },
+            onEditWorkspace: { [weak self] id in
+                self?.hidePanel()
+                DispatchQueue.main.async { self?.onEditWorkspace(id) }
             },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.

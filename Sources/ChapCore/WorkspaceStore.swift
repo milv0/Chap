@@ -57,6 +57,19 @@ public struct WorkspaceStore: Sendable {
             + [ChapWorkspace(name: name, windows: Array(windows.prefix(maxWindows)))]
     }
 
+    /// 저장된 Workspace를 고친다(이름·창·디스플레이). 자리와 id는 그대로 둔다.
+    /// 이름이 비거나 창이 하나도 없으면 그대로 돌려준다(지우기는 `removing`).
+    public static func replacing(
+        _ id: UUID, name: String, windows: [WorkspaceWindow], in workspaces: [ChapWorkspace]
+    ) -> [ChapWorkspace] {
+        guard let name = cleanedName(name), !windows.isEmpty else { return workspaces }
+        return workspaces.map { workspace in
+            guard workspace.id == id else { return workspace }
+            return ChapWorkspace(
+                id: workspace.id, name: name, windows: Array(windows.prefix(maxWindows)))
+        }
+    }
+
     public static func removing(_ id: UUID, from workspaces: [ChapWorkspace]) -> [ChapWorkspace] {
         workspaces.filter { $0.id != id }
     }

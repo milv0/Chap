@@ -2,6 +2,9 @@ import SwiftUI
 
 struct WorkspaceCaptureView: View {
     @ObservedObject var model: WorkspaceCaptureViewModel
+    /// 새로 캡처할 때와 저장된 Workspace를 고칠 때 같은 화면을 쓴다. 글자만 다르다.
+    var title = "Capture Workspace"
+    var subtitle = "Saves app names, window titles, and positions. Stays on this Mac."
     let onCancel: () -> Void
     let onSave: (String, [WorkspaceWindow]) -> Void
 
@@ -27,10 +30,10 @@ struct WorkspaceCaptureView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Capture Workspace")
+                Text(title)
                     .font(DS.headlineFont)
                     .foregroundColor(DS.textPrimary)
-                Text("Saves app names, window titles, and positions. Stays on this Mac.")
+                Text(subtitle)
                     .font(DS.captionFont)
                     .foregroundColor(DS.textSecondary)
             }
