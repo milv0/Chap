@@ -62,7 +62,7 @@ Sources/
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
-│       ├── NotchTodoView.swift    ← 노치 To-do 칸 (추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
+│       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
