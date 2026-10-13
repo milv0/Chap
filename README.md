@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.13.0-orange)
+![Version](https://img.shields.io/badge/version-2.13.1-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -97,7 +97,7 @@ window resizing is unavailable.
 
 ### Workspaces (demo)
 
-Arrange the standard app windows you want to keep, then choose **Workspaces → Capture Workspace…** from the status menu. Select up to six app windows, name the layout, and place the Workspaces widget in **Settings → Notch** if you want one-click restore under the notch. Chap keeps up to four workspaces.
+Arrange the standard app windows you want to keep, then choose **Workspaces → Capture Workspace…** from the status menu. Select up to six app windows, pick the display each one opens on (with more than one screen: any connected display, or Follow Cursor), name the layout, and place the Workspaces widget in **Settings → Notch** if you want one-click restore under the notch. Chap keeps up to four workspaces.
 
 A workspace stores the app bundle, local app path, window title, display UUID, and the window frame relative to that display's visible area. It lives only at `~/Library/Application Support/Chap/Workspaces.json`; it is not synced or included in config Export. If the saved display is disconnected, Chap fits the same relative layout on the cursor display. Accessibility permission is required to read and restore window bounds.
 
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.13.0
+Scripts/release.sh 2.13.1
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.13.0 --publish
+Scripts/release.sh 2.13.1 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

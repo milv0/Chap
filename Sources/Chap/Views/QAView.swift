@@ -94,7 +94,7 @@ struct QAView: View {
             [
                 (
                     "현재 창 배치를 어떻게 저장하나요?",
-                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. Settings → Notch에서 Workspaces 위젯을 놓으면 노치에서도 바로 복원할 수 있습니다."
+                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. 모니터가 여럿이면 줄마다 열 디스플레이(또는 Follow Cursor)를 고를 수 있고, 화면 안의 비율 위치·크기는 그대로 따라갑니다. Settings → Notch에서 Workspaces 위젯을 놓으면 노치에서도 바로 복원할 수 있습니다."
                 ),
                 (
                     "열린 창을 모두 자동으로 저장하나요?",
@@ -364,7 +364,7 @@ struct QAView: View {
             [
                 (
                     "How do I save the current window layout?",
-                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. Place the Workspaces widget in Settings → Notch for one-click restore under the notch."
+                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. With more than one screen, pick the display each window opens on (or Follow Cursor); its relative size and position come along. Place the Workspaces widget in Settings → Notch for one-click restore under the notch."
                 ),
                 (
                     "Does Chap capture every open window?",

@@ -70,7 +70,7 @@ Sources/
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
 │       ├── NotchWorkspacesView.swift ← 노치 Workspaces 목록·창 수·Capture 줄
-│       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·프레임 미니맵·이름 입력 창
+│       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
@@ -90,7 +90,7 @@ Sources/
 │   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
 │   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
 │   ├── WindowGeometry.swift       ← 크기 fitting·화면별 override·centeredBounds·좌표 변환 (순수 코어+NSScreen 래퍼)
-│   ├── WorkspaceModels.swift      ← Workspace·앱 창·visibleFrame 상대 프레임 Codable 모델
+│   ├── WorkspaceModels.swift      ← Workspace·앱 창·visibleFrame 상대 프레임 Codable 모델, 디스플레이 선택(WorkspaceDisplay·메뉴 이름 구분)
 │   ├── WorkspaceGeometry.swift    ← AX bounds ↔ 디스플레이 상대 프레임 순수 변환·클램프
 │   ├── WorkspaceStore.swift       ← Workspaces.json 로컬 저장·상한·손상 파일 보존
 │   ├── DisplayMatching.swift      ← 커서/내장 화면 결정·명시 디스플레이 판정·UUID 우선 매칭(resolvedDisplayIndex)

@@ -57,3 +57,44 @@ public struct ChapWorkspace: Codable, Equatable, Identifiable, Sendable {
         self.windows = windows
     }
 }
+
+/// 창을 띄울 디스플레이. Workspace에는 UUID와 이름으로 저장하고, nil이면 Follow Cursor
+/// (열 때 커서가 있는 화면)다.
+public struct WorkspaceDisplay: Equatable, Hashable, Sendable {
+    public let identifier: String?
+    public let name: String
+
+    public init(identifier: String?, name: String) {
+        self.identifier = identifier
+        self.name = name
+    }
+
+    /// 메뉴에 보일 이름. 같은 모델 모니터가 여럿이면 연결 순서대로 번호를 붙여 구분한다.
+    public static func menuLabels(for displays: [WorkspaceDisplay]) -> [String] {
+        var seen: [String: Int] = [:]
+        let counts = Dictionary(grouping: displays, by: \.name).mapValues(\.count)
+        return displays.map { display in
+            guard (counts[display.name] ?? 0) > 1 else { return display.name }
+            let index = (seen[display.name] ?? 0) + 1
+            seen[display.name] = index
+            return "\(display.name) \(index)"
+        }
+    }
+}
+
+extension WorkspaceWindow {
+    /// 저장된 디스플레이. 둘 다 비어 있으면 Follow Cursor라 nil이다.
+    public var display: WorkspaceDisplay? {
+        guard displayIdentifier != nil || displayName != nil else { return nil }
+        return WorkspaceDisplay(identifier: displayIdentifier, name: displayName ?? "")
+    }
+
+    /// 다른 디스플레이로 옮긴 사본. 창의 상대 위치·크기는 그대로 둔다(새 화면에서도 같은 비율).
+    /// nil이면 Follow Cursor.
+    public func assigned(to display: WorkspaceDisplay?) -> WorkspaceWindow {
+        var copy = self
+        copy.displayIdentifier = display?.identifier
+        copy.displayName = display?.name
+        return copy
+    }
+}
