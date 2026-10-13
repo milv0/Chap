@@ -30,6 +30,8 @@ blue competing with content. Titles and labels stay neutral gray.
 
 The seal is drawn from the `ChapMascot` character grid, one filled square per
 pixel, at 1.5pt per pixel in the notch strip (3 Retina pixels, so edges stay crisp).
+`ChapMascot.rgb(_:)` is the single source for these colors; SwiftUI (`Color`) and
+AppKit (`NSColor`) both derive from it, and a test pins the table below.
 
 | Ink | Hex | Grid symbol |
 |---|---|---|
