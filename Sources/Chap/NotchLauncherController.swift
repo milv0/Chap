@@ -78,6 +78,10 @@ final class NotchLauncherController {
     var onLaunch: (Int) -> Void = { _ in }
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
+    /// Workspaces 칸에서 저장된 배치를 연다.
+    var onOpenWorkspace: (UUID) -> Void = { _ in }
+    /// Workspaces 칸에서 현재 창 배치를 캡처한다.
+    var onCaptureWorkspace: () -> Void = {}
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
@@ -444,6 +448,14 @@ final class NotchLauncherController {
             onLaunch: { [weak self] siteIndex in
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
+            },
+            onOpenWorkspace: { [weak self] id in
+                self?.hidePanel()
+                self?.onOpenWorkspace(id)
+            },
+            onCaptureWorkspace: { [weak self] in
+                self?.hidePanel()
+                self?.onCaptureWorkspace()
             },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.

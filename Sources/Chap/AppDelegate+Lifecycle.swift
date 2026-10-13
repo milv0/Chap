@@ -15,6 +15,7 @@ extension AppDelegate {
         copyDefaultConfigIfNeeded()
         loadConfig()
         stripLegacyConfigFields()
+        workspaces = workspaceStore.load()
         applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(.accessory)
 
@@ -308,6 +309,9 @@ extension AppDelegate {
             qaWindow = nil
         } else if window == welcomeWindow {
             welcomeWindow = nil
+        } else if window == workspaceCaptureWindow {
+            workspaceCaptureViewModel = nil
+            workspaceCaptureWindow = nil
         }
         // 모든 관리 창이 닫히면 accessory로 복원
         restoreAccessoryIfNeeded()
@@ -320,6 +324,7 @@ extension AppDelegate {
             (settingsWindow?.isVisible ?? false)
             || (qaWindow?.isVisible ?? false)
             || (welcomeWindow?.isVisible ?? false)
+            || (workspaceCaptureWindow?.isVisible ?? false)
         if !hasVisibleWindow {
             NSApp.setActivationPolicy(.accessory)
         }
@@ -393,6 +398,9 @@ extension AppDelegate {
                 self.resetAppleEventsPermission()
                 do {
                     try AppLifecycleSupport.removeConfigurationFiles(configPath: self.configPath)
+                    if FileManager.default.fileExists(atPath: self.workspaceStore.fileURL.path) {
+                        try FileManager.default.removeItem(at: self.workspaceStore.fileURL)
+                    }
                 } catch {
                     Log.config.error(
                         "Failed to remove config during uninstall: \(error.localizedDescription, privacy: .public)"
@@ -400,7 +408,7 @@ extension AppDelegate {
                     let cleanupAlert = NSAlert()
                     cleanupAlert.messageText = "Chap moved to Trash"
                     cleanupAlert.informativeText =
-                        "Some settings could not be removed. Delete these files manually:\n\(self.configPath)\n\(self.configPath).bak\n\nError: \(error.localizedDescription)"
+                        "Some settings could not be removed. Delete these files manually:\n\(self.configPath)\n\(self.configPath).bak\n\(self.workspaceStore.fileURL.path)\n\nError: \(error.localizedDescription)"
                     cleanupAlert.alertStyle = .warning
                     cleanupAlert.addButton(withTitle: "OK")
                     cleanupAlert.runModal()

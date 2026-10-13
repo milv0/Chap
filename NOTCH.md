@@ -190,8 +190,9 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
+| Workspaces | 170pt (이름 + 캡처한 창 수) |
 
-글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 
@@ -319,6 +320,14 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
 
+## Workspaces 칸
+
+위젯 칸(3~6번)에 놓는 로컬 작업 공간 목록(`NotchWidget.workspaces`, `NotchWorkspacesView`, 폭 170pt). 최대 4개 Workspace를 26pt 줄로 보여 주고, 오른쪽 숫자는 캡처한 앱 창 수다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
+
+4개 미만이면 `+ Capture` 줄이 보이며, 누르면 도커를 접고 `Capture Workspace` 창을 연다. Workspace는 `~/Library/Application Support/Chap/Workspaces.json`에만 저장되고 config Import/Export에는 포함하지 않는다. 앱 이름·창 제목·디스플레이 UUID·visibleFrame 상대 프레임을 저장한다. 연결했던 화면이 없으면 커서 화면에 같은 상대 프레임을 맞춘다.
+
+캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원도 저장한 제목과 정확히 하나가 맞거나 대상 창이 하나일 때만 적용한다. 최대 Workspace 4개·Workspace당 창 6개다.
+
 ## To-do 칸
 
 위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 188pt). Chap 안에만 저장한다
@@ -408,5 +417,7 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
 - `Sources/Chap/Views/NotchFocusView.swift`, `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 다이얼·물범·위젯 공용
 - `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
+- `Sources/Chap/Views/NotchWorkspacesView.swift`, `WorkspaceCaptureView.swift` — Workspace 노치 목록·캡처 확인 창
+- `Sources/Chap/Workspaces/`, `Sources/ChapCore/Workspace*.swift` — AX 캡처·복원, 정규화 좌표·로컬 저장
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
 - `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직

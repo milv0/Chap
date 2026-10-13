@@ -3,7 +3,7 @@ Chap Project Structure
 
 ## 앱 소개
 
-Chap — 키보드 단축키 한 번으로 웹사이트·앱·폴더를 원하는 화면, 원하는 크기로 즉시 여는 macOS 메뉴바 런처.
+Chap — 웹사이트·앱·폴더를 원하는 화면과 크기로 열고, 실제 앱 창 배치를 Workspace로 기억하는 macOS 메뉴바 런처.
 
 
 ## 프로젝트 구조
@@ -13,6 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← AppDelegate 코어 클래스·상태·관리 창 생성
 │   ├── AppDelegate+Lifecycle.swift ← 라이프사이클·관리 창·종료·재실행·제거·Login Item
 │   ├── AppDelegate+Menu.swift     ← 메뉴·핫키·상태바 아이콘·Keep Awake 액션·노치 동기화
+│   ├── AppDelegate+Workspaces.swift ← Workspace 메뉴·캡처 창·저장·복원 orchestration
 │   ├── AppDelegate+Config.swift   ← config 마이그레이션·로드·레거시 필드 정리
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
@@ -45,6 +46,11 @@ Sources/
 │   │   ├── AXWindowIntrospection.swift ← AX 요소 메타데이터·settable 검사·창 상태 스냅샷·public CGWindowID 매칭
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용, 14일 초과분 자동 정리)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
+│   ├── Workspaces/                ← 실제 앱 창 배치 캡처·복원
+│   │   ├── WorkspaceWindowAccess.swift ← 표준·이동 가능 AX 창 판별과 추측 없는 대표/일치 창 선택
+│   │   ├── WorkspaceCaptureService.swift ← 실행 앱 대표 창·디스플레이·프레임 캡처 (userInitiated 직렬 큐)
+│   │   ├── WorkspaceRestoreService.swift ← 앱 재열기·창 대기·검증된 AX bounds 순차 복원
+│   │   └── WorkspaceCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
@@ -63,6 +69,8 @@ Sources/
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
+│       ├── NotchWorkspacesView.swift ← 노치 Workspaces 목록·창 수·Capture 줄
+│       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·프레임 미니맵·이름 입력 창
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
@@ -82,6 +90,9 @@ Sources/
 │   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
 │   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
 │   ├── WindowGeometry.swift       ← 크기 fitting·화면별 override·centeredBounds·좌표 변환 (순수 코어+NSScreen 래퍼)
+│   ├── WorkspaceModels.swift      ← Workspace·앱 창·visibleFrame 상대 프레임 Codable 모델
+│   ├── WorkspaceGeometry.swift    ← AX bounds ↔ 디스플레이 상대 프레임 순수 변환·클램프
+│   ├── WorkspaceStore.swift       ← Workspaces.json 로컬 저장·상한·손상 파일 보존
 │   ├── DisplayMatching.swift      ← 커서/내장 화면 결정·명시 디스플레이 판정·UUID 우선 매칭(resolvedDisplayIndex)
 │   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
@@ -151,6 +162,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── NotchLauncherPolicyTests.swift
     ├── NotchToolWidgetTests.swift
     ├── TodoStoreTests.swift
+    ├── WorkspaceTests.swift
     ├── QuickNoteShortcutTests.swift
     ├── ChapMascotTests.swift
     ├── ShelfFolderLaunchTests.swift
@@ -370,6 +382,11 @@ Config 모델 필드:
   **잠금이 아니다**: 암호를 묻지 않고 Chap이 끝나면 걷힌다(문서·설정·Q&A에 명시)
 - 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
   `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
+- Workspaces 데모: 메뉴의 Capture Workspace에서 현재 실행 앱의 표준·이동 가능 대표 창을 최대 6개 골라 이름을 붙이고,
+  디스플레이 UUID와 visibleFrame 상대 위치·크기를 `~/Library/Application Support/Chap/Workspaces.json`에 저장한다.
+  최대 4개이며 config Export/Import·동기화에 넣지 않는다. 노치 Workspaces 칸이나 메뉴에서 열면 앱을 뒤에서부터
+  재열고 기존 `LauncherUtils.axApplyBounds`의 size→position→size·readback 검증으로 순차 복원한다. 연결 화면이 없으면
+  커서 화면에 같은 상대 프레임을 맞추며, 여러 창 중 저장 제목과 유일하게 맞거나 표준 창이 하나일 때만 움직인다.
 - 노치 To-do 칸: 3~6번 칸에 놓는 최대 4개 체크리스트. 추가·체크(자리 유지)·더블클릭 수정·×/우클릭 삭제,
   완료 항목 Clear(일부만 비우면 4초 Undo), 모두 끝나면 "All done."(Back/Clear). 체크 시 햅틱 + 물범 꼬리.
   `~/Library/Application Support/Chap/Todos.json`에만 저장 (권한·동기화·Export 없음)
@@ -384,6 +401,8 @@ Config 모델 필드:
 ## 메뉴바 메뉴 구성
 
   [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
+  ────────
+  Workspaces ▸  (저장한 배치 열기, Capture Workspace…, Remove Workspace)
   ────────
   Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   Cover Screens / Uncover Screens  (화면 가림막. Keep Awake와 독립)
@@ -405,7 +424,7 @@ Config 모델 필드:
   Report Bug...  (GitHub 이슈 페이지)
   ────────
   Restart App
-  Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak 삭제 → 앱 휴지통 이동)
+  Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak·Workspaces.json 삭제 → 앱 휴지통 이동)
 
 
 ## 단축키

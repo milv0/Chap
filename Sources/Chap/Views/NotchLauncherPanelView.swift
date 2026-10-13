@@ -35,6 +35,10 @@ struct NotchLauncherPanelView: View {
     /// 상단 검정 띠에 Cover Screens 아이콘을 둘지. Quick Note 오른쪽에 둔다.
     var showsCoverScreens = false
     let onLaunch: (Int) -> Void
+    /// 저장된 Workspace를 연다.
+    var onOpenWorkspace: (UUID) -> Void = { _ in }
+    /// 현재 앱 창 배치를 새 Workspace로 캡처한다.
+    var onCaptureWorkspace: () -> Void = {}
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
     /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
     var onContentSizeChange: (CGSize) -> Void = { _ in }
@@ -65,6 +69,8 @@ struct NotchLauncherPanelView: View {
     static let focusColumnWidth: CGFloat = 116
     /// 할 일 칸 폭. 상태 캡슐과 12pt 문구가 답답하지 않게 보인다.
     static let todoColumnWidth: CGFloat = 188
+    /// 작업 공간 이름과 창 수가 한 줄에 보이는 폭.
+    static let workspaceColumnWidth: CGFloat = 170
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
@@ -114,6 +120,8 @@ struct NotchLauncherPanelView: View {
             return Self.focusColumnWidth
         case .todo:
             return Self.todoColumnWidth
+        case .workspaces:
+            return Self.workspaceColumnWidth
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -669,6 +677,10 @@ struct NotchLauncherPanelView: View {
             NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
         case .todo:
             NotchTodoView(palette: widgetPalette)
+        case .workspaces(let workspaces):
+            NotchWorkspacesView(
+                workspaces: workspaces, palette: widgetPalette,
+                onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace)
         }
     }
 
