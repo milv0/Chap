@@ -328,6 +328,8 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원도 저장한 제목과 정확히 하나가 맞거나 대상 창이 하나일 때만 적용한다. 최대 Workspace 4개·Workspace당 창 6개다.
 
+줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 캡처 창을 편집 모드로 열어 이름을 고치고, 창을 빼고, 창별 디스플레이를 바꾼다(`WorkspaceStore.replacing`, 자리·id 유지). 창 위치·크기를 새로 잡으려면 다시 캡처한다. Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Workspace와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
+
 캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`WorkspaceDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`WorkspaceWindow.assigned(to:)`). 같은 이름의 모니터는 `WorkspaceDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다.
 
 ## To-do 칸

@@ -97,7 +97,7 @@ window resizing is unavailable.
 
 ### Workspaces (demo)
 
-Arrange the standard app windows you want to keep, then choose **Workspaces → Capture Workspace…** from the status menu. Select up to six app windows, pick the display each one opens on (with more than one screen: any connected display, or Follow Cursor), name the layout, and place the Workspaces widget in **Settings → Notch** if you want one-click restore under the notch. Chap keeps up to four workspaces.
+Arrange the standard app windows you want to keep, then choose **Workspaces → Capture Workspace…** from the status menu. Select up to six app windows, pick the display each one opens on (with more than one screen: any connected display, or Follow Cursor), name the layout, and place the Workspaces widget in **Settings → Notch** if you want one-click restore under the notch. Chap keeps up to four workspaces. To change one, choose **Workspaces → Edit Workspace** (or right-click it in the notch): rename it, leave out windows, or move a window to another display. To capture new window positions, arrange the windows again and capture a new workspace. Remove one from **Workspaces → Remove Workspace** or the notch right-click menu.
 
 A workspace stores the app bundle, local app path, window title, display UUID, and the window frame relative to that display's visible area. It lives only at `~/Library/Application Support/Chap/Workspaces.json`; it is not synced or included in config Export. If the saved display is disconnected, Chap fits the same relative layout on the cursor display. Accessibility permission is required to read and restore window bounds.
 

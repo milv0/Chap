@@ -101,6 +101,10 @@ struct QAView: View {
                     "아니요. 위치와 크기를 바꿀 수 있는 표준 앱 창 중 앱마다 대표 창 하나만 제안합니다. 여러 창 중 하나를 확실히 고를 수 없거나 최소화·전체 화면인 창은 추측하지 않고 제외합니다."
                 ),
                 (
+                    "저장한 Workspace를 고치거나 지우려면?",
+                    "메뉴바 Workspaces → Edit Workspace에서 이름을 바꾸고, 창을 빼고, 창별 디스플레이를 바꿀 수 있습니다. 노치의 Workspaces 칸에서 줄을 우클릭해도 Edit…·Remove…가 있습니다. 창 위치·크기를 새로 잡으려면 창을 다시 배열한 뒤 새로 캡처하세요."
+                ),
+                (
                     "Workspace 데이터는 어디에 있나요?",
                     "앱 이름, 창 제목, 화면과 배치가 이 Mac의 ~/Library/Application Support/Chap/Workspaces.json에만 저장됩니다. 동기화하거나 설정 Export에 넣지 않습니다."
                 ),
@@ -369,6 +373,10 @@ struct QAView: View {
                 (
                     "Does Chap capture every open window?",
                     "No. Chap suggests one representative standard, movable window per app. It skips ambiguous, minimized, and full-screen windows instead of guessing."
+                ),
+                (
+                    "How do I change or remove a saved workspace?",
+                    "Choose Workspaces → Edit Workspace in the status menu to rename it, leave out windows, or move a window to another display. Right-clicking a row in the notch Workspaces slot offers Edit… and Remove… too. To capture new window positions, arrange the windows again and capture a new workspace."
                 ),
                 (
                     "Where is Workspace data stored?",
