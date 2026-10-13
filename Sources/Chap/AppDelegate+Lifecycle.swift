@@ -160,49 +160,11 @@ extension AppDelegate {
             return
         }
 
-        let vm = SettingsViewModel(
-            sites: config.sites,
-            showGuideWindow: config.showGuideWindow,
-            launchAtLogin: config.launchAtLogin,
-            optionShortcutsEnabled: config.optionShortcutsEnabled,
-            statusBarIcon: config.statusBarIcon,
-            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
-            notchLauncherEnabled: config.notchLauncherEnabled,
-            notchPanelStyle: config.notchPanelStyle,
-            notchGlassAppearance: config.notchGlassAppearance,
-            notchGlassMaterial: config.notchGlassMaterial,
-            notchPanelOpacity: config.notchPanelOpacity,
-            notchPanelColorHex: config.notchPanelColorHex,
-            notchMirrorEnabled: config.notchMirrorEnabled,
-            notchQuickNoteEnabled: config.notchQuickNoteEnabled,
-            notchCoverScreensEnabled: config.notchCoverScreensEnabled,
-            notchQuickNoteShortcut: config.notchQuickNoteShortcut,
-            coverScreensShortcut: config.coverScreensShortcut,
-            coverScreensMessage: config.coverScreensMessage,
-            notchWidgets: config.notchWidgets)
+        let vm = SettingsViewModel(config: config)
         vm.onSave = { [weak self] payload in
             guard let self = self else { return false }
             // Full config validation before saving
-            let validationConfig = Config(
-                showGuideWindow: payload.showGuideWindow,
-                launchAtLogin: payload.launchAtLogin,
-                optionShortcutsEnabled: payload.optionShortcutsEnabled,
-                statusBarIcon: payload.statusBarIcon,
-                hiddenMenuLaunchTypes: payload.hiddenMenuLaunchTypes,
-                notchLauncherEnabled: payload.notchLauncherEnabled,
-                notchPanelStyle: payload.notchPanelStyle,
-                notchGlassAppearance: payload.notchGlassAppearance,
-                notchGlassMaterial: payload.notchGlassMaterial,
-                notchPanelOpacity: payload.notchPanelOpacity,
-                notchPanelColorHex: payload.notchPanelColorHex,
-                notchMirrorEnabled: payload.notchMirrorEnabled,
-                notchQuickNoteEnabled: payload.notchQuickNoteEnabled,
-                notchCoverScreensEnabled: payload.notchCoverScreensEnabled,
-                notchQuickNoteShortcut: payload.notchQuickNoteShortcut,
-                coverScreensShortcut: payload.coverScreensShortcut,
-                coverScreensMessage: payload.coverScreensMessage,
-                notchWidgets: payload.notchWidgets,
-                sites: payload.sites)
+            let validationConfig = payload.config
             let result = validateConfig(validationConfig)
             if !result.isValid {
                 let errorMessages = result.errors.map { issue in

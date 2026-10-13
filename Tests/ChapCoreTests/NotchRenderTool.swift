@@ -15,7 +15,9 @@ import Testing
 @Suite("Notch render tool", .serialized)
 @MainActor
 struct NotchRenderTool {
-    static let outputDirectory = ProcessInfo.processInfo.environment["CHAP_NOTCH_RENDER_DIR"]
+    /// `.enabled(if:)` 조건은 비동기 컨텍스트에서 읽으므로 main actor에 묶지 않는다.
+    nonisolated static let outputDirectory = ProcessInfo.processInfo.environment[
+        "CHAP_NOTCH_RENDER_DIR"]
 
     @Test(
         "render the notch dock to PNG",
@@ -25,7 +27,6 @@ struct NotchRenderTool {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
-        let slots = NotchSlotContent.slots(widgets: config.notchWidgets, sites: config.sites)
 
         let shots = await withCheckedContinuation { continuation in
             ScreenshotShelf.recentScreenshotsAsync { continuation.resume(returning: $0) }
@@ -148,20 +149,9 @@ struct NotchRenderTool {
         for (name, scheme) in [
             ("settings-notch-light", ColorScheme.light), ("settings-notch-dark", .dark),
         ] {
-            let vm = SettingsViewModel(
-                sites: config.sites, notchLauncherEnabled: true,
-                notchPanelStyle: config.notchPanelStyle,
-                notchGlassAppearance: config.notchGlassAppearance,
-                notchGlassMaterial: config.notchGlassMaterial,
-                notchPanelOpacity: config.notchPanelOpacity,
-                notchPanelColorHex: config.notchPanelColorHex,
-                notchMirrorEnabled: config.notchMirrorEnabled,
-                notchQuickNoteEnabled: config.notchQuickNoteEnabled,
-                notchCoverScreensEnabled: config.notchCoverScreensEnabled,
-                notchQuickNoteShortcut: config.notchQuickNoteShortcut,
-                coverScreensShortcut: config.coverScreensShortcut,
-                coverScreensMessage: config.coverScreensMessage,
-                notchWidgets: config.notchWidgets)
+            var forced = config
+            forced.notchLauncherEnabled = true
+            let vm = SettingsViewModel(config: forced)
             let view = NotchSettingsView(vm: vm, onSave: {})
                 .frame(width: 600, height: 720)
                 .environment(\.colorScheme, scheme)

@@ -11,26 +11,7 @@ enum SettingsConfigTransfer {
 
     /// 현재 VM의 모든 설정을 보존한 export 값. UI와 분리해 회귀 테스트한다.
     static func exportConfigValue(vm: SettingsViewModel) -> Config {
-        Config(
-            showGuideWindow: vm.showGuideWindow,
-            launchAtLogin: vm.launchAtLogin,
-            optionShortcutsEnabled: vm.optionShortcutsEnabled,
-            statusBarIcon: vm.statusBarIcon,
-            hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
-            notchLauncherEnabled: vm.notchLauncherEnabled,
-            notchPanelStyle: vm.notchPanelStyle,
-            notchGlassAppearance: vm.notchGlassAppearance,
-            notchGlassMaterial: vm.notchGlassMaterial,
-            notchPanelOpacity: vm.notchPanelOpacity,
-            notchPanelColorHex: vm.notchPanelColorHex,
-            notchMirrorEnabled: vm.notchMirrorEnabled,
-            notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-            notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
-            notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-            coverScreensShortcut: vm.coverScreensShortcut,
-            coverScreensMessage: vm.coverScreensMessage,
-            notchWidgets: vm.notchWidgets,
-            sites: vm.sites)
+        vm.config
     }
 
     /// Export current config to a user-chosen JSON file.
@@ -171,29 +152,16 @@ enum SettingsConfigTransfer {
         case .success(let processed):
             vm.cancelPendingSave()
             let imported = processed.config
-            let saved =
-                vm.onSave?(
-                    SettingsPayload(
-                        sites: imported.sites,
-                        showGuideWindow: imported.showGuideWindow,
-                        launchAtLogin: imported.launchAtLogin,
-                        optionShortcutsEnabled: imported.optionShortcutsEnabled,
-                        statusBarIcon: imported.statusBarIcon,
-                        hiddenMenuLaunchTypes: imported.hiddenMenuLaunchTypes,
-                        // 노치 설정 전체는 기기(노치 유무) 종속이라 import로 덮지 않는다.
-                        notchLauncherEnabled: vm.notchLauncherEnabled,
-                        notchPanelStyle: vm.notchPanelStyle,
-                        notchGlassAppearance: vm.notchGlassAppearance,
-                        notchGlassMaterial: vm.notchGlassMaterial,
-                        notchPanelOpacity: vm.notchPanelOpacity,
-                        notchPanelColorHex: vm.notchPanelColorHex,
-                        notchMirrorEnabled: vm.notchMirrorEnabled,
-                        notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                        notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
-                        notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-                        coverScreensShortcut: vm.coverScreensShortcut,
-                        coverScreensMessage: vm.coverScreensMessage,
-                        notchWidgets: vm.notchWidgets)) ?? false
+            // 노치 설정 전체는 기기(노치 유무) 종속이라 import로 덮지 않는다: 현재 값 위에
+            // 가져온 파일의 사이트·일반 설정만 올린다.
+            var merged = vm.config
+            merged.sites = imported.sites
+            merged.showGuideWindow = imported.showGuideWindow
+            merged.launchAtLogin = imported.launchAtLogin
+            merged.optionShortcutsEnabled = imported.optionShortcutsEnabled
+            merged.statusBarIcon = imported.statusBarIcon
+            merged.hiddenMenuLaunchTypes = imported.hiddenMenuLaunchTypes
+            let saved = vm.onSave?(SettingsPayload(config: merged)) ?? false
             guard saved else { return false }
 
             vm.sites = imported.sites

@@ -138,25 +138,7 @@ struct SettingsViewModelTests {
         vm.optionShortcutsEnabled = false
         vm.statusBarIcon = .lightning
         _ = vm.onSave?(
-            SettingsPayload(
-                sites: vm.sites, showGuideWindow: vm.showGuideWindow,
-                launchAtLogin: vm.launchAtLogin,
-                optionShortcutsEnabled: vm.optionShortcutsEnabled,
-                statusBarIcon: vm.statusBarIcon,
-                hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
-                notchLauncherEnabled: vm.notchLauncherEnabled,
-                notchPanelStyle: vm.notchPanelStyle,
-                notchGlassAppearance: vm.notchGlassAppearance,
-                notchGlassMaterial: vm.notchGlassMaterial,
-                notchPanelOpacity: vm.notchPanelOpacity,
-                notchPanelColorHex: vm.notchPanelColorHex,
-                notchMirrorEnabled: vm.notchMirrorEnabled,
-                notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
-                notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-                coverScreensShortcut: vm.coverScreensShortcut,
-                coverScreensMessage: vm.coverScreensMessage,
-                notchWidgets: vm.notchWidgets))
+            SettingsPayload(config: vm.config))
 
         #expect(savedSites?.count == 2)
         #expect(savedGuide == false)

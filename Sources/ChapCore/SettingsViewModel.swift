@@ -1,25 +1,30 @@
 import Foundation
 
+/// 설정창이 저장을 요청할 때 넘기는 전체 설정. `Config` 하나를 감싸고, 읽기 편하게 필드를 그대로 노출한다.
 public struct SettingsPayload {
-    public let sites: [Site]
-    public let showGuideWindow: Bool
-    public let launchAtLogin: Bool
-    public let optionShortcutsEnabled: Bool
-    public let statusBarIcon: StatusBarIconChoice
-    public let hiddenMenuLaunchTypes: Set<LaunchType>
-    public let notchLauncherEnabled: Bool
-    public let notchPanelStyle: NotchPanelStyle
-    public let notchGlassAppearance: NotchGlassAppearance
-    public let notchGlassMaterial: NotchGlassMaterial
-    public let notchPanelOpacity: Double
-    public let notchPanelColorHex: String
-    public let notchMirrorEnabled: Bool
-    public let notchQuickNoteEnabled: Bool
-    public let notchCoverScreensEnabled: Bool
-    public let notchQuickNoteShortcut: String?
-    public let coverScreensShortcut: String?
-    public let coverScreensMessage: String?
-    public let notchWidgets: [NotchWidget]
+    public let config: Config
+
+    public init(config: Config) { self.config = config }
+
+    public var sites: [Site] { config.sites }
+    public var showGuideWindow: Bool { config.showGuideWindow }
+    public var launchAtLogin: Bool { config.launchAtLogin }
+    public var optionShortcutsEnabled: Bool { config.optionShortcutsEnabled }
+    public var statusBarIcon: StatusBarIconChoice { config.statusBarIcon }
+    public var hiddenMenuLaunchTypes: Set<LaunchType> { config.hiddenMenuLaunchTypes }
+    public var notchLauncherEnabled: Bool { config.notchLauncherEnabled }
+    public var notchPanelStyle: NotchPanelStyle { config.notchPanelStyle }
+    public var notchGlassAppearance: NotchGlassAppearance { config.notchGlassAppearance }
+    public var notchGlassMaterial: NotchGlassMaterial { config.notchGlassMaterial }
+    public var notchPanelOpacity: Double { config.notchPanelOpacity }
+    public var notchPanelColorHex: String { config.notchPanelColorHex }
+    public var notchMirrorEnabled: Bool { config.notchMirrorEnabled }
+    public var notchQuickNoteEnabled: Bool { config.notchQuickNoteEnabled }
+    public var notchCoverScreensEnabled: Bool { config.notchCoverScreensEnabled }
+    public var notchQuickNoteShortcut: String? { config.notchQuickNoteShortcut }
+    public var coverScreensShortcut: String? { config.coverScreensShortcut }
+    public var coverScreensMessage: String? { config.coverScreensMessage }
+    public var notchWidgets: [NotchWidget] { config.notchWidgets }
 }
 
 public final class SettingsViewModel: ObservableObject {
@@ -118,26 +123,7 @@ public final class SettingsViewModel: ObservableObject {
     public func scheduleAutoSave() {
         saveDebouncer.schedule { [weak self] in
             guard let self else { return }
-            let config = Config(
-                showGuideWindow: self.showGuideWindow,
-                launchAtLogin: self.launchAtLogin,
-                optionShortcutsEnabled: self.optionShortcutsEnabled,
-                statusBarIcon: self.statusBarIcon,
-                hiddenMenuLaunchTypes: self.hiddenMenuLaunchTypes,
-                notchLauncherEnabled: self.notchLauncherEnabled,
-                notchPanelStyle: self.notchPanelStyle,
-                notchGlassAppearance: self.notchGlassAppearance,
-                notchGlassMaterial: self.notchGlassMaterial,
-                notchPanelOpacity: self.notchPanelOpacity,
-                notchPanelColorHex: self.notchPanelColorHex,
-                notchMirrorEnabled: self.notchMirrorEnabled,
-                notchQuickNoteEnabled: self.notchQuickNoteEnabled,
-                notchCoverScreensEnabled: self.notchCoverScreensEnabled,
-                notchQuickNoteShortcut: self.notchQuickNoteShortcut,
-                coverScreensShortcut: self.coverScreensShortcut,
-                coverScreensMessage: self.coverScreensMessage,
-                notchWidgets: self.notchWidgets,
-                sites: self.sites)
+            let config = self.config
             guard validateConfig(config).isValid else { return }
             _ = self.persistCurrentState()
         }
@@ -153,29 +139,60 @@ public final class SettingsViewModel: ObservableObject {
 
     @discardableResult
     public func persistCurrentState() -> Bool {
-        let saved =
-            onSave?(
-                SettingsPayload(
-                    sites: sites, showGuideWindow: showGuideWindow,
-                    launchAtLogin: launchAtLogin,
-                    optionShortcutsEnabled: optionShortcutsEnabled,
-                    statusBarIcon: statusBarIcon,
-                    hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
-                    notchLauncherEnabled: notchLauncherEnabled,
-                    notchPanelStyle: notchPanelStyle,
-                    notchGlassAppearance: notchGlassAppearance,
-                    notchGlassMaterial: notchGlassMaterial,
-                    notchPanelOpacity: notchPanelOpacity,
-                    notchPanelColorHex: notchPanelColorHex,
-                    notchMirrorEnabled: notchMirrorEnabled,
-                    notchQuickNoteEnabled: notchQuickNoteEnabled,
-                    notchCoverScreensEnabled: notchCoverScreensEnabled,
-                    notchQuickNoteShortcut: notchQuickNoteShortcut,
-                    coverScreensShortcut: coverScreensShortcut,
-                    coverScreensMessage: coverScreensMessage,
-                    notchWidgets: notchWidgets)) ?? true
+        let saved = onSave?(SettingsPayload(config: config)) ?? true
         if saved { markSaved() }
         return saved
+    }
+
+    /// 지금 편집 중인 값 전체를 `Config`로. 저장·검증·Export가 모두 이것을 쓴다.
+    /// `notchCollapsedWidgets`는 설정창이 다루지 않는 이 Mac의 표시 선택이라 기본값(빈 목록)으로 두고,
+    /// AppDelegate가 저장 직전에 현재 값을 다시 채운다.
+    public var config: Config {
+        Config(
+            showGuideWindow: showGuideWindow,
+            launchAtLogin: launchAtLogin,
+            optionShortcutsEnabled: optionShortcutsEnabled,
+            statusBarIcon: statusBarIcon,
+            hiddenMenuLaunchTypes: hiddenMenuLaunchTypes,
+            notchLauncherEnabled: notchLauncherEnabled,
+            notchPanelStyle: notchPanelStyle,
+            notchGlassAppearance: notchGlassAppearance,
+            notchGlassMaterial: notchGlassMaterial,
+            notchPanelOpacity: notchPanelOpacity,
+            notchPanelColorHex: notchPanelColorHex,
+            notchMirrorEnabled: notchMirrorEnabled,
+            notchQuickNoteEnabled: notchQuickNoteEnabled,
+            notchCoverScreensEnabled: notchCoverScreensEnabled,
+            notchQuickNoteShortcut: notchQuickNoteShortcut,
+            coverScreensShortcut: coverScreensShortcut,
+            coverScreensMessage: coverScreensMessage,
+            notchWidgets: notchWidgets,
+            sites: sites)
+    }
+
+    /// 저장된 `Config`로 뷰 모델을 만든다. 필드를 하나씩 옮겨 적는 긴 호출을 대신한다.
+    public convenience init(config: Config, saveDebouncer: SaveDebouncer = SaveDebouncer()) {
+        self.init(
+            sites: config.sites,
+            showGuideWindow: config.showGuideWindow,
+            launchAtLogin: config.launchAtLogin,
+            optionShortcutsEnabled: config.optionShortcutsEnabled,
+            statusBarIcon: config.statusBarIcon,
+            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
+            notchLauncherEnabled: config.notchLauncherEnabled,
+            notchPanelStyle: config.notchPanelStyle,
+            notchGlassAppearance: config.notchGlassAppearance,
+            notchGlassMaterial: config.notchGlassMaterial,
+            notchPanelOpacity: config.notchPanelOpacity,
+            notchPanelColorHex: config.notchPanelColorHex,
+            notchMirrorEnabled: config.notchMirrorEnabled,
+            notchQuickNoteEnabled: config.notchQuickNoteEnabled,
+            notchCoverScreensEnabled: config.notchCoverScreensEnabled,
+            notchQuickNoteShortcut: config.notchQuickNoteShortcut,
+            coverScreensShortcut: config.coverScreensShortcut,
+            coverScreensMessage: config.coverScreensMessage,
+            notchWidgets: config.notchWidgets,
+            saveDebouncer: saveDebouncer)
     }
 
     public init(
