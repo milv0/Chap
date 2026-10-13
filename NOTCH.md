@@ -190,7 +190,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
-| Workspaces | 170pt (이름 + 캡처한 창 수) |
+| Workspaces | 128pt (2열 타일: 앱 아이콘 묶음 + 이름) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -322,9 +322,9 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 ## Workspaces 칸
 
-위젯 칸(3~6번)에 놓는 로컬 작업 공간 목록(`NotchWidget.workspaces`, `NotchWorkspacesView`, 폭 170pt). 최대 4개 Workspace를 26pt 줄로 보여 주고, 오른쪽 숫자는 캡처한 앱 창 수다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
+위젯 칸(3~6번)에 놓는 로컬 작업 공간 격자(`NotchWidget.workspaces`, `NotchWorkspacesView`, 폭 128pt). Apps 칸처럼 2열 타일이며, 최대 4개라 2×2에 맞는다. 타일은 그 Workspace 앱 아이콘을 앞에서부터 넷까지 모은 36pt 묶음(`WorkspaceIconCluster`, 폴더 아이콘처럼 둘씩 줄지어, 하나면 크게 하나)과 아래 10pt 이름이다. 같은 앱 조합이 겹칠 수 있어 이름은 늘 보인다. 마우스를 올리면 이름과 앱 목록 툴팁, 열리는 중에는 묶음 위에 진행 표시가 돈다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
 
-4개 미만이면 `+ Capture` 줄이 보이며, 누르면 도커를 접고 `Capture Workspace` 창을 연다. Workspace는 `~/Library/Application Support/Chap/Workspaces.json`에만 저장되고 config Import/Export에는 포함하지 않는다. 앱 이름·창 제목·디스플레이 UUID·visibleFrame 상대 프레임을 저장한다. 연결했던 화면이 없으면 커서 화면에 같은 상대 프레임을 맞춘다.
+4개 미만이면 빈 자리에 점선 `+` Capture 타일이 보이며, 누르면 도커를 접고 `Capture Workspace` 창을 연다. Workspace는 `~/Library/Application Support/Chap/Workspaces.json`에만 저장되고 config Import/Export에는 포함하지 않는다. 앱 이름·창 제목·디스플레이 UUID·visibleFrame 상대 프레임을 저장한다. 연결했던 화면이 없으면 커서 화면에 같은 상대 프레임을 맞춘다.
 
 캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원은 저장한 제목과 정확히 하나가 맞는 창, 없으면 표준 창이 하나일 때 그 창, 그것도 없으면 포커스된 표준 창에 적용한다(최소화된 창은 Dock에서 꺼내서). 앱의 최소 크기보다 작게 저장된 창은 그 크기로 키우되 화면 안에 둔다(`WorkspaceGeometry.bounds(minimumSize:)`). 앱마다 12초 상한이라 한 앱이 멈춰도 다음 앱은 열리고, 끝나면 자리를 못 잡은 앱 이름을 알려 준다. 열리는 동안 `WorkspaceLibrary.busyID`가 설정 버튼과 노치 줄을 진행 표시로 바꾸고 한 번에 하나만 돈다. 최대 Workspace 4개·Workspace당 창 6개다.
 
