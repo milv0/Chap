@@ -189,7 +189,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
-| To-do | 170pt (12pt 문구, 20자 안팎) |
+| To-do | 188pt (상태 캡슐 + 12pt 문구) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots)가
 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -321,30 +321,31 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 ## To-do 칸
 
-위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 170pt). Chap 안에만 저장한다
+위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 188pt). Chap 안에만 저장한다
 (`TodoStore`, `~/Library/Application Support/Chap/Todos.json`, 권한·동기화 없음, 설정 Export/Import에 안 섞임).
 
 - 줄: 다른 목록과 같은 26pt, 16pt 체크 동그라미(완료는 블루 `checkmark.circle.fill`) + 12pt 문구(`DS.notchRowName`).
-  완료 항목은 보조색 + 취소선. 최대 4개(`maxItems`)라 항목 + 추가 줄이 늘 4줄 이하로, 스크롤 없이 목록 칸 높이(113pt)에 맞는다.
-- 추가: 맨 아래 추가 줄은 평소에 체크 동그라미 자리의 옅은 ＋(보조색 55%)만 보이고, 마우스를 올리거나 목록이
-  비어 있을 때만 "Add a to-do"가 나타난다(목록을 방해하지 않게). 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
+  완료 항목은 옅은 블루 면 + 낮춘 보조색 + 취소선으로 현재 항목과 구분한다. 최대 4개(`maxItems`)라 항목 + 추가 줄이 늘 4줄 이하로, 스크롤 없이 목록 칸 높이(113pt)에 맞는다.
+- 추가: 맨 아래 `+ Add to-do` 줄은 옅은 면으로 늘 보여 빈 자리의 용도를 바로 알 수 있다. 마우스를 올리면 글자와 ＋가
+  블루로 바뀌고, 입력 중에는 블루 면 + 테두리로 현재 위치를 표시한다. 줄을 누르면 바로 입력. Enter로 더하고 같은 줄에서 다음
   항목을 이어 쓴다. 칸 밖 클릭(`didClickPanel`), 다른 앱, Esc, 패널 닫힘이면 쓰던 문구를 확정하고 입력을 닫는다.
   문구는 한 줄로 다듬고 200자까지(`cleanedTitle`), 빈 문구는 버린다. 4개가 차면 추가 줄을 숨기고, 완료 항목을 지우면(Clear Completed·Delete) 다시 보인다.
 - 완료: 동그라미를 누르면 체크·취소선. 항목은 제자리에 있다(아래로 옮기지 않는다, `ordered`는 넣은 순).
 - 수정·삭제: 문구 더블클릭으로 고치고(비우면 삭제). 줄에 마우스를 올리면 줄이 옅게 강조되고 오른쪽 끝에 16pt ×
   (`TodoDeleteButton`, 보조색, 버튼에 올리면 `DS.danger` 원)가 나타나 바로 지운다. 숨어 있을 때도 자리를 잡아 문구가
   밀리지 않는다. 우클릭에 Mark Done/Edit/Delete, VoiceOver는 줄의 Delete 동작. 제목 우클릭 → Clear Completed.
-- 제목 옆 10pt 진행률 원(`TodoProgressRing`, `TodoStore.progress`): 끝낸 비율만큼 블루로 차고, 다 끝나면 가득 찬 원
-  (Things의 프로젝트 원). 열린 노치 안의 정보일 뿐, 닫힌 노치·메뉴 막대에는 배지를 달지 않는다.
-- 체크하는 순간: 동그라미가 체크로 바뀌며 한 번 튀고(`.symbolEffect(.bounce)`), 취소선이 글자 폭만큼 왼쪽에서
-  오른쪽으로 0.28초에 그어진다. 트랙패드 햅틱(`.levelChange`)과 함께 `NotchTodoView.didCompleteNotification`을 보내
+- 제목 오른쪽 상태 캡슐은 `2 left`처럼 남은 수를 글자로 보여 주고, 완료 항목이 있으면 같은 캡슐 안에 `Clear`를 묶는다.
+  제목 아래 2pt 진행선(`TodoProgressBar`, `TodoStore.progress`)이 끝낸 비율만큼 블루로 찬다. 색만으로 상태를 전하지 않고,
+  열린 노치 안에서만 보여 닫힌 노치·메뉴 막대에는 배지를 달지 않는다.
+- 체크하는 순간: 동그라미가 체크로 바뀌며 한 번 튀고(`.symbolEffect(.bounce)`), 문구의 대비가 낮아지고 취소선이 생긴다.
+  트랙패드 햅틱(`.levelChange`)과 함께 `NotchTodoView.didCompleteNotification`을 보내
   검정 띠의 물범이 꼬리를 한 번 까딱한다(동작 줄이기·닫힌 노치에서는 까딱하지 않음). 체크를 풀 때는 조용하다.
 - 다 끝냈을 때(`isAllDone`): 목록 대신 블루 체크, "All done.", 캡슐 둘. "Back"은 목록으로 돌아가 체크를 풀 수
   있게 하고, "Clear"는 완료 항목을 비운다. 끝낸 항목이 하나라도 있으면 제목 줄 오른쪽에 작은 "Clear"가 있어
-  Back으로 돌아온 뒤에도 체크를 풀었다 다시 누를 필요 없이 바로 비운다. 저절로 지우지는 않는다. 축하는 이 정도로만 한다.
+  Back으로 돌아온 뒤에도 상태 캡슐의 "Clear"로 바로 비운다. 저절로 지우지는 않는다. 축하는 이 정도로만 한다.
 - 비우기 되돌리기: "All done." 화면의 Clear는 마무리라 바로 빈 "Add a to-do" 화면으로 돌아가고 되돌리기를 남기지
   않는다(다시 보려면 그 전에 Back). 목록에서 일부만 비울 때(제목 줄 Clear·Clear Completed)는 목록이 바로 비고
-  4초 동안 제목 줄 오른쪽 작은 "Undo"로 되돌릴 수 있다(`restoring`, 그사이 넣은 항목은 지키고 4개 한도 안에서 되돌림). 노치를 닫으면 되돌리기도 끝난다. 줄 하나를 Delete한 것은 되돌리지 않는다.
+  4초 동안 제목 줄 오른쪽 `Undo` 캡슐로 되돌릴 수 있다(`restoring`, 그사이 넣은 항목은 지키고 4개 한도 안에서 되돌림). 노치를 닫으면 되돌리기도 끝난다. 줄 하나를 Delete한 것은 되돌리지 않는다.
 - 이전 버전은 모르는 위젯 이름을 버리므로 `todo` 칸은 그냥 빈 칸이 된다(설정은 그대로 읽힌다).
 
 ## Quick Note 창

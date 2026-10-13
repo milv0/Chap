@@ -137,7 +137,7 @@ public struct TodoStore: Sendable {
             .map(\.element)
     }
 
-    /// 완료 비율(0…1). 항목이 없으면 nil이라 진행률 원을 그리지 않는다.
+    /// 완료 비율(0…1). 항목이 없으면 nil이라 진행 표시를 그리지 않는다.
     public static func progress(_ items: [TodoItem]) -> Double? {
         guard !items.isEmpty else { return nil }
         return Double(items.filter(\.isDone).count) / Double(items.count)
