@@ -69,6 +69,26 @@ public struct WorkspaceDisplay: Equatable, Hashable, Sendable {
         self.name = name
     }
 
+    /// 같은 디스플레이인지. UUID가 있으면 UUID로, 없으면 이름으로 본다.
+    public func matches(_ other: WorkspaceDisplay) -> Bool {
+        if let identifier, let otherIdentifier = other.identifier {
+            return identifier == otherIdentifier
+        }
+        return identifier == nil && other.identifier == nil && name == other.name
+    }
+
+    /// 창에 보여 줄 디스플레이 이름. 연결된 디스플레이면 메뉴와 같은 번호 붙은 이름, nil이면 "Follow Cursor",
+    /// 저장만 되어 있고 지금 없는 디스플레이면 "(not connected)"를 붙인다. 모든 화면이 이 한 함수를 쓴다.
+    public static func label(for display: WorkspaceDisplay?, among connected: [WorkspaceDisplay])
+        -> String
+    {
+        guard let display else { return "Follow Cursor" }
+        if let index = connected.firstIndex(where: { $0.matches(display) }) {
+            return menuLabels(for: connected)[index]
+        }
+        return "\(display.name.isEmpty ? "Saved display" : display.name) (not connected)"
+    }
+
     /// 메뉴에 보일 이름. 같은 모델 모니터가 여럿이면 연결 순서대로 번호를 붙여 구분한다.
     public static func menuLabels(for displays: [WorkspaceDisplay]) -> [String] {
         var seen: [String: Int] = [:]
@@ -114,8 +134,11 @@ extension ChapWorkspace {
             updated += 1
             var copy = window
             copy.frame = fresh.frame
-            copy.displayIdentifier = fresh.displayIdentifier
-            copy.displayName = fresh.displayName
+            // 사용자가 고른 Follow Cursor는 지킨다. 디스플레이를 정해 둔 창만 지금 화면으로 옮긴다.
+            if window.display != nil {
+                copy.displayIdentifier = fresh.displayIdentifier
+                copy.displayName = fresh.displayName
+            }
             copy.windowTitle = fresh.windowTitle
             return copy
         }

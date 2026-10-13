@@ -393,6 +393,10 @@ extension AppDelegate {
         notchLauncher.onEditWorkspace = { [weak self] id in
             self?.editWorkspace(id: id)
         }
+        notchLauncher.onOpenWorkspaceSettings = { [weak self] in
+            self?.showWorkspacesInSettings()
+        }
+        notchLauncher.busyWorkspaceIDProvider = { [weak self] in self?.workspaceLibrary.busyID }
         notchLauncher.onRemoveWorkspace = { [weak self] id in
             self?.confirmRemoveWorkspace(id: id)
         }

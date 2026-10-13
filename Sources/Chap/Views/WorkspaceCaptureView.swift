@@ -15,6 +15,13 @@ struct WorkspaceCaptureView: View {
         }
         .frame(width: 520, height: 500)
         .background(DS.surfaceBg)
+        // 창을 열어 둔 채 모니터를 꽂거나 뽑으면 디스플레이 메뉴도 따라간다.
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSApplication.didChangeScreenParametersNotification)
+        ) { _ in
+            model.displays = WorkspaceDisplay.connected()
+        }
     }
 
     private var header: some View {
@@ -58,7 +65,7 @@ struct WorkspaceCaptureView: View {
                 Text("No windows to capture")
                     .font(DS.headlineFont)
                     .foregroundColor(DS.textPrimary)
-                Text("Arrange a standard app window, then try again.")
+                Text("Open an app window that isn't minimized or full screen, then try again.")
                     .font(DS.captionFont)
                     .foregroundColor(DS.textSecondary)
             }
@@ -114,46 +121,36 @@ struct WorkspaceCaptureView: View {
                 .strokeBorder(selected ? DS.accent.opacity(0.35) : DS.border, lineWidth: 1)
         }
         .contentShape(Rectangle())
+        .opacity(selected || !model.isAtSelectionLimit ? 1 : 0.55)
         .onTapGesture { model.toggle(window.id) }
+        // 키보드: 줄에 포커스를 두고 Space로 고르고 뺀다.
+        .focusable()
+        .onKeyPress(.space) {
+            model.toggle(window.id)
+            return .handled
+        }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(
-            "\(window.applicationName), \(displayLabel(for: window)), "
-                + (selected ? "selected" : "not selected")
-        )
+        .accessibilityLabel("\(window.applicationName), \(displayLabel(for: window))")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { model.toggle(window.id) }
     }
 
     /// 이 창을 띄울 디스플레이. 바꿔도 화면 안의 상대 위치·크기는 그대로다.
     private func displayMenu(for window: WorkspaceWindow) -> some View {
-        let labels = WorkspaceDisplay.menuLabels(for: model.displays)
-        var choices = model.displays.enumerated().map { index, display in
-            WorkspaceDisplayMenuButton.Choice(
-                title: labels[index], isSelected: window.display?.identifier == display.identifier
-            ) { model.setDisplay(display, for: window.id) }
-        }
-        choices.append(
-            WorkspaceDisplayMenuButton.Choice(
-                title: "Follow Cursor", isSelected: window.display == nil, startsSection: true
-            ) { model.setDisplay(nil, for: window.id) })
-        return WorkspaceDisplayMenuButton(
+        WorkspaceDisplayMenuButton(
             title: displayLabel(for: window),
             symbol: window.display == nil ? "cursorarrow" : "display",
-            choices: choices
+            choices: WorkspaceDisplayMenuButton.displayChoices(
+                for: window, among: model.displays
+            ) { model.setDisplay($0, for: window.id) }
         )
         .help("Display this window opens on")
         .accessibilityLabel("Display for \(window.applicationName)")
         .accessibilityValue(displayLabel(for: window))
     }
 
-    /// 창의 디스플레이 이름. 같은 모델 모니터가 여럿이면 메뉴와 같은 번호를 붙인다.
     private func displayLabel(for window: WorkspaceWindow) -> String {
-        guard let display = window.display else { return "Follow Cursor" }
-        let labels = WorkspaceDisplay.menuLabels(for: model.displays)
-        if let index = model.displays.firstIndex(where: { $0.identifier == display.identifier }) {
-            return labels[index]
-        }
-        return display.name.isEmpty ? "Unknown display" : display.name
+        WorkspaceDisplay.label(for: window.display, among: model.displays)
     }
 
     private var footer: some View {
@@ -167,9 +164,13 @@ struct WorkspaceCaptureView: View {
                     .accessibilityLabel("Workspace name")
             }
             HStack {
-                Text("\(model.selectedWindows.count) selected")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
+                Text(
+                    model.isAtSelectionLimit
+                        ? "\(model.selectedWindows.count) selected · up to \(WorkspaceStore.maxWindows)"
+                        : "\(model.selectedWindows.count) selected"
+                )
+                .font(DS.captionFont)
+                .foregroundColor(DS.textSecondary)
                 Spacer()
                 Button("Cancel", action: onCancel)
                     .keyboardShortcut(.cancelAction)
