@@ -12,19 +12,23 @@ enum NotchSlotContent {
     case awake
     /// 할 일 목록 위젯.
     case todo
+    /// 실제 앱 창 배치를 복원하는 Workspaces 위젯.
+    case workspaces([ChapWorkspace])
 
     /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
     var collapsibleWidget: NotchWidget? {
         switch self {
         case .screenshots: return .screenshots
         case .downloads: return .downloads
-        case .launchers, .awake, .todo: return nil
+        case .launchers, .awake, .todo, .workspaces: return nil
         }
     }
 
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
-    static func slots(widgets: [NotchWidget], sites: [Site]) -> [NotchSlotContent] {
+    static func slots(
+        widgets: [NotchWidget], sites: [Site], workspaces: [ChapWorkspace] = []
+    ) -> [NotchSlotContent] {
         // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김 설정과 무관하다.
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
         return widgets.compactMap { widget -> NotchSlotContent? in
@@ -36,6 +40,7 @@ enum NotchSlotContent {
             case .downloads: return .downloads
             case .awake: return .awake
             case .todo: return .todo
+            case .workspaces: return .workspaces(workspaces)
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)

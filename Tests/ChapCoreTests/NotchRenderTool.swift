@@ -49,6 +49,13 @@ struct NotchRenderTool {
         var todoWidgets = previewWidgets
         if !todoWidgets.contains(.todo) { todoWidgets[NotchWidget.slotCount - 1] = .todo }
         let todoSlots = NotchSlotContent.slots(widgets: todoWidgets, sites: config.sites)
+        var workspaceWidgets = previewWidgets
+        if !workspaceWidgets.contains(.workspaces) {
+            workspaceWidgets[NotchWidget.slotCount - 1] = .workspaces
+        }
+        let previewWorkspaces = Self.previewWorkspaces
+        let workspaceSlots = NotchSlotContent.slots(
+            widgets: workspaceWidgets, sites: config.sites, workspaces: previewWorkspaces)
         let now = Date()
         NotchTodoView.previewItems = [
             TodoItem(title: "Send the Q4 deck to Jun", created: now),
@@ -83,6 +90,8 @@ struct NotchRenderTool {
             ("notch-glass-light-empty-shelves", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-todo", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-todo", .glass, .dark, Color(white: 0.16), false),
+            ("notch-glass-light-workspaces", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-workspaces", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
@@ -119,7 +128,8 @@ struct NotchRenderTool {
                 awakeSessionEnd: name.hasSuffix("focus-on")
                     ? Date().addingTimeInterval(3 * 3600 + 25 * 60) : nil, style: style,
                 glassMaterial: config.notchGlassMaterial,
-                slots: name.hasSuffix("-todo") ? todoSlots : previewSlots,
+                slots: name.hasSuffix("-todo")
+                    ? todoSlots : name.hasSuffix("-workspaces") ? workspaceSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
                 showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
@@ -136,6 +146,45 @@ struct NotchRenderTool {
             let png = try Self.renderPNG(view)
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
+    }
+
+    @Test(
+        "render the Workspace capture window",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderWorkspaceCapture() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let model = WorkspaceCaptureViewModel()
+        model.finishLoading(Self.previewWorkspaces[0].windows)
+        model.name = "Deep Work"
+        let view = WorkspaceCaptureView(model: model, onCancel: {}, onSave: { _, _ in })
+            .environment(\.colorScheme, .light)
+        try Self.renderPNG(view).write(
+            to: directory.appendingPathComponent("workspace-capture.png"))
+    }
+
+    private static var previewWorkspaces: [ChapWorkspace] {
+        let windows = [
+            WorkspaceWindow(
+                applicationName: "Xcode", bundleIdentifier: "com.apple.dt.Xcode",
+                applicationPath: "/Applications/Xcode.app", windowTitle: "Chap",
+                displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
+                frame: WorkspaceFrame(left: 0.03, top: 0.05, width: 0.62, height: 0.88)),
+            WorkspaceWindow(
+                applicationName: "Safari", bundleIdentifier: "com.apple.Safari",
+                applicationPath: "/Applications/Safari.app", windowTitle: "Documentation",
+                displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
+                frame: WorkspaceFrame(left: 0.66, top: 0.05, width: 0.31, height: 0.55)),
+            WorkspaceWindow(
+                applicationName: "Terminal", bundleIdentifier: "com.apple.Terminal",
+                applicationPath: "/System/Applications/Utilities/Terminal.app",
+                windowTitle: "chap", displayIdentifier: "DISPLAY-1",
+                displayName: "Built-in Retina Display",
+                frame: WorkspaceFrame(left: 0.66, top: 0.62, width: 0.31, height: 0.31)),
+        ]
+        return [
+            ChapWorkspace(name: "Deep Work", windows: windows),
+            ChapWorkspace(name: "Writing", windows: Array(windows.prefix(2))),
+        ]
     }
 
     /// Settings → Notch 화면을 그린다 (라이트·다크). 노치가 없는 Mac에서도 세부 설정까지 보이도록

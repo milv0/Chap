@@ -1,0 +1,91 @@
+import SwiftUI
+
+/// 저장된 작업 공간을 한 번에 복원하고 새 배치를 캡처하는 노치 위젯.
+struct NotchWorkspacesView: View {
+    let workspaces: [ChapWorkspace]
+    let palette: NotchWidgetPalette
+    let onOpen: (UUID) -> Void
+    let onCapture: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            NotchWidgetHeader(
+                symbol: "rectangle.3.group", title: "Workspaces", palette: palette)
+            VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
+                ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
+                    WorkspaceRow(workspace: workspace, palette: palette) {
+                        onOpen(workspace.id)
+                    }
+                }
+                if workspaces.count < WorkspaceStore.maxWorkspaces {
+                    captureRow
+                }
+            }
+            .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+        }
+    }
+
+    private var captureRow: some View {
+        Button(action: onCapture) {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .semibold))
+                    .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
+                Text("Capture")
+                    .font(DS.notchRowName.weight(.medium))
+                Spacer(minLength: 0)
+            }
+            .foregroundColor(palette.secondary)
+            .padding(.horizontal, 6)
+            .frame(height: NotchAppIconTile.listRowHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(palette.subtleSurface)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("Capture the open app windows")
+        .accessibilityLabel("Capture Workspace")
+    }
+}
+
+private struct WorkspaceRow: View {
+    let workspace: ChapWorkspace
+    let palette: NotchWidgetPalette
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "rectangle.3.group")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(DS.accent)
+                    .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
+                Text(workspace.name)
+                    .font(DS.notchRowName)
+                    .foregroundColor(palette.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer(minLength: 4)
+                Text("\(workspace.windows.count)")
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+                    .monospacedDigit()
+            }
+            .padding(.horizontal, 6)
+            .frame(height: NotchAppIconTile.listRowHeight)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                    .fill(isHovered ? palette.hoverBackground : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(workspace.windows.map(\.applicationName).joined(separator: ", "))
+        .accessibilityLabel(
+            "Open \(workspace.name), \(workspace.windows.count) app windows")
+    }
+}

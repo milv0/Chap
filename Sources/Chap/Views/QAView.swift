@@ -77,7 +77,7 @@ struct QAView: View {
                 ),
                 (
                     "윈도우가 항상 화면 가운데 열려요. 위치를 바꿀 수 있나요?",
-                    "현재는 선택한 디스플레이의 중앙에 자동 배치됩니다. 위치 커스텀은 지원하지 않습니다."
+                    "일반 Launchable은 선택한 디스플레이 중앙에 자동 배치됩니다. Workspaces에서는 실제로 배열한 앱 창의 화면·크기·위치를 캡처해 함께 복원할 수 있습니다."
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
@@ -86,6 +86,23 @@ struct QAView: View {
                 (
                     "같은 URL/앱을 두 번 등록하면?",
                     "중복 경고가 뜨고 저장되지 않습니다."
+                ),
+            ]
+        ),
+        (
+            "Workspaces",
+            [
+                (
+                    "현재 창 배치를 어떻게 저장하나요?",
+                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. Settings → Notch에서 Workspaces 위젯을 놓으면 노치에서도 바로 복원할 수 있습니다."
+                ),
+                (
+                    "열린 창을 모두 자동으로 저장하나요?",
+                    "아니요. 위치와 크기를 바꿀 수 있는 표준 앱 창 중 앱마다 대표 창 하나만 제안합니다. 여러 창 중 하나를 확실히 고를 수 없거나 최소화·전체 화면인 창은 추측하지 않고 제외합니다."
+                ),
+                (
+                    "Workspace 데이터는 어디에 있나요?",
+                    "앱 이름, 창 제목, 화면과 배치가 이 Mac의 ~/Library/Application Support/Chap/Workspaces.json에만 저장됩니다. 동기화하거나 설정 Export에 넣지 않습니다."
                 ),
             ]
         ),
@@ -197,7 +214,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do, Workspaces를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -330,7 +347,7 @@ struct QAView: View {
                 ),
                 (
                     "Windows always open in the center. Can I change the position?",
-                    "Currently, windows are always centered on the target display. Custom positioning is not supported."
+                    "Regular launchables stay centered on the target display. Workspaces can capture and restore the displays, sizes, and positions of app windows you arranged yourself."
                 ),
                 (
                     "How do I open on a specific monitor?",
@@ -339,6 +356,23 @@ struct QAView: View {
                 (
                     "What if I register the same URL/app twice?",
                     "A duplicate warning appears and it won't be saved."
+                ),
+            ]
+        ),
+        (
+            "Workspaces",
+            [
+                (
+                    "How do I save the current window layout?",
+                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. Place the Workspaces widget in Settings → Notch for one-click restore under the notch."
+                ),
+                (
+                    "Does Chap capture every open window?",
+                    "No. Chap suggests one representative standard, movable window per app. It skips ambiguous, minimized, and full-screen windows instead of guessing."
+                ),
+                (
+                    "Where is Workspace data stored?",
+                    "App names, window titles, displays, and layouts stay in ~/Library/Application Support/Chap/Workspaces.json on this Mac. They are not synced or included in config Export."
                 ),
             ]
         ),
@@ -450,7 +484,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, or To-do. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, To-do, or Workspaces. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

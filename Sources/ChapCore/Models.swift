@@ -302,6 +302,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case drop = "drop"
     /// 할 일 목록: Chap 안에만 저장하는 짧은 체크리스트(`TodoStore`).
     case todo = "todo"
+    /// 실제 앱 창 배치를 이 Mac에 기억하고 복원하는 작업 공간(`WorkspaceStore`).
+    case workspaces = "workspaces"
     /// 빈 칸.
     case none = "none"
 
@@ -311,7 +313,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .todo, .none: return nil
+        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .none:
+            return nil
         }
     }
 

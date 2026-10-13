@@ -16,6 +16,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var settingsWindow: NSWindow?
     var qaWindow: NSWindow?
     var welcomeWindow: NSWindow?
+    var workspaceCaptureWindow: NSWindow?
+    var workspaceCaptureViewModel: WorkspaceCaptureViewModel?
+    let workspaceStore = WorkspaceStore()
+    var workspaces: [ChapWorkspace] = []
     var settingsVM: SettingsViewModel?
     let globalHotKeyManager = GlobalHotKeyManager()
     /// Cover Screens 가림막. 상태는 메모리에만 있고 Keep Awake와 독립이다.
