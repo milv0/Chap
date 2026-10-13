@@ -32,8 +32,9 @@ enum WorkspaceCaptureService {
         }
         let ownPID = ProcessInfo.processInfo.processIdentifier
         let apps = NSWorkspace.shared.runningApplications.compactMap { app -> RunningApp? in
+            // 숨긴 앱(⌘H)의 창은 화면에 없으니 "지금 배열한 창"이 아니다.
             guard app.processIdentifier != ownPID, app.activationPolicy == .regular,
-                !app.isTerminated, let bundleIdentifier = app.bundleIdentifier,
+                !app.isTerminated, !app.isHidden, let bundleIdentifier = app.bundleIdentifier,
                 let path = app.bundleURL?.path, let name = app.localizedName
             else { return nil }
             return RunningApp(

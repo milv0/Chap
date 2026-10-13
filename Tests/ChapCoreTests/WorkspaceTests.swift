@@ -287,3 +287,69 @@ struct WorkspacePositionUpdateTests {
         #expect(result.workspace.windows[1] == workspace.windows[1])
     }
 }
+
+@Suite("Workspace display labels")
+struct WorkspaceDisplayLabelTests {
+    private let displays = [
+        WorkspaceDisplay(identifier: "A", name: "Built-in Retina Display"),
+        WorkspaceDisplay(identifier: "B", name: "LG UltraFine"),
+        WorkspaceDisplay(identifier: "C", name: "LG UltraFine"),
+    ]
+
+    @Test("a connected display uses its menu label; a missing one is marked")
+    func labels() {
+        #expect(WorkspaceDisplay.label(for: nil, among: displays) == "Follow Cursor")
+        #expect(
+            WorkspaceDisplay.label(
+                for: WorkspaceDisplay(identifier: "C", name: "LG UltraFine"), among: displays)
+                == "LG UltraFine 2")
+        #expect(
+            WorkspaceDisplay.label(
+                for: WorkspaceDisplay(identifier: "Z", name: "Studio Display"), among: displays)
+                == "Studio Display (not connected)")
+    }
+
+    @Test("displays without a UUID still match by name")
+    func matchesByName() {
+        let unnamed = [WorkspaceDisplay(identifier: nil, name: "Only")]
+        #expect(
+            WorkspaceDisplay(identifier: nil, name: "Only").matches(unnamed[0]))
+        #expect(
+            !WorkspaceDisplay(identifier: nil, name: "Other").matches(unnamed[0]))
+        #expect(
+            !WorkspaceDisplay(identifier: "A", name: "Only").matches(unnamed[0]))
+    }
+
+    @Test("update positions keeps Follow Cursor but takes the new frame")
+    func keepsFollowCursor() {
+        let window = WorkspaceWindow(
+            applicationName: "Mail", bundleIdentifier: "mail", applicationPath: "/A/Mail.app",
+            frame: WorkspaceFrame(left: 0, top: 0, width: 0.5, height: 0.5))
+        let workspace = ChapWorkspace(name: "W", windows: [window])
+        let captured = WorkspaceWindow(
+            applicationName: "Mail", bundleIdentifier: "mail", applicationPath: "/A/Mail.app",
+            displayIdentifier: "A", displayName: "Built-in",
+            frame: WorkspaceFrame(left: 0.3, top: 0.3, width: 0.4, height: 0.4))
+
+        let result = workspace.updatingPositions(from: [captured])
+
+        #expect(result.workspace.windows[0].display == nil)
+        #expect(result.workspace.windows[0].frame.left == 0.3)
+    }
+
+    @Test("a restored frame grown to an app's minimum size stays inside the display")
+    func clampsGrownBounds() {
+        let visible = CGRect(x: 0, y: 0, width: 1000, height: 700)
+        // 오른쪽 아래 끝에 붙은 작은 창
+        let frame = WorkspaceFrame(left: 0.9, top: 0.9, width: 0.1, height: 0.1)
+
+        let bounds = WorkspaceGeometry.bounds(
+            for: frame, visibleFrame: visible, primaryHeight: 700,
+            minimumSize: CGSize(width: 400, height: 300))
+
+        #expect(bounds.right - bounds.left == 400)
+        #expect(bounds.bottom - bounds.top == 300)
+        #expect(bounds.right <= 1000 && bounds.bottom <= 700)
+        #expect(bounds.left == 600 && bounds.top == 400)
+    }
+}

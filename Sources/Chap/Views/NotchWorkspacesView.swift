@@ -3,19 +3,30 @@ import SwiftUI
 /// 저장된 작업 공간을 한 번에 복원하고 새 배치를 캡처하는 노치 위젯.
 struct NotchWorkspacesView: View {
     let workspaces: [ChapWorkspace]
+    /// 지금 열리는 중인 Workspace. 그 줄의 숫자가 진행 표시로 바뀐다.
+    var busyID: UUID? = nil
     let palette: NotchWidgetPalette
     let onOpen: (UUID) -> Void
     let onCapture: () -> Void
     var onEdit: (UUID) -> Void = { _ in }
     var onRemove: (UUID) -> Void = { _ in }
+    /// 제목 클릭: 설정창 Launchers의 Workspaces 섹션을 연다(다른 런처 칸 제목과 같은 동작).
+    var onOpenSettings: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            NotchWidgetHeader(
-                symbol: "rectangle.3.group", title: "Workspaces", palette: palette)
+            NotchSectionTitleButton(
+                symbol: "rectangle.3.group", title: "Workspaces",
+                foreground: palette.heading,
+                iconForeground: palette.icon ?? palette.heading,
+                hoverBackground: palette.hoverBackground,
+                textShadowOpacity: palette.textShadowOpacity,
+                action: onOpenSettings)
             VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
                 ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
-                    WorkspaceRow(workspace: workspace, palette: palette) {
+                    WorkspaceRow(
+                        workspace: workspace, isBusy: busyID == workspace.id, palette: palette
+                    ) {
                         onOpen(workspace.id)
                     }
                     .contextMenu {
@@ -62,6 +73,7 @@ struct NotchWorkspacesView: View {
 
 private struct WorkspaceRow: View {
     let workspace: ChapWorkspace
+    let isBusy: Bool
     let palette: NotchWidgetPalette
     let action: () -> Void
     @State private var isHovered = false
@@ -79,10 +91,17 @@ private struct WorkspaceRow: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 Spacer(minLength: 4)
-                Text("\(workspace.windows.count)")
-                    .font(DS.notchMeta)
-                    .foregroundColor(palette.secondary)
-                    .monospacedDigit()
+                if isBusy {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .frame(width: 12, height: 12)
+                        .accessibilityLabel("Opening")
+                } else {
+                    Text("\(workspace.windows.count)")
+                        .font(DS.notchMeta)
+                        .foregroundColor(palette.secondary)
+                        .monospacedDigit()
+                }
             }
             .padding(.horizontal, 6)
             .frame(height: NotchAppIconTile.listRowHeight)
@@ -93,6 +112,7 @@ private struct WorkspaceRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(isBusy)
         .onHover { isHovered = $0 }
         .help(workspace.windows.map(\.applicationName).joined(separator: ", "))
         .accessibilityLabel(

@@ -51,7 +51,7 @@ Sources/
 │   │   ├── WorkspaceCaptureService.swift ← 실행 앱 대표 창·디스플레이·프레임 캡처 (userInitiated 직렬 큐)
 │   │   ├── WorkspaceRestoreService.swift ← 앱 재열기·창 대기·검증된 AX bounds 순차 복원
 │   │   ├── WorkspaceCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
-│   │   └── WorkspaceLibrary.swift ← 저장된 Workspace 단일 출처(ObservableObject). 메뉴·노치·설정창 공유, 변경 시 메뉴 재구성
+│   │   └── WorkspaceLibrary.swift ← 저장된 Workspace 단일 출처(ObservableObject, busyID 진행 상태)·WorkspaceAlert(앞으로 가져와 띄우는 알림)·connected() 디스플레이
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)

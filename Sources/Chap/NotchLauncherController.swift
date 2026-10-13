@@ -86,6 +86,10 @@ final class NotchLauncherController {
     var onRemoveWorkspace: (UUID) -> Void = { _ in }
     /// Workspaces 칸 우클릭 Edit.
     var onEditWorkspace: (UUID) -> Void = { _ in }
+    /// Workspaces 칸 제목 클릭 → 설정창 Workspaces 섹션.
+    var onOpenWorkspaceSettings: () -> Void = {}
+    /// 열리는 중인 Workspace id 공급자.
+    var busyWorkspaceIDProvider: () -> UUID? = { nil }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
@@ -470,6 +474,11 @@ final class NotchLauncherController {
                 self?.hidePanel()
                 DispatchQueue.main.async { self?.onEditWorkspace(id) }
             },
+            onOpenWorkspaceSettings: { [weak self] in
+                self?.hidePanel()
+                self?.onOpenWorkspaceSettings()
+            },
+            busyWorkspaceIDProvider: { [weak self] in self?.busyWorkspaceIDProvider() },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.
                 DispatchQueue.main.async { self?.resizePanel(toContentSize: size) }

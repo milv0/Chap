@@ -23,6 +23,7 @@ struct WorkspaceDetailView: View {
     @FocusState private var nameFocused: Bool
 
     private var workspace: ChapWorkspace? { library.workspace(id: workspaceID) }
+    private var isBusy: Bool { library.busyID == workspaceID }
 
     var body: some View {
         if let workspace {
@@ -41,7 +42,6 @@ struct WorkspaceDetailView: View {
                 .padding(.vertical, DS.paddingSmall)
             }
             .onAppear { nameDraft = workspace.name }
-            .onChange(of: workspaceID) { _, _ in nameDraft = self.workspace?.name ?? "" }
             .onChange(of: nameFocused) { _, focused in if !focused { commitName() } }
             .onDisappear(perform: commitName)
         }
@@ -83,15 +83,21 @@ struct WorkspaceDetailView: View {
                         Label("Update Positions", systemImage: "arrow.triangle.2.circlepath")
                     }
                     .help("Save where these apps' windows are right now")
+                    if isBusy {
+                        ProgressView()
+                            .controlSize(.small)
+                            .accessibilityLabel("Working")
+                    }
                     Spacer()
                     Button(role: .destructive) {
                         actions.remove(workspace.id)
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Remove", systemImage: "trash")
                     }
-                    .help("Delete this workspace. Apps and windows are not changed.")
+                    .help("Remove this workspace. Apps and windows are not changed.")
                 }
                 .controlSize(.regular)
+                .disabled(library.busyID != nil)
             }
         }
     }
@@ -131,7 +137,7 @@ struct WorkspaceDetailView: View {
                     windowRow(window, in: workspace)
                 }
                 Text(
-                    "To add a window or move one, arrange the apps on screen and choose Update Positions, or capture a new workspace."
+                    "Update Positions saves where these apps' windows are now. To add an app, capture a new workspace."
                 )
                 .font(DS.captionFont)
                 .foregroundColor(DS.textTertiary)
@@ -165,7 +171,9 @@ struct WorkspaceDetailView: View {
             WorkspaceDisplayMenuButton(
                 title: displayLabel(for: window),
                 symbol: window.display == nil ? "cursorarrow" : "display",
-                choices: displayChoices(for: window, in: workspace)
+                choices: WorkspaceDisplayMenuButton.displayChoices(
+                    for: window, among: displays
+                ) { move(window, to: $0, in: workspace) }
             )
             .help("Display this window opens on")
             .accessibilityLabel("Display for \(window.applicationName)")
@@ -204,38 +212,8 @@ struct WorkspaceDetailView: View {
 
     // MARK: - Displays
 
-    private func displayChoices(
-        for window: WorkspaceWindow, in workspace: ChapWorkspace
-    ) -> [WorkspaceDisplayMenuButton.Choice] {
-        let labels = WorkspaceDisplay.menuLabels(for: displays)
-        var choices = displays.enumerated().map { index, display in
-            WorkspaceDisplayMenuButton.Choice(
-                title: labels[index], isSelected: window.display?.identifier == display.identifier
-            ) { move(window, to: display, in: workspace) }
-        }
-        // 저장된 디스플레이가 지금 연결돼 있지 않으면 그 이름도 남겨 두어 무엇이 골라져 있는지 보이게 한다.
-        if let saved = window.display,
-            !displays.contains(where: { $0.identifier == saved.identifier })
-        {
-            choices.append(
-                WorkspaceDisplayMenuButton.Choice(
-                    title: "\(saved.name.isEmpty ? "Saved display" : saved.name) (not connected)",
-                    isSelected: true, startsSection: true, action: {}))
-        }
-        choices.append(
-            WorkspaceDisplayMenuButton.Choice(
-                title: "Follow Cursor", isSelected: window.display == nil, startsSection: true
-            ) { move(window, to: nil, in: workspace) })
-        return choices
-    }
-
     private func displayLabel(for window: WorkspaceWindow) -> String {
-        guard let display = window.display else { return "Follow Cursor" }
-        let labels = WorkspaceDisplay.menuLabels(for: displays)
-        if let index = displays.firstIndex(where: { $0.identifier == display.identifier }) {
-            return labels[index]
-        }
-        return display.name.isEmpty ? "Saved display" : display.name
+        WorkspaceDisplay.label(for: window.display, among: displays)
     }
 
     // MARK: - Saving

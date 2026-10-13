@@ -43,7 +43,8 @@ private struct SettingsTabButton: View {
 struct SettingsView: View {
     /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
     static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
-    /// 메뉴·노치의 Edit Workspace가 그 Workspace를 보여 달라는 요청. object는 UUID.
+    /// 메뉴·노치의 Edit Workspace가 그 Workspace를 보여 달라는 요청. object는 UUID,
+    /// nil이면 Workspaces 섹션만 고른다(노치 제목 클릭에서 저장된 Workspace가 없을 때).
     static let focusWorkspace = Notification.Name("ChapSettingsFocusWorkspace")
 
     @ObservedObject var vm: SettingsViewModel
@@ -54,6 +55,8 @@ struct SettingsView: View {
     @State private var selectedWorkspaceID: UUID?
     /// Workspaces 섹션 제목을 눌러 "+"가 새 캡처를 뜻하는 상태.
     @State private var isWorkspacesFocused = false
+    /// 연결된 디스플레이. 모니터를 꽂거나 뽑으면 갱신한다.
+    @State private var connectedDisplays = WorkspaceDisplay.connected()
     @State private var selectedTab: SettingsTab = .launchables
     @State private var selectedIndex: Int? = nil
     /// 사이드바에서 마지막으로 고른 섹션(URL·App·Finder). "+"가 이 섹션에 항목을 만든다.
@@ -138,15 +141,27 @@ struct SettingsView: View {
             focus(on: type)
         }
         .onReceive(NotificationCenter.default.publisher(for: Self.focusWorkspace)) { note in
-            guard let id = note.object as? UUID else { return }
             searchText = ""
-            selectWorkspace(id)
-        }
-        .onChange(of: workspaceLibrary.workspaces.map(\.id)) { _, ids in
-            // 지운 Workspace를 보고 있었으면 선택을 푼다.
-            if let selected = selectedWorkspaceID, !ids.contains(selected) {
+            if let id = note.object as? UUID {
+                selectWorkspace(id)
+            } else {
+                selectedTab = .launchables
+                selectedIndex = nil
                 selectedWorkspaceID = nil
+                isWorkspacesFocused = true
             }
+        }
+        .onChange(of: workspaceLibrary.workspaces.map(\.id)) { oldIDs, ids in
+            // 지운 Workspace를 보고 있었으면 이웃 Workspace로 옮긴다 (사이트 삭제와 같은 동작).
+            guard let selected = selectedWorkspaceID, !ids.contains(selected) else { return }
+            let oldIndex = oldIDs.firstIndex(of: selected) ?? 0
+            selectedWorkspaceID = ids.isEmpty ? nil : ids[min(oldIndex, ids.count - 1)]
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NSApplication.didChangeScreenParametersNotification)
+        ) { _ in
+            connectedDisplays = WorkspaceDisplay.connected()
         }
         .alert("Delete site?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
@@ -376,10 +391,7 @@ struct SettingsView: View {
             {
                 WorkspaceDetailView(
                     library: workspaceLibrary, workspaceID: workspaceID,
-                    displays: NSScreen.screens.map {
-                        WorkspaceDisplay(identifier: displayUUID(for: $0), name: $0.localizedName)
-                    },
-                    actions: workspaceActions
+                    displays: connectedDisplays, actions: workspaceActions
                 )
                 .id(workspaceID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -412,9 +424,14 @@ struct SettingsView: View {
                     Image(systemName: "sidebar.left")
                         .font(.system(size: 28))
                         .foregroundColor(DS.textTertiary)
-                    Text("Select a site to configure")
-                        .font(DS.bodyFont)
-                        .foregroundColor(DS.textSecondary)
+                    Text(
+                        isWorkspacesFocused
+                            ? (workspaceLibrary.workspaces.isEmpty
+                                ? "Press + to capture a workspace" : "Select a workspace")
+                            : "Select a site to configure"
+                    )
+                    .font(DS.bodyFont)
+                    .foregroundColor(DS.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 Spacer()
@@ -583,20 +600,38 @@ struct SettingsView: View {
     }
 
     /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
+    /// ↑↓는 사이드바 순서(URL → App → Finder → Workspaces)를 그대로 따라간다.
+    private enum SidebarEntry: Equatable {
+        case site(Int)
+        case workspace(UUID)
+    }
+
     private func moveSelection(by offset: Int) {
-        let displayOrder = LaunchType.allCases.flatMap { type in
-            vm.sites.indices.filter { vm.sites[$0].launchType == type }
-        }
+        let displayOrder: [SidebarEntry] =
+            LaunchType.allCases.flatMap { type in
+                vm.sites.indices.filter { vm.sites[$0].launchType == type }.map(SidebarEntry.site)
+            } + workspaceLibrary.workspaces.map { SidebarEntry.workspace($0.id) }
         guard !displayOrder.isEmpty else { return }
-        guard let current = selectedIndex,
-            let pos = displayOrder.firstIndex(of: current)
-        else {
-            selectedIndex = displayOrder.first
+        let current: SidebarEntry? =
+            selectedWorkspaceID.map(SidebarEntry.workspace) ?? selectedIndex.map(SidebarEntry.site)
+        guard let current, let pos = displayOrder.firstIndex(of: current) else {
+            select(displayOrder[0])
             return
         }
         let newPos = pos + offset
         if newPos >= 0 && newPos < displayOrder.count {
-            selectedIndex = displayOrder[newPos]
+            select(displayOrder[newPos])
+        }
+    }
+
+    private func select(_ entry: SidebarEntry) {
+        switch entry {
+        case .site(let index):
+            selectedWorkspaceID = nil
+            isWorkspacesFocused = false
+            selectedIndex = index
+        case .workspace(let id):
+            selectWorkspace(id)
         }
     }
 

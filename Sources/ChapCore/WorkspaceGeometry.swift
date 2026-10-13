@@ -24,13 +24,16 @@ public enum WorkspaceGeometry {
     }
 
     /// 저장된 비율을 현재 visibleFrame 안의 AX 좌상단 bounds로 복원한다.
+    /// `minimumSize`는 앱이 보고한 최소 창 크기. 비율로 계산한 크기가 그보다 작으면 그 크기로 키우고,
+    /// 커진 만큼 화면 안으로 당겨 창이 Dock 밑이나 옆 모니터로 나가지 않게 한다.
     public static func bounds(
-        for frame: WorkspaceFrame, visibleFrame: CGRect, primaryHeight: CGFloat
+        for frame: WorkspaceFrame, visibleFrame: CGRect, primaryHeight: CGFloat,
+        minimumSize: CGSize? = nil
     ) -> Bounds {
         let visibleWidth = max(visibleFrame.width, 100)
         let visibleHeight = max(visibleFrame.height, 100)
-        let minimumWidth = min(100 / visibleWidth, 1)
-        let minimumHeight = min(100 / visibleHeight, 1)
+        let minimumWidth = min(max(100, minimumSize?.width ?? 0) / visibleWidth, 1)
+        let minimumHeight = min(max(100, minimumSize?.height ?? 0) / visibleHeight, 1)
         let widthRatio = min(max(CGFloat(frame.width), minimumWidth), 1)
         let heightRatio = min(max(CGFloat(frame.height), minimumHeight), 1)
         let leftRatio = min(clamp(CGFloat(frame.left)), max(1 - widthRatio, 0))

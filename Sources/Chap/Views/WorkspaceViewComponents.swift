@@ -46,7 +46,7 @@ struct WorkspaceFramePreview: View {
     }
 }
 
-/// 캡슐 모양 디스플레이 선택 버튼. 누르면 커서 자리에 기본 NSMenu를 띄운다.
+/// 캡슐 모양 디스플레이 선택 버튼. 누르거나(키보드: Space·Return) 버튼 바로 아래에 NSMenu를 띄운다.
 /// SwiftUI Menu는 macOS에서 버튼 bezel을 남겨 캡슐 양옆에 자국이 생기므로 쓰지 않는다.
 struct WorkspaceDisplayMenuButton: View {
     struct Choice {
@@ -60,14 +60,13 @@ struct WorkspaceDisplayMenuButton: View {
     let symbol: String
     let choices: [Choice]
     @State private var isHovered = false
+    @FocusState private var isFocused: Bool
 
     /// 캡슐 대신 반지름이 높이의 절반보다 조금 작은 연속 모서리. Capsule의 strokeBorder는
     /// 양 끝 꼭짓점에서 선이 한 픽셀 튀어나와 세로 자국처럼 보인다.
     private static let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
 
     var body: some View {
-        // Button 대신 탭 제스처: ToolbarIconButton과 같이 첫 클릭에 바로 반응하고,
-        // 오프스크린 렌더에서 버튼 bezel 자국이 캡슐 양옆에 남지 않는다.
         HStack(spacing: 4) {
             Image(systemName: symbol)
                 .font(.system(size: 9, weight: .medium))
@@ -78,20 +77,34 @@ struct WorkspaceDisplayMenuButton: View {
             Image(systemName: "chevron.down")
                 .font(.system(size: 7, weight: .bold))
         }
-        .foregroundColor(isHovered ? DS.textPrimary : DS.textSecondary)
+        .foregroundColor(isHovered || isFocused ? DS.textPrimary : DS.textSecondary)
         .padding(.horizontal, 9)
         .frame(height: 22)
         .background(Self.shape.fill(DS.surfaceBg.opacity(isHovered ? 1 : 0.9)))
-        .overlay(Self.shape.strokeBorder(DS.border, lineWidth: 1))
+        .overlay(Self.shape.strokeBorder(isFocused ? DS.accent : DS.border, lineWidth: 1))
         .contentShape(Self.shape)
         .frame(maxWidth: 200, alignment: .trailing)
         .fixedSize()
-        .onTapGesture(perform: showMenu)
+        // 메뉴는 버튼 아래에 붙여 띄운다. 좌표는 AppKit 뷰로 읽는다.
+        .background(MenuAnchor(anchor: anchorView))
+        .onTapGesture { showMenu() }
+        .focusable()
+        .focused($isFocused)
+        .onKeyPress(.space) {
+            showMenu()
+            return .handled
+        }
+        .onKeyPress(.return) {
+            showMenu()
+            return .handled
+        }
         .onHover { isHovered = $0 }
         .accessibilityElement(children: .ignore)
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { showMenu() }
     }
+
+    @State private var anchorView = AnchorBox()
 
     private func showMenu() {
         let menu = NSMenu()
@@ -109,7 +122,30 @@ struct WorkspaceDisplayMenuButton: View {
         }
         // NSMenuItem.target는 약한 참조라 메뉴가 떠 있는 동안 핸들러를 붙잡아 둔다.
         objc_setAssociatedObject(menu, &MenuActionHandler.key, handler, .OBJC_ASSOCIATION_RETAIN)
-        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        if let view = anchorView.view {
+            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: view.bounds.height + 4), in: view)
+        } else {
+            menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
+        }
+    }
+}
+
+/// 버튼의 AppKit 뷰를 붙잡아 메뉴를 그 아래에 띄울 수 있게 한다.
+private final class AnchorBox {
+    weak var view: NSView?
+}
+
+private struct MenuAnchor: NSViewRepresentable {
+    let anchor: AnchorBox
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        anchor.view = view
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        anchor.view = nsView
     }
 }
 
@@ -142,7 +178,6 @@ struct WorkspaceLayoutPreview: View {
     }
 
     private var screens: [Screen] {
-        let labels = WorkspaceDisplay.menuLabels(for: displays)
         var order: [String] = []
         var grouped: [String: [WorkspaceWindow]] = [:]
         var titles: [String: String] = [:]
@@ -151,12 +186,7 @@ struct WorkspaceLayoutPreview: View {
             if grouped[key] == nil { order.append(key) }
             grouped[key, default: []].append(window)
             if titles[key] == nil {
-                if let display = window.display {
-                    let index = displays.firstIndex { $0.identifier == display.identifier }
-                    titles[key] = index.map { labels[$0] } ?? display.name
-                } else {
-                    titles[key] = "Follow Cursor"
-                }
+                titles[key] = WorkspaceDisplay.label(for: window.display, among: displays)
             }
         }
         return order.map { Screen(id: $0, title: titles[$0] ?? "", windows: grouped[$0] ?? []) }
@@ -226,5 +256,33 @@ struct WorkspaceLayoutPreview: View {
         .overlay(
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .strokeBorder(DS.border, lineWidth: 1))
+    }
+}
+
+extension WorkspaceDisplayMenuButton {
+    /// 창 하나의 디스플레이 선택지: 연결된 디스플레이들, (연결되지 않은 저장 디스플레이), Follow Cursor.
+    /// 캡처 창과 설정 화면이 같은 메뉴를 쓴다.
+    static func displayChoices(
+        for window: WorkspaceWindow, among connected: [WorkspaceDisplay],
+        move: @escaping (WorkspaceDisplay?) -> Void
+    ) -> [Choice] {
+        let labels = WorkspaceDisplay.menuLabels(for: connected)
+        var choices = connected.enumerated().map { index, display in
+            Choice(
+                title: labels[index],
+                isSelected: window.display.map { $0.matches(display) } ?? false
+            ) { move(display) }
+        }
+        if let saved = window.display, !connected.contains(where: { $0.matches(saved) }) {
+            choices.append(
+                Choice(
+                    title: WorkspaceDisplay.label(for: saved, among: connected), isSelected: true,
+                    startsSection: true, action: {}))
+        }
+        choices.append(
+            Choice(title: "Follow Cursor", isSelected: window.display == nil, startsSection: true) {
+                move(nil)
+            })
+        return choices
     }
 }
