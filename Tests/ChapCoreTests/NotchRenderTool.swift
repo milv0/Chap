@@ -110,6 +110,9 @@ struct NotchRenderTool {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
             }
             for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
+            for window in previewWorkspaces.flatMap(\.windows) {
+                _ = await AppIconLoader.icon(forAppPath: window.applicationPath)
+            }
             // 캐시가 비워질 수 있으니 그리기 직전에 한 번 더 채운다.
             for site in config.sites where site.launchType == .app {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
@@ -242,6 +245,7 @@ struct NotchRenderTool {
         return [
             ChapWorkspace(name: "Deep Work", windows: windows),
             ChapWorkspace(name: "Writing", windows: Array(windows.prefix(2))),
+            ChapWorkspace(name: "Meeting", windows: Array(windows.suffix(3))),
         ]
     }
 
