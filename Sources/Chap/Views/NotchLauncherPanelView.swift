@@ -63,8 +63,8 @@ struct NotchLauncherPanelView: View {
     static let downloadsColumnWidth: CGFloat = 200
     /// Focus 칸 폭. 104pt 다이얼이 들어간다.
     static let focusColumnWidth: CGFloat = 116
-    /// 할 일 칸 폭. 12pt 문구가 20자 안팎까지 보인다.
-    static let todoColumnWidth: CGFloat = 170
+    /// 할 일 칸 폭. 상태 캡슐과 12pt 문구가 답답하지 않게 보인다.
+    static let todoColumnWidth: CGFloat = 188
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {

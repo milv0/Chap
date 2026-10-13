@@ -23,7 +23,7 @@ struct NotchTodoView: View {
     @State private var editingID: UUID?
     @State private var editDraft = ""
     @State private var isAdding = false
-    /// 추가 줄 위에 마우스가 있는지. 있을 때만 "Add a to-do" 글자가 보인다.
+    /// 추가 줄 위에 마우스가 있는지. 있으면 액센트 면과 글자로 반응한다.
     @State private var isAddHovered = false
     /// 방금 비운 항목. 몇 초 동안 "Undo"로 되돌릴 수 있다.
     @State private var lastCleared: [TodoItem] = []
@@ -50,8 +50,12 @@ struct NotchTodoView: View {
     private static let saveQueue = DispatchQueue(
         label: "com.mingyupark.Chap.todo", qos: .utility)
 
+    private var completedCount: Int { items.lazy.filter(\.isDone).count }
+
+    private var remainingCount: Int { items.count - completedCount }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 4) {
             header
             // 항목과 추가 줄을 합쳐도 4줄을 넘지 않아 스크롤 없이 다른 목록 칸과 높이가 같다.
             Group {
@@ -105,46 +109,67 @@ struct NotchTodoView: View {
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 5) {
-            NotchWidgetHeader(symbol: "checklist", title: "To-do", palette: palette)
-            // Things의 프로젝트 원처럼: 끝낸 비율만큼 차는 작은 원. 숫자보다 조용하게 진행을 보여 준다.
-            if let progress = TodoStore.progress(items) {
-                TodoProgressRing(progress: progress, palette: palette)
-                    .help("\(items.filter(\.isDone).count) of \(items.count) done")
-                    .accessibilityLabel("\(items.filter(\.isDone).count) of \(items.count) done")
+        VStack(spacing: 3) {
+            HStack(spacing: 5) {
+                NotchWidgetHeader(symbol: "checklist", title: "To-do", palette: palette)
+                Spacer(minLength: 0)
+                headerStatus
             }
-            Spacer(minLength: 0)
-            // 끝낸 항목이 있으면 제목 줄 오른쪽에 작은 Clear. All done 화면에서 Back으로 돌아와도 바로 비울 수 있다.
-            if !lastCleared.isEmpty {
-                // 비운 직후 몇 초 동안만: 목록은 바로 비고, 되돌리기는 제목 줄 오른쪽 작은 Undo로 남긴다.
-                Button("Undo", action: undoClear)
-                    .buttonStyle(.plain)
-                    .font(DS.notchMeta.weight(.semibold))
-                    .foregroundColor(DS.accent)
-                    .padding(.trailing, 6)
-                    .help("Bring the cleared to-dos back")
-                    .transition(.opacity)
-                    .task(id: lastCleared.map(\.id)) {
-                        try? await Task.sleep(for: .seconds(Self.undoWindow))
-                        guard !Task.isCancelled else { return }
-                        withAnimation(.smooth(duration: 0.2)) { lastCleared = [] }
-                    }
-            } else if items.contains(where: \.isDone),
-                !(TodoStore.isAllDone(items) && !showsDoneList)
-            {
-                Button("Clear", action: clearCompleted)
-                    .buttonStyle(.plain)
-                    .font(DS.notchMeta.weight(.semibold))
-                    .foregroundColor(DS.accent)
-                    .padding(.trailing, 6)
-                    .help("Clear finished to-dos. You can undo right after.")
+            if let progress = TodoStore.progress(items) {
+                TodoProgressBar(progress: progress, palette: palette)
+                    .padding(.horizontal, 6)
                     .transition(.opacity)
             }
         }
+        .frame(height: DS.notchHeaderHeight + 5, alignment: .top)
         .contentShape(Rectangle())
         .contextMenu {
             Button("Clear Completed", action: clearCompleted)
-                .disabled(!items.contains(where: \.isDone))
+                .disabled(completedCount == 0)
+        }
+    }
+
+    @ViewBuilder
+    private var headerStatus: some View {
+        if !lastCleared.isEmpty {
+            Button("Undo", action: undoClear)
+                .buttonStyle(.plain)
+                .font(DS.notchMeta.weight(.semibold))
+                .foregroundColor(DS.accent)
+                .padding(.horizontal, 7)
+                .frame(height: 16)
+                .background(Capsule().fill(DS.accent.opacity(0.11)))
+                .padding(.trailing, 6)
+                .help("Bring the cleared to-dos back")
+                .transition(.opacity)
+                .task(id: lastCleared.map(\.id)) {
+                    try? await Task.sleep(for: .seconds(Self.undoWindow))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(.smooth(duration: 0.2)) { lastCleared = [] }
+                }
+        } else if !items.isEmpty {
+            HStack(spacing: 5) {
+                Text(remainingCount == 0 ? "Done" : "\(remainingCount) left")
+                    .font(DS.notchMeta)
+                    .foregroundColor(palette.secondary)
+                    .monospacedDigit()
+                if completedCount > 0 && !(TodoStore.isAllDone(items) && !showsDoneList) {
+                    Rectangle()
+                        .fill(palette.secondary.opacity(0.22))
+                        .frame(width: 1, height: 9)
+                    Button("Clear", action: clearCompleted)
+                        .buttonStyle(.plain)
+                        .font(DS.notchMeta.weight(.semibold))
+                        .foregroundColor(DS.accent)
+                        .accessibilityLabel("Clear \(completedCount) finished to-dos")
+                        .help("Clear finished to-dos. You can undo right after.")
+                }
+            }
+            .padding(.horizontal, 7)
+            .frame(height: 16)
+            .background(Capsule().fill(palette.subtleSurface))
+            .padding(.trailing, 6)
+            .transition(.opacity)
         }
     }
 
@@ -156,7 +181,7 @@ struct NotchTodoView: View {
                 toggle(item)
             } label: {
                 Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 14))
+                    .font(.system(size: 15, weight: item.isDone ? .semibold : .regular))
                     .foregroundColor(item.isDone ? DS.accent : palette.secondary)
                     // 동그라미가 체크로 바뀌며 한 번 튄다(체크할 때만).
                     .contentTransition(.symbolEffect(.replace))
@@ -178,17 +203,12 @@ struct NotchTodoView: View {
             } else {
                 Text(item.title)
                     .font(DS.notchRowName)
-                    .foregroundColor(item.isDone ? palette.secondary : palette.primary)
+                    .foregroundColor(
+                        item.isDone ? palette.secondary.opacity(0.72) : palette.primary
+                    )
+                    .strikethrough(item.isDone, color: palette.secondary.opacity(0.8))
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    // 취소선은 글자 위로 왼쪽에서 오른쪽으로 그어진다(글자 폭만큼).
-                    .overlay(alignment: .leading) {
-                        Rectangle()
-                            .fill(palette.secondary)
-                            .frame(height: 1)
-                            .scaleEffect(x: item.isDone ? 1 : 0, anchor: .leading)
-                            .animation(.easeOut(duration: 0.28), value: item.isDone)
-                    }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) { beginEditing(item) }
@@ -206,12 +226,16 @@ struct NotchTodoView: View {
                 }
             }
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 5)
         .padding(.vertical, 5)
         .frame(height: NotchAppIconTile.listRowHeight)
         .background(
             RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                .fill(hoveredID == item.id ? palette.hoverBackground : Color.clear)
+                .fill(
+                    hoveredID == item.id
+                        ? palette.hoverBackground
+                        : item.isDone ? DS.accent.opacity(0.055) : Color.clear
+                )
         )
         .onHover { inside in
             if inside {
@@ -234,14 +258,13 @@ struct NotchTodoView: View {
         .accessibilityAction(named: "Delete") { update(TodoStore.removing(item.id, from: items)) }
     }
 
-    /// 추가 줄. 목록을 방해하지 않도록 평소에는 체크 동그라미 자리에 옅은 ＋만 두고, 마우스를 올리거나
-    /// 목록이 비어 있을 때만 "Add a to-do" 글자를 보여 준다.
+    /// 추가 줄. 빈 자리도 무엇을 할 수 있는지 바로 알 수 있게 항상 문구를 보여 주고,
+    /// 마우스를 올리거나 입력 중일 때만 액센트 면과 테두리로 반응한다.
     private var addRow: some View {
-        let showsLabel = isAddHovered || items.isEmpty
-        return HStack(spacing: 6) {
+        HStack(spacing: 6) {
             Image(systemName: "plus")
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(palette.secondary.opacity(isAddHovered || isAdding ? 1 : 0.55))
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(isAddHovered || isAdding ? DS.accent : palette.secondary)
                 .frame(width: DS.notchRowIconSize, height: DS.notchRowIconSize)
             if isAdding {
                 TextField("Add a to-do", text: $draft)
@@ -252,16 +275,28 @@ struct NotchTodoView: View {
                     .onSubmit(commitDraft)
                     .background(fieldFrameReader)
             } else {
-                Text("Add a to-do")
-                    .font(DS.notchRowName)
-                    .foregroundColor(palette.secondary.opacity(0.8))
-                    .opacity(showsLabel ? 1 : 0)
+                Text("Add to-do")
+                    .font(DS.notchRowName.weight(.medium))
+                    .foregroundColor(
+                        isAddHovered ? DS.accent : palette.secondary.opacity(0.82)
+                    )
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, 6)
+        .padding(.horizontal, 5)
         .padding(.vertical, 5)
         .frame(height: NotchAppIconTile.listRowHeight)
+        .background(
+            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                .fill(isAddHovered || isAdding ? DS.accent.opacity(0.09) : palette.subtleSurface)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                .stroke(
+                    isAdding ? DS.accent.opacity(0.55) : Color.clear,
+                    lineWidth: 1
+                )
+        }
         .contentShape(Rectangle())
         .onHover { inside in
             withAnimation(.easeOut(duration: 0.12)) { isAddHovered = inside }
@@ -458,23 +493,22 @@ private struct TodoDeleteButton: View {
     }
 }
 
-/// 제목 옆 진행률 원. 끝낸 비율만큼 Chap 블루로 차고, 다 끝나면 가득 찬 원이 된다.
-private struct TodoProgressRing: View {
+/// 제목 아래 진행선. 숫자 상태와 함께 써서 색만으로 진행을 전달하지 않는다.
+private struct TodoProgressBar: View {
     let progress: Double
     let palette: NotchWidgetPalette
 
     var body: some View {
-        ZStack {
-            Circle().stroke(palette.secondary.opacity(0.35), lineWidth: 1.5)
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(DS.accent, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.3), value: progress)
-            if progress >= 1 {
-                Circle().fill(DS.accent).padding(2.5)
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule().fill(palette.secondary.opacity(0.16))
+                Capsule()
+                    .fill(DS.accent.opacity(0.86))
+                    .frame(width: geometry.size.width * progress)
             }
         }
-        .frame(width: 10, height: 10)
+        .frame(height: 2)
+        .animation(.easeOut(duration: 0.3), value: progress)
+        .accessibilityHidden(true)
     }
 }
