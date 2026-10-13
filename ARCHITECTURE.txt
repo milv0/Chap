@@ -55,12 +55,19 @@ Sources/
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
 │       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
-│       ├── NotchLauncherPanelView.swift ← 노치 메인 패널·Liquid Glass·도커 shape
+│       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·Drop 줄·크기 보고)
+│       ├── NotchSlotModel.swift   ← NotchSlotContent(칸 내용)·NotchRevealModel(펼침 상태)·NotchContentSizeKey
+│       ├── NotchDockShapes.swift  ← 도커 실루엣 셰이프(NotchDockShape·PressedStripShape·GlassCornerBridgeShape)·채움 스타일·글자 측정
+│       ├── NotchLauncherRows.swift ← 런처 칸의 줄·키캡·앱 아이콘 타일·칸 제목 버튼
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
-│       ├── NotchWidgetViews.swift ← Focus 다이얼(Keep Awake, 1~12시간), 마스코트(NotchMascotView), 거울(좌우 반전 미리보기)·빠른 메모 위젯, 공용 제목/색
+│       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
+│       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
+│       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
+│       ├── NotchQuickNoteView.swift ← Quick Note 편집기(자동 저장·백업 버튼·읽기 실패 안내)
+│       ├── NotchMascotView.swift  ← 마스코트(물범) 뷰: 깜빡임·꼬리·다이빙·z, 잉크 색은 ChapMascot.rgb
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
 │       ├── SiteWindowConfigView.swift ← 사이트 창·디스플레이 설정 (Display Picker·Follow Cursor·프리셋·크기·미니맵)
@@ -93,7 +100,7 @@ Sources/
 │   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
-│   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크
+│   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크 색(RGB 단일 출처)·동작 타이밍
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
 │   ├── TodoStore.swift        ← 노치 할 일 목록 저장소·규칙 (Application Support/Chap/Todos.json, 최대 4개)
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)·백업 정책·읽기 실패 보존

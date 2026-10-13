@@ -12,6 +12,8 @@ enum DS {
     static let radiusSmall: CGFloat = 8
 
     static let accent = Color(red: 54 / 255, green: 100 / 255, blue: 255 / 255)
+    /// 같은 accent의 AppKit 색 (상태바 아이콘·HUD처럼 NSColor가 필요한 자리).
+    static let accentNSColor = NSColor(red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
     static let accentSoft = accent.opacity(0.08)
     /// 밝은 대표 블루(#89A3FF, 웹 `--blue-light`). 검정 노치 띠 위 아이콘처럼 어두운 바탕에서
     /// 진한 액센트보다 부드럽게 읽힌다.
@@ -185,5 +187,21 @@ struct ToolbarIconMenu<Content: View>: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .onHover { hovering in isHovered = hovering }
+    }
+}
+
+// MARK: - 마스코트 잉크
+
+extension Color {
+    /// `ChapMascot.rgb`에서 만든 SwiftUI 색.
+    init(_ rgb: ChapMascot.RGB) {
+        self.init(red: rgb.red, green: rgb.green, blue: rgb.blue)
+    }
+}
+
+extension NSColor {
+    /// `ChapMascot.rgb`에서 만든 AppKit 색.
+    convenience init(_ rgb: ChapMascot.RGB) {
+        self.init(red: rgb.red, green: rgb.green, blue: rgb.blue, alpha: 1)
     }
 }

@@ -780,26 +780,7 @@ struct SettingsView: View {
     /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
     private func saveGlobals() {
         let saved =
-            vm.onSave?(
-                SettingsPayload(
-                    sites: vm.originalSites, showGuideWindow: vm.showGuideWindow,
-                    launchAtLogin: vm.launchAtLogin,
-                    optionShortcutsEnabled: vm.optionShortcutsEnabled,
-                    statusBarIcon: vm.statusBarIcon,
-                    hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
-                    notchLauncherEnabled: vm.notchLauncherEnabled,
-                    notchPanelStyle: vm.notchPanelStyle,
-                    notchGlassAppearance: vm.notchGlassAppearance,
-                    notchGlassMaterial: vm.notchGlassMaterial,
-                    notchPanelOpacity: vm.notchPanelOpacity,
-                    notchPanelColorHex: vm.notchPanelColorHex,
-                    notchMirrorEnabled: vm.notchMirrorEnabled,
-                    notchQuickNoteEnabled: vm.notchQuickNoteEnabled,
-                    notchCoverScreensEnabled: vm.notchCoverScreensEnabled,
-                    notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
-                    coverScreensShortcut: vm.coverScreensShortcut,
-                    coverScreensMessage: vm.coverScreensMessage,
-                    notchWidgets: vm.notchWidgets)) ?? true
+            vm.onSave?(SettingsPayload(config: vm.config)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.
             vm.markGlobalsSaved()

@@ -404,7 +404,8 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/ChapCore/NotchGeometry.swift` — 수치의 단일 출처
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
-- `Sources/Chap/Views/NotchWidgetViews.swift`, `Sources/Chap/MirrorCamera.swift` — 거울·메모 위젯
-- `Sources/Chap/Views/NotchLauncherPanelView.swift` — 메인 패널 + 도커 실루엣 셰이프
+- `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
+- `Sources/Chap/Views/NotchFocusView.swift`, `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 다이얼·물범·위젯 공용
+- `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
 - `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직
