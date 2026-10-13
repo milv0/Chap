@@ -637,7 +637,7 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | Downloads folder scan (`DownloadsShelf`) | serial utility queue | 칸 표시 중 2초 주기, 결과만 main으로 복귀 |
 | To-do 저장 (`NotchTodoView.saveQueue`) | serial utility queue | 칸이 처음 보일 때 같은 큐에서 1회 읽고, 변경마다 atomic write |
 | Workspace 캡처 (`WorkspaceCaptureService`) | serial userInitiated queue | main에서 앱·화면 스냅샷을 만든 뒤 AX 창 읽기, 결과만 main 복귀 |
-| Workspace 복원 (`WorkspaceRestoreService.Session`) | main + session별 serial userInitiated queue | main에서 앱을 순차 재열고, AX 창 대기·bounds 적용은 큐. activeSession으로 중복 실행 방지 |
+| Workspace 복원 (`WorkspaceRestoreService.Session`) | main + session별 serial userInitiated queue | main에서 앱을 순차 재열고, AX 창 대기·bounds 적용은 큐. activeSession으로 중복 실행 방지, 앱당 12초 상한 |
 | Focus 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
 | Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
 

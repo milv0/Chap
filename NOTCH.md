@@ -326,9 +326,9 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 
 4개 미만이면 `+ Capture` 줄이 보이며, 누르면 도커를 접고 `Capture Workspace` 창을 연다. Workspace는 `~/Library/Application Support/Chap/Workspaces.json`에만 저장되고 config Import/Export에는 포함하지 않는다. 앱 이름·창 제목·디스플레이 UUID·visibleFrame 상대 프레임을 저장한다. 연결했던 화면이 없으면 커서 화면에 같은 상대 프레임을 맞춘다.
 
-캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원도 저장한 제목과 정확히 하나가 맞거나 대상 창이 하나일 때만 적용한다. 최대 Workspace 4개·Workspace당 창 6개다.
+캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원은 저장한 제목과 정확히 하나가 맞는 창, 없으면 표준 창이 하나일 때 그 창, 그것도 없으면 포커스된 표준 창에 적용한다(최소화된 창은 Dock에서 꺼내서). 앱의 최소 크기보다 작게 저장된 창은 그 크기로 키우되 화면 안에 둔다(`WorkspaceGeometry.bounds(minimumSize:)`). 앱마다 12초 상한이라 한 앱이 멈춰도 다음 앱은 열리고, 끝나면 자리를 못 잡은 앱 이름을 알려 준다. 열리는 동안 `WorkspaceLibrary.busyID`가 설정 버튼과 노치 줄을 진행 표시로 바꾸고 한 번에 하나만 돈다. 최대 Workspace 4개·Workspace당 창 6개다.
 
-줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Workspaces 섹션에서 그 Workspace를 연다(`SettingsView.focusWorkspace`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`WorkspaceStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapWorkspace.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Workspace와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
+제목(`NotchSectionTitleButton`, 다른 런처 칸과 같은 모양)을 누르면 도커를 접고 설정창 Launchers의 Workspaces 섹션을 연다. 저장된 Workspace가 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showWorkspacesInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Workspaces 섹션에서 그 Workspace를 연다(`SettingsView.focusWorkspace`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`WorkspaceStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapWorkspace.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Workspace와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
 
 캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`WorkspaceDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`WorkspaceWindow.assigned(to:)`). 같은 이름의 모니터는 `WorkspaceDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다.
 
