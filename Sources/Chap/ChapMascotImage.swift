@@ -2,17 +2,15 @@ import Cocoa
 
 /// Chap(픽셀 물범)을 AppKit 이미지로 그린다. 노치는 SwiftUI `NotchMascotView`가 같은 격자를
 /// 그리므로, 여기서는 NSView·NSImage가 필요한 자리(중앙 HUD 등)만 담당한다.
-/// 색은 `DESIGN.md`의 마스코트 잉크와 같다.
+/// 색은 `ChapMascot.rgb`(단일 출처)에서 만든다.
 enum ChapMascotImage {
-    static let outline = NSColor(red: 0x16 / 255, green: 0x1A / 255, blue: 0x30 / 255, alpha: 1)
-    static let body = NSColor.white
-    static let shade = NSColor(red: 0xB0 / 255, green: 0xBE / 255, blue: 0xD8 / 255, alpha: 1)
+    static let body = NSColor(ChapMascot.rgb(.body))
 
     private static func color(for symbol: Character) -> NSColor? {
         switch symbol {
-        case "o", "e": return outline
+        case "o", "e": return NSColor(ChapMascot.rgb(.outline))
         case "w": return body
-        case "s": return shade
+        case "s": return NSColor(ChapMascot.rgb(.shade))
         default: return nil
         }
     }

@@ -133,8 +133,7 @@ extension AppDelegate {
     }
 
     /// 앱 테마 색 (DS.accent와 동일).
-    private static let accentColor = NSColor(
-        red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
+    private static let accentColor = DS.accentNSColor
 
     /// `statusBarSymbolImage`와 동일한 geometry로, 색만 테마 블루로 고정한
     /// non-template 이미지를 만든다. 크기·baseline이 template 버전과 동일하도록

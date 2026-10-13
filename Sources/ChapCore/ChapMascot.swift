@@ -20,6 +20,32 @@ public enum ChapMascot {
         case splash
     }
 
+    /// 잉크의 sRGB 성분(0…1). SwiftUI `Color`와 AppKit `NSColor`가 모두 여기서 색을 만든다
+    /// (`DESIGN.md`의 마스코트 표와 같다). 노치·HUD·가림막·앱 아이콘이 한 색을 쓰게 하는 단일 출처.
+    public struct RGB: Equatable, Sendable {
+        public let red: Double
+        public let green: Double
+        public let blue: Double
+        init(_ hex: UInt32) {
+            red = Double((hex >> 16) & 0xFF) / 255
+            green = Double((hex >> 8) & 0xFF) / 255
+            blue = Double(hex & 0xFF) / 255
+        }
+    }
+
+    /// 잉크별 색. 윤곽선은 검정 띠에서도 몸통 가장자리가 보이도록 아주 짙은 남색이고,
+    /// 물속은 깊은 블루, 마루와 물방울은 밝은 Chap 블루다.
+    public static func rgb(_ ink: Ink) -> RGB {
+        switch ink {
+        case .outline: return RGB(0x16_1A30)
+        case .body: return RGB(0xFFFFFF)
+        case .shade: return RGB(0xB0_BED8)
+        case .water: return RGB(0x24_40AA)
+        case .crest: return RGB(0x6E_91FF)
+        case .splash: return RGB(0xA0_B9FF)
+        }
+    }
+
     /// 한 픽셀. 좌상단이 (0, 0)이다.
     public struct Pixel: Equatable, Sendable {
         public let x: Int

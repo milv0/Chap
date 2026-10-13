@@ -210,3 +210,23 @@ struct ChapMascotCompanionTests {
                 * ChapMascot.flickFrameDuration * 2)
     }
 }
+
+@Suite("ChapMascot – ink colors")
+struct ChapMascotInkTests {
+    @Test("ink colors match the DESIGN.md table")
+    func inkTable() {
+        func hex(_ ink: ChapMascot.Ink) -> String {
+            let c = ChapMascot.rgb(ink)
+            return String(
+                format: "#%02X%02X%02X", Int((c.red * 255).rounded()),
+                Int((c.green * 255).rounded()),
+                Int((c.blue * 255).rounded()))
+        }
+        #expect(hex(.outline) == "#161A30")
+        #expect(hex(.body) == "#FFFFFF")
+        #expect(hex(.shade) == "#B0BED8")
+        #expect(hex(.water) == "#2440AA")
+        #expect(hex(.crest) == "#6E91FF")
+        #expect(hex(.splash) == "#A0B9FF")
+    }
+}

@@ -15,8 +15,7 @@ enum KeepAwakeHUD {
     private static let hudSize = NSSize(width: 230, height: 150)
     private static let visibleDuration: TimeInterval = 2.2
     /// 앱 테마 색 (DS.accent와 동일). GuideWindow와 같은 컬러감을 위해 사용한다.
-    private static let accent = NSColor(
-        red: 54 / 255, green: 100 / 255, blue: 255 / 255, alpha: 1)
+    private static let accent = DS.accentNSColor
 
     /// 문구와 Focus 상태로 HUD를 띄운다. 이전 HUD가 떠 있으면 즉시 교체한다.
     /// - Parameter focusOn: 켜는 중이면 깨어 있는 물범, 끄는 중이면 잠든 물범을 그린다.
