@@ -77,8 +77,10 @@ struct NotchLauncherPanelView: View {
     static let focusColumnWidth: CGFloat = 116
     /// 할 일 칸 폭. 상태 캡슐과 12pt 문구가 답답하지 않게 보인다.
     static let todoColumnWidth: CGFloat = 188
-    /// 작업 공간 이름과 창 수가 한 줄에 보이는 폭.
-    static let workspaceColumnWidth: CGFloat = 170
+    /// Workspaces 칸 폭: 2열 타일 격자(앱 아이콘 묶음 + 이름).
+    static var workspaceColumnWidth: CGFloat {
+        max(NotchWorkspacesView.columnWidth, NotchTextMetrics.headerWidth(title: "Workspaces"))
+    }
 
     /// Apps 칸 폭: 2열 아이콘 격자 폭.
     static var appGridColumnWidth: CGFloat {
