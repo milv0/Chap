@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- **Under the hood** — Mascot colors now come from one place, the two largest
+  notch view files are split by role, and settings save through a single
+  `Config` instead of long argument lists. No visible changes; the build is now
+  warning-free.
+
 ## [2.12.2] — 2026-10-13
 
 ### Changed
