@@ -102,7 +102,7 @@ struct QAView: View {
                 ),
                 (
                     "저장한 Workspace를 고치거나 지우려면?",
-                    "메뉴바 Workspaces → Edit Workspace에서 이름을 바꾸고, 창을 빼고, 창별 디스플레이를 바꿀 수 있습니다. 노치의 Workspaces 칸에서 줄을 우클릭해도 Edit…·Remove…가 있습니다. 창 위치·크기를 새로 잡으려면 창을 다시 배열한 뒤 새로 캡처하세요."
+                    "Settings → Launchers 사이드바 맨 아래 Workspaces 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Workspaces → Edit Workspace와 노치 줄 우클릭 Edit…도 같은 화면을 엽니다."
                 ),
                 (
                     "Workspace 데이터는 어디에 있나요?",
@@ -376,7 +376,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I change or remove a saved workspace?",
-                    "Choose Workspaces → Edit Workspace in the status menu to rename it, leave out windows, or move a window to another display. Right-clicking a row in the notch Workspaces slot offers Edit… and Remove… too. To capture new window positions, arrange the windows again and capture a new workspace."
+                    "Pick it in the Workspaces section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Workspaces → Edit Workspace in the status menu and Edit… on a notch row open the same page."
                 ),
                 (
                     "Where is Workspace data stored?",
