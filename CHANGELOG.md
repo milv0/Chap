@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.13.5] — 2026-10-13
+
+### Changed
+
+- **Workspaces as icons** — The notch Workspaces slot is a two-column grid like
+  Apps: each workspace shows up to four of its app icons together, with its name
+  underneath. A dashed + tile captures a new one.
+
 ## [2.13.4] — 2026-10-13
 
 ### Changed
