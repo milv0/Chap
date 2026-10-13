@@ -164,3 +164,58 @@ struct WorkspaceStoreTests {
         #expect(try Data(contentsOf: fileURL) == original)
     }
 }
+
+@Suite("Workspace display choice")
+struct WorkspaceDisplayChoiceTests {
+    private let window = WorkspaceWindow(
+        applicationName: "Xcode", bundleIdentifier: "com.apple.dt.Xcode",
+        applicationPath: "/Applications/Xcode.app", windowTitle: "Chap",
+        displayIdentifier: "BUILT-IN", displayName: "Built-in Retina Display",
+        frame: WorkspaceFrame(left: 0.1, top: 0.2, width: 0.6, height: 0.7))
+
+    @Test("moving a window to another display keeps its relative frame")
+    func movesToDisplay() {
+        let moved = window.assigned(
+            to: WorkspaceDisplay(identifier: "LG-1", name: "LG UltraFine"))
+
+        #expect(moved.displayIdentifier == "LG-1")
+        #expect(moved.displayName == "LG UltraFine")
+        #expect(moved.frame == window.frame)
+        #expect(moved.id == window.id)
+    }
+
+    @Test("follow cursor clears the saved display")
+    func followsCursor() {
+        let moved = window.assigned(to: nil)
+
+        #expect(moved.displayIdentifier == nil)
+        #expect(moved.displayName == nil)
+        #expect(moved.display == nil)
+    }
+
+    @Test("identical monitor names get a number so the menu can tell them apart")
+    func disambiguatesNames() {
+        let displays = [
+            WorkspaceDisplay(identifier: "A", name: "Built-in Retina Display"),
+            WorkspaceDisplay(identifier: "B", name: "LG UltraFine"),
+            WorkspaceDisplay(identifier: "C", name: "LG UltraFine"),
+        ]
+
+        #expect(
+            WorkspaceDisplay.menuLabels(for: displays) == [
+                "Built-in Retina Display", "LG UltraFine 1", "LG UltraFine 2",
+            ])
+    }
+
+    @Test("the capture model changes one window's display and saves it")
+    func captureModelChangesDisplay() {
+        let model = WorkspaceCaptureViewModel()
+        model.finishLoading([window])
+        let external = WorkspaceDisplay(identifier: "LG-1", name: "LG UltraFine")
+
+        model.setDisplay(external, for: window.id)
+
+        #expect(model.selectedWindows.first?.display == external)
+        #expect(model.selectedWindows.first?.frame == window.frame)
+    }
+}

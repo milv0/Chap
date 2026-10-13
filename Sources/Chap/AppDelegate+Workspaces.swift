@@ -59,6 +59,9 @@ extension AppDelegate {
         let frontmostBundleIdentifier =
             NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         let model = WorkspaceCaptureViewModel()
+        model.displays = NSScreen.screens.map {
+            WorkspaceDisplay(identifier: displayUUID(for: $0), name: $0.localizedName)
+        }
         let window = makeManagedWindow(
             title: "Capture Workspace", contentSize: NSSize(width: 520, height: 500),
             styleMask: [.titled, .closable])

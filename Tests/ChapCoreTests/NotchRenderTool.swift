@@ -153,13 +153,33 @@ struct NotchRenderTool {
         .enabled(if: NotchRenderTool.outputDirectory != nil))
     func renderWorkspaceCapture() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
-        let model = WorkspaceCaptureViewModel()
-        model.finishLoading(Self.previewWorkspaces[0].windows)
-        model.name = "Deep Work"
-        let view = WorkspaceCaptureView(model: model, onCancel: {}, onSave: { _, _ in })
-            .environment(\.colorScheme, .light)
-        try Self.renderPNG(view).write(
-            to: directory.appendingPathComponent("workspace-capture.png"))
+        // 모니터 하나(디스플레이 이름만)와 둘(디스플레이 메뉴)을 모두 그린다.
+        for (name, displays) in [
+            (
+                "workspace-capture",
+                [
+                    WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display")
+                ]
+            ),
+            (
+                "workspace-capture-displays",
+                [
+                    WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
+                    WorkspaceDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
+                ]
+            ),
+        ] {
+            let model = WorkspaceCaptureViewModel()
+            model.displays = displays
+            model.finishLoading(Self.previewWorkspaces[0].windows)
+            if displays.count > 1, let terminal = model.candidates.last {
+                model.setDisplay(displays[1], for: terminal.id)
+            }
+            model.name = "Deep Work"
+            let view = WorkspaceCaptureView(model: model, onCancel: {}, onSave: { _, _ in })
+                .environment(\.colorScheme, .light)
+            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
+        }
     }
 
     private static var previewWorkspaces: [ChapWorkspace] {
@@ -180,6 +200,12 @@ struct NotchRenderTool {
                 windowTitle: "chap", displayIdentifier: "DISPLAY-1",
                 displayName: "Built-in Retina Display",
                 frame: WorkspaceFrame(left: 0.66, top: 0.62, width: 0.31, height: 0.31)),
+            // 화면 오른쪽 끝·위아래에 꽉 붙은 창: 미니맵 테두리가 겹치지 않는지 본다.
+            WorkspaceWindow(
+                applicationName: "Notes", bundleIdentifier: "com.apple.Notes",
+                applicationPath: "/System/Applications/Notes.app", windowTitle: "Notes",
+                displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
+                frame: WorkspaceFrame(left: 0.5, top: 0, width: 0.5, height: 1)),
         ]
         return [
             ChapWorkspace(name: "Deep Work", windows: windows),
