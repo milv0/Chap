@@ -2,7 +2,7 @@
 
 All notable changes to Chap are documented in this file.
 
-## [Unreleased]
+## [2.13.1] — 2026-10-13
 
 ### Added
 
