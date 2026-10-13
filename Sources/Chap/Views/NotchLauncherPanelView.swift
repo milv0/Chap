@@ -39,6 +39,10 @@ struct NotchLauncherPanelView: View {
     var onOpenWorkspace: (UUID) -> Void = { _ in }
     /// 현재 앱 창 배치를 새 Workspace로 캡처한다.
     var onCaptureWorkspace: () -> Void = {}
+    /// 저장된 Workspace를 지운다(확인 창을 거친다).
+    var onRemoveWorkspace: (UUID) -> Void = { _ in }
+    /// 저장된 Workspace를 고치는 창을 연다.
+    var onEditWorkspace: (UUID) -> Void = { _ in }
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
     /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
     var onContentSizeChange: (CGSize) -> Void = { _ in }
@@ -680,7 +684,8 @@ struct NotchLauncherPanelView: View {
         case .workspaces(let workspaces):
             NotchWorkspacesView(
                 workspaces: workspaces, palette: widgetPalette,
-                onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace)
+                onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace,
+                onEdit: onEditWorkspace, onRemove: onRemoveWorkspace)
         }
     }
 

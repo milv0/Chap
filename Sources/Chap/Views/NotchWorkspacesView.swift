@@ -6,6 +6,8 @@ struct NotchWorkspacesView: View {
     let palette: NotchWidgetPalette
     let onOpen: (UUID) -> Void
     let onCapture: () -> Void
+    var onEdit: (UUID) -> Void = { _ in }
+    var onRemove: (UUID) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
@@ -16,6 +18,14 @@ struct NotchWorkspacesView: View {
                     WorkspaceRow(workspace: workspace, palette: palette) {
                         onOpen(workspace.id)
                     }
+                    .contextMenu {
+                        Button("Open") { onOpen(workspace.id) }
+                        Button("Edit…") { onEdit(workspace.id) }
+                        Divider()
+                        Button("Remove…", role: .destructive) { onRemove(workspace.id) }
+                    }
+                    .accessibilityAction(named: "Edit") { onEdit(workspace.id) }
+                    .accessibilityAction(named: "Remove") { onRemove(workspace.id) }
                 }
                 if workspaces.count < WorkspaceStore.maxWorkspaces {
                     captureRow

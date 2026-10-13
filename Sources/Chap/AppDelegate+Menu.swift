@@ -390,6 +390,12 @@ extension AppDelegate {
         notchLauncher.onCaptureWorkspace = { [weak self] in
             self?.captureWorkspace()
         }
+        notchLauncher.onEditWorkspace = { [weak self] id in
+            self?.editWorkspace(id: id)
+        }
+        notchLauncher.onRemoveWorkspace = { [weak self] id in
+            self?.confirmRemoveWorkspace(id: id)
+        }
         // 가림막 아래에서 도커가 열리면 보이지 않는 채로 포커스를 가져간다 (노치 없는 Mac의 hover 포함).
         notchLauncher.isSuppressedProvider = { [weak self] in
             self?.coverScreensController.isOn ?? false

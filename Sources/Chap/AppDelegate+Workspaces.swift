@@ -24,8 +24,22 @@ extension AppDelegate {
         capture.isEnabled = workspaces.count < WorkspaceStore.maxWorkspaces
         submenu.addItem(capture)
         if !workspaces.isEmpty {
+            let edit = NSMenuItem(title: "Edit Workspace", action: nil, keyEquivalent: "")
+            let editMenu = NSMenu()
+            editMenu.autoenablesItems = false
+            for (index, workspace) in workspaces.enumerated() {
+                let editItem = NSMenuItem(
+                    title: workspace.name, action: #selector(editWorkspaceFromMenu(_:)),
+                    keyEquivalent: "")
+                editItem.tag = index
+                editItem.target = self
+                editMenu.addItem(editItem)
+            }
+            edit.submenu = editMenu
+            submenu.addItem(edit)
             let remove = NSMenuItem(title: "Remove Workspace", action: nil, keyEquivalent: "")
             let removeMenu = NSMenu()
+            removeMenu.autoenablesItems = false
             for (index, workspace) in workspaces.enumerated() {
                 let removeItem = NSMenuItem(
                     title: workspace.name, action: #selector(removeWorkspaceFromMenu(_:)),
@@ -107,9 +121,60 @@ extension AppDelegate {
         openWorkspace(id: workspaces[sender.tag].id)
     }
 
+    @objc private func editWorkspaceFromMenu(_ sender: NSMenuItem) {
+        guard workspaces.indices.contains(sender.tag) else { return }
+        let id = workspaces[sender.tag].id
+        DispatchQueue.main.async { [weak self] in self?.editWorkspace(id: id) }
+    }
+
+    /// 저장된 Workspace를 캡처 화면으로 고친다: 이름, 뺄 창, 창별 디스플레이.
+    /// 창 위치·크기를 새로 잡으려면 창을 다시 배열한 뒤 새로 캡처한다.
+    func editWorkspace(id: UUID) {
+        guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
+        if let window = workspaceCaptureWindow, window.isVisible {
+            presentManagedWindow(window)
+            return
+        }
+        let model = WorkspaceCaptureViewModel()
+        model.displays = NSScreen.screens.map {
+            WorkspaceDisplay(identifier: displayUUID(for: $0), name: $0.localizedName)
+        }
+        model.finishLoading(workspace.windows)
+        model.name = workspace.name
+        let window = makeManagedWindow(
+            title: "Edit Workspace", contentSize: NSSize(width: 520, height: 500),
+            styleMask: [.titled, .closable])
+        window.contentViewController = NSHostingController(
+            rootView: WorkspaceCaptureView(
+                model: model,
+                title: "Edit Workspace",
+                subtitle: "Rename it, leave out windows, or move them to another display.",
+                onCancel: { [weak window] in window?.close() },
+                onSave: { [weak self, weak window] name, windows in
+                    guard let self else { return }
+                    let updated = WorkspaceStore.replacing(
+                        id, name: name, windows: windows, in: self.workspaces)
+                    guard updated == self.workspaces || self.saveWorkspaces(updated) else {
+                        return
+                    }
+                    window?.close()
+                }))
+        window.center()
+        workspaceCaptureViewModel = model
+        workspaceCaptureWindow = window
+        presentManagedWindow(window)
+    }
+
     @objc private func removeWorkspaceFromMenu(_ sender: NSMenuItem) {
         guard workspaces.indices.contains(sender.tag) else { return }
-        let workspace = workspaces[sender.tag]
+        let id = workspaces[sender.tag].id
+        // 메뉴가 완전히 닫힌 다음 틱에 묻는다. 메뉴 추적 중에 띄운 모달은 뜨지 않거나 다른 앱 뒤에 숨는다.
+        DispatchQueue.main.async { [weak self] in self?.confirmRemoveWorkspace(id: id) }
+    }
+
+    /// 확인 후 Workspace를 지운다. 메뉴와 노치 우클릭이 같은 경로를 쓴다.
+    func confirmRemoveWorkspace(id: UUID) {
+        guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
         let alert = NSAlert()
         alert.messageText = "Remove \"\(workspace.name)\"?"
         alert.informativeText = "The apps and their windows are not changed."
@@ -117,6 +182,9 @@ extension AppDelegate {
         alert.addButton(withTitle: "Cancel")
         alert.alertStyle = .warning
         alert.buttons.first?.hasDestructiveAction = true
+        // accessory 앱은 활성화하지 않으면 확인 창이 앞 앱 뒤에 열려 아무 일도 없는 것처럼 보인다.
+        NSApp.activate(ignoringOtherApps: true)
+        alert.window.level = .floating
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         saveWorkspaces(WorkspaceStore.removing(workspace.id, from: workspaces))
     }

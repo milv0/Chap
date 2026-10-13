@@ -219,3 +219,39 @@ struct WorkspaceDisplayChoiceTests {
         #expect(model.selectedWindows.first?.frame == window.frame)
     }
 }
+
+@Suite("Workspace editing")
+struct WorkspaceEditingTests {
+    private func window(_ name: String) -> WorkspaceWindow {
+        WorkspaceWindow(
+            applicationName: name, bundleIdentifier: "com.example.\(name)",
+            applicationPath: "/Applications/\(name).app",
+            frame: WorkspaceFrame(left: 0, top: 0, width: 0.5, height: 0.5))
+    }
+
+    @Test("editing keeps the workspace's place and id, and takes the new name and windows")
+    func replaces() throws {
+        let first = ChapWorkspace(name: "Deep Work", windows: [window("A"), window("B")])
+        let second = ChapWorkspace(name: "Meeting", windows: [window("C")])
+
+        let edited = WorkspaceStore.replacing(
+            first.id, name: "  Focus  ", windows: [window("B")], in: [first, second])
+
+        #expect(edited.map(\.name) == ["Focus", "Meeting"])
+        #expect(edited.first?.id == first.id)
+        #expect(edited.first?.windows.map(\.applicationName) == ["B"])
+    }
+
+    @Test("an edit with no name or no windows changes nothing")
+    func refusesEmpty() {
+        let workspace = ChapWorkspace(name: "Deep Work", windows: [window("A")])
+
+        #expect(
+            WorkspaceStore.replacing(
+                workspace.id, name: " ", windows: [window("A")], in: [workspace])
+                == [workspace])
+        #expect(
+            WorkspaceStore.replacing(workspace.id, name: "New", windows: [], in: [workspace])
+                == [workspace])
+    }
+}
