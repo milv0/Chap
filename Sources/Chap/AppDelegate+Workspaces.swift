@@ -3,6 +3,8 @@ import SwiftUI
 import os
 
 extension AppDelegate {
+    var workspaces: [ChapWorkspace] { workspaceLibrary.workspaces }
+
     func addWorkspacesMenu(to menu: NSMenu) {
         let item = NSMenuItem(title: "Workspaces", action: nil, keyEquivalent: "")
         item.image = NSImage(
@@ -127,42 +129,41 @@ extension AppDelegate {
         DispatchQueue.main.async { [weak self] in self?.editWorkspace(id: id) }
     }
 
-    /// 저장된 Workspace를 캡처 화면으로 고친다: 이름, 뺄 창, 창별 디스플레이.
-    /// 창 위치·크기를 새로 잡으려면 창을 다시 배열한 뒤 새로 캡처한다.
+    /// 저장된 Workspace를 설정창 Launchers의 Workspaces 섹션에서 연다(고치는 곳은 한 군데다).
     func editWorkspace(id: UUID) {
-        guard let workspace = workspaces.first(where: { $0.id == id }) else { return }
-        if let window = workspaceCaptureWindow, window.isVisible {
-            presentManagedWindow(window)
-            return
+        guard workspaceLibrary.workspace(id: id) != nil else { return }
+        showSettings(focusing: nil)
+        // 새 창이면 SettingsView가 구독을 마친 다음 틱에 전달한다.
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: SettingsView.focusWorkspace, object: id)
         }
-        let model = WorkspaceCaptureViewModel()
-        model.displays = NSScreen.screens.map {
-            WorkspaceDisplay(identifier: displayUUID(for: $0), name: $0.localizedName)
+    }
+
+    /// 지금 화면에 있는 창 위치로 Workspace를 갱신한다. 같은 앱의 창만 바뀌고, 지금 없는 앱은 그대로 둔다.
+    func updateWorkspacePositions(id: UUID) {
+        guard let workspace = workspaceLibrary.workspace(id: id) else { return }
+        accessibilityController.refresh(
+            reason: "workspace capture", showAlert: true, requestSystemPrompt: true)
+        guard AccessibilityPermission.isTrusted else { return }
+        WorkspaceCaptureService.capture(frontmostBundleIdentifier: nil) { [weak self] captured in
+            guard let self, let current = self.workspaceLibrary.workspace(id: workspace.id)
+            else { return }
+            let result = current.updatingPositions(from: captured)
+            guard result.updated > 0 else {
+                LauncherUtils.showAlert(
+                    message: "No windows to update",
+                    info: "Open the workspace's apps and arrange them, then try again.")
+                return
+            }
+            self.workspaceLibrary.replace(
+                current.id, name: current.name, windows: result.workspace.windows)
+            let missing = current.windows.count - result.updated
+            if missing > 0 {
+                LauncherUtils.showAlert(
+                    message: "Updated \(result.updated) of \(current.windows.count) windows",
+                    info: "Apps that weren't open kept their saved positions.")
+            }
         }
-        model.finishLoading(workspace.windows)
-        model.name = workspace.name
-        let window = makeManagedWindow(
-            title: "Edit Workspace", contentSize: NSSize(width: 520, height: 500),
-            styleMask: [.titled, .closable])
-        window.contentViewController = NSHostingController(
-            rootView: WorkspaceCaptureView(
-                model: model,
-                title: "Edit Workspace",
-                subtitle: "Rename it, leave out windows, or move them to another display.",
-                onCancel: { [weak window] in window?.close() },
-                onSave: { [weak self, weak window] name, windows in
-                    guard let self else { return }
-                    let updated = WorkspaceStore.replacing(
-                        id, name: name, windows: windows, in: self.workspaces)
-                    guard updated == self.workspaces || self.saveWorkspaces(updated) else {
-                        return
-                    }
-                    window?.close()
-                }))
-        window.center()
-        workspaceCaptureViewModel = model
-        workspaceCaptureWindow = window
-        presentManagedWindow(window)
     }
 
     @objc private func removeWorkspaceFromMenu(_ sender: NSMenuItem) {
@@ -186,28 +187,15 @@ extension AppDelegate {
         NSApp.activate(ignoringOtherApps: true)
         alert.window.level = .floating
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        saveWorkspaces(WorkspaceStore.removing(workspace.id, from: workspaces))
+        workspaceLibrary.remove(workspace.id)
     }
 
     private func saveCapturedWorkspace(name: String, windows: [WorkspaceWindow]) -> Bool {
-        let updated = WorkspaceStore.adding(name: name, windows: windows, to: workspaces)
-        guard updated != workspaces else { return false }
-        return saveWorkspaces(updated)
-    }
-
-    @discardableResult
-    private func saveWorkspaces(_ updated: [ChapWorkspace]) -> Bool {
-        do {
-            try workspaceStore.save(updated)
-            workspaces = updated
-            buildMenu()
-            return true
-        } catch {
-            Log.app.error(
-                "Workspace save failed: \(error.localizedDescription, privacy: .public)")
-            LauncherUtils.showAlert(
-                message: "Workspace was not saved", info: error.localizedDescription)
-            return false
+        guard let id = workspaceLibrary.add(name: name, windows: windows) else { return false }
+        // 저장한 Workspace는 바로 고칠 수 있게 설정창이 열려 있으면 그 자리를 보여 준다.
+        if settingsWindow?.isVisible == true {
+            NotificationCenter.default.post(name: SettingsView.focusWorkspace, object: id)
         }
+        return true
     }
 }
