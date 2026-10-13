@@ -33,14 +33,14 @@
 | I2 | 성공 판정은 AX set 반환값이 아니라 **readback 비교** (tolerance 4px) | 앱이 최소 크기로 클램프해도 성공으로 기록됨 |
 | I3 | baseline 스냅샷이 빈 배열이면 재시도한다 (5회 × 30ms) | 기존 창이 "새 창"으로 오인돼 리사이즈됨 |
 | I4 | Chrome은 `Process` 실행까지 **단일 serial queue 안에서** 수행 | 연속 실행 시 요청과 창이 뒤섞여 엉뚱한 창이 리사이즈됨 |
-| I5 | 창 위치(x, y)는 config에 저장하지 않는다. 항상 대상 화면 중앙 | 화면 구성이 바뀌면 화면 밖에 창이 생성됨 |
+| I5 | 일반 Launchable의 창 위치(x, y)는 config에 저장하지 않고 중앙 배치. Workspaces만 별도 로컬 파일에 디스플레이 UUID + visibleFrame 상대 프레임으로 저장하고 복원 때 화면 안으로 클램프 | 절대 좌표를 재사용하면 화면 구성이 바뀐 뒤 창이 화면 밖에 생성됨 |
 | I6 | shortcut 정규화(`sanitizedShortcuts`)는 **UI 저장 / config load / import 3경로 전부** 통과하고, load에서 바뀐 값은 즉시 저장 | 손으로 편집한 `~/.chap.json`의 다글자·중복·예약키가 런타임이나 다음 실행에 새어 든다 |
 | I7 | `.` 와 `,` 는 예약 단축키 (⌥. 메뉴, ⌥, 설정) | 전역 단축키 충돌 |
 | I8 | `ResizeLogger`는 `#if DEBUG` 전용 | 최종 사용자 기기에 "무엇을 언제 열었는지" 이력이 쌓인다 |
 | I9 | 사용자 데이터(이름·URL·경로)는 `privacy: .private` | 통합 로그에 평문 유출 |
 | I10 | 같은 앱 연속 실행 시 **최신 관찰만 유효** (`ResizeObservationRegistry` token) | 이전 AXObserver가 Office grace 20초 동안 남아 중복 스캔 |
 | I11 | `GuideWindow.dismiss(token)`은 토큰이 현재일 때만 자기 창을 닫는다 | 연속 실행 시 유령 가이드 창이 남는다 |
-| I12 | 관리 창(Settings/QA/Welcome) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
+| I12 | 관리 창(Settings/QA/Welcome/Capture Workspace) 전부 닫히면 activation policy를 `.accessory`로 복원 | Dock 아이콘이 계속 남는다 |
 | I13 | 글로벌 단축키는 `RegisterEventHotKey`로 **정확한 Option 조합만** 등록. 전체 keyDown event tap 금지 | Chap 메인 스레드 정체가 일반 키 입력 전달을 막는다 |
 | I14 | URL 창 재사용은 해당 launchable이 **현재 Chap/Chrome 세션에서 직접 만든 window ID 1개**만 활성화·리사이즈. 사용자 탭 URL 검색과 focused 창 폴백은 금지 | 다른 Chrome 작업 창이 이동된다 |
 | I15 | 노치 런처는 상태바 NSMenu를 대체하지 않는 opt-in 표면. 토글 off에서도 메뉴·Option 단축키 유지 | 노치 없는 Mac에서 핵심 기능을 잃는다 |
@@ -68,18 +68,19 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 2. copyDefaultConfigIfNeeded()  파일이 없으면 ConfigStore.seedConfig 로 생성
 3. loadConfig()                 읽기 → decode → shortcut 정규화 → display UUID 마이그레이션
 4. stripLegacyConfigFields()    원본 JSON에 레거시 키가 남아 있으면 1회 덮어써 정리
-5. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
-6. NSApp.setActivationPolicy(.accessory)
-7. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
-8. buildMenu()                  메뉴 구성 + RegisterEventHotKey 재등록 + 노치 hotzone/Drop 배지 동기화
-9. didChangeScreenParameters observer  150ms debounce 후 노치 화면·프레임 재계산
-10. accessibilityController.start()     권한 확인 + 옵저버 등록 + 최초 시스템 프롬프트 예약
-11. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
+5. workspaceStore.load()        Workspaces.json 로드(손상이면 unreadable 사본 보존)
+6. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
+7. NSApp.setActivationPolicy(.accessory)
+8. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
+9. buildMenu()                  메뉴 구성 + RegisterEventHotKey 재등록 + 노치 hotzone/Drop 배지 동기화
+10. didChangeScreenParameters observer 150ms debounce 후 노치 화면·프레임 재계산
+11. accessibilityController.start()    권한 확인 + 옵저버 등록 + 최초 시스템 프롬프트 예약
+12. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
 ```
 
 - 2가 3보다 먼저여야 첫 실행에서 빈 config로 로드되지 않는다.
 - 4는 3 뒤여야 한다. decode→encode 과정에서 레거시 키가 탈락하므로, 로드된 `config`를 그대로 다시 써서 정리한다.
-- 9의 시스템 프롬프트는 테스트 실행 중(`isRunningTests`)에는 뜨지 않는다.
+- 11의 시스템 프롬프트는 테스트 실행 중(`isRunningTests`)에는 뜨지 않는다.
 
 ---
 
@@ -97,6 +98,7 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 | 메뉴바 메뉴 열림 (`menuWillOpen`) | `menu` | X | X |
 | Settings 열기 | `settings` | X | X |
 | 사이트 실행 | `launch` | url/app 타입일 때만 O | X |
+| Workspace 캡처·복원 | `workspace capture` / `workspace restore` | O | O (거부 상태에서 1회만) |
 | AX 리사이즈 실패 알림 | `resize failure` | O | X |
 | 권한 감지 폴링 (2s 간격, 최대 30s) | 직전 reason | X | X |
 
@@ -547,6 +549,10 @@ Settings → Notch Launcher on
     켜진 동안 다시 클릭 → deactivateRequest → keepAwake.deactivate (메뉴 Keep Mac Awake와 같은 세션)
   → To-do 칸: 변경마다 TodoStore 순수 함수로 새 배열 → @State 갱신 → utility 직렬 큐에서 Todos.json atomic write.
     체크 시 NotchTodoView.didCompleteNotification → 띠의 물범이 꼬리를 한 번 까딱
+  → Workspaces 칸: 저장된 이름·앱 창 수를 최대 4줄 표시. 줄 클릭 → hidePanel → WorkspaceRestoreService.
+    디스플레이 UUID(이름 fallback)를 연결 화면에 맞추고, 없으면 커서 화면에 상대 프레임을 적용한다.
+    앱은 뒤쪽부터 NSWorkspace.openApplication로 재열고, 저장 제목과 유일하게 맞거나 표준 창이 하나일 때만
+    LauncherUtils.axApplyBounds로 복원한다. + Capture → Capture Workspace 관리 창.
   → To-do 입력: 패널이 key가 되어 입력. 커서가 텍스트에 있으면 visibility 판정이 닫지 않음.
     Esc(keyDown 로컬 모니터) 또는 key 상실 후 일반 규칙. 닫히기 직전 willHidePanel → 카메라 stop
   → 80ms common-mode mouse polling
@@ -566,6 +572,9 @@ Settings → Notch Launcher on
 - Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
   원본을 이동하지 않는다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
 - To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.
+- Workspaces는 `~/Library/Application Support/Chap/Workspaces.json`에 앱 이름·경로·창 제목·디스플레이 UUID·상대 프레임을
+  최대 4개(각 6창) 저장한다. config Export/Import·동기화 대상이 아니며, 읽을 수 없는 파일은
+  `Workspaces.unreadable-<시각>.json`으로 옮겨 원본을 보존한다.
 - Chap Drop은 원본을 북마크로 참조한다(`DropStore`, 목록은 `~/Library/Application Support/Chap/Drop/.references.json`).
   원본을 옮기면 따라가고, 지우면 다음 읽기 때 목록에서 빠진다. 임시 위치(`/var/folders`, `/tmp`)에서 온 항목과 2.7 이전
   복사본만 Drop 폴더에 Chap 사본으로 둔다. **보관함에서 빼기는 참조만 지우고 원본 파일은 절대 삭제하지 않는다**(Chap 사본만 삭제).
@@ -627,6 +636,8 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | Screenshot folder scan | concurrent utility queue | 패널 표시 중 2초 주기, 중복 scan 방지 |
 | Downloads folder scan (`DownloadsShelf`) | serial utility queue | 칸 표시 중 2초 주기, 결과만 main으로 복귀 |
 | To-do 저장 (`NotchTodoView.saveQueue`) | serial utility queue | 칸이 처음 보일 때 같은 큐에서 1회 읽고, 변경마다 atomic write |
+| Workspace 캡처 (`WorkspaceCaptureService`) | serial userInitiated queue | main에서 앱·화면 스냅샷을 만든 뒤 AX 창 읽기, 결과만 main 복귀 |
+| Workspace 복원 (`WorkspaceRestoreService.Session`) | main + session별 serial userInitiated queue | main에서 앱을 순차 재열고, AX 창 대기·bounds 적용은 큐. activeSession으로 중복 실행 방지 |
 | Focus 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
 | Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
 

@@ -17,6 +17,7 @@
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
 - **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
+- **Workspaces (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or a notch widget; app names and window titles stay in a local file on this Mac
 - **Focus Mode** — A Focus dial in the notch: drag the arc to set 1–12 hours (your last setting is remembered), click the center to start, and watch the arc wind down; click again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
 - **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit
@@ -47,7 +48,7 @@
 - A MacBook notch for the Notch Launcher's hardware look; without one the launcher still opens from the middle of the menu bar, and all classic menu and Option-shortcut features work either way
 - macOS 26+ (Tahoe) for Liquid Glass; Custom style works on macOS 14+
 - Google Chrome (for URL launch type)
-- Accessibility permission (for URL/app window resizing)
+- Accessibility permission (for URL/app window resizing and Workspaces)
 - Automation permission when reusing Chrome URL windows or using Finder folder launch
 - Downloads folder access only if you place the Downloads widget (macOS asks once)
 - Camera permission only if you use the notch Mirror (asked the first time you click its icon)
@@ -93,6 +94,14 @@ causes the next launch to create and link a new window.
 **Window resizing setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
 Global hotkeys work without this permission; the menubar warning badge indicates that URL/app
 window resizing is unavailable.
+
+### Workspaces (demo)
+
+Arrange the standard app windows you want to keep, then choose **Workspaces → Capture Workspace…** from the status menu. Select up to six app windows, name the layout, and place the Workspaces widget in **Settings → Notch** if you want one-click restore under the notch. Chap keeps up to four workspaces.
+
+A workspace stores the app bundle, local app path, window title, display UUID, and the window frame relative to that display's visible area. It lives only at `~/Library/Application Support/Chap/Workspaces.json`; it is not synced or included in config Export. If the saved display is disconnected, Chap fits the same relative layout on the cursor display. Accessibility permission is required to read and restore window bounds.
+
+The demo deliberately handles only a representative standard, non-minimized, non-full-screen window per app. When an app has several windows and Chap cannot identify one unambiguously, it leaves that app out instead of guessing. Regular browser tabs, document reopening, and macOS Space assignment are not promised.
 
 ### Config File
 
@@ -153,7 +162,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Sites, Apps, Finder, Focus, or To-do into the other four; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Sites, Apps, Finder, Focus, To-do, or Workspaces into the other four; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 

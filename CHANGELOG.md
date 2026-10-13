@@ -2,6 +2,12 @@
 
 All notable changes to Chap are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Workspaces demo** — Arrange standard app windows, capture their display-relative frames, and restore the layout from the status menu or a new notch widget. Workspaces stay in a separate local file and ambiguous windows are skipped instead of guessed.
+
 ## [2.12.4] — 2026-10-13
 
 ### Changed
