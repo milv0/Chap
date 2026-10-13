@@ -15,7 +15,8 @@ extension AppDelegate {
         copyDefaultConfigIfNeeded()
         loadConfig()
         stripLegacyConfigFields()
-        workspaces = workspaceStore.load()
+        workspaceLibrary.load()
+        workspaceLibrary.onChange = { [weak self] in self?.buildMenu() }
         applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(.accessory)
 
@@ -259,7 +260,13 @@ extension AppDelegate {
         }
         let settingsView = SettingsView(
             vm: vm,
-            updateController: updateController
+            updateController: updateController,
+            workspaceLibrary: workspaceLibrary,
+            workspaceActions: WorkspaceSettingsActions(
+                open: { [weak self] id in self?.openWorkspace(id: id) },
+                capture: { [weak self] in self?.captureWorkspace() },
+                updatePositions: { [weak self] id in self?.updateWorkspacePositions(id: id) },
+                remove: { [weak self] id in self?.confirmRemoveWorkspace(id: id) })
         )
         let window = makeManagedWindow(
             title: "Chap Settings", contentSize: NSSize(width: 770, height: 680),

@@ -98,3 +98,27 @@ extension WorkspaceWindow {
         return copy
     }
 }
+
+extension ChapWorkspace {
+    /// 지금 화면의 창 위치로 갱신한다. 같은 앱(번들 ID)의 새 캡처가 있으면 그 프레임·디스플레이·제목을
+    /// 받고, 없으면 그대로 둔다. 창 id·순서·앱 경로는 유지한다. `updated`는 바뀐 창 수다.
+    public func updatingPositions(from captured: [WorkspaceWindow]) -> (
+        workspace: ChapWorkspace, updated: Int
+    ) {
+        var updated = 0
+        let windows = windows.map { window -> WorkspaceWindow in
+            guard
+                let fresh = captured.first(where: { $0.bundleIdentifier == window.bundleIdentifier }
+                )
+            else { return window }
+            updated += 1
+            var copy = window
+            copy.frame = fresh.frame
+            copy.displayIdentifier = fresh.displayIdentifier
+            copy.displayName = fresh.displayName
+            copy.windowTitle = fresh.windowTitle
+            return copy
+        }
+        return (ChapWorkspace(id: id, name: name, windows: windows), updated)
+    }
+}

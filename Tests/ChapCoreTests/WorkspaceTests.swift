@@ -255,3 +255,35 @@ struct WorkspaceEditingTests {
                 == [workspace])
     }
 }
+
+@Suite("Workspace position update")
+struct WorkspacePositionUpdateTests {
+    private func window(
+        _ bundle: String, display: String = "A", left: Double = 0, title: String? = nil
+    ) -> WorkspaceWindow {
+        WorkspaceWindow(
+            applicationName: bundle, bundleIdentifier: bundle,
+            applicationPath: "/Applications/\(bundle).app", windowTitle: title,
+            displayIdentifier: display, displayName: display,
+            frame: WorkspaceFrame(left: left, top: 0, width: 0.5, height: 0.5))
+    }
+
+    @Test("windows take the new frame, display, and title of the same app; others stay put")
+    func updatesMatchingApps() {
+        let workspace = ChapWorkspace(
+            name: "Deep Work", windows: [window("xcode"), window("notes", left: 0.2)])
+        let captured = [window("xcode", display: "B", left: 0.4, title: "Chap"), window("mail")]
+
+        let result = workspace.updatingPositions(from: captured)
+
+        #expect(result.updated == 1)
+        #expect(result.workspace.id == workspace.id)
+        #expect(result.workspace.windows.map(\.bundleIdentifier) == ["xcode", "notes"])
+        let xcode = result.workspace.windows[0]
+        #expect(xcode.id == workspace.windows[0].id)
+        #expect(xcode.frame.left == 0.4)
+        #expect(xcode.displayIdentifier == "B")
+        #expect(xcode.windowTitle == "Chap")
+        #expect(result.workspace.windows[1] == workspace.windows[1])
+    }
+}

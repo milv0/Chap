@@ -50,7 +50,8 @@ Sources/
 │   │   ├── WorkspaceWindowAccess.swift ← 표준·이동 가능 AX 창 판별과 추측 없는 대표/일치 창 선택
 │   │   ├── WorkspaceCaptureService.swift ← 실행 앱 대표 창·디스플레이·프레임 캡처 (userInitiated 직렬 큐)
 │   │   ├── WorkspaceRestoreService.swift ← 앱 재열기·창 대기·검증된 AX bounds 순차 복원
-│   │   └── WorkspaceCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
+│   │   ├── WorkspaceCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
+│   │   └── WorkspaceLibrary.swift ← 저장된 Workspace 단일 출처(ObservableObject). 메뉴·노치·설정창 공유, 변경 시 메뉴 재구성
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
@@ -71,6 +72,9 @@ Sources/
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
 │       ├── NotchWorkspacesView.swift ← 노치 Workspaces 목록·창 수·Capture 줄
 │       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
+│       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
+│       ├── WorkspaceDetailView.swift ← Launchers 탭 Workspace 편집 화면 (이름·Open·Update Positions·Delete·Layout·창 목록)
+│       ├── SettingsWorkspacesSection.swift ← 설정 사이드바 Workspaces 섹션 (n/4, + 대상, 검색 필터)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
@@ -402,7 +406,7 @@ Config 모델 필드:
 
   [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
   ────────
-  Workspaces ▸  (저장한 배치 열기, Capture Workspace…, Edit Workspace ▸, Remove Workspace ▸)
+  Workspaces ▸  (저장한 배치 열기, Capture Workspace…, Edit Workspace ▸ = 설정창 Launchers에서 열기, Remove Workspace ▸)
   ────────
   Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   Cover Screens / Uncover Screens  (화면 가림막. Keep Awake와 독립)

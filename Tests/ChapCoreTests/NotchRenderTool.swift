@@ -182,6 +182,38 @@ struct NotchRenderTool {
         }
     }
 
+    @Test(
+        "render the Workspaces settings panel",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderWorkspaceSettings() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let storeDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ChapWorkspaceRender-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: storeDirectory) }
+        let library = WorkspaceLibrary(
+            store: WorkspaceStore(fileURL: storeDirectory.appendingPathComponent("Workspaces.json"))
+        )
+        let displays = [
+            WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
+            WorkspaceDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
+        ]
+        var windows = Self.previewWorkspaces[0].windows
+        windows[windows.count - 1] = windows[windows.count - 1].assigned(to: displays[1])
+        let id = try #require(library.add(name: "Deep Work", windows: windows))
+        for (name, scheme) in [
+            ("settings-workspace-light", ColorScheme.light), ("settings-workspace-dark", .dark),
+        ] {
+            let view = WorkspaceDetailView(
+                library: library, workspaceID: id, displays: displays,
+                actions: WorkspaceSettingsActions()
+            )
+            .frame(width: 570, height: 640)
+            .background(DS.surfaceBg)
+            .environment(\.colorScheme, scheme)
+            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
     private static var previewWorkspaces: [ChapWorkspace] {
         let windows = [
             WorkspaceWindow(
