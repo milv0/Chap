@@ -3,17 +3,7 @@ import Cocoa
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
-
-let mainMenu = NSMenu()
-let editMenuItem = NSMenuItem()
-let editMenu = NSMenu(title: "Edit")
-editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-editMenu.addItem(
-    withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
-editMenuItem.submenu = editMenu
-mainMenu.addItem(editMenuItem)
-app.mainMenu = mainMenu
+// 편집 단축키(⌘Z·⇧⌘Z·⌘X·⌘C·⌘V·⌘A)를 텍스트 칸에 보내는 숨은 Edit 메뉴.
+app.mainMenu = AppMainMenu.make()
 
 app.run()
