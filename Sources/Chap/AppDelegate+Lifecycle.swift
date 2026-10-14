@@ -47,15 +47,15 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
-            // 노치 Timer 칸: 메뉴 Timer와 같은 타이머를 켜고 끈다.
+            // 노치 Focus 칸의 Timer 모드: 메뉴 Timer와 같은 타이머를 켜고 끈다.
             NotificationCenter.default.addObserver(
-                forName: NotchTimerView.startRequest, object: nil, queue: .main
+                forName: NotchFocusView.timerStartRequest, object: nil, queue: .main
             ) { [weak self] note in
                 guard let length = note.object as? TimeInterval else { return }
                 self?.chapTimer.start(length: length)
             },
             NotificationCenter.default.addObserver(
-                forName: NotchTimerView.stopRequest, object: nil, queue: .main
+                forName: NotchFocusView.timerStopRequest, object: nil, queue: .main
             ) { [weak self] _ in
                 self?.chapTimer.stop()
             },

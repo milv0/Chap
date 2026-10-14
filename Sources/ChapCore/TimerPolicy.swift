@@ -5,9 +5,9 @@ import Foundation
 /// 한 번에 하나만 돌고, 상태는 메모리에만 있다(config에 저장하지 않는다). 끝나는 시각은 벽시계 기준이라
 /// 뚜껑을 닫아 잠든 시간도 센다. Keep Mac Awake와는 따로 돈다(화면을 깨워 두지 않는다).
 enum TimerPolicy {
-    /// 노치 칸의 −/+가 한 번에 바꾸는 길이.
+    /// 노치 다이얼의 한 눈금. Focus 다이얼과 같은 12칸이라 5분 × 12 = 1시간이 끝이다.
     static let step: TimeInterval = 5 * 60
-    static let lengthRange: ClosedRange<TimeInterval> = (5 * 60)...(180 * 60)
+    static let lengthRange: ClosedRange<TimeInterval> = (5 * 60)...(60 * 60)
     static let defaultLength: TimeInterval = 25 * 60
     /// 메뉴에서 바로 고르는 길이.
     static let presets: [TimeInterval] = [5, 10, 15, 25, 30, 45, 60].map { $0 * 60 }
@@ -47,11 +47,29 @@ enum TimerPolicy {
         lengthRange.contains(stored) ? stored : defaultLength
     }
 
-    /// 지난 비율(0...1). 노치 칸의 진행선이 쓴다.
-    static func progress(end: Date, length: TimeInterval, now: Date) -> Double {
-        guard length > 0 else { return 1 }
-        let remaining = max(end.timeIntervalSince(now), 0)
-        return min(max(1 - remaining / length, 0), 1)
+    // MARK: - Focus 다이얼의 Timer 모드 (노치)
+
+    /// 다이얼 가운데 숫자 아래의 짧은 말.
+    static let dialStartLabel = "Start"
+    static let dialStopLabel = "Stop"
+    /// 다이얼 오른쪽 끝 눈금 글자.
+    static let dialMaxLabel = "60m"
+
+    /// 다이얼 위 비율(0…1). 0분이 호의 왼쪽 끝, 60분이 오른쪽 끝이라 돌고 있는 동안
+    /// 남은 시간이 같은 눈금 위에서 줄어든다.
+    static func dialFraction(length: TimeInterval) -> Double {
+        min(max(length / lengthRange.upperBound, 0), 1)
+    }
+
+    /// 호 위 비율을 길이로. 5분 눈금에 붙이고 5~60분 안에 둔다.
+    static func dialLength(fraction: Double) -> TimeInterval {
+        let steps = (fraction * lengthRange.upperBound / step).rounded()
+        return min(max(steps * step, lengthRange.lowerBound), lengthRange.upperBound)
+    }
+
+    /// 다이얼 가운데에 보이는 고른 길이. "25m".
+    static func dialLabel(length: TimeInterval) -> String {
+        "\(Int((length / 60).rounded()))m"
     }
 
     static func presetTitle(_ length: TimeInterval) -> String {

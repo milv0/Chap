@@ -188,9 +188,8 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
-| Focus | 116pt (80pt 링 + 길이 칩 셋) |
+| Focus | 116pt (104pt 다이얼, Focus·Timer 모드 공용) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
-| Timer | 116pt (−/+ 길이 · Start, 돌면 남은 시간 · 진행선 · Stop) |
 | Workspaces | 128pt (2열 타일: 앱 아이콘 묶음 + 이름) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
@@ -261,9 +260,17 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 `ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 꼬리 흔들기 속도는 `focusWagFrameDuration(for:)`.
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
-## Focus 칸 (Keep Mac Awake)
+## Focus 칸 (Keep Mac Awake · Timer)
 
-번개 아이콘의 Focus 모드. 상태바 메뉴 Keep Mac Awake와 **같은 세션**이다.
+다이얼 하나로 두 가지를 켠다. **Focus 모드**(번개)는 상태바 메뉴 Keep Mac Awake와 같은 세션, **Timer 모드**(타이머)는
+메뉴 Timer ▸와 같은 타이머다. 2.14의 Timer 칸(`"timer"`)은 디코딩할 때 Focus 칸으로 바뀐다(`NotchWidget.formerTimerRawValue`,
+Focus 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로).
+
+- **모드 전환**: 제목 줄이 탭이다. 고른 모드는 아이콘 + 제목("Focus"/"Timer"), 다른 모드는 아이콘만(연하게). 누르면
+  햅틱(`.alignment`)과 함께 바뀌고 UserDefaults `ChapFocusDialMode`에 기억한다. 칸을 열 때 하나만 돌고 있으면 그 모드,
+  아니면 마지막 모드(`FocusDialMode.initial`). 보이지 않는 모드가 돌고 있으면 그 아이콘이 블루이고 오른쪽 위에 4pt 점.
+
+### Focus 모드
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
 - 켜고 끄는 모습이 같은 **다이얼**이다(`FocusDial`, 104×92pt, 제목 아래 9pt 띄움 `topGap`, 칸 폭 116pt). 반원보다 긴 240° 호가 위를 감싸고
   아래 120°는 평평하게 열려 있다(`focusDialSweep`). 눈금은 0~12시간 하나(`focusDialFraction`), 3·6·9시간에 점, 양 끝
@@ -279,6 +286,19 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 - 제목 번개는 켜져 있으면 진한 블루(`DS.accent`)다.
 - 버튼은 `NotchFocusView.activateRequest/deactivateRequest` 알림으로 앱의 `KeepAwakeController`를 부르고, 컨트롤러는
   모든 이벤트 뒤 `didChangeNotification`을 보내 위젯·메뉴·띠 물범이 함께 바뀐다. 사운드·HUD는 메뉴와 같다.
+
+### Timer 모드
+
+같은 다이얼(`FocusDial`)에 눈금만 분이다: 0~60분, 15·30·45분에 점, 오른쪽 끝 "60m"(`TimerPolicy.dialMaxLabel`).
+Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengthRange` 5~60분, 메뉴 프리셋 최댓값과 같다).
+
+- 꺼짐: 호를 끌면 5분 눈금(`dialLength(fraction:)`, 아래 빈 곳은 가까운 끝)으로 맞추고 한 칸마다 햅틱. 가운데에는 20pt 고른 길이("25m")와
+  블루 10pt "Start". 마지막 길이는 `ChapTimerLength`(기본 25분, 1시간을 넘는 2.14 저장값은 기본값으로). VoiceOver 조절 동작은 5분씩.
+- 돌 때: 남은 시간까지 호가 1초마다 줄어든다(같은 0~60분 눈금). 가운데에는 18pt 남은 시간(`TimerPolicy.clockLabel`, `m:ss`)과
+  10pt "Stop"(마우스를 올리면 빨강). 안쪽 원을 누르면 멈춘다.
+- 버튼은 `NotchFocusView.timerStartRequest/timerStopRequest` 알림으로 `ChapTimerController`를 부른다. 타이머는 한 번에 하나, 메모리에만,
+  Keep Awake와 따로 돈다(Mac을 깨워 두지 않는다).
+- 끝나면 Glass 소리와 HUD "Time's up"(노치 화면, 없으면 커서 화면). 끝나는 시각은 벽시계 기준이라 잠든 시간도 센다.
 
 ## 접는 선반 칸 (Screenshots · Downloads)
 
@@ -321,15 +341,9 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
 
-## Timer 칸과 타이머 배지
+## 타이머 배지
 
-위젯 칸(3~6번)에 놓는 카운트다운(`NotchWidget.timer`, `NotchTimerView`, 폭 116pt). 메뉴 Timer ▸와 같은 타이머다(`ChapTimerController`, 한 번에 하나, 메모리에만, Keep Awake와 따로).
-
-- 꺼짐: 가운데 길이("25:00")와 양옆 −/+ (5분 단위, 5분~3시간, 마지막 값은 UserDefaults `ChapTimerLength`), 아래 Start 캡슐.
-- 돌 때: 남은 시간(1시간 미만 `m:ss`, 넘으면 `h:mm:ss`, `TimerPolicy.clockLabel`), 남은 만큼 줄어드는 진행선, Stop 캡슐.
-- 끝나면 Glass 소리와 HUD "Time's up"(노치 화면, 없으면 커서 화면). 끝나는 시각은 벽시계 기준이라 잠든 시간도 센다.
-
-**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 12pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Timer 칸이 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
+**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 12pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Focus 칸의 Timer 모드가 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
 
 ## Workspaces 칸
 
@@ -431,7 +445,7 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
 - `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
-- `Sources/Chap/Views/NotchFocusView.swift`, `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 다이얼·물범·위젯 공용
+- `Sources/Chap/Views/NotchFocusView.swift`(칸·모드 탭·Focus 모드), `NotchFocusTimerBody.swift`(Timer 모드), `NotchFocusDial.swift`(다이얼), `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 칸·물범·위젯 공용
 - `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
 - `Sources/Chap/Views/NotchWorkspacesView.swift`, `WorkspaceCaptureView.swift` — Workspace 노치 목록·캡처 확인 창
 - `Sources/Chap/Workspaces/`, `Sources/ChapCore/Workspace*.swift` — AX 캡처·복원, 정규화 좌표·로컬 저장

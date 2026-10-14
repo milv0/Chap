@@ -1,31 +1,55 @@
 import SwiftUI
 
-// MARK: - Focus (Keep Mac Awake)
+// MARK: - Focus (Keep Mac Awake · Timer)
 
-/// 노치 한 칸의 Focus 모드. Keep Mac Awake 세션을 번개 아이콘과 함께 켜고 끄며
-/// 남은 시간을 크게 보여준다. 상태바 메뉴의 Keep Mac Awake와 같은 세션이다.
+/// 노치 한 칸의 Focus. 다이얼 하나로 Keep Mac Awake 세션(1~12시간)이나 타이머(5~60분)를 켠다.
+/// 제목 줄의 번개·타이머 아이콘으로 모드를 바꾸고, 마지막 모드를 기억한다. 둘 다 상태바 메뉴의
+/// Keep Mac Awake·Timer와 같은 세션이다.
 struct NotchFocusView: View {
     let palette: NotchWidgetPalette
     /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
-    @State var sessionEnd: Date?
+    @State private var sessionEnd: Date?
+    /// 도커를 열 때 돌고 있던 타이머가 끝나는 시각. 이후 변화는 알림으로 받는다.
+    @State private var timerEnd: Date?
+    @State private var mode: FocusDialMode
 
-    /// 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
+    /// Keep Mac Awake 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
     static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
+    /// 타이머 시작·중지 요청. AppDelegate가 `ChapTimerController`로 전달한다. 시작 object는 길이(초).
+    static let timerStartRequest = Notification.Name("ChapTimerStartRequest")
+    static let timerStopRequest = Notification.Name("ChapTimerStopRequest")
 
-    private var isActive: Bool { (sessionEnd ?? .distantPast) > Date() }
+    /// 오프스크린 렌더에서 보여 줄 모드. nil이면 평소 규칙을 따른다.
+    static var previewMode: FocusDialMode?
+
+    init(palette: NotchWidgetPalette, sessionEnd: Date?, timerEnd: Date?) {
+        self.palette = palette
+        _sessionEnd = State(initialValue: sessionEnd)
+        _timerEnd = State(initialValue: timerEnd)
+        let now = Date()
+        _mode = State(
+            initialValue: Self.previewMode
+                ?? FocusDialMode.initial(
+                    stored: UserDefaults.standard.string(forKey: FocusDialMode.storageKey),
+                    isFocusRunning: (sessionEnd ?? .distantPast) > now,
+                    isTimerRunning: (timerEnd ?? .distantPast) > now))
+    }
+
+    private func isRunning(_ mode: FocusDialMode) -> Bool {
+        switch mode {
+        case .focus: return (sessionEnd ?? .distantPast) > Date()
+        case .timer: return (timerEnd ?? .distantPast) > Date()
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            // 켜져 있으면 제목 번개가 진한 블루로 바뀐다(꺼짐은 다른 칸과 같은 연한 블루).
-            NotchWidgetHeader(
-                symbol: "bolt.fill", title: "Focus",
-                palette: isActive ? palette.withIcon(DS.accent) : palette)
+            header
             Group {
-                if let sessionEnd, sessionEnd > Date() {
-                    active(until: sessionEnd)
-                } else {
-                    idle
+                switch mode {
+                case .focus: NotchFocusAwakeBody(palette: palette, sessionEnd: sessionEnd)
+                case .timer: NotchFocusTimerBody(palette: palette, endDate: timerEnd)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -36,14 +60,74 @@ struct NotchFocusView: View {
         ) { note in
             sessionEnd = note.object as? Date
         }
+        .onReceive(
+            NotificationCenter.default.publisher(for: ChapTimerController.didChangeNotification)
+        ) { note in
+            timerEnd = note.object as? Date
+        }
     }
+
+    // MARK: - Header (모드 전환)
+
+    /// 고른 모드는 아이콘과 제목, 다른 모드는 아이콘만. 다른 모드가 돌고 있으면 아이콘 옆에 작은 점.
+    private var header: some View {
+        HStack(spacing: 0) {
+            ForEach(FocusDialMode.allCases, id: \.self) { item in
+                modeTab(item)
+            }
+        }
+    }
+
+    private func modeTab(_ item: FocusDialMode) -> some View {
+        let isSelected = item == mode
+        let running = isRunning(item)
+        return Button {
+            guard !isSelected else { return }
+            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+            withAnimation(.easeOut(duration: 0.12)) { mode = item }
+            UserDefaults.standard.set(item.rawValue, forKey: FocusDialMode.storageKey)
+        } label: {
+            Group {
+                if isSelected {
+                    // 돌고 있으면 제목 아이콘이 진한 블루로 바뀐다(꺼짐은 다른 칸과 같은 연한 블루).
+                    NotchWidgetHeader(
+                        symbol: item.symbol, title: item.title,
+                        palette: running ? palette.withIcon(DS.accent) : palette)
+                } else {
+                    Image(systemName: item.symbol)
+                        .font(DS.notchLabel)
+                        .foregroundColor(running ? DS.accent : palette.heading.opacity(0.45))
+                        .overlay(alignment: .topTrailing) {
+                            if running {
+                                Circle().fill(DS.accent).frame(width: 4, height: 4)
+                                    .offset(x: 3, y: -1)
+                            }
+                        }
+                        .padding(.horizontal, 6)
+                        .frame(height: DS.notchHeaderHeight)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(isSelected ? item.title : "Switch to \(item.title)")
+        .accessibilityLabel(item.title)
+        .accessibilityValue(running ? "On" : "")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+}
+
+// MARK: - Focus 모드 (Keep Mac Awake)
+
+/// Focus 모드 본문. 다이얼로 1~12시간을 고르고 가운데를 눌러 Keep Mac Awake를 켠다.
+struct NotchFocusAwakeBody: View {
+    let palette: NotchWidgetPalette
+    let sessionEnd: Date?
 
     /// 마지막으로 고른 Focus 길이(초). 다음에 열 때 다이얼이 같은 시간에 있다.
     @AppStorage("ChapFocusPresetDuration") private var storedDuration =
         Double(KeepAwakePolicy.defaultFocusDialHours * 3600)
     @State private var isCenterHovered = false
-    /// 다이얼을 끄는 중인지. 그동안만 가운데에 고른 시간("4h")을 보여 준다.
-    @State private var isPicking = false
 
     private var dialHours: Int { KeepAwakePolicy.focusDialHours(forStoredDuration: storedDuration) }
 
@@ -58,32 +142,31 @@ struct NotchFocusView: View {
         // 트랙패드가 "딱" 하고 눌린 느낌을 준다 (권한 없음, 트랙패드가 없으면 아무 일 없음).
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
         NotificationCenter.default.post(
-            name: Self.activateRequest,
+            name: NotchFocusView.activateRequest,
             object: KeepAwakePolicy.focusPreset(hours: dialHours).duration)
+    }
+
+    var body: some View {
+        if let sessionEnd, sessionEnd > Date() {
+            active(until: sessionEnd)
+        } else {
+            idle
+        }
     }
 
     /// 꺼짐: 다이얼을 끌어 시간을 맞추고(1~12시간, 마지막 값 기억), 가운데를 누르면 켠다.
     private var idle: some View {
         FocusDial(
             fraction: KeepAwakePolicy.focusDialFraction(hours: Double(dialHours)),
-            isRunning: false, palette: palette, onPick: setDialHours,
-            onPickingChange: { picking in
-                withAnimation(.easeOut(duration: 0.12)) { isPicking = picking }
-            }
+            isRunning: false, palette: palette, maxLabel: "12h",
+            onPick: { setDialHours(KeepAwakePolicy.focusDialHours(fraction: $0)) }
         ) {
             // 다이얼 안쪽 원 전체가 켜기 스위치다. 따로 버튼 모양을 두지 않고, 마우스를 올리면 안쪽이 옅게 물든다.
             Button(action: start) {
-                // 가운데는 고른 시간 숫자와 그 아래 작은 "On". 숫자가 주인공이다.
                 FocusDialInner(isHovered: isCenterHovered, hoverTint: DS.accent.opacity(0.10)) {
-                    VStack(spacing: 2) {
-                        Text("\(dialHours)h")
-                            .font(.system(size: 20, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundColor(palette.primary)
-                        Text(KeepAwakePolicy.focusDialOnLabel)
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundColor(DS.accent)
-                    }
+                    FocusDialCenterLabel(
+                        value: "\(dialHours)h", caption: KeepAwakePolicy.focusDialOnLabel,
+                        valueSize: 20, valueColor: palette.primary, captionColor: DS.accent)
                 }
             }
             .buttonStyle(FocusPressStyle())
@@ -106,32 +189,27 @@ struct NotchFocusView: View {
     }
 
     /// 켜짐: 같은 다이얼에서 남은 시간만큼의 호가 줄어들고(같은 0~12시간 눈금), 가운데에 남은 시간.
-    /// 안쪽 원을 누르면 끈다(마우스를 올리면 "Chap off"가 빨강).
+    /// 안쪽 원을 누르면 끈다(마우스를 올리면 "Off"가 빨강).
     private func active(until end: Date) -> some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = max(end.timeIntervalSince(context.date), 0)
             FocusDial(
                 fraction: KeepAwakePolicy.focusDialFraction(hours: remaining / 3600),
-                isRunning: true, palette: palette, onPick: nil
+                isRunning: true, palette: palette, maxLabel: "12h", onPick: nil
             ) {
                 Button {
-                    NotificationCenter.default.post(name: Self.deactivateRequest, object: nil)
+                    NotificationCenter.default.post(
+                        name: NotchFocusView.deactivateRequest, object: nil)
                 } label: {
-                    // 가운데는 남은 시간 숫자와 그 아래 작은 "Off"(마우스를 올리면 빨강).
                     FocusDialInner(
                         isHovered: isCenterHovered, hoverTint: palette.primary.opacity(0.06)
                     ) {
-                        VStack(spacing: 2) {
-                            Text(KeepAwakePolicy.remainingClockLabel(until: end, now: context.date))
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                                .monospacedDigit()
-                                .foregroundColor(palette.primary)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                            Text(KeepAwakePolicy.focusDialOffLabel)
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(isCenterHovered ? DS.danger : palette.secondary)
-                        }
+                        FocusDialCenterLabel(
+                            value: KeepAwakePolicy.remainingClockLabel(
+                                until: end, now: context.date),
+                            caption: KeepAwakePolicy.focusDialOffLabel, valueSize: 15,
+                            valueColor: palette.primary,
+                            captionColor: isCenterHovered ? DS.danger : palette.secondary)
                     }
                 }
                 .buttonStyle(FocusPressStyle())
@@ -143,141 +221,5 @@ struct NotchFocusView: View {
                 .accessibilityHint("Turns Focus off")
             }
         }
-    }
-}
-
-/// 다이얼 안쪽 원(누르는 자리). 호 안쪽을 거의 채우는 원이 통째로 스위치이고, 마우스를 올리면 옅게 물든다.
-private struct FocusDialInner<Content: View>: View {
-    let isHovered: Bool
-    let hoverTint: Color
-    @ViewBuilder let content: () -> Content
-
-    /// 호(반지름 44, 두께 6) 안쪽에 6pt 여유를 둔 원.
-    static var diameter: CGFloat { 2 * (44 - 3 - 6) }
-
-    var body: some View {
-        content()
-            // 숫자 + On/Off 두 줄은 원 중심에 그대로 둔다(올리면 숫자가 위로 쏠려 보인다).
-            .frame(width: Self.diameter, height: Self.diameter)
-            .background(Circle().fill(isHovered ? hoverTint : Color.clear))
-            .contentShape(Circle())
-            .animation(.easeOut(duration: 0.12), value: isHovered)
-    }
-}
-
-/// Focus 다이얼. 반원보다 긴 240° 호가 위를 감싸고 아래는 평평하게 열려 있다(속도계처럼).
-/// - 꺼짐: 연한 트랙 위에 고른 시간까지 블루 호 + 끝에 손잡이. 호(테두리 띠)를 끌면 1시간 단위로 맞춘다.
-/// - 켜짐: 같은 눈금에서 남은 시간까지 블루 호가 1초마다 줄어든다(끌 수 없음).
-/// 눈금은 3·6·9시간에 짧은 점, 양 끝 아래에 "0"과 "12h".
-private struct FocusDial<Center: View>: View {
-    let fraction: Double
-    let isRunning: Bool
-    let palette: NotchWidgetPalette
-    /// nil이면 끌어서 바꿀 수 없다(켜짐).
-    let onPick: ((Int) -> Void)?
-    /// 호를 끄기 시작하고 끝낼 때 알린다.
-    var onPickingChange: (Bool) -> Void = { _ in }
-    @ViewBuilder let center: () -> Center
-
-    static var size: CGSize { CGSize(width: 104, height: 92) }
-    static var lineWidth: CGFloat { 6 }
-    /// 원 반지름. 호 아래 빈 곳(120°)이 칸 바닥에 닿지 않도록 중심을 조금 위에 둔다.
-    static var radius: CGFloat { 44 }
-    static var centerPoint: CGPoint { CGPoint(x: size.width / 2, y: radius + lineWidth / 2 + 1) }
-
-    private var sweep: Double { KeepAwakePolicy.focusDialSweep }
-    /// SwiftUI 각도(3시 = 0°, 시계 방향 +). 호는 12시에서 -120°(왼쪽 아래)부터 +120°(오른쪽 아래)까지.
-    private var startAngle: Angle { .degrees(-90 - sweep / 2) }
-
-    private func arc(to fraction: Double) -> Path {
-        var path = Path()
-        path.addArc(
-            center: Self.centerPoint, radius: Self.radius, startAngle: startAngle,
-            endAngle: startAngle + .degrees(sweep * fraction), clockwise: false)
-        return path
-    }
-
-    private func point(at fraction: Double, radius: CGFloat) -> CGPoint {
-        let angle = (startAngle + .degrees(sweep * fraction)).radians
-        return CGPoint(
-            x: Self.centerPoint.x + radius * CGFloat(cos(angle)),
-            y: Self.centerPoint.y + radius * CGFloat(sin(angle)))
-    }
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            arc(to: 1)
-                .stroke(
-                    palette.primary.opacity(0.12),
-                    style: StrokeStyle(lineWidth: Self.lineWidth, lineCap: .round))
-            if fraction > 0 {
-                arc(to: fraction)
-                    .stroke(
-                        DS.accent, style: StrokeStyle(lineWidth: Self.lineWidth, lineCap: .round)
-                    )
-                    .animation(
-                        isRunning ? .linear(duration: 1) : .smooth(duration: 0.12), value: fraction)
-            }
-            // 눈금: 3·6·9시간(양 끝은 아래 0·12h 글자가 맡는다).
-            ForEach(1..<4, id: \.self) { index in
-                Circle()
-                    .fill(palette.secondary.opacity(0.6))
-                    .frame(width: 2, height: 2)
-                    .position(
-                        point(at: Double(index) / 4, radius: Self.radius - Self.lineWidth - 3))
-            }
-            if !isRunning {
-                Circle()
-                    .fill(.white)
-                    .overlay(Circle().strokeBorder(DS.accent, lineWidth: 2))
-                    .frame(width: 12, height: 12)
-                    .shadow(color: .black.opacity(0.2), radius: 1.5, y: 0.5)
-                    .position(point(at: fraction, radius: Self.radius))
-                    .animation(.smooth(duration: 0.12), value: fraction)
-            }
-            Text("0")
-                .position(x: point(at: 0, radius: Self.radius).x, y: Self.size.height - 5)
-            Text("12h")
-                .position(x: point(at: 1, radius: Self.radius).x, y: Self.size.height - 5)
-            center()
-                .position(x: Self.centerPoint.x, y: Self.centerPoint.y)
-        }
-        .font(.system(size: 9, weight: .medium))
-        .foregroundColor(palette.secondary)
-        .frame(width: Self.size.width, height: Self.size.height)
-        .contentShape(Rectangle())
-        // 호(테두리 띠) 위에서 시작한 끌기만 시간을 바꾼다. 가운데 버튼의 클릭은 그대로 버튼이 받는다.
-        .gesture(
-            DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .onChanged { value in
-                    guard let onPick else { return }
-                    let start = value.startLocation
-                    let distance = hypot(start.x - Self.centerPoint.x, start.y - Self.centerPoint.y)
-                    guard distance > Self.radius - 16 else { return }
-                    onPickingChange(true)
-                    onPick(
-                        KeepAwakePolicy.focusDialHours(
-                            dx: Double(value.location.x - Self.centerPoint.x),
-                            dy: Double(value.location.y - Self.centerPoint.y)))
-                }
-                .onEnded { _ in onPickingChange(false) },
-            including: onPick == nil ? .subviews : .all
-        )
-        // 제목 줄과 호 꼭대기 사이 숨 쉴 틈. 끌기 좌표는 이 여백 안쪽 다이얼 기준 그대로다.
-        .padding(.top, Self.topGap)
-    }
-
-    /// 제목과 호 꼭대기 사이 간격. 다이얼(92pt) + 간격이 칸 본문 높이(113pt) 안에 들어간다.
-    static var topGap: CGFloat { 9 }
-}
-
-/// 누르는 순간 살짝 눌렸다 튀어 오르는 버튼 모양. "딱" 누르는 손맛을 준다.
-private struct FocusPressStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .brightness(configuration.isPressed ? -0.06 : 0)
-            .animation(
-                .spring(response: 0.22, dampingFraction: 0.55), value: configuration.isPressed)
     }
 }

@@ -79,8 +79,10 @@ Sources/
 │       ├── WorkspaceDetailView.swift ← Launchers 탭 Workspace 편집 화면 (이름·Open·Update Positions·Delete·Layout·창 목록)
 │       ├── SettingsWorkspacesSection.swift ← 설정 사이드바 Workspaces 섹션 (n/4, + 대상, 검색 필터)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
-│       ├── NotchTimerView.swift   ← 노치 Timer 칸(−/+·Start, 남은 시간·진행선·Stop)·접힌 노치 왼쪽 타이머 배지
-│       ├── NotchFocusView.swift   ← Focus 다이얼(Keep Awake, 1~12시간)
+│       ├── NotchFocusView.swift   ← Focus 칸·탭(Keep Awake/Timer 전환)·Focus 모드 본문
+│       ├── NotchFocusTimerBody.swift ← Focus 칸 Timer 모드 본문(5~60분 다이얼)
+│       ├── NotchFocusDial.swift   ← Focus·Timer 공용 240° 다이얼·가운데 버튼 모양
+│       ├── NotchTimerBadgeView.swift ← 접힌 노치 왼쪽 타이머 배지
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
 │       ├── NotchQuickNoteView.swift ← Quick Note 편집기(자동 저장·백업 버튼·읽기 실패 안내)
 │       ├── NotchMascotView.swift  ← 마스코트(물범) 뷰: 깜빡임·꼬리·다이빙·z, 잉크 색은 ChapMascot.rgb
@@ -110,8 +112,9 @@ Sources/
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
 │   ├── CoverScreensPolicy.swift      ← Cover Screens ⌥ 탭 판정(OptionTap)·연타 판정·문구 정리 (순수 로직)
-│   ├── TimerPolicy.swift          ← 타이머 길이(5분 단위 5분~3시간)·시계 표시·진행·메뉴 문구 (순수 로직)
-│   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료·Focus 다이얼 각도↔시간 (순수 로직)
+│   ├── TimerPolicy.swift          ← 타이머 길이(5분 단위 5~60분)·공용 다이얼 변환·시계 표시·메뉴 문구 (순수 로직)
+│   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료·공용 다이얼 각도↔시간 (순수 로직)
+│   ├── FocusDialMode.swift        ← Focus 칸의 Focus/Timer 모드 선택·저장값·실행 중 모드 우선 규칙 (순수 로직)
 │   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처

@@ -102,15 +102,24 @@ enum KeepAwakePolicy {
         min(max(hours / Double(focusDialHours.upperBound), 0), 1)
     }
 
-    /// 다이얼 가운데 기준 점(아래가 +y)을 시간으로. 12시 방향이 호의 가운데, 시계 방향이 늘어나는 쪽이다.
-    /// 아래 빈 곳의 점은 가까운 끝으로 붙는다.
-    static func focusDialHours(dx: Double, dy: Double) -> Int {
+    /// 다이얼 가운데 기준 점(아래가 +y)을 호 위 비율(0…1)로. 12시 방향이 호의 가운데, 시계 방향이
+    /// 늘어나는 쪽이다. 아래 빈 곳의 점은 가까운 끝으로 붙는다. Focus와 Timer가 같은 호를 쓴다.
+    static func focusDialFraction(dx: Double, dy: Double) -> Double {
         let angle = atan2(dx, -dy) * 180 / .pi  // -180…180, 0 = 12시
         let half = focusDialSweep / 2
         let clamped = min(max(angle, -half), half)
-        let fraction = (clamped + half) / focusDialSweep
+        return (clamped + half) / focusDialSweep
+    }
+
+    /// 호 위 비율을 Focus 시간(1~12시간)으로.
+    static func focusDialHours(fraction: Double) -> Int {
         let hours = Int((fraction * Double(focusDialHours.upperBound)).rounded())
         return min(max(hours, focusDialHours.lowerBound), focusDialHours.upperBound)
+    }
+
+    /// 다이얼 가운데 기준 점(아래가 +y)을 시간으로.
+    static func focusDialHours(dx: Double, dy: Double) -> Int {
+        focusDialHours(fraction: focusDialFraction(dx: dx, dy: dy))
     }
 
     /// 다이얼로 고른 시간의 세션. 메뉴 프리셋과 같은 길이면 그 이름을 쓴다.

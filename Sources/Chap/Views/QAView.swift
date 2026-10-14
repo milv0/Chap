@@ -222,11 +222,11 @@ struct QAView: View {
                 ),
                 (
                     "타이머는 어떻게 쓰나요?",
-                    "메뉴바 Timer에서 길이를 고르거나, Settings → Notch에서 Timer 칸을 놓고 −/+로 길이를 맞춘 뒤 Start를 누르세요. 도는 동안 노치가 접혀 있으면 노치 왼쪽에 남은 시간이 보이고, 끝나면 소리와 함께 Time's up이 뜹니다. 타이머는 하나만 돌고 Chap을 끄면 사라지며, Mac을 깨워 두지는 않습니다(그건 Focus가 합니다)."
+                    "메뉴바 Timer에서 길이를 고르거나, 노치 Focus 칸에서 제목 줄의 타이머 아이콘을 누르세요. 다이얼을 끌어 5분부터 1시간까지 맞춘 뒤 가운데 Start를 누르면 됩니다. 도는 동안 노치가 접혀 있으면 노치 왼쪽에 남은 시간이 보이고, 끝나면 소리와 함께 Time's up이 뜹니다. 타이머는 하나만 돌고 Chap을 끄면 사라지며, Mac을 깨워 두지는 않습니다(그건 Focus가 합니다)."
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, Timer, To-do, Workspaces를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do, Workspaces를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -504,11 +504,11 @@ struct QAView: View {
                 ),
                 (
                     "How does the timer work?",
-                    "Pick a length from Timer in the status menu, or place the Timer slot in Settings → Notch, set the length with − and +, and press Start. While it runs and the notch is closed, the time left shows beside the notch; when it ends, Chap plays a sound and shows Time's up. One timer runs at a time, it ends when you quit Chap, and it doesn't keep your Mac awake (Focus does that)."
+                    "Pick a length from Timer in the status menu, or open the notch Focus slot and click the timer icon in its title row. Drag the dial to choose 5 minutes to 1 hour, then click Start in the center. While it runs and the notch is closed, the time left shows beside the notch; when it ends, Chap plays a sound and shows Time's up. One timer runs at a time, it ends when you quit Chap, and it doesn't keep your Mac awake (Focus does that)."
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, Timer, To-do, or Workspaces. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus (switches between Keep Awake and Timer on one dial), To-do, or Workspaces. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

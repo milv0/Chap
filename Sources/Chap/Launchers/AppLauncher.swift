@@ -263,7 +263,7 @@ enum AppLauncher {
     private static var shownMinimumSizeNoticeKeys: Set<String> = []
 
     /// 요청 크기가 앱 최소 크기보다 작아 클램프됐으면 원인을 사용자에게 안내한다.
-    /// 같은 launchable·크기 조합은 앱 세션당 한 번만 표시한다 (FLOW.md 이슈 2 개선).
+    /// 같은 launchable·크기 조합은 앱 세션당 한 번만 표시한다 (FLOW.md 이슈 1 개선).
     private static func notifyMinimumSizeClampIfNeeded(
         _ boundsResult: AXBoundsResult, siteName: String
     ) {
