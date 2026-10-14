@@ -840,6 +840,9 @@ final class NotchLauncherController {
         guard let panel else { return }
         prepareForPanelHide()
         self.panel = nil
+        // 논리적으로 접힌 즉시 타이머 배지를 패널보다 위에 둔다. 아래의 검정 띠가
+        // 0.18초 동안 노치로 접히는 동안 배지가 이미 맞물려, 따로 튀어나오지 않는다.
+        updateTimerBadge()
         // 메인 패널을 노치로 말아 넣고 애니메이션 뒤 창을 정리한다.
         if let reveal = revealModel {
             withAnimation(NotchLauncherPanelView.closeAnimation) {
