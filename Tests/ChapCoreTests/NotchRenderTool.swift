@@ -252,6 +252,34 @@ struct NotchRenderTool {
         }
     }
 
+    /// 닫히는 검정 띠 위로 타이머 배지를 먼저 올린 중간 프레임. 배지가
+    /// 띠에서 끊겨 튀어나오지 않고 노치 왼쪽으로 자연스럽게 이어지는지 본다.
+    @Test(
+        "render the timer badge joined to the closing strip",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderTimerBadgeClosingTransition() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let dockWidth: CGFloat = 640
+        let notch = CGRect(x: (dockWidth - 185) / 2, y: 0, width: 185, height: 32)
+        let badge = NotchLauncherPolicy.timerBadgeFrame(notchRect: notch)
+        let view = ZStack(alignment: .topLeading) {
+            Color(white: 0.85)
+            PressedStripShape(
+                plateauHalfWidth: notch.width / 2 + NotchGeometry.stripPlateauSideWidth,
+                centerDepth: notch.height,
+                edgeDepth: 0
+            )
+            .fill(Color.black)
+            .frame(width: dockWidth, height: 48)
+            NotchTimerBadgeView(endDate: Date().addingTimeInterval(18 * 60 + 42))
+                .frame(width: badge.width, height: badge.height)
+                .offset(x: badge.minX, y: badge.minY)
+        }
+        .frame(width: dockWidth, height: 64)
+        try Self.renderPNG(view).write(
+            to: directory.appendingPathComponent("notch-timer-badge-closing.png"))
+    }
+
     private static var previewWorkspaces: [ChapWorkspace] {
         let windows = [
             WorkspaceWindow(
