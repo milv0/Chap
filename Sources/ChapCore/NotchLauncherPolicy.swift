@@ -69,6 +69,17 @@ public enum NotchLauncherPolicy {
             height: notchRect.height)
     }
 
+    /// 노치 왼쪽에 붙는 타이머 배지의 프레임. Drop 배지를 좌우로 뒤집은 자리다:
+    /// 오른쪽 겹침은 노치 밑으로, 왼쪽 플레어는 본체 바깥으로 나가 메뉴 막대에 합류한다.
+    public static func timerBadgeFrame(notchRect: CGRect) -> CGRect {
+        let width =
+            dropBadgeNotchOverlap + NotchGeometry.timerBadgeBodyWidth
+            + NotchGeometry.dockFlareRadius
+        return CGRect(
+            x: notchRect.minX + dropBadgeNotchOverlap - width, y: notchRect.minY,
+            width: width, height: notchRect.height)
+    }
+
     /// 펼친 도커의 최소 폭. 위젯이 적어도 노치 양옆 상태 영역(Keep Awake 시계, Drop·Mirror·
     /// Quick Note 아이콘)을 넉넉히 감싸고, 칸이 두세 개뿐일 때 도커가 노치에 붙어 보이지 않게 한다.
     public static let dockMinimumWidth: CGFloat = 640

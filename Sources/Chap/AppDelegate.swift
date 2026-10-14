@@ -5,6 +5,9 @@ import os
 class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem!
     let keepAwake = KeepAwakeController()
+    /// 카운트다운 타이머. 메모리에만 있고 Keep Awake와 따로 돈다.
+    let chapTimer = ChapTimerController()
+    weak var timerMenuItem: NSMenuItem?
     var focusObservers: [NSObjectProtocol] = []
     let notchLauncher = NotchLauncherController()
     var screenParametersObserver: NSObjectProtocol?

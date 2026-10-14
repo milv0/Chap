@@ -53,6 +53,9 @@ struct NotchRenderTool {
         if !workspaceWidgets.contains(.workspaces) {
             workspaceWidgets[NotchWidget.slotCount - 1] = .workspaces
         }
+        var timerWidgets = previewWidgets
+        if !timerWidgets.contains(.timer) { timerWidgets[NotchWidget.slotCount - 1] = .timer }
+        let timerSlots = NotchSlotContent.slots(widgets: timerWidgets, sites: config.sites)
         let previewWorkspaces = Self.previewWorkspaces
         let workspaceSlots = NotchSlotContent.slots(
             widgets: workspaceWidgets, sites: config.sites, workspaces: previewWorkspaces)
@@ -91,6 +94,8 @@ struct NotchRenderTool {
             ("notch-glass-light-todo", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-todo", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-workspaces", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-timer", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-timer-running", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark-workspaces", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
@@ -132,10 +137,16 @@ struct NotchRenderTool {
                     ? Date().addingTimeInterval(3 * 3600 + 25 * 60) : nil, style: style,
                 glassMaterial: config.notchGlassMaterial,
                 slots: name.hasSuffix("-todo")
-                    ? todoSlots : name.hasSuffix("-workspaces") ? workspaceSlots : previewSlots,
+                    ? todoSlots
+                    : name.hasSuffix("-workspaces")
+                        ? workspaceSlots : name.contains("-timer") ? timerSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
                 showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
+                timerStateProvider: {
+                    name.hasSuffix("timer-running")
+                        ? (Date().addingTimeInterval(18 * 60 + 42), 25 * 60) : (nil, nil)
+                },
                 showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
             let view =
@@ -213,6 +224,30 @@ struct NotchRenderTool {
             .frame(width: 570, height: 640)
             .background(DS.surfaceBg)
             .environment(\.colorScheme, scheme)
+            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    /// 접힌 노치 왼쪽 타이머 배지를 하드웨어 노치(검정) 옆에 그린다.
+    @Test("render the collapsed timer badge", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderTimerBadge() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let notch = CGRect(x: 0, y: 0, width: 185, height: 32)
+        let frame = NotchLauncherPolicy.timerBadgeFrame(notchRect: notch)
+        for (name, remaining) in [
+            ("notch-timer-badge", 18.0 * 60 + 42), ("notch-timer-badge-last", 42.0),
+        ] {
+            let view = ZStack(alignment: .topLeading) {
+                Color(white: 0.85)
+                // 하드웨어 노치 자리
+                UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10)
+                    .fill(Color.black)
+                    .frame(width: notch.width, height: notch.height)
+                    .offset(x: frame.width - NotchLauncherPolicy.dropBadgeNotchOverlap)
+                NotchTimerBadgeView(endDate: Date().addingTimeInterval(remaining))
+                    .frame(width: frame.width, height: frame.height)
+            }
+            .frame(width: frame.width + notch.width, height: 48)
             try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
         }
     }

@@ -30,6 +30,7 @@ extension AppDelegate {
         keepAwake.onEvent = { [weak self] event in
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
+        chapTimer.onEvent = { [weak self] event in self?.handleTimerEvent(event) }
         buildMenu()
         // 노치 Focus 위젯이 Keep Mac Awake 세션을 켜고 끈다 (메뉴와 같은 세션).
         focusObservers = [
@@ -45,6 +46,18 @@ extension AppDelegate {
                 forName: NotchFocusView.deactivateRequest, object: nil, queue: .main
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
+            },
+            // 노치 Timer 칸: 메뉴 Timer와 같은 타이머를 켜고 끈다.
+            NotificationCenter.default.addObserver(
+                forName: NotchTimerView.startRequest, object: nil, queue: .main
+            ) { [weak self] note in
+                guard let length = note.object as? TimeInterval else { return }
+                self?.chapTimer.start(length: length)
+            },
+            NotificationCenter.default.addObserver(
+                forName: NotchTimerView.stopRequest, object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.chapTimer.stop()
             },
             // 노치 띠의 Cover Screens 아이콘: 메뉴바 항목과 같은 경로로 가림막을 친다.
             NotificationCenter.default.addObserver(

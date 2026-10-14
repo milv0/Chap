@@ -40,6 +40,8 @@ extension AppDelegate {
         keepAwake.expireIfNeeded()
         keepAwakeMenuItem?.title = KeepAwakePolicy.menuTitle(
             sessionEnd: keepAwake.sessionEnd, now: Date())
+        chapTimer.finishIfDue()
+        timerMenuItem?.title = TimerPolicy.menuTitle(end: chapTimer.endDate, now: Date())
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
@@ -282,6 +284,7 @@ extension AppDelegate {
         keepAwakeItem.submenu = keepAwakeMenu
         menu.addItem(keepAwakeItem)
         keepAwakeMenuItem = keepAwakeItem
+        addTimerMenu(to: menu)
 
         // Cover Screens — 자리 비울 때 화면을 덮는 가림막 (Keep Awake와 독립, config 미저장)
         let coverScreens = NSMenuItem(
@@ -397,6 +400,9 @@ extension AppDelegate {
             self?.showWorkspacesInSettings()
         }
         notchLauncher.busyWorkspaceIDProvider = { [weak self] in self?.workspaceLibrary.busyID }
+        notchLauncher.timerStateProvider = { [weak self] in
+            (self?.chapTimer.endDate, self?.chapTimer.length)
+        }
         notchLauncher.onRemoveWorkspace = { [weak self] id in
             self?.confirmRemoveWorkspace(id: id)
         }

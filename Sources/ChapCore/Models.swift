@@ -304,6 +304,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case todo = "todo"
     /// 실제 앱 창 배치를 이 Mac에 기억하고 복원하는 작업 공간(`WorkspaceStore`).
     case workspaces = "workspaces"
+    /// 카운트다운 타이머. 돌고 있으면 접힌 노치 왼쪽에 남은 시간이 보인다.
+    case timer = "timer"
     /// 빈 칸.
     case none = "none"
 
@@ -313,7 +315,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .none:
+        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .timer, .none:
             return nil
         }
     }

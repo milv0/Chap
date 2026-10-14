@@ -14,13 +14,15 @@ enum NotchSlotContent {
     case todo
     /// 실제 앱 창 배치를 복원하는 Workspaces 위젯.
     case workspaces([ChapWorkspace])
+    /// 타이머 위젯.
+    case timer
 
     /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
     var collapsibleWidget: NotchWidget? {
         switch self {
         case .screenshots: return .screenshots
         case .downloads: return .downloads
-        case .launchers, .awake, .todo, .workspaces: return nil
+        case .launchers, .awake, .todo, .workspaces, .timer: return nil
         }
     }
 
@@ -41,6 +43,7 @@ enum NotchSlotContent {
             case .awake: return .awake
             case .todo: return .todo
             case .workspaces: return .workspaces(workspaces)
+            case .timer: return .timer
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
