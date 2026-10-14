@@ -358,7 +358,7 @@ Office 판정은 prefix가 아니라 **명시 allowlist**다: `com.microsoft.Pow
         · baseline에 없는 창들에 resizeIfNewStandardWindow()
         · CFRunLoopRunInMode(0.05)          ← 50ms 재스캔 + 콜백 처리
         · elapsed >= focusedFallbackDelay && 아직 리사이즈 못했고 시도 안 했으면
-              focusedWindowFallback() 1회                   ★ §12 이슈 1
+              focusedWindowFallback() 1회
               일반 앱은 성공 시 종료, Office는 성공해도 문서창을 계속 관찰
         · 일반 앱  : 새 창 리사이즈 성공 후 grace(3s) 지나면 break
         · Office  : 리사이즈 성공 후 grace(20s) 동안 새 문서창 계속 대기 → 지나면 break
@@ -725,51 +725,22 @@ grep -h -E ",(failed|partial)," ~/Library/Logs/Chap/resize_*.csv
 
 ---
 
-## 12. 알려진 이슈 (미해결)
+## 12. 알려진 이슈
 
 새 버그로 오진하지 말 것. 고칠 때는 아래 근거를 먼저 확인한다.
 
-### 이슈 1 — 실행 중 Office 앱에서 30초 헛도는 경로 (미수정)
-
-**증상**: 2026-08-03 Excel 6건이 정확히 ~30.3초 후 `failed`. `app_state=running`, `window_count=0`.
-
-**코드상 원인** (`AppLauncher › observeAndResizeOneWindow`):
-1. `didAttemptEarlyFocusedFallback`가 **단발 플래그**라 focused fallback을 0.2초에 한 번만 시도한다.
-2. 두 break 조건이 모두 `ctx.lastResizeTime != nil`을 요구한다. 아무것도 리사이즈하지 못하면
-   break가 성립하지 않아 30초 deadline까지 50ms 루프를 계속 돈다.
-
-**정황**: 해당 행들은 baseline 창 개수가 0이다. Excel이 실행 중인데 AX 창이 0개
-(`captureExistingWindows` 5회 재시도 후에도 빈 배열) → 활성화만 되고 새 창이 안 생기고,
-focused 창도 없거나 자격 미달 → 위 경로에 갇힌다.
-
-**영향 범위**: 전용 백그라운드 큐라서 UI·다른 런처를 막지 않는다. 권한 알림도 오발하지 않는다(§3).
-사용자에게는 "리사이즈가 안 됨"으로만 나타난다.
-
-**재현 안 되는 이유**: 이후 Excel 실행은 모두 `cold`였고, cold는 `focusedFallbackDelay == timeout`이라
-이 경로를 밟지 않는다. 코드는 그대로 남아 있다.
-
-**제안된 수정**: focused fallback을 캡 있는 스케줄(예: 0.2s / 0.6s / 1.2s)로 재시도. 기존
-`policy.focusedFallbackDelay` 게이트를 유지하면 cold 동작은 그대로다. 조기 종료(early exit)는
-Office 시작창→문서창 전환을 놓치므로 권하지 않는다.
-
-### 이슈 2 — 앱 최소 창 크기보다 작게 요청하면 `partial` (동작상 정상, 안내 추가됨)
+### 이슈 1 — 앱 최소 창 크기보다 작게 요청하면 `partial` (동작상 정상, 안내 추가됨)
 
 Outlook을 831x519로 요청한 2건이 `partial`이었다. 앱이 자체 최소 크기로 클램프한 결과이며 버그가 아니다.
 사용자가 1300x769로 올려 해소됐다. App 타입은 이제 클램프가 감지되면
 (`MinimumSizeNoticePolicy`) 앱 최소 크기와 현재 설정 크기를 alert로 안내한다.
 같은 launchable·크기 조합은 앱 세션당 한 번만 표시하고, 설정 크기를 바꾸면 다시 안내한다.
 
-### 이슈 3 — Chrome `partial`의 20ms readback 경합 (관측 개선 완료)
+### 이슈 2 — Chrome `partial`의 20ms readback 경합 (관측 개선 완료)
 
 Chrome이 비동기로 창을 정착시키는 동안 20ms 후 readback이 먼저 찍히면 `partial`이 된다.
 과거에는 level만 로그에 남아 원인 구분이 불가능했다. 현재는 `detail` 열에 어느 축이 얼마나
 벗어났는지 남으므로, 재발 시 근거를 갖고 판단할 수 있다.
-
-### 이슈 4 — Excel 시작창이 대상이 되는 경우
-
-Excel을 실행하면 `Open new and recent files`(시작창)가 리사이즈 대상이 되는 것이 관측된다.
-Office 정책의 `postResizeGrace: 20.0`이 정확히 이 상황을 위한 것(문서창이 늦게 뜨면 교체)이지만,
-시작창에서 파일을 클릭해 문서창을 여는 흐름이 20초 안에 끝나는지는 확인되지 않았다.
 
 ---
 
