@@ -400,8 +400,8 @@ extension AppDelegate {
             self?.showWorkspacesInSettings()
         }
         notchLauncher.busyWorkspaceIDProvider = { [weak self] in self?.workspaceLibrary.busyID }
-        notchLauncher.timerStateProvider = { [weak self] in
-            (self?.chapTimer.endDate, self?.chapTimer.length)
+        notchLauncher.timerEndProvider = { [weak self] in
+            self?.chapTimer.endDate
         }
         notchLauncher.onRemoveWorkspace = { [weak self] id in
             self?.confirmRemoveWorkspace(id: id)

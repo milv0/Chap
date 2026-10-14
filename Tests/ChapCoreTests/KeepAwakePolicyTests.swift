@@ -168,6 +168,12 @@ struct FocusWidgetTests {
 
     @Test("the dial maps the arc to 1-12 hours, with the gap snapping to the nearest end")
     func dialAngles() {
+        // 호 위 비율은 Focus·Timer가 같이 쓴다: 왼쪽 끝 0, 12시 0.5, 오른쪽 끝 1.
+        #expect(KeepAwakePolicy.focusDialFraction(dx: 0, dy: -40) == 0.5)
+        #expect(KeepAwakePolicy.focusDialFraction(dx: -1, dy: 40) == 0)
+        #expect(KeepAwakePolicy.focusDialFraction(dx: 1, dy: 40) == 1)
+        #expect(KeepAwakePolicy.focusDialHours(fraction: 0) == 1)
+        #expect(KeepAwakePolicy.focusDialHours(fraction: 1) == 12)
         // 12시 방향 = 호의 가운데 = 6시간.
         #expect(KeepAwakePolicy.focusDialHours(dx: 0, dy: -40) == 6)
         // 왼쪽 끝(-120°) 근처 = 최소 1시간, 오른쪽 끝(+120°) = 12시간.

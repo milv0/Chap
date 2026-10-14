@@ -16,8 +16,6 @@ final class ChapTimerController {
     }
 
     private(set) var endDate: Date?
-    /// 지금 타이머의 전체 길이(진행선용). 꺼져 있으면 nil.
-    private(set) var length: TimeInterval?
     private var deadlineTimer: DispatchSourceTimer?
     private var wakeObservers: [NSObjectProtocol] = []
 
@@ -47,7 +45,6 @@ final class ChapTimerController {
         let length = min(
             max(length, TimerPolicy.lengthRange.lowerBound), TimerPolicy.lengthRange.upperBound)
         endDate = Date().addingTimeInterval(length)
-        self.length = length
         schedule(after: length)
         Log.app.notice("Timer started (\(Int(length / 60), privacy: .public)m)")
         emit(.started)
@@ -89,7 +86,6 @@ final class ChapTimerController {
         deadlineTimer?.cancel()
         deadlineTimer = nil
         endDate = nil
-        length = nil
     }
 
     private func emit(_ event: Event) {

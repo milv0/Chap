@@ -92,8 +92,8 @@ final class NotchLauncherController {
     var onOpenWorkspaceSettings: () -> Void = {}
     /// 열리는 중인 Workspace id 공급자.
     var busyWorkspaceIDProvider: () -> UUID? = { nil }
-    /// 돌고 있는 타이머(끝나는 시각·길이). 없으면 (nil, nil).
-    var timerStateProvider: () -> (end: Date?, length: TimeInterval?) = { (nil, nil) }
+    /// 돌고 있는 타이머가 끝나는 시각. 없으면 nil.
+    var timerEndProvider: () -> Date? = { nil }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
@@ -300,9 +300,9 @@ final class NotchLauncherController {
 
     /// 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지를 둔다.
     /// 노치가 없는 화면에는 두지 않는다(메뉴 막대를 가리고 클릭을 삼킨다, I16).
-    /// 도커가 열려 있는 동안은 숨긴다. 그때는 Timer 칸이 남은 시간을 보여 준다.
+    /// 도커가 열려 있는 동안은 숨긴다. 그때는 Focus 칸의 Timer 모드가 남은 시간을 보여 준다.
     func updateTimerBadge() {
-        guard let end = timerStateProvider().end, end > Date(), panel == nil,
+        guard let end = timerEndProvider(), end > Date(), panel == nil,
             hotzoneWindow != nil, let screen = Self.dockScreen(),
             NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
         else {
@@ -537,7 +537,7 @@ final class NotchLauncherController {
                 self?.onOpenWorkspaceSettings()
             },
             busyWorkspaceIDProvider: { [weak self] in self?.busyWorkspaceIDProvider() },
-            timerStateProvider: { [weak self] in self?.timerStateProvider() ?? (nil, nil) },
+            timerEndProvider: { [weak self] in self?.timerEndProvider() },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.
                 DispatchQueue.main.async { self?.resizePanel(toContentSize: size) }

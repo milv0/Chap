@@ -296,7 +296,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// 다운로드 선반: ~/Downloads의 최근 파일을 모아 보여준다.
     case downloads = "downloads"
-    /// Focus 모드: Keep Mac Awake 세션을 노치에서 켜고 끄며 남은 시간을 보여준다.
+    /// Focus 모드: 다이얼 하나로 Keep Mac Awake 세션(1~12시간)이나 타이머(5~60분)를 켜고 끈다.
     case awake = "awake"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"
@@ -304,8 +304,6 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case todo = "todo"
     /// 실제 앱 창 배치를 이 Mac에 기억하고 복원하는 작업 공간(`WorkspaceStore`).
     case workspaces = "workspaces"
-    /// 카운트다운 타이머. 돌고 있으면 접힌 노치 왼쪽에 남은 시간이 보인다.
-    case timer = "timer"
     /// 빈 칸.
     case none = "none"
 
@@ -315,7 +313,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .timer, .none:
+        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .none:
             return nil
         }
     }
@@ -324,6 +322,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     public static let formerMirrorRawValue = "mirror"
     /// 칸 위젯이었던 Quick Note의 저장 문자열. Quick Note는 이제 상단 띠의 아이콘이다.
     public static let formerNoteRawValue = "note"
+    /// 칸 위젯이었던 Timer의 저장 문자열(2.14). Timer는 이제 Focus 칸 다이얼의 모드다.
+    public static let formerTimerRawValue = "timer"
 
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
     public static let removedScriptsRawValue = "scripts"
@@ -597,9 +597,15 @@ public struct Config: Codable {
             let hasScripts = rawWidgets.contains(NotchWidget.removedScriptsRawValue)
             didMigrateScriptsWidget = hasScripts
             let screenshotsPlaced = rawWidgets.contains(NotchWidget.screenshots.rawValue)
+            // 2.14의 Timer 칸은 Focus 칸으로 바꾼다(Timer가 Focus 다이얼의 모드가 됐다).
+            // Focus 칸이 이미 있으면 빈 칸으로 두어 다른 칸 자리를 옮기지 않는다.
+            let awakePlaced = rawWidgets.contains(NotchWidget.awake.rawValue)
             let knownWidgets = rawWidgets.compactMap { raw -> NotchWidget? in
                 if raw == NotchWidget.removedScriptsRawValue {
                     return screenshotsPlaced ? NotchWidget.none : .screenshots
+                }
+                if raw == NotchWidget.formerTimerRawValue {
+                    return awakePlaced ? NotchWidget.none : .awake
                 }
                 // Mirror 칸은 빼고 뒤 위젯을 한 칸씩 당긴다 (Mirror는 Drop 줄 아이콘으로 옮겨졌다).
                 if raw == NotchWidget.formerMirrorRawValue { return nil }

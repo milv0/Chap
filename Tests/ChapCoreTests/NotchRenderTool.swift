@@ -53,9 +53,6 @@ struct NotchRenderTool {
         if !workspaceWidgets.contains(.workspaces) {
             workspaceWidgets[NotchWidget.slotCount - 1] = .workspaces
         }
-        var timerWidgets = previewWidgets
-        if !timerWidgets.contains(.timer) { timerWidgets[NotchWidget.slotCount - 1] = .timer }
-        let timerSlots = NotchSlotContent.slots(widgets: timerWidgets, sites: config.sites)
         let previewWorkspaces = Self.previewWorkspaces
         let workspaceSlots = NotchSlotContent.slots(
             widgets: workspaceWidgets, sites: config.sites, workspaces: previewWorkspaces)
@@ -79,6 +76,7 @@ struct NotchRenderTool {
             DownloadsShelf.previewOverride = nil
             DownloadsShelf.previewHoveredURL = nil
             ChapDrop.previewOverride = nil
+            NotchFocusView.previewMode = nil
         }
 
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
@@ -96,6 +94,7 @@ struct NotchRenderTool {
             ("notch-glass-light-workspaces", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-timer", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-timer-running", .glass, .dark, Color(white: 0.16), false),
+            ("notch-glass-light-timer-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-workspaces", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
@@ -128,6 +127,8 @@ struct NotchRenderTool {
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
+            // Focus 칸은 이름에 "-timer"가 있으면 Timer 모드로 그린다.
+            NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -139,13 +140,12 @@ struct NotchRenderTool {
                 slots: name.hasSuffix("-todo")
                     ? todoSlots
                     : name.hasSuffix("-workspaces")
-                        ? workspaceSlots : name.contains("-timer") ? timerSlots : previewSlots,
+                        ? workspaceSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
                 showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
-                timerStateProvider: {
-                    name.hasSuffix("timer-running")
-                        ? (Date().addingTimeInterval(18 * 60 + 42), 25 * 60) : (nil, nil)
+                timerEndProvider: {
+                    name.hasSuffix("timer-running") ? Date().addingTimeInterval(18 * 60 + 42) : nil
                 },
                 showsShoulderGuides: name.hasPrefix("notch-guides"),
                 reveal: reveal)
