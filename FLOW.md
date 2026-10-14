@@ -630,6 +630,7 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
 | `GuideWindow` show/dismiss | 내부에서 main으로 hop | 토큰으로 소유권 판별 |
 | Cover Screens 창·키 모니터 (`CoverScreensController`) | main | 화면마다 창 1개, 로컬 keyDown 모니터 1개. 자체 IOKit 어써션을 들고 Keep Awake와 독립 |
+| 카운트다운 타이머 (`ChapTimerController`) | main | 돌 때만 `DispatchSourceTimer` `wallDeadline` 1개. wake·메뉴 열기 때 재확인. 끝나면 소리·HUD 후 메뉴·노치 배지 갱신 |
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 | Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
 | Chap Drop 참조 저장/빼기/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |

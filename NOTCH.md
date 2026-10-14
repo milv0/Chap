@@ -190,6 +190,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (80pt 링 + 길이 칩 셋) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
+| Timer | 116pt (−/+ 길이 · Start, 돌면 남은 시간 · 진행선 · Stop) |
 | Workspaces | 128pt (2열 타일: 앱 아이콘 묶음 + 이름) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
@@ -320,6 +321,16 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 최대 320pt, 넘으면 두 줄. 스크롤 목록 밖(칸)에서 그려 목록 잘림·아래 흐림에 가리지 않고, 칸 오른쪽 밖으로
 뻗을 수 있다. 누를 수 없고(아래 줄 클릭 그대로) VoiceOver는 줄 라벨로 전체 이름을 읽는다. 잘리지 않은 이름은 띄우지 않는다.
 
+## Timer 칸과 타이머 배지
+
+위젯 칸(3~6번)에 놓는 카운트다운(`NotchWidget.timer`, `NotchTimerView`, 폭 116pt). 메뉴 Timer ▸와 같은 타이머다(`ChapTimerController`, 한 번에 하나, 메모리에만, Keep Awake와 따로).
+
+- 꺼짐: 가운데 길이("25:00")와 양옆 −/+ (5분 단위, 5분~3시간, 마지막 값은 UserDefaults `ChapTimerLength`), 아래 Start 캡슐.
+- 돌 때: 남은 시간(1시간 미만 `m:ss`, 넘으면 `h:mm:ss`, `TimerPolicy.clockLabel`), 남은 만큼 줄어드는 진행선, Stop 캡슐.
+- 끝나면 Glass 소리와 HUD "Time's up"(노치 화면, 없으면 커서 화면). 끝나는 시각은 벽시계 기준이라 잠든 시간도 센다.
+
+**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 12pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Timer 칸이 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
+
 ## Workspaces 칸
 
 위젯 칸(3~6번)에 놓는 로컬 작업 공간 격자(`NotchWidget.workspaces`, `NotchWorkspacesView`, 폭 128pt). Apps 칸처럼 2열 타일이며, 최대 4개라 2×2에 맞는다. 타일은 그 Workspace 앱 아이콘을 앞에서부터 넷까지 모은 36pt 묶음(`WorkspaceIconCluster`, 폴더 아이콘처럼 둘씩 줄지어, 하나면 크게 하나)과 아래 10pt 이름이다. 같은 앱 조합이 겹칠 수 있어 이름은 늘 보인다. 마우스를 올리면 이름과 앱 목록 툴팁, 열리는 중에는 묶음 위에 진행 표시가 돈다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
@@ -373,6 +384,7 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
   켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
+- ⌘Z로 입력을 되돌리고 ⇧⌘Z로 다시 한다. 앱의 숨은 Edit 메뉴(`AppMainMenu`)가 단축키를 메모 상자로 보낸다.
 - **Esc로 닫는다**(`QuickNoteWindow.handleKeyDown`, local key monitor). 메모 상자에서 타이핑 중이어도 TextEditor보다
   먼저 받아 삼킨다. 닫힘 경로가 하나(`willClose`)라 Esc로 닫아도 마지막 입력이 flush되어 저장된다.
 
