@@ -47,6 +47,8 @@ struct NotchLauncherPanelView: View {
     var onOpenWorkspaceSettings: () -> Void = {}
     /// 지금 열리는 중인 Workspace를 알려 주는 공급자(열릴 때마다 읽는다).
     var busyWorkspaceIDProvider: () -> UUID? = { nil }
+    /// 도커를 열 때 돌고 있는 타이머(끝나는 시각·길이). 이후 변화는 Timer 칸이 알림으로 받는다.
+    var timerStateProvider: () -> (end: Date?, length: TimeInterval?) = { (nil, nil) }
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
     /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
     var onContentSizeChange: (CGSize) -> Void = { _ in }
@@ -132,6 +134,8 @@ struct NotchLauncherPanelView: View {
             return Self.todoColumnWidth
         case .workspaces:
             return Self.workspaceColumnWidth
+        case .timer:
+            return NotchTimerView.columnWidth
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -687,6 +691,10 @@ struct NotchLauncherPanelView: View {
             NotchFocusView(palette: widgetPalette, sessionEnd: currentAwakeSessionEnd)
         case .todo:
             NotchTodoView(palette: widgetPalette)
+        case .timer:
+            NotchTimerView(
+                palette: widgetPalette, endDate: timerStateProvider().end,
+                length: timerStateProvider().length)
         case .workspaces(let workspaces):
             NotchWorkspacesView(
                 workspaces: workspaces, busyID: busyWorkspaceIDProvider(), palette: widgetPalette,

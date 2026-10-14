@@ -15,6 +15,8 @@ public enum NotchGeometry {
     /// 배지 본체(보이는 검정)의 폭. 높이는 노치 높이(32)를 따르므로
     /// 34×32의 살짝 가로로 긴 비율이 된다.
     public static let badgeBodyWidth: CGFloat = 34
+    /// 노치 왼쪽 타이머 배지 본체 폭. "1:02:05"(12pt)가 들어가는 폭이다.
+    public static let timerBadgeBodyWidth: CGFloat = 52
     /// 노치 좌우에 확보하는 평평한 검정 plateau 영역 폭.
     /// 왼쪽은 Keep Awake 상태, 오른쪽은 Drop 배지와 향후 상태 표시에 쓴다.
     public static let stripPlateauSideWidth: CGFloat = 110

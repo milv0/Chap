@@ -19,7 +19,8 @@ enum KeepAwakeHUD {
 
     /// 문구와 Focus 상태로 HUD를 띄운다. 이전 HUD가 떠 있으면 즉시 교체한다.
     /// - Parameter focusOn: 켜는 중이면 깨어 있는 물범, 끄는 중이면 잠든 물범을 그린다.
-    static func show(message: String, focusOn: Bool) {
+    /// - Parameter anyScreen: 노치 화면이 없어도 커서가 있는 화면에 띄운다(타이머 끝 알림처럼 놓치면 안 될 때).
+    static func show(message: String, focusOn: Bool, anyScreen: Bool = false) {
         DispatchQueue.main.async {
             lastToken += 1
             let token = lastToken
@@ -29,7 +30,10 @@ enum KeepAwakeHUD {
                 window = nil
             }
             // Chap(물범)은 노치의 친구다. HUD도 노치가 있는 내장 화면 가운데에만 띄운다.
-            guard let screen = NotchLauncherController.notchScreen() else { return }
+            guard
+                let screen = NotchLauncherController.notchScreen()
+                    ?? (anyScreen ? cursorScreen : nil)
+            else { return }
 
             let visible = screen.visibleFrame
             let origin = NSPoint(

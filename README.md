@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.13.5-orange)
+![Version](https://img.shields.io/badge/version-2.14.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -17,6 +17,7 @@
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
 - **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance; clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
+- **Timer** — Start a countdown from the status menu or a notch Timer slot; while it runs, the time left sits beside the notch when it is closed, and Chap plays a sound and shows "Time's up" when it ends
 - **Workspaces (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or a notch widget; app names and window titles stay in a local file on this Mac
 - **Focus Mode** — A Focus dial in the notch: drag the arc to set 1–12 hours (your last setting is remembered), click the center to start, and watch the arc wind down; click again to stop (the same session as Keep Mac Awake)
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
@@ -101,7 +102,7 @@ Arrange the standard app windows you want to keep, then choose **Workspaces → 
 
 A workspace stores the app bundle, local app path, window title, display UUID, and the window frame relative to that display's visible area. It lives only at `~/Library/Application Support/Chap/Workspaces.json`; it is not synced or included in config Export. If the saved display is disconnected, Chap fits the same relative layout on the cursor display. Accessibility permission is required to read and restore window bounds.
 
-The demo deliberately handles only a representative standard, non-minimized, non-full-screen window per app. When an app has several windows and Chap cannot identify one unambiguously, it leaves that app out instead of guessing. Regular browser tabs, document reopening, and macOS Space assignment are not promised.
+The demo deliberately handles only a representative standard, non-minimized, non-full-screen window per app. When an app has several windows and Chap cannot identify one unambiguously, it leaves that app out instead of guessing. Regular browser tabs and document reopening are not promised. Chap doesn't move windows between desktops (Spaces), since macOS has no public API for it; to keep apps together, right-click an app's Dock icon → Options → Assign To → This Desktop or All Desktops.
 
 ### Config File
 
@@ -210,11 +211,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.13.5
+Scripts/release.sh 2.14.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.13.5 --publish
+Scripts/release.sh 2.14.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

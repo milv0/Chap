@@ -26,7 +26,7 @@ struct NotchSettingsView: View {
     /// 팔레트에 노출하는 위젯 (빈 칸 제외 — 비우기는 슬롯의 x 버튼).
     /// 끌어다 놓는 위젯. 선반(Screenshots·Downloads)은 고정 칸에서 켜고 끄기만 하므로 팔레트에 없다.
     private static let paletteWidgets: [NotchWidget] = [
-        .sites, .apps, .folders, .awake, .todo, .workspaces,
+        .sites, .apps, .folders, .awake, .timer, .todo, .workspaces,
     ]
 
     /// Liquid Glass는 macOS 26(Tahoe)+ 에서만 제공된다.
@@ -89,6 +89,7 @@ struct NotchSettingsView: View {
         case .awake: return "Focus"
         case .todo: return "To-do"
         case .workspaces: return "Workspaces"
+        case .timer: return "Timer"
         case .drop: return "Drop"
         case .none: return "Empty"
         }
@@ -104,6 +105,7 @@ struct NotchSettingsView: View {
         case .awake: return "bolt.fill"
         case .todo: return "checklist"
         case .workspaces: return "rectangle.3.group"
+        case .timer: return "timer"
         case .drop: return "tray.and.arrow.down.fill"
         default: return "square.dashed"
         }
@@ -410,7 +412,8 @@ private struct WidgetSlotBox: View {
     /// 이 칸에 놓을 수 있는 위젯(메뉴·VoiceOver 동작).
     private var choices: [NotchWidget] {
         [
-            .sites, .apps, .folders, .screenshots, .downloads, .awake, .todo, .workspaces,
+            .sites, .apps, .folders, .screenshots, .downloads, .awake, .timer, .todo,
+            .workspaces,
         ].filter {
             $0.fits(slot: index)
         }

@@ -31,6 +31,8 @@ final class NotchLauncherController {
     private var pointerWasInZone = false
     private var panel: NSPanel?
     private var badgeWindow: NSWindow?
+    /// 노치 왼쪽 타이머 배지. 타이머가 돌고 도커가 접혀 있을 때만 있다.
+    private var timerBadgeWindow: NSWindow?
     /// 드롭 완료 직후에는 hover로 메인 도커를 열지 않는다. 드래그가 끝나는
     /// 순간 tracking이 재개되며 mouseEntered가 곧바로 날아오기 때문이다.
     private var hoverOpenSuppressedUntil = Date.distantPast
@@ -90,6 +92,8 @@ final class NotchLauncherController {
     var onOpenWorkspaceSettings: () -> Void = {}
     /// 열리는 중인 Workspace id 공급자.
     var busyWorkspaceIDProvider: () -> UUID? = { nil }
+    /// 돌고 있는 타이머(끝나는 시각·길이). 없으면 (nil, nil).
+    var timerStateProvider: () -> (end: Date?, length: TimeInterval?) = { (nil, nil) }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
     var collapsedWidgetsProvider: () -> [NotchWidget] = { [] }
     /// true면 도커를 열지 않는다 (Cover Screens 가림막이 떠 있는 동안).
@@ -173,6 +177,7 @@ final class NotchLauncherController {
         applyGlassAppearance(to: panel)
         installDropObserverIfNeeded()
         updateDropBadge()
+        updateTimerBadge()
     }
 
     func tearDown() {
@@ -188,6 +193,8 @@ final class NotchLauncherController {
         stopPointerWatch()
         badgeWindow?.orderOut(nil)
         badgeWindow = nil
+        timerBadgeWindow?.orderOut(nil)
+        timerBadgeWindow = nil
         if let dropObserver {
             NotificationCenter.default.removeObserver(dropObserver)
             self.dropObserver = nil
@@ -287,6 +294,57 @@ final class NotchLauncherController {
             window.orderFrontRegardless()
         }
         badgeWindow = window
+    }
+
+    // MARK: - Timer badge
+
+    /// 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지를 둔다.
+    /// 노치가 없는 화면에는 두지 않는다(메뉴 막대를 가리고 클릭을 삼킨다, I16).
+    /// 도커가 열려 있는 동안은 숨긴다. 그때는 Timer 칸이 남은 시간을 보여 준다.
+    func updateTimerBadge() {
+        guard let end = timerStateProvider().end, end > Date(), panel == nil,
+            hotzoneWindow != nil, let screen = Self.dockScreen(),
+            NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+        else {
+            timerBadgeWindow?.orderOut(nil)
+            timerBadgeWindow = nil
+            return
+        }
+        let margin = NotchGeometry.hoverMargin
+        let visualFrame = NotchLauncherPolicy.timerBadgeFrame(notchRect: Self.notchRect(on: screen))
+        let frame = NSRect(
+            x: visualFrame.minX - margin, y: visualFrame.minY - margin,
+            width: visualFrame.width + margin * 2, height: visualFrame.height + margin)
+        let hosting = NSHostingView(
+            rootView: NotchTimerBadgeView(endDate: end)
+                .padding(.horizontal, margin)
+                .padding(.bottom, margin))
+        // 배지에 마우스를 올리면 노치에 올린 것처럼 도커를 연다.
+        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        tracker.onEntered = { [weak self] in
+            guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
+            self.showPanel()
+        }
+        tracker.autoresizingMask = [.width, .height]
+        hosting.frame = NSRect(origin: .zero, size: frame.size)
+        hosting.addSubview(tracker)
+
+        let window =
+            timerBadgeWindow
+            ?? {
+                let window = NSWindow(
+                    contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
+                window.level = Self.badgeLevel
+                window.isOpaque = false
+                window.backgroundColor = .clear
+                window.hasShadow = false
+                window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+                return window
+            }()
+        window.setFrame(frame, display: true)
+        window.contentView = hosting
+        window.orderFrontRegardless()
+        timerBadgeWindow = window
     }
 
     /// 보관(원본 참조)은 utility queue에서 수행하고 실패 건수는 사용자에게 알린다.
@@ -479,6 +537,7 @@ final class NotchLauncherController {
                 self?.onOpenWorkspaceSettings()
             },
             busyWorkspaceIDProvider: { [weak self] in self?.busyWorkspaceIDProvider() },
+            timerStateProvider: { [weak self] in self?.timerStateProvider() ?? (nil, nil) },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.
                 DispatchQueue.main.async { self?.resizePanel(toContentSize: size) }
@@ -534,6 +593,7 @@ final class NotchLauncherController {
         badgeWindow?.order(.above, relativeTo: panel.windowNumber)
         self.panel = panel
         self.revealModel = reveal
+        updateTimerBadge()
         DispatchQueue.main.async {
             withAnimation(NotchLauncherPanelView.openAnimation) {
                 reveal.revealed = true
@@ -772,6 +832,7 @@ final class NotchLauncherController {
         panel?.orderOut(nil)
         panel = nil
         revealModel = nil
+        updateTimerBadge()
     }
 
     private func hidePanel() {
@@ -796,6 +857,7 @@ final class NotchLauncherController {
         ) { [weak self] in
             panel.orderOut(nil)
             self?.updateDropBadge()
+            self?.updateTimerBadge()
         }
     }
 }

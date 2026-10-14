@@ -105,6 +105,10 @@ struct QAView: View {
                     "Settings → Launchers 사이드바 맨 아래 Workspaces 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Workspaces → Edit Workspace와 노치 줄 우클릭 Edit…도 같은 화면을 엽니다."
                 ),
                 (
+                    "Workspace를 열면 일부 앱이 다른 데스크탑에 남아 있어요.",
+                    "Chap은 창의 위치와 크기는 옮기지만, 창을 다른 데스크탑(스페이스)으로 옮기지는 않습니다. macOS에 공식 방법이 없기 때문입니다. Dock에서 그 앱 아이콘을 우클릭하고 옵션 → 할당 위치에서 '이 데스크탑'(늘 지금 데스크탑에서 열림) 또는 '모든 데스크탑'(어느 데스크탑에서나 보임)을 고르세요. Slack·메신저처럼 늘 띄워 두는 앱은 '모든 데스크탑'이 편합니다. 그다음 Workspace를 열면 함께 보입니다."
+                ),
+                (
                     "Workspace 데이터는 어디에 있나요?",
                     "앱 이름, 창 제목, 화면과 배치가 이 Mac의 ~/Library/Application Support/Chap/Workspaces.json에만 저장됩니다. 동기화하거나 설정 Export에 넣지 않습니다."
                 ),
@@ -217,8 +221,12 @@ struct QAView: View {
                     "⌥ 단축키입니다. 가독성을 위해 평소에는 키만 보이고, 노치가 열린 채 ⌥를 누르고 있으면 키캡이 파랗게 바뀌며 ⌥1처럼 전체 조합을 보여줍니다."
                 ),
                 (
+                    "타이머는 어떻게 쓰나요?",
+                    "메뉴바 Timer에서 길이를 고르거나, Settings → Notch에서 Timer 칸을 놓고 −/+로 길이를 맞춘 뒤 Start를 누르세요. 도는 동안 노치가 접혀 있으면 노치 왼쪽에 남은 시간이 보이고, 끝나면 소리와 함께 Time's up이 뜹니다. 타이머는 하나만 돌고 Chap을 끄면 사라지며, Mac을 깨워 두지는 않습니다(그건 Focus가 합니다)."
+                ),
+                (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, To-do, Workspaces를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Sites, Apps, Finder, Focus, Timer, To-do, Workspaces를 놓습니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -379,6 +387,10 @@ struct QAView: View {
                     "Pick it in the Workspaces section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Workspaces → Edit Workspace in the status menu and Edit… on a notch row open the same page."
                 ),
                 (
+                    "Some apps stay on another desktop when I open a workspace.",
+                    "Chap moves and resizes windows, but it doesn't move them between desktops (Spaces); macOS has no official way to do that. Right-click the app's Dock icon, choose Options → Assign To, then pick This Desktop (it always opens on the current desktop) or All Desktops (it shows on every desktop). All Desktops suits apps you keep open, like Slack or a messenger. Open the workspace again and they appear together."
+                ),
+                (
                     "Where is Workspace data stored?",
                     "App names, window titles, displays, and layouts stay in ~/Library/Application Support/Chap/Workspaces.json on this Mac. They are not synced or included in config Export."
                 ),
@@ -491,8 +503,12 @@ struct QAView: View {
                     "They are Option shortcuts. The notch shows just the key for readability; hold Option while it is open and the keycaps turn blue and show the full combination, such as ⌥1."
                 ),
                 (
+                    "How does the timer work?",
+                    "Pick a length from Timer in the status menu, or place the Timer slot in Settings → Notch, set the length with − and +, and press Start. While it runs and the notch is closed, the time left shows beside the notch; when it ends, Chap plays a sound and shows Time's up. One timer runs at a time, it ends when you quit Chap, and it doesn't keep your Mac awake (Focus does that)."
+                ),
+                (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, To-do, or Workspaces. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Sites, Apps, Finder, Focus, Timer, To-do, or Workspaces. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
