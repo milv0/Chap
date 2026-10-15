@@ -206,7 +206,7 @@ struct QAView: View {
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
-                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 체크되고(자리는 그대로), 문구를 더블클릭하면 고칩니다. 줄에 마우스를 올리면 오른쪽 끝에 나오는 ×를 눌러(또는 우클릭) 지우고, 끝낸 항목이 있으면 제목 옆에 나오는 Clear(또는 제목 우클릭 → Clear Completed)로 한 번에 지웁니다. 일부만 비웠다면 잠깐 Undo로 되돌릴 수 있습니다. 모두 끝내면 \"All done.\"이 나오고 Back으로 목록을 다시 보거나 Clear로 비웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
+                    "Settings → Notch에서 To-do를 3~6번 칸에 놓으세요. 맨 아래 Add를 눌러 입력하고 Enter로 추가하면 다음 항목을 바로 이어 쓸 수 있습니다. 동그라미를 누르면 체크되고(자리는 그대로), 문구를 더블클릭하면 고칩니다. 줄에 마우스를 올리면 오른쪽 끝에 나오는 ×를 눌러(또는 우클릭) 지우고, 끝낸 항목이 있으면 칸에 마우스를 올렸을 때 제목 옆에 나오는 Clear(또는 제목 우클릭 → Clear Completed)로 한 번에 지웁니다. 일부만 비웠다면 잠깐 Undo로 되돌릴 수 있습니다. 모두 끝내면 \"All done.\"이 나오고 Back으로 목록을 다시 보거나 Clear로 비웁니다. 한눈에 보이도록 최대 4개까지 담고, 꽉 차면 완료 항목을 지워 자리를 만드세요. 이 Mac에만 저장됩니다(권한·동기화 없음)."
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
@@ -488,7 +488,7 @@ struct QAView: View {
                 ),
                 (
                     "How does the To-do slot work?",
-                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off (it stays in place); double-click a title to edit it. Hover a row and click × at its right end (or right-click) to delete. When something is done, a small Clear appears by the title (or right-click the title and choose Clear Completed); if only some items were cleared, Undo brings them back for a few seconds. When everything is done the slot says \"All done.\" with Back to see the list again and Clear to empty it. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
+                    "Place To-do in slot 3–6 in Settings → Notch. Click Add, type, and press Enter; the next line is ready right away. Click a circle to check an item off (it stays in place); double-click a title to edit it. Hover a row and click × at its right end (or right-click) to delete. When something is done, a small Clear appears by the title while you hover the slot (or right-click the title and choose Clear Completed); if only some items were cleared, Undo brings them back for a few seconds. When everything is done the slot says \"All done.\" with Back to see the list again and Clear to empty it. It holds up to four items so the list fits at a glance; clear finished ones to make room. It stays on this Mac (no permissions, no sync)."
                 ),
                 (
                     "When does Quick Note save?",
