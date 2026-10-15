@@ -25,6 +25,8 @@ struct NotchQuickNoteView: View {
     var showsToolbarDivider = false
     /// 오프스크린 렌더에서만 쓰는 고정 메모. 실제 저장소를 읽거나 쓰지 않는다.
     var previewText: String? = nil
+    /// borderless Quick Note 창의 자체 닫기 버튼. nil이면 노치 안쪽 편집기다.
+    var onClose: (() -> Void)?
 
     @State private var didCopy = false
 
@@ -188,6 +190,9 @@ struct NotchQuickNoteView: View {
             .disabled(text.isEmpty)
             toolButton(
                 symbol: "clock.arrow.circlepath", label: "Show Backups", action: showBackups)
+            if let onClose {
+                toolButton(symbol: "xmark", label: "Close Quick Note", action: onClose)
+            }
         }
         .padding(.leading, 6 + toolbarLeadingInset)
         .padding(.trailing, 6)
@@ -198,6 +203,9 @@ struct NotchQuickNoteView: View {
                     .fill(palette.subtleSurface)
                     .frame(height: 1)
             }
+        }
+        .background {
+            if onClose != nil { QuickNoteHeaderDragRegion() }
         }
     }
 

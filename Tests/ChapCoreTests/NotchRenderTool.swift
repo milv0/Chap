@@ -280,8 +280,7 @@ struct NotchRenderTool {
             to: directory.appendingPathComponent("notch-timer-badge-closing.png"))
     }
 
-    /// 실제 메모 파일을 읽지 않는 고정 문구로 Quick Note의 custom chrome을 확인한다.
-    /// traffic light는 AppKit이 그리므로, 렌더에서는 같은 여백에 표식만 놓는다.
+    /// 실제 메모 파일을 읽지 않는 고정 문구로 Quick Note의 불투명 custom card를 확인한다.
     @Test(
         "render the custom Quick Note window chrome",
         .enabled(if: NotchRenderTool.outputDirectory != nil))
@@ -292,20 +291,10 @@ struct NotchRenderTool {
             ("quick-note-window-dark", ColorScheme.dark, Color(white: 0.16)),
         ] {
             let view = QuickNoteWindowContent(
-                previewText: "Draft the launch notes before the stand-up."
+                previewText: "Draft the launch notes before the stand-up.",
+                onClose: {}
             )
             .frame(width: 420, height: 320)
-            .overlay(alignment: .topLeading) {
-                HStack(spacing: 8) {
-                    Circle().fill(.red.opacity(0.85)).frame(width: 12, height: 12)
-                    Circle().fill(.orange.opacity(0.85)).frame(width: 12, height: 12)
-                    Circle().fill(.green.opacity(0.85)).frame(width: 12, height: 12)
-                }
-                .padding(.leading, 20)
-                .padding(.top, 13)
-                .allowsHitTesting(false)
-                .accessibilityHidden(true)
-            }
             .background(backdrop)
             .environment(\.colorScheme, scheme)
             try Self.renderPNG(view).write(
