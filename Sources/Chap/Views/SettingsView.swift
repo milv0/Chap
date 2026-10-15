@@ -399,6 +399,8 @@ struct SettingsView: View {
                 ZStack {
                     SiteConfigView(
                         site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
+                        quickNoteShortcut: vm.notchQuickNoteShortcut,
+                        coverScreensShortcut: vm.coverScreensShortcut,
                         onSave: {
                             vm.cancelPendingSave()
                             return save(showAlerts: true)
@@ -842,6 +844,8 @@ struct SettingsView: View {
             statusBarIcon: vm.statusBarIcon,
             hiddenMenuLaunchTypes: vm.hiddenMenuLaunchTypes,
             notchLauncherEnabled: vm.notchLauncherEnabled,
+            notchQuickNoteShortcut: vm.notchQuickNoteShortcut,
+            coverScreensShortcut: vm.coverScreensShortcut,
             sites: vm.sites)
         let result = validateConfig(config)
 

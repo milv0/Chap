@@ -65,6 +65,7 @@ public struct ValidationResult: Sendable {
 /// - 필수값: name(비어있거나 placeholder면 error), launchType별 필수 필드
 /// - URL: http:// 또는 https:// scheme과 host가 모두 있어야 함
 /// - 중복(error): shortcut(case-insensitive), url(url타입), appPath(app타입), folderPath(finder타입)
+/// - Tools shortcut: site shortcut은 Quick Note·Cover Screens에 배정된 키를 쓸 수 없음
 /// - preset: windowSizePreset이 설정됐으면 알려진 값이어야 함
 /// - size: width·height 최소 100
 /// - displaySizeOverrides: 각 override의 preset·width·height도 동일하게 검증
@@ -172,6 +173,7 @@ public func validateConfig(_ config: Config) -> ValidationResult {
 
     // Cross-site duplicate detection
     issues.append(contentsOf: detectDuplicateShortcuts(in: config.sites))
+    issues.append(contentsOf: detectFeatureShortcutConflicts(in: config))
     issues.append(contentsOf: detectDuplicateValues(in: config.sites))
     issues.append(contentsOf: detectLaunchTypeCountOverLimit(in: config.sites))
 
@@ -221,6 +223,26 @@ private func detectDuplicateShortcuts(in sites: [Site]) -> [ValidationIssue] {
         }
     }
     return issues
+}
+
+/// 런처 단축키와 Tools에 배정한 Quick Note·Cover Screens 키의 충돌을 막는다.
+/// 이 검증은 UI 바깥에서 편집한 config와 import에도 같은 규칙을 적용한다.
+private func detectFeatureShortcutConflicts(in config: Config) -> [ValidationIssue] {
+    config.sites.enumerated().compactMap { index, site in
+        let trimmed = site.shortcut?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard trimmed.count == 1,
+            let conflict = QuickNoteShortcutPolicy.launcherConflict(
+                for: trimmed,
+                quickNoteKey: config.notchQuickNoteShortcut,
+                coverScreensKey: config.coverScreensShortcut),
+            let key = QuickNoteShortcutPolicy.normalized(trimmed)
+        else { return nil }
+        return ValidationIssue(
+            siteIndex: index,
+            field: .shortcut,
+            severity: .error,
+            message: QuickNoteShortcutPolicy.conflictMessage(conflict, key: key))
+    }
 }
 
 /// 중복 url/appPath/folderPath 감지. 같은 launchType끼리만 비교.

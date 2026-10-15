@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.14.2-orange)
+![Version](https://img.shields.io/badge/version-2.14.3-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -82,8 +82,8 @@ causes the next launch to create and link a new window.
 | `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
-| `⌥N` | Open Quick Note (change or turn off in Settings → Tools; a site using the same key wins) |
-| `⌥L` | Cover Screens (change or turn off in Settings → Tools; a site or Quick Note using the same key wins) |
+| `⌥N` | Open Quick Note (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
+| `⌥L` | Cover Screens (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.14.2
+Scripts/release.sh 2.14.3
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.14.2 --publish
+Scripts/release.sh 2.14.3 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

@@ -40,7 +40,7 @@ struct QAView: View {
             [
                 (
                     "단축키는 어떻게 설정하나요?",
-                    "Settings에서 각 사이트의 \"Shortcut (⌥ +)\" 필드에 원하는 키 하나를 입력하면 됩니다. 예: T 입력 → ⌥T로 실행."
+                    "Settings에서 각 사이트의 \"Shortcut (⌥ +)\" 필드에 원하는 키 하나를 입력하면 됩니다. 예: T 입력 → ⌥T로 실행. Quick Note나 Cover Screens에 배정된 키는 런처에 쓸 수 없고, 충돌하면 빨간 안내가 나옵니다."
                 ),
                 (
                     "단축키를 안 넣어도 되나요?",
@@ -322,7 +322,7 @@ struct QAView: View {
             [
                 (
                     "How do I set up shortcuts?",
-                    "In Settings, enter a single key in the \"Shortcut (⌥ +)\" field for each site. For example: enter T → press ⌥T to launch."
+                    "In Settings, enter a single key in the \"Shortcut (⌥ +)\" field for each site. For example: enter T → press ⌥T to launch. Keys assigned to Quick Note or Cover Screens cannot be used by a launcher; a conflict shows a red warning."
                 ),
                 (
                     "Is a shortcut required?",

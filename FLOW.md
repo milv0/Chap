@@ -137,6 +137,7 @@ configure()
 - Settings > General의 `Enable Chap Option-Key Triggers`를 끄면 `⌥.`, `⌥,`, 사이트 단축키 등록과
   메뉴의 Option key equivalent가 모두 즉시 해제된다. 사이트별 shortcut 설정값 자체는 유지된다.
 - `.`/`,`를 사이트 단축키로 쓸 수는 없다 (I7 + `validateConfig`가 차단).
+- Tools의 Quick Note·Cover Screens에 배정된 키는 런처 입력에서 즉시 거부되고, 이미 들어온 값은 `validateConfig`가 저장·import에서 차단한다.
 - 문자→keyCode는 `TISCopyCurrentASCIICapableKeyboardLayoutInputSource` + `UCKeyTranslate`를 쓴다.
   한글/일본어 IME 활성 상태에서도 ASCII 레이아웃을 얻고 AZERTY/Dvorak 물리 배열도 반영한다.
 - `kTISNotifySelectedKeyboardInputSourceChanged`를 받아도 ASCII keyboard layout ID가 실제로

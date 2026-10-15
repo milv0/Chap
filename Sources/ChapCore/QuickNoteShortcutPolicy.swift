@@ -42,6 +42,17 @@ public enum QuickNoteShortcutPolicy {
         return nil
     }
 
+    /// 런처가 이 키를 쓸 수 없는 이유. Tools에 배정된 키는 런처가 가져가지 못한다.
+    /// Quick Note를 먼저 보이고, 그다음 Cover Screens를 보이게 해 안내가 일관되게 나온다.
+    public static func launcherConflict(
+        for key: String?, quickNoteKey: String?, coverScreensKey: String?
+    ) -> Conflict? {
+        guard let key = normalized(key) else { return nil }
+        if normalized(quickNoteKey) == key { return .feature(name: "Quick Note") }
+        if normalized(coverScreensKey) == key { return .feature(name: "Cover Screens") }
+        return nil
+    }
+
     /// 실제로 등록할 키. 키가 있고 예약키·사이트와 겹치지 않을 때. Quick Note는 Tools 설정의 독립 기능이라
     /// 노치 런처·띠 아이콘 상태를 보지 않는다(노치 없는 Mac도 ⌥N으로 메모를 연다). 끄려면 키를 비운다.
     public static func registeredKey(shortcut: String?, sites: [Site]) -> String? {

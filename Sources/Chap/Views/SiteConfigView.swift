@@ -6,10 +6,15 @@ struct SiteConfigView: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
     var isNew: Bool = false
+    /// Tools에서 이미 배정한 키. 런처 입력에서는 이 키를 쓸 수 없다.
+    var quickNoteShortcut: String?
+    var coverScreensShortcut: String?
     @State private var hoveredSizeSelection: Int?
     @State private var isSizePresetPopoverPresented = false
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
+    /// 거부한 입력은 site에 쓰지 않고, 사용자가 왜 안 됐는지 바로 보게 한다.
+    @State private var rejectedShortcutMessage: String?
     @State private var sizeEditingDisplayIdentifier: String?
     @State private var sizeEditingDisplayName: String?
     @FocusState private var nameFieldFocused: Bool
@@ -32,6 +37,8 @@ struct SiteConfigView: View {
             .padding(.vertical, DS.paddingSmall)
         }
         .disabled(!isEditing)
+        .onChange(of: quickNoteShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
+        .onChange(of: coverScreensShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
     }
 
     // MARK: - Form Content
@@ -80,11 +87,20 @@ struct SiteConfigView: View {
     }
 
     private var nameAndShortcutRow: some View {
-        HStack(alignment: .bottom, spacing: DS.spacing) {
-            nameSection
-                .frame(maxWidth: .infinity, alignment: .leading)
-            shortcutSection(isCompact: true)
-                .frame(width: 88, alignment: .center)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .bottom, spacing: DS.spacing) {
+                nameSection
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                shortcutSection(isCompact: true)
+                    .frame(width: 88, alignment: .center)
+            }
+            if let message = shortcutErrorMessage {
+                Label(message, systemImage: "exclamationmark.triangle.fill")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.danger)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(message)
+            }
         }
     }
 
@@ -97,20 +113,50 @@ struct SiteConfigView: View {
         )
     }
 
+    private var activeShortcutConflict: QuickNoteShortcutPolicy.Conflict? {
+        QuickNoteShortcutPolicy.launcherConflict(
+            for: site.shortcut,
+            quickNoteKey: quickNoteShortcut,
+            coverScreensKey: coverScreensShortcut)
+    }
+
+    private var shortcutErrorMessage: String? {
+        if let conflict = activeShortcutConflict,
+            let key = QuickNoteShortcutPolicy.normalized(site.shortcut)
+        {
+            return QuickNoteShortcutPolicy.conflictMessage(conflict, key: key)
+        }
+        return rejectedShortcutMessage
+    }
+
     private var shortcutBinding: Binding<String> {
         Binding(
             get: { site.shortcut ?? "" },
             set: { newValue in
-                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                let key = trimmed.isEmpty ? nil : String(trimmed.prefix(1)).uppercased()
+                let key = QuickNoteShortcutPolicy.normalized(newValue)
                 if let key, [".", ","].contains(key) {
                     reservedKeyAlert = true
                     reservedKeyChar = key
                     return
                 }
+                if let key,
+                    let conflict = QuickNoteShortcutPolicy.launcherConflict(
+                        for: key,
+                        quickNoteKey: quickNoteShortcut,
+                        coverScreensKey: coverScreensShortcut)
+                {
+                    rejectedShortcutMessage = QuickNoteShortcutPolicy.conflictMessage(
+                        conflict, key: key)
+                    return
+                }
+                rejectedShortcutMessage = nil
                 site.shortcut = key
             }
         )
+    }
+
+    private func clearRejectedShortcutMessageIfResolved() {
+        if activeShortcutConflict == nil { rejectedShortcutMessage = nil }
     }
 
     private func shortcutSection(isCompact: Bool = false) -> some View {
@@ -121,7 +167,8 @@ struct SiteConfigView: View {
             alignment: isCompact ? .center : .leading,
             textAlignment: isCompact ? .center : .leading,
             fieldBackground: isCompact ? DS.accentSurface : DS.surfaceBg,
-            fieldBorder: isCompact ? DS.accent.opacity(0.7) : DS.border
+            fieldBorder: isCompact ? DS.accent.opacity(0.7) : DS.border,
+            hasError: shortcutErrorMessage != nil
         )
         .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
             Button("OK", role: .cancel) {}
