@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.14.6] — 2026-10-15
+
+### Changed
+
+- **A quieter To-do** — The To-do slot drops its boxes, capsule, and progress
+  line. The title reads "2 left" in plain text, Clear shows only while you hover
+  the slot, finished items are simply gray and struck through, and Add to-do is
+  plain text.
+
 ## [2.14.5] — 2026-10-15
 
 ### Fixed
