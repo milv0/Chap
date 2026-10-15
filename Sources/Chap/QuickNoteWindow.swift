@@ -21,20 +21,18 @@ enum QuickNoteWindow {
             window.makeKeyAndOrderFront(nil)
             return
         }
-        let hosting = NSHostingController(rootView: QuickNoteWindowContent())
+        let hosting = NSHostingController(
+            rootView: QuickNoteWindowContent(onClose: { Self.window?.close() })
+        )
         // 창 크기는 사용자가 정한다. SwiftUI 내용이 창을 되돌려 키우지 않게 한다.
         hosting.sizingOptions = []
-        // SwiftUI가 투명 titlebar의 safe area를 피하지 않고, Chap의 도구 줄이 그 아래까지 이어진다.
-        hosting.safeAreaRegions = []
         let window = QuickNoteNSWindow(contentViewController: hosting)
         window.title = "Quick Note"
-        // traffic light와 이동·리사이즈는 macOS 기본 동작으로 남기고, 그 아래 외관만 Chap이 그린다.
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-        window.titleVisibility = .hidden
-        window.titlebarAppearsTransparent = true
-        window.isMovableByWindowBackground = true
-        window.isOpaque = false
-        window.backgroundColor = .clear
+        // 겉은 Chap이 전부 그린다. AppKit은 리사이즈·키 포커스·프레임 저장만 맡는다.
+        window.styleMask = [.borderless, .resizable]
+        window.isMovableByWindowBackground = false
+        window.isOpaque = true
+        window.backgroundColor = .windowBackgroundColor
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
@@ -103,10 +101,9 @@ enum QuickNoteWindow {
     }
 }
 
-/// 투명한 시스템 titlebar 아래에 맞춘 Quick Note의 Chap chrome. 실제 traffic light는 NSWindow가 그린다.
+/// Quick Note의 불투명 custom card. AppKit titlebar 대신 Chap 헤더·닫기·드래그 영역을 쓴다.
 struct QuickNoteWindowContent: View {
-    static let chromeHeight: CGFloat = 38
-    static let trafficLightClearance: CGFloat = 68
+    static let chromeHeight: CGFloat = 36
 
     private static let palette = NotchWidgetPalette(
         primary: .primary, secondary: .secondary, accent: DS.accent, heading: .secondary,
@@ -115,6 +112,8 @@ struct QuickNoteWindowContent: View {
 
     /// 오프스크린 렌더만 실제 메모를 읽지 않도록 넣는 고정 문구.
     var previewText: String? = nil
+    /// 실제 창의 × 버튼. nil이면 렌더 프리뷰라 닫기 버튼은 눌리지 않는다.
+    var onClose: (() -> Void)?
 
     var body: some View {
         GeometryReader { geo in
@@ -122,17 +121,17 @@ struct QuickNoteWindowContent: View {
                 palette: Self.palette,
                 bodyHeight: max(geo.size.height - Self.chromeHeight - 15, 80),
                 focusesOnAppear: true,
-                toolbarLeadingInset: Self.trafficLightClearance,
                 toolbarHeight: Self.chromeHeight,
                 showsToolbarDivider: true,
-                previewText: previewText
+                previewText: previewText,
+                onClose: onClose
             )
             .padding(.horizontal, 12)
             .padding(.bottom, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        // titlebar까지 이어지는 얇은 Glass 면. 시스템 traffic light가 이 위에 그대로 올라간다.
-        .background(.thinMaterial)
+        // Glass가 아닌 불투명 card surface라 Light/Dark에서 메모와 헤더 대비가 흔들리지 않는다.
+        .background(DS.cardBg)
         .frame(
             minWidth: QuickNoteWindow.minimumSize.width,
             minHeight: QuickNoteWindow.minimumSize.height)
@@ -141,3 +140,26 @@ struct QuickNoteWindowContent: View {
 
 /// Quick Note 창. 표시 프로토콜로 메모 뷰가 이 창이 key를 잃는 순간을 알아본다.
 final class QuickNoteNSWindow: NSWindow, QuickNoteWindowPanelMarker {}
+
+/// borderless Quick Note의 빈 헤더를 AppKit 창 드래그 영역으로 만든다.
+/// SwiftUI 버튼 위가 아니라 background에만 놓여 Copy·Backups·× 입력은 그대로 버튼이 받는다.
+struct QuickNoteHeaderDragRegion: NSViewRepresentable {
+    func makeNSView(context: Context) -> HeaderDragView { HeaderDragView() }
+    func updateNSView(_ nsView: HeaderDragView, context: Context) {}
+
+    final class HeaderDragView: NSView {
+        override func mouseDown(with event: NSEvent) {
+            guard let window else { return }
+            let initialMouseLocation = NSEvent.mouseLocation
+            let initialOrigin = window.frame.origin
+            while let next = window.nextEvent(matching: [.leftMouseDragged, .leftMouseUp]) {
+                guard next.type != .leftMouseUp else { break }
+                let location = NSEvent.mouseLocation
+                window.setFrameOrigin(
+                    NSPoint(
+                        x: initialOrigin.x + location.x - initialMouseLocation.x,
+                        y: initialOrigin.y + location.y - initialMouseLocation.y))
+            }
+        }
+    }
+}

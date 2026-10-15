@@ -28,7 +28,7 @@ Sources/
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
-│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 floating Quick Note 창 (노치 바로 아래에서 시작, 크기 기억, Esc로 닫기, 네이티브 traffic light 위 Chap Glass chrome)
+│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 borderless floating Quick Note 카드 (노치 아래 시작, 크기 기억, 헤더 드래그·Esc/× 닫기)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
