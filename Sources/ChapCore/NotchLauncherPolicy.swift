@@ -65,7 +65,7 @@ public enum NotchLauncherPolicy {
             x: notchRect.maxX - dropBadgeNotchOverlap,
             y: notchRect.minY,
             width: dropBadgeNotchOverlap + NotchGeometry.badgeBodyWidth
-                + NotchGeometry.dockFlareRadius,
+                + NotchGeometry.badgeFlareRadius,
             height: notchRect.height)
     }
 
@@ -74,7 +74,7 @@ public enum NotchLauncherPolicy {
     public static func timerBadgeFrame(notchRect: CGRect) -> CGRect {
         let width =
             dropBadgeNotchOverlap + NotchGeometry.timerBadgeBodyWidth
-            + NotchGeometry.dockFlareRadius
+            + NotchGeometry.badgeFlareRadius
         return CGRect(
             x: notchRect.minX + dropBadgeNotchOverlap - width, y: notchRect.minY,
             width: width, height: notchRect.height)
@@ -142,7 +142,7 @@ public enum NotchLauncherPolicy {
     public static let stripToolPitch: CGFloat = 28
 
     /// Drop 배지 아이콘 중심의 노치 오른쪽 끝 기준 거리. 배지 본체(34pt)는 노치 밑으로
-    /// 12pt 파고든 뒤 시작하고, 아이콘은 본체 가운데에서 왼쪽으로 4pt 광학 보정된다.
+    /// 18pt 파고든 뒤 시작하고, 아이콘은 본체 가운데에서 왼쪽으로 4pt 광학 보정된다.
     public static let dropBadgeIconCenterOffset: CGFloat = NotchGeometry.badgeBodyWidth / 2 - 4
 
     /// 상단 띠 도구 아이콘들의 중심 위치(노치 오른쪽 끝 기준). Drop 배지가 있으면 배지 바로

@@ -8,7 +8,7 @@ struct NotchTimerBadgeView: View {
     var body: some View {
         ZStack {
             NotchBadgeShape(
-                flareRadius: NotchGeometry.dockFlareRadius,
+                flareRadius: NotchGeometry.badgeFlareRadius,
                 bottomCornerRadius: NotchGeometry.badgeCornerRadius
             )
             .fill(Color.black)
@@ -26,7 +26,7 @@ struct NotchTimerBadgeView: View {
                     .accessibilityLabel(
                         "Timer, \(TimerPolicy.clockLabel(until: endDate, now: context.date)) left")
             }
-            .padding(.leading, NotchGeometry.dockFlareRadius)
+            .padding(.leading, NotchGeometry.badgeFlareRadius)
             .padding(.trailing, NotchLauncherPolicy.dropBadgeNotchOverlap)
         }
     }

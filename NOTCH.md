@@ -14,9 +14,9 @@
  │  menu bar     [═══════ notch (hardware) ═══════]▓▓[■ 34×32]╮    │
  │                        185 × 32 (runtime)     (12+34+10)×32 │    │
  └────────────────────────────────────────────────────────────┴────┘
-                     badgeNotchOverlap 12 (노치 밑으로 파고듦 ▓) ↑
-                     보이는 본체 badgeBodyWidth 34 × 32, 플레어 10은 그 바깥  ↑
-                     하단 바깥: badgeCornerRadius 6 볼록          ↑
+                     badgeNotchOverlap 18 (노치 밑으로 파고듦 ▓) ↑
+                     보이는 본체 badgeBodyWidth 34 × 32, 플레어 badgeFlareRadius 6은 그 바깥  ↑
+                     하단 바깥: badgeCornerRadius 13 볼록(연속 곡률, 하드웨어 노치와 같은 곡률)          ↑
 
  도커가 펼쳐지면 (노치 중앙 정렬):
               ╭──flare 10                        flare 10──╮
@@ -63,6 +63,9 @@
 1. **벽 인셋** — 본체 벽은 프레임보다 좌우 각 `dockFlareRadius`만큼
    안쪽에 선다. 메인 패널은 `NotchDockShape`과 동일한 geometry를 공유하고,
    Drop 배지는 별도 `NotchBadgeShape`으로 노치 쪽 직선 변과 바깥 플레어를 만든다.
+   배지(Drop·Timer)만은 하드웨어 노치 옆에 나란히 보이므로 도커 값이 아니라 노치 곡률을 따른다:
+   플레어 `badgeFlareRadius` 6, 아래 모서리 `badgeCornerRadius` 13 `.continuous`.
+   애플이 노치 곡률을 공개하지 않아 실측에 가까운 근사치다.
 2. **림 스트로크** — 림 하이라이트는 상단 변을 긋지 않는 `isRim` 경로를
    써야 노치 경계에 흰 줄이 생기지 않는다.
 
@@ -343,7 +346,7 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
 
 ## 타이머 배지
 
-**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 12pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 도커를 닫을 때는 닫힘 애니메이션이 시작되는 즉시 배지를 패널보다 위에 올려, 접히는 검정 띠에서 끊기지 않고 이어진다. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Focus 칸의 Timer 모드가 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
+**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 18pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 도커를 닫을 때는 닫힘 애니메이션이 시작되는 즉시 배지를 패널보다 위에 올려, 접히는 검정 띠에서 끊기지 않고 이어진다. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Focus 칸의 Timer 모드가 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
 
 ## Workspaces 칸
 
