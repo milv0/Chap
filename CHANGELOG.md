@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.14.4] — 2026-10-15
+
+### Changed
+
+- **Quick Note card** — Quick Note is now a plain, opaque Chap card with its own
+  header: title, character count, Copy, Backups, and ×. No system title bar or
+  see-through glass, so the note reads clearly in Light and Dark. Drag the header
+  to move it and the edges to resize; Esc still closes it.
+
 ## [2.14.3] — 2026-10-15
 
 ### Changed
