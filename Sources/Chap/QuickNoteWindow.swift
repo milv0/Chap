@@ -31,8 +31,10 @@ enum QuickNoteWindow {
         // 겉은 Chap이 전부 그린다. AppKit은 리사이즈·키 포커스·프레임 저장만 맡는다.
         window.styleMask = [.borderless, .resizable]
         window.isMovableByWindowBackground = false
-        window.isOpaque = true
-        window.backgroundColor = .windowBackgroundColor
+        // 둥근 모서리 밖은 투명하게 두고, 그림자는 카드 모양(알파)을 따라가게 한다.
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = true
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
@@ -61,6 +63,8 @@ enum QuickNoteWindow {
         Self.window = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+        // 첫 레이아웃이 끝난 뒤 둥근 카드 모양으로 그림자를 다시 잡는다.
+        DispatchQueue.main.async { window.invalidateShadow() }
     }
 
     /// Esc로 창을 닫는다. 메모 상자에서 타이핑 중이어도(TextEditor가 Esc를 먹기 전에) 받는다.
@@ -105,6 +109,13 @@ enum QuickNoteWindow {
 struct QuickNoteWindowContent: View {
     static let chromeHeight: CGFloat = 36
 
+    /// 시스템 창과 같은 모서리. macOS 26의 창은 더 둥글고, 그 이전은 10pt다.
+    /// `.continuous`(스퀴클)라 원호가 직선에 매끄럽게 이어진다.
+    static var cornerRadius: CGFloat {
+        if #available(macOS 26, *) { return 16 }
+        return 10
+    }
+
     private static let palette = NotchWidgetPalette(
         primary: .primary, secondary: .secondary, accent: DS.accent, heading: .secondary,
         textShadowOpacity: 0, hoverBackground: Color.primary.opacity(0.08),
@@ -132,6 +143,12 @@ struct QuickNoteWindowContent: View {
         }
         // Glass가 아닌 불투명 card surface라 Light/Dark에서 메모와 헤더 대비가 흔들리지 않는다.
         .background(DS.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous))
+        // 시스템 창처럼 아주 옅은 테두리로 밝은 배경 위에서도 카드 윤곽이 보이게 한다.
+        .overlay(
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+        )
         .frame(
             minWidth: QuickNoteWindow.minimumSize.width,
             minHeight: QuickNoteWindow.minimumSize.height)
@@ -139,7 +156,11 @@ struct QuickNoteWindowContent: View {
 }
 
 /// Quick Note 창. 표시 프로토콜로 메모 뷰가 이 창이 key를 잃는 순간을 알아본다.
-final class QuickNoteNSWindow: NSWindow, QuickNoteWindowPanelMarker {}
+/// borderless 창은 기본으로 key가 되지 못한다. 그러면 타이핑과 Esc가 이 창에 오지 않으므로 허용한다.
+final class QuickNoteNSWindow: NSWindow, QuickNoteWindowPanelMarker {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
 
 /// borderless Quick Note의 빈 헤더를 AppKit 창 드래그 영역으로 만든다.
 /// SwiftUI 버튼 위가 아니라 background에만 놓여 Copy·Backups·× 입력은 그대로 버튼이 받는다.

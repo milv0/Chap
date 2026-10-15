@@ -197,7 +197,7 @@ struct NotchDropBadgeView: View {
             // 노치 쪽(왼쪽)은 직선으로 하드웨어와 융합하고, 바깥(오른쪽)만
             // 도커 문법을 따른다: 상단 오목 플레어 + 하단 볼록 라운드.
             NotchBadgeShape(
-                flareRadius: NotchGeometry.dockFlareRadius,
+                flareRadius: NotchGeometry.badgeFlareRadius,
                 bottomCornerRadius: NotchGeometry.badgeCornerRadius
             )
             .fill(Color.black)
@@ -222,7 +222,7 @@ struct NotchDropBadgeView: View {
                 // 왼쪽으로 4pt 민 광학 중앙에 둔다.
                 .offset(x: -4, y: 1)
                 .padding(.leading, NotchLauncherPolicy.dropBadgeNotchOverlap)
-                .padding(.trailing, NotchGeometry.dockFlareRadius)
+                .padding(.trailing, NotchGeometry.badgeFlareRadius)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
@@ -239,23 +239,25 @@ struct NotchBadgeShape: Shape {
     let bottomCornerRadius: CGFloat
     func path(in rect: CGRect) -> Path {
         let fl = flareRadius
-        let br = bottomCornerRadius
         var path = Path()
 
-        // 상단 왼쪽(노치 밑)에서 시작해 왼쪽 변은 직선으로 내려간다.
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        // 하단 변 → 바깥쪽 볼록 라운드.
-        path.addLine(to: CGPoint(x: rect.maxX - fl - br, y: rect.maxY))
-        path.addArc(
-            center: CGPoint(x: rect.maxX - fl - br, y: rect.maxY - br), radius: br,
-            startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
-        // 바깥 벽을 올라가 오목 플레어로 상단 라인에 합류.
-        path.addLine(to: CGPoint(x: rect.maxX - fl, y: rect.minY + fl))
-        path.addArc(
+        // 본체: 노치 쪽(왼쪽) 변은 직선, 바깥 아래 모서리만 하드웨어 노치처럼 연속 곡률(스퀴클).
+        let body = CGRect(
+            x: rect.minX, y: rect.minY, width: max(rect.width - fl, 0), height: rect.height)
+        path.addPath(
+            UnevenRoundedRectangle(
+                bottomTrailingRadius: min(bottomCornerRadius, body.width / 2, body.height / 2),
+                style: .continuous
+            ).path(in: body))
+        // 바깥 위: 본체 벽에서 오목하게 휘어 메뉴 막대 라인에 합류하는 플레어.
+        var flare = Path()
+        flare.move(to: CGPoint(x: rect.maxX - fl, y: rect.minY))
+        flare.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        flare.addArc(
             center: CGPoint(x: rect.maxX, y: rect.minY + fl), radius: fl,
-            startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-        path.closeSubpath()
+            startAngle: .degrees(270), endAngle: .degrees(180), clockwise: true)
+        flare.closeSubpath()
+        path.addPath(flare)
         return path
     }
 }

@@ -240,10 +240,14 @@ struct NotchRenderTool {
             let view = ZStack(alignment: .topLeading) {
                 Color(white: 0.85)
                 // 하드웨어 노치 자리
-                UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10)
-                    .fill(Color.black)
-                    .frame(width: notch.width, height: notch.height)
-                    .offset(x: frame.width - NotchLauncherPolicy.dropBadgeNotchOverlap)
+                // 하드웨어 노치 근사: 아래 모서리 13pt 연속 곡률(배지와 같은 값).
+                UnevenRoundedRectangle(
+                    bottomLeadingRadius: NotchGeometry.badgeCornerRadius,
+                    bottomTrailingRadius: NotchGeometry.badgeCornerRadius, style: .continuous
+                )
+                .fill(Color.black)
+                .frame(width: notch.width, height: notch.height)
+                .offset(x: frame.width - NotchLauncherPolicy.dropBadgeNotchOverlap)
                 NotchTimerBadgeView(endDate: Date().addingTimeInterval(remaining))
                     .frame(width: frame.width, height: frame.height)
             }

@@ -104,6 +104,16 @@ struct QuickNoteWindowTests {
         #expect(didRequestFlush)
     }
 
+    @Test("the borderless note window can take keys, so typing and Esc reach it")
+    func borderlessWindowTakesKeys() throws {
+        QuickNoteWindow.show()
+        let window = try #require(NSApp.windows.first { $0 is QuickNoteNSWindow })
+        defer { if QuickNoteWindow.isOpen { window.close() } }
+        #expect(window.styleMask.contains(.borderless))
+        #expect(window.styleMask.contains(.resizable))
+        #expect(window.canBecomeKey)
+    }
+
     @Test("other keys and other windows pass through")
     func otherKeysPassThrough() throws {
         QuickNoteWindow.show()

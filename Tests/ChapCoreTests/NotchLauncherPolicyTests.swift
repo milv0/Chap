@@ -68,9 +68,9 @@ struct NotchLauncherPolicyTests {
         let frame = NotchLauncherPolicy.dropBadgeFrame(
             notchRect: CGRect(x: 656, y: 950, width: 200, height: 32))
 
-        // 856(노치 오른쪽 끝) 기준: 겹침 12 + 본체 34 + 플레어 10.
+        // 856(노치 오른쪽 끝) 기준: 겹침 18 + 본체 34 + 플레어 6.
         #expect(frame.minX == 856 - NotchLauncherPolicy.dropBadgeNotchOverlap)
-        #expect(frame.maxX == 900)
+        #expect(frame.maxX == 896)
         #expect(frame.minY == 950)
         #expect(frame.height == 32)
     }

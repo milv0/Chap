@@ -9,9 +9,11 @@ import CoreGraphics
 public enum NotchGeometry {
     // MARK: Drop 배지
 
-    /// 배지가 노치 안쪽으로 파고드는 겹침. 노치의 둥근 오른쪽 아래 모서리를
-    /// 검정으로 채워 노치가 오른쪽으로 길어져 보이게 한다.
-    public static let badgeNotchOverlap: CGFloat = 12
+    /// 배지가 노치 안쪽으로 파고드는 겹침. 노치의 둥근 아래 모서리를 검정으로 채워
+    /// 노치가 옆으로 길어져 보이게 한다. 노치 모서리는 연속 곡률이라 반경(약 13pt)보다
+    /// 안쪽(약 17pt)까지 휘므로, 그보다 깊게 파고들어야 이음새에 홈이 남지 않는다.
+    /// 겹친 부분은 하드웨어 노치 밑이라 보이지 않는다.
+    public static let badgeNotchOverlap: CGFloat = 18
     /// 배지 본체(보이는 검정)의 폭. 높이는 노치 높이(32)를 따르므로
     /// 34×32의 살짝 가로로 긴 비율이 된다.
     public static let badgeBodyWidth: CGFloat = 34
@@ -20,10 +22,13 @@ public enum NotchGeometry {
     /// 노치 좌우에 확보하는 평평한 검정 plateau 영역 폭.
     /// 왼쪽은 Keep Awake 상태, 오른쪽은 Drop 배지와 향후 상태 표시에 쓴다.
     public static let stripPlateauSideWidth: CGFloat = 110
-    /// 배지 하단 바깥 볼록 모서리 반경. 실제 노치의 라운드보다 크면 이질감이
-    /// 생기므로 하드웨어 곡률에 가깝게 작게 유지한다. 상단은 도커와 같은
-    /// 오목 플레어(`dockFlareRadius`)를 써서 상단바에서 흘러나오게 한다.
-    public static let badgeCornerRadius: CGFloat = 6
+    /// 배지 하단 바깥 볼록 모서리 반경. 하드웨어 노치의 아래 모서리와 같은 크기로 맞추고
+    /// `.continuous`(스퀴클)로 그려, 노치 옆에 붙어도 곡률이 따로 놀지 않는다.
+    /// 애플이 수치를 공개하지 않아 실측에 가까운 값이다(노치 높이 32~38pt 기준 약 13pt).
+    public static let badgeCornerRadius: CGFloat = 13
+    /// 배지 상단 바깥 오목 플레어 반경. 하드웨어 노치가 메뉴 막대와 만나는 곡선(약 6pt)에 맞춘다.
+    /// 도커의 플레어(`dockFlareRadius` 10)보다 작다: 배지는 노치와 나란히 보이는 작은 표면이다.
+    public static let badgeFlareRadius: CGFloat = 6
 
     // MARK: 도커 실루엣
 
