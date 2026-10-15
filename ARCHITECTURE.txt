@@ -28,7 +28,7 @@ Sources/
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
-│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 floating Quick Note 창 (노치 바로 아래에서 시작, 크기 기억, Esc로 닫기)
+│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 floating Quick Note 창 (노치 바로 아래에서 시작, 크기 기억, Esc로 닫기, 네이티브 traffic light 위 Chap Glass chrome)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
@@ -104,7 +104,7 @@ Sources/
 │   ├── WorkspaceGeometry.swift    ← AX bounds ↔ 디스플레이 상대 프레임 순수 변환·클램프
 │   ├── WorkspaceStore.swift       ← Workspaces.json 로컬 저장·상한·손상 파일 보존
 │   ├── DisplayMatching.swift      ← 커서/내장 화면 결정·명시 디스플레이 판정·UUID 우선 매칭(resolvedDisplayIndex)
-│   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복 검증
+│   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복·Tools 키 충돌 검증
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
 │   ├── ImportNormalization.swift  ← Import 안전 정규화·검증·display UUID/displayName 마이그레이션
 │   ├── UpdateConfiguration.swift ← Sparkle 설정 검증 (fail-closed 순수 로직)
@@ -127,7 +127,7 @@ Sources/
 │   ├── MirrorPolicy.swift     ← 카메라 권한 → 거울 표시 상태, 캡처 허용 판정
 │   ├── TodoStore.swift        ← 노치 할 일 목록 저장소·규칙 (Application Support/Chap/Todos.json, 최대 4개)
 │   ├── QuickNoteStore.swift   ← 빠른 메모 평문 저장소 (Application Support/Chap/QuickNote.txt, 2만 자)·백업 정책·읽기 실패 보존
-│   ├── QuickNoteShortcutPolicy.swift ← Quick Note ⌥ 키 정규화·사이트/예약키 충돌·등록 조건 (순수 로직)
+│   ├── QuickNoteShortcutPolicy.swift ← Quick Note ⌥ 키 정규화·사이트/예약키·런처 Tools 키 충돌 정책 (순수 로직)
 │   ├── QuickNotePlacement.swift ← Quick Note 창 첫 자리: 노치 아랫변에 붙여 가운데 정렬 (순수 로직)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책

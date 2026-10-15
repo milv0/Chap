@@ -17,6 +17,14 @@ struct NotchQuickNoteView: View {
     var bodyHeight: CGFloat = widgetBodyHeight
     /// 창이 뜨면 바로 입력할 수 있게 커서를 넣는다.
     var focusesOnAppear = false
+    /// 창 chrome에서는 시스템 traffic light가 차지하는 왼쪽 여백.
+    var toolbarLeadingInset: CGFloat = 0
+    /// 노치에서는 짧고, 분리 창에서는 titlebar 높이에 맞춘다.
+    var toolbarHeight: CGFloat = DS.notchHeaderHeight
+    /// 분리 창의 커스텀 chrome일 때 도구 줄 아래에 미세한 구분선을 둔다.
+    var showsToolbarDivider = false
+    /// 오프스크린 렌더에서만 쓰는 고정 메모. 실제 저장소를 읽거나 쓰지 않는다.
+    var previewText: String? = nil
 
     @State private var didCopy = false
 
@@ -102,14 +110,20 @@ struct NotchQuickNoteView: View {
                 .onTapGesture { isFocused = false }
         )
         .onAppear {
-            load()
+            if let previewText {
+                text = previewText
+                didLoad = true
+            } else {
+                load()
+            }
             if focusesOnAppear {
                 // 패널이 key가 된 다음 틱에 커서를 넣는다.
                 DispatchQueue.main.async { isFocused = true }
             }
         }
         .onChange(of: text) { _, newValue in
-            guard didLoad else { return }
+            // 렌더 프리뷰는 실제 메모를 바꾸지 않는다.
+            guard didLoad, previewText == nil else { return }
             let clamped = QuickNoteStore.clamped(newValue)
             if clamped != newValue {
                 text = clamped
@@ -175,8 +189,16 @@ struct NotchQuickNoteView: View {
             toolButton(
                 symbol: "clock.arrow.circlepath", label: "Show Backups", action: showBackups)
         }
-        .padding(.horizontal, 6)
-        .frame(height: DS.notchHeaderHeight)
+        .padding(.leading, 6 + toolbarLeadingInset)
+        .padding(.trailing, 6)
+        .frame(height: toolbarHeight)
+        .overlay(alignment: .bottom) {
+            if showsToolbarDivider {
+                Rectangle()
+                    .fill(palette.subtleSurface)
+                    .frame(height: 1)
+            }
+        }
     }
 
     private func toolButton(symbol: String, label: String, action: @escaping () -> Void)

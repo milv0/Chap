@@ -280,6 +280,74 @@ struct NotchRenderTool {
             to: directory.appendingPathComponent("notch-timer-badge-closing.png"))
     }
 
+    /// 실제 메모 파일을 읽지 않는 고정 문구로 Quick Note의 custom chrome을 확인한다.
+    /// traffic light는 AppKit이 그리므로, 렌더에서는 같은 여백에 표식만 놓는다.
+    @Test(
+        "render the custom Quick Note window chrome",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderQuickNoteWindowChrome() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        for (name, scheme, backdrop) in [
+            ("quick-note-window-light", ColorScheme.light, Color(white: 0.92)),
+            ("quick-note-window-dark", ColorScheme.dark, Color(white: 0.16)),
+        ] {
+            let view = QuickNoteWindowContent(
+                previewText: "Draft the launch notes before the stand-up."
+            )
+            .frame(width: 420, height: 320)
+            .overlay(alignment: .topLeading) {
+                HStack(spacing: 8) {
+                    Circle().fill(.red.opacity(0.85)).frame(width: 12, height: 12)
+                    Circle().fill(.orange.opacity(0.85)).frame(width: 12, height: 12)
+                    Circle().fill(.green.opacity(0.85)).frame(width: 12, height: 12)
+                }
+                .padding(.leading, 20)
+                .padding(.top, 13)
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+            .background(backdrop)
+            .environment(\.colorScheme, scheme)
+            try Self.renderPNG(view).write(
+                to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    /// Tools가 보유한 ⌥N을 런처에 넣으려 할 때, 입력이 거부되고 빨간 안내가 보이는지 그린다.
+    @Test(
+        "render the launcher shortcut conflict",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderLauncherShortcutConflict() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        for (name, scheme) in [
+            ("settings-launcher-shortcut-conflict-light", ColorScheme.light),
+            ("settings-launcher-shortcut-conflict-dark", ColorScheme.dark),
+        ] {
+            let view = LauncherShortcutConflictPreview()
+                .frame(width: 560, height: 440)
+                .background(DS.surfaceBg)
+                .environment(\.colorScheme, scheme)
+            try Self.renderPNG(view).write(
+                to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    private struct LauncherShortcutConflictPreview: View {
+        @State private var site = Site(
+            name: "Docs", url: "https://docs.example.com", width: 900, height: 700,
+            shortcut: "N")
+        @State private var isEditing = true
+
+        var body: some View {
+            SiteConfigView(
+                site: $site,
+                isEditing: $isEditing,
+                quickNoteShortcut: "N",
+                coverScreensShortcut: "L"
+            )
+        }
+    }
+
     private static var previewWorkspaces: [ChapWorkspace] {
         let windows = [
             WorkspaceWindow(

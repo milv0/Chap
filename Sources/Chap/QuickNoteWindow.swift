@@ -24,9 +24,17 @@ enum QuickNoteWindow {
         let hosting = NSHostingController(rootView: QuickNoteWindowContent())
         // 창 크기는 사용자가 정한다. SwiftUI 내용이 창을 되돌려 키우지 않게 한다.
         hosting.sizingOptions = []
+        // SwiftUI가 투명 titlebar의 safe area를 피하지 않고, Chap의 도구 줄이 그 아래까지 이어진다.
+        hosting.safeAreaRegions = []
         let window = QuickNoteNSWindow(contentViewController: hosting)
         window.title = "Quick Note"
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        // traffic light와 이동·리사이즈는 macOS 기본 동작으로 남기고, 그 아래 외관만 Chap이 그린다.
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.isOpaque = false
+        window.backgroundColor = .clear
         window.level = .floating
         window.isReleasedWhenClosed = false
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
@@ -95,21 +103,36 @@ enum QuickNoteWindow {
     }
 }
 
-/// 창의 내용: 시스템 색으로 그린 메모 편집기와 도구 줄(글자 수·복사·백업).
-private struct QuickNoteWindowContent: View {
+/// 투명한 시스템 titlebar 아래에 맞춘 Quick Note의 Chap chrome. 실제 traffic light는 NSWindow가 그린다.
+struct QuickNoteWindowContent: View {
+    static let chromeHeight: CGFloat = 38
+    static let trafficLightClearance: CGFloat = 68
+
     private static let palette = NotchWidgetPalette(
         primary: .primary, secondary: .secondary, accent: DS.accent, heading: .secondary,
         textShadowOpacity: 0, hoverBackground: Color.primary.opacity(0.08),
         subtleSurface: Color.primary.opacity(0.12))
 
+    /// 오프스크린 렌더만 실제 메모를 읽지 않도록 넣는 고정 문구.
+    var previewText: String? = nil
+
     var body: some View {
         GeometryReader { geo in
             NotchQuickNoteView(
                 palette: Self.palette,
-                bodyHeight: max(geo.size.height - DS.notchHeaderHeight - 7, 80),
-                focusesOnAppear: true)
+                bodyHeight: max(geo.size.height - Self.chromeHeight - 15, 80),
+                focusesOnAppear: true,
+                toolbarLeadingInset: Self.trafficLightClearance,
+                toolbarHeight: Self.chromeHeight,
+                showsToolbarDivider: true,
+                previewText: previewText
+            )
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .padding(12)
+        // titlebar까지 이어지는 얇은 Glass 면. 시스템 traffic light가 이 위에 그대로 올라간다.
+        .background(.thinMaterial)
         .frame(
             minWidth: QuickNoteWindow.minimumSize.width,
             minHeight: QuickNoteWindow.minimumSize.height)

@@ -93,6 +93,8 @@ struct InputField: View {
     var textAlignment: TextAlignment = .leading
     var fieldBackground: Color = DS.surfaceBg
     var fieldBorder: Color = DS.border
+    /// 유효하지 않은 입력은 오류색 테두리로 보여 준다. 안내 문구는 호출자 문맥에 맞춰 칸 아래에 둔다.
+    var hasError = false
 
     var body: some View {
         VStack(alignment: alignment, spacing: 6) {
@@ -108,7 +110,7 @@ struct InputField: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(fieldBorder, lineWidth: 1)
+                        .stroke(hasError ? DS.danger : fieldBorder, lineWidth: hasError ? 2 : 1)
                 )
         }
     }

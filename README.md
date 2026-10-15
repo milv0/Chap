@@ -82,8 +82,8 @@ causes the next launch to create and link a new window.
 | `⌥.` | Open menubar menu |
 | `⌥(custom key)` | Launch site (per-site shortcut setting) |
 | `⌥,` | Open Settings |
-| `⌥N` | Open Quick Note (change or turn off in Settings → Tools; a site using the same key wins) |
-| `⌥L` | Cover Screens (change or turn off in Settings → Tools; a site or Quick Note using the same key wins) |
+| `⌥N` | Open Quick Note (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
+| `⌥L` | Cover Screens (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
 | `⌘1`~`⌘9` | Select site in Settings sidebar |
 | `⌘N` | Add new site |
 | `⌘S` | Save changes |

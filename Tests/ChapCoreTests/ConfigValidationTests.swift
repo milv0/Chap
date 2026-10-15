@@ -387,3 +387,39 @@ struct ConfigValidationTests {
         #expect(validateConfig(Config(sites: urls + apps)).isValid)
     }
 }
+
+@Suite("Feature shortcut config validation")
+struct FeatureShortcutConfigValidationTests {
+    @Test("site shortcuts cannot use configured Quick Note or Cover Screens keys")
+    func toolsKeysBlockSiteShortcuts() {
+        func result(siteKey: String, quickNoteKey: String?, coverScreensKey: String?)
+            -> ValidationResult
+        {
+            validateConfig(
+                Config(
+                    notchQuickNoteShortcut: quickNoteKey,
+                    coverScreensShortcut: coverScreensKey,
+                    sites: [
+                        Site(
+                            name: "Docs", url: "https://docs.example.com", width: 800,
+                            height: 600, shortcut: siteKey)
+                    ]
+                )
+            )
+        }
+
+        let quickNoteConflict = result(siteKey: "P", quickNoteKey: "P", coverScreensKey: "L")
+        #expect(
+            quickNoteConflict.errors.contains {
+                $0.field == .shortcut && $0.message.contains("Quick Note")
+            })
+
+        let coverScreensConflict = result(siteKey: "K", quickNoteKey: "N", coverScreensKey: "K")
+        #expect(
+            coverScreensConflict.errors.contains {
+                $0.field == .shortcut && $0.message.contains("Cover Screens")
+            })
+
+        #expect(result(siteKey: "D", quickNoteKey: "N", coverScreensKey: "L").isValid)
+    }
+}
