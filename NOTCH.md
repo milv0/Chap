@@ -187,18 +187,18 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 
 | 칸 | 폭 |
 |---|---|
-| Sites·Finder | 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽, 112–170pt (`LauncherListPolicy.listColumnWidth`) |
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
-| Apps | 2열 아이콘 격자 80pt (제목이 더 길면 제목 폭) |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (104pt 다이얼, Focus·Timer 모드 공용) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
-| Launchers | 112–170pt (모든 탭 중 가장 넓은 내용, 제목 + 탭 아이콘 셋은 늘 들어감) |
-| Workspaces | 128pt (2열 타일: 앱 아이콘 묶음 + 이름) |
+| Launchers | 112–170pt (Sites·Finder 중 가장 넓은 목록, 제목 + 탭 아이콘은 늘 들어감) |
+| Apps | 112–170pt (Apps 3열 격자 122pt와 Workspaces 2열 타일 128pt 중 넓은 쪽, 제목 + 탭 아이콘은 늘 들어감) |
 
-글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
-모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
+글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 놓을 수 있는 위젯
+(Screenshots·Downloads·Launchers·Apps·Focus·To-do) 여섯이 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
+2.16에서 없앤 위젯은 자리를 지킨 채 바뀐다(`NotchWidget.migratedSlots`): 첫 Sites·Finder 칸은 Launchers, 그다음은 빈 칸.
+Workspaces 칸은 Apps(이미 Apps가 있으면 빈 칸). 칸을 지워 당기지 않아 나머지 배치가 그대로다.
 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
@@ -206,14 +206,19 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈
-Downloads 칸 · Sites · Apps · Finder · 빈 칸.
+Downloads 칸 · Launchers · Apps · 빈 칸 · 빈 칸.
 
-## Apps 칸: 아이콘 격자
+## Apps 칸: 아이콘 격자 + Workspaces 탭
 
-Apps 위젯은 목록 대신 앱 아이콘 2열 격자(최대 2열 × 3줄, 6개)다. 앱 수와 관계없이 2열 × 3줄 자리(113pt)를 잡고 위에서부터 한 줄에 둘씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 5.5pt. 세로 간격은 격자 3줄(앱 6개) 높이가 목록 칸 4줄 높이(26pt × 4 + 3pt × 3 = 113pt)와 정확히 같도록 계산한다.
+Apps 칸(`NotchWidget.apps`, `NotchAppsSlot`)은 Apps(앱 아이콘)와 Workspaces(작업 공간 타일) 두 탭이다. 둘 다 아이콘 타일이라
+탭을 바꿔도 칸 모양이 같다. 제목 줄은 Launchers와 같은 `NotchTabHeader`(`■ Apps  ▤`)다. Workspaces는 Capture 타일이 늘 있어
+항상 탭이고, Apps 탭은 앱이 있을 때만 있다(`AppsSlotTab.available`). 마지막 탭은 UserDefaults `ChapAppsTab`에 기억한다.
+고른 탭을 다시 누르면 Apps는 설정의 Apps 섹션, Workspaces는 Workspaces 섹션을 연다.
+
+Apps 탭은 앱 아이콘 3열 격자(최대 3열 × 2줄, 6개)다. 필요한 줄만 쓰고 위에서부터 한 줄에 셋씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 12pt(키캡 배지가 아래 줄과 붙지 않게). 격자 폭 122pt는 Workspaces 2열 타일(128pt)과 거의 같아 어느 탭이든 양옆이 비지 않는다. 본문은 목록 칸 4줄 높이(113pt)에 고정한다.
 단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
-utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다. Apps 칸 폭은 격자 폭 80pt다. 목록 칸(Sites·Finder 등)은 160pt 그대로다.
+utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다.
 
 ## 상단 띠 오른쪽: Drop · Mirror · Quick Note · Cover Screens
 
@@ -351,28 +356,29 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
 
 ## Launchers 칸
 
-위젯 칸(3~6번)에 놓는 Sites·Apps·Finder 묶음(`NotchWidget.launchers`, `NotchLaunchersTabSlot`). 폭은 따로 둔 목록 칸과 같은 112–170pt 안에서
-모든 탭의 가장 넓은 내용과 제목 + 탭 아이콘 중 큰 쪽(`LauncherListPolicy.launcherTabsColumnWidth`, 가장 긴 제목이 골라졌을 때의 제목 줄 기준). 런처 셋을 한 칸으로 아껴, 이 칸을 쓰면 모든 위젯이 여섯 칸에 들어간다.
-따로 둔 Sites·Apps·Finder 칸도 그대로 쓸 수 있다.
+위젯 칸(3~6번)에 놓는 Sites·Finder 목록 묶음(`NotchWidget.launchers`, `NotchLaunchersTabSlot`). 따로 두던 Sites·Finder 위젯은 2.16에서 없앴다. 폭은 112–170pt 안에서
+모든 탭의 가장 넓은 내용과 제목 + 탭 아이콘 중 큰 쪽(`LauncherListPolicy.launcherTabsColumnWidth`, 가장 긴 제목이 골라졌을 때의 제목 줄 기준). 둘 다 이름 + 키캡 목록이라 어느 탭이든
+칸이 같은 모양으로 찬다. Apps는 아이콘 격자라 넣지 않는다: 탭을 바꿀 때 목록 폭에 격자가 들어가
+양옆이 비었다(2.15.0–2.15.2). Apps는 Workspaces와 함께 Apps 칸에 둔다(`LauncherListPolicy.launcherTabTypes`).
 
-- 제목 줄이 곧 탭이다(`▢ Sites  ■  ▤`, launch type 순서 고정). 고른 탭만 아이콘 + 이름
+- 제목 줄이 곧 탭이다(`▢ Sites  ▤`, launch type 순서 고정). 고른 탭만 아이콘 + 이름
   (`NotchSectionTitleButton`, 다른 칸 제목과 같은 모양)이고, 나머지는 흐린 아이콘(22pt)만 둔다. 면·밑줄은 없다.
   아이콘을 누르면 그 탭으로 바꾸고, 고른 탭을 다시 누르면 그 타입의 설정을 연다(마우스를 올리면 ›).
   같은 아이콘을 제목과 탭에 두 번 그리지 않아 제목 줄이 짧다. 타입이 하나뿐이면 제목만 남는다.
-- 본문은 따로 둔 칸과 같다(Sites·Finder 목록, Apps 2열 격자). 목록 칸 4줄 높이에 고정하고 폭을 모든 탭 기준으로 잡아, 탭을 바꿔도 바닥선과 폭이 그대로다.
+- 본문은 이름 + 키캡 목록이다. 목록 칸 4줄 높이에 고정하고 폭을 모든 탭 기준으로 잡아, 탭을 바꿔도 바닥선과 폭이 그대로다.
 - 마지막 탭은 UserDefaults `ChapLauncherTab`에 기억하고, 그 타입이 비면 첫 타입(`LauncherListPolicy.selectedTab`).
   탭을 바꿀 때 햅틱(`.alignment`).
 - 항목이 하나도 없으면 칸을 그리지 않는다(빈 런처 칸과 같은 규칙).
 
-## Workspaces 칸
+## Workspaces 탭
 
-위젯 칸(3~6번)에 놓는 로컬 작업 공간 격자(`NotchWidget.workspaces`, `NotchWorkspacesView`, 폭 128pt). Apps 칸처럼 2열 타일이며, 최대 4개라 2×2에 맞는다. 타일은 그 Workspace 앱 아이콘을 앞에서부터 넷까지 모은 36pt 묶음(`WorkspaceIconCluster`, 폴더 아이콘처럼 둘씩 줄지어, 하나면 크게 하나)과 아래 10pt 이름이다. 같은 앱 조합이 겹칠 수 있어 이름은 늘 보인다. 마우스를 올리면 이름과 앱 목록 툴팁, 열리는 중에는 묶음 위에 진행 표시가 돈다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
+Apps 칸의 두 번째 탭으로 보는 로컬 작업 공간 격자(`NotchWorkspacesView`, 폭 128pt). 2.16 전에는 따로 놓는 Workspaces 위젯이었다. 2열 타일이며, 최대 4개라 2×2에 맞는다. 타일은 그 Workspace 앱 아이콘을 앞에서부터 넷까지 모은 36pt 묶음(`WorkspaceIconCluster`, 폴더 아이콘처럼 둘씩 줄지어, 하나면 크게 하나)과 아래 10pt 이름이다. 같은 앱 조합이 겹칠 수 있어 이름은 늘 보인다. 마우스를 올리면 이름과 앱 목록 툴팁, 열리는 중에는 묶음 위에 진행 표시가 돈다. 줄을 누르면 도커를 접고 `WorkspaceRestoreService`가 뒤쪽 창부터 앱을 열어 저장된 배치를 적용한다. 가능하면 마지막에 캡처 당시 앞쪽 앱이 활성화된다.
 
 4개 미만이면 빈 자리에 점선 `+` Capture 타일이 보이며, 누르면 도커를 접고 `Capture Workspace` 창을 연다. Workspace는 `~/Library/Application Support/Chap/Workspaces.json`에만 저장되고 config Import/Export에는 포함하지 않는다. 앱 이름·창 제목·디스플레이 UUID·visibleFrame 상대 프레임을 저장한다. 연결했던 화면이 없으면 커서 화면에 같은 상대 프레임을 맞춘다.
 
 캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원은 저장한 제목과 정확히 하나가 맞는 창, 없으면 표준 창이 하나일 때 그 창, 그것도 없으면 포커스된 표준 창에 적용한다(최소화된 창은 Dock에서 꺼내서). 앱의 최소 크기보다 작게 저장된 창은 그 크기로 키우되 화면 안에 둔다(`WorkspaceGeometry.bounds(minimumSize:)`). 앱마다 12초 상한이라 한 앱이 멈춰도 다음 앱은 열리고, 끝나면 자리를 못 잡은 앱 이름을 알려 준다. 열리는 동안 `WorkspaceLibrary.busyID`가 설정 버튼과 노치 줄을 진행 표시로 바꾸고 한 번에 하나만 돈다. 최대 Workspace 4개·Workspace당 창 6개다.
 
-제목(`NotchSectionTitleButton`, 다른 런처 칸과 같은 모양)을 누르면 도커를 접고 설정창 Launchers의 Workspaces 섹션을 연다. 저장된 Workspace가 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showWorkspacesInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Workspaces 섹션에서 그 Workspace를 연다(`SettingsView.focusWorkspace`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`WorkspaceStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapWorkspace.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Workspace와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
+고른 Workspaces 탭(`NotchSectionTitleButton`, 다른 칸 제목과 같은 모양)을 다시 누르면 도커를 접고 설정창 Launchers의 Workspaces 섹션을 연다. 저장된 Workspace가 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showWorkspacesInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Workspaces 섹션에서 그 Workspace를 연다(`SettingsView.focusWorkspace`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`WorkspaceStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapWorkspace.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Workspace와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
 
 캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`WorkspaceDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`WorkspaceWindow.assigned(to:)`). 같은 이름의 모니터는 `WorkspaceDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다.
 
@@ -469,7 +475,7 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
 - `Sources/Chap/Views/NotchFocusView.swift`(칸·모드 탭·Focus 모드), `NotchFocusTimerBody.swift`(Timer 모드), `NotchFocusDial.swift`(다이얼), `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 칸·물범·위젯 공용
 - `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
-- `Sources/Chap/Views/NotchWorkspacesView.swift`, `WorkspaceCaptureView.swift` — Workspace 노치 목록·캡처 확인 창
+- `Sources/Chap/Views/NotchWorkspacesView.swift`, `WorkspaceCaptureView.swift` — Workspace 노치 탭 격자·캡처 확인 창
 - `Sources/Chap/Workspaces/`, `Sources/ChapCore/Workspace*.swift` — AX 캡처·복원, 정규화 좌표·로컬 저장
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
 - `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직

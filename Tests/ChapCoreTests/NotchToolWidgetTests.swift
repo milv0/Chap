@@ -250,7 +250,7 @@ struct NotchToolWidgetDecodingTests {
         let json = #"{"notchWidgets": ["mirror", "note", "sites", "apps"], "sites": []}"#
         let config = try JSONDecoder().decode(Config.self, from: Data(json.utf8))
 
-        #expect(config.notchWidgets == [.none, .none, .sites, .apps, .none, .none])
+        #expect(config.notchWidgets == [.none, .none, .launchers, .apps, .none, .none])
         #expect(config.notchMirrorEnabled)
         #expect(config.notchQuickNoteEnabled)
     }

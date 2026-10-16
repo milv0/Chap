@@ -94,7 +94,7 @@ struct QAView: View {
             [
                 (
                     "현재 창 배치를 어떻게 저장하나요?",
-                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. 모니터가 여럿이면 줄마다 열 디스플레이(또는 Follow Cursor)를 고를 수 있고, 화면 안의 비율 위치·크기는 그대로 따라갑니다. Settings → Notch에서 Workspaces 위젯을 놓으면 노치에서도 바로 복원할 수 있습니다."
+                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. 모니터가 여럿이면 줄마다 열 디스플레이(또는 Follow Cursor)를 고를 수 있고, 화면 안의 비율 위치·크기는 그대로 따라갑니다. Settings → Notch에서 Apps 위젯을 놓으면 그 칸의 Workspaces 탭에서 바로 복원할 수 있습니다."
                 ),
                 (
                     "열린 창을 모두 자동으로 저장하나요?",
@@ -102,7 +102,7 @@ struct QAView: View {
                 ),
                 (
                     "저장한 Workspace를 고치거나 지우려면?",
-                    "Settings → Launchers 사이드바 맨 아래 Workspaces 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Workspaces → Edit Workspace와 노치 줄 우클릭 Edit…도 같은 화면을 엽니다."
+                    "Settings → Launchers 사이드바 맨 아래 Workspaces 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Workspaces → Edit Workspace와 노치 Workspaces 타일 우클릭 Edit…도 같은 화면을 엽니다."
                 ),
                 (
                     "Workspace를 열면 일부 앱이 다른 데스크탑에 남아 있어요.",
@@ -226,7 +226,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Sites, Apps, Finder, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do, Workspaces를 놓습니다. Launchers는 Sites·Apps·Finder를 한 칸에 두고 제목 줄 오른쪽 아이콘으로 바꿔 보는 칸이라, 이걸 쓰면 모든 위젯이 여섯 칸에 들어갑니다(마지막 탭을 기억합니다). 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Workspaces를 한 칸에 두고 제목 줄 아이콘으로 바꿔 봅니다(마지막 탭을 기억합니다). 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -242,7 +242,7 @@ struct QAView: View {
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
-                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 URL·Finder는 최대 네 개, App은 노치에서 2열 아이콘으로 보여 최대 여섯 개까지 허용합니다. 각 타입의 한도는 서로 독립적입니다."
+                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 URL·Finder는 최대 네 개, App은 노치에서 3열 아이콘으로 보여 최대 여섯 개까지 허용합니다. 각 타입의 한도는 서로 독립적입니다."
                 ),
             ]
         ),
@@ -376,7 +376,7 @@ struct QAView: View {
             [
                 (
                     "How do I save the current window layout?",
-                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. With more than one screen, pick the display each window opens on (or Follow Cursor); its relative size and position come along. Place the Workspaces widget in Settings → Notch for one-click restore under the notch."
+                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. With more than one screen, pick the display each window opens on (or Follow Cursor); its relative size and position come along. Place the Apps widget in Settings → Notch for one-click restore from its Workspaces tab under the notch."
                 ),
                 (
                     "Does Chap capture every open window?",
@@ -384,7 +384,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I change or remove a saved workspace?",
-                    "Pick it in the Workspaces section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Workspaces → Edit Workspace in the status menu and Edit… on a notch row open the same page."
+                    "Pick it in the Workspaces section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Workspaces → Edit Workspace in the status menu and Edit… on a notch Workspaces tile open the same page."
                 ),
                 (
                     "Some apps stay on another desktop when I open a workspace.",
@@ -508,7 +508,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Sites, Apps, Finder, Focus (switches between Keep Awake and Timer on one dial), To-do, or Workspaces. Launchers puts Sites, Apps, and Finder in one slot; switch with the icons at the right of its title (Chap remembers the last one). With it, every widget fits in the six slots. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Workspaces; switch with the icons in each title (Chap remembers the last one). Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
@@ -524,7 +524,7 @@ struct QAView: View {
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",
-                    "URL and Finder allow four each, and App allows six because the notch shows apps as a two-column icon grid. The limits keep the status menu and each notch slot short and predictable, and each type is counted separately."
+                    "URL and Finder allow four each, and App allows six because the notch shows apps as a three-column icon grid. The limits keep the status menu and each notch slot short and predictable, and each type is counted separately."
                 ),
             ]
         ),

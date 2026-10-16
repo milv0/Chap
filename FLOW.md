@@ -533,6 +533,8 @@ Settings → Notch Launcher on
      1·2번 칸은 Screenshots·Downloads 선반 고정, 접힌 선반은 검정 띠 왼쪽 아이콘(notchCollapsedWidgets)
   → 런처 칸 제목 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
     → Launchables 탭 + 그 타입 첫 항목 선택
+    Launchers(Sites|Finder)·Apps(Apps|Workspaces) 칸은 제목 줄이 탭: 다른 탭 아이콘 클릭은 탭 전환
+    (UserDefaults ChapLauncherTab·ChapAppsTab), 고른 탭 클릭은 그 설정 열기(Workspaces → showWorkspacesInSettings)
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
   → Quick Note 아이콘 또는 ⌥N(GlobalHotKeyAction.openQuickNote): requestClose로 도커 닫기 → QuickNoteWindow.show()
@@ -550,7 +552,7 @@ Settings → Notch Launcher on
     켜진 동안 다시 클릭 → deactivateRequest → keepAwake.deactivate (메뉴 Keep Mac Awake와 같은 세션)
   → To-do 칸: 변경마다 TodoStore 순수 함수로 새 배열 → @State 갱신 → utility 직렬 큐에서 Todos.json atomic write.
     체크 시 NotchTodoView.didCompleteNotification → 띠의 물범이 꼬리를 한 번 까딱
-  → Workspaces 칸: 저장된 이름·앱 창 수를 최대 4줄 표시. 줄 클릭 → hidePanel → WorkspaceRestoreService.
+  → Apps 칸 Workspaces 탭: 저장된 Workspace를 2열 타일로 최대 4개 표시. 타일 클릭 → hidePanel → WorkspaceRestoreService.
     디스플레이 UUID(이름 fallback)를 연결 화면에 맞추고, 없으면 커서 화면에 상대 프레임을 적용한다.
     앱은 뒤쪽부터 NSWorkspace.openApplication로 재열고, 저장 제목과 유일하게 맞거나 표준 창이 하나일 때만
     LauncherUtils.axApplyBounds로 복원한다. + Capture → Capture Workspace 관리 창.
@@ -569,7 +571,7 @@ Settings → Notch Launcher on
 ```
 
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
-- URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 2열 아이콘, 필요한 줄만).
+- URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 3열 아이콘, 필요한 줄만).
 - Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
   원본을 이동하지 않는다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
 - To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.

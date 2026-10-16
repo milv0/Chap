@@ -11,9 +11,9 @@ struct LaunchersTabTests {
             launchType: type, appPath: "/Applications/\(name).app", folderPath: "~/\(name)")
     }
 
-    @Test("one Launchers slot holds every type that has items, in launch type order")
-    func slotHoldsTypesWithItems() {
-        let sites = [site("Finder", .finder), site("Docs", .url)]
+    @Test("one Launchers slot holds the Sites and Finder lists, not the Apps grid")
+    func slotHoldsListTypes() {
+        let sites = [site("Finder", .finder), site("Slack", .app), site("Docs", .url)]
 
         let slots = NotchSlotContent.slots(widgets: [.none, .none, .launchers], sites: sites)
 
@@ -25,9 +25,13 @@ struct LaunchersTabTests {
         #expect(sections.map(\.launchType) == [.url, .finder])
     }
 
-    @Test("with no launchers at all, the slot is left out")
+    @Test("with no Sites or Finder items, the slot is left out, even when apps exist")
     func emptyLaunchersIsSkipped() {
         #expect(NotchSlotContent.slots(widgets: [.none, .none, .launchers], sites: []).isEmpty)
+        #expect(
+            NotchSlotContent.slots(
+                widgets: [.none, .none, .launchers], sites: [site("Slack", .app)]
+            ).isEmpty)
     }
 
     @Test("Launchers is a placeable widget that round-trips")
@@ -40,12 +44,11 @@ struct LaunchersTabTests {
         #expect(!NotchWidget.launchers.fits(slot: 0))
     }
 
-    @Test("with Launchers in one slot, every other widget fits in the six slots")
-    func everyWidgetFits() {
-        let all: [NotchWidget] = [
-            .screenshots, .downloads, .launchers, .awake, .todo, .workspaces,
-        ]
-        #expect(NotchWidget.normalizedSlots(all) == all)
+    @Test("Launchers and Apps sit side by side in the free slots")
+    func launchersBesideApps() {
+        let layout: [NotchWidget] = [.screenshots, .downloads, .launchers, .apps, .awake, .todo]
+        #expect(NotchWidget.normalizedSlots(layout) == layout)
+        #expect(LauncherListPolicy.launcherTabTypes == [.url, .finder])
     }
 
     @Test("the tab remembers the last type, falling back to the first one with items")
@@ -77,5 +80,92 @@ struct LaunchersTabTests {
         #expect(LauncherListPolicy.title(for: .url) == "Sites")
         #expect(LauncherListPolicy.title(for: .app) == "Apps")
         #expect(LauncherListPolicy.title(for: .finder) == "Finder")
+    }
+}
+
+@Suite("Apps slot with Workspaces")
+struct AppsSlotTests {
+    private func app(_ name: String) -> Site {
+        Site(
+            name: name, url: "", width: 800, height: 600, launchType: .app,
+            appPath: "/Applications/\(name).app")
+    }
+
+    @Test("the Apps slot carries the apps and the workspaces together")
+    func slotCarriesBoth() {
+        let slots = NotchSlotContent.slots(
+            widgets: [.none, .none, .apps], sites: [app("Slack")],
+            workspaces: [ChapWorkspace(name: "Deep Work", windows: [])])
+        guard case .apps(let apps, let workspaces) = slots.first else {
+            Issue.record("expected an Apps slot")
+            return
+        }
+        #expect(apps?.entries.map(\.site.name) == ["Slack"])
+        #expect(workspaces.map(\.name) == ["Deep Work"])
+    }
+
+    @Test("Workspaces is always a tab; Apps only when there are apps")
+    func availableTabs() {
+        #expect(AppsSlotTab.available(hasApps: true) == [.apps, .workspaces])
+        #expect(AppsSlotTab.available(hasApps: false) == [.workspaces])
+    }
+
+    @Test("the tab remembers the last one, falling back to the first available")
+    func selectedTab() {
+        #expect(AppsSlotTab.selected(stored: "workspaces", hasApps: true) == .workspaces)
+        #expect(AppsSlotTab.selected(stored: "apps", hasApps: false) == .workspaces)
+        #expect(AppsSlotTab.selected(stored: nil, hasApps: true) == .apps)
+        #expect(AppsSlotTab.selected(stored: "nope", hasApps: true) == .apps)
+    }
+
+    @Test("with Launchers and Apps, every widget fits in the six slots")
+    func everyWidgetFits() {
+        let all: [NotchWidget] = [.screenshots, .downloads, .launchers, .apps, .awake, .todo]
+        #expect(NotchWidget.normalizedSlots(all) == all)
+        // 칸에 놓을 수 있는 위젯이 모두 들어간다(빈 칸·Drop 제외).
+        let placeable = Set(NotchWidget.allCases).subtracting([.none, .drop])
+        #expect(Set(all) == placeable)
+    }
+}
+
+@Suite("Merged slot migration")
+struct MergedSlotMigrationTests {
+    private func widgets(_ raw: String) throws -> [NotchWidget] {
+        let json = #"{"notchWidgets": \#(raw), "sites": []}"#
+        return try JSONDecoder().decode(Config.self, from: Data(json.utf8)).notchWidgets
+    }
+
+    @Test("Sites and Finder slots become one Launchers slot; the second is left empty")
+    func listSlotsBecomeLaunchers() throws {
+        #expect(
+            try widgets(#"["screenshots", "none", "sites", "apps", "folders", "none"]"#)
+                == [.screenshots, .none, .launchers, .apps, .none, .none])
+        #expect(
+            try widgets(#"["screenshots", "none", "folders", "todo", "awake", "none"]"#)
+                == [.screenshots, .none, .launchers, .todo, .awake, .none])
+    }
+
+    @Test("with Launchers already placed, old Sites and Finder slots are left empty")
+    func listSlotsBesideLaunchers() throws {
+        #expect(
+            try widgets(#"["screenshots", "none", "sites", "launchers", "folders", "none"]"#)
+                == [.screenshots, .none, .none, .launchers, .none, .none])
+    }
+
+    @Test("a Workspaces slot becomes the Apps slot, or empty when Apps is already placed")
+    func workspacesBecomesApps() throws {
+        #expect(
+            try widgets(#"["screenshots", "none", "workspaces", "todo", "none", "none"]"#)
+                == [.screenshots, .none, .apps, .todo, .none, .none])
+        #expect(
+            try widgets(#"["screenshots", "none", "apps", "workspaces", "todo", "none"]"#)
+                == [.screenshots, .none, .apps, .none, .todo, .none])
+    }
+
+    @Test("Sites, Finder, and Workspaces are no longer slots of their own")
+    func formerSlotsAreGone() {
+        #expect(NotchWidget(rawValue: "sites") == nil)
+        #expect(NotchWidget(rawValue: "folders") == nil)
+        #expect(NotchWidget(rawValue: NotchWidget.formerWorkspacesRawValue) == nil)
     }
 }

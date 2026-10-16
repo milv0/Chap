@@ -198,7 +198,7 @@ struct SettingsViewModelTests {
             notchGlassMaterial: .regular,
             notchPanelOpacity: 0.8,
             notchPanelColorHex: "#123456",
-            notchWidgets: [.screenshots, .sites, .none, .none])
+            notchWidgets: [.screenshots, .launchers, .none, .none])
 
         let config = SettingsConfigTransfer.exportConfigValue(vm: vm)
 
@@ -211,7 +211,7 @@ struct SettingsViewModelTests {
         #expect(config.notchPanelColorHex == "#123456")
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.screenshots, .sites, .none, .none]))
+                == NotchWidget.normalizedSlots([.screenshots, .launchers, .none, .none]))
     }
     @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
         let vm = SettingsViewModel(sites: baseSites)
@@ -222,7 +222,7 @@ struct SettingsViewModelTests {
         vm.notchGlassMaterial = .regular
         vm.notchPanelOpacity = 0.8
         vm.notchPanelColorHex = "#123456"
-        vm.notchWidgets = [.screenshots, .sites, .none, .none]
+        vm.notchWidgets = [.screenshots, .launchers, .none, .none]
 
         vm.markGlobalsSaved()
 
@@ -232,7 +232,7 @@ struct SettingsViewModelTests {
         #expect(vm.originalNotchGlassMaterial == .regular)
         #expect(vm.originalNotchPanelOpacity == 0.8)
         #expect(vm.originalNotchPanelColorHex == "#123456")
-        #expect(vm.originalNotchWidgets == [.screenshots, .sites, .none, .none])
+        #expect(vm.originalNotchWidgets == [.screenshots, .launchers, .none, .none])
         #expect(vm.hasChanges)  // site draft remains unsaved
         #expect(vm.originalSites[0].name != "Unsaved Site Draft")
     }

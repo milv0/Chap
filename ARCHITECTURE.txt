@@ -73,8 +73,8 @@ Sources/
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
-│       ├── NotchLaunchersTabView.swift ← Launchers 칸: Sites·Apps·Finder를 제목 줄 아이콘 탭으로 바꿔 보는 한 칸(마지막 탭 기억)
-│       ├── NotchWorkspacesView.swift ← 노치 Workspaces 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
+│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 3열 격자|Workspaces 탭), 마지막 탭 기억
+│       ├── NotchWorkspacesView.swift ← Apps 칸 Workspaces 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
 │       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
 │       ├── WorkspaceDetailView.swift ← Launchers 탭 Workspace 편집 화면 (이름·Open·Update Positions·Delete·Layout·창 목록)
@@ -131,7 +131,7 @@ Sources/
 │   ├── QuickNoteShortcutPolicy.swift ← Quick Note ⌥ 키 정규화·사이트/예약키·런처 Tools 키 충돌 정책 (순수 로직)
 │   ├── QuickNotePlacement.swift ← Quick Note 창 첫 자리: 노치 아랫변에 붙여 가운데 정렬 (순수 로직)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
-│   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책·Launchers 탭 선택·칸 폭
+│   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책·Launchers·Apps 탭 선택(AppsSlotTab)·칸 폭·Apps 격자 열 수
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
 │   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·짧은 시각
@@ -283,11 +283,13 @@ Config 모델 필드:
   - coverScreensMessage: String?  가림막 시계 아래 문구. 한 줄·80자, 없으면 키를 쓰지 않는다
   ※ 2.10.1까지의 lightsOutShortcut·notchLightsOutEnabled는 읽을 때 cover… 이름으로 옮기고,
     lightsOutUnlockKey는 버린다(걷는 법이 ⌥ 탭으로 고정)
-  - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (sites | apps | folders | screenshots |
-                                 downloads | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
-                                 선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, sites, apps,
-                                 folders, none]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
+  - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (screenshots | downloads | launchers(Sites|Finder 탭) |
+                                 apps(Apps|Workspaces 탭) | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
+                                 선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, launchers, apps,
+                                 none, none]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
                                  2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로 당겨 6칸에 옮긴다.
+                                 2.16에서 없앤 sites·folders는 첫 칸만 launchers, 그다음은 none, workspaces는
+                                 apps(이미 있으면 none)로 같은 자리에서 바꾼다(NotchWidget.migratedSlots).
                                  모르는 위젯 이름(구버전이 읽은 todo 등)은 빈 칸이 된다
   - notchCollapsedWidgets: [NotchWidget]  검정 띠 왼쪽 아이콘으로 접은 선반 (screenshots | downloads).
                                  노치에서만 바꾸는 이 Mac의 표시 선택. 누락 시 []
@@ -313,7 +315,7 @@ Config 모델 필드:
     (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
-  - URL·Finder는 최대 4개, App은 최대 6개(노치 2열 × 3줄 아이콘). 추가 UI·저장·Import에서 동일하게 차단
+  - URL·Finder는 최대 4개, App은 최대 6개(노치 3열 × 2줄 아이콘). 추가 UI·저장·Import에서 동일하게 차단
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환. 네 탭(Launchers·General·Notch·Tools)이
   같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
   Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),

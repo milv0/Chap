@@ -240,24 +240,24 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchPanelColorHex == "#33445A")
     }
 
-    @Test("widgets default to the three launcher sections plus Screenshots")
+    @Test("widgets default to Launchers, Apps, and Screenshots")
     func widgetsDefaultToLauncherSections() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
 
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.sites, .apps, .folders, .screenshots]))
+                == NotchWidget.normalizedSlots([.launchers, .apps, .screenshots]))
         #expect(!config.didMigrateScriptsWidget)
     }
 
     @Test("a removed Scripts slot becomes Screenshots")
     func scriptsSlotMigratesToScreenshots() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["sites", "apps", "folders", "scripts"], "sites": []}"#)
+            #"{"notchWidgets": ["launchers", "apps", "todo", "scripts"], "sites": []}"#)
 
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.sites, .apps, .folders, .screenshots]))
+                == NotchWidget.normalizedSlots([.launchers, .apps, .todo, .screenshots]))
         #expect(config.didMigrateScriptsWidget)
         #expect(config.needsShellRemovalMigration)
     }
@@ -265,40 +265,41 @@ struct NotchLauncherSettingTests {
     @Test("a removed Scripts slot becomes empty when Screenshots is already placed")
     func scriptsSlotMigratesToEmptyWhenScreenshotsPlaced() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["scripts", "screenshots", "sites", "apps"], "sites": []}"#)
+            #"{"notchWidgets": ["scripts", "screenshots", "launchers", "apps"], "sites": []}"#)
 
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.none, .screenshots, .sites, .apps]))
+                == NotchWidget.normalizedSlots([.none, .screenshots, .launchers, .apps]))
         #expect(config.didMigrateScriptsWidget)
     }
 
     @Test("decodes explicit widget slots")
     func decodesExplicitWidgets() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["screenshots", "sites", "apps", "none"], "sites": []}"#)
+            #"{"notchWidgets": ["screenshots", "launchers", "apps", "none"], "sites": []}"#)
 
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.screenshots, .sites, .apps, .none]))
+                == NotchWidget.normalizedSlots([.screenshots, .launchers, .apps, .none]))
     }
 
     @Test("decodes the drop widget")
     func decodesDropWidget() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["drop", "sites", "none", "none"], "sites": []}"#)
+            #"{"notchWidgets": ["drop", "launchers", "none", "none"], "sites": []}"#)
 
-        #expect(config.notchWidgets == NotchWidget.normalizedSlots([.drop, .sites, .none, .none]))
+        #expect(
+            config.notchWidgets == NotchWidget.normalizedSlots([.drop, .launchers, .none, .none]))
     }
 
     @Test("unknown widget names are dropped and slots padded to four")
     func unknownWidgetsDroppedAndPadded() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["sites", "hologram", "screenshots"], "sites": []}"#)
+            #"{"notchWidgets": ["launchers", "hologram", "screenshots"], "sites": []}"#)
 
         #expect(
             config.notchWidgets
-                == NotchWidget.normalizedSlots([.sites, .screenshots, .none, .none]))
+                == NotchWidget.normalizedSlots([.launchers, .screenshots, .none, .none]))
     }
 
     @Test("all unknown widgets fall back to usable defaults")
@@ -311,57 +312,59 @@ struct NotchLauncherSettingTests {
 
     @Test("duplicate non-empty widgets are removed while empty slots remain")
     func duplicateWidgetsAreNormalized() {
-        let slots = NotchWidget.normalizedSlots([.sites, .sites, .none, .none, .apps])
+        let slots = NotchWidget.normalizedSlots([.launchers, .launchers, .none, .none, .apps])
 
-        #expect(slots == NotchWidget.normalizedSlots([.sites, .none, .none, .apps]))
+        #expect(slots == NotchWidget.normalizedSlots([.launchers, .none, .none, .apps]))
     }
 
     @Test("the notch has six slots")
     func sixSlots() {
         #expect(NotchWidget.slotCount == 6)
-        #expect(NotchWidget.defaultSlots == [.screenshots, .none, .sites, .apps, .folders, .none])
+        #expect(NotchWidget.defaultSlots == [.screenshots, .none, .launchers, .apps, .none, .none])
     }
 
     @Test("a 2.1 twelve-slot layout keeps every widget by moving late ones into gaps")
     func twelveSlotLayoutIsCompacted() throws {
         let config = try decodeConfig(
             #"""
-            {"notchWidgets": ["screenshots", "sites", "apps", "folders", "none", "none",
+            {"notchWidgets": ["screenshots", "launchers", "apps", "todo", "none", "none",
                               "none", "none", "mirror", "none", "note", "none"],
              "sites": []}
             """#)
 
-        #expect(config.notchWidgets == [.screenshots, .none, .sites, .apps, .folders, .none])
+        #expect(config.notchWidgets == [.screenshots, .none, .launchers, .apps, .todo, .none])
     }
 
     @Test("widgets beyond the six slots are dropped only when no gap is left")
     func overflowWithoutGapsIsDropped() {
         let slots = NotchWidget.normalizedSlots([
-            .sites, .apps, .folders, .screenshots, .awake, .drop, .none,
+            .launchers, .apps, .todo, .screenshots, .awake, .drop, .none,
         ])
 
-        // 선반은 앞으로, 뒤쪽 네 칸에 런처·Focus가 순서대로 들어가고 넘친 Drop은 빠진다.
-        #expect(slots == [.screenshots, .none, .sites, .apps, .folders, .awake])
+        // 선반은 앞으로, 뒤쪽 네 칸에 런처·To-do·Focus가 순서대로 들어가고 넘친 Drop은 빠진다.
+        #expect(slots == [.screenshots, .none, .launchers, .apps, .todo, .awake])
     }
 
     @Test("a legacy layout moves shelves to the shelf slots and keeps the other order")
     func legacyFourSlotsKeepOrder() throws {
         let config = try decodeConfig(
-            #"{"notchWidgets": ["sites", "apps", "folders", "screenshots"], "sites": []}"#)
+            #"{"notchWidgets": ["launchers", "apps", "todo", "screenshots"], "sites": []}"#)
 
-        #expect(config.notchWidgets == [.screenshots, .none, .sites, .apps, .folders, .none])
+        #expect(config.notchWidgets == [.screenshots, .none, .launchers, .apps, .todo, .none])
     }
 
     @Test("a 2.7 free layout moves both shelves front and keeps the rest in order")
     func freeLayoutMigrates() {
         #expect(
-            NotchWidget.normalizedSlots([.downloads, .apps, .folders, .screenshots, .sites, .awake])
-                == [.screenshots, .downloads, .apps, .folders, .sites, .awake])
+            NotchWidget.normalizedSlots([
+                .downloads, .apps, .todo, .screenshots, .launchers, .awake,
+            ])
+                == [.screenshots, .downloads, .apps, .todo, .launchers, .awake])
     }
 
     @Test("a layout that already follows the shelf rule keeps its gaps")
     func validLayoutIsUntouched() {
-        let layout: [NotchWidget] = [.none, .downloads, .sites, .none, .apps, .none]
+        let layout: [NotchWidget] = [.none, .downloads, .launchers, .none, .apps, .none]
         #expect(NotchWidget.normalizedSlots(layout) == layout)
     }
 
@@ -373,20 +376,20 @@ struct NotchLauncherSettingTests {
         #expect(!NotchWidget.screenshots.fits(slot: 1) && !NotchWidget.downloads.fits(slot: 0))
         #expect(!NotchWidget.screenshots.fits(slot: 2))
         #expect(NotchWidget.shelfSlots == [.screenshots, .downloads])
-        #expect(!NotchWidget.sites.fits(slot: 1) && NotchWidget.sites.fits(slot: 2))
+        #expect(!NotchWidget.launchers.fits(slot: 1) && NotchWidget.launchers.fits(slot: 2))
         #expect(NotchWidget.none.fits(slot: 0) && NotchWidget.none.fits(slot: 5))
     }
 
     @Test("widgets round-trip through encoding")
     func widgetsRoundTripThroughEncoding() throws {
         let original = Config(
-            notchWidgets: [.screenshots, .sites, .none, .folders], sites: [])
+            notchWidgets: [.screenshots, .launchers, .none, .todo], sites: [])
 
         let decoded = try JSONDecoder().decode(
             Config.self, from: try JSONEncoder().encode(original))
 
         #expect(
             decoded.notchWidgets
-                == NotchWidget.normalizedSlots([.screenshots, .sites, .none, .folders]))
+                == NotchWidget.normalizedSlots([.screenshots, .launchers, .none, .todo]))
     }
 }

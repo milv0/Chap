@@ -45,10 +45,11 @@ public enum LauncherListPolicy {
             listColumnWidthRange.upperBound)
     }
 
-    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 6개가 2열 × 3줄로 한 칸에 들어간다.
-    public static let appIconColumns = 2
+    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 6개가 3열 × 2줄로 들어간다. Workspaces 탭(2열 타일,
+    /// 약 128pt)과 칸 폭이 비슷해 어느 탭이든 양옆이 비지 않는다.
+    public static let appIconColumns = 3
 
-    /// 앱 개수에 필요한 격자 줄 수. 빈 줄 공간은 만들지 않는다 (예: 3개 → 2줄).
+    /// 앱 개수에 필요한 격자 줄 수. 빈 줄 공간은 만들지 않는다 (예: 4개 → 2줄).
     public static func appIconRows(forCount count: Int) -> Int {
         guard count > 0 else { return 0 }
         return (min(count, SiteCountLimitPolicy.maxApps) + appIconColumns - 1) / appIconColumns
@@ -113,9 +114,13 @@ public enum LauncherListPolicy {
     }
 }
 
-// MARK: - Launchers 칸 (Sites·Apps·Finder 탭)
+// MARK: - Launchers 칸 (Sites·Finder 탭)
 
 extension LauncherListPolicy {
+    /// Launchers 칸이 담는 타입. 둘 다 이름 + 키캡 목록이라 어느 탭이든 칸이 같은 모양으로 꽉 찬다.
+    /// Apps는 아이콘 격자라 폭이 달라 자기 칸(`NotchWidget.apps`)에 둔다.
+    public static let launcherTabTypes: [LaunchType] = [.url, .finder]
+
     /// 탭으로 고른 타입을 기억하는 UserDefaults 키.
     public static let launcherTabStorageKey = "ChapLauncherTab"
 
@@ -155,5 +160,42 @@ extension LauncherListPolicy {
             return type
         }
         return available.first
+    }
+}
+
+// MARK: - Apps 칸 (Apps·Workspaces 탭)
+
+/// Apps 칸의 탭. 둘 다 아이콘 타일이라 한 칸에 같은 모양으로 들어간다.
+public enum AppsSlotTab: String, CaseIterable, Sendable {
+    case apps
+    case workspaces
+
+    public var title: String {
+        switch self {
+        case .apps: return "Apps"
+        case .workspaces: return "Workspaces"
+        }
+    }
+
+    public var symbol: String {
+        switch self {
+        case .apps: return LauncherListPolicy.symbolName(for: .app)
+        case .workspaces: return "rectangle.3.group"
+        }
+    }
+
+    /// 마지막으로 고른 탭을 기억하는 UserDefaults 키.
+    public static let storageKey = "ChapAppsTab"
+
+    /// 보여 줄 탭들. Workspaces는 저장한 게 없어도 Capture 타일이 있어 늘 있고, Apps는 앱이 있을 때만.
+    public static func available(hasApps: Bool) -> [AppsSlotTab] {
+        hasApps ? [.apps, .workspaces] : [.workspaces]
+    }
+
+    /// 보여 줄 탭. 저장한 탭이 아직 있으면 그것, 아니면 첫 탭.
+    public static func selected(stored: String?, hasApps: Bool) -> AppsSlotTab {
+        let tabs = available(hasApps: hasApps)
+        if let stored, let tab = AppsSlotTab(rawValue: stored), tabs.contains(tab) { return tab }
+        return tabs[0]
     }
 }

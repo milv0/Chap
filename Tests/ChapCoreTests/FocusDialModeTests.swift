@@ -56,17 +56,17 @@ struct TimerSlotMigrationTests {
     func timerBecomesFocus() throws {
         #expect(
             try widgets(#"["screenshots", "none", "sites", "timer", "apps"]"#)
-                == [.screenshots, .none, .sites, .awake, .apps, .none])
+                == [.screenshots, .none, .launchers, .awake, .apps, .none])
     }
 
     @Test("with Focus already placed, the Timer slot is left empty so nothing shifts")
     func timerBesideFocusEmpties() throws {
         #expect(
             try widgets(#"["screenshots", "none", "awake", "sites", "timer", "apps"]"#)
-                == [.screenshots, .none, .awake, .sites, .none, .apps])
+                == [.screenshots, .none, .awake, .launchers, .none, .apps])
         #expect(
             try widgets(#"["screenshots", "none", "timer", "sites", "awake", "apps"]"#)
-                == [.screenshots, .none, .none, .sites, .awake, .apps])
+                == [.screenshots, .none, .none, .launchers, .awake, .apps])
     }
 
     @Test("Timer is no longer a slot of its own")

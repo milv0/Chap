@@ -2,10 +2,10 @@ import SwiftUI
 
 /// 노치 패널 한 칸의 렌더링 내용.
 enum NotchSlotContent {
-    /// 런처 목록 위젯.
-    case launchers(LauncherListSection)
-    /// Sites·Apps·Finder를 탭으로 바꿔 보는 한 칸. 항목이 있는 타입만, launch type 순서로 담는다.
+    /// Sites·Finder 목록을 탭으로 바꿔 보는 한 칸. 항목이 있는 타입만, launch type 순서로 담는다.
     case launcherTabs([LauncherListSection])
+    /// Apps(아이콘 격자)·Workspaces(타일)를 탭으로 바꿔 보는 한 칸. 앱이 없으면 Workspaces만.
+    case apps(LauncherListSection?, [ChapWorkspace])
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
     /// 다운로드 선반 위젯.
@@ -14,15 +14,13 @@ enum NotchSlotContent {
     case awake
     /// 할 일 목록 위젯.
     case todo
-    /// 실제 앱 창 배치를 복원하는 Workspaces 위젯.
-    case workspaces([ChapWorkspace])
 
     /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
     var collapsibleWidget: NotchWidget? {
         switch self {
         case .screenshots: return .screenshots
         case .downloads: return .downloads
-        case .launchers, .launcherTabs, .awake, .todo, .workspaces: return nil
+        case .launcherTabs, .apps, .awake, .todo: return nil
         }
     }
 
@@ -42,12 +40,13 @@ enum NotchSlotContent {
             case .downloads: return .downloads
             case .awake: return .awake
             case .todo: return .todo
-            case .workspaces: return .workspaces(workspaces)
+            case .apps:
+                return .apps(sections.first { $0.launchType == .app }, workspaces)
             case .launchers:
-                return sections.isEmpty ? nil : .launcherTabs(sections)
-            case .sites, .apps, .folders:
-                return sections.first { $0.launchType == widget.launchType }
-                    .map(NotchSlotContent.launchers)
+                let lists = sections.filter {
+                    LauncherListPolicy.launcherTabTypes.contains($0.launchType)
+                }
+                return lists.isEmpty ? nil : .launcherTabs(lists)
             }
         }
     }

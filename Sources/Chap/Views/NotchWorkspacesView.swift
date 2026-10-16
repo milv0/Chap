@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// 저장된 작업 공간을 한 번에 복원하고 새 배치를 캡처하는 노치 위젯.
-/// Apps 칸처럼 2열 타일 격자다. 타일은 그 Workspace 앱 아이콘을 최대 넷 모은 묶음(폴더 아이콘처럼)과
+/// 저장된 작업 공간을 한 번에 복원하고 새 배치를 캡처하는 격자. Apps 칸의 Workspaces 탭 본문이다
+/// (제목 줄은 Apps 칸의 탭이 맡는다). 2열 타일 격자다. 타일은 그 Workspace 앱 아이콘을 최대 넷 모은 묶음(폴더 아이콘처럼)과
 /// 아래 짧은 이름이다. Workspace는 같은 앱 조합이 겹칠 수 있어 이름을 늘 함께 보여 준다.
 /// 최대 4개라 2×2에 맞고, 4개 미만이면 빈 자리에 점선 + 타일(Capture)이 들어간다.
 struct NotchWorkspacesView: View {
@@ -13,8 +13,6 @@ struct NotchWorkspacesView: View {
     let onCapture: () -> Void
     var onEdit: (UUID) -> Void = { _ in }
     var onRemove: (UUID) -> Void = { _ in }
-    /// 제목 클릭: 설정창 Launchers의 Workspaces 섹션을 연다(다른 런처 칸 제목과 같은 동작).
-    var onOpenSettings: () -> Void = {}
 
     static let tileWidth: CGFloat = 58
     static let clusterSize: CGFloat = 36
@@ -23,42 +21,32 @@ struct NotchWorkspacesView: View {
     static var columnWidth: CGFloat { 2 * tileWidth + columnGap + 4 }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            NotchSectionTitleButton(
-                symbol: "rectangle.3.group", title: "Workspaces",
-                foreground: palette.heading,
-                iconForeground: palette.icon ?? palette.heading,
-                hoverBackground: palette.hoverBackground,
-                textShadowOpacity: palette.textShadowOpacity,
-                action: onOpenSettings)
-            LazyVGrid(
-                columns: Array(
-                    repeating: GridItem(.fixed(Self.tileWidth), spacing: Self.columnGap),
-                    count: 2),
-                alignment: .center, spacing: 6
-            ) {
-                ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
-                    WorkspaceTile(
-                        workspace: workspace, isBusy: busyID == workspace.id, palette: palette
-                    ) {
-                        onOpen(workspace.id)
-                    }
-                    .contextMenu {
-                        Button("Open") { onOpen(workspace.id) }
-                        Button("Edit…") { onEdit(workspace.id) }
-                        Divider()
-                        Button("Remove…", role: .destructive) { onRemove(workspace.id) }
-                    }
-                    .accessibilityAction(named: "Edit") { onEdit(workspace.id) }
-                    .accessibilityAction(named: "Remove") { onRemove(workspace.id) }
+        LazyVGrid(
+            columns: Array(
+                repeating: GridItem(.fixed(Self.tileWidth), spacing: Self.columnGap),
+                count: 2),
+            alignment: .center, spacing: 6
+        ) {
+            ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
+                WorkspaceTile(
+                    workspace: workspace, isBusy: busyID == workspace.id, palette: palette
+                ) {
+                    onOpen(workspace.id)
                 }
-                if workspaces.count < WorkspaceStore.maxWorkspaces {
-                    CaptureTile(palette: palette, action: onCapture)
+                .contextMenu {
+                    Button("Open") { onOpen(workspace.id) }
+                    Button("Edit…") { onEdit(workspace.id) }
+                    Divider()
+                    Button("Remove…", role: .destructive) { onRemove(workspace.id) }
                 }
+                .accessibilityAction(named: "Edit") { onEdit(workspace.id) }
+                .accessibilityAction(named: "Remove") { onRemove(workspace.id) }
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+            if workspaces.count < WorkspaceStore.maxWorkspaces {
+                CaptureTile(palette: palette, action: onCapture)
+            }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
