@@ -72,8 +72,8 @@ Sources/
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
-│       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
-│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 3열 격자|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle)
+│       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정, 열 때 정하는 가변 폭)
+│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle)
 │       ├── NotchWorkspacesView.swift ← Apps 칸 Workspaces 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
 │       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
@@ -315,7 +315,7 @@ Config 모델 필드:
     (통합 로그 보존 기간이 짧아 며칠 뒤 원인 추적이 불가능해지는 것을 방지)
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
-  - URL·Finder는 최대 4개, App은 최대 6개(노치 3열 × 2줄 아이콘). 추가 UI·저장·Import에서 동일하게 차단
+  - URL·Finder는 최대 4개, App은 최대 6개(노치 아이콘 격자: 4개까지 2열, 5~6개 3열 × 2줄). 추가 UI·저장·Import에서 동일하게 차단
 - Settings 하단 탭: 고정 사이드바와 하단 도구막대는 유지하고 오른쪽 패널만 전환. 네 탭(Launchers·General·Notch·Tools)이
   같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
   Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),
@@ -383,6 +383,7 @@ Config 모델 필드:
   - Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
   - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
     HUD 그림은 앱 아이콘·노치와 같은 픽셀 물범이다 (켜면 깨어 꼬리를 든 Chap, 끄면 눈 감고 z를 띄운 Chap).
+    물범은 따로 타일 없이 HUD 바탕(옅은 popover + 테마색 틴트·테두리) 위에 바로 놓는다. Timer 끝(Time's up)도 같은 HUD다.
     물범 자리는 두 모습에서 같고 z는 머리 위 여백만 채운다. HUD는 노치가 있는 내장 화면에만 띄운다.
     노치에서는 Focus 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
 - Cover Screens(가림막): ⌥L, 메뉴바 항목, 노치 띠의 달 아이콘(Quick Note 오른쪽)으로 모든 화면을 검정 창(.screenSaver 레벨, 모든 Space)으로 덮는다.

@@ -80,8 +80,8 @@ struct NotchLaunchersTabSlot<Content: View>: View {
                 content(selected)
                     .id(selected.launchType)
                     .transition(.opacity)
-                    .padding(.top, NotchAppIconTile.tabBodyTopGap)
                     .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+                    .padding(.top, NotchAppIconTile.tabBodyTopGap)
             }
         }
     }
@@ -125,8 +125,8 @@ struct NotchAppsSlot<AppsContent: View, WorkspacesContent: View>: View {
             .id(selected)
             .transition(.opacity)
             .frame(maxWidth: .infinity)
-            .padding(.top, NotchAppIconTile.tabBodyTopGap)
             .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
+            .padding(.top, NotchAppIconTile.tabBodyTopGap)
         }
     }
 }

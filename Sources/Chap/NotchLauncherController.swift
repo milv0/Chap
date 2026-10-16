@@ -174,6 +174,8 @@ final class NotchLauncherController {
             return
         }
         installHotzone(on: screen)
+        // 첫 도커도 To-do 칸이 맞는 폭으로 열리도록 항목을 미리 읽어 둔다(파일 읽기는 직렬 큐).
+        NotchTodoView.preloadTitles()
         applyGlassAppearance(to: panel)
         installDropObserverIfNeeded()
         updateDropBadge()
