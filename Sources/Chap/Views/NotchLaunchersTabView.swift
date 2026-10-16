@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Sites·Apps·Finder를 한 칸에 두는 Launchers 칸. 제목 줄 왼쪽은 고른 타입의 제목(누르면 설정),
 /// 오른쪽은 항목이 있는 타입의 아이콘 탭이다. 탭 순서는 늘 같고, 고른 탭만 진하게 보인다.
-/// 마지막으로 고른 탭을 기억한다. 칸 폭은 고정이라 탭을 바꿔도 도커가 흔들리지 않는다.
+/// 마지막으로 고른 탭을 기억한다. 칸 폭은 모든 탭 중 가장 넓은 내용에 맞춰 두어 탭을 바꿔도 도커가 흔들리지 않는다.
 struct NotchLaunchersTabSlot<Content: View>: View {
     let sections: [LauncherListSection]
     let palette: NotchWidgetPalette
@@ -48,7 +48,7 @@ struct NotchLaunchersTabSlot<Content: View>: View {
             }
             Spacer(minLength: 8)
             if sections.count > 1 {
-                HStack(spacing: 2) {
+                HStack(spacing: LauncherListPolicy.launcherTabSpacing) {
                     ForEach(sections, id: \.launchType) { section in
                         tab(
                             section.launchType,
@@ -100,7 +100,7 @@ private struct NotchLauncherTabButton: View {
                         ? (palette.icon ?? palette.heading)
                         : palette.heading.opacity(isHovered ? 0.85 : 0.4)
                 )
-                .frame(width: 22, height: DS.notchHeaderHeight)
+                .frame(width: LauncherListPolicy.launcherTabWidth, height: DS.notchHeaderHeight)
                 .background(
                     RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                         .fill(isHovered && !isSelected ? palette.hoverBackground : Color.clear)
