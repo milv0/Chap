@@ -114,6 +114,11 @@ struct NotchAppIconTile: View {
     static let listRowHeight: CGFloat = 26
     static let listRowSpacing: CGFloat = 3
     static let listBodyHeight: CGFloat = 4 * listRowHeight + 3 * listRowSpacing  // 113pt
+    /// 탭 칸(Launchers·Apps) 제목 줄과 본문 사이에 더 두는 간격. 탭 아이콘이 줄지어 있어 제목 줄이
+    /// 무거우므로 본문을 조금 띄운다. 본문 높이(113pt)는 그대로라 다른 칸과 바닥선이 맞는다.
+    static let tabBodyTopGap: CGFloat = 3
+    /// Launchers 목록의 줄 간격. 위 간격만큼 줄여 4줄이 113pt 안에 그대로 든다(4 × 26 + 3 × 2 + 3).
+    static let tabListRowSpacing: CGFloat = (3 * listRowSpacing - tabBodyTopGap) / 3
 
     static let iconSize: CGFloat = 32
     /// 타일 한 변: 아이콘 + 호버 배경 여백 2pt씩.
