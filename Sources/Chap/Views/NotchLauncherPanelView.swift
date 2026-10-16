@@ -769,7 +769,7 @@ struct NotchLauncherPanelView: View {
     }
 
     private func launcherRows(_ section: LauncherListSection) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: NotchAppIconTile.tabListRowSpacing) {
             ForEach(
                 section.entries.prefix(
                     LauncherListPolicy.maxEntriesPerNotchSlot(for: section.launchType)),

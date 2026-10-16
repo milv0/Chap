@@ -368,6 +368,9 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
   › 자리는 늘 잡혀 있어 칸 폭은 그대로다. 탭 없는 칸(Screenshots·Downloads·Focus 등)의 제목은 그대로 버튼이다.
   같은 아이콘을 제목과 탭에 두 번 그리지 않아 제목 줄이 짧다. 타입이 하나뿐이면 제목만 남는다.
 - 본문은 이름 + 키캡 목록이다. 목록 칸 4줄 높이에 고정하고 폭을 모든 탭 기준으로 잡아, 탭을 바꿔도 바닥선과 폭이 그대로다.
+- 탭 칸(Launchers·Apps)은 제목 줄과 본문 사이를 3pt 더 띄운다(`NotchAppIconTile.tabBodyTopGap`). 탭 아이콘이 늘어선 제목 줄이
+  본문에 붙어 보여서다. 대신 Launchers 목록 줄 간격은 2pt, Workspaces 타일 줄 간격은 3pt로 줄여 본문 높이(113pt)와
+  바닥선은 다른 칸과 같다.
 - 마지막 탭은 UserDefaults `ChapLauncherTab`에 기억하고, 그 타입이 비면 첫 타입(`LauncherListPolicy.selectedTab`).
   탭을 바꿀 때 햅틱(`.alignment`).
 - 항목이 하나도 없으면 칸을 그리지 않는다(빈 런처 칸과 같은 규칙).
