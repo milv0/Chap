@@ -19,11 +19,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     var settingsWindow: NSWindow?
     var qaWindow: NSWindow?
     var welcomeWindow: NSWindow?
-    var workspaceCaptureWindow: NSWindow?
-    var workspaceCaptureViewModel: WorkspaceCaptureViewModel?
-    /// 저장된 Workspace. 메뉴·노치·설정창이 함께 본다.
-    let workspaceLibrary = WorkspaceLibrary()
-    var workspaceStore: WorkspaceStore { workspaceLibrary.store }
+    var layoutCaptureWindow: NSWindow?
+    var layoutCaptureViewModel: LayoutCaptureViewModel?
+    /// 저장된 Layout. 메뉴·노치·설정창이 함께 본다.
+    let layoutLibrary = LayoutLibrary()
+    var layoutStore: LayoutStore { layoutLibrary.store }
     var settingsVM: SettingsViewModel?
     let globalHotKeyManager = GlobalHotKeyManager()
     /// Cover Screens 가림막. 상태는 메모리에만 있고 Keep Awake와 독립이다.

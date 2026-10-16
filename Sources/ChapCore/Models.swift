@@ -286,7 +286,7 @@ public enum NotchGlassMaterial: String, Codable, CaseIterable {
 
 /// 노치 패널의 한 칸에 배치할 수 있는 위젯.
 public enum NotchWidget: String, Codable, CaseIterable {
-    /// 아이콘 칸: 앱 아이콘 격자(Apps)와 저장한 작업 공간(Workspaces)을 제목 줄 탭으로 바꿔 본다.
+    /// 아이콘 칸: 앱 아이콘 격자(Apps)와 저장한 창 배치(Layouts)를 제목 줄 탭으로 바꿔 본다.
     /// 둘 다 아이콘 타일이라 한 칸에 같은 모양으로 들어간다.
     case apps = "apps"
     /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
@@ -321,7 +321,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
     public static let formerTimerRawValue = "timer"
     /// 따로 있던 Sites·Finder 칸의 저장 문자열(2.15). 이제 Launchers 칸의 탭이다.
     public static let formerListRawValues: Set<String> = ["sites", "folders"]
-    /// 따로 있던 Workspaces 칸의 저장 문자열(2.15). 이제 Apps 칸의 탭이다.
+    /// 따로 있던 Workspaces 칸(지금 이름 Layouts)의 저장 문자열(2.15). 이제 Apps 칸의 탭이다.
     public static let formerWorkspacesRawValue = "workspaces"
 
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
@@ -619,7 +619,7 @@ public struct Config: Codable {
         {
             // 2.1에서 제거된 "scripts" 칸은 Screenshots(이미 배치돼 있으면 빈 칸)로 바꾼다.
             didMigrateScriptsWidget = rawWidgets.contains(NotchWidget.removedScriptsRawValue)
-            // 합쳐지거나 없어진 칸(Scripts·Timer·Sites·Finder·Workspaces 등)을 지금 위젯으로 옮긴다.
+            // 합쳐지거나 없어진 칸(Scripts·Timer·Sites·Finder·Layouts 등)을 지금 위젯으로 옮긴다.
             let knownWidgets = NotchWidget.migratedSlots(fromRaw: rawWidgets)
             // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
             // 현재 버전의 안전한 기본 슬롯으로 폴백한다.

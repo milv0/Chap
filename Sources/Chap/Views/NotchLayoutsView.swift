@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// 저장된 작업 공간을 한 번에 복원하고 새 배치를 캡처하는 격자. Apps 칸의 Workspaces 탭 본문이다
-/// (제목 줄은 Apps 칸의 탭이 맡는다). 2열 타일 격자다. 타일은 그 Workspace 앱 아이콘을 최대 넷 모은 묶음(폴더 아이콘처럼)과
-/// 아래 짧은 이름이다. Workspace는 같은 앱 조합이 겹칠 수 있어 이름을 늘 함께 보여 준다.
+/// 저장된 창 배치를 한 번에 복원하고 새 배치를 캡처하는 격자. Apps 칸의 Layouts 탭 본문이다
+/// (제목 줄은 Apps 칸의 탭이 맡는다). 2열 타일 격자다. 타일은 그 Layout 앱 아이콘을 최대 넷 모은 묶음(폴더 아이콘처럼)과
+/// 아래 짧은 이름이다. Layout은 같은 앱 조합이 겹칠 수 있어 이름을 늘 함께 보여 준다.
 /// 최대 4개라 2×2에 맞고, 4개 미만이면 빈 자리에 점선 + 타일(Capture)이 들어간다.
-struct NotchWorkspacesView: View {
-    let workspaces: [ChapWorkspace]
-    /// 지금 열리는 중인 Workspace. 그 타일 위에 진행 표시가 돈다.
+struct NotchLayoutsView: View {
+    let layouts: [ChapLayout]
+    /// 지금 열리는 중인 Layout. 그 타일 위에 진행 표시가 돈다.
     var busyID: UUID? = nil
     let palette: NotchWidgetPalette
     let onOpen: (UUID) -> Void
@@ -14,8 +14,12 @@ struct NotchWorkspacesView: View {
     var onEdit: (UUID) -> Void = { _ in }
     var onRemove: (UUID) -> Void = { _ in }
 
-    static let tileWidth: CGFloat = 58
-    static let clusterSize: CGFloat = 36
+    /// 타일 폭. 이름보다 아이콘 묶음 간격을 앞세워 Apps 탭처럼 촘촘하게 둔다(묶음 사이 약 24pt).
+    /// 긴 이름은 끝을 줄이고, 마우스를 올리면 툴팁에 전체 이름이 보인다.
+    static let tileWidth: CGFloat = 48
+    /// 아이콘 묶음 한 변. Apps 탭 앱 아이콘(32pt)과 같아 탭을 바꿔도 한 칸처럼 보인다.
+    static let clusterSize: CGFloat = 32
+    static let clusterCornerRadius: CGFloat = 8
     static let columnGap: CGFloat = 8
     /// 칸 폭: 2열 타일 + 간격 + 좌우 여백.
     static var columnWidth: CGFloat { 2 * tileWidth + columnGap + 4 }
@@ -25,26 +29,26 @@ struct NotchWorkspacesView: View {
             columns: Array(
                 repeating: GridItem(.fixed(Self.tileWidth), spacing: Self.columnGap),
                 count: 2),
-            // 탭 칸 위 간격(`tabBodyTopGap` 6pt)만큼 줄 간격을 없애 두 줄이 다른 칸 바닥선 안에 든다.
-            // 타일마다 위아래 2pt 여백이 있어 줄 사이는 4pt 남는다.
-            alignment: .center, spacing: 0
+            // 줄 간격 8pt: 묶음을 32pt로 줄여 생긴 여유(두 줄 × 4pt)를 줄 사이에 둔다. 타일 위아래 여백
+            // 2pt씩을 더하면 위 이름과 아래 묶음 사이가 12pt이고, 두 줄은 다른 칸 바닥선 안에 든다.
+            alignment: .center, spacing: 8
         ) {
-            ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
-                WorkspaceTile(
-                    workspace: workspace, isBusy: busyID == workspace.id, palette: palette
+            ForEach(layouts.prefix(LayoutStore.maxLayouts)) { layout in
+                LayoutTile(
+                    layout: layout, isBusy: busyID == layout.id, palette: palette
                 ) {
-                    onOpen(workspace.id)
+                    onOpen(layout.id)
                 }
                 .contextMenu {
-                    Button("Open") { onOpen(workspace.id) }
-                    Button("Edit…") { onEdit(workspace.id) }
+                    Button("Open") { onOpen(layout.id) }
+                    Button("Edit…") { onEdit(layout.id) }
                     Divider()
-                    Button("Remove…", role: .destructive) { onRemove(workspace.id) }
+                    Button("Remove…", role: .destructive) { onRemove(layout.id) }
                 }
-                .accessibilityAction(named: "Edit") { onEdit(workspace.id) }
-                .accessibilityAction(named: "Remove") { onRemove(workspace.id) }
+                .accessibilityAction(named: "Edit") { onEdit(layout.id) }
+                .accessibilityAction(named: "Remove") { onRemove(layout.id) }
             }
-            if workspaces.count < WorkspaceStore.maxWorkspaces {
+            if layouts.count < LayoutStore.maxLayouts {
                 CaptureTile(palette: palette, action: onCapture)
             }
         }
@@ -52,9 +56,9 @@ struct NotchWorkspacesView: View {
     }
 }
 
-/// Workspace 하나: 앱 아이콘 묶음 + 이름. 누르면 연다.
-private struct WorkspaceTile: View {
-    let workspace: ChapWorkspace
+/// Layout 하나: 앱 아이콘 묶음 + 이름. 누르면 연다.
+private struct LayoutTile: View {
+    let layout: ChapLayout
     let isBusy: Bool
     let palette: NotchWidgetPalette
     let action: () -> Void
@@ -63,27 +67,30 @@ private struct WorkspaceTile: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 2) {
-                WorkspaceIconCluster(
-                    paths: workspace.windows.map(\.applicationPath), palette: palette
+                LayoutIconCluster(
+                    paths: layout.windows.map(\.applicationPath), palette: palette
                 )
                 .overlay {
                     if isBusy {
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .fill(.black.opacity(0.35))
+                        RoundedRectangle(
+                            cornerRadius: NotchLayoutsView.clusterCornerRadius,
+                            style: .continuous
+                        )
+                        .fill(.black.opacity(0.35))
                         ProgressView()
                             .controlSize(.small)
                             .tint(.white)
                     }
                 }
-                Text(workspace.name)
+                Text(layout.name)
                     .font(DS.notchMeta)
                     .foregroundColor(palette.primary)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .frame(width: NotchWorkspacesView.tileWidth - 4)
+                    .frame(width: NotchLayoutsView.tileWidth - 4)
             }
             .padding(.vertical, 2)
-            .frame(width: NotchWorkspacesView.tileWidth)
+            .frame(width: NotchLayoutsView.tileWidth)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? palette.hoverBackground : Color.clear)
@@ -94,31 +101,33 @@ private struct WorkspaceTile: View {
         .disabled(isBusy)
         .onHover { isHovered = $0 }
         .help(
-            "\(workspace.name) — "
-                + workspace.windows.map(\.applicationName).joined(separator: ", ")
+            "\(layout.name) — "
+                + layout.windows.map(\.applicationName).joined(separator: ", ")
         )
         .accessibilityLabel(
-            "Open \(workspace.name), "
-                + workspace.windows.map(\.applicationName).joined(separator: ", ")
+            "Open \(layout.name), "
+                + layout.windows.map(\.applicationName).joined(separator: ", ")
         )
         .accessibilityValue(isBusy ? "Opening" : "")
     }
 }
 
 /// 폴더 아이콘처럼 앱 아이콘을 모은 사각형. 앱이 하나면 크게 하나, 둘 이상이면 2×2 격자에 앞에서부터 넷.
-struct WorkspaceIconCluster: View {
+struct LayoutIconCluster: View {
     let paths: [String]
     let palette: NotchWidgetPalette
 
-    private static let size = NotchWorkspacesView.clusterSize
-    private static let inset: CGFloat = 3
+    private static let size = NotchLayoutsView.clusterSize
+    private static let inset: CGFloat = 2
     private static let gap: CGFloat = 2
     private static var smallIcon: CGFloat { (size - 2 * inset - gap) / 2 }
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(palette.subtleSurface)
+            RoundedRectangle(
+                cornerRadius: NotchLayoutsView.clusterCornerRadius, style: .continuous
+            )
+            .fill(palette.subtleSurface)
             if paths.count == 1 {
                 ClusterIcon(path: paths[0], size: Self.size - 8)
             } else {
@@ -179,26 +188,28 @@ private struct CaptureTile: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 2) {
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .strokeBorder(
-                        palette.secondary.opacity(isHovered ? 0.8 : 0.45),
-                        style: StrokeStyle(lineWidth: 1, dash: [3, 2.5])
-                    )
-                    .overlay {
-                        Image(systemName: "plus")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(isHovered ? DS.accent : palette.secondary)
-                    }
-                    .frame(
-                        width: NotchWorkspacesView.clusterSize,
-                        height: NotchWorkspacesView.clusterSize)
+                RoundedRectangle(
+                    cornerRadius: NotchLayoutsView.clusterCornerRadius, style: .continuous
+                )
+                .strokeBorder(
+                    palette.secondary.opacity(isHovered ? 0.8 : 0.45),
+                    style: StrokeStyle(lineWidth: 1, dash: [3, 2.5])
+                )
+                .overlay {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(isHovered ? DS.accent : palette.secondary)
+                }
+                .frame(
+                    width: NotchLayoutsView.clusterSize,
+                    height: NotchLayoutsView.clusterSize)
                 Text("Capture")
                     .font(DS.notchMeta)
                     .foregroundColor(isHovered ? DS.accent : palette.secondary)
                     .lineLimit(1)
             }
             .padding(.vertical, 2)
-            .frame(width: NotchWorkspacesView.tileWidth)
+            .frame(width: NotchLayoutsView.tileWidth)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? palette.hoverBackground : Color.clear)
@@ -208,6 +219,6 @@ private struct CaptureTile: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .help("Capture the open app windows")
-        .accessibilityLabel("Capture Workspace")
+        .accessibilityLabel("Capture Layout")
     }
 }

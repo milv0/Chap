@@ -1,8 +1,8 @@
 import ApplicationServices
 import Cocoa
 
-/// Workspace가 캡처·복원할 수 있는 표준 앱 창을 추측 없이 고른다.
-enum WorkspaceWindowAccess {
+/// Layout이 캡처·복원할 수 있는 표준 앱 창을 추측 없이 고른다.
+enum LayoutWindowAccess {
     static func representativeWindow(pid: pid_t) -> AXUIElement? {
         let app = LauncherUtils.axApplication(pid: pid)
         let eligible = eligibleWindows(app: app)

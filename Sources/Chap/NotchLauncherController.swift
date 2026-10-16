@@ -80,18 +80,18 @@ final class NotchLauncherController {
     var onLaunch: (Int) -> Void = { _ in }
     /// 런처 칸 제목 클릭 → 해당 타입이 선택된 설정창.
     var onOpenSettings: (LaunchType) -> Void = { _ in }
-    /// Workspaces 칸에서 저장된 배치를 연다.
-    var onOpenWorkspace: (UUID) -> Void = { _ in }
-    /// Workspaces 칸에서 현재 창 배치를 캡처한다.
-    var onCaptureWorkspace: () -> Void = {}
-    /// Workspaces 칸 우클릭 Remove.
-    var onRemoveWorkspace: (UUID) -> Void = { _ in }
-    /// Workspaces 칸 우클릭 Edit.
-    var onEditWorkspace: (UUID) -> Void = { _ in }
-    /// Workspaces 칸 제목 클릭 → 설정창 Workspaces 섹션.
-    var onOpenWorkspaceSettings: () -> Void = {}
-    /// 열리는 중인 Workspace id 공급자.
-    var busyWorkspaceIDProvider: () -> UUID? = { nil }
+    /// Layouts 칸에서 저장된 배치를 연다.
+    var onOpenLayout: (UUID) -> Void = { _ in }
+    /// Layouts 칸에서 현재 창 배치를 캡처한다.
+    var onCaptureLayout: () -> Void = {}
+    /// Layouts 칸 우클릭 Remove.
+    var onRemoveLayout: (UUID) -> Void = { _ in }
+    /// Layouts 칸 우클릭 Edit.
+    var onEditLayout: (UUID) -> Void = { _ in }
+    /// Layouts 칸 제목 클릭 → 설정창 Layouts 섹션.
+    var onOpenLayoutSettings: () -> Void = {}
+    /// 열리는 중인 Layout id 공급자.
+    var busyLayoutIDProvider: () -> UUID? = { nil }
     /// 돌고 있는 타이머가 끝나는 시각. 없으면 nil.
     var timerEndProvider: () -> Date? = { nil }
     /// 어깨로 접힌 위젯 공급자와 변경 콜백 (config 저장).
@@ -517,28 +517,28 @@ final class NotchLauncherController {
                 self?.hidePanel()
                 self?.onLaunch(siteIndex)
             },
-            onOpenWorkspace: { [weak self] id in
+            onOpenLayout: { [weak self] id in
                 self?.hidePanel()
-                self?.onOpenWorkspace(id)
+                self?.onOpenLayout(id)
             },
-            onCaptureWorkspace: { [weak self] in
+            onCaptureLayout: { [weak self] in
                 self?.hidePanel()
-                self?.onCaptureWorkspace()
+                self?.onCaptureLayout()
             },
-            onRemoveWorkspace: { [weak self] id in
+            onRemoveLayout: { [weak self] id in
                 // 확인 창이 도커 뒤에 깔리지 않게 먼저 접는다.
                 self?.hidePanel()
-                DispatchQueue.main.async { self?.onRemoveWorkspace(id) }
+                DispatchQueue.main.async { self?.onRemoveLayout(id) }
             },
-            onEditWorkspace: { [weak self] id in
+            onEditLayout: { [weak self] id in
                 self?.hidePanel()
-                DispatchQueue.main.async { self?.onEditWorkspace(id) }
+                DispatchQueue.main.async { self?.onEditLayout(id) }
             },
-            onOpenWorkspaceSettings: { [weak self] in
+            onOpenLayoutSettings: { [weak self] in
                 self?.hidePanel()
-                self?.onOpenWorkspaceSettings()
+                self?.onOpenLayoutSettings()
             },
-            busyWorkspaceIDProvider: { [weak self] in self?.busyWorkspaceIDProvider() },
+            busyLayoutIDProvider: { [weak self] in self?.busyLayoutIDProvider() },
             timerEndProvider: { [weak self] in self?.timerEndProvider() },
             onContentSizeChange: { [weak self] size in
                 // 레이아웃이 끝난 뒤 불리지만, 창 조정은 다음 틱으로 미뤄 레이아웃 중 재진입을 피한다.

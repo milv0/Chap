@@ -1,12 +1,12 @@
 import AppKit
 import SwiftUI
 
-// Workspace 캡처 창과 설정창 Workspaces 섹션이 함께 쓰는 작은 뷰들.
+// Layout 캡처 창과 설정창 Layouts 섹션이 함께 쓰는 작은 뷰들.
 
 /// 화면 안에서 창이 놓인 자리를 보여 주는 미니맵.
 /// 창 사각형은 틀 안쪽 여백 안에만 그려, 화면 끝에 붙은 창이어도 틀 테두리와 겹치지 않는다.
-struct WorkspaceFramePreview: View {
-    let frame: WorkspaceFrame
+struct LayoutFramePreview: View {
+    let frame: LayoutFrame
 
     private static let size = CGSize(width: 54, height: 34)
     /// 틀 테두리와 창 사각형 사이의 여백.
@@ -48,7 +48,7 @@ struct WorkspaceFramePreview: View {
 
 /// 캡슐 모양 디스플레이 선택 버튼. 누르거나(키보드: Space·Return) 버튼 바로 아래에 NSMenu를 띄운다.
 /// SwiftUI Menu는 macOS에서 버튼 bezel을 남겨 캡슐 양옆에 자국이 생기므로 쓰지 않는다.
-struct WorkspaceDisplayMenuButton: View {
+struct LayoutDisplayMenuButton: View {
     struct Choice {
         let title: String
         let isSelected: Bool
@@ -163,30 +163,30 @@ private final class MenuActionHandler: NSObject {
     }
 }
 
-/// Workspace 전체 배치 미리보기. 창이 놓일 디스플레이마다 화면 하나를 그리고, 그 위에 창 사각형과
+/// Layout 전체 배치 미리보기. 창이 놓일 디스플레이마다 화면 하나를 그리고, 그 위에 창 사각형과
 /// 앱 이름을 올린다. Follow Cursor 창은 "Follow Cursor" 화면에 모은다. 고른 창은 진하게 강조한다.
-struct WorkspaceLayoutPreview: View {
-    let windows: [WorkspaceWindow]
+struct LayoutPreviewByDisplay: View {
+    let windows: [LayoutWindow]
     /// 연결된 디스플레이 이름을 메뉴와 같게 붙이려고 받는다.
-    let displays: [WorkspaceDisplay]
+    let displays: [LayoutDisplay]
     var highlightedID: UUID?
 
     private struct Screen: Identifiable {
         let id: String
         let title: String
-        let windows: [WorkspaceWindow]
+        let windows: [LayoutWindow]
     }
 
     private var screens: [Screen] {
         var order: [String] = []
-        var grouped: [String: [WorkspaceWindow]] = [:]
+        var grouped: [String: [LayoutWindow]] = [:]
         var titles: [String: String] = [:]
         for window in windows {
             let key = window.display.map { $0.identifier ?? "name:\($0.name)" } ?? "cursor"
             if grouped[key] == nil { order.append(key) }
             grouped[key, default: []].append(window)
             if titles[key] == nil {
-                titles[key] = WorkspaceDisplay.label(for: window.display, among: displays)
+                titles[key] = LayoutDisplay.label(for: window.display, among: displays)
             }
         }
         return order.map { Screen(id: $0, title: titles[$0] ?? "", windows: grouped[$0] ?? []) }
@@ -259,14 +259,14 @@ struct WorkspaceLayoutPreview: View {
     }
 }
 
-extension WorkspaceDisplayMenuButton {
+extension LayoutDisplayMenuButton {
     /// 창 하나의 디스플레이 선택지: 연결된 디스플레이들, (연결되지 않은 저장 디스플레이), Follow Cursor.
     /// 캡처 창과 설정 화면이 같은 메뉴를 쓴다.
     static func displayChoices(
-        for window: WorkspaceWindow, among connected: [WorkspaceDisplay],
-        move: @escaping (WorkspaceDisplay?) -> Void
+        for window: LayoutWindow, among connected: [LayoutDisplay],
+        move: @escaping (LayoutDisplay?) -> Void
     ) -> [Choice] {
-        let labels = WorkspaceDisplay.menuLabels(for: connected)
+        let labels = LayoutDisplay.menuLabels(for: connected)
         var choices = connected.enumerated().map { index, display in
             Choice(
                 title: labels[index],
@@ -276,7 +276,7 @@ extension WorkspaceDisplayMenuButton {
         if let saved = window.display, !connected.contains(where: { $0.matches(saved) }) {
             choices.append(
                 Choice(
-                    title: WorkspaceDisplay.label(for: saved, among: connected), isSelected: true,
+                    title: LayoutDisplay.label(for: saved, among: connected), isSelected: true,
                     startsSection: true, action: {}))
         }
         choices.append(

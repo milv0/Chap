@@ -255,7 +255,7 @@ extension AppDelegate {
             menu.addItem(.separator())
         }
 
-        addWorkspacesMenu(to: menu)
+        addLayoutsMenu(to: menu)
         menu.addItem(.separator())
 
         // Keep Mac Awake — 화면 잠자기 방지 세션 (세션 한정, config 미저장)
@@ -342,7 +342,7 @@ extension AppDelegate {
             guard let self else { return [] }
             return NotchSlotContent.slots(
                 widgets: self.config.notchWidgets, sites: self.config.sites,
-                workspaces: self.workspaces)
+                layouts: self.layouts)
         }
         notchLauncher.mirrorEnabledProvider = { [weak self] in
             self?.config.notchMirrorEnabled ?? false
@@ -387,24 +387,24 @@ extension AppDelegate {
                 AppLauncher.open(site)
             }
         }
-        notchLauncher.onOpenWorkspace = { [weak self] id in
-            self?.openWorkspace(id: id)
+        notchLauncher.onOpenLayout = { [weak self] id in
+            self?.openLayout(id: id)
         }
-        notchLauncher.onCaptureWorkspace = { [weak self] in
-            self?.captureWorkspace()
+        notchLauncher.onCaptureLayout = { [weak self] in
+            self?.captureLayout()
         }
-        notchLauncher.onEditWorkspace = { [weak self] id in
-            self?.editWorkspace(id: id)
+        notchLauncher.onEditLayout = { [weak self] id in
+            self?.editLayout(id: id)
         }
-        notchLauncher.onOpenWorkspaceSettings = { [weak self] in
-            self?.showWorkspacesInSettings()
+        notchLauncher.onOpenLayoutSettings = { [weak self] in
+            self?.showLayoutsInSettings()
         }
-        notchLauncher.busyWorkspaceIDProvider = { [weak self] in self?.workspaceLibrary.busyID }
+        notchLauncher.busyLayoutIDProvider = { [weak self] in self?.layoutLibrary.busyID }
         notchLauncher.timerEndProvider = { [weak self] in
             self?.chapTimer.endDate
         }
-        notchLauncher.onRemoveWorkspace = { [weak self] id in
-            self?.confirmRemoveWorkspace(id: id)
+        notchLauncher.onRemoveLayout = { [weak self] id in
+            self?.confirmRemoveLayout(id: id)
         }
         // 가림막 아래에서 도커가 열리면 보이지 않는 채로 포커스를 가져간다 (노치 없는 Mac의 hover 포함).
         notchLauncher.isSuppressedProvider = { [weak self] in

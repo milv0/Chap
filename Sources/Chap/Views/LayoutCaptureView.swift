@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct WorkspaceCaptureView: View {
-    @ObservedObject var model: WorkspaceCaptureViewModel
+struct LayoutCaptureView: View {
+    @ObservedObject var model: LayoutCaptureViewModel
     let onCancel: () -> Void
-    let onSave: (String, [WorkspaceWindow]) -> Void
+    let onSave: (String, [LayoutWindow]) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,7 +20,7 @@ struct WorkspaceCaptureView: View {
             NotificationCenter.default.publisher(
                 for: NSApplication.didChangeScreenParametersNotification)
         ) { _ in
-            model.displays = WorkspaceDisplay.connected()
+            model.displays = LayoutDisplay.connected()
         }
     }
 
@@ -34,7 +34,7 @@ struct WorkspaceCaptureView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
-                Text("Capture Workspace")
+                Text("Capture Layout")
                     .font(DS.headlineFont)
                     .foregroundColor(DS.textPrimary)
                 Text("Saves app names, window titles, and positions. Stays on this Mac.")
@@ -84,7 +84,7 @@ struct WorkspaceCaptureView: View {
 
     /// 후보 한 줄. 줄을 누르면 고르고 빼며, 디스플레이 메뉴는 따로 눌리는 컨트롤이다
     /// (메뉴는 버튼 라벨 안에 넣으면 눌리지 않는다).
-    private func candidateRow(_ window: WorkspaceWindow) -> some View {
+    private func candidateRow(_ window: LayoutWindow) -> some View {
         let selected = model.selectedIDs.contains(window.id)
         return HStack(spacing: 12) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: window.applicationPath))
@@ -106,7 +106,7 @@ struct WorkspaceCaptureView: View {
             if model.offersDisplayChoice {
                 displayMenu(for: window)
             }
-            WorkspaceFramePreview(frame: window.frame)
+            LayoutFramePreview(frame: window.frame)
             Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 16))
                 .foregroundColor(selected ? DS.accent : DS.textTertiary)
@@ -136,11 +136,11 @@ struct WorkspaceCaptureView: View {
     }
 
     /// 이 창을 띄울 디스플레이. 바꿔도 화면 안의 상대 위치·크기는 그대로다.
-    private func displayMenu(for window: WorkspaceWindow) -> some View {
-        WorkspaceDisplayMenuButton(
+    private func displayMenu(for window: LayoutWindow) -> some View {
+        LayoutDisplayMenuButton(
             title: displayLabel(for: window),
             symbol: window.display == nil ? "cursorarrow" : "display",
-            choices: WorkspaceDisplayMenuButton.displayChoices(
+            choices: LayoutDisplayMenuButton.displayChoices(
                 for: window, among: model.displays
             ) { model.setDisplay($0, for: window.id) }
         )
@@ -149,8 +149,8 @@ struct WorkspaceCaptureView: View {
         .accessibilityValue(displayLabel(for: window))
     }
 
-    private func displayLabel(for window: WorkspaceWindow) -> String {
-        WorkspaceDisplay.label(for: window.display, among: model.displays)
+    private func displayLabel(for window: LayoutWindow) -> String {
+        LayoutDisplay.label(for: window.display, among: model.displays)
     }
 
     private var footer: some View {
@@ -161,12 +161,12 @@ struct WorkspaceCaptureView: View {
                     .foregroundColor(DS.textSecondary)
                 TextField("Deep Work", text: $model.name)
                     .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Workspace name")
+                    .accessibilityLabel("Layout name")
             }
             HStack {
                 Text(
                     model.isAtSelectionLimit
-                        ? "\(model.selectedWindows.count) selected · up to \(WorkspaceStore.maxWindows)"
+                        ? "\(model.selectedWindows.count) selected · up to \(LayoutStore.maxWindows)"
                         : "\(model.selectedWindows.count) selected"
                 )
                 .font(DS.captionFont)
@@ -185,7 +185,7 @@ struct WorkspaceCaptureView: View {
     }
 
     /// 둘째 줄: 창 제목. 디스플레이를 고를 수 없을 때(모니터 하나)는 디스플레이 이름을 앞에 붙인다.
-    private func detailText(for window: WorkspaceWindow) -> String {
+    private func detailText(for window: LayoutWindow) -> String {
         let title = window.windowTitle?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !model.offersDisplayChoice else { return title.isEmpty ? " " : title }
         let display = displayLabel(for: window)

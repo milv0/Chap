@@ -3,7 +3,7 @@ Chap Project Structure
 
 ## 앱 소개
 
-Chap — 웹사이트·앱·폴더를 원하는 화면과 크기로 열고, 실제 앱 창 배치를 Workspace로 기억하는 macOS 메뉴바 런처.
+Chap — 웹사이트·앱·폴더를 원하는 화면과 크기로 열고, 실제 앱 창 배치를 Layout으로 기억하는 macOS 메뉴바 런처.
 
 
 ## 프로젝트 구조
@@ -13,7 +13,7 @@ Sources/
 │   ├── AppDelegate.swift          ← AppDelegate 코어 클래스·상태·관리 창 생성
 │   ├── AppDelegate+Lifecycle.swift ← 라이프사이클·관리 창·종료·재실행·제거·Login Item
 │   ├── AppDelegate+Menu.swift     ← 메뉴·핫키·상태바 아이콘·Keep Awake 액션·노치 동기화
-│   ├── AppDelegate+Workspaces.swift ← Workspace 메뉴·캡처 창·저장·복원 orchestration
+│   ├── AppDelegate+Layouts.swift ← Layout 메뉴·캡처 창·저장·복원 orchestration
 │   ├── AppDelegate+Config.swift   ← config 마이그레이션·로드·레거시 필드 정리
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
@@ -49,12 +49,12 @@ Sources/
 │   │   ├── AXWindowIntrospection.swift ← AX 요소 메타데이터·settable 검사·창 상태 스냅샷·public CGWindowID 매칭
 │   │   ├── ResizeLogger.swift     ← CSV 성능 로그 (DEBUG 전용, 14일 초과분 자동 정리)
 │   │   └── GuideWindow.swift      ← 리사이즈 위치 가이드 윈도우
-│   ├── Workspaces/                ← 실제 앱 창 배치 캡처·복원
-│   │   ├── WorkspaceWindowAccess.swift ← 표준·이동 가능 AX 창 판별과 추측 없는 대표/일치 창 선택
-│   │   ├── WorkspaceCaptureService.swift ← 실행 앱 대표 창·디스플레이·프레임 캡처 (userInitiated 직렬 큐)
-│   │   ├── WorkspaceRestoreService.swift ← 앱 재열기·창 대기·검증된 AX bounds 순차 복원
-│   │   ├── WorkspaceCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
-│   │   └── WorkspaceLibrary.swift ← 저장된 Workspace 단일 출처(ObservableObject, busyID 진행 상태)·WorkspaceAlert(앞으로 가져와 띄우는 알림)·connected() 디스플레이
+│   ├── Layouts/                ← 실제 앱 창 배치 캡처·복원
+│   │   ├── LayoutWindowAccess.swift ← 표준·이동 가능 AX 창 판별과 추측 없는 대표/일치 창 선택
+│   │   ├── LayoutCaptureService.swift ← 실행 앱 대표 창·디스플레이·프레임 캡처 (userInitiated 직렬 큐)
+│   │   ├── LayoutRestoreService.swift ← 앱 재열기·창 대기·검증된 AX bounds 순차 복원
+│   │   ├── LayoutCaptureViewModel.swift ← Capture 창 후보 선택·이름·저장 가능 상태
+│   │   └── LayoutLibrary.swift ← 저장된 Layout 단일 출처(ObservableObject, busyID 진행 상태)·LayoutAlert(앞으로 가져와 띄우는 알림)·connected() 디스플레이
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
@@ -73,12 +73,12 @@ Sources/
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정, 열 때 정하는 가변 폭)
-│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle), 제목 줄 빈 자리 클릭·두 손가락 스와이프로 탭 전환(tabSwipe, NotchTabMotion)
-│       ├── NotchWorkspacesView.swift ← Apps 칸 Workspaces 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
-│       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
-│       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
-│       ├── WorkspaceDetailView.swift ← Launchers 탭 Workspace 편집 화면 (이름·Open·Update Positions·Delete·Layout·창 목록)
-│       ├── SettingsWorkspacesSection.swift ← 설정 사이드바 Workspaces 섹션 (n/4, + 대상, 검색 필터)
+│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Layouts 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle), 제목 줄 빈 자리 클릭·두 손가락 스와이프로 탭 전환(tabSwipe, NotchTabMotion)
+│       ├── NotchLayoutsView.swift ← Apps 칸 Layouts 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
+│       ├── LayoutCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
+│       ├── LayoutViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Preview (캡처 창·설정 공용)
+│       ├── LayoutDetailView.swift ← Launchers 탭 Layout 편집 화면 (이름·Open·Update Positions·Delete·Preview·창 목록)
+│       ├── SettingsLayoutsSection.swift ← 설정 사이드바 Layouts 섹션 (n/4, + 대상, 검색 필터)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Focus 칸·탭(Keep Awake/Timer 전환)·Focus 모드 본문
 │       ├── NotchFocusTimerBody.swift ← Focus 칸 Timer 모드 본문(5~60분 다이얼)
@@ -101,9 +101,9 @@ Sources/
 │   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
 │   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
 │   ├── WindowGeometry.swift       ← 크기 fitting·화면별 override·centeredBounds·좌표 변환 (순수 코어+NSScreen 래퍼)
-│   ├── WorkspaceModels.swift      ← Workspace·앱 창·visibleFrame 상대 프레임 Codable 모델, 디스플레이 선택(WorkspaceDisplay·메뉴 이름 구분)
-│   ├── WorkspaceGeometry.swift    ← AX bounds ↔ 디스플레이 상대 프레임 순수 변환·클램프
-│   ├── WorkspaceStore.swift       ← Workspaces.json 로컬 저장·상한·손상 파일 보존
+│   ├── LayoutModels.swift      ← Layout·앱 창·visibleFrame 상대 프레임 Codable 모델, 디스플레이 선택(LayoutDisplay·메뉴 이름 구분)
+│   ├── LayoutGeometry.swift    ← AX bounds ↔ 디스플레이 상대 프레임 순수 변환·클램프
+│   ├── LayoutStore.swift       ← Layouts.json 로컬 저장·상한·손상 파일 보존·2.17 Workspaces.json 이름 옮기기
 │   ├── DisplayMatching.swift      ← 커서/내장 화면 결정·명시 디스플레이 판정·UUID 우선 매칭(resolvedDisplayIndex)
 │   ├── ConfigValidation.swift     ← 전체 sites 필수값·HTTP(S) URL·크기·중복·Tools 키 충돌 검증
 │   ├── ConfigFormatReference.swift ← Import 안내용 예제 JSON·필수 필드 설명 (self-contained)
@@ -178,7 +178,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── NotchToolWidgetTests.swift
     ├── AppMainMenuTests.swift
     ├── TodoStoreTests.swift
-    ├── WorkspaceTests.swift
+    ├── LayoutTests.swift
     ├── QuickNoteShortcutTests.swift
     ├── ChapMascotTests.swift
     ├── ShelfFolderLaunchTests.swift
@@ -285,7 +285,7 @@ Config 모델 필드:
   ※ 2.10.1까지의 lightsOutShortcut·notchLightsOutEnabled는 읽을 때 cover… 이름으로 옮기고,
     lightsOutUnlockKey는 버린다(걷는 법이 ⌥ 탭으로 고정)
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (screenshots | downloads | launchers(Sites|Finder 탭) |
-                                 apps(Apps|Workspaces 탭) | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
+                                 apps(Apps|Layouts 탭) | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
                                  선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, launchers, apps,
                                  none, none]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
                                  2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로 당겨 6칸에 옮긴다.
@@ -401,9 +401,9 @@ Config 모델 필드:
   **잠금이 아니다**: 암호를 묻지 않고 Chap이 끝나면 걷힌다(문서·설정·Q&A에 명시)
 - 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
   `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
-- Workspaces 데모: 메뉴의 Capture Workspace에서 현재 실행 앱의 표준·이동 가능 대표 창을 최대 6개 골라 이름을 붙이고,
-  디스플레이 UUID와 visibleFrame 상대 위치·크기를 `~/Library/Application Support/Chap/Workspaces.json`에 저장한다.
-  최대 4개이며 config Export/Import·동기화에 넣지 않는다. 노치 Workspaces 칸이나 메뉴에서 열면 앱을 뒤에서부터
+- Layouts 데모: 메뉴의 Capture Layout에서 현재 실행 앱의 표준·이동 가능 대표 창을 최대 6개 골라 이름을 붙이고,
+  디스플레이 UUID와 visibleFrame 상대 위치·크기를 `~/Library/Application Support/Chap/Layouts.json`에 저장한다.
+  최대 4개이며 config Export/Import·동기화에 넣지 않는다. 노치 Layouts 칸이나 메뉴에서 열면 앱을 뒤에서부터
   재열고 기존 `LauncherUtils.axApplyBounds`의 size→position→size·readback 검증으로 순차 복원한다. 연결 화면이 없으면
   커서 화면에 같은 상대 프레임을 맞추며, 여러 창 중 저장 제목과 유일하게 맞거나 표준 창이 하나일 때만 움직인다.
 - 노치 To-do 칸: 3~6번 칸에 놓는 최대 4개 체크리스트. 추가·체크(자리 유지)·더블클릭 수정·×/우클릭 삭제,
@@ -421,7 +421,7 @@ Config 모델 필드:
 
   [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
   ────────
-  Workspaces ▸  (저장한 배치 열기, Capture Workspace…, Edit Workspace ▸ = 설정창 Launchers에서 열기, Remove Workspace ▸)
+  Layouts ▸  (저장한 배치 열기, Capture Layout…, Edit Layout ▸ = 설정창 Launchers에서 열기, Remove Layout ▸)
   ────────
   Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   Timer ▸  (돌면 "Timer — 12:34 left", Stop Timer + 5·10·15·25·30·45분·1시간)
@@ -444,7 +444,7 @@ Config 모델 필드:
   Report Bug...  (GitHub 이슈 페이지)
   ────────
   Restart App
-  Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak·Workspaces.json 삭제 → 앱 휴지통 이동)
+  Uninstall...  (확인 후 Login Item 해제 → tccutil 권한 리셋 → config/.bak·Layouts.json 삭제 → 앱 휴지통 이동)
 
 
 ## 단축키

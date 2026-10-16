@@ -168,15 +168,15 @@ struct NotchLaunchersTabSlot<Content: View>: View {
     }
 }
 
-/// Apps(앱 아이콘 격자)와 Workspaces(작업 공간 타일)를 한 칸에 두는 Apps 칸. 둘 다 아이콘 타일이라
-/// 탭을 바꿔도 칸 모양이 같다. 앱이 없으면 Workspaces만 보인다(Capture 타일이 늘 있다).
-struct NotchAppsSlot<AppsContent: View, WorkspacesContent: View>: View {
+/// Apps(앱 아이콘 격자)와 Layouts(창 배치 타일)를 한 칸에 두는 Apps 칸. 둘 다 아이콘 타일이라
+/// 탭을 바꿔도 칸 모양이 같다. 앱이 없으면 Layouts만 보인다(Capture 타일이 늘 있다).
+struct NotchAppsSlot<AppsContent: View, LayoutsContent: View>: View {
     let hasApps: Bool
     let palette: NotchWidgetPalette
     let onOpenAppSettings: () -> Void
-    let onOpenWorkspaceSettings: () -> Void
+    let onOpenLayoutSettings: () -> Void
     @ViewBuilder let apps: () -> AppsContent
-    @ViewBuilder let workspaces: () -> WorkspacesContent
+    @ViewBuilder let layouts: () -> LayoutsContent
 
     @AppStorage(AppsSlotTab.storageKey) private var storedTab = ""
     @State private var motion = NotchTabMotion()
@@ -203,12 +203,12 @@ struct NotchAppsSlot<AppsContent: View, WorkspacesContent: View>: View {
                     }
                 },
                 onOpenSelected: {
-                    selected == .apps ? onOpenAppSettings() : onOpenWorkspaceSettings()
+                    selected == .apps ? onOpenAppSettings() : onOpenLayoutSettings()
                 })
             Group {
                 switch selected {
                 case .apps: apps()
-                case .workspaces: workspaces()
+                case .layouts: layouts()
                 }
             }
             .id(selected)

@@ -1,37 +1,37 @@
 import SwiftUI
 
-/// 설정창이 Workspace에 대해 앱에 부탁하는 일. 실제 동작(권한·창 제어·확인 창)은 AppDelegate가 맡는다.
-struct WorkspaceSettingsActions {
+/// 설정창이 Layout에 대해 앱에 부탁하는 일. 실제 동작(권한·창 제어·확인 창)은 AppDelegate가 맡는다.
+struct LayoutSettingsActions {
     var open: (UUID) -> Void = { _ in }
     var capture: () -> Void = {}
     var updatePositions: (UUID) -> Void = { _ in }
     var remove: (UUID) -> Void = { _ in }
 }
 
-/// Launchers 탭에서 Workspace 하나를 고치는 화면. 바꾸는 즉시 저장한다(이름은 Enter나 칸을 벗어날 때).
+/// Launchers 탭에서 Layout 하나를 고치는 화면. 바꾸는 즉시 저장한다(이름은 Enter나 칸을 벗어날 때).
 /// - 위: 이름, Open, Update Positions(지금 창 위치로), 삭제
 /// - 가운데: 디스플레이별 배치 미리보기
-/// - 아래: 창 목록. 창마다 디스플레이를 바꾸거나 Workspace에서 뺀다.
-struct WorkspaceDetailView: View {
-    @ObservedObject var library: WorkspaceLibrary
-    let workspaceID: UUID
-    let displays: [WorkspaceDisplay]
-    let actions: WorkspaceSettingsActions
+/// - 아래: 창 목록. 창마다 디스플레이를 바꾸거나 Layout에서 뺀다.
+struct LayoutDetailView: View {
+    @ObservedObject var library: LayoutLibrary
+    let layoutID: UUID
+    let displays: [LayoutDisplay]
+    let actions: LayoutSettingsActions
 
     @State private var nameDraft = ""
     @State private var hoveredWindowID: UUID?
     @FocusState private var nameFocused: Bool
 
-    private var workspace: ChapWorkspace? { library.workspace(id: workspaceID) }
-    private var isBusy: Bool { library.busyID == workspaceID }
+    private var layout: ChapLayout? { library.layout(id: layoutID) }
+    private var isBusy: Bool { library.busyID == layoutID }
 
     var body: some View {
-        if let workspace {
+        if let layout {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: DS.spacing) {
-                    header(workspace)
-                    layoutCard(workspace)
-                    windowsCard(workspace)
+                    header(layout)
+                    previewCard(layout)
+                    windowsCard(layout)
                     Text("App names, window titles, and positions stay on this Mac.")
                         .font(DS.captionFont)
                         .foregroundColor(DS.textTertiary)
@@ -41,7 +41,7 @@ struct WorkspaceDetailView: View {
                 .padding(.trailing, DS.padding)
                 .padding(.vertical, DS.paddingSmall)
             }
-            .onAppear { nameDraft = workspace.name }
+            .onAppear { nameDraft = layout.name }
             .onChange(of: nameFocused) { _, focused in if !focused { commitName() } }
             .onDisappear(perform: commitName)
         }
@@ -49,14 +49,14 @@ struct WorkspaceDetailView: View {
 
     // MARK: - Header
 
-    private func header(_ workspace: ChapWorkspace) -> some View {
+    private func header(_ layout: ChapLayout) -> some View {
         CardSection {
             VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Name")
                         .font(DS.captionFont)
                         .foregroundColor(DS.textSecondary)
-                    TextField("Workspace name", text: $nameDraft)
+                    TextField("Layout name", text: $nameDraft)
                         .textFieldStyle(.plain)
                         .font(DS.bodyFont)
                         .padding(DS.paddingSmall)
@@ -68,17 +68,17 @@ struct WorkspaceDetailView: View {
                         )
                         .focused($nameFocused)
                         .onSubmit(commitName)
-                        .accessibilityLabel("Workspace name")
+                        .accessibilityLabel("Layout name")
                 }
                 HStack(spacing: 8) {
                     Button {
-                        actions.open(workspace.id)
+                        actions.open(layout.id)
                     } label: {
                         Label("Open", systemImage: "play.fill")
                     }
                     .help("Open these apps and put their windows in place")
                     Button {
-                        actions.updatePositions(workspace.id)
+                        actions.updatePositions(layout.id)
                     } label: {
                         Label("Update Positions", systemImage: "arrow.triangle.2.circlepath")
                     }
@@ -90,11 +90,11 @@ struct WorkspaceDetailView: View {
                     }
                     Spacer()
                     Button(role: .destructive) {
-                        actions.remove(workspace.id)
+                        actions.remove(layout.id)
                     } label: {
                         Label("Remove", systemImage: "trash")
                     }
-                    .help("Remove this workspace. Apps and windows are not changed.")
+                    .help("Remove this layout. Apps and windows are not changed.")
                 }
                 .controlSize(.regular)
                 .disabled(library.busyID != nil)
@@ -102,16 +102,16 @@ struct WorkspaceDetailView: View {
         }
     }
 
-    // MARK: - Layout
+    // MARK: - Preview
 
-    private func layoutCard(_ workspace: ChapWorkspace) -> some View {
+    private func previewCard(_ layout: ChapLayout) -> some View {
         CardSection {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Layout")
+                Text("Preview")
                     .font(DS.captionFont.weight(.semibold))
                     .foregroundColor(DS.textSecondary)
-                WorkspaceLayoutPreview(
-                    windows: workspace.windows, displays: displays,
+                LayoutPreviewByDisplay(
+                    windows: layout.windows, displays: displays,
                     highlightedID: hoveredWindowID)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -120,24 +120,24 @@ struct WorkspaceDetailView: View {
 
     // MARK: - Windows
 
-    private func windowsCard(_ workspace: ChapWorkspace) -> some View {
+    private func windowsCard(_ layout: ChapLayout) -> some View {
         CardSection {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Windows")
                         .font(DS.captionFont.weight(.semibold))
                         .foregroundColor(DS.textSecondary)
-                    Text("\(workspace.windows.count)/\(WorkspaceStore.maxWindows)")
+                    Text("\(layout.windows.count)/\(LayoutStore.maxWindows)")
                         .font(DS.captionFont)
                         .foregroundColor(DS.textTertiary)
                         .monospacedDigit()
                     Spacer()
                 }
-                ForEach(workspace.windows) { window in
-                    windowRow(window, in: workspace)
+                ForEach(layout.windows) { window in
+                    windowRow(window, in: layout)
                 }
                 Text(
-                    "Update Positions saves where these apps' windows are now. To add an app, capture a new workspace."
+                    "Update Positions saves where these apps' windows are now. To add an app, capture a new layout."
                 )
                 .font(DS.captionFont)
                 .foregroundColor(DS.textTertiary)
@@ -146,8 +146,8 @@ struct WorkspaceDetailView: View {
         }
     }
 
-    private func windowRow(_ window: WorkspaceWindow, in workspace: ChapWorkspace) -> some View {
-        let isLast = workspace.windows.count == 1
+    private func windowRow(_ window: LayoutWindow, in layout: ChapLayout) -> some View {
+        let isLast = layout.windows.count == 1
         return HStack(spacing: 10) {
             Image(nsImage: NSWorkspace.shared.icon(forFile: window.applicationPath))
                 .resizable()
@@ -168,19 +168,19 @@ struct WorkspaceDetailView: View {
                 }
             }
             Spacer(minLength: 6)
-            WorkspaceDisplayMenuButton(
+            LayoutDisplayMenuButton(
                 title: displayLabel(for: window),
                 symbol: window.display == nil ? "cursorarrow" : "display",
-                choices: WorkspaceDisplayMenuButton.displayChoices(
+                choices: LayoutDisplayMenuButton.displayChoices(
                     for: window, among: displays
-                ) { move(window, to: $0, in: workspace) }
+                ) { move(window, to: $0, in: layout) }
             )
             .help("Display this window opens on")
             .accessibilityLabel("Display for \(window.applicationName)")
             .accessibilityValue(displayLabel(for: window))
-            // 자리는 위 Layout 미리보기가 보여 준다(줄에 마우스를 올리면 그 창이 진해진다).
+            // 자리는 위 Preview가 보여 준다(줄에 마우스를 올리면 그 창이 진해진다).
             Button {
-                save(workspace, windows: workspace.windows.filter { $0.id != window.id })
+                save(layout, windows: layout.windows.filter { $0.id != window.id })
             } label: {
                 Image(systemName: "minus.circle.fill")
                     .font(.system(size: 14))
@@ -190,7 +190,7 @@ struct WorkspaceDetailView: View {
             .disabled(isLast)
             .help(
                 isLast
-                    ? "A workspace needs at least one window. Delete the workspace instead."
+                    ? "A layout needs at least one window. Delete the layout instead."
                     : "Leave this window out"
             )
             .accessibilityLabel("Leave out \(window.applicationName)")
@@ -212,33 +212,33 @@ struct WorkspaceDetailView: View {
 
     // MARK: - Displays
 
-    private func displayLabel(for window: WorkspaceWindow) -> String {
-        WorkspaceDisplay.label(for: window.display, among: displays)
+    private func displayLabel(for window: LayoutWindow) -> String {
+        LayoutDisplay.label(for: window.display, among: displays)
     }
 
     // MARK: - Saving
 
     private func move(
-        _ window: WorkspaceWindow, to display: WorkspaceDisplay?, in workspace: ChapWorkspace
+        _ window: LayoutWindow, to display: LayoutDisplay?, in layout: ChapLayout
     ) {
         save(
-            workspace,
-            windows: workspace.windows.map { $0.id == window.id ? $0.assigned(to: display) : $0 })
+            layout,
+            windows: layout.windows.map { $0.id == window.id ? $0.assigned(to: display) : $0 })
     }
 
-    private func save(_ workspace: ChapWorkspace, windows: [WorkspaceWindow]) {
-        library.replace(workspace.id, name: workspace.name, windows: windows)
+    private func save(_ layout: ChapLayout, windows: [LayoutWindow]) {
+        library.replace(layout.id, name: layout.name, windows: windows)
     }
 
     private func commitName() {
-        guard let workspace else { return }
-        guard let cleaned = WorkspaceStore.cleanedName(nameDraft) else {
+        guard let layout else { return }
+        guard let cleaned = LayoutStore.cleanedName(nameDraft) else {
             // 비운 이름은 저장하지 않고 원래 이름으로 돌린다.
-            nameDraft = workspace.name
+            nameDraft = layout.name
             return
         }
         nameDraft = cleaned
-        guard cleaned != workspace.name else { return }
-        library.replace(workspace.id, name: cleaned, windows: workspace.windows)
+        guard cleaned != layout.name else { return }
+        library.replace(layout.id, name: cleaned, windows: layout.windows)
     }
 }

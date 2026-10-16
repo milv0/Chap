@@ -1,8 +1,8 @@
 import Cocoa
 import os
 
-/// 현재 실행 중인 앱의 대표 창을 Workspace 후보로 캡처한다.
-enum WorkspaceCaptureService {
+/// 현재 실행 중인 앱의 대표 창을 Layout 후보로 캡처한다.
+enum LayoutCaptureService {
     private struct RunningApp: Sendable {
         let pid: pid_t
         let name: String
@@ -19,11 +19,11 @@ enum WorkspaceCaptureService {
     }
 
     private static let queue = DispatchQueue(
-        label: "com.mingyupark.Chap.workspace.capture", qos: .userInitiated)
+        label: "com.mingyupark.Chap.layout.capture", qos: .userInitiated)
 
     static func capture(
         frontmostBundleIdentifier: String?,
-        completion: @escaping ([WorkspaceWindow]) -> Void
+        completion: @escaping ([LayoutWindow]) -> Void
     ) {
         precondition(Thread.isMainThread)
         guard AccessibilityPermission.isTrusted else {
@@ -62,8 +62,8 @@ enum WorkspaceCaptureService {
 
     private static func capture(
         app: RunningApp, screens: [DisplaySnapshot], primaryHeight: CGFloat
-    ) -> WorkspaceWindow? {
-        guard let window = WorkspaceWindowAccess.representativeWindow(pid: app.pid),
+    ) -> LayoutWindow? {
+        guard let window = LayoutWindowAccess.representativeWindow(pid: app.pid),
             let position = LauncherUtils.axGetPosition(window),
             let size = LauncherUtils.axGetSize(window)
         else { return nil }
@@ -78,11 +78,11 @@ enum WorkspaceCaptureService {
                 $0.frame.intersection(appKitFrame).area < $1.frame.intersection(appKitFrame).area
             }), screen.frame.intersects(appKitFrame)
         else { return nil }
-        return WorkspaceWindow(
+        return LayoutWindow(
             applicationName: app.name, bundleIdentifier: app.bundleIdentifier,
-            applicationPath: app.path, windowTitle: WorkspaceWindowAccess.windowTitle(window),
+            applicationPath: app.path, windowTitle: LayoutWindowAccess.windowTitle(window),
             displayIdentifier: screen.identifier, displayName: screen.name,
-            frame: WorkspaceGeometry.capture(
+            frame: LayoutGeometry.capture(
                 bounds: bounds, visibleFrame: screen.visibleFrame, primaryHeight: primaryHeight))
     }
 }

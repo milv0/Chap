@@ -43,20 +43,20 @@ private struct SettingsTabButton: View {
 struct SettingsView: View {
     /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
     static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
-    /// 메뉴·노치의 Edit Workspace가 그 Workspace를 보여 달라는 요청. object는 UUID,
-    /// nil이면 Workspaces 섹션만 고른다(노치 제목 클릭에서 저장된 Workspace가 없을 때).
-    static let focusWorkspace = Notification.Name("ChapSettingsFocusWorkspace")
+    /// 메뉴·노치의 Edit Layout이 그 Layout을 보여 달라는 요청. object는 UUID,
+    /// nil이면 Layouts 섹션만 고른다(노치 제목 클릭에서 저장된 Layout이 없을 때).
+    static let focusLayout = Notification.Name("ChapSettingsFocusLayout")
 
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
-    @ObservedObject var workspaceLibrary: WorkspaceLibrary
-    var workspaceActions = WorkspaceSettingsActions()
-    /// 사이드바에서 고른 Workspace. 사이트 선택(selectedIndex)과 동시에 있지 않는다.
-    @State private var selectedWorkspaceID: UUID?
-    /// Workspaces 섹션 제목을 눌러 "+"가 새 캡처를 뜻하는 상태.
-    @State private var isWorkspacesFocused = false
+    @ObservedObject var layoutLibrary: LayoutLibrary
+    var layoutActions = LayoutSettingsActions()
+    /// 사이드바에서 고른 Layout. 사이트 선택(selectedIndex)과 동시에 있지 않는다.
+    @State private var selectedLayoutID: UUID?
+    /// Layouts 섹션 제목을 눌러 "+"가 새 캡처를 뜻하는 상태.
+    @State private var isLayoutsFocused = false
     /// 연결된 디스플레이. 모니터를 꽂거나 뽑으면 갱신한다.
-    @State private var connectedDisplays = WorkspaceDisplay.connected()
+    @State private var connectedDisplays = LayoutDisplay.connected()
     @State private var selectedTab: SettingsTab = .launchables
     @State private var selectedIndex: Int? = nil
     /// 사이드바에서 마지막으로 고른 섹션(URL·App·Finder). "+"가 이 섹션에 항목을 만든다.
@@ -129,8 +129,8 @@ struct SettingsView: View {
         .onChange(of: selectedIndex) { oldValue, newValue in
             if let newValue, newValue < vm.sites.count {
                 focusedLaunchType = vm.sites[newValue].launchType
-                selectedWorkspaceID = nil
-                isWorkspacesFocused = false
+                selectedLayoutID = nil
+                isLayoutsFocused = false
             }
             handleSelectionChange(from: oldValue, to: newValue)
         }
@@ -140,28 +140,28 @@ struct SettingsView: View {
             }
             focus(on: type)
         }
-        .onReceive(NotificationCenter.default.publisher(for: Self.focusWorkspace)) { note in
+        .onReceive(NotificationCenter.default.publisher(for: Self.focusLayout)) { note in
             searchText = ""
             if let id = note.object as? UUID {
-                selectWorkspace(id)
+                selectLayout(id)
             } else {
                 selectedTab = .launchables
                 selectedIndex = nil
-                selectedWorkspaceID = nil
-                isWorkspacesFocused = true
+                selectedLayoutID = nil
+                isLayoutsFocused = true
             }
         }
-        .onChange(of: workspaceLibrary.workspaces.map(\.id)) { oldIDs, ids in
-            // 지운 Workspace를 보고 있었으면 이웃 Workspace로 옮긴다 (사이트 삭제와 같은 동작).
-            guard let selected = selectedWorkspaceID, !ids.contains(selected) else { return }
+        .onChange(of: layoutLibrary.layouts.map(\.id)) { oldIDs, ids in
+            // 지운 Layout을 보고 있었으면 이웃 Layout으로 옮긴다 (사이트 삭제와 같은 동작).
+            guard let selected = selectedLayoutID, !ids.contains(selected) else { return }
             let oldIndex = oldIDs.firstIndex(of: selected) ?? 0
-            selectedWorkspaceID = ids.isEmpty ? nil : ids[min(oldIndex, ids.count - 1)]
+            selectedLayoutID = ids.isEmpty ? nil : ids[min(oldIndex, ids.count - 1)]
         }
         .onReceive(
             NotificationCenter.default.publisher(
                 for: NSApplication.didChangeScreenParametersNotification)
         ) { _ in
-            connectedDisplays = WorkspaceDisplay.connected()
+            connectedDisplays = LayoutDisplay.connected()
         }
         .alert("Delete site?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
@@ -288,7 +288,7 @@ struct SettingsView: View {
                             // 제목 옆 (n/한도) 카운트로 타입별 한도를 상시 보여준다.
                             // 제목을 누르면 이 섹션이 "+"의 대상이 된다.
                             let isFocusedSection =
-                                focusedLaunchType == type && !isWorkspacesFocused
+                                focusedLaunchType == type && !isLayoutsFocused
                             HStack(spacing: 4) {
                                 Text(typeSectionTitle(type))
                                     .fontWeight(isFocusedSection ? .semibold : .regular)
@@ -316,8 +316,8 @@ struct SettingsView: View {
                                 // "+"가 어디에 추가될지 헷갈리지 않는다. 편집 중인 값은
                                 // handleSelectionChange가 저장하고 이름 없는 새 항목은 폐기한다.
                                 focusedLaunchType = type
-                                isWorkspacesFocused = false
-                                selectedWorkspaceID = nil
+                                isLayoutsFocused = false
+                                selectedLayoutID = nil
                                 selectedTab = .launchables
                                 selectedIndex = nil
                             }
@@ -361,19 +361,19 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    SettingsWorkspacesSection(
-                        workspaces: workspaceLibrary.workspaces,
-                        selectedID: selectedWorkspaceID,
-                        isFocused: isWorkspacesFocused,
+                    SettingsLayoutsSection(
+                        layouts: layoutLibrary.layouts,
+                        selectedID: selectedLayoutID,
+                        isFocused: isLayoutsFocused,
                         searchText: searchText,
                         onFocusSection: {
-                            isWorkspacesFocused = true
+                            isLayoutsFocused = true
                             selectedTab = .launchables
                             selectedIndex = nil
-                            selectedWorkspaceID = nil
+                            selectedLayoutID = nil
                         },
-                        onSelect: selectWorkspace,
-                        onCapture: workspaceActions.capture)
+                        onSelect: selectLayout,
+                        onCapture: layoutActions.capture)
                 }
                 .padding(DS.spacingSmall)
             }
@@ -386,14 +386,14 @@ struct SettingsView: View {
 
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let workspaceID = selectedWorkspaceID,
-                workspaceLibrary.workspace(id: workspaceID) != nil
+            if let layoutID = selectedLayoutID,
+                layoutLibrary.layout(id: layoutID) != nil
             {
-                WorkspaceDetailView(
-                    library: workspaceLibrary, workspaceID: workspaceID,
-                    displays: connectedDisplays, actions: workspaceActions
+                LayoutDetailView(
+                    library: layoutLibrary, layoutID: layoutID,
+                    displays: connectedDisplays, actions: layoutActions
                 )
-                .id(workspaceID)
+                .id(layoutID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let idx = selectedIndex, idx < vm.sites.count {
                 ZStack {
@@ -427,9 +427,9 @@ struct SettingsView: View {
                         .font(.system(size: 28))
                         .foregroundColor(DS.textTertiary)
                     Text(
-                        isWorkspacesFocused
-                            ? (workspaceLibrary.workspaces.isEmpty
-                                ? "Press + to capture a workspace" : "Select a workspace")
+                        isLayoutsFocused
+                            ? (layoutLibrary.layouts.isEmpty
+                                ? "Press + to capture a layout" : "Select a layout")
                             : "Select a site to configure"
                     )
                     .font(DS.bodyFont)
@@ -525,24 +525,24 @@ struct SettingsView: View {
                 icon: "plus", color: DS.textSecondary, action: { addSite() }
             )
             .help(
-                isWorkspacesFocused
-                    ? "Capture Workspace (⌘N)"
+                isLayoutsFocused
+                    ? "Capture Layout (⌘N)"
                     : "Add to \(typeSectionTitle(focusedLaunchType)) (⌘N)"
             )
             .accessibilityLabel(
-                isWorkspacesFocused
-                    ? "Capture Workspace" : "Add \(typeSectionTitle(focusedLaunchType)) item")
+                isLayoutsFocused
+                    ? "Capture Layout" : "Add \(typeSectionTitle(focusedLaunchType)) item")
             ToolbarIconButton(
                 icon: "minus", color: DS.danger,
                 action: {
                     selectedTab = .launchables
-                    if let id = selectedWorkspaceID {
-                        workspaceActions.remove(id)
+                    if let id = selectedLayoutID {
+                        layoutActions.remove(id)
                     } else {
                         showDeleteAlert = true
                     }
                 },
-                disabled: selectedIndex == nil && selectedWorkspaceID == nil)
+                disabled: selectedIndex == nil && selectedLayoutID == nil)
 
             Spacer()
 
@@ -602,20 +602,20 @@ struct SettingsView: View {
     }
 
     /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
-    /// ↑↓는 사이드바 순서(URL → App → Finder → Workspaces)를 그대로 따라간다.
+    /// ↑↓는 사이드바 순서(URL → App → Finder → Layouts)를 그대로 따라간다.
     private enum SidebarEntry: Equatable {
         case site(Int)
-        case workspace(UUID)
+        case layout(UUID)
     }
 
     private func moveSelection(by offset: Int) {
         let displayOrder: [SidebarEntry] =
             LaunchType.allCases.flatMap { type in
                 vm.sites.indices.filter { vm.sites[$0].launchType == type }.map(SidebarEntry.site)
-            } + workspaceLibrary.workspaces.map { SidebarEntry.workspace($0.id) }
+            } + layoutLibrary.layouts.map { SidebarEntry.layout($0.id) }
         guard !displayOrder.isEmpty else { return }
         let current: SidebarEntry? =
-            selectedWorkspaceID.map(SidebarEntry.workspace) ?? selectedIndex.map(SidebarEntry.site)
+            selectedLayoutID.map(SidebarEntry.layout) ?? selectedIndex.map(SidebarEntry.site)
         guard let current, let pos = displayOrder.firstIndex(of: current) else {
             select(displayOrder[0])
             return
@@ -629,11 +629,11 @@ struct SettingsView: View {
     private func select(_ entry: SidebarEntry) {
         switch entry {
         case .site(let index):
-            selectedWorkspaceID = nil
-            isWorkspacesFocused = false
+            selectedLayoutID = nil
+            isLayoutsFocused = false
             selectedIndex = index
-        case .workspace(let id):
-            selectWorkspace(id)
+        case .layout(let id):
+            selectLayout(id)
         }
     }
 
@@ -695,9 +695,9 @@ struct SettingsView: View {
     /// 새 사이트 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
     private func addSite(type explicitType: LaunchType? = nil) {
         selectedTab = .launchables
-        // Workspaces 섹션이 대상이면 "+"·⌘N은 새 Workspace를 캡처한다.
-        if explicitType == nil, isWorkspacesFocused {
-            workspaceActions.capture()
+        // Layouts 섹션이 대상이면 "+"·⌘N은 새 Layout을 캡처한다.
+        if explicitType == nil, isLayoutsFocused {
+            layoutActions.capture()
             return
         }
         // 이름을 정하지 않은 직전 placeholder가 남아 있으면 먼저 폐기해 중복 누적을 막는다.
@@ -732,13 +732,13 @@ struct SettingsView: View {
         selectedIndex = vm.sites.count - 1
     }
 
-    /// 사이드바에서 Workspace를 고른다. 사이트 선택은 풀고(편집 중인 값은 handleSelectionChange가 저장)
-    /// Workspaces 섹션을 "+"의 대상으로 둔다.
-    private func selectWorkspace(_ id: UUID) {
+    /// 사이드바에서 Layout을 고른다. 사이트 선택은 풀고(편집 중인 값은 handleSelectionChange가 저장)
+    /// Layouts 섹션을 "+"의 대상으로 둔다.
+    private func selectLayout(_ id: UUID) {
         selectedTab = .launchables
         selectedIndex = nil
-        isWorkspacesFocused = true
-        selectedWorkspaceID = id
+        isLayoutsFocused = true
+        selectedLayoutID = id
     }
 
     private func removeSite() {

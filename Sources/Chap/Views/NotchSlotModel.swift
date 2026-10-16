@@ -4,8 +4,8 @@ import SwiftUI
 enum NotchSlotContent {
     /// Sites·Finder 목록을 탭으로 바꿔 보는 한 칸. 항목이 있는 타입만, launch type 순서로 담는다.
     case launcherTabs([LauncherListSection])
-    /// Apps(아이콘 격자)·Workspaces(타일)를 탭으로 바꿔 보는 한 칸. 앱이 없으면 Workspaces만.
-    case apps(LauncherListSection?, [ChapWorkspace])
+    /// Apps(아이콘 격자)·Layouts(타일)를 탭으로 바꿔 보는 한 칸. 앱이 없으면 Layouts만.
+    case apps(LauncherListSection?, [ChapLayout])
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
     /// 다운로드 선반 위젯.
@@ -27,7 +27,7 @@ enum NotchSlotContent {
     /// config의 위젯 배치를 실제로 그릴 칸으로 바꾼다. 빈 칸과 항목이 없는 런처 칸은 뺀다.
     /// 노치 패널과 오프스크린 렌더 도구가 같은 규칙을 쓴다.
     static func slots(
-        widgets: [NotchWidget], sites: [Site], workspaces: [ChapWorkspace] = []
+        widgets: [NotchWidget], sites: [Site], layouts: [ChapLayout] = []
     ) -> [NotchSlotContent] {
         // 위젯 배치는 사용자가 명시적으로 고른 것이므로 메뉴의 숨김 설정과 무관하다.
         let sections = LauncherListPolicy.sections(sites: sites, hiddenLaunchTypes: [])
@@ -41,7 +41,7 @@ enum NotchSlotContent {
             case .awake: return .awake
             case .todo: return .todo
             case .apps:
-                return .apps(sections.first { $0.launchType == .app }, workspaces)
+                return .apps(sections.first { $0.launchType == .app }, layouts)
             case .launchers:
                 let lists = sections.filter {
                     LauncherListPolicy.launcherTabTypes.contains($0.launchType)
