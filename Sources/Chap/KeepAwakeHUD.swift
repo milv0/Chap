@@ -101,24 +101,17 @@ enum KeepAwakeHUD {
         tint.layer?.backgroundColor = accent.withAlphaComponent(0.1).cgColor
         tint.autoresizingMask = [.width, .height]
 
-        // 물범은 흰 몸통이라 밝은 HUD 바탕에서는 묻힌다. 앱 아이콘과 같은 파란 타일에 올린다.
-        let plate = NSView(
-            frame: NSRect(x: (hudSize.width - 132) / 2, y: 54, width: 132, height: 72))
-        plate.wantsLayer = true
-        plate.layer?.backgroundColor = accent.cgColor
-        plate.layer?.cornerRadius = 16
-        plate.layer?.masksToBounds = true
-
+        // 파란 타일 없이 HUD 바탕에 바로 올린다. 바탕(옅은 popover + 테마색 틴트)이 이미 한 겹이라
+        // 타일까지 두면 상자 안의 상자가 된다. 흰 몸통은 픽셀 물범의 어두운 테두리가 모양을 잡아 준다.
         // 켜짐: 깨어 꼬리를 든 Chap. 꺼짐: 눈 감고 z를 띄운 Chap.
         let seal = ChapMascotImage.image(
             pixelSize: 4, eyes: focusOn ? .open : .closed, pose: focusOn ? .tailUp : .rest,
             showsSleepZ: !focusOn)
-        let imageView = NSImageView(frame: plate.bounds)
+        let imageView = NSImageView(
+            frame: NSRect(x: (hudSize.width - 132) / 2, y: 54, width: 132, height: 72))
         imageView.image = seal
         imageView.imageScaling = .scaleNone
         imageView.imageAlignment = .alignCenter
-        imageView.autoresizingMask = [.width, .height]
-        plate.addSubview(imageView)
 
         let label = NSTextField(labelWithString: message)
         label.font = .systemFont(ofSize: 14, weight: .semibold)
@@ -127,7 +120,7 @@ enum KeepAwakeHUD {
         label.frame = NSRect(x: 8, y: 22, width: hudSize.width - 16, height: 20)
 
         container.addSubview(tint)
-        container.addSubview(plate)
+        container.addSubview(imageView)
         container.addSubview(label)
         return container
     }
