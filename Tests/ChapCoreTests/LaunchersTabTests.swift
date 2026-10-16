@@ -83,7 +83,7 @@ struct LaunchersTabTests {
     }
 }
 
-@Suite("Apps slot with Workspaces")
+@Suite("Apps slot with Layouts")
 struct AppsSlotTests {
     private func app(_ name: String) -> Site {
         Site(
@@ -91,31 +91,33 @@ struct AppsSlotTests {
             appPath: "/Applications/\(name).app")
     }
 
-    @Test("the Apps slot carries the apps and the workspaces together")
+    @Test("the Apps slot carries the apps and the layouts together")
     func slotCarriesBoth() {
         let slots = NotchSlotContent.slots(
             widgets: [.none, .none, .apps], sites: [app("Slack")],
-            workspaces: [ChapWorkspace(name: "Deep Work", windows: [])])
-        guard case .apps(let apps, let workspaces) = slots.first else {
+            layouts: [ChapLayout(name: "Deep Work", windows: [])])
+        guard case .apps(let apps, let layouts) = slots.first else {
             Issue.record("expected an Apps slot")
             return
         }
         #expect(apps?.entries.map(\.site.name) == ["Slack"])
-        #expect(workspaces.map(\.name) == ["Deep Work"])
+        #expect(layouts.map(\.name) == ["Deep Work"])
     }
 
-    @Test("Workspaces is always a tab; Apps only when there are apps")
+    @Test("Layouts is always a tab; Apps only when there are apps")
     func availableTabs() {
-        #expect(AppsSlotTab.available(hasApps: true) == [.apps, .workspaces])
-        #expect(AppsSlotTab.available(hasApps: false) == [.workspaces])
+        #expect(AppsSlotTab.available(hasApps: true) == [.apps, .layouts])
+        #expect(AppsSlotTab.available(hasApps: false) == [.layouts])
     }
 
     @Test("the tab remembers the last one, falling back to the first available")
     func selectedTab() {
-        #expect(AppsSlotTab.selected(stored: "workspaces", hasApps: true) == .workspaces)
-        #expect(AppsSlotTab.selected(stored: "apps", hasApps: false) == .workspaces)
+        #expect(AppsSlotTab.selected(stored: "layouts", hasApps: true) == .layouts)
+        #expect(AppsSlotTab.selected(stored: "apps", hasApps: false) == .layouts)
         #expect(AppsSlotTab.selected(stored: nil, hasApps: true) == .apps)
         #expect(AppsSlotTab.selected(stored: "nope", hasApps: true) == .apps)
+        // 2.17까지 저장한 "workspaces"는 Layouts 탭으로 읽는다.
+        #expect(AppsSlotTab.selected(stored: "workspaces", hasApps: true) == .layouts)
     }
 
     @Test("with Launchers and Apps, every widget fits in the six slots")
@@ -152,8 +154,8 @@ struct MergedSlotMigrationTests {
                 == [.screenshots, .none, .none, .launchers, .none, .none])
     }
 
-    @Test("a Workspaces slot becomes the Apps slot, or empty when Apps is already placed")
-    func workspacesBecomesApps() throws {
+    @Test("a Layouts slot becomes the Apps slot, or empty when Apps is already placed")
+    func layoutsBecomesApps() throws {
         #expect(
             try widgets(#"["screenshots", "none", "workspaces", "todo", "none", "none"]"#)
                 == [.screenshots, .none, .apps, .todo, .none, .none])
@@ -162,7 +164,7 @@ struct MergedSlotMigrationTests {
                 == [.screenshots, .none, .apps, .none, .todo, .none])
     }
 
-    @Test("Sites, Finder, and Workspaces are no longer slots of their own")
+    @Test("Sites, Finder, and Layouts are no longer slots of their own")
     func formerSlotsAreGone() {
         #expect(NotchWidget(rawValue: "sites") == nil)
         #expect(NotchWidget(rawValue: "folders") == nil)

@@ -175,7 +175,7 @@ struct NotchSettingsView: View {
                     .onChange(of: vm.notchWidgets) { _, _ in onSave() }
                 } header: {
                     SettingsSectionHeader(
-                        title: "Layout", systemImage: "rectangle.split.3x1",
+                        title: "Slots", systemImage: "rectangle.split.3x1",
                         note: "Click a shelf to turn it on or off. Drag widgets onto slots 3–6, "
                             + "or right-click a slot.")
                 }

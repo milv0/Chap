@@ -49,12 +49,12 @@ struct NotchRenderTool {
         var todoWidgets = previewWidgets
         if !todoWidgets.contains(.todo) { todoWidgets[NotchWidget.slotCount - 1] = .todo }
         let todoSlots = NotchSlotContent.slots(widgets: todoWidgets, sites: config.sites)
-        let previewWorkspaces = Self.previewWorkspaces
-        // Launchers(Sites·Finder 목록) 옆에 Apps(아이콘)·Workspaces 탭 칸을 둔다.
-        // "-workspaces" 렌더는 같은 칸에서 Workspaces 탭을 그린다.
+        let previewLayouts = Self.previewLayouts
+        // Launchers(Sites·Finder 목록) 옆에 Apps(아이콘)·Layouts 탭 칸을 둔다.
+        // "-layouts" 렌더는 같은 칸에서 Layouts 탭을 그린다.
         let launcherSlots = NotchSlotContent.slots(
             widgets: [.screenshots, .downloads, .launchers, .apps, .awake, .todo],
-            sites: config.sites, workspaces: previewWorkspaces)
+            sites: config.sites, layouts: previewLayouts)
         let now = Date()
         let previewTodos = [
             TodoItem(title: "Send the Q4 deck to Jun", created: now),
@@ -96,11 +96,11 @@ struct NotchRenderTool {
             ("notch-glass-dark-todo", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-todo-empty", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-todo-empty", .glass, .dark, Color(white: 0.16), false),
-            ("notch-glass-light-workspaces", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-layouts", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-timer", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-timer-running", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-timer-focus-on", .glass, .light, Color(white: 0.92), false),
-            ("notch-glass-dark-workspaces", .glass, .dark, Color(white: 0.16), false),
+            ("notch-glass-dark-layouts", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-launchers", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-launchers", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
@@ -121,7 +121,7 @@ struct NotchRenderTool {
                 if let path = site.appPath { _ = await AppIconLoader.icon(forAppPath: path) }
             }
             for url in shots { _ = await ThumbnailLoader.image(for: url, maxPixelSize: 96) }
-            for window in previewWorkspaces.flatMap(\.windows) {
+            for window in previewLayouts.flatMap(\.windows) {
                 _ = await AppIconLoader.icon(forAppPath: window.applicationPath)
             }
             // 캐시가 비워질 수 있으니 그리기 직전에 한 번 더 채운다.
@@ -140,10 +140,10 @@ struct NotchRenderTool {
             NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
             // Launchers 칸: 라이트는 Sites 탭, 다크는 Finder 탭을 그린다.
             NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .finder : .url
-            NotchLaunchersTabPreview.appsTab = name.hasSuffix("-workspaces") ? .workspaces : .apps
+            NotchLaunchersTabPreview.appsTab = name.hasSuffix("-layouts") ? .layouts : .apps
             // 다크 렌더는 고른 탭 제목에 마우스를 올린 상태(›)로 그린다.
             NotchLaunchersTabPreview.titleHovered =
-                name.hasSuffix("dark-launchers") || name.hasSuffix("dark-workspaces")
+                name.hasSuffix("dark-launchers") || name.hasSuffix("dark-layouts")
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -154,7 +154,7 @@ struct NotchRenderTool {
                 glassMaterial: config.notchGlassMaterial,
                 slots: name.hasSuffix("-todo") || name.hasSuffix("-todo-empty")
                     ? todoSlots
-                    : name.hasSuffix("-workspaces") || name.hasSuffix("-launchers")
+                    : name.hasSuffix("-layouts") || name.hasSuffix("-launchers")
                         ? launcherSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
@@ -178,63 +178,63 @@ struct NotchRenderTool {
     }
 
     @Test(
-        "render the Workspace capture window",
+        "render the Layout capture window",
         .enabled(if: NotchRenderTool.outputDirectory != nil))
-    func renderWorkspaceCapture() throws {
+    func renderLayoutCapture() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
         // 모니터 하나(디스플레이 이름만)와 둘(디스플레이 메뉴)을 모두 그린다.
         for (name, displays) in [
             (
-                "workspace-capture",
+                "layout-capture",
                 [
-                    WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display")
+                    LayoutDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display")
                 ]
             ),
             (
-                "workspace-capture-displays",
+                "layout-capture-displays",
                 [
-                    WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
-                    WorkspaceDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
+                    LayoutDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
+                    LayoutDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
                 ]
             ),
         ] {
-            let model = WorkspaceCaptureViewModel()
+            let model = LayoutCaptureViewModel()
             model.displays = displays
-            model.finishLoading(Self.previewWorkspaces[0].windows)
+            model.finishLoading(Self.previewLayouts[0].windows)
             if displays.count > 1, let terminal = model.candidates.last {
                 model.setDisplay(displays[1], for: terminal.id)
             }
             model.name = "Deep Work"
-            let view = WorkspaceCaptureView(model: model, onCancel: {}, onSave: { _, _ in })
+            let view = LayoutCaptureView(model: model, onCancel: {}, onSave: { _, _ in })
                 .environment(\.colorScheme, .light)
             try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
         }
     }
 
     @Test(
-        "render the Workspaces settings panel",
+        "render the Layouts settings panel",
         .enabled(if: NotchRenderTool.outputDirectory != nil))
-    func renderWorkspaceSettings() throws {
+    func renderLayoutSettings() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
         let storeDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ChapWorkspaceRender-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("ChapLayoutRender-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: storeDirectory) }
-        let library = WorkspaceLibrary(
-            store: WorkspaceStore(fileURL: storeDirectory.appendingPathComponent("Workspaces.json"))
+        let library = LayoutLibrary(
+            store: LayoutStore(fileURL: storeDirectory.appendingPathComponent("Layouts.json"))
         )
         let displays = [
-            WorkspaceDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
-            WorkspaceDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
+            LayoutDisplay(identifier: "DISPLAY-1", name: "Built-in Retina Display"),
+            LayoutDisplay(identifier: "DISPLAY-2", name: "LG UltraFine"),
         ]
-        var windows = Self.previewWorkspaces[0].windows
+        var windows = Self.previewLayouts[0].windows
         windows[windows.count - 1] = windows[windows.count - 1].assigned(to: displays[1])
         let id = try #require(library.add(name: "Deep Work", windows: windows))
         for (name, scheme) in [
-            ("settings-workspace-light", ColorScheme.light), ("settings-workspace-dark", .dark),
+            ("settings-layout-light", ColorScheme.light), ("settings-layout-dark", .dark),
         ] {
-            let view = WorkspaceDetailView(
-                library: library, workspaceID: id, displays: displays,
-                actions: WorkspaceSettingsActions()
+            let view = LayoutDetailView(
+                library: library, layoutID: id, displays: displays,
+                actions: LayoutSettingsActions()
             )
             .frame(width: 570, height: 640)
             .background(DS.surfaceBg)
@@ -356,35 +356,35 @@ struct NotchRenderTool {
         }
     }
 
-    private static var previewWorkspaces: [ChapWorkspace] {
+    private static var previewLayouts: [ChapLayout] {
         let windows = [
-            WorkspaceWindow(
+            LayoutWindow(
                 applicationName: "Xcode", bundleIdentifier: "com.apple.dt.Xcode",
                 applicationPath: "/Applications/Xcode.app", windowTitle: "Chap",
                 displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
-                frame: WorkspaceFrame(left: 0.03, top: 0.05, width: 0.62, height: 0.88)),
-            WorkspaceWindow(
+                frame: LayoutFrame(left: 0.03, top: 0.05, width: 0.62, height: 0.88)),
+            LayoutWindow(
                 applicationName: "Safari", bundleIdentifier: "com.apple.Safari",
                 applicationPath: "/Applications/Safari.app", windowTitle: "Documentation",
                 displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
-                frame: WorkspaceFrame(left: 0.66, top: 0.05, width: 0.31, height: 0.55)),
-            WorkspaceWindow(
+                frame: LayoutFrame(left: 0.66, top: 0.05, width: 0.31, height: 0.55)),
+            LayoutWindow(
                 applicationName: "Terminal", bundleIdentifier: "com.apple.Terminal",
                 applicationPath: "/System/Applications/Utilities/Terminal.app",
                 windowTitle: "chap", displayIdentifier: "DISPLAY-1",
                 displayName: "Built-in Retina Display",
-                frame: WorkspaceFrame(left: 0.66, top: 0.62, width: 0.31, height: 0.31)),
+                frame: LayoutFrame(left: 0.66, top: 0.62, width: 0.31, height: 0.31)),
             // 화면 오른쪽 끝·위아래에 꽉 붙은 창: 미니맵 테두리가 겹치지 않는지 본다.
-            WorkspaceWindow(
+            LayoutWindow(
                 applicationName: "Notes", bundleIdentifier: "com.apple.Notes",
                 applicationPath: "/System/Applications/Notes.app", windowTitle: "Notes",
                 displayIdentifier: "DISPLAY-1", displayName: "Built-in Retina Display",
-                frame: WorkspaceFrame(left: 0.5, top: 0, width: 0.5, height: 1)),
+                frame: LayoutFrame(left: 0.5, top: 0, width: 0.5, height: 1)),
         ]
         return [
-            ChapWorkspace(name: "Deep Work", windows: windows),
-            ChapWorkspace(name: "Writing", windows: Array(windows.prefix(2))),
-            ChapWorkspace(name: "Meeting", windows: Array(windows.suffix(3))),
+            ChapLayout(name: "Deep Work", windows: windows),
+            ChapLayout(name: "Writing", windows: Array(windows.prefix(2))),
+            ChapLayout(name: "Meeting", windows: Array(windows.suffix(3))),
         ]
     }
 

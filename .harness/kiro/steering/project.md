@@ -34,7 +34,7 @@ There is no `Package.swift`; do not use `swift test`.
 - `Sources/Chap/NotchLauncherController.swift`: notch hotzone/panel/badge orchestration.
 - `Sources/Chap/ChapDrop.swift`, `ScreenshotShelf.swift`, `ThumbnailLoader.swift`:
   Chap Drop store, Screenshot Shelf source, async thumbnails.
-- `Sources/Chap/Workspaces/`, `Sources/ChapCore/Workspace*.swift`: local standard-window capture, normalized display frames, storage, and verified restore.
+- `Sources/Chap/Layouts/`, `Sources/ChapCore/Layout*.swift`: local standard-window capture, normalized display frames, storage, and verified restore.
 - `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Mac Awake session and HUD.
 - `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).
 - `Sources/Chap/Launchers/`: Chrome, app, Finder launch behavior.
@@ -60,7 +60,7 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Screenshots, Downloads, Launchers (Sites/Finder list tabs),
-  Apps (app icons/Workspaces tabs), Focus (Keep Awake or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge); the status menu stays available. On a
+  Apps (app icons/Layouts tabs), Focus (Keep Awake or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge); the status menu stays available. On a
   screen without a notch, no window sits at the top: a 150ms pointer poll over the
   top-center `hoverZone` opens the same dock and the Drop badge is suppressed. Chap Drop keeps bookmark references to dropped originals
   (`DropStore`; only temporary-location items are copied into

@@ -170,39 +170,43 @@ extension LauncherListPolicy {
     }
 }
 
-// MARK: - Apps 칸 (Apps·Workspaces 탭)
+// MARK: - Apps 칸 (Apps·Layouts 탭)
 
 /// Apps 칸의 탭. 둘 다 아이콘 타일이라 한 칸에 같은 모양으로 들어간다.
 public enum AppsSlotTab: String, CaseIterable, Sendable {
     case apps
-    case workspaces
+    case layouts
 
     public var title: String {
         switch self {
         case .apps: return "Apps"
-        case .workspaces: return "Workspaces"
+        case .layouts: return "Layouts"
         }
     }
 
     public var symbol: String {
         switch self {
         case .apps: return LauncherListPolicy.symbolName(for: .app)
-        case .workspaces: return "rectangle.3.group"
+        case .layouts: return "rectangle.3.group"
         }
     }
 
     /// 마지막으로 고른 탭을 기억하는 UserDefaults 키.
     public static let storageKey = "ChapAppsTab"
+    /// 2.17까지 Layouts 탭을 저장하던 값(그때 이름은 Workspaces).
+    public static let legacyLayoutsRawValue = "workspaces"
 
-    /// 보여 줄 탭들. Workspaces는 저장한 게 없어도 Capture 타일이 있어 늘 있고, Apps는 앱이 있을 때만.
+    /// 보여 줄 탭들. Layouts는 저장한 게 없어도 Capture 타일이 있어 늘 있고, Apps는 앱이 있을 때만.
     public static func available(hasApps: Bool) -> [AppsSlotTab] {
-        hasApps ? [.apps, .workspaces] : [.workspaces]
+        hasApps ? [.apps, .layouts] : [.layouts]
     }
 
     /// 보여 줄 탭. 저장한 탭이 아직 있으면 그것, 아니면 첫 탭.
     public static func selected(stored: String?, hasApps: Bool) -> AppsSlotTab {
         let tabs = available(hasApps: hasApps)
-        if let stored, let tab = AppsSlotTab(rawValue: stored), tabs.contains(tab) { return tab }
+        // 2.17까지는 같은 탭을 "workspaces"로 저장했다.
+        let raw = stored == legacyLayoutsRawValue ? AppsSlotTab.layouts.rawValue : stored
+        if let raw, let tab = AppsSlotTab(rawValue: raw), tabs.contains(tab) { return tab }
         return tabs[0]
     }
 }

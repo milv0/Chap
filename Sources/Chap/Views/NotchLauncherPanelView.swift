@@ -35,18 +35,18 @@ struct NotchLauncherPanelView: View {
     /// 상단 검정 띠에 Cover Screens 아이콘을 둘지. Quick Note 오른쪽에 둔다.
     var showsCoverScreens = false
     let onLaunch: (Int) -> Void
-    /// 저장된 Workspace를 연다.
-    var onOpenWorkspace: (UUID) -> Void = { _ in }
-    /// 현재 앱 창 배치를 새 Workspace로 캡처한다.
-    var onCaptureWorkspace: () -> Void = {}
-    /// 저장된 Workspace를 지운다(확인 창을 거친다).
-    var onRemoveWorkspace: (UUID) -> Void = { _ in }
-    /// 저장된 Workspace를 고치는 창을 연다.
-    var onEditWorkspace: (UUID) -> Void = { _ in }
-    /// Workspaces 칸 제목 클릭.
-    var onOpenWorkspaceSettings: () -> Void = {}
-    /// 지금 열리는 중인 Workspace를 알려 주는 공급자(열릴 때마다 읽는다).
-    var busyWorkspaceIDProvider: () -> UUID? = { nil }
+    /// 저장된 Layout을 연다.
+    var onOpenLayout: (UUID) -> Void = { _ in }
+    /// 현재 앱 창 배치를 새 Layout으로 캡처한다.
+    var onCaptureLayout: () -> Void = {}
+    /// 저장된 Layout을 지운다(확인 창을 거친다).
+    var onRemoveLayout: (UUID) -> Void = { _ in }
+    /// 저장된 Layout을 고치는 창을 연다.
+    var onEditLayout: (UUID) -> Void = { _ in }
+    /// Layouts 칸 제목 클릭.
+    var onOpenLayoutSettings: () -> Void = {}
+    /// 지금 열리는 중인 Layout을 알려 주는 공급자(열릴 때마다 읽는다).
+    var busyLayoutIDProvider: () -> UUID? = { nil }
     /// 도커를 열 때 돌고 있는 타이머가 끝나는 시각. 이후 변화는 Focus 칸이 알림으로 받는다.
     var timerEndProvider: () -> Date? = { nil }
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
@@ -139,7 +139,7 @@ struct NotchLauncherPanelView: View {
                     contentWidth: Double(
                         max(
                             Self.appGridColumnWidth(appCount: apps?.entries.count ?? 0),
-                            NotchWorkspacesView.columnWidth)),
+                            NotchLayoutsView.columnWidth)),
                     tabCount: tabs.count))
         case .awake:
             return Self.focusColumnWidth
@@ -709,20 +709,20 @@ struct NotchLauncherPanelView: View {
                 // 처음 읽었을 때만 맞춘다. 그 뒤의 추가·수정·삭제는 다음에 열 때 반영된다.
                 if todoWidth == nil { todoWidth = NotchTodoView.columnWidth(titles: titles) }
             }
-        case .apps(let apps, let workspaces):
+        case .apps(let apps, let layouts):
             NotchAppsSlot(
                 hasApps: apps != nil, palette: widgetPalette,
                 onOpenAppSettings: { onOpenSettings(.app) },
-                onOpenWorkspaceSettings: onOpenWorkspaceSettings,
+                onOpenLayoutSettings: onOpenLayoutSettings,
                 apps: {
                     if let apps { appIconGrid(apps) }
                 },
-                workspaces: {
-                    NotchWorkspacesView(
-                        workspaces: workspaces, busyID: busyWorkspaceIDProvider(),
+                layouts: {
+                    NotchLayoutsView(
+                        layouts: layouts, busyID: busyLayoutIDProvider(),
                         palette: widgetPalette,
-                        onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace,
-                        onEdit: onEditWorkspace, onRemove: onRemoveWorkspace)
+                        onOpen: onOpenLayout, onCapture: onCaptureLayout,
+                        onEdit: onEditLayout, onRemove: onRemoveLayout)
                 })
         }
     }

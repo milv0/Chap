@@ -70,6 +70,6 @@ struct TabStepPolicyTests {
     func neighbor() {
         #expect(TabStepPolicy.neighbor(ids: ids, current: "url") == "finder")
         #expect(TabStepPolicy.neighbor(ids: ids, current: "finder") == "url")
-        #expect(TabStepPolicy.neighbor(ids: ["workspaces"], current: "workspaces") == nil)
+        #expect(TabStepPolicy.neighbor(ids: ["layouts"], current: "layouts") == nil)
     }
 }

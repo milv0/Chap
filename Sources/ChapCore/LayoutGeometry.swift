@@ -1,13 +1,13 @@
 import CoreGraphics
 
 /// 실제 AX bounds와 디스플레이 상대 프레임 사이를 변환한다.
-public enum WorkspaceGeometry {
+public enum LayoutGeometry {
     public typealias Bounds = (left: Int, top: Int, right: Int, bottom: Int)
 
     /// 현재 AX bounds를 visibleFrame 안의 0...1 비율로 캡처한다.
     public static func capture(
         bounds: Bounds, visibleFrame: CGRect, primaryHeight: CGFloat
-    ) -> WorkspaceFrame {
+    ) -> LayoutFrame {
         let visibleTop = primaryHeight - visibleFrame.maxY
         let visibleWidth = max(visibleFrame.width, 1)
         let visibleHeight = max(visibleFrame.height, 1)
@@ -19,7 +19,7 @@ public enum WorkspaceGeometry {
         let top = min(
             clamp((CGFloat(bounds.top) - visibleTop) / visibleHeight),
             max(1 - height, 0))
-        return WorkspaceFrame(
+        return LayoutFrame(
             left: Double(left), top: Double(top), width: Double(width), height: Double(height))
     }
 
@@ -27,7 +27,7 @@ public enum WorkspaceGeometry {
     /// `minimumSize`는 앱이 보고한 최소 창 크기. 비율로 계산한 크기가 그보다 작으면 그 크기로 키우고,
     /// 커진 만큼 화면 안으로 당겨 창이 Dock 밑이나 옆 모니터로 나가지 않게 한다.
     public static func bounds(
-        for frame: WorkspaceFrame, visibleFrame: CGRect, primaryHeight: CGFloat,
+        for frame: LayoutFrame, visibleFrame: CGRect, primaryHeight: CGFloat,
         minimumSize: CGSize? = nil
     ) -> Bounds {
         let visibleWidth = max(visibleFrame.width, 100)

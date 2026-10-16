@@ -77,7 +77,7 @@ struct QAView: View {
                 ),
                 (
                     "윈도우가 항상 화면 가운데 열려요. 위치를 바꿀 수 있나요?",
-                    "일반 Launchable은 선택한 디스플레이 중앙에 자동 배치됩니다. Workspaces에서는 실제로 배열한 앱 창의 화면·크기·위치를 캡처해 함께 복원할 수 있습니다."
+                    "일반 Launchable은 선택한 디스플레이 중앙에 자동 배치됩니다. Layouts에서는 실제로 배열한 앱 창의 화면·크기·위치를 캡처해 함께 복원할 수 있습니다."
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
@@ -90,27 +90,27 @@ struct QAView: View {
             ]
         ),
         (
-            "Workspaces",
+            "Layouts",
             [
                 (
                     "현재 창 배치를 어떻게 저장하나요?",
-                    "메뉴바에서 Workspaces → Capture Workspace…를 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. 모니터가 여럿이면 줄마다 열 디스플레이(또는 Follow Cursor)를 고를 수 있고, 화면 안의 비율 위치·크기는 그대로 따라갑니다. Settings → Notch에서 Apps 위젯을 놓으면 그 칸의 Workspaces 탭에서 바로 복원할 수 있습니다."
+                    "메뉴바에서 Layouts → Capture Layout…을 고르고 저장할 앱 창을 선택한 뒤 이름을 입력하세요. 모니터가 여럿이면 줄마다 열 디스플레이(또는 Follow Cursor)를 고를 수 있고, 화면 안의 비율 위치·크기는 그대로 따라갑니다. Settings → Notch에서 Apps 위젯을 놓으면 그 칸의 Layouts 탭에서 바로 복원할 수 있습니다."
                 ),
                 (
                     "열린 창을 모두 자동으로 저장하나요?",
                     "아니요. 위치와 크기를 바꿀 수 있는 표준 앱 창 중 앱마다 대표 창 하나만 제안합니다. 여러 창 중 하나를 확실히 고를 수 없거나 최소화·전체 화면인 창은 추측하지 않고 제외합니다."
                 ),
                 (
-                    "저장한 Workspace를 고치거나 지우려면?",
-                    "Settings → Launchers 사이드바 맨 아래 Workspaces 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Workspaces → Edit Workspace와 노치 Workspaces 타일 우클릭 Edit…도 같은 화면을 엽니다."
+                    "저장한 Layout을 고치거나 지우려면?",
+                    "Settings → Launchers 사이드바 맨 아래 Layouts 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Layouts → Edit Layout과 노치 Layouts 타일 우클릭 Edit…도 같은 화면을 엽니다."
                 ),
                 (
-                    "Workspace를 열면 일부 앱이 다른 데스크탑에 남아 있어요.",
-                    "Chap은 창의 위치와 크기는 옮기지만, 창을 다른 데스크탑(스페이스)으로 옮기지는 않습니다. macOS에 공식 방법이 없기 때문입니다. Dock에서 그 앱 아이콘을 우클릭하고 옵션 → 할당 위치에서 '이 데스크탑'(늘 지금 데스크탑에서 열림) 또는 '모든 데스크탑'(어느 데스크탑에서나 보임)을 고르세요. Slack·메신저처럼 늘 띄워 두는 앱은 '모든 데스크탑'이 편합니다. 그다음 Workspace를 열면 함께 보입니다."
+                    "Layout을 열면 일부 앱이 다른 데스크탑에 남아 있어요.",
+                    "Chap은 창의 위치와 크기는 옮기지만, 창을 다른 데스크탑(스페이스)으로 옮기지는 않습니다. macOS에 공식 방법이 없기 때문입니다. Dock에서 그 앱 아이콘을 우클릭하고 옵션 → 할당 위치에서 '이 데스크탑'(늘 지금 데스크탑에서 열림) 또는 '모든 데스크탑'(어느 데스크탑에서나 보임)을 고르세요. Slack·메신저처럼 늘 띄워 두는 앱은 '모든 데스크탑'이 편합니다. 그다음 Layout을 열면 함께 보입니다."
                 ),
                 (
-                    "Workspace 데이터는 어디에 있나요?",
-                    "앱 이름, 창 제목, 화면과 배치가 이 Mac의 ~/Library/Application Support/Chap/Workspaces.json에만 저장됩니다. 동기화하거나 설정 Export에 넣지 않습니다."
+                    "Layout 데이터는 어디에 있나요?",
+                    "앱 이름, 창 제목, 화면과 배치가 이 Mac의 ~/Library/Application Support/Chap/Layouts.json에만 저장됩니다. 동기화하거나 설정 Export에 넣지 않습니다."
                 ),
             ]
         ),
@@ -226,7 +226,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Workspaces를 한 칸에 두고 제목 줄 아이콘, 제목 줄 빈 자리 클릭, 트랙패드 두 손가락 가로 스와이프로 바꿔 봅니다(마지막 탭을 기억합니다). 고른 탭 이름은 눌러도 아무 일이 없고, 마우스를 올리면 뒤에 보이는 ›를 눌러야 그 설정이 열립니다. 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Slots에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Layouts를 한 칸에 두고 제목 줄 아이콘, 제목 줄 빈 자리 클릭, 트랙패드 두 손가락 가로 스와이프로 바꿔 봅니다(마지막 탭을 기억합니다). 고른 탭 이름은 눌러도 아무 일이 없고, 마우스를 올리면 뒤에 보이는 ›를 눌러야 그 설정이 열립니다. 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -359,7 +359,7 @@ struct QAView: View {
                 ),
                 (
                     "Windows always open in the center. Can I change the position?",
-                    "Regular launchables stay centered on the target display. Workspaces can capture and restore the displays, sizes, and positions of app windows you arranged yourself."
+                    "Regular launchables stay centered on the target display. Layouts can capture and restore the displays, sizes, and positions of app windows you arranged yourself."
                 ),
                 (
                     "How do I open on a specific monitor?",
@@ -372,27 +372,27 @@ struct QAView: View {
             ]
         ),
         (
-            "Workspaces",
+            "Layouts",
             [
                 (
                     "How do I save the current window layout?",
-                    "Choose Workspaces → Capture Workspace… from the status menu, select the app windows to keep, and name the layout. With more than one screen, pick the display each window opens on (or Follow Cursor); its relative size and position come along. Place the Apps widget in Settings → Notch for one-click restore from its Workspaces tab under the notch."
+                    "Choose Layouts → Capture Layout… from the status menu, select the app windows to keep, and name the layout. With more than one screen, pick the display each window opens on (or Follow Cursor); its relative size and position come along. Place the Apps widget in Settings → Notch for one-click restore from its Layouts tab under the notch."
                 ),
                 (
                     "Does Chap capture every open window?",
                     "No. Chap suggests one representative standard, movable window per app. It skips ambiguous, minimized, and full-screen windows instead of guessing."
                 ),
                 (
-                    "How do I change or remove a saved workspace?",
-                    "Pick it in the Workspaces section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Workspaces → Edit Workspace in the status menu and Edit… on a notch Workspaces tile open the same page."
+                    "How do I change or remove a saved layout?",
+                    "Pick it in the Layouts section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Layouts → Edit Layout in the status menu and Edit… on a notch Layouts tile open the same page."
                 ),
                 (
-                    "Some apps stay on another desktop when I open a workspace.",
-                    "Chap moves and resizes windows, but it doesn't move them between desktops (Spaces); macOS has no official way to do that. Right-click the app's Dock icon, choose Options → Assign To, then pick This Desktop (it always opens on the current desktop) or All Desktops (it shows on every desktop). All Desktops suits apps you keep open, like Slack or a messenger. Open the workspace again and they appear together."
+                    "Some apps stay on another desktop when I open a layout.",
+                    "Chap moves and resizes windows, but it doesn't move them between desktops (Spaces); macOS has no official way to do that. Right-click the app's Dock icon, choose Options → Assign To, then pick This Desktop (it always opens on the current desktop) or All Desktops (it shows on every desktop). All Desktops suits apps you keep open, like Slack or a messenger. Open the layout again and they appear together."
                 ),
                 (
-                    "Where is Workspace data stored?",
-                    "App names, window titles, displays, and layouts stay in ~/Library/Application Support/Chap/Workspaces.json on this Mac. They are not synced or included in config Export."
+                    "Where is Layout data stored?",
+                    "App names, window titles, displays, and layouts stay in ~/Library/Application Support/Chap/Layouts.json on this Mac. They are not synced or included in config Export."
                 ),
             ]
         ),
@@ -508,7 +508,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Workspaces; switch with the icons in each title, a click on the empty part of the title row, or a two-finger swipe on the trackpad (Chap remembers the last one). The current tab's name doesn't open anything; point at it and click the › beside it to open its settings. Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Slots has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Layouts; switch with the icons in each title, a click on the empty part of the title row, or a two-finger swipe on the trackpad (Chap remembers the last one). The current tab's name doesn't open anything; point at it and click the › beside it to open its settings. Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

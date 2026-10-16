@@ -15,8 +15,8 @@ extension AppDelegate {
         copyDefaultConfigIfNeeded()
         loadConfig()
         stripLegacyConfigFields()
-        workspaceLibrary.load()
-        workspaceLibrary.onChange = { [weak self] in self?.buildMenu() }
+        layoutLibrary.load()
+        layoutLibrary.onChange = { [weak self] in self?.buildMenu() }
         applyLoginItem(enabled: config.launchAtLogin)
         NSApp.setActivationPolicy(.accessory)
 
@@ -274,12 +274,12 @@ extension AppDelegate {
         let settingsView = SettingsView(
             vm: vm,
             updateController: updateController,
-            workspaceLibrary: workspaceLibrary,
-            workspaceActions: WorkspaceSettingsActions(
-                open: { [weak self] id in self?.openWorkspace(id: id) },
-                capture: { [weak self] in self?.captureWorkspace() },
-                updatePositions: { [weak self] id in self?.updateWorkspacePositions(id: id) },
-                remove: { [weak self] id in self?.confirmRemoveWorkspace(id: id) })
+            layoutLibrary: layoutLibrary,
+            layoutActions: LayoutSettingsActions(
+                open: { [weak self] id in self?.openLayout(id: id) },
+                capture: { [weak self] in self?.captureLayout() },
+                updatePositions: { [weak self] id in self?.updateLayoutPositions(id: id) },
+                remove: { [weak self] id in self?.confirmRemoveLayout(id: id) })
         )
         let window = makeManagedWindow(
             title: "Chap Settings", contentSize: NSSize(width: 770, height: 680),
@@ -329,9 +329,9 @@ extension AppDelegate {
             qaWindow = nil
         } else if window == welcomeWindow {
             welcomeWindow = nil
-        } else if window == workspaceCaptureWindow {
-            workspaceCaptureViewModel = nil
-            workspaceCaptureWindow = nil
+        } else if window == layoutCaptureWindow {
+            layoutCaptureViewModel = nil
+            layoutCaptureWindow = nil
         }
         // 모든 관리 창이 닫히면 accessory로 복원
         restoreAccessoryIfNeeded()
@@ -344,7 +344,7 @@ extension AppDelegate {
             (settingsWindow?.isVisible ?? false)
             || (qaWindow?.isVisible ?? false)
             || (welcomeWindow?.isVisible ?? false)
-            || (workspaceCaptureWindow?.isVisible ?? false)
+            || (layoutCaptureWindow?.isVisible ?? false)
         if !hasVisibleWindow {
             NSApp.setActivationPolicy(.accessory)
         }
@@ -416,10 +416,19 @@ extension AppDelegate {
                 // 앱이 휴지통으로 옮겨진 뒤에만 로그인 항목, 권한, 설정을 정리한다.
                 self.applyLoginItem(enabled: false)
                 self.resetAppleEventsPermission()
+                // 옮기지 못하고 남은 예전 파일(그때 이름 Workspaces.json)은 따로 지운다. 실패해도 나머지 정리는 이어 간다.
+                let legacyLayouts = self.layoutStore.fileURL.deletingLastPathComponent()
+                    .appendingPathComponent(LayoutStore.legacyFileName)
+                if FileManager.default.fileExists(atPath: legacyLayouts.path) {
+                    try? FileManager.default.removeItem(at: legacyLayouts)
+                }
+                let leftoverLegacy =
+                    FileManager.default.fileExists(atPath: legacyLayouts.path)
+                    ? "\n\(legacyLayouts.path)" : ""
                 do {
                     try AppLifecycleSupport.removeConfigurationFiles(configPath: self.configPath)
-                    if FileManager.default.fileExists(atPath: self.workspaceStore.fileURL.path) {
-                        try FileManager.default.removeItem(at: self.workspaceStore.fileURL)
+                    if FileManager.default.fileExists(atPath: self.layoutStore.fileURL.path) {
+                        try FileManager.default.removeItem(at: self.layoutStore.fileURL)
                     }
                 } catch {
                     Log.config.error(
@@ -428,7 +437,7 @@ extension AppDelegate {
                     let cleanupAlert = NSAlert()
                     cleanupAlert.messageText = "Chap moved to Trash"
                     cleanupAlert.informativeText =
-                        "Some settings could not be removed. Delete these files manually:\n\(self.configPath)\n\(self.configPath).bak\n\(self.workspaceStore.fileURL.path)\n\nError: \(error.localizedDescription)"
+                        "Some settings could not be removed. Delete these files manually:\n\(self.configPath)\n\(self.configPath).bak\n\(self.layoutStore.fileURL.path)\(leftoverLegacy)\n\nError: \(error.localizedDescription)"
                     cleanupAlert.alertStyle = .warning
                     cleanupAlert.addButton(withTitle: "OK")
                     cleanupAlert.runModal()

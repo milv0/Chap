@@ -1,52 +1,52 @@
 import SwiftUI
 
-/// 설정창 사이드바의 Workspaces 섹션. URL·App·Finder 섹션 아래에 같은 모양으로 붙는다.
-/// 제목을 누르면 이 섹션이 "+"의 대상(새 캡처)이 되고, 줄을 누르면 오른쪽에 그 Workspace를 연다.
-struct SettingsWorkspacesSection: View {
-    let workspaces: [ChapWorkspace]
+/// 설정창 사이드바의 Layouts 섹션. URL·App·Finder 섹션 아래에 같은 모양으로 붙는다.
+/// 제목을 누르면 이 섹션이 "+"의 대상(새 캡처)이 되고, 줄을 누르면 오른쪽에 그 Layout을 연다.
+struct SettingsLayoutsSection: View {
+    let layouts: [ChapLayout]
     let selectedID: UUID?
     let isFocused: Bool
-    /// 검색어. 비어 있지 않으면 이름이 맞는 Workspace만 보이고, 하나도 없으면 섹션을 숨긴다.
+    /// 검색어. 비어 있지 않으면 이름이 맞는 Layout만 보이고, 하나도 없으면 섹션을 숨긴다.
     let searchText: String
     let onFocusSection: () -> Void
     let onSelect: (UUID) -> Void
     let onCapture: () -> Void
 
-    private var visible: [ChapWorkspace] {
+    private var visible: [ChapLayout] {
         searchText.isEmpty
-            ? workspaces
-            : workspaces.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+            ? layouts
+            : layouts.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
         if !visible.isEmpty || searchText.isEmpty {
             header
             if visible.isEmpty {
-                SidebarAddRow(label: "Capture Workspace", action: onCapture)
+                SidebarAddRow(label: "Capture Layout", action: onCapture)
             }
-            ForEach(visible) { workspace in
+            ForEach(visible) { layout in
                 SidebarItem(
                     icon: "rectangle.3.group",
-                    name: workspace.name,
-                    badge: "\(workspace.windows.count)",
-                    isSelected: selectedID == workspace.id
+                    name: layout.name,
+                    badge: "\(layout.windows.count)",
+                    isSelected: selectedID == layout.id
                 )
                 .contentShape(Rectangle())
-                .onTapGesture { onSelect(workspace.id) }
+                .onTapGesture { onSelect(layout.id) }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(workspace.name), \(workspace.windows.count) windows")
+                .accessibilityLabel("\(layout.name), \(layout.windows.count) windows")
                 .accessibilityAddTraits(
-                    selectedID == workspace.id ? [.isButton, .isSelected] : .isButton)
+                    selectedID == layout.id ? [.isButton, .isSelected] : .isButton)
             }
         }
     }
 
     private var header: some View {
         HStack(spacing: 4) {
-            Text("Workspaces")
+            Text("Layouts")
                 .fontWeight(isFocused ? .semibold : .regular)
                 .foregroundColor(isFocused ? DS.accent : DS.textSecondary)
-            Text("(\(workspaces.count)/\(WorkspaceStore.maxWorkspaces))")
+            Text("(\(layouts.count)/\(LayoutStore.maxLayouts))")
                 .foregroundColor(DS.textTertiary)
                 .monospacedDigit()
             Spacer(minLength: 0)
@@ -64,6 +64,6 @@ struct SettingsWorkspacesSection: View {
         .padding(.top, 5)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(isFocused ? [.isButton, .isSelected] : .isButton)
-        .accessibilityHint("New items from + capture a workspace")
+        .accessibilityHint("New items from + capture a layout")
     }
 }
