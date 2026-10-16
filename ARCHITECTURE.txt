@@ -73,7 +73,7 @@ Sources/
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정, 열 때 정하는 가변 폭)
-│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle)
+│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle), 제목 줄 빈 자리 클릭·두 손가락 스와이프로 탭 전환(tabSwipe, NotchTabMotion)
 │       ├── NotchWorkspacesView.swift ← Apps 칸 Workspaces 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
 │       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
@@ -131,6 +131,7 @@ Sources/
 │   ├── QuickNoteShortcutPolicy.swift ← Quick Note ⌥ 키 정규화·사이트/예약키·런처 Tools 키 충돌 정책 (순수 로직)
 │   ├── QuickNotePlacement.swift ← Quick Note 창 첫 자리: 노치 아랫변에 붙여 가운데 정렬 (순수 로직)
 │   ├── NotchContrastPolicy.swift ← HIG 대비·semantic foreground 정책
+│   ├── TabSwipePolicy.swift   ← 탭 칸 트랙패드 가로 스와이프(한 제스처 한 칸, 관성 무시)·옆 탭 계산 (순수 로직)
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책·Launchers·Apps 탭 선택(AppsSlotTab)·칸 폭·Apps 격자 열 수
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
