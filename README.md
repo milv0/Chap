@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.16.3-orange)
+![Version](https://img.shields.io/badge/version-2.16.4-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -15,7 +15,7 @@
 - **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Focus starts, wags its tail while Focus runs, and flicks it when you check off a to-do
-- **To-do** — A short checklist in a notch slot: click Add and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance, and the slot widens to fit your longest item (it settles each time you open the notch); clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
+- **To-do** — A short checklist in a notch slot: click Add (or anywhere in an empty slot) and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance, and the slot widens to fit your longest item (it settles each time you open the notch); clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
 - **Mirror and Quick Note** — Check your camera before a call, or jot a note, right from the notch
 - **Focus & Timer Dial** — One notch slot handles both: switch between a 1–12-hour Focus dial (the same session as Keep Mac Awake) and a 5–60-minute Timer dial. Drag the arc to set the duration, click the center to start, and watch it wind down; while a timer runs, its time sits beside the closed notch and Chap plays a sound and shows "Time's up" when it ends
 - **Workspaces (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or the Workspaces tab of the notch Apps slot; app names and window titles stay in a local file on this Mac
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.16.3
+Scripts/release.sh 2.16.4
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.16.3 --publish
+Scripts/release.sh 2.16.4 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
