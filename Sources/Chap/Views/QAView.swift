@@ -226,7 +226,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Workspaces를 한 칸에 두고 제목 줄 아이콘으로 바꿔 봅니다(마지막 탭을 기억합니다). 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Layout에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Workspaces를 한 칸에 두고 제목 줄 아이콘으로 바꿔 봅니다(마지막 탭을 기억합니다). 고른 탭 이름은 눌러도 아무 일이 없고, 마우스를 올리면 뒤에 보이는 ›를 눌러야 그 설정이 열립니다. 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -508,7 +508,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Workspaces; switch with the icons in each title (Chap remembers the last one). Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Layout has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Workspaces; switch with the icons in each title (Chap remembers the last one). The current tab's name doesn't open anything; point at it and click the › beside it to open its settings. Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",

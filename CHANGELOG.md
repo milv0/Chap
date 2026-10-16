@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.16.1] — 2026-10-16
+
+### Changed
+
+- **No more surprise Settings** — In the Launchers and Apps slots, the current
+  tab's name no longer opens Settings. Point at it and click the › beside it
+  instead, so a slip while switching tabs keeps the notch open.
+
 ## [2.16.0] — 2026-10-16
 
 ### Changed

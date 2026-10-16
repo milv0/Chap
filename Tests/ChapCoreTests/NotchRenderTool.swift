@@ -78,6 +78,7 @@ struct NotchRenderTool {
             NotchFocusView.previewMode = nil
             NotchLaunchersTabPreview.tab = nil
             NotchLaunchersTabPreview.appsTab = nil
+            NotchLaunchersTabPreview.titleHovered = false
         }
 
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
@@ -135,6 +136,9 @@ struct NotchRenderTool {
             // Launchers 칸: 라이트는 Sites 탭, 다크는 Finder 탭을 그린다.
             NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .finder : .url
             NotchLaunchersTabPreview.appsTab = name.hasSuffix("-workspaces") ? .workspaces : .apps
+            // 다크 렌더는 고른 탭 제목에 마우스를 올린 상태(›)로 그린다.
+            NotchLaunchersTabPreview.titleHovered =
+                name.hasSuffix("dark-launchers") || name.hasSuffix("dark-workspaces")
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(

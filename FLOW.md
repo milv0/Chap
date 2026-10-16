@@ -531,10 +531,11 @@ Settings → Notch Launcher on
   → showPanel(forDrop:false)
   → LauncherListPolicy 기반 위젯 6칸(빈 칸·접힌 선반 제외 한 줄) + 조건부 Drop 파일 행
      1·2번 칸은 Screenshots·Downloads 선반 고정, 접힌 선반은 검정 띠 왼쪽 아이콘(notchCollapsedWidgets)
-  → 런처 칸 제목 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
+  → 런처 칸 제목 뒤 › 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
     → Launchables 탭 + 그 타입 첫 항목 선택
     Launchers(Sites|Finder)·Apps(Apps|Workspaces) 칸은 제목 줄이 탭: 다른 탭 아이콘 클릭은 탭 전환
-    (UserDefaults ChapLauncherTab·ChapAppsTab), 고른 탭 클릭은 그 설정 열기(Workspaces → showWorkspacesInSettings)
+    (UserDefaults ChapLauncherTab·ChapAppsTab), 고른 탭 이름은 누를 수 없고 뒤의 ›만 그 설정 열기
+    (Workspaces → showWorkspacesInSettings)
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로
   → Quick Note 아이콘 또는 ⌥N(GlobalHotKeyAction.openQuickNote): requestClose로 도커 닫기 → QuickNoteWindow.show()
