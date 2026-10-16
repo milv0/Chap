@@ -1,8 +1,9 @@
 import SwiftUI
 
 /// 탭 칸(Launchers·Apps)이 함께 쓰는 제목 줄. 제목 줄이 곧 탭이다: 고른 탭만 아이콘 + 이름,
-/// 나머지는 흐린 아이콘만(`▢ Sites  ▤`). 아이콘을 누르면 그 탭으로 바꾸고, 고른 탭을 다시 누르면
-/// 그 탭의 설정을 연다(마우스를 올리면 ›). 탭 순서는 늘 같다. 탭이 하나면 제목만 남는다.
+/// 나머지는 흐린 아이콘만(`▢ Sites  ▤`). 아이콘을 누르면 그 탭으로 바꾼다. 고른 탭의 이름은 누를 수
+/// 없고, 마우스를 올리면 보이는 ›만 그 탭의 설정을 연다. 탭을 바꾸려다 이름을 눌러 설정창이 뜨는
+/// 일을 막는다. 탭 순서는 늘 같다. 탭이 하나면 제목만 남는다.
 struct NotchTabHeader: View {
     struct Tab: Identifiable, Equatable {
         let id: String
@@ -20,15 +21,10 @@ struct NotchTabHeader: View {
         HStack(spacing: LauncherListPolicy.launcherTabSpacing) {
             ForEach(tabs) { tab in
                 if tab.id == selectedID {
-                    // 고른 탭: 다른 칸 제목과 같은 모양.
-                    NotchSectionTitleButton(
-                        symbol: tab.symbol,
-                        title: tab.title,
-                        foreground: palette.heading,
-                        iconForeground: palette.icon ?? palette.heading,
-                        hoverBackground: palette.hoverBackground,
-                        textShadowOpacity: palette.textShadowOpacity,
-                        action: onOpenSelected
+                    // 고른 탭: 다른 칸 제목과 같은 모양이지만, 설정은 ›만 연다.
+                    NotchTabTitle(
+                        symbol: tab.symbol, title: tab.title, palette: palette,
+                        onOpenSettings: onOpenSelected
                     )
                     .transition(.opacity)
                 } else {
@@ -137,6 +133,62 @@ struct NotchAppsSlot<AppsContent: View, WorkspacesContent: View>: View {
 enum NotchLaunchersTabPreview {
     static var tab: LaunchType?
     static var appsTab: AppsSlotTab?
+    /// 제목에 마우스를 올린 것처럼 ›를 그린다.
+    static var titleHovered = false
+}
+
+/// 탭 칸의 고른 탭 제목. 아이콘 + 이름은 누를 수 없는 머리글이고, 제목에 마우스를 올리면 뒤에 ›가
+/// 보인다. ›만 버튼이라 그 탭의 설정을 연다. 폭은 `NotchSectionTitleButton`과 같다
+/// (오른쪽 여백 6 + `launcherTitleAccessoryWidth` 13 = › 버튼 18 + 간격 1).
+private struct NotchTabTitle: View {
+    let symbol: String
+    let title: String
+    let palette: NotchWidgetPalette
+    let onOpenSettings: () -> Void
+
+    @State private var isTitleHovered = false
+    @State private var isChevronHovered = false
+
+    var body: some View {
+        HStack(spacing: 1) {
+            HStack(spacing: 5) {
+                Image(systemName: symbol)
+                    .font(DS.notchLabel)
+                    .foregroundColor(palette.icon ?? palette.heading)
+                Text(title)
+                    .font(DS.notchLabel)
+                    .fixedSize()
+            }
+            .foregroundColor(palette.heading)
+            .shadow(color: .black.opacity(palette.textShadowOpacity), radius: 1.5, y: 0.5)
+            .padding(.leading, 6)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+
+            Button(action: onOpenSettings) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(palette.heading)
+                    .opacity(
+                        isChevronHovered
+                            ? 1 : isTitleHovered || NotchLaunchersTabPreview.titleHovered ? 0.6 : 0
+                    )
+                    .frame(width: 18, height: DS.notchHeaderHeight)
+                    .background(
+                        RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
+                            .fill(isChevronHovered ? palette.hoverBackground : Color.clear)
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onHover { isChevronHovered = $0 }
+            .help("Edit \(title) in Settings")
+            .accessibilityLabel("Edit \(title) in Settings")
+        }
+        .frame(height: DS.notchHeaderHeight)
+        .contentShape(Rectangle())
+        .onHover { isTitleHovered = $0 }
+    }
 }
 
 /// 탭 칸 제목 줄의 고르지 않은 탭(아이콘만). 흐린 제목색이고, 마우스를 올리면 진해지며

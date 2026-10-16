@@ -73,7 +73,7 @@ Sources/
 │       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
 │       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수·진행선, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정)
-│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 3열 격자|Workspaces 탭), 마지막 탭 기억
+│       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 3열 격자|Workspaces 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle)
 │       ├── NotchWorkspacesView.swift ← Apps 칸 Workspaces 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
 │       ├── WorkspaceCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── WorkspaceViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Layout 미리보기 (캡처 창·설정 공용)
