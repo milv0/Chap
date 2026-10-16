@@ -128,6 +128,8 @@ struct NotchLauncherPanelView: View {
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(rows.max() ?? 0, header))))
+        case .launcherTabs:
+            return CGFloat(LauncherListPolicy.launcherTabsColumnWidth)
         case .awake:
             return Self.focusColumnWidth
         case .todo:
@@ -673,6 +675,12 @@ struct NotchLauncherPanelView: View {
         switch slot {
         case .launchers(let section):
             sectionView(section)
+        case .launcherTabs(let sections):
+            NotchLaunchersTabSlot(
+                sections: sections, palette: widgetPalette, onOpenSettings: onOpenSettings
+            ) { section in
+                launcherBody(section)
+            }
         case .screenshots:
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
@@ -726,11 +734,17 @@ struct NotchLauncherPanelView: View {
                 onOpenSettings(section.launchType)
             }
 
-            if section.launchType == .app {
-                appIconGrid(section)
-            } else {
-                launcherRows(section)
-            }
+            launcherBody(section)
+        }
+    }
+
+    /// 런처 칸 본문: Apps는 아이콘 격자, Sites·Finder는 목록. 따로 둔 칸과 Launchers 탭 칸이 같이 쓴다.
+    @ViewBuilder
+    private func launcherBody(_ section: LauncherListSection) -> some View {
+        if section.launchType == .app {
+            appIconGrid(section)
+        } else {
+            launcherRows(section)
         }
     }
 
@@ -791,10 +805,6 @@ struct NotchLauncherPanelView: View {
     }
 
     private static func sectionTitle(_ launchType: LaunchType) -> String {
-        switch launchType {
-        case .url: return "Sites"
-        case .app: return "Apps"
-        case .finder: return "Finder"
-        }
+        LauncherListPolicy.title(for: launchType)
     }
 }

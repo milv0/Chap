@@ -304,6 +304,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case todo = "todo"
     /// 실제 앱 창 배치를 이 Mac에 기억하고 복원하는 작업 공간(`WorkspaceStore`).
     case workspaces = "workspaces"
+    /// Sites·Apps·Finder를 한 칸에 두고 제목 줄 탭으로 바꿔 보는 런처 칸. 칸 셋을 하나로 아낀다.
+    case launchers = "launchers"
     /// 빈 칸.
     case none = "none"
 
@@ -313,7 +315,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
         case .sites: return .url
         case .apps: return .app
         case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .none:
+        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .launchers, .none:
             return nil
         }
     }

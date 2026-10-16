@@ -162,7 +162,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Sites, Apps, Finder, Focus, To-do, or Workspaces into the other four; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Launchers, Sites, Apps, Finder, Focus, To-do, or Workspaces into the other four. **Launchers** puts Sites, Apps, and Finder in one slot with icon tabs in its title row (Chap remembers the last tab), so every widget fits in six slots; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 

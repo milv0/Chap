@@ -59,7 +59,7 @@ There is no `Package.swift`; do not use `swift test`.
 - App launch uses `NSWorkspace.openApplication` plus AXObserver/polling resize, including resizable non-standard Office windows.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
-  `.nonactivatingPanel` under the hardware notch with six slots (Sites, Apps,
+  `.nonactivatingPanel` under the hardware notch with six slots (Launchers (Sites/Apps/Finder tabs in one slot), Sites, Apps,
   Finder, Screenshots, Downloads, Focus (Keep Awake or Timer on one dial), To-do, or Workspaces; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge); the status menu stays available. On a
   screen without a notch, no window sits at the top: a 150ms pointer poll over the
   top-center `hoverZone` opens the same dock and the Drop badge is suppressed. Chap Drop keeps bookmark references to dropped originals

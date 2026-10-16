@@ -56,6 +56,10 @@ struct NotchRenderTool {
         let previewWorkspaces = Self.previewWorkspaces
         let workspaceSlots = NotchSlotContent.slots(
             widgets: workspaceWidgets, sites: config.sites, workspaces: previewWorkspaces)
+        // Launchers 칸 하나로 런처 셋을 묶으면 모든 위젯이 여섯 칸에 들어간다.
+        let launcherSlots = NotchSlotContent.slots(
+            widgets: [.screenshots, .downloads, .launchers, .awake, .todo, .workspaces],
+            sites: config.sites, workspaces: previewWorkspaces)
         let now = Date()
         NotchTodoView.previewItems = [
             TodoItem(title: "Send the Q4 deck to Jun", created: now),
@@ -77,6 +81,7 @@ struct NotchRenderTool {
             DownloadsShelf.previewHoveredURL = nil
             ChapDrop.previewOverride = nil
             NotchFocusView.previewMode = nil
+            NotchLaunchersTabPreview.tab = nil
         }
 
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
@@ -96,6 +101,8 @@ struct NotchRenderTool {
             ("notch-glass-dark-timer-running", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-timer-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-workspaces", .glass, .dark, Color(white: 0.16), false),
+            ("notch-glass-light-launchers", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-launchers", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-dark", .glass, .dark, Color(white: 0.16), false),
             ("notch-custom", .custom, .dark, Color(white: 0.55), false),
         ]
@@ -129,6 +136,8 @@ struct NotchRenderTool {
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
             // Focus 칸은 이름에 "-timer"가 있으면 Timer 모드로 그린다.
             NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
+            // Launchers 칸: 라이트는 Sites 탭, 다크는 Apps 탭을 그린다.
+            NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .app : .url
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -140,7 +149,8 @@ struct NotchRenderTool {
                 slots: name.hasSuffix("-todo")
                     ? todoSlots
                     : name.hasSuffix("-workspaces")
-                        ? workspaceSlots : previewSlots,
+                        ? workspaceSlots
+                        : name.hasSuffix("-launchers") ? launcherSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
                 showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
