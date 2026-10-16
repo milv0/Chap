@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Sites·Apps·Finder를 한 칸에 두는 Launchers 칸. 제목 줄 왼쪽은 고른 타입의 제목(누르면 설정),
-/// 오른쪽은 항목이 있는 타입의 아이콘 탭이다. 탭 순서는 늘 같고, 고른 탭만 진하게 보인다.
+/// Sites·Apps·Finder를 한 칸에 두는 Launchers 칸. 제목 줄이 곧 탭이다: 고른 탭만 아이콘 + 이름,
+/// 나머지는 아이콘만(`▢ Sites  ■  ▤`). 아이콘을 누르면 그 탭으로 바꾸고, 고른 탭을 다시 누르면
+/// 그 타입의 설정을 연다(마우스를 올리면 ›). 탭 순서는 launch type 순서로 늘 같다.
 /// 마지막으로 고른 탭을 기억한다. 칸 폭은 모든 탭 중 가장 넓은 내용에 맞춰 두어 탭을 바꿔도 도커가 흔들리지 않는다.
 struct NotchLaunchersTabSlot<Content: View>: View {
     let sections: [LauncherListSection]
@@ -35,43 +36,38 @@ struct NotchLaunchersTabSlot<Content: View>: View {
     }
 
     private func header(_ selected: LauncherListSection) -> some View {
-        HStack(spacing: 0) {
-            NotchSectionTitleButton(
-                symbol: LauncherListPolicy.symbolName(for: selected.launchType),
-                title: LauncherListPolicy.title(for: selected.launchType),
-                foreground: palette.heading,
-                iconForeground: palette.icon ?? palette.heading,
-                hoverBackground: palette.hoverBackground,
-                textShadowOpacity: palette.textShadowOpacity
-            ) {
-                onOpenSettings(selected.launchType)
-            }
-            Spacer(minLength: 8)
-            if sections.count > 1 {
-                HStack(spacing: LauncherListPolicy.launcherTabSpacing) {
-                    ForEach(sections, id: \.launchType) { section in
-                        tab(
-                            section.launchType,
-                            isSelected: section.launchType == selected.launchType)
+        HStack(spacing: LauncherListPolicy.launcherTabSpacing) {
+            ForEach(sections, id: \.launchType) { section in
+                if section.launchType == selected.launchType {
+                    // 고른 탭: 다른 칸 제목과 같은 모양. 누르면 그 타입의 설정을 연다.
+                    NotchSectionTitleButton(
+                        symbol: LauncherListPolicy.symbolName(for: section.launchType),
+                        title: LauncherListPolicy.title(for: section.launchType),
+                        foreground: palette.heading,
+                        iconForeground: palette.icon ?? palette.heading,
+                        hoverBackground: palette.hoverBackground,
+                        textShadowOpacity: palette.textShadowOpacity
+                    ) {
+                        onOpenSettings(section.launchType)
+                    }
+                    .transition(.opacity)
+                } else {
+                    NotchLauncherTabButton(
+                        symbol: LauncherListPolicy.symbolName(for: section.launchType),
+                        title: LauncherListPolicy.title(for: section.launchType),
+                        palette: palette
+                    ) {
+                        select(section.launchType)
                     }
                 }
-                .padding(.trailing, 2)
             }
         }
         .frame(height: DS.notchHeaderHeight)
     }
 
-    private func tab(_ type: LaunchType, isSelected: Bool) -> some View {
-        NotchLauncherTabButton(
-            symbol: LauncherListPolicy.symbolName(for: type),
-            title: LauncherListPolicy.title(for: type),
-            isSelected: isSelected,
-            palette: palette
-        ) {
-            guard !isSelected else { return }
-            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-            withAnimation(.easeOut(duration: 0.12)) { storedTab = type.rawValue }
-        }
+    private func select(_ type: LaunchType) {
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+        withAnimation(.easeOut(duration: 0.15)) { storedTab = type.rawValue }
     }
 }
 
@@ -80,12 +76,11 @@ enum NotchLaunchersTabPreview {
     static var tab: LaunchType?
 }
 
-/// Launchers 칸 제목 줄의 아이콘 탭 하나. 고른 탭은 아이콘 색, 나머지는 흐린 제목색.
-/// 면이나 밑줄 없이 색만 바뀐다(미니멀). 마우스를 올리면 옅은 면이 생긴다.
+/// Launchers 칸 제목 줄의 고르지 않은 탭(아이콘만). 흐린 제목색이고, 마우스를 올리면 진해지며
+/// 옅은 면이 생긴다. 고른 탭은 아이콘 + 이름 제목(`NotchSectionTitleButton`)이 맡는다.
 private struct NotchLauncherTabButton: View {
     let symbol: String
     let title: String
-    let isSelected: Bool
     let palette: NotchWidgetPalette
     let action: () -> Void
 
@@ -95,22 +90,17 @@ private struct NotchLauncherTabButton: View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(DS.notchLabel)
-                .foregroundColor(
-                    isSelected
-                        ? (palette.icon ?? palette.heading)
-                        : palette.heading.opacity(isHovered ? 0.85 : 0.4)
-                )
+                .foregroundColor(palette.heading.opacity(isHovered ? 0.85 : 0.4))
                 .frame(width: LauncherListPolicy.launcherTabWidth, height: DS.notchHeaderHeight)
                 .background(
                     RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                        .fill(isHovered && !isSelected ? palette.hoverBackground : Color.clear)
+                        .fill(isHovered ? palette.hoverBackground : Color.clear)
                 )
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .help(isSelected ? title : "Show \(title)")
-        .accessibilityLabel(title)
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+        .help("Show \(title)")
+        .accessibilityLabel("Show \(title)")
     }
 }

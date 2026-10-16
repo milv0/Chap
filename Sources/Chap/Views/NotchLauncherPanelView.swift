@@ -140,6 +140,7 @@ struct NotchLauncherPanelView: View {
             }
             let title = sections.map {
                 NotchTextMetrics.headerWidth(title: Self.sectionTitle($0.launchType))
+                    + CGFloat(LauncherListPolicy.launcherTitleAccessoryWidth)
             }
             return CGFloat(
                 LauncherListPolicy.launcherTabsColumnWidth(

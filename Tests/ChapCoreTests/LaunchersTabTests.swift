@@ -63,11 +63,13 @@ struct LaunchersTabTests {
             LauncherListPolicy.launcherTabsColumnWidth(
                 titleWidth: titleWidth, contentWidth: contentWidth, tabCount: tabCount)
         }
-        // 짧은 내용이면 목록 칸 최소 폭이지만, 제목 + 탭 셋은 늘 들어간다.
-        let tabs = width(titleWidth: 60, contentWidth: 90, tabCount: 3)
-        let minimumHeader: Double = 60 + 3 * 22 + 2 * 2 + 10
+        // 고른 탭(아이콘 + 이름)과 나머지 두 아이콘이 늘 들어간다.
+        let tabs = width(titleWidth: 80, contentWidth: 90, tabCount: 3)
+        let minimumHeader: Double = 80 + 2 * (22 + 2)
         #expect(tabs >= minimumHeader)
         #expect(tabs <= LauncherListPolicy.listColumnWidthRange.upperBound)
+        // 짧은 제목과 본문이면 목록 칸 최소 폭이다.
+        #expect(width(titleWidth: 60, contentWidth: 90, tabCount: 2) == 112)
         // 탭이 하나면 아이콘 자리가 없다.
         #expect(width(titleWidth: 60, contentWidth: 90, tabCount: 1) == 112)
         // 긴 이름은 목록 칸과 같은 상한에서 자른다.
