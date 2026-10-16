@@ -99,16 +99,23 @@ struct NotchAppIconLabelTests {
             appPath: "/Applications/\(name).app", shortcut: shortcut)
     }
 
-    @Test("up to six apps fit in a three-column icon grid of two rows")
+    @Test("up to six apps fit in an icon grid of two rows")
     func gridFitsSixApps() {
-        #expect(LauncherListPolicy.appIconColumns == 3)
+        #expect(LauncherListPolicy.maxAppIconColumns == 3)
         #expect(LauncherListPolicy.maxEntriesPerNotchSlot(for: .app) == 6)
         #expect(LauncherListPolicy.appIconRows(forCount: 6) == 2)
     }
 
     @Test(
+        "four apps or fewer use two columns; five or six use three",
+        arguments: [(1, 2), (2, 2), (3, 2), (4, 2), (5, 3), (6, 3)])
+    func columnsForCount(count: Int, columns: Int) {
+        #expect(LauncherListPolicy.appIconColumns(forCount: count) == columns)
+    }
+
+    @Test(
         "the grid uses only the rows it needs",
-        arguments: [(0, 0), (1, 1), (3, 1), (4, 2), (6, 2), (9, 2)])
+        arguments: [(0, 0), (1, 1), (2, 1), (3, 2), (4, 2), (5, 2), (6, 2), (9, 2)])
     func rowsForCount(count: Int, rows: Int) {
         #expect(LauncherListPolicy.appIconRows(forCount: count) == rows)
     }

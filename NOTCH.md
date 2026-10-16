@@ -190,9 +190,9 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (104pt 다이얼, Focus·Timer 모드 공용) |
-| To-do | 188pt (상태 캡슐 + 12pt 문구) |
+| To-do | 140–240pt (가장 긴 항목·추가 줄·제목 줄 중 넓은 쪽, `TodoColumnPolicy`). 도커를 열 때 정하고 열려 있는 동안은 고정 |
 | Launchers | 112–170pt (Sites·Finder 중 가장 넓은 목록, 제목 + 탭 아이콘은 늘 들어감) |
-| Apps | 112–170pt (Apps 3열 격자 122pt와 Workspaces 2열 타일 128pt 중 넓은 쪽, 제목 + 탭 아이콘은 늘 들어감) |
+| Apps | 112–170pt (Apps 격자(2열 80pt·3열 122pt)와 Workspaces 2열 타일 128pt 중 넓은 쪽, 제목 + 탭 아이콘은 늘 들어감) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 놓을 수 있는 위젯
 (Screenshots·Downloads·Launchers·Apps·Focus·To-do) 여섯이 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
@@ -215,7 +215,7 @@ Apps 칸(`NotchWidget.apps`, `NotchAppsSlot`)은 Apps(앱 아이콘)와 Workspac
 항상 탭이고, Apps 탭은 앱이 있을 때만 있다(`AppsSlotTab.available`). 마지막 탭은 UserDefaults `ChapAppsTab`에 기억한다.
 고른 탭 이름 뒤 ›를 누르면 Apps는 설정의 Apps 섹션, Workspaces는 Workspaces 섹션을 연다(이름은 누를 수 없다).
 
-Apps 탭은 앱 아이콘 3열 격자(최대 3열 × 2줄, 6개)다. 필요한 줄만 쓰고 위에서부터 한 줄에 셋씩 채운다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 12pt(키캡 배지가 아래 줄과 붙지 않게). 격자 폭 122pt는 Workspaces 2열 타일(128pt)과 거의 같아 어느 탭이든 양옆이 비지 않는다. 본문은 목록 칸 4줄 높이(113pt)에 고정한다.
+Apps 탭은 앱 아이콘 격자다(`LauncherListPolicy.appIconColumns(forCount:)`). 4개까지는 2열(4개면 2 × 2)로 덩어리지게, 5~6개는 3열 × 2줄로 둔다. 어느 쪽이든 최대 2줄이고, 필요한 줄만 써서 위에서부터 채우며 칸 가운데에 놓는다. 아이콘 32pt, 타일 34pt 정사각(고정 폭 열), 가로 간격 8pt, 세로 간격 12pt(키캡 배지가 아래 줄과 붙지 않게). 3열 격자 폭 122pt는 Workspaces 2열 타일(128pt)과 거의 같다. 2열 격자(80pt)는 칸 가운데에 모여 양옆이 조금 빈다. 본문은 목록 칸 4줄 높이(113pt)에 고정한다.
 단축키가 있으면 아이콘 오른쪽 아래에 키 글자만(`S`) 10pt semibold 키캡으로 붙인다. 호버 시 앱 이름
 툴팁과 `rowHoverBackground`, VoiceOver는 "Launch Slack, Option S". 아이콘은 `AppIconLoader`가
 utility queue에서 `NSWorkspace.icon(forFile:)`로 읽고 경로별로 캐시한다.
@@ -368,9 +368,10 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
   › 자리는 늘 잡혀 있어 칸 폭은 그대로다. 탭 없는 칸(Screenshots·Downloads·Focus 등)의 제목은 그대로 버튼이다.
   같은 아이콘을 제목과 탭에 두 번 그리지 않아 제목 줄이 짧다. 타입이 하나뿐이면 제목만 남는다.
 - 본문은 이름 + 키캡 목록이다. 목록 칸 4줄 높이에 고정하고 폭을 모든 탭 기준으로 잡아, 탭을 바꿔도 바닥선과 폭이 그대로다.
-- 탭 칸(Launchers·Apps)은 제목 줄과 본문 사이를 3pt 더 띄운다(`NotchAppIconTile.tabBodyTopGap`). 탭 아이콘이 늘어선 제목 줄이
-  본문에 붙어 보여서다. 대신 Launchers 목록 줄 간격은 2pt, Workspaces 타일 줄 간격은 3pt로 줄여 본문 높이(113pt)와
-  바닥선은 다른 칸과 같다.
+- 탭 칸(Launchers·Apps)은 제목 줄 아래를 6pt 더 띄운다(`NotchAppIconTile.tabBodyTopGap`). To-do 칸(제목 줄 21pt + 4pt)과
+  본문 시작이 같아(16 + 3 + 6 = 25pt), 목록 줄(26pt, 간격 3pt)이 To-do 줄과 같은 높이에 놓이고 4줄이 위아래 같은 여백으로 찬다.
+  목록 줄은 To-do·Downloads처럼 26pt로 고정한다(글자 높이에 맡기면 25pt 안팎이라 아래가 남았다). Workspaces 타일은 줄 간격을
+  0으로 둬(타일 위아래 여백 2pt씩) 두 줄이 다른 칸 바닥선 안에 든다.
 - 마지막 탭은 UserDefaults `ChapLauncherTab`에 기억하고, 그 타입이 비면 첫 타입(`LauncherListPolicy.selectedTab`).
   탭을 바꿀 때 햅틱(`.alignment`).
 - 항목이 하나도 없으면 칸을 그리지 않는다(빈 런처 칸과 같은 규칙).
@@ -389,7 +390,11 @@ Apps 칸의 두 번째 탭으로 보는 로컬 작업 공간 격자(`NotchWorksp
 
 ## To-do 칸
 
-위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 188pt). Chap 안에만 저장한다
+위젯 칸(3~6번)에 놓는 짧은 체크리스트(`NotchWidget.todo`, `NotchTodoView`, 폭 140–240pt).
+폭은 저장된 항목 중 가장 긴 줄에 맞추되(`NotchTodoView.columnWidth`, `TodoColumnPolicy`) 도커를 열 때 한 번 정한다.
+열려 있는 동안 추가·수정·삭제해도 폭은 그대로이고 다음에 열 때 반영된다. 가운데 정렬 도커가 입력·삭제마다 흔들려 다른 칸이
+마우스 아래에서 비켜나지 않게 하기 위해서다. 항목 문구는 메모리(`NotchTodoView.knownTitles`)에 두고, 노치 런처를 켤 때
+직렬 큐에서 미리 읽어(`preloadTitles`) 첫 도커도 맞는 폭으로 열린다. 240pt를 넘는 문구는 말줄임한다. Chap 안에만 저장한다
 (`TodoStore`, `~/Library/Application Support/Chap/Todos.json`, 권한·동기화 없음, 설정 Export/Import에 안 섞임).
 
 - 미니멀: 면·캡슐·진행선 없이 글자와 동그라미만 둔다. 줄 배경은 마우스를 올린 줄에만 생긴다.

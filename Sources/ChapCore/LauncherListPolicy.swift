@@ -45,14 +45,21 @@ public enum LauncherListPolicy {
             listColumnWidthRange.upperBound)
     }
 
-    /// 노치 Apps 칸의 아이콘 격자 열 수. 최대 6개가 3열 × 2줄로 들어간다. Workspaces 탭(2열 타일,
-    /// 약 128pt)과 칸 폭이 비슷해 어느 탭이든 양옆이 비지 않는다.
-    public static let appIconColumns = 3
+    /// 노치 Apps 칸 아이콘 격자의 최대 열 수. 6개는 3열 × 2줄로 들어간다.
+    public static let maxAppIconColumns = 3
 
-    /// 앱 개수에 필요한 격자 줄 수. 빈 줄 공간은 만들지 않는다 (예: 4개 → 2줄).
+    /// 앱 개수에 맞는 격자 열 수. 4개까지는 2열(4개면 2 × 2)로 덩어리지게 두고, 5개부터 3열로 넓힌다.
+    /// 어느 쪽이든 2줄을 넘지 않는다.
+    public static func appIconColumns(forCount count: Int) -> Int {
+        count > 4 ? maxAppIconColumns : 2
+    }
+
+    /// 앱 개수에 필요한 격자 줄 수. 빈 줄 공간은 만들지 않는다 (예: 3개 → 2줄, 5개 → 2줄).
     public static func appIconRows(forCount count: Int) -> Int {
         guard count > 0 else { return 0 }
-        return (min(count, SiteCountLimitPolicy.maxApps) + appIconColumns - 1) / appIconColumns
+        let shown = min(count, SiteCountLimitPolicy.maxApps)
+        let columns = appIconColumns(forCount: shown)
+        return (shown + columns - 1) / columns
     }
 
     /// 단축키 표기 (예: "⌥S"). 단축키가 없으면 nil.

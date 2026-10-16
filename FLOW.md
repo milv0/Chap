@@ -572,7 +572,8 @@ Settings → Notch Launcher on
 ```
 
 - 위젯 설정은 drag/drop 외에도 context menu·VoiceOver actions로 동일하게 조작한다.
-- URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 3열 아이콘, 필요한 줄만).
+- URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 4개까지 2열·5~6개 3열 아이콘, 필요한 줄만).
+- To-do 칸 폭은 도커를 열 때 저장된 항목으로 정하고(140–240pt) 열려 있는 동안 고정한다. 바뀐 항목은 다음에 열 때 반영된다.
 - Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
   원본을 이동하지 않는다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
 - To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.

@@ -25,8 +25,9 @@ struct NotchWorkspacesView: View {
             columns: Array(
                 repeating: GridItem(.fixed(Self.tileWidth), spacing: Self.columnGap),
                 count: 2),
-            // 줄 간격 3pt: 탭 칸 위 간격(`tabBodyTopGap`)만큼 줄여 두 줄이 본문 높이 안에 든다.
-            alignment: .center, spacing: 3
+            // 탭 칸 위 간격(`tabBodyTopGap` 6pt)만큼 줄 간격을 없애 두 줄이 다른 칸 바닥선 안에 든다.
+            // 타일마다 위아래 2pt 여백이 있어 줄 사이는 4pt 남는다.
+            alignment: .center, spacing: 0
         ) {
             ForEach(workspaces.prefix(WorkspaceStore.maxWorkspaces)) { workspace in
                 WorkspaceTile(

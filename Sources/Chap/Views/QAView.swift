@@ -242,7 +242,7 @@ struct QAView: View {
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
-                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 URL·Finder는 최대 네 개, App은 노치에서 3열 아이콘으로 보여 최대 여섯 개까지 허용합니다. 각 타입의 한도는 서로 독립적입니다."
+                    "상태바 메뉴와 노치 한 칸을 짧고 예측 가능하게 유지하기 위해 URL·Finder는 최대 네 개, App은 노치에서 아이콘 격자(4개까지 2열, 5~6개 3열)로 보여 최대 여섯 개까지 허용합니다. 각 타입의 한도는 서로 독립적입니다."
                 ),
             ]
         ),
@@ -524,7 +524,7 @@ struct QAView: View {
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",
-                    "URL and Finder allow four each, and App allows six because the notch shows apps as a three-column icon grid. The limits keep the status menu and each notch slot short and predictable, and each type is counted separately."
+                    "URL and Finder allow four each, and App allows six because the notch shows apps as an icon grid of two rows (two columns for up to four, three for five or six). The limits keep the status menu and each notch slot short and predictable, and each type is counted separately."
                 ),
             ]
         ),

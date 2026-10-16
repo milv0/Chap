@@ -21,6 +21,18 @@ public struct TodoItem: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
+/// 노치 To-do 칸 폭. 가장 긴 항목·제목 줄에 맞추되 140–240pt 안에 둔다. 넘는 문구는 말줄임한다.
+/// 폭은 도커를 열 때 정하고 열려 있는 동안은 바꾸지 않는다(가운데 정렬 도커가 입력·삭제마다 흔들리지 않게).
+public enum TodoColumnPolicy {
+    public static let minWidth: Double = 140
+    public static let maxWidth: Double = 240
+
+    /// 내용 폭(가장 넓은 줄)을 칸 폭으로 바꾼다.
+    public static func columnWidth(contentWidth: Double) -> Double {
+        min(max(contentWidth.rounded(.up), minWidth), maxWidth)
+    }
+}
+
 /// 노치 할 일 목록의 규칙과 저장소. 최대 4개. Chap 안에만 저장하고(권한 없음, 동기화 없음) 설정 Export/Import에
 /// 섞이지 않는다. 위치: `~/Library/Application Support/Chap/Todos.json`.
 public struct TodoStore: Sendable {

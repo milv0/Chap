@@ -10,6 +10,43 @@ import SwiftUI
 /// 저장은 `TodoStore`(Chap 안에만, 권한 없음)이며 바뀔 때마다 직렬 큐로 바로 쓴다.
 struct NotchTodoView: View {
     let palette: NotchWidgetPalette
+    /// 파일에서 처음 읽었을 때 항목 문구를 알린다(도커가 칸 폭을 한 번 맞춘다).
+    var onLoaded: ([String]) -> Void = { _ in }
+
+    /// 마지막으로 알고 있는 항목 문구(메인 스레드 전용, 메모리에만). 도커를 열 때 칸 폭을 이것으로 정한다.
+    /// 아직 한 번도 읽지 않았으면 nil이다.
+    /// 렌더 도구가 `previewItems`를 쓰면 그 문구가 우선한다.
+    static var knownTitles: [String]? {
+        get { previewItems?.map(\.title) ?? cachedTitles }
+        set { cachedTitles = newValue }
+    }
+    private static var cachedTitles: [String]?
+
+    /// To-do 칸 폭: 가장 긴 항목 줄, 추가 줄, 제목 줄(남은 수 + 호버 시 Clear) 중 넓은 쪽을 140–240pt로.
+    static func columnWidth(titles: [String]) -> CGFloat {
+        // 항목 줄: 여백 5 + 동그라미 16 + 간격 6 + 문구 + 간격 6 + 삭제 16 + 여백 5.
+        let longest = titles.map { 54 + NotchTextMetrics.bodyWidth($0) }.max() ?? 0
+        // 추가 줄: 여백 5 + 더하기 16 + 간격 6 + 문구 + 여백 5.
+        let addRow = 32 + NotchTextMetrics.bodyWidth("Add a to-do")
+        // 제목 줄: 제목 + 간격 5 + "Clear" + 8 + "4 left" + 오른쪽 여백 6.
+        let header =
+            NotchTextMetrics.headerWidth(title: "To-do") + 5 + NotchTextMetrics.metaWidth("Clear")
+            + 8 + NotchTextMetrics.metaWidth("\(TodoStore.maxItems) left") + 6
+        return CGFloat(
+            TodoColumnPolicy.columnWidth(contentWidth: Double(max(longest, addRow, header))))
+    }
+
+    /// 앱이 켜질 때 항목을 미리 읽어 둔다. 처음 여는 도커도 맞는 폭으로 열린다.
+    static func preloadTitles() {
+        guard knownTitles == nil else { return }
+        let store = TodoStore()
+        saveQueue.async {
+            let titles = TodoStore.ordered(store.load()).map(\.title)
+            DispatchQueue.main.async {
+                if knownTitles == nil { knownTitles = titles }
+            }
+        }
+    }
 
     /// (렌더 도구) 설정하면 파일 대신 이 목록을 첫 프레임에 쓴다. 앱 실행 중에는 항상 nil이다.
     static var previewItems: [TodoItem]?
@@ -433,12 +470,16 @@ struct NotchTodoView: View {
             DispatchQueue.main.async {
                 items = loaded
                 didLoad = true
+                Self.knownTitles = loaded.map(\.title)
+                onLoaded(loaded.map(\.title))
             }
         }
     }
 
     private func update(_ next: [TodoItem]) {
         items = next
+        // 폭은 다음에 열 때 반영한다(열려 있는 동안은 그대로).
+        Self.knownTitles = next.map(\.title)
         guard Self.previewItems == nil else { return }
         let store = store
         Self.saveQueue.async {

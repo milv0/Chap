@@ -34,6 +34,8 @@ struct NotchLauncherRow: View {
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 5)
+            // To-do·Downloads 줄과 같은 26pt. 글자 높이에 맡기면 25pt 안팎이라 4줄이 목록 칸 바닥에 못 닿는다.
+            .frame(height: NotchAppIconTile.listRowHeight)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
                     .fill(isHovered ? hoverBackground : Color.clear)
@@ -114,11 +116,9 @@ struct NotchAppIconTile: View {
     static let listRowHeight: CGFloat = 26
     static let listRowSpacing: CGFloat = 3
     static let listBodyHeight: CGFloat = 4 * listRowHeight + 3 * listRowSpacing  // 113pt
-    /// 탭 칸(Launchers·Apps) 제목 줄과 본문 사이에 더 두는 간격. 탭 아이콘이 줄지어 있어 제목 줄이
-    /// 무거우므로 본문을 조금 띄운다. 본문 높이(113pt)는 그대로라 다른 칸과 바닥선이 맞는다.
-    static let tabBodyTopGap: CGFloat = 3
-    /// Launchers 목록의 줄 간격. 위 간격만큼 줄여 4줄이 113pt 안에 그대로 든다(4 × 26 + 3 × 2 + 3).
-    static let tabListRowSpacing: CGFloat = (3 * listRowSpacing - tabBodyTopGap) / 3
+    /// 탭 칸(Launchers·Apps) 제목 줄과 본문 사이에 더 두는 간격. To-do 칸(제목 줄 21pt + 간격 4pt)과
+    /// 같은 자리에서 목록이 시작하고 끝나도록 6pt를 둔다(16 + 3 + 6 = 21 + 4). 줄 높이·간격도 To-do와 같다.
+    static let tabBodyTopGap: CGFloat = 6
 
     static let iconSize: CGFloat = 32
     /// 타일 한 변: 아이콘 + 호버 배경 여백 2pt씩.

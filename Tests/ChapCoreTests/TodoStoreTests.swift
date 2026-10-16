@@ -140,3 +140,25 @@ struct TodoStoreTests {
         #expect(config.notchWidgets == [.none, .none, .todo, .none, .none, .none])
     }
 }
+
+@Suite("TodoColumnPolicy – To-do slot width")
+struct TodoColumnPolicyTests {
+    @Test(
+        "the slot follows its widest line within 140–240 pt",
+        arguments: [(60.0, 140.0), (140.0, 140.0), (171.2, 172.0), (240.0, 240.0), (900.0, 240.0)])
+    func clampsToRange(content: Double, width: Double) {
+        #expect(TodoColumnPolicy.columnWidth(contentWidth: content) == width)
+    }
+
+    @Test("a short list makes a narrower slot than a long one")
+    @MainActor
+    func widthFollowsTitles() {
+        let short = NotchTodoView.columnWidth(titles: ["Milk"])
+        let long = NotchTodoView.columnWidth(titles: ["Milk", "Send the Q4 deck to Jun"])
+        // 짧은 항목은 칸을 넓히지 않는다. 가장 좁은 폭은 제목 줄(남은 수 + Clear)이 정한다.
+        #expect(short == NotchTodoView.columnWidth(titles: []))
+        #expect(short >= CGFloat(TodoColumnPolicy.minWidth))
+        #expect(long > short)
+        #expect(long <= CGFloat(TodoColumnPolicy.maxWidth))
+    }
+}

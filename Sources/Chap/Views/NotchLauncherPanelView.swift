@@ -77,14 +77,18 @@ struct NotchLauncherPanelView: View {
     static let downloadsColumnWidth: CGFloat = 200
     /// Focus 칸 폭. 104pt 다이얼이 들어간다.
     static let focusColumnWidth: CGFloat = 116
-    /// 할 일 칸 폭. 상태 캡슐과 12pt 문구가 답답하지 않게 보인다.
-    static let todoColumnWidth: CGFloat = 188
-    /// Apps 탭의 3열 아이콘 격자 폭. Workspaces 탭(2열 타일, `NotchWorkspacesView.columnWidth`)과 비슷하다.
-    static var appGridColumnWidth: CGFloat {
-        let columns = CGFloat(LauncherListPolicy.appIconColumns)
+    /// Apps 탭 아이콘 격자 폭. 앱 수에 따라 2열(4개까지) 또는 3열이다.
+    static func appGridColumnWidth(appCount: Int) -> CGFloat {
+        let columns = CGFloat(LauncherListPolicy.appIconColumns(forCount: appCount))
         return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
             + 4
     }
+
+    /// To-do 칸 폭. 도커를 열 때(이 뷰가 만들어질 때) 저장된 항목으로 한 번 정하고, 열려 있는 동안은
+    /// 바꾸지 않는다. 가운데 정렬 도커라 폭이 바뀌면 다른 칸이 마우스 아래에서 비켜나기 때문이다.
+    /// 앱을 켜고 처음 열 때 항목을 아직 못 읽었으면, 읽는 즉시 한 번만 맞춘다.
+    @State private var todoWidth: CGFloat? = NotchTodoView.knownTitles.map(
+        NotchTodoView.columnWidth(titles:))
 
     /// 읽어 보니 비어 있는 선반. 비면 칸이 제목 폭(+ 접기 버튼)으로 좁아진다.
     @State private var emptyShelves: Set<NotchWidget> = []
@@ -133,12 +137,14 @@ struct NotchLauncherPanelView: View {
                 LauncherListPolicy.launcherTabsColumnWidth(
                     titleWidth: NotchTabHeader.widestTitleWidth(tabs.map(\.title)),
                     contentWidth: Double(
-                        max(Self.appGridColumnWidth, NotchWorkspacesView.columnWidth)),
+                        max(
+                            Self.appGridColumnWidth(appCount: apps?.entries.count ?? 0),
+                            NotchWorkspacesView.columnWidth)),
                     tabCount: tabs.count))
         case .awake:
             return Self.focusColumnWidth
         case .todo:
-            return Self.todoColumnWidth
+            return todoWidth ?? NotchTodoView.columnWidth(titles: [])
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -699,7 +705,10 @@ struct NotchLauncherPanelView: View {
                 palette: widgetPalette, sessionEnd: currentAwakeSessionEnd,
                 timerEnd: timerEndProvider())
         case .todo:
-            NotchTodoView(palette: widgetPalette)
+            NotchTodoView(palette: widgetPalette) { titles in
+                // 처음 읽었을 때만 맞춘다. 그 뒤의 추가·수정·삭제는 다음에 열 때 반영된다.
+                if todoWidth == nil { todoWidth = NotchTodoView.columnWidth(titles: titles) }
+            }
         case .apps(let apps, let workspaces):
             NotchAppsSlot(
                 hasApps: apps != nil, palette: widgetPalette,
@@ -735,14 +744,17 @@ struct NotchLauncherPanelView: View {
         launcherRows(section)
     }
 
-    /// Apps 칸 Apps 탭: 앱 아이콘 3열 × 2줄 격자. 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
+    /// Apps 칸 Apps 탭: 앱 아이콘 격자(4개까지 2열, 5~6개 3열, 최대 2줄). 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
     private func appIconGrid(_ section: LauncherListSection) -> some View {
         // 고정 폭 열: flexible 열은 칸 폭(160pt)을 나눠 가져 아이콘 사이가 벌어진다.
         LazyVGrid(
             columns: Array(
                 repeating: GridItem(
                     .fixed(NotchAppIconTile.tileSize), spacing: NotchAppIconTile.columnGap),
-                count: LauncherListPolicy.appIconColumns),
+                count: LauncherListPolicy.appIconColumns(
+                    forCount: min(
+                        section.entries.count,
+                        LauncherListPolicy.maxEntriesPerNotchSlot(for: section.launchType)))),
             alignment: .center, spacing: NotchAppIconTile.rowGap
         ) {
             ForEach(
@@ -769,7 +781,7 @@ struct NotchLauncherPanelView: View {
     }
 
     private func launcherRows(_ section: LauncherListSection) -> some View {
-        VStack(alignment: .leading, spacing: NotchAppIconTile.tabListRowSpacing) {
+        VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
             ForEach(
                 section.entries.prefix(
                     LauncherListPolicy.maxEntriesPerNotchSlot(for: section.launchType)),
