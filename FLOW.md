@@ -534,7 +534,8 @@ Settings → Notch Launcher on
   → 런처 칸 제목 뒤 › 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
     → Launchables 탭 + 그 타입 첫 항목 선택
     Launchers(Sites|Finder)·Apps(Apps|Workspaces) 칸은 제목 줄이 탭: 다른 탭 아이콘 클릭은 탭 전환
-    (UserDefaults ChapLauncherTab·ChapAppsTab), 고른 탭 이름은 누를 수 없고 뒤의 ›만 그 설정 열기
+    (UserDefaults ChapLauncherTab·ChapAppsTab). 제목 줄 빈 자리 클릭은 옆 탭,
+    칸 위 두 손가락 가로 스와이프는 NSEvent 로컬 모니터(.scrollWheel, 칸 hover 중에만) → TabSwipeTracker → 한 칸, 고른 탭 이름은 누를 수 없고 뒤의 ›만 그 설정 열기
     (Workspaces → showWorkspacesInSettings)
   → 칸 클릭 실행: LauncherListPolicy.resizesOnNotchLaunch가 false(단축키 없는 앱)면 AppLauncher.open(크기 조정 없음),
     아니면 launchSite(site)로 메뉴·단축키와 같은 경로

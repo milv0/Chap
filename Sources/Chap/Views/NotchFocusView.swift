@@ -12,6 +12,10 @@ struct NotchFocusView: View {
     /// 도커를 열 때 돌고 있던 타이머가 끝나는 시각. 이후 변화는 알림으로 받는다.
     @State private var timerEnd: Date?
     @State private var mode: FocusDialMode
+    /// 모드를 바꿀 때 본문이 밀려 나가는 방향과 끝에서 튕기는 양(Launchers·Apps 탭 칸과 같은 움직임).
+    @State private var motion = NotchTabMotion()
+
+    private static let modeIDs = FocusDialMode.allCases.map(\.rawValue)
 
     /// Keep Mac Awake 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
@@ -52,8 +56,16 @@ struct NotchFocusView: View {
                 case .timer: NotchFocusTimerBody(palette: palette, endDate: timerEnd)
                 }
             }
+            .id(mode)
+            .transition(motion.transition)
+            .offset(x: motion.nudge)
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .frame(height: widgetBodyHeight, alignment: .top)
+        }
+        // 트랙패드 두 손가락 가로 스와이프로 Focus ↔ Timer. 다이얼의 호 끌기는 클릭 드래그라 섞이지 않는다.
+        .tabSwipe(enabled: true) { step in
+            NotchTabMotion.step(
+                step, current: mode.rawValue, ids: Self.modeIDs, motion: $motion, apply: apply)
         }
         .onReceive(
             NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
@@ -65,6 +77,13 @@ struct NotchFocusView: View {
         ) { note in
             timerEnd = note.object as? Date
         }
+    }
+
+    /// 모드를 바꾸고 마지막 모드로 기억한다(클릭·스와이프 공통).
+    private func apply(_ id: String) {
+        guard let next = FocusDialMode(rawValue: id) else { return }
+        mode = next
+        UserDefaults.standard.set(next.rawValue, forKey: FocusDialMode.storageKey)
     }
 
     // MARK: - Header (모드 전환)
@@ -83,9 +102,9 @@ struct NotchFocusView: View {
         let running = isRunning(item)
         return Button {
             guard !isSelected else { return }
-            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-            withAnimation(.easeOut(duration: 0.12)) { mode = item }
-            UserDefaults.standard.set(item.rawValue, forKey: FocusDialMode.storageKey)
+            NotchTabMotion.select(
+                item.rawValue, from: mode.rawValue, ids: Self.modeIDs, motion: $motion,
+                apply: apply)
         } label: {
             Group {
                 if isSelected {
