@@ -100,6 +100,9 @@ struct NotchTodoView: View {
             Group {
                 if TodoStore.isAllDone(items) && !showsDoneList {
                     allDone
+                } else if didLoad && items.isEmpty && !isAdding {
+                    emptyState
+                        .transition(.opacity)
                 } else {
                     VStack(alignment: .leading, spacing: NotchAppIconTile.listRowSpacing) {
                         ForEach(items) { item in
@@ -330,6 +333,31 @@ struct NotchTodoView: View {
         .accessibilityAddTraits(.isButton)
     }
 
+    /// 비었을 때: "All done."과 같은 구도로 가운데에 흐린 아이콘, 보조 문구 한 줄, Add 버튼.
+    /// 빈 칸 어디를 눌러도 바로 입력이 시작된다(작은 줄을 겨냥하지 않아도 된다).
+    /// 입력을 시작하면 첫 줄에 입력칸이 열리는 목록 모양으로 바뀐다.
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            Image(systemName: "checklist")
+                .font(.system(size: 20))
+                .foregroundColor(palette.secondary.opacity(0.6))
+            Text("Nothing on your plate.")
+                .font(DS.notchMeta)
+                .foregroundColor(palette.secondary)
+            capsuleButton("Add to-do", tint: DS.accent, fill: DS.accent.opacity(0.12)) {
+                beginAdding()
+            }
+            .help("Add a to-do")
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture { beginAdding() }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("No to-dos")
+    }
+
     /// 다 끝냈을 때: 차분한 한 줄과 비우기. 축하는 이 정도로만 한다(관심을 조르지 않는다).
     private var allDone: some View {
         VStack(spacing: 8) {
@@ -407,7 +435,7 @@ struct NotchTodoView: View {
 
     private func beginAdding() {
         guard didLoad, TodoStore.canAdd(items) else { return }
-        isAdding = true
+        withAnimation(.easeOut(duration: 0.15)) { isAdding = true }
         // 패널이 key가 된 다음 틱에 커서를 넣는다.
         DispatchQueue.main.async { focus = .add }
     }

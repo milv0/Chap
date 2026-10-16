@@ -56,13 +56,14 @@ struct NotchRenderTool {
             widgets: [.screenshots, .downloads, .launchers, .apps, .awake, .todo],
             sites: config.sites, workspaces: previewWorkspaces)
         let now = Date()
-        NotchTodoView.previewItems = [
+        let previewTodos = [
             TodoItem(title: "Send the Q4 deck to Jun", created: now),
             TodoItem(title: "Book dentist", created: now.addingTimeInterval(1)),
             TodoItem(
                 title: "Review Chap 2.8 notes", isDone: true, created: now.addingTimeInterval(2),
                 completed: now),
         ]
+        NotchTodoView.previewItems = previewTodos
         let drops = await withCheckedContinuation { continuation in
             ChapDrop.recentFilesAsync(limit: DropPolicy.maxDockItems) {
                 continuation.resume(returning: $0)
@@ -93,6 +94,8 @@ struct NotchRenderTool {
             ("notch-glass-light-empty-shelves", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-todo", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-todo", .glass, .dark, Color(white: 0.16), false),
+            ("notch-glass-light-todo-empty", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-todo-empty", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-workspaces", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-timer", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-dark-timer-running", .glass, .dark, Color(white: 0.16), false),
@@ -131,6 +134,8 @@ struct NotchRenderTool {
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
+            // 빈 To-do: 항목 없이 추가 줄만 있는 모습.
+            NotchTodoView.previewItems = name.hasSuffix("todo-empty") ? [] : previewTodos
             // Focus 칸은 이름에 "-timer"가 있으면 Timer 모드로 그린다.
             NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
             // Launchers 칸: 라이트는 Sites 탭, 다크는 Finder 탭을 그린다.
@@ -147,7 +152,7 @@ struct NotchRenderTool {
                 awakeSessionEnd: name.hasSuffix("focus-on")
                     ? Date().addingTimeInterval(3 * 3600 + 25 * 60) : nil, style: style,
                 glassMaterial: config.notchGlassMaterial,
-                slots: name.hasSuffix("-todo")
+                slots: name.hasSuffix("-todo") || name.hasSuffix("-todo-empty")
                     ? todoSlots
                     : name.hasSuffix("-workspaces") || name.hasSuffix("-launchers")
                         ? launcherSlots : previewSlots,
