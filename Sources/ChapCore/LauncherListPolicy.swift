@@ -112,3 +112,31 @@ public enum LauncherListPolicy {
         }
     }
 }
+
+// MARK: - Launchers 칸 (Sites·Apps·Finder 탭)
+
+extension LauncherListPolicy {
+    /// 탭으로 고른 타입을 기억하는 UserDefaults 키.
+    public static let launcherTabStorageKey = "ChapLauncherTab"
+
+    /// Launchers 칸 폭. 목록 칸 최대 폭(170)보다 넉넉히 잡아, 제목 + 탭 아이콘 셋과
+    /// 이름·키캡 줄이 붙어 보이지 않게 한다. 탭을 바꿔도 칸 폭이 흔들리지 않도록 고정이다.
+    public static let launcherTabsColumnWidth: Double = 204
+
+    /// 칸 제목에 쓰는 launch type 이름.
+    public static func title(for launchType: LaunchType) -> String {
+        switch launchType {
+        case .url: return "Sites"
+        case .app: return "Apps"
+        case .finder: return "Finder"
+        }
+    }
+
+    /// 보여 줄 탭. 저장한 타입이 아직 항목이 있으면 그것, 아니면 첫 타입(launch type 순서).
+    public static func selectedTab(stored: String?, available: [LaunchType]) -> LaunchType? {
+        if let stored, let type = LaunchType(rawValue: stored), available.contains(type) {
+            return type
+        }
+        return available.first
+    }
+}

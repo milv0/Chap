@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.14.6-orange)
+![Version](https://img.shields.io/badge/version-2.15.0-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -162,7 +162,7 @@ tabs that happen to show the same URL.
 
 ### Notch Launcher and Chap Drop
 
-Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Sites, Apps, Finder, Focus, To-do, or Workspaces into the other four; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
+Enable the feature in **Settings → Notch**. Under **Layout**, the first two slots belong to the Screenshots and Downloads shelves, in that order (click each to turn it on or off; a folded shelf and its slot stay on the left), and you drag Launchers, Sites, Apps, Finder, Focus, To-do, or Workspaces into the other four. **Launchers** puts Sites, Apps, and Finder in one slot with icon tabs in its title row (Chap remembers the last tab), so every widget fits in six slots; context-menu and VoiceOver actions provide the same controls without drag and drop. Hover the hardware notch to open the dock. Changing display resolution, arrangement, or clamshell state automatically recalculates its geometry.
 
 Custom style supports a background color and opacity. On macOS 26+, Glass uses Apple's public Liquid Glass API: Appearance (System/Light/Dark) and Material (Clear/Regular) are chosen independently, so any appearance can use either material, and System follows macOS. Glass text uses native semantic foregrounds.
 
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.14.6
+Scripts/release.sh 2.15.0
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.14.6 --publish
+Scripts/release.sh 2.15.0 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

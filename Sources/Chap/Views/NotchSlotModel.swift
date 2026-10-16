@@ -4,6 +4,8 @@ import SwiftUI
 enum NotchSlotContent {
     /// 런처 목록 위젯.
     case launchers(LauncherListSection)
+    /// Sites·Apps·Finder를 탭으로 바꿔 보는 한 칸. 항목이 있는 타입만, launch type 순서로 담는다.
+    case launcherTabs([LauncherListSection])
     /// 스크린샷 선반 위젯. 파일 목록은 뷰가 background queue에서 읽는다.
     case screenshots
     /// 다운로드 선반 위젯.
@@ -20,7 +22,7 @@ enum NotchSlotContent {
         switch self {
         case .screenshots: return .screenshots
         case .downloads: return .downloads
-        case .launchers, .awake, .todo, .workspaces: return nil
+        case .launchers, .launcherTabs, .awake, .todo, .workspaces: return nil
         }
     }
 
@@ -41,6 +43,8 @@ enum NotchSlotContent {
             case .awake: return .awake
             case .todo: return .todo
             case .workspaces: return .workspaces(workspaces)
+            case .launchers:
+                return sections.isEmpty ? nil : .launcherTabs(sections)
             case .sites, .apps, .folders:
                 return sections.first { $0.launchType == widget.launchType }
                     .map(NotchSlotContent.launchers)
