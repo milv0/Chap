@@ -193,7 +193,7 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
 | Focus | 116pt (104pt 다이얼, Focus·Timer 모드 공용) |
 | To-do | 188pt (상태 캡슐 + 12pt 문구) |
-| Launchers | 204pt 고정 (제목 + 탭 아이콘 셋, Sites·Apps·Finder 본문) |
+| Launchers | 112–170pt (모든 탭 중 가장 넓은 내용, 제목 + 탭 아이콘 셋은 늘 들어감) |
 | Workspaces | 128pt (2열 타일: 앱 아이콘 묶음 + 이름) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 위젯 종류(Sites·Apps·Finder·Screenshots·Workspaces)가
@@ -351,13 +351,13 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
 
 ## Launchers 칸
 
-위젯 칸(3~6번)에 놓는 Sites·Apps·Finder 묶음(`NotchWidget.launchers`, `NotchLaunchersTabSlot`, 폭 204pt 고정
-`LauncherListPolicy.launcherTabsColumnWidth`). 런처 셋을 한 칸으로 아껴, 이 칸을 쓰면 모든 위젯이 여섯 칸에 들어간다.
+위젯 칸(3~6번)에 놓는 Sites·Apps·Finder 묶음(`NotchWidget.launchers`, `NotchLaunchersTabSlot`). 폭은 따로 둔 목록 칸과 같은 112–170pt 안에서
+모든 탭의 가장 넓은 내용과 제목 + 탭 아이콘 중 큰 쪽(`LauncherListPolicy.launcherTabsColumnWidth`). 런처 셋을 한 칸으로 아껴, 이 칸을 쓰면 모든 위젯이 여섯 칸에 들어간다.
 따로 둔 Sites·Apps·Finder 칸도 그대로 쓸 수 있다.
 
 - 제목 줄: 왼쪽은 고른 타입의 제목(`NotchSectionTitleButton`, 누르면 그 타입 설정), 오른쪽은 항목이 있는 타입의
   아이콘 탭(22pt, launch type 순서 고정). 고른 탭은 아이콘 색, 나머지는 흐린 제목색이고 면·밑줄은 없다. 타입이 하나뿐이면 탭을 숨긴다.
-- 본문은 따로 둔 칸과 같다(Sites·Finder 목록, Apps 2열 격자). 목록 칸 4줄 높이에 고정해 탭을 바꿔도 바닥선과 폭이 그대로다.
+- 본문은 따로 둔 칸과 같다(Sites·Finder 목록, Apps 2열 격자). 목록 칸 4줄 높이에 고정하고 폭을 모든 탭 기준으로 잡아, 탭을 바꿔도 바닥선과 폭이 그대로다.
 - 마지막 탭은 UserDefaults `ChapLauncherTab`에 기억하고, 그 타입이 비면 첫 타입(`LauncherListPolicy.selectedTab`).
   탭을 바꿀 때 햅틱(`.alignment`).
 - 항목이 하나도 없으면 칸을 그리지 않는다(빈 런처 칸과 같은 규칙).

@@ -109,6 +109,14 @@ struct NotchLauncherPanelView: View {
         }
     }
 
+    /// 목록의 가장 긴 줄(이름 + 키캡) 폭.
+    private static func launcherRowsWidth(_ section: LauncherListSection) -> CGFloat {
+        section.entries.map { entry in
+            NotchTextMetrics.rowWidth(
+                name: entry.site.name, keycap: LauncherListPolicy.shortcutBadge(for: entry.site))
+        }.max() ?? 0
+    }
+
     /// 칸마다 내용에 맞는 폭. 목록 칸은 가장 긴 줄(이름 + 키캡)과 제목 중 긴 쪽에 맞춘다.
     private func width(for slot: NotchSlotContent) -> CGFloat {
         switch slot {
@@ -120,16 +128,24 @@ struct NotchLauncherPanelView: View {
         case .launchers(let section) where section.launchType == .app:
             return max(Self.appGridColumnWidth, NotchTextMetrics.headerWidth(title: "Apps"))
         case .launchers(let section):
-            let rows = section.entries.map { entry -> CGFloat in
-                let key = LauncherListPolicy.shortcutBadge(for: entry.site)
-                return NotchTextMetrics.rowWidth(name: entry.site.name, keycap: key)
-            }
+            let rows = [Self.launcherRowsWidth(section)]
             let header = NotchTextMetrics.headerWidth(title: Self.sectionTitle(section.launchType))
             return CGFloat(
                 LauncherListPolicy.listColumnWidth(
                     contentWidth: Double(max(rows.max() ?? 0, header))))
-        case .launcherTabs:
-            return CGFloat(LauncherListPolicy.launcherTabsColumnWidth)
+        case .launcherTabs(let sections):
+            let content = sections.map { section -> CGFloat in
+                section.launchType == .app
+                    ? Self.appGridColumnWidth : Self.launcherRowsWidth(section)
+            }
+            let title = sections.map {
+                NotchTextMetrics.headerWidth(title: Self.sectionTitle($0.launchType))
+            }
+            return CGFloat(
+                LauncherListPolicy.launcherTabsColumnWidth(
+                    titleWidth: Double(title.max() ?? 0),
+                    contentWidth: Double(content.max() ?? 0),
+                    tabCount: sections.count))
         case .awake:
             return Self.focusColumnWidth
         case .todo:

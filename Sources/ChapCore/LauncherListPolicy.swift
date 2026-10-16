@@ -119,9 +119,27 @@ extension LauncherListPolicy {
     /// 탭으로 고른 타입을 기억하는 UserDefaults 키.
     public static let launcherTabStorageKey = "ChapLauncherTab"
 
-    /// Launchers 칸 폭. 목록 칸 최대 폭(170)보다 넉넉히 잡아, 제목 + 탭 아이콘 셋과
-    /// 이름·키캡 줄이 붙어 보이지 않게 한다. 탭을 바꿔도 칸 폭이 흔들리지 않도록 고정이다.
-    public static let launcherTabsColumnWidth: Double = 204
+    /// 제목 줄 탭 아이콘 하나의 폭과 탭 사이 간격.
+    public static let launcherTabWidth: Double = 22
+    public static let launcherTabSpacing: Double = 2
+
+    /// Launchers 칸 폭. 한 번에 한 종류만 보이므로 따로 둔 목록 칸과 같은 범위(112–170)를 쓴다.
+    /// 모든 탭의 가장 넓은 내용(이름 + 키캡 줄, Apps 격자)과 제목 + 탭 아이콘 중 큰 쪽에 맞춰,
+    /// 탭을 바꿔도 칸 폭이 흔들리지 않는다.
+    /// - Parameters:
+    ///   - titleWidth: 가장 긴 제목("Sites"·"Apps"·"Finder")의 제목 줄 폭.
+    ///   - contentWidth: 모든 탭 본문 중 가장 넓은 폭.
+    ///   - tabCount: 항목이 있는 타입 수. 하나면 탭을 그리지 않는다.
+    public static func launcherTabsColumnWidth(
+        titleWidth: Double, contentWidth: Double, tabCount: Int
+    ) -> Double {
+        let tabs =
+            tabCount > 1
+            ? Double(tabCount) * launcherTabWidth + Double(tabCount - 1) * launcherTabSpacing
+                + 2 + 8
+            : 0
+        return listColumnWidth(contentWidth: max(titleWidth + tabs, contentWidth))
+    }
 
     /// 칸 제목에 쓰는 launch type 이름.
     public static func title(for launchType: LaunchType) -> String {

@@ -57,11 +57,21 @@ struct LaunchersTabTests {
         #expect(LauncherListPolicy.selectedTab(stored: "url", available: []) == nil)
     }
 
-    @Test("the slot is roomier than a single list slot")
-    func roomyWidth() {
-        #expect(
-            LauncherListPolicy.launcherTabsColumnWidth
-                > LauncherListPolicy.listColumnWidthRange.upperBound)
+    @Test("the slot is as narrow as a list slot, but never squeezes the title and its tabs")
+    func compactWidth() {
+        func width(titleWidth: Double, contentWidth: Double, tabCount: Int) -> Double {
+            LauncherListPolicy.launcherTabsColumnWidth(
+                titleWidth: titleWidth, contentWidth: contentWidth, tabCount: tabCount)
+        }
+        // 짧은 내용이면 목록 칸 최소 폭이지만, 제목 + 탭 셋은 늘 들어간다.
+        let tabs = width(titleWidth: 60, contentWidth: 90, tabCount: 3)
+        let minimumHeader: Double = 60 + 3 * 22 + 2 * 2 + 10
+        #expect(tabs >= minimumHeader)
+        #expect(tabs <= LauncherListPolicy.listColumnWidthRange.upperBound)
+        // 탭이 하나면 아이콘 자리가 없다.
+        #expect(width(titleWidth: 60, contentWidth: 90, tabCount: 1) == 112)
+        // 긴 이름은 목록 칸과 같은 상한에서 자른다.
+        #expect(width(titleWidth: 60, contentWidth: 400, tabCount: 3) == 170)
         #expect(LauncherListPolicy.title(for: .url) == "Sites")
         #expect(LauncherListPolicy.title(for: .app) == "Apps")
         #expect(LauncherListPolicy.title(for: .finder) == "Finder")
