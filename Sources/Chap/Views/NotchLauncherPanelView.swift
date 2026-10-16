@@ -79,12 +79,7 @@ struct NotchLauncherPanelView: View {
     static let focusColumnWidth: CGFloat = 116
     /// 할 일 칸 폭. 상태 캡슐과 12pt 문구가 답답하지 않게 보인다.
     static let todoColumnWidth: CGFloat = 188
-    /// Workspaces 칸 폭: 2열 타일 격자(앱 아이콘 묶음 + 이름).
-    static var workspaceColumnWidth: CGFloat {
-        max(NotchWorkspacesView.columnWidth, NotchTextMetrics.headerWidth(title: "Workspaces"))
-    }
-
-    /// Apps 칸 폭: 2열 아이콘 격자 폭.
+    /// Apps 탭의 3열 아이콘 격자 폭. Workspaces 탭(2열 타일, `NotchWorkspacesView.columnWidth`)과 비슷하다.
     static var appGridColumnWidth: CGFloat {
         let columns = CGFloat(LauncherListPolicy.appIconColumns)
         return columns * NotchAppIconTile.tileSize + (columns - 1) * NotchAppIconTile.columnGap
@@ -125,34 +120,25 @@ struct NotchLauncherPanelView: View {
         case .screenshots where emptyShelves.contains(.screenshots):
             // 비어서 저절로 접혔다가 사용자가 띠 아이콘으로 펼친 경우.
             return Self.emptyShelfWidth(title: "Screenshots", message: "No screenshots yet")
-        case .launchers(let section) where section.launchType == .app:
-            return max(Self.appGridColumnWidth, NotchTextMetrics.headerWidth(title: "Apps"))
-        case .launchers(let section):
-            let rows = [Self.launcherRowsWidth(section)]
-            let header = NotchTextMetrics.headerWidth(title: Self.sectionTitle(section.launchType))
-            return CGFloat(
-                LauncherListPolicy.listColumnWidth(
-                    contentWidth: Double(max(rows.max() ?? 0, header))))
         case .launcherTabs(let sections):
-            let content = sections.map { section -> CGFloat in
-                section.launchType == .app
-                    ? Self.appGridColumnWidth : Self.launcherRowsWidth(section)
-            }
-            let title = sections.map {
-                NotchTextMetrics.headerWidth(title: Self.sectionTitle($0.launchType))
-                    + CGFloat(LauncherListPolicy.launcherTitleAccessoryWidth)
-            }
             return CGFloat(
                 LauncherListPolicy.launcherTabsColumnWidth(
-                    titleWidth: Double(title.max() ?? 0),
-                    contentWidth: Double(content.max() ?? 0),
+                    titleWidth: NotchTabHeader.widestTitleWidth(
+                        sections.map { Self.sectionTitle($0.launchType) }),
+                    contentWidth: Double(sections.map(Self.launcherRowsWidth).max() ?? 0),
                     tabCount: sections.count))
+        case .apps(let apps, _):
+            let tabs = AppsSlotTab.available(hasApps: apps != nil)
+            return CGFloat(
+                LauncherListPolicy.launcherTabsColumnWidth(
+                    titleWidth: NotchTabHeader.widestTitleWidth(tabs.map(\.title)),
+                    contentWidth: Double(
+                        max(Self.appGridColumnWidth, NotchWorkspacesView.columnWidth)),
+                    tabCount: tabs.count))
         case .awake:
             return Self.focusColumnWidth
         case .todo:
             return Self.todoColumnWidth
-        case .workspaces:
-            return Self.workspaceColumnWidth
         case .downloads:
             // 파일명이 핵심이라 목록 칸보다 넓게 쓴다 (아이콘 20 + 이름 + 짧은 시각).
             return Self.downloadsColumnWidth
@@ -690,8 +676,6 @@ struct NotchLauncherPanelView: View {
     @ViewBuilder
     private func slotView(_ slot: NotchSlotContent) -> some View {
         switch slot {
-        case .launchers(let section):
-            sectionView(section)
         case .launcherTabs(let sections):
             NotchLaunchersTabSlot(
                 sections: sections, palette: widgetPalette, onOpenSettings: onOpenSettings
@@ -716,12 +700,21 @@ struct NotchLauncherPanelView: View {
                 timerEnd: timerEndProvider())
         case .todo:
             NotchTodoView(palette: widgetPalette)
-        case .workspaces(let workspaces):
-            NotchWorkspacesView(
-                workspaces: workspaces, busyID: busyWorkspaceIDProvider(), palette: widgetPalette,
-                onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace,
-                onEdit: onEditWorkspace, onRemove: onRemoveWorkspace,
-                onOpenSettings: onOpenWorkspaceSettings)
+        case .apps(let apps, let workspaces):
+            NotchAppsSlot(
+                hasApps: apps != nil, palette: widgetPalette,
+                onOpenAppSettings: { onOpenSettings(.app) },
+                onOpenWorkspaceSettings: onOpenWorkspaceSettings,
+                apps: {
+                    if let apps { appIconGrid(apps) }
+                },
+                workspaces: {
+                    NotchWorkspacesView(
+                        workspaces: workspaces, busyID: busyWorkspaceIDProvider(),
+                        palette: widgetPalette,
+                        onOpen: onOpenWorkspace, onCapture: onCaptureWorkspace,
+                        onEdit: onEditWorkspace, onRemove: onRemoveWorkspace)
+                })
         }
     }
 
@@ -737,35 +730,12 @@ struct NotchLauncherPanelView: View {
             icon: iconForeground)
     }
 
-    private func sectionView(_ section: LauncherListSection) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            // 제목을 누르면 그 타입이 선택된 설정창을 연다 (Screenshots 제목이 폴더를 여는 것과 같은 모양).
-            NotchSectionTitleButton(
-                symbol: LauncherListPolicy.symbolName(for: section.launchType),
-                title: Self.sectionTitle(section.launchType),
-                foreground: headingForeground,
-                iconForeground: iconForeground,
-                hoverBackground: rowHoverBackground,
-                textShadowOpacity: textShadowOpacity
-            ) {
-                onOpenSettings(section.launchType)
-            }
-
-            launcherBody(section)
-        }
-    }
-
-    /// 런처 칸 본문: Apps는 아이콘 격자, Sites·Finder는 목록. 따로 둔 칸과 Launchers 탭 칸이 같이 쓴다.
-    @ViewBuilder
+    /// Launchers 칸 본문: Sites·Finder 목록.
     private func launcherBody(_ section: LauncherListSection) -> some View {
-        if section.launchType == .app {
-            appIconGrid(section)
-        } else {
-            launcherRows(section)
-        }
+        launcherRows(section)
     }
 
-    /// Apps 칸: 앱 아이콘 2열 격자. 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
+    /// Apps 칸 Apps 탭: 앱 아이콘 3열 × 2줄 격자. 단축키가 있으면 아이콘 모서리에 배지를 붙인다.
     private func appIconGrid(_ section: LauncherListSection) -> some View {
         // 고정 폭 열: flexible 열은 칸 폭(160pt)을 나눠 가져 아이콘 사이가 벌어진다.
         LazyVGrid(
@@ -794,9 +764,8 @@ struct NotchLauncherPanelView: View {
         }
         .fixedSize(horizontal: true, vertical: false)
         // 배지 글자는 ⌥와 함께 누르는 키다. 수식키 안내는 툴팁으로만 둔다.
-        // 칸 폭 안에서 가운데, 앱 수와 관계없이 2열 × 3줄 자리를 잡아 목록 칸 4줄 높이와 맞춘다.
+        // 칸 폭 안에서 가운데. 높이는 Apps 칸(`NotchAppsSlot`)이 목록 칸 4줄 높이로 맞춘다.
         .frame(maxWidth: .infinity)
-        .frame(height: NotchAppIconTile.listBodyHeight, alignment: .top)
     }
 
     private func launcherRows(_ section: LauncherListSection) -> some View {

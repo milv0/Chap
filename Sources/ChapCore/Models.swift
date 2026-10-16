@@ -286,12 +286,9 @@ public enum NotchGlassMaterial: String, Codable, CaseIterable {
 
 /// 노치 패널의 한 칸에 배치할 수 있는 위젯.
 public enum NotchWidget: String, Codable, CaseIterable {
-    /// URL 런처 목록.
-    case sites = "sites"
-    /// 앱 런처 목록.
+    /// 아이콘 칸: 앱 아이콘 격자(Apps)와 저장한 작업 공간(Workspaces)을 제목 줄 탭으로 바꿔 본다.
+    /// 둘 다 아이콘 타일이라 한 칸에 같은 모양으로 들어간다.
     case apps = "apps"
-    /// Finder 폴더 런처 목록.
-    case folders = "folders"
     /// 스크린샷 선반: 스크린샷 폴더의 최신 이미지를 모아 보여준다.
     case screenshots = "screenshots"
     /// 다운로드 선반: ~/Downloads의 최근 파일을 모아 보여준다.
@@ -302,9 +299,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case drop = "drop"
     /// 할 일 목록: Chap 안에만 저장하는 짧은 체크리스트(`TodoStore`).
     case todo = "todo"
-    /// 실제 앱 창 배치를 이 Mac에 기억하고 복원하는 작업 공간(`WorkspaceStore`).
-    case workspaces = "workspaces"
-    /// Sites·Apps·Finder를 한 칸에 두고 제목 줄 탭으로 바꿔 보는 런처 칸. 칸 셋을 하나로 아낀다.
+    /// 목록 칸: Sites·Finder 목록을 제목 줄 탭으로 바꿔 본다. Apps(아이콘)는 `apps` 칸이다.
     case launchers = "launchers"
     /// 빈 칸.
     case none = "none"
@@ -312,10 +307,8 @@ public enum NotchWidget: String, Codable, CaseIterable {
     /// 위젯이 담당하는 launch type. 런처 위젯이 아니면 nil.
     public var launchType: LaunchType? {
         switch self {
-        case .sites: return .url
         case .apps: return .app
-        case .folders: return .finder
-        case .screenshots, .downloads, .awake, .drop, .todo, .workspaces, .launchers, .none:
+        case .screenshots, .downloads, .awake, .drop, .todo, .launchers, .none:
             return nil
         }
     }
@@ -326,6 +319,10 @@ public enum NotchWidget: String, Codable, CaseIterable {
     public static let formerNoteRawValue = "note"
     /// 칸 위젯이었던 Timer의 저장 문자열(2.14). Timer는 이제 Focus 칸 다이얼의 모드다.
     public static let formerTimerRawValue = "timer"
+    /// 따로 있던 Sites·Finder 칸의 저장 문자열(2.15). 이제 Launchers 칸의 탭이다.
+    public static let formerListRawValues: Set<String> = ["sites", "folders"]
+    /// 따로 있던 Workspaces 칸의 저장 문자열(2.15). 이제 Apps 칸의 탭이다.
+    public static let formerWorkspacesRawValue = "workspaces"
 
     /// 2.1에서 제거된 Scripts 위젯의 저장 문자열. 마이그레이션 판별에만 쓴다.
     public static let removedScriptsRawValue = "scripts"
@@ -350,10 +347,35 @@ public enum NotchWidget: String, Codable, CaseIterable {
         return index >= NotchWidget.shelfSlotCount
     }
 
-    /// 기본 배치: 선반 칸에 Screenshots, 나머지 칸에 런처 섹션.
+    /// 기본 배치: 선반 칸에 Screenshots, 나머지 칸에 Launchers(목록)·Apps(아이콘).
     public static let defaultSlots: [NotchWidget] = normalizedSlots([
-        .screenshots, .none, .sites, .apps, .folders,
+        .screenshots, .none, .launchers, .apps,
     ])
+
+    /// 저장된 칸 이름을 지금 위젯으로 옮긴다. 합쳐진 칸은 처음 나온 하나만 새 칸이 되고, 나머지는
+    /// 빈 칸으로 남겨 다른 칸 자리를 옮기지 않는다. 모르는 이름과 띠 아이콘이 된 칸은 뺀다.
+    /// - 2.1 Scripts → Screenshots(이미 있으면 빈 칸)
+    /// - 2.14 Timer → Focus(이미 있으면 빈 칸)
+    /// - 2.15 Sites·Finder → Launchers, Workspaces → Apps(이미 있으면 빈 칸)
+    public static func migratedSlots(fromRaw rawWidgets: [String]) -> [NotchWidget] {
+        var taken = Set(rawWidgets.compactMap(NotchWidget.init(rawValue:)))
+        func merged(into widget: NotchWidget) -> NotchWidget {
+            if taken.contains(widget) { return .none }
+            taken.insert(widget)
+            return widget
+        }
+        return rawWidgets.compactMap { raw -> NotchWidget? in
+            switch raw {
+            case removedScriptsRawValue: return merged(into: .screenshots)
+            case formerTimerRawValue: return merged(into: .awake)
+            case formerWorkspacesRawValue: return merged(into: .apps)
+            case _ where formerListRawValues.contains(raw): return merged(into: .launchers)
+            // Mirror·Quick Note 칸은 빼고 뒤 위젯을 한 칸씩 당긴다(띠 아이콘으로 옮겨졌다).
+            case formerMirrorRawValue, formerNoteRawValue: return nil
+            default: return NotchWidget(rawValue: raw)
+            }
+        }
+    }
 
     /// 임의 길이 입력을 정확히 `slotCount`칸으로 정규화한다.
     /// - 중복 위젯은 첫 번째만 남긴다.
@@ -596,25 +618,9 @@ public struct Config: Codable {
             .flatMap({ $0 })
         {
             // 2.1에서 제거된 "scripts" 칸은 Screenshots(이미 배치돼 있으면 빈 칸)로 바꾼다.
-            let hasScripts = rawWidgets.contains(NotchWidget.removedScriptsRawValue)
-            didMigrateScriptsWidget = hasScripts
-            let screenshotsPlaced = rawWidgets.contains(NotchWidget.screenshots.rawValue)
-            // 2.14의 Timer 칸은 Focus 칸으로 바꾼다(Timer가 Focus 다이얼의 모드가 됐다).
-            // Focus 칸이 이미 있으면 빈 칸으로 두어 다른 칸 자리를 옮기지 않는다.
-            let awakePlaced = rawWidgets.contains(NotchWidget.awake.rawValue)
-            let knownWidgets = rawWidgets.compactMap { raw -> NotchWidget? in
-                if raw == NotchWidget.removedScriptsRawValue {
-                    return screenshotsPlaced ? NotchWidget.none : .screenshots
-                }
-                if raw == NotchWidget.formerTimerRawValue {
-                    return awakePlaced ? NotchWidget.none : .awake
-                }
-                // Mirror 칸은 빼고 뒤 위젯을 한 칸씩 당긴다 (Mirror는 Drop 줄 아이콘으로 옮겨졌다).
-                if raw == NotchWidget.formerMirrorRawValue { return nil }
-                // Quick Note 칸도 같은 이유로 뺀다 (상단 띠 아이콘으로 옮겨졌다).
-                if raw == NotchWidget.formerNoteRawValue { return nil }
-                return NotchWidget(rawValue: raw)
-            }
+            didMigrateScriptsWidget = rawWidgets.contains(NotchWidget.removedScriptsRawValue)
+            // 합쳐지거나 없어진 칸(Scripts·Timer·Sites·Finder·Workspaces 등)을 지금 위젯으로 옮긴다.
+            let knownWidgets = NotchWidget.migratedSlots(fromRaw: rawWidgets)
             // 미래 버전 위젯만 들어 있으면 전부 삭제해 빈 패널을 만들지 않고
             // 현재 버전의 안전한 기본 슬롯으로 폴백한다.
             notchWidgets =

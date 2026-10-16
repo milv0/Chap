@@ -92,7 +92,7 @@ struct ShellRemovalMigrationTests {
         #expect(second.config.sites.map(\.name) == ["GitHub", "Downloads"])
         #expect(
             second.config.notchWidgets
-                == NotchWidget.normalizedSlots([.sites, .apps, .folders, .screenshots]))
+                == NotchWidget.normalizedSlots([.launchers, .apps, .none, .screenshots]))
     }
 
     @Test("an existing Shell backup is never overwritten")

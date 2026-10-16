@@ -87,18 +87,19 @@ struct WorkspaceStoreTests {
         #expect(workspaces.allSatisfy { $0.windows.count == WorkspaceStore.maxWindows })
     }
 
-    @Test("Workspaces is available only in widget slots")
+    @Test("Workspaces is a tab of the Apps slot, shown even without apps")
     func notchWidgetPlacement() {
-        #expect(NotchWidget.workspaces.fits(slot: 2))
-        #expect(!NotchWidget.workspaces.fits(slot: 0))
+        #expect(NotchWidget.apps.fits(slot: 2))
+        #expect(!NotchWidget.apps.fits(slot: 0))
         let slots = NotchSlotContent.slots(
-            widgets: [.none, .none, .workspaces], sites: [],
+            widgets: [.none, .none, .apps], sites: [],
             workspaces: [ChapWorkspace(name: "Deep Work", windows: [window()])])
         #expect(slots.count == 1)
-        guard case .workspaces(let workspaces) = slots.first else {
-            Issue.record("Expected a Workspaces slot")
+        guard case .apps(let apps, let workspaces) = slots.first else {
+            Issue.record("Expected an Apps slot")
             return
         }
+        #expect(apps == nil)
         #expect(workspaces.first?.name == "Deep Work")
     }
 

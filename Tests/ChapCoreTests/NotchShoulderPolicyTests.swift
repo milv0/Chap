@@ -9,7 +9,9 @@ struct NotchShoulderPolicyTests {
     @Test("only Screenshots and Downloads collapse, once each, in order")
     func normalized() {
         #expect(
-            NotchShoulderPolicy.normalized([.downloads, .sites, .screenshots, .downloads, .none])
+            NotchShoulderPolicy.normalized([
+                .downloads, .launchers, .screenshots, .downloads, .none,
+            ])
                 == [.downloads, .screenshots])
         #expect(NotchShoulderPolicy.normalized([.awake, .apps]) == [])
     }

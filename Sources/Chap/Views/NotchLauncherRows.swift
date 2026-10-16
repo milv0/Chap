@@ -120,8 +120,8 @@ struct NotchAppIconTile: View {
     static let tileSize: CGFloat = iconSize + 2
     /// 가로 간격: 앱 아이콘의 투명 가장자리를 감안해 넉넉히 둔다.
     static let columnGap: CGFloat = 8
-    /// 세로 간격: 3줄이 목록 4줄 높이를 정확히 채우도록 계산한다 (5.5pt).
-    static let rowGap: CGFloat = (listBodyHeight - 3 * tileSize) / 2
+    /// 세로 간격. 3열 × 2줄이라 목록 4줄 높이(113pt) 안에 여유가 있다. 키캡 배지가 아래 줄과 붙지 않게 둔다.
+    static let rowGap: CGFloat = 12
 
     var body: some View {
         Button(action: action) {

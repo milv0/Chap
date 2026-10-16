@@ -49,16 +49,11 @@ struct NotchRenderTool {
         var todoWidgets = previewWidgets
         if !todoWidgets.contains(.todo) { todoWidgets[NotchWidget.slotCount - 1] = .todo }
         let todoSlots = NotchSlotContent.slots(widgets: todoWidgets, sites: config.sites)
-        var workspaceWidgets = previewWidgets
-        if !workspaceWidgets.contains(.workspaces) {
-            workspaceWidgets[NotchWidget.slotCount - 1] = .workspaces
-        }
         let previewWorkspaces = Self.previewWorkspaces
-        let workspaceSlots = NotchSlotContent.slots(
-            widgets: workspaceWidgets, sites: config.sites, workspaces: previewWorkspaces)
-        // Launchers 칸 하나로 런처 셋을 묶으면 모든 위젯이 여섯 칸에 들어간다.
+        // Launchers(Sites·Finder 목록) 옆에 Apps(아이콘)·Workspaces 탭 칸을 둔다.
+        // "-workspaces" 렌더는 같은 칸에서 Workspaces 탭을 그린다.
         let launcherSlots = NotchSlotContent.slots(
-            widgets: [.screenshots, .downloads, .launchers, .awake, .todo, .workspaces],
+            widgets: [.screenshots, .downloads, .launchers, .apps, .awake, .todo],
             sites: config.sites, workspaces: previewWorkspaces)
         let now = Date()
         NotchTodoView.previewItems = [
@@ -82,6 +77,7 @@ struct NotchRenderTool {
             ChapDrop.previewOverride = nil
             NotchFocusView.previewMode = nil
             NotchLaunchersTabPreview.tab = nil
+            NotchLaunchersTabPreview.appsTab = nil
         }
 
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
@@ -136,8 +132,9 @@ struct NotchRenderTool {
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
             // Focus 칸은 이름에 "-timer"가 있으면 Timer 모드로 그린다.
             NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
-            // Launchers 칸: 라이트는 Sites 탭, 다크는 Apps 탭을 그린다.
-            NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .app : .url
+            // Launchers 칸: 라이트는 Sites 탭, 다크는 Finder 탭을 그린다.
+            NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .finder : .url
+            NotchLaunchersTabPreview.appsTab = name.hasSuffix("-workspaces") ? .workspaces : .apps
             reveal.bottomOpacity = config.notchPanelOpacity
             reveal.colorHex = config.notchPanelColorHex
             let panel = NotchLauncherPanelView(
@@ -148,9 +145,8 @@ struct NotchRenderTool {
                 glassMaterial: config.notchGlassMaterial,
                 slots: name.hasSuffix("-todo")
                     ? todoSlots
-                    : name.hasSuffix("-workspaces")
-                        ? workspaceSlots
-                        : name.hasSuffix("-launchers") ? launcherSlots : previewSlots,
+                    : name.hasSuffix("-workspaces") || name.hasSuffix("-launchers")
+                        ? launcherSlots : previewSlots,
                 showsMirror: config.notchMirrorEnabled,
                 showsNote: config.notchQuickNoteEnabled,
                 showsCoverScreens: config.notchCoverScreensEnabled, onLaunch: { _ in },
@@ -539,7 +535,7 @@ struct NotchRenderTool {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
         // 여섯 칸을 모두 채워 도커가 최소 폭보다 넉넉히 넓게 만든다. 최소 폭에 걸리면 접어도 줄어들 수 없다.
         let slots = NotchSlotContent.slots(
-            widgets: [.screenshots, .downloads, .sites, .apps, .folders, .todo],
+            widgets: [.screenshots, .downloads, .launchers, .apps, .awake, .todo],
             sites: config.sites)
         // 선반이 비면 Screenshots가 저절로 접혀 "펼친 상태"가 아니게 된다. 파일이 있는 상태로 고정한다.
         ScreenshotShelf.previewOverride = [URL(fileURLWithPath: "/tmp/chap-shot.png")]
