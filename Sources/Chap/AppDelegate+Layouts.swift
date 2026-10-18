@@ -21,17 +21,11 @@ extension AppDelegate {
         capture.isEnabled = layoutLibrary.canAdd
         submenu.addItem(capture)
         if !layouts.isEmpty {
-            for (title, selector) in [
-                ("Edit Layout", #selector(editLayoutFromMenu(_:))),
-                ("Remove Layout", #selector(removeLayoutFromMenu(_:))),
-            ] {
-                let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-                let child = NSMenu()
-                child.autoenablesItems = false
-                for entry in layoutMenuItems(action: selector) { child.addItem(entry) }
-                parent.submenu = child
-                submenu.addItem(parent)
-            }
+            // 고치기·지우기는 설정의 Layouts 섹션 한곳에서 한다(메뉴를 3단으로 타지 않게).
+            let edit = NSMenuItem(
+                title: "Edit Layouts…", action: #selector(editLayoutsFromMenu), keyEquivalent: "")
+            edit.target = self
+            submenu.addItem(edit)
         }
         item.submenu = submenu
         menu.addItem(item)
@@ -126,10 +120,9 @@ extension AppDelegate {
         DispatchQueue.main.async { [weak self] in self?.openLayout(id: id) }
     }
 
-    @objc private func editLayoutFromMenu(_ sender: NSMenuItem) {
-        guard layouts.indices.contains(sender.tag) else { return }
-        let id = layouts[sender.tag].id
-        DispatchQueue.main.async { [weak self] in self?.editLayout(id: id) }
+    /// 메뉴 Edit Layouts…: 메뉴가 닫힌 다음 틱에 설정의 Layouts 섹션을 연다.
+    @objc private func editLayoutsFromMenu() {
+        DispatchQueue.main.async { [weak self] in self?.showLayoutsInSettings() }
     }
 
     /// 저장된 Layout을 설정창 Launchers의 Layouts 섹션에서 연다(고치는 곳은 한 군데다).
@@ -182,14 +175,7 @@ extension AppDelegate {
         }
     }
 
-    @objc private func removeLayoutFromMenu(_ sender: NSMenuItem) {
-        guard layouts.indices.contains(sender.tag) else { return }
-        let id = layouts[sender.tag].id
-        // 메뉴가 완전히 닫힌 다음 틱에 묻는다. 메뉴 추적 중에 띄운 모달은 뜨지 않거나 다른 앱 뒤에 숨는다.
-        DispatchQueue.main.async { [weak self] in self?.confirmRemoveLayout(id: id) }
-    }
-
-    /// 확인 후 Layout을 지운다. 메뉴와 노치 우클릭이 같은 경로를 쓴다.
+    /// 확인 후 Layout을 지운다. 설정과 노치 우클릭이 같은 경로를 쓴다.
     func confirmRemoveLayout(id: UUID) {
         guard let layout = layoutLibrary.layout(id: id) else { return }
         let alert = NSAlert()

@@ -5,7 +5,7 @@ uses XcodeGen (`project.yml`) to generate `Chap.xcodeproj`. It launches URLs,
 macOS apps, and Finder folders (up to four URLs or folders and six apps)
 and centers resizable windows on the selected display. Alongside the status menu
 it offers an optional Notch Launcher (a six-slot panel with Chap Drop and a
-Screenshot Shelf), Keep Mac Awake sessions, and Sparkle update checks.
+Screenshot Shelf), Keep Awake sessions, and Sparkle update checks.
 
 **Identity:** Chap is *your chap in the menu bar* — a friend (British "chap") that
 snaps windows into place ("chap"). Read `BRAND.md` before writing any user-facing
@@ -35,7 +35,7 @@ There is no `Package.swift`; do not use `swift test`.
 - `Sources/Chap/ChapDrop.swift`, `ScreenshotShelf.swift`, `ThumbnailLoader.swift`:
   Chap Drop store, Screenshot Shelf source, async thumbnails.
 - `Sources/Chap/Layouts/`, `Sources/ChapCore/Layout*.swift`: local standard-window capture, normalized display frames, storage, and verified restore.
-- `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Mac Awake session and HUD.
+- `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Awake session and HUD.
 - `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).
 - `Sources/Chap/Launchers/`: Chrome, app, Finder launch behavior.
 - `Sources/Chap/Views/`: SwiftUI settings, site config, notch panel/settings, QA, welcome, components.
@@ -60,13 +60,13 @@ There is no `Package.swift`; do not use `swift test`.
 - Finder launch uses AppleScript to open and set bounds atomically.
 - Notch Launcher (optional, off by default): `NotchLauncherController` shows a
   `.nonactivatingPanel` under the hardware notch with six slots (Screenshots, Downloads, Launchers (Sites/Finder list tabs),
-  Apps (app icons/Layouts tabs), Focus (Keep Awake or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge); the status menu stays available. On a
+  Apps (app icons/Layouts tabs), Keep Awake (display-awake session or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge); the status menu stays available. On a
   screen without a notch, no window sits at the top: a 150ms pointer poll over the
   top-center `hoverZone` opens the same dock and the Drop badge is suppressed. Chap Drop keeps bookmark references to dropped originals
   (`DropStore`; only temporary-location items are copied into
   `~/Library/Application Support/Chap/Drop/`, and removing never deletes an original); the Screenshot
   Shelf reads the system screenshot folder in place.
-- Keep Mac Awake: `KeepAwakeController` holds an IOKit assertion for a
+- Keep Awake: `KeepAwakeController` holds an IOKit assertion for a
   `KeepAwakePolicy` preset (30m–12h), expiring on a wall-clock `DispatchSourceTimer`
   re-checked on wake and when the menu opens; a session expired during sleep ends
   quietly. State is memory only.

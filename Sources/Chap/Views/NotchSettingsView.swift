@@ -84,7 +84,7 @@ struct NotchSettingsView: View {
         case .apps: return "Apps"
         case .screenshots: return "Screenshots"
         case .downloads: return "Downloads"
-        case .awake: return "Focus"
+        case .awake: return "Keep Awake"
         case .todo: return "To-do"
         case .launchers: return "Launchers"
         case .drop: return "Drop"

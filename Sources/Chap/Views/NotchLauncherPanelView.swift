@@ -75,8 +75,11 @@ struct NotchLauncherPanelView: View {
     static let columnWidth: CGFloat = 160
     /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Focus를 줄여 생긴 폭을 여기 쓴다).
     static let downloadsColumnWidth: CGFloat = 200
-    /// Focus 칸 폭. 104pt 다이얼이 들어간다.
-    static let focusColumnWidth: CGFloat = 116
+    /// Keep Awake 칸 폭. 104pt 다이얼과, 제목 줄("⚡ Keep Awake" + 타이머 탭 아이콘 25pt) 중 넓은 쪽.
+    /// 제목이 잘리지 않게 글자 폭으로 잰다(2.17까지 "Focus"라 116pt 고정이었다).
+    static var focusColumnWidth: CGFloat {
+        max(116, ceil(NotchTextMetrics.headerWidth(title: FocusDialMode.keepAwake.title) + 25 + 2))
+    }
     /// Apps 탭 아이콘 격자 폭. 앱 수에 따라 2열(4개까지) 또는 3열이다.
     static func appGridColumnWidth(appCount: Int) -> CGFloat {
         let columns = CGFloat(LauncherListPolicy.appIconColumns(forCount: appCount))

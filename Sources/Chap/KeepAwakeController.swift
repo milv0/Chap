@@ -75,7 +75,7 @@ final class KeepAwakeController {
         let result = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
-            "Chap Keep Mac Awake" as CFString,
+            "Chap Keep Awake" as CFString,
             &id)
         guard result == kIOReturnSuccess else {
             Log.app.error(

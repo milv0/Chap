@@ -102,7 +102,7 @@ struct QAView: View {
                 ),
                 (
                     "저장한 Layout을 고치거나 지우려면?",
-                    "Settings → Launchers 사이드바 맨 아래 Layouts 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Layouts → Edit Layout과 노치 Layouts 타일 우클릭 Edit…도 같은 화면을 엽니다."
+                    "Settings → Launchers 사이드바 맨 아래 Layouts 섹션에서 고르세요. 이름, 창별 디스플레이, 뺄 창을 바로 고치고, 디스플레이별 배치를 미리 보고, Open·Delete할 수 있습니다. 창을 다시 배열한 뒤 Update Positions를 누르면 지금 위치로 저장됩니다(열려 있지 않은 앱은 그대로). 메뉴바 Layouts → Edit Layouts…와 노치 Layouts 타일 우클릭 Edit…도 같은 화면을 엽니다."
                 ),
                 (
                     "Layout을 열면 일부 앱이 다른 데스크탑에 남아 있어요.",
@@ -198,7 +198,7 @@ struct QAView: View {
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
-                    "Chap입니다. 이 아기 물범이 바로 Chap이에요(앱 아이콘과 같은 그림입니다). 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Focus를 켜면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Focus가 켜져 있는 동안 꼬리를 흔듭니다. To-do를 체크하면 꼬리를 한 번 까딱합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
+                    "Chap입니다. 이 아기 물범이 바로 Chap이에요(앱 아이콘과 같은 그림입니다). 노치 왼쪽 검정 띠에 엎드려 있고, 노치를 열면 꼬리를 까딱합니다(동작 줄이기가 켜져 있으면 가만히 있습니다). Keep Awake를 켜면 뛰어올라 물속으로 첨벙 뛰어들었다 다시 올라오고, Keep Awake가 켜져 있는 동안 꼬리를 흔듭니다. To-do를 체크하면 꼬리를 한 번 까딱합니다. 장식이라 눌러도 아무 일도 일어나지 않습니다."
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
@@ -222,11 +222,11 @@ struct QAView: View {
                 ),
                 (
                     "타이머는 어떻게 쓰나요?",
-                    "메뉴바 Timer에서 길이를 고르거나, 노치 Focus 칸에서 제목 줄의 타이머 아이콘을 누르세요(트랙패드 두 손가락 가로 스와이프로도 바뀝니다). 다이얼을 끌어 5분부터 1시간까지 맞춘 뒤 가운데 Start를 누르면 됩니다. 도는 동안 노치가 접혀 있으면 노치 왼쪽에 남은 시간이 보이고, 끝나면 소리와 함께 Time's up이 뜹니다. 타이머는 하나만 돌고 Chap을 끄면 사라지며, Mac을 깨워 두지는 않습니다(그건 Focus가 합니다)."
+                    "메뉴바 Timer에서 길이를 고르거나, 노치 Keep Awake 칸에서 제목 줄의 타이머 아이콘을 누르세요(트랙패드 두 손가락 가로 스와이프로도 바뀝니다). 다이얼을 끌어 5분부터 1시간까지 맞춘 뒤 가운데 Start를 누르면 됩니다. 도는 동안 노치가 접혀 있으면 노치 왼쪽에 남은 시간이 보이고, 끝나면 소리와 함께 Time's up이 뜹니다. 타이머는 하나만 돌고 Chap을 끄면 사라지며, Mac을 깨워 두지는 않습니다(그건 Keep Awake가 합니다)."
                 ),
                 (
                     "노치 위젯 칸은 어떻게 바꾸나요?",
-                    "Notch 탭 Slots에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Focus(Keep Awake와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Layouts를 한 칸에 두고 제목 줄 아이콘, 제목 줄 빈 자리 클릭, 트랙패드 두 손가락 가로 스와이프로 바꿔 봅니다(마지막 탭을 기억합니다). 고른 탭 이름은 눌러도 아무 일이 없고, 마우스를 올리면 뒤에 보이는 ›를 눌러야 그 설정이 열립니다. 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
+                    "Notch 탭 Slots에 있는 6칸에 위젯을 드래그하세요. 앞 두 칸은 Screenshots(1번)·Downloads(2번) 자리로 고정되어 있어 옮길 수 없고, 눌러서 켜고 끄기만 합니다(접으면 노치 왼쪽 띠 아이콘이 되므로 펼쳐지는 자리도 왼쪽입니다). 나머지 네 칸에 Launchers, Apps, Keep Awake(화면 깨워 두기와 Timer를 한 다이얼에서 전환), To-do를 놓아 모든 위젯이 한 번에 들어갑니다. Launchers는 Sites·Finder 목록을, Apps는 앱 아이콘과 Layouts를 한 칸에 두고 제목 줄 아이콘, 제목 줄 빈 자리 클릭, 트랙패드 두 손가락 가로 스와이프로 바꿔 봅니다(마지막 탭을 기억합니다). 고른 탭 이름은 눌러도 아무 일이 없고, 마우스를 올리면 뒤에 보이는 ›를 눌러야 그 설정이 열립니다. 예전 Sites·Finder·Workspaces 칸은 같은 자리에서 Launchers·Apps로 바뀝니다. 슬롯의 context menu와 VoiceOver actions로도 배치하거나 비울 수 있습니다."
                 ),
                 (
                     "Custom과 Glass의 차이는?",
@@ -247,19 +247,19 @@ struct QAView: View {
             ]
         ),
         (
-            "Keep Mac Awake & 메뉴",
+            "Keep Awake & 메뉴",
             [
                 (
-                    "Keep Mac Awake는 어떻게 쓰나요?",
-                    "메뉴바 아이콘 클릭 → Keep Mac Awake에서 30분/1시간/4시간/8시간/12시간 중 하나를 고르면 그 시간 동안 화면이 꺼지지 않습니다. 시스템 잠자기(로그아웃)는 막지 않고 화면 꺼짐만 방지합니다."
+                    "Keep Awake는 어떻게 쓰나요?",
+                    "메뉴바 아이콘 클릭 → Keep Awake에서 30분/1시간/4시간/8시간/12시간 중 하나를 고르면 그 시간 동안 화면이 꺼지지 않습니다. 시스템 잠자기(로그아웃)는 막지 않고 화면 꺼짐만 방지합니다."
                 ),
                 (
                     "세션을 끄고 싶으면?",
-                    "메뉴에서 Keep Mac Awake를 다시 열면 남은 시간과 함께 Turn Off 항목이 보입니다. 클릭하면 즉시 해제됩니다."
+                    "메뉴에서 Keep Awake를 다시 열면 남은 시간과 함께 Turn Off 항목이 보입니다. 클릭하면 즉시 해제됩니다."
                 ),
                 (
-                    "노치의 Focus 다이얼은 어떻게 쓰나요?",
-                    "Settings → Notch에서 Focus를 3~6번 칸에 놓으세요. 다이얼의 호를 끌어 1~12시간을 고르고(마지막 값을 기억합니다) 가운데 원을 누르면 켜집니다. 켜진 동안 호가 남은 시간만큼 줄어들고, 가운데를 다시 누르면 끕니다. 메뉴의 Keep Mac Awake와 같은 세션입니다."
+                    "노치의 Keep Awake 다이얼은 어떻게 쓰나요?",
+                    "Settings → Notch에서 Keep Awake를 3~6번 칸에 놓으세요. 다이얼의 호를 끌어 1~12시간을 고르고(마지막 값을 기억합니다) 가운데 원을 누르면 켜집니다. 켜진 동안 호가 남은 시간만큼 줄어들고, 가운데를 다시 누르면 끕니다. 메뉴의 Keep Awake와 같은 세션입니다."
                 ),
                 (
                     "Chap을 종료하거나 재시작하면 세션은?",
@@ -271,7 +271,7 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Mac Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
                 ),
                 (
                     "Cover Screens가 화면을 잠그는 건가요?",
@@ -384,7 +384,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I change or remove a saved layout?",
-                    "Pick it in the Layouts section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Layouts → Edit Layout in the status menu and Edit… on a notch Layouts tile open the same page."
+                    "Pick it in the Layouts section at the bottom of the Settings → Launchers sidebar. Rename it, move windows to another display, leave windows out, preview the layout per display, open it, or delete it. Arrange the windows again and choose Update Positions to save where they are now (apps that aren't open keep their spot). Layouts → Edit Layouts… in the status menu and Edit… on a notch Layouts tile open the same page."
                 ),
                 (
                     "Some apps stay on another desktop when I open a layout.",
@@ -480,7 +480,7 @@ struct QAView: View {
                 ),
                 (
                     "Who is the seal on the left of the notch?",
-                    "That's Chap. The baby seal is Chap itself, the same drawing as the app icon. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when Focus starts it hops, splashes into the water, and pops back up, then wags its tail while Focus runs. When you check off a to-do it flicks its tail once. It is just decoration, so clicking it does nothing."
+                    "That's Chap. The baby seal is Chap itself, the same drawing as the app icon. It rests on the left of the notch's black strip, flicks its tail when you open the notch (it stays still with Reduce Motion on), and when Keep Awake starts it hops, splashes into the water, and pops back up, then wags its tail while Keep Awake runs. When you check off a to-do it flicks its tail once. It is just decoration, so clicking it does nothing."
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
@@ -504,11 +504,11 @@ struct QAView: View {
                 ),
                 (
                     "How does the timer work?",
-                    "Pick a length from Timer in the status menu, or open the notch Focus slot and click the timer icon in its title row (or swipe with two fingers on the trackpad). Drag the dial to choose 5 minutes to 1 hour, then click Start in the center. While it runs and the notch is closed, the time left shows beside the notch; when it ends, Chap plays a sound and shows Time's up. One timer runs at a time, it ends when you quit Chap, and it doesn't keep your Mac awake (Focus does that)."
+                    "Pick a length from Timer in the status menu, or open the notch Keep Awake slot and click the timer icon in its title row (or swipe with two fingers on the trackpad). Drag the dial to choose 5 minutes to 1 hour, then click Start in the center. While it runs and the notch is closed, the time left shows beside the notch; when it ends, Chap plays a sound and shows Time's up. One timer runs at a time, it ends when you quit Chap, and it doesn't keep your Mac awake (Keep Awake does that)."
                 ),
                 (
                     "How do I arrange the notch slots?",
-                    "Settings → Notch → Slots has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Focus (switches between Keep Awake and Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Layouts; switch with the icons in each title, a click on the empty part of the title row, or a two-finger swipe on the trackpad (Chap remembers the last one). The current tab's name doesn't open anything; point at it and click the › beside it to open its settings. Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
+                    "Settings → Notch → Slots has six slots. The first two are fixed to Screenshots (slot 1) and Downloads (slot 2); you can't move them, only click to turn each on or off (a folded shelf becomes an icon left of the notch, so its slot stays on the left). The other four take Launchers, Apps, Keep Awake (switches between keeping the screen awake and a Timer on one dial), and To-do, so every widget fits at once. Launchers holds the Sites and Finder lists, and Apps holds the app icons and your Layouts; switch with the icons in each title, a click on the empty part of the title row, or a two-finger swipe on the trackpad (Chap remembers the last one). The current tab's name doesn't open anything; point at it and click the › beside it to open its settings. Older Sites, Finder, and Workspaces slots become Launchers and Apps in place. Drag widgets in, or use a slot's context menu or VoiceOver actions."
                 ),
                 (
                     "What is the difference between Custom and Glass?",
@@ -529,19 +529,19 @@ struct QAView: View {
             ]
         ),
         (
-            "Keep Mac Awake & Menu",
+            "Keep Awake & Menu",
             [
                 (
-                    "How do I use Keep Mac Awake?",
-                    "Click the menubar icon → Keep Mac Awake, then choose 30 minutes, 1, 4, 8, or 12 hours. It only prevents the display from sleeping; it does not block system sleep or log you out."
+                    "How do I use Keep Awake?",
+                    "Click the menubar icon → Keep Awake, then choose 30 minutes, 1, 4, 8, or 12 hours. It only prevents the display from sleeping; it does not block system sleep or log you out."
                 ),
                 (
                     "How do I turn a session off early?",
-                    "Open Keep Mac Awake again; it shows the remaining time along with a Turn Off item. Clicking it releases the session immediately."
+                    "Open Keep Awake again; it shows the remaining time along with a Turn Off item. Clicking it releases the session immediately."
                 ),
                 (
-                    "How does the notch Focus dial work?",
-                    "Place Focus in slot 3–6 in Settings → Notch. Drag the arc to pick 1 to 12 hours (Chap remembers your last setting) and click the center to start. While it runs, the arc winds down with the time left; click the center again to stop. It is the same session as Keep Mac Awake in the menu."
+                    "How does the notch Keep Awake dial work?",
+                    "Place Keep Awake in slot 3–6 in Settings → Notch. Drag the arc to pick 1 to 12 hours (Chap remembers your last setting) and click the center to start. While it runs, the arc winds down with the time left; click the center again to stop. It is the same session as Keep Awake in the menu."
                 ),
                 (
                     "What happens to a session if I quit or restart Chap?",
@@ -553,7 +553,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others. While the cover is up the display stays awake on its own, so you do not need Keep Mac Awake, and the cover stays even after a Keep Awake session ends."
+                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others. While the cover is up the display stays awake on its own, so you do not need Keep Awake, and the cover stays even after a Keep Awake session ends."
                 ),
                 (
                     "Does Cover Screens lock my Mac?",

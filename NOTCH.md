@@ -47,7 +47,7 @@
   도커 위에 반투명 "Drop here" 레이어가 덮인다. Drop 파일들은 메인 도커
   하단의 가로 아이콘 행(파일이 있을 때만 표시)으로 보여준다.
 - **왼쪽 상태 영역**: 별도 배지 창은 두지 않는다. Keep Awake 시작/종료는
-  상단바 아이콘 색과 중앙 HUD가 담당한다. 남은 시간은 Focus 칸 다이얼이 보여 주고,
+  상단바 아이콘 색과 중앙 HUD가 담당한다. 남은 시간은 Keep Awake 칸 다이얼이 보여 주고,
   띠 왼쪽에는 물범(과 접힌 선반 아이콘)이 있다.
 
 ## 실루엣 문법: 오목 플레어
@@ -189,13 +189,13 @@ Glass Clear에는 창 배경색 28% 베일을 얹어 뒤 화면이 복잡해도 
 |---|---|
 | Screenshots | 썸네일 34 + 가장 긴 시각 문구 기준, 112–170pt |
 | Downloads | 200pt (12pt 파일명, 20자 안팎) |
-| Focus | 116pt (104pt 다이얼, Focus·Timer 모드 공용) |
+| Keep Awake | 104pt 다이얼과 제목 줄("⚡ Keep Awake" + 타이머 탭 25pt) 중 넓은 쪽, 최소 116pt(지금 약 127pt, `focusColumnWidth`). Keep Awake·Timer 모드 공용 |
 | To-do | 140–240pt (가장 긴 항목·추가 줄·제목 줄 중 넓은 쪽, `TodoColumnPolicy`). 도커를 열 때 정하고 열려 있는 동안은 고정 |
 | Launchers | 112–170pt (Sites·Finder 중 가장 넓은 목록, 제목 + 탭 아이콘은 늘 들어감) |
 | Apps | 112–170pt (Apps 격자(2열 80pt·3열 122pt)와 Layouts 2열 타일 108pt 중 넓은 쪽, 제목 + 탭 아이콘은 늘 들어감) |
 
 글자 폭은 `NotchTextMetrics`가 실제 글꼴(13pt 본문, 11pt semibold)로 재고 SwiftUI 렌더링 여유를 더한다. 놓을 수 있는 위젯
-(Screenshots·Downloads·Launchers·Apps·Focus·To-do) 여섯이 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
+(Screenshots·Downloads·Launchers·Apps·Keep Awake·To-do) 여섯이 모두 한 번에 들어가는 수라서 페이지를 두지 않는다. 2.1의 12칸 설정은 뒤쪽 위젯을 앞쪽 빈 칸으로
 당겨 6칸에 옮기고, 2.0의 4칸 설정은 순서 그대로 앞 4칸이 된다.
 2.16에서 없앤 위젯은 자리를 지킨 채 바뀐다(`NotchWidget.migratedSlots`): 첫 Sites·Finder 칸은 Launchers, 그다음은 빈 칸.
 Workspaces 칸(지금 이름 Layouts)은 Apps(이미 Apps가 있으면 빈 칸). 칸을 지워 당기지 않아 나머지 배치가 그대로다.
@@ -233,16 +233,16 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
 
 노치 왼쪽 검정 띠(`stripPlateauSideWidth` 110pt)에는 접힌 선반 아이콘과 Chap(아기 물범 마스코트, 이름이 곧 Chap이다,
-`ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Focus 남은 시간은 더 이상 띠에 그리지 않는다
-(Focus 칸 다이얼과 상태 메뉴에서 본다).
+`ChapMascot` 24×12 픽셀 × 1.5pt = 36×18pt)가 놓인다. Keep Awake 남은 시간은 더 이상 띠에 그리지 않는다
+(Keep Awake 칸 다이얼과 상태 메뉴에서 본다).
 
-물범 자리는 Focus 칸이 보이든 아니든 **늘 띠 왼쪽이다**(`NotchLauncherPolicy.stripLeading()`). Focus 칸은 번개와
-남은 시간을 맡고, 물범은 띠에서 Focus 상태를 보여 준다.
+물범 자리는 Keep Awake 칸이 보이든 아니든 **늘 띠 왼쪽이다**(`NotchLauncherPolicy.stripLeading()`). Keep Awake 칸은 번개와
+남은 시간을 맡고, 물범은 띠에서 Keep Awake 상태를 보여 준다.
 
-| Focus 세션 | 띠 물범 |
+| Keep Awake 세션 | 띠 물범 |
 |---|---|
 | 꺼짐 | 엎드려 쉼. 눈 뜸, 가끔 까딱(7~12초), 깜빡임 |
-| 켜는 순간 | 첨벙 다이빙 한 번(아래 "Focus 다이빙") 뒤 원래 자리로 |
+| 켜는 순간 | 첨벙 다이빙 한 번(아래 "Keep Awake 다이빙") 뒤 원래 자리로 |
 | 30분 이상 남음 | 꼬리를 0.4초 프레임으로 계속 흔듦 |
 | 30분 미만 | 졸린 눈꺼풀(`Eyes.drowsy`), 꼬리를 0.7초 프레임으로 느리게 흔듦 |
 
@@ -258,7 +258,7 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 `.task(id:)`가 `reveal.revealed`에 묶여 닫히면 취소되고, 동작 줄이기(Reduce Motion)가 켜져 있으면 움직이지 않는다.
 깨어 있는 동안 4~7초마다 0.15초 깜빡인다(`Eyes.closed`).
 
-**Focus 다이빙(몰입)**: Focus가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 첨벙 다이빙을 한 번 한다
+**Keep Awake 다이빙(몰입)**: Keep Awake가 켜지는 순간(꺼짐 → 켜짐, 노치가 열려 있을 때) 띠 물범이 첨벙 다이빙을 한 번 한다
 (`ChapMascot.focusDiveSequence`, 10프레임 × 0.1초 = 1초): 웅크림(아래 1px) → 꼬리를 들고 뛰어오름(위 3px) → 물이 차오르며
 첨벙 뛰어들어 잠깐 잠김(아래 3·5px) → 꼬리를 들고 튀어 올라 첨벙 → 물이 빠지고 원래 자리. 물범은 열마다 수면(`surfaceRow`)보다
 아래 부분을 그리지 않아 물속으로 들어간 모습이 된다. 물은 다이빙하는 동안만 있고, 그 뒤에는 물 없이 원래 자리에서 꼬리를 흔든다.
@@ -266,22 +266,22 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 닫힌 노치에서는 다이빙하지 않는다. 물은 물범 위에 그리는 겹침 레이어라 수면은 제자리이고 물범만 뛰고 가라앉는다.
 물속 `#2440AA`, 마루 `#6E91FF`, 물방울 `#A0B9FF`.
 띠에서는 z가 화면 위 경계에 잘리므로 잠든(`.asleep`) 모습 대신 쉬는 자세를 쓴다. `.asleep`·z·`widgetPixelSize`(2pt)는
-`ChapMascot`에 남아 있다(2.5.0의 Focus 칸 물범). 꼬리 흔들기 속도는 `focusWagFrameDuration(for:)`.
+`ChapMascot`에 남아 있다(2.5.0의 Keep Awake 칸 물범). 꼬리 흔들기 속도는 `focusWagFrameDuration(for:)`.
 배경 위 투명 도커로 근사한다. 변수 없이 테스트하면 건너뛴다.
 
-## Focus 칸 (Keep Mac Awake · Timer)
+## Keep Awake 칸 (Keep Awake · Timer)
 
-다이얼 하나로 두 가지를 켠다. **Focus 모드**(번개)는 상태바 메뉴 Keep Mac Awake와 같은 세션, **Timer 모드**(타이머)는
-메뉴 Timer ▸와 같은 타이머다. 2.14의 Timer 칸(`"timer"`)은 디코딩할 때 Focus 칸으로 바뀐다(`NotchWidget.formerTimerRawValue`,
-Focus 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로).
+다이얼 하나로 두 가지를 켠다. **Keep Awake 모드**(번개)는 상태바 메뉴 Keep Awake와 같은 세션, **Timer 모드**(타이머)는
+메뉴 Timer ▸와 같은 타이머다. 2.14의 Timer 칸(`"timer"`)은 디코딩할 때 Keep Awake 칸으로 바뀐다(`NotchWidget.formerTimerRawValue`,
+Keep Awake 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로).
 
-- **모드 전환**: 제목 줄이 탭이다. 고른 모드는 아이콘 + 제목("Focus"/"Timer"), 다른 모드는 아이콘만(연하게). 누르면
+- **모드 전환**: 제목 줄이 탭이다. 고른 모드는 아이콘 + 제목("Keep Awake"/"Timer"), 다른 모드는 아이콘만(연하게). 누르면
   햅틱(`.alignment`)과 함께 바뀌고 UserDefaults `ChapFocusDialMode`에 기억한다. 칸을 열 때 하나만 돌고 있으면 그 모드,
   아니면 마지막 모드(`FocusDialMode.initial`). 보이지 않는 모드가 돌고 있으면 그 아이콘이 블루이고 오른쪽 위에 4pt 점.
 
-### Focus 모드
+### Keep Awake 모드
 - 물범은 칸이 아니라 검정 띠에 있다(위 "상단 띠 왼쪽").
-- 켜고 끄는 모습이 같은 **다이얼**이다(`FocusDial`, 104×92pt, 제목 아래 9pt 띄움 `topGap`, 칸 폭 116pt). 반원보다 긴 240° 호가 위를 감싸고
+- 켜고 끄는 모습이 같은 **다이얼**이다(`FocusDial`, 104×92pt, 제목 아래 14pt 띄움 `topGap`: 호 위와 눈금 글자 아래(도커 바닥까지) 여백이 같아 보이게, 칸 가운데 정렬, 칸 폭은 제목 줄에 맞춤). 반원보다 긴 240° 호가 위를 감싸고
   아래 120°는 평평하게 열려 있다(`focusDialSweep`). 눈금은 0~12시간 하나(`focusDialFraction`), 3·6·9시간에 점, 양 끝
   아래에 "0"과 "12h".
 - 꺼짐: 호(테두리 띠)를 끌면 1시간 단위(1~12시간, `focusDialHours(dx:dy:)`, 아래 빈 곳은 가까운 끝)로 맞추고, 한 칸
@@ -299,7 +299,7 @@ Focus 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로).
 ### Timer 모드
 
 같은 다이얼(`FocusDial`)에 눈금만 분이다: 0~60분, 15·30·45분에 점, 오른쪽 끝 "60m"(`TimerPolicy.dialMaxLabel`).
-Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengthRange` 5~60분, 메뉴 프리셋 최댓값과 같다).
+Keep Awake와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengthRange` 5~60분, 메뉴 프리셋 최댓값과 같다).
 
 - 꺼짐: 호를 끌면 5분 눈금(`dialLength(fraction:)`, 아래 빈 곳은 가까운 끝)으로 맞추고 한 칸마다 햅틱. 가운데에는 20pt 고른 길이("25m")와
   블루 10pt "Start". 마지막 길이는 `ChapTimerLength`(기본 25분, 1시간을 넘는 2.14 저장값은 기본값으로). VoiceOver 조절 동작은 5분씩.
@@ -352,7 +352,7 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
 
 ## 타이머 배지
 
-**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 18pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 도커를 닫을 때는 닫힘 애니메이션이 시작되는 즉시 배지를 패널보다 위에 올려, 접히는 검정 띠에서 끊기지 않고 이어진다. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Focus 칸의 Timer 모드가 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
+**접힌 노치의 타이머 배지**: 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지(`NotchTimerBadgeView`, `NotchLauncherPolicy.timerBadgeFrame`)가 붙는다. Drop 배지를 좌우로 뒤집은 모양으로, 오른쪽 18pt는 노치 밑으로 겹치고 본체 52pt, 왼쪽 플레어로 메뉴 막대에 합류한다. 12pt semibold rounded 흰 숫자, 마지막 1분은 `accentLight`. 도커를 닫을 때는 닫힘 애니메이션이 시작되는 즉시 배지를 패널보다 위에 올려, 접히는 검정 띠에서 끊기지 않고 이어진다. 마우스를 올리면 도커가 열리고, 열린 동안 배지는 숨는다(Keep Awake 칸의 Timer 모드가 남은 시간을 보여 준다). 노치가 없는 화면에는 두지 않는다(I16). 노치 런처가 꺼져 있어도 메뉴 Timer는 쓸 수 있다.
 
 ## Launchers 칸
 
@@ -365,11 +365,11 @@ Focus와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.lengt
   (`NotchTabTitle`, 다른 칸 제목과 같은 모양)이고, 나머지는 흐린 아이콘(22pt)만 둔다. 면·밑줄은 없다.
   아이콘을 누르면 그 탭으로 바꾼다. 고른 탭의 이름은 누를 수 없는 머리글이고, 마우스를 올리면 뒤에 ›(18pt 버튼)가
   보여 그것만 그 타입의 설정을 연다. 탭을 바꾸려다 이름을 눌러 설정창이 뜨던 일을 막는다(2.16.0까지는 이름 전체가 버튼).
-  › 자리는 늘 잡혀 있어 칸 폭은 그대로다. 탭 없는 칸(Screenshots·Downloads·Focus 등)의 제목은 그대로 버튼이다.
+  › 자리는 늘 잡혀 있어 칸 폭은 그대로다. 탭 없는 칸(Screenshots·Downloads·Keep Awake 등)의 제목은 그대로 버튼이다.
   같은 아이콘을 제목과 탭에 두 번 그리지 않아 제목 줄이 짧다. 타입이 하나뿐이면 제목만 남는다.
 - 제목 줄 오른쪽 빈 자리 전체가 옆 탭 버튼이다(`TabStepPolicy.neighbor`, 두 탭이면 늘 다른 쪽). 22pt 아이콘을 겨냥하지
   않아도 되고, 마우스를 올리면 갈 탭 아이콘이 진해진다. 보이는 것은 없어 칸 모양은 그대로다.
-- 트랙패드 두 손가락 가로 스와이프로도 넘긴다(Launchers·Apps 칸, Focus 칸의 Focus ↔ Timer 공통, `tabSwipe`, `TabSwipeTracker`). 왼쪽으로 밀면 다음
+- 트랙패드 두 손가락 가로 스와이프로도 넘긴다(Launchers·Apps 칸, Keep Awake 칸의 Keep Awake ↔ Timer 공통, `tabSwipe`, `TabSwipeTracker`). 왼쪽으로 밀면 다음
   탭, 오른쪽이면 이전 탭(손가락 기준, 자연스러운 스크롤 설정과 무관). 제스처 하나에 한 칸만, 문턱 24pt, 관성은 무시한다.
   가로가 세로의 1.5배를 넘을 때만 반응하고 그때만 이벤트를 삼켜 선반의 세로 스크롤과 섞이지 않는다. 칸 위에 마우스가 있는
   동안만 `NSEvent` 로컬 모니터(공개 API)를 건다. 정밀 스크롤(트랙패드·Magic Mouse)만 다루고 일반 휠은 그대로 둔다.
@@ -392,7 +392,7 @@ Apps 칸의 두 번째 탭으로 보는 로컬 창 배치 격자(`NotchLayoutsVi
 
 캡처 대상은 위치·크기 변경이 가능한 표준, 비최소화, 비전체화면 앱 창이다. 앱당 focused 표준 창 또는 유일한 표준 창 하나만 제안하며 여러 창 중 하나를 증명할 수 없으면 제외한다. 복원은 저장한 제목과 정확히 하나가 맞는 창, 없으면 표준 창이 하나일 때 그 창, 그것도 없으면 포커스된 표준 창에 적용한다(최소화된 창은 Dock에서 꺼내서). 앱의 최소 크기보다 작게 저장된 창은 그 크기로 키우되 화면 안에 둔다(`LayoutGeometry.bounds(minimumSize:)`). 앱마다 12초 상한이라 한 앱이 멈춰도 다음 앱은 열리고, 끝나면 자리를 못 잡은 앱 이름을 알려 준다. 열리는 동안 `LayoutLibrary.busyID`가 설정 버튼과 노치 줄을 진행 표시로 바꾸고 한 번에 하나만 돈다. 최대 Layout 4개·Layout당 창 6개다.
 
-고른 Layouts 탭 이름 뒤 ›를 누르면 도커를 접고 설정창 Launchers의 Layouts 섹션을 연다. 저장된 Layout이 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showLayoutsInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Layouts 섹션에서 그 Layout을 연다(`SettingsView.focusLayout`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`LayoutStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapLayout.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(메뉴 Remove Layout과 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
+고른 Layouts 탭 이름 뒤 ›를 누르면 도커를 접고 설정창 Launchers의 Layouts 섹션을 연다. 저장된 Layout이 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showLayoutsInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Layouts 섹션에서 그 Layout을 연다(`SettingsView.focusLayout`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`LayoutStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapLayout.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(설정의 Remove와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
 
 캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`LayoutDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`LayoutWindow.assigned(to:)`). 같은 이름의 모니터는 `LayoutDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다.
 
@@ -494,7 +494,7 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/ChapCore/NotchLauncherPolicy.swift` — 표시 조건·프레임 계산 (테스트로 고정)
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
 - `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
-- `Sources/Chap/Views/NotchFocusView.swift`(칸·모드 탭·Focus 모드), `NotchFocusTimerBody.swift`(Timer 모드), `NotchFocusDial.swift`(다이얼), `NotchMascotView.swift`, `NotchWidgetViews.swift` — Focus 칸·물범·위젯 공용
+- `Sources/Chap/Views/NotchFocusView.swift`(칸·모드 탭·Keep Awake 모드), `NotchFocusTimerBody.swift`(Timer 모드), `NotchFocusDial.swift`(다이얼), `NotchMascotView.swift`, `NotchWidgetViews.swift` — Keep Awake 칸·물범·위젯 공용
 - `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
 - `Sources/Chap/Views/NotchLayoutsView.swift`, `LayoutCaptureView.swift` — Layout 노치 탭 격자·캡처 확인 창
 - `Sources/Chap/Layouts/`, `Sources/ChapCore/Layout*.swift` — AX 캡처·복원, 정규화 좌표·로컬 저장

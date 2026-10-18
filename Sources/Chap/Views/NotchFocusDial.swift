@@ -144,8 +144,9 @@ struct FocusDial<Center: View>: View {
         .padding(.top, Self.topGap)
     }
 
-    /// 제목과 호 꼭대기 사이 간격. 다이얼(92pt) + 간격이 칸 본문 높이(113pt) 안에 들어간다.
-    static var topGap: CGFloat { 9 }
+    /// 제목과 호 꼭대기 사이 간격. 호 위(제목 줄 아래)와 눈금 글자 아래(도커 바닥까지)의 여백이 눈으로
+    /// 같아 보이도록 14pt. 다이얼(92pt) + 간격이 칸 본문 높이(113pt) 안에 들어간다(바닥 7pt 남음).
+    static var topGap: CGFloat { 14 }
 }
 
 /// 누르는 순간 살짝 눌렸다 튀어 오르는 버튼 모양. "딱" 누르는 손맛을 준다.

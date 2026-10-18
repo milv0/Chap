@@ -87,7 +87,7 @@ struct GeneralSettingsView: View {
                 Section {
                     SettingsRow(
                         title: "Status Bar Icon",
-                        subtitle: "Turns Chap blue while Keep Mac Awake runs."
+                        subtitle: "Turns Chap blue while Keep Awake runs."
                     ) {
                         HStack(spacing: 8) {
                             ForEach(StatusBarIconChoice.allCases, id: \.self) { choice in

@@ -46,8 +46,8 @@ enum KeepAwakePolicy {
 
     /// 메뉴 항목 제목. 활성 세션이면 남은 시간을 덧붙인다.
     static func menuTitle(sessionEnd: Date?, now: Date) -> String {
-        guard let sessionEnd, sessionEnd > now else { return "Keep Mac Awake" }
-        return "Keep Mac Awake — \(remainingLabel(until: sessionEnd, now: now)) left"
+        guard let sessionEnd, sessionEnd > now else { return "Keep Awake" }
+        return "Keep Awake — \(remainingLabel(until: sessionEnd, now: now)) left"
     }
 
     /// 만료 시각 이후로 이만큼 늦게 확인되면 잠든 사이 끝난 세션으로 본다.

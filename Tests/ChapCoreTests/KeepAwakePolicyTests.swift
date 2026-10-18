@@ -36,7 +36,7 @@ struct KeepAwakePolicyTests {
     func plainTitleWhenInactive() {
         let title = KeepAwakePolicy.menuTitle(sessionEnd: nil, now: Date())
 
-        #expect(title == "Keep Mac Awake")
+        #expect(title == "Keep Awake")
     }
 
     @Test("menu title appends remaining time during a session")
@@ -46,7 +46,7 @@ struct KeepAwakePolicyTests {
         let title = KeepAwakePolicy.menuTitle(
             sessionEnd: now.addingTimeInterval(3600), now: now)
 
-        #expect(title == "Keep Mac Awake — 1h left")
+        #expect(title == "Keep Awake — 1h left")
     }
 
     @Test("started HUD message names the preset")
@@ -68,7 +68,7 @@ struct KeepAwakePolicyTests {
         let title = KeepAwakePolicy.menuTitle(
             sessionEnd: now.addingTimeInterval(-1), now: now)
 
-        #expect(title == "Keep Mac Awake")
+        #expect(title == "Keep Awake")
     }
 
     @Test("quit confirmation asks for explicit confirmation")

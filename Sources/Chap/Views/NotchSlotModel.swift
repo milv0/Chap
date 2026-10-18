@@ -10,7 +10,7 @@ enum NotchSlotContent {
     case screenshots
     /// 다운로드 선반 위젯.
     case downloads
-    /// Focus 위젯: 다이얼 하나로 Keep Mac Awake와 타이머를 켠다.
+    /// Keep Awake 위젯: 다이얼 하나로 Keep Awake와 타이머를 켠다.
     case awake
     /// 할 일 목록 위젯.
     case todo
