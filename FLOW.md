@@ -548,10 +548,10 @@ Settings → Notch Launcher on
     마지막 입력을 파일에 쓴다. Esc는 QuickNoteWindow.handleKeyDown(local key monitor)이 TextEditor보다 먼저 받아 삼킨다
   → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
     MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
-  → Focus 칸(다이얼): 호를 끌어 1~12시간 → UserDefaults ChapFocusPresetDuration에 기억.
+  → Keep Awake 칸(다이얼): 호를 끌어 1~12시간 → UserDefaults ChapFocusPresetDuration에 기억.
     안쪽 원 클릭 → NotchFocusView.activateRequest(duration) → AppDelegate가
     KeepAwakePolicy.focusPreset(forRequestedDuration:)으로 검증(프리셋 또는 1~12 정수 시간만) → keepAwake.activate.
-    켜진 동안 다시 클릭 → deactivateRequest → keepAwake.deactivate (메뉴 Keep Mac Awake와 같은 세션)
+    켜진 동안 다시 클릭 → deactivateRequest → keepAwake.deactivate (메뉴 Keep Awake와 같은 세션)
   → To-do 칸: 변경마다 TodoStore 순수 함수로 새 배열 → @State 갱신 → utility 직렬 큐에서 Todos.json atomic write.
     체크 시 NotchTodoView.didCompleteNotification → 띠의 물범이 꼬리를 한 번 까딱
   → Apps 칸 Layouts 탭: 저장된 Layout을 2열 타일로 최대 4개 표시. 타일 클릭 → hidePanel → LayoutRestoreService.
@@ -645,7 +645,7 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | To-do 저장 (`NotchTodoView.saveQueue`) | serial utility queue | 칸이 처음 보일 때 같은 큐에서 1회 읽고, 변경마다 atomic write |
 | Layout 캡처 (`LayoutCaptureService`) | serial userInitiated queue | main에서 앱·화면 스냅샷을 만든 뒤 AX 창 읽기, 결과만 main 복귀 |
 | Layout 복원 (`LayoutRestoreService.Session`) | main + session별 serial userInitiated queue | main에서 앱을 순차 재열고, AX 창 대기·bounds 적용은 큐. activeSession으로 중복 실행 방지, 앱당 12초 상한 |
-| Focus 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
+| Keep Awake 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
 | Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
 
 `AppDelegate › quitApp()`은 항상 Cancel을 기본 버튼으로 한 종료 확인창을 띄우고, 사용자가 Quit을

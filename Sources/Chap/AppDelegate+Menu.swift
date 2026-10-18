@@ -229,10 +229,12 @@ extension AppDelegate {
             sites: config.sites, hiddenLaunchTypes: config.hiddenMenuLaunchTypes)
         var addedSiteItem = false
         for (sectionIndex, section) in sections.enumerated() {
-            // 타입이 바뀌면 구분선 추가
+            // 타입마다 구분선 + 머리글(Sites·Apps·Finder). 종류는 머리글이 알려 주므로 줄마다 같은
+            // 아이콘을 되풀이하지 않는다(노치 목록 칸과 같은 규칙). Apps만 줄마다 다른 실제 앱 아이콘을 둔다.
             if sectionIndex > 0 {
                 menu.addItem(.separator())
             }
+            menu.addItem(.sectionHeader(title: LauncherListPolicy.title(for: section.launchType)))
             for entry in section.entries {
                 let site = entry.site
                 let keyEquiv =
@@ -242,9 +244,9 @@ extension AppDelegate {
                 if !keyEquiv.isEmpty {
                     item.keyEquivalentModifierMask = .option
                 }
-                item.image = NSImage(
-                    systemSymbolName: LauncherListPolicy.symbolName(for: section.launchType),
-                    accessibilityDescription: nil)
+                if section.launchType == .app, let path = site.appPath {
+                    setMenuAppIcon(item, appPath: path)
+                }
                 item.tag = entry.siteIndex
                 item.target = self
                 menu.addItem(item)
@@ -258,13 +260,13 @@ extension AppDelegate {
         addLayoutsMenu(to: menu)
         menu.addItem(.separator())
 
-        // Keep Mac Awake — 화면 잠자기 방지 세션 (세션 한정, config 미저장)
+        // Keep Awake — 화면 잠자기 방지 세션 (세션 한정, config 미저장)
         let keepAwakeItem = NSMenuItem(
             title: KeepAwakePolicy.menuTitle(sessionEnd: keepAwake.sessionEnd, now: Date()),
             action: nil, keyEquivalent: "")
         keepAwakeItem.image = NSImage(
             systemSymbolName: "cup.and.saucer.fill",
-            accessibilityDescription: "Keep Mac Awake")
+            accessibilityDescription: "Keep Awake")
         let keepAwakeMenu = NSMenu()
         if keepAwake.isActive {
             let turnOff = NSMenuItem(
@@ -296,24 +298,29 @@ extension AppDelegate {
             accessibilityDescription: CoverScreensPolicy.menuTitleOff)
         coverScreens.target = self
         coverScreens.toolTip = CoverScreensPolicy.subtitle
+        setOptionKey(registeredCoverScreensKey, on: coverScreens)
         menu.addItem(coverScreens)
+
+        // Quick Note — 노치를 끈 Mac에서도 메뉴로 찾을 수 있게 둔다(⌥ 단축키와 같은 창).
+        let quickNote = NSMenuItem(
+            title: "Quick Note", action: #selector(openQuickNoteFromMenu), keyEquivalent: "")
+        quickNote.image = NSImage(
+            systemSymbolName: "note.text", accessibilityDescription: "Quick Note")
+        quickNote.target = self
+        setOptionKey(registeredQuickNoteKey, on: quickNote)
+        menu.addItem(quickNote)
         menu.addItem(.separator())
 
+        // 앱 관리 묶음은 아이콘 없이 한 묶음으로 둔다(macOS 앱 메뉴 관례).
         let settings = NSMenuItem(
-            title: "Settings...", action: #selector(openSettings),
-            keyEquivalent: config.optionShortcutsEnabled ? "," : "")
-        if config.optionShortcutsEnabled {
-            settings.keyEquivalentModifierMask = .option
-        }
+            title: "Settings…", action: #selector(openSettings), keyEquivalent: "")
+        setOptionKey(",", on: settings)
         settings.target = self
         menu.addItem(settings)
         let qa = NSMenuItem(
             title: "Q&A", action: #selector(openQA), keyEquivalent: "")
-        qa.image = NSImage(
-            systemSymbolName: "questionmark.circle", accessibilityDescription: "Q&A")
         qa.target = self
         menu.addItem(qa)
-        menu.addItem(.separator())
 
         // Check for Updates — disabled when Sparkle configuration is incomplete
         let updateItem = NSMenuItem(
@@ -325,7 +332,8 @@ extension AppDelegate {
         menu.addItem(updateItem)
 
         menu.addItem(.separator())
-        let quit = NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "")
+        let quit = NSMenuItem(title: "Quit Chap", action: #selector(quitApp), keyEquivalent: "q")
+        quit.keyEquivalentModifierMask = .command
         quit.target = self
         menu.addItem(quit)
         menu.delegate = self
@@ -461,6 +469,36 @@ extension AppDelegate {
             // 덮여 있는 동안에는 위에서 이미 돌아왔다. 걷는 것은 ⌥ 한 번(또는 10연타)이 맡는다.
             toggleCoverScreens()
         }
+    }
+
+    /// 메뉴 항목에 전역 ⌥ 단축키를 표시한다. 실제로 등록되는 키일 때만(⌥ 단축키가 꺼져 있으면 표시하지 않는다).
+    private func setOptionKey(_ key: String?, on item: NSMenuItem) {
+        guard config.optionShortcutsEnabled, let key, !key.isEmpty else { return }
+        item.keyEquivalent = key.lowercased()
+        item.keyEquivalentModifierMask = .option
+    }
+
+    /// 메뉴 App 줄의 실제 앱 아이콘(16pt). 캐시에 있으면 바로, 없으면 다 읽은 뒤 그 줄에만 넣는다.
+    /// 캐시 이미지는 노치와 함께 쓰므로 크기를 바꾼 사본을 쓴다.
+    private func setMenuAppIcon(_ item: NSMenuItem, appPath: String) {
+        func menuSized(_ icon: NSImage) -> NSImage? {
+            guard let copy = icon.copy() as? NSImage else { return nil }
+            copy.size = NSSize(width: 16, height: 16)
+            return copy
+        }
+        if let cached = AppIconLoader.cachedIcon(forAppPath: appPath) {
+            item.image = menuSized(cached)
+            return
+        }
+        Task { @MainActor [weak item] in
+            guard let icon = await AppIconLoader.icon(forAppPath: appPath) else { return }
+            item?.image = menuSized(icon)
+        }
+    }
+
+    @objc private func openQuickNoteFromMenu() {
+        NotificationCenter.default.post(name: NotchLauncherController.requestClose, object: nil)
+        QuickNoteWindow.show()
     }
 
     @objc func toggleCoverScreens() {

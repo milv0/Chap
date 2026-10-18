@@ -4,7 +4,7 @@ import os
 /// 카운트다운 타이머. 한 번에 하나만 돌고 상태는 메모리에만 있다. 메인 스레드 전제.
 ///
 /// 끝나는 시각은 벽시계 기준(`wallDeadline`)이라 뚜껑을 닫아 잠든 시간도 센다.
-/// 깨어나면 다시 확인해, 잠든 사이 끝났으면 깨어난 직후 알린다. Keep Mac Awake와는 따로 돈다.
+/// 깨어나면 다시 확인해, 잠든 사이 끝났으면 깨어난 직후 알린다. Keep Awake와는 따로 돈다.
 final class ChapTimerController {
     /// 시작·중지·끝났을 때 보낸다. object는 끝나는 시각(Date?), 꺼졌으면 nil.
     static let didChangeNotification = Notification.Name("ChapTimerDidChange")

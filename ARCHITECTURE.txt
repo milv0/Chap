@@ -80,9 +80,9 @@ Sources/
 │       ├── LayoutDetailView.swift ← Launchers 탭 Layout 편집 화면 (이름·Open·Update Positions·Delete·Preview·창 목록)
 │       ├── SettingsLayoutsSection.swift ← 설정 사이드바 Layouts 섹션 (n/4, + 대상, 검색 필터)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
-│       ├── NotchFocusView.swift   ← Focus 칸·탭(Keep Awake/Timer 전환)·Focus 모드 본문
-│       ├── NotchFocusTimerBody.swift ← Focus 칸 Timer 모드 본문(5~60분 다이얼)
-│       ├── NotchFocusDial.swift   ← Focus·Timer 공용 240° 다이얼·가운데 버튼 모양
+│       ├── NotchFocusView.swift   ← Keep Awake 칸·탭(Keep Awake/Timer 전환)·Keep Awake 모드 본문
+│       ├── NotchFocusTimerBody.swift ← Keep Awake 칸 Timer 모드 본문(5~60분 다이얼)
+│       ├── NotchFocusDial.swift   ← Keep Awake·Timer 공용 240° 다이얼·가운데 버튼 모양
 │       ├── NotchTimerBadgeView.swift ← 접힌 노치 왼쪽 타이머 배지
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
 │       ├── NotchQuickNoteView.swift ← Quick Note 편집기(자동 저장·백업 버튼·읽기 실패 안내)
@@ -115,7 +115,7 @@ Sources/
 │   ├── CoverScreensPolicy.swift      ← Cover Screens ⌥ 탭 판정(OptionTap)·연타 판정·문구 정리 (순수 로직)
 │   ├── TimerPolicy.swift          ← 타이머 길이(5분 단위 5~60분)·공용 다이얼 변환·시계 표시·메뉴 문구 (순수 로직)
 │   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료·공용 다이얼 각도↔시간 (순수 로직)
-│   ├── FocusDialMode.swift        ← Focus 칸의 Focus/Timer 모드 선택·저장값·실행 중 모드 우선 규칙 (순수 로직)
+│   ├── FocusDialMode.swift        ← Keep Awake 칸의 Keep Awake/Timer 모드 선택·저장값·실행 중 모드 우선 규칙 (순수 로직)
 │   ├── MenuConfigurationSnapshot.swift ← 메뉴/핫키 재구성에 영향 주는 사이트 정보만 추린 스냅샷
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
@@ -285,7 +285,7 @@ Config 모델 필드:
   ※ 2.10.1까지의 lightsOutShortcut·notchLightsOutEnabled는 읽을 때 cover… 이름으로 옮기고,
     lightsOutUnlockKey는 버린다(걷는 법이 ⌥ 탭으로 고정)
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (screenshots | downloads | launchers(Sites|Finder 탭) |
-                                 apps(Apps|Layouts 탭) | awake(Focus) | todo | none). 1·2번 칸은 Screenshots·Downloads
+                                 apps(Apps|Layouts 탭) | awake(Keep Awake) | todo | none). 1·2번 칸은 Screenshots·Downloads
                                  선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, launchers, apps,
                                  none, none]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
                                  2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로 당겨 6칸에 옮긴다.
@@ -386,7 +386,7 @@ Config 모델 필드:
     HUD 그림은 앱 아이콘·노치와 같은 픽셀 물범이다 (켜면 깨어 꼬리를 든 Chap, 끄면 눈 감고 z를 띄운 Chap).
     물범은 따로 타일 없이 HUD 바탕(옅은 popover + 테마색 틴트·테두리) 위에 바로 놓는다. Timer 끝(Time's up)도 같은 HUD다.
     물범 자리는 두 모습에서 같고 z는 머리 위 여백만 채운다. HUD는 노치가 있는 내장 화면에만 띄운다.
-    노치에서는 Focus 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
+    노치에서는 Keep Awake 칸 다이얼이 남은 시간(h:mm:ss)과 줄어드는 호를 보여 주고, 검정 띠의 물범이 꼬리를 흔든다
 - Cover Screens(가림막): ⌥L, 메뉴바 항목, 노치 띠의 달 아이콘(Quick Note 오른쪽)으로 모든 화면을 검정 창(.screenSaver 레벨, 모든 Space)으로 덮는다.
   켜져 있는 동안 자체 IOKit 어써션을 들어 Keep Awake와 독립이다(Keep Awake가 꺼져 있어도 화면이
   꺼지지 않고, Keep Awake 세션이 끝나도 가림막은 남는다). 걷기는 ⌥만 한 번 눌렀다 떼기(OptionTap:
@@ -399,8 +399,8 @@ Config 모델 필드:
   계속 본다. Chap 글로벌 단축키와 노치 도커는 열지 않는다(가림막 아래에서 보이지 않게 포커스만 가져가므로).
   걷으면 켜기 전 앞에 있던 앱으로 돌아간다.
   **잠금이 아니다**: 암호를 묻지 않고 Chap이 끝나면 걷힌다(문서·설정·Q&A에 명시)
-- 노치 Focus 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
-  `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Mac Awake와 같은 세션
+- 노치 Keep Awake 칸: 240° 다이얼을 끌어 1~12시간(1시간 단위, 마지막 값은 UserDefaults
+  `ChapFocusPresetDuration`에 기억)을 고르고 안쪽 원을 눌러 시작/중지. 메뉴의 Keep Awake와 같은 세션
 - Layouts 데모: 메뉴의 Capture Layout에서 현재 실행 앱의 표준·이동 가능 대표 창을 최대 6개 골라 이름을 붙이고,
   디스플레이 UUID와 visibleFrame 상대 위치·크기를 `~/Library/Application Support/Chap/Layouts.json`에 저장한다.
   최대 4개이며 config Export/Import·동기화에 넣지 않는다. 노치 Layouts 칸이나 메뉴에서 열면 앱을 뒤에서부터
@@ -413,26 +413,28 @@ Config 모델 필드:
   덮어쓰기 전 이전 내용을 `Application Support/Chap/QuickNote Backups/`에 백업(10분 간격, 크게 줄면 즉시, 최신 10개),
   읽지 못한 파일은 `QuickNote.unreadable-<시각>.txt`로 옮겨 보존하고 옮기지도 못하면 편집을 막는다
 - 노치 Downloads 칸: ~/Downloads 최근 파일(4개 보임, 스크롤로 최대 12개)·짧은 시각, 클릭 열기·드래그·우클릭 공유
-- 노치 마스코트(Chap the Seal): 검정 띠 왼쪽 24×12 픽셀 물범. 노치 열 때 꼬리 까딱, Focus 시작 시 다이빙,
-  Focus 중 꼬리 흔들기, To-do 체크 시 꼬리 한 번 (동작 줄이기면 정지)
+- 노치 마스코트(Chap the Seal): 검정 띠 왼쪽 24×12 픽셀 물범. 노치 열 때 꼬리 까딱, Keep Awake 시작 시 다이빙,
+  Keep Awake 중 꼬리 흔들기, To-do 체크 시 꼬리 한 번 (동작 줄이기면 정지)
 - Restart App·Report Bug·Uninstall (설정 창 하단 ⋯ 메뉴)
 
 ## 메뉴바 메뉴 구성
 
-  [사이트들 — 타입별 그룹, 구분선으로 분리, hiddenMenuLaunchTypes에 있는 타입은 제외]
+  [사이트들 — 타입마다 구분선 + 머리글(Sites·Apps·Finder, NSMenuItem.sectionHeader). 줄 아이콘은
+   App 줄의 실제 앱 아이콘만(AppIconLoader, 16pt 사본). hiddenMenuLaunchTypes에 있는 타입은 제외]
   ────────
-  Layouts ▸  (저장한 배치 열기, Capture Layout…, Edit Layout ▸ = 설정창 Launchers에서 열기, Remove Layout ▸)
+  Layouts ▸  (저장한 배치 열기, Capture Layout…, Edit Layouts… = 설정창 Launchers의 Layouts 섹션)
   ────────
-  Keep Mac Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
+  Keep Awake ▸  (활성 시 남은 시간 표시, Turn Off + 30m/1h/4h/8h/12h)
   Timer ▸  (돌면 "Timer — 12:34 left", Stop Timer + 5·10·15·25·30·45분·1시간)
-  Cover Screens / Uncover Screens  (화면 가림막. Keep Awake와 독립)
+  Cover Screens / Uncover Screens  (⌥L 등 등록된 키 표시. 화면 가림막. Keep Awake와 독립)
+  Quick Note  (⌥N 등 등록된 키 표시. 노치를 꺼도 메뉴로 연다)
   ────────
-  Settings...   (⌥,)
+  Settings…   (⌥,)
   Q&A
-  ────────
   Check for Updates…  (설정 미완료 시 비활성화)
   ────────
-  Quit
+  Quit Chap   (⌘Q)
+  ※ ⌥ 키 표시는 Enable Chap Option-Key Triggers가 켜져 있고 실제로 등록되는 키일 때만
 
 ## 설정 창 하단 ⋯ 메뉴
 
@@ -593,7 +595,7 @@ App 윈도우 감지 방식 (AXObserver):
   - 개인키는 앱에 절대 포함하지 않음; 오퍼레이터 Keychain에만 존재
 
 ### IOKit (pwr_mgt)
-  용도: Keep Mac Awake — 화면 잠자기 방지 (Amphetamine과 같은 세션 개념)
+  용도: Keep Awake — 화면 잠자기 방지 (Amphetamine과 같은 세션 개념)
   - IOPMAssertionCreateWithName(PreventUserIdleDisplaySleep) 세션 시작
   - IOPMAssertionRelease                                     만료·해제 시
   - 앱 종료 시 프로세스 소유 어써션은 IOKit이 자동 해제

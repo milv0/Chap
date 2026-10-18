@@ -126,7 +126,7 @@
     .dock-cap path { fill: #000; }
     .dock-awake { align-items: center; color: rgb(255 255 255 / .9); display: flex; font-size: max(9px, calc(13 * var(--pt))); font-variant-numeric: tabular-nums; font-weight: 500; gap: calc(5 * var(--pt)); height: calc(32 * var(--pt)); justify-content: center; left: calc(204.5 * var(--pt)); position: absolute; top: 0; transform: translateX(-50%); width: calc(110 * var(--pt)); z-index: 3; }
     .dock-awake svg { color: var(--blue); flex: none; height: max(8px, calc(12 * var(--pt))); width: max(8px, calc(12 * var(--pt))); }
-    /* Chap 2.5.1+: the notch strip no longer shows the Focus countdown (it lives in the Focus slot). */
+    /* Chap 2.5.1+: the notch strip no longer shows the Keep Awake countdown (it lives in the Keep Awake slot). */
     .dock-awake { display: none; }
     /* Chap the Seal: the 24x12 pixel mascot on the strip's left, 1.5pt per pixel, like the app. */
     .dock-seal { height: calc(18 * var(--pt)); image-rendering: pixelated; left: calc(149.5 * var(--pt)); position: absolute; top: calc(7 * var(--pt)); width: calc(36 * var(--pt)); z-index: 3; }
@@ -137,7 +137,7 @@
     @keyframes seal-wag-up { 0% { opacity: 0; } 50% { opacity: 1; } }
     .focus-section { align-items: center; }
     .focus-section .dock-heading { align-self: stretch; }
-    /* Focus dial mirrors NotchFocusView: a 240° arc (open at the bottom), 0–12 h on one scale, 104×92pt. */
+    /* Keep Awake dial mirrors NotchFocusView: a 240° arc (open at the bottom), 0–12 h on one scale, 104×92pt. */
     .focus-dial { height: calc(92 * var(--pt)); margin-top: calc(9 * var(--pt)); position: relative; touch-action: none; user-select: none; -webkit-user-select: none; width: calc(104 * var(--pt)); }
     .focus-dial svg:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
     .focus-dial svg { height: 100%; left: 0; overflow: visible; position: absolute; top: 0; width: 100%; }
@@ -500,8 +500,8 @@
             <button class="menu-item" type="button" data-launch="Desktop" data-kind="folder"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M2.5 5.8A1.8 1.8 0 0 1 4.3 4h4l1.7 2h5.7a1.8 1.8 0 0 1 1.8 1.8v6.4a1.8 1.8 0 0 1-1.8 1.8H4.3a1.8 1.8 0 0 1-1.8-1.8V5.8Z"/></svg>Desktop</button>
             <div class="menu-sep" role="separator"></div>
             <div class="menu-sub">
-              <button class="menu-item" type="button" data-awake-toggle aria-expanded="false" aria-controls="awake-menu-demo"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M3 5h11v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V5Zm11 1.5h1.2a2.6 2.6 0 0 1 0 5.2H13.6ZM2 16.5h13v1.4H2Z"/></svg><span data-awake-title>Keep Mac Awake</span><span class="menu-key">›</span></button>
-              <div class="status-menu submenu" id="awake-menu-demo" data-awake-menu role="group" aria-label="Keep Mac Awake" hidden>
+              <button class="menu-item" type="button" data-awake-toggle aria-expanded="false" aria-controls="awake-menu-demo"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M3 5h11v5a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V5Zm11 1.5h1.2a2.6 2.6 0 0 1 0 5.2H13.6ZM2 16.5h13v1.4H2Z"/></svg><span data-awake-title>Keep Awake</span><span class="menu-key">›</span></button>
+              <div class="status-menu submenu" id="awake-menu-demo" data-awake-menu role="group" aria-label="Keep Awake" hidden>
                 <button class="menu-item" type="button" data-awake-off>Turn Off</button>
                 <div class="menu-sep" role="separator" data-awake-off-sep></div>
                 <button class="menu-item" type="button" data-awake-minutes="30">30 Minutes</button>
@@ -512,12 +512,11 @@
               </div>
             </div>
             <div class="menu-sep" role="separator"></div>
-            <button class="menu-item" type="button" data-menu-action="settings">Settings...<span class="menu-key">⌥,</span></button>
-            <button class="menu-item" type="button" data-menu-action="qa"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7.8 7.8a2.3 2.3 0 1 1 3.2 2.1c-.7.3-1 .8-1 1.5v.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="14.4" r="1" fill="currentColor"/></svg>Q&amp;A</button>
-            <div class="menu-sep" role="separator"></div>
+            <button class="menu-item" type="button" data-menu-action="settings">Settings…<span class="menu-key">⌥,</span></button>
+            <button class="menu-item" type="button" data-menu-action="qa">Q&amp;A</button>
             <button class="menu-item" type="button" data-menu-action="updates">Check for Updates…</button>
             <div class="menu-sep" role="separator"></div>
-            <button class="menu-item" type="button" data-menu-action="quit">Quit</button>
+            <button class="menu-item" type="button" data-menu-action="quit">Quit Chap<span class="menu-key">⌘Q</span></button>
           </div>
 
           <div class="desktop-copy" aria-hidden="true"><strong>chap.</strong><span>Press ⌥N and watch it land.</span></div>
@@ -546,9 +545,9 @@
                   <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.30.44 AM.png" data-kind="screenshot"><span class="shot-thumb shot-c" aria-hidden="true"></span><span class="dock-label">Screensh…44 AM.png</span></button>
                   <button class="dock-row shot-row" type="button" data-launch="Screenshot 9.12.09 AM.png" data-kind="screenshot"><span class="shot-thumb shot-d" aria-hidden="true"></span><span class="dock-label">Screensh…09 AM.png</span></button>
                 </div>
-                <div class="dock-section focus-section" role="group" aria-label="Focus">
-                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M11.6 1.5 4 11h5l-1.4 7.5L16 9h-5.2l.8-7.5Z"/></svg>Focus</div>
-                  <div class="focus-dial" data-focus-dial><svg viewBox="0 0 104 92" data-focus-slider role="slider" tabindex="0" aria-label="Focus length" aria-valuemin="1" aria-valuemax="12" aria-valuenow="4" aria-valuetext="4 hours"><path class="track" d="M13.89 70.00A44 44 0 1 1 90.11 70.00" pathLength="100"/><path class="fill" data-focus-fill d="M13.89 70.00A44 44 0 1 1 90.11 70.00" pathLength="100" stroke-dasharray="33.33 100"/><circle class="tick" cx="21.69" cy="30.50" r="1"/><circle class="tick" cx="52.00" cy="13.00" r="1"/><circle class="tick" cx="82.31" cy="30.50" r="1"/><circle class="knob" data-focus-knob cx="0" cy="0" r="5"/><text class="scale" x="13.89" y="90" text-anchor="middle">0</text><text class="scale" x="90.11" y="90" text-anchor="middle">12h</text></svg><button class="focus-center" type="button" data-focus-center aria-label="Turn on for 4 hours"><span class="value" data-focus-value>4h</span><span class="state" data-focus-state>On</span></button></div>
+                <div class="dock-section focus-section" role="group" aria-label="Keep Awake">
+                  <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M11.6 1.5 4 11h5l-1.4 7.5L16 9h-5.2l.8-7.5Z"/></svg>Keep Awake</div>
+                  <div class="focus-dial" data-focus-dial><svg viewBox="0 0 104 92" data-focus-slider role="slider" tabindex="0" aria-label="Keep Awake length" aria-valuemin="1" aria-valuemax="12" aria-valuenow="4" aria-valuetext="4 hours"><path class="track" d="M13.89 70.00A44 44 0 1 1 90.11 70.00" pathLength="100"/><path class="fill" data-focus-fill d="M13.89 70.00A44 44 0 1 1 90.11 70.00" pathLength="100" stroke-dasharray="33.33 100"/><circle class="tick" cx="21.69" cy="30.50" r="1"/><circle class="tick" cx="52.00" cy="13.00" r="1"/><circle class="tick" cx="82.31" cy="30.50" r="1"/><circle class="knob" data-focus-knob cx="0" cy="0" r="5"/><text class="scale" x="13.89" y="90" text-anchor="middle">0</text><text class="scale" x="90.11" y="90" text-anchor="middle">12h</text></svg><button class="focus-center" type="button" data-focus-center aria-label="Turn on for 4 hours"><span class="value" data-focus-value>4h</span><span class="state" data-focus-state>On</span></button></div>
                 </div>
                 <div class="dock-section" role="group" aria-label="Apps">
                   <div class="dock-heading" aria-hidden="true"><svg viewBox="0 0 20 20"><rect x="4" y="3" width="12" height="14" rx="3" fill="currentColor"/></svg>Apps</div>
@@ -599,8 +598,8 @@
         </div>
         <div class="feature-grid">
           <article class="feature-card feature-card--wide">
-            <div class="card-number">01 · NOTCH LAUNCHER</div><h3>Six slots. Your order.</h3><p>Two shelf slots for Screenshots and Downloads, then four for Launchers, Apps, Focus, and To-do. Launchers tabs between Sites and Finder; Apps tabs between six app icons and your Layouts. Fold a shelf away and it waits as an icon beside the notch.</p>
-            <div class="shortcut-cloud" aria-hidden="true"><span class="shortcut-chip"><b>1</b> Launchers</span><span class="shortcut-chip"><b>2</b> Apps</span><span class="shortcut-chip"><b>3</b> Focus</span><span class="shortcut-chip"><b>4</b> To-do</span></div>
+            <div class="card-number">01 · NOTCH LAUNCHER</div><h3>Six slots. Your order.</h3><p>Two shelf slots for Screenshots and Downloads, then four for Launchers, Apps, Keep Awake, and To-do. Launchers tabs between Sites and Finder; Apps tabs between six app icons and your Layouts. Fold a shelf away and it waits as an icon beside the notch.</p>
+            <div class="shortcut-cloud" aria-hidden="true"><span class="shortcut-chip"><b>1</b> Launchers</span><span class="shortcut-chip"><b>2</b> Apps</span><span class="shortcut-chip"><b>3</b> Keep Awake</span><span class="shortcut-chip"><b>4</b> To-do</span></div>
           </article>
           <article class="feature-card feature-card--narrow">
             <div class="card-number">02 · EXACT PLACEMENT</div><h3>Every window lands where intended.</h3><p>Choose a display and size preset for centered launches, or capture a Layout you arranged yourself. Chap reads Accessibility bounds back and corrects apps that clamp their size.</p><div class="screen-map" aria-hidden="true"></div>
@@ -609,7 +608,7 @@
             <div class="card-number">03 · LIQUID GLASS</div><h3>Clear or Regular, any appearance.</h3><p>On macOS 26+, Apple Liquid Glass pairs semantic text with your pick of Clear or Regular material and any System, Light, or Dark appearance. Custom color remains available everywhere else.</p><div class="glass-samples" aria-hidden="true"><div class="glass-sample">Clear</div><div class="glass-sample">Regular</div></div>
           </article>
           <article class="feature-card feature-card--half">
-            <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the notch's Focus dial winds down with a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
+            <div class="card-number">04 · KEEP AWAKE</div><h3>A visible session, never a mystery.</h3><p>Keep the display awake for 30 minutes to 12 hours. The icon turns Chap blue, and the notch's Keep Awake dial winds down with a live h:mm:ss countdown.</p><div class="awake-clock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9h12v5a6 6 0 0 1-12 0V9Zm12 2h2a2 2 0 0 1 0 4h-2M7 5c0-1 1-1 1-2m3 2c0-1 1-1 1-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg><span>1:59:42</span></div>
           </article>
         </div>
       </div>
@@ -651,8 +650,8 @@
         <div class="section-heading"><p class="eyebrow">Product history</p><h2 id="history-title">The releases that changed Chap.</h2><p>A curated record of meaningful workflow shifts, not every patch.</p></div>
         <div class="timeline">
           <article class="timeline-item"><span class="timeline-version">v2.8.4</span><h3>Quick Note gets its own window</h3><p>⌥N opens the note in a floating window that starts under the notch, Esc closes it after saving, and Chap keeps the previous version in Backups. The app icon becomes the pixel seal.</p></article>
-          <article class="timeline-item"><span class="timeline-version">v2.8.0</span><h3>A dial and a checklist</h3><p>Focus becomes a dial you drag from 1 to 12 hours, and a To-do slot keeps a short checklist in the notch, with a little tail flick from the seal for every item you finish.</p></article>
-          <article class="timeline-item"><span class="timeline-version">v2.7.1</span><h3>Chap gets a face</h3><p>Chap the Seal lives beside the notch and dives in when Focus starts, Focus becomes one ring, Chap Drop remembers originals instead of copying them, and shelves fold into the strip.</p></article>
+          <article class="timeline-item"><span class="timeline-version">v2.8.0</span><h3>A dial and a checklist</h3><p>Keep Awake becomes a dial you drag from 1 to 12 hours, and a To-do slot keeps a short checklist in the notch, with a little tail flick from the seal for every item you finish.</p></article>
+          <article class="timeline-item"><span class="timeline-version">v2.7.1</span><h3>Chap gets a face</h3><p>Chap the Seal lives beside the notch and dives in when Keep Awake starts, Keep Awake becomes one ring, Chap Drop remembers originals instead of copying them, and shelves fold into the strip.</p></article>
           <article class="timeline-item"><span class="timeline-version">v2.1.0</span><h3>Focused on windows, paged in the notch</h3><p>Twelve notch slots on three swipeable pages, Clear or Regular Glass with any appearance, and a launcher trimmed to URL, App, and Finder.</p></article>
           <article class="timeline-item"><span class="timeline-version">v2.0.0</span><h3>The notch becomes a command surface</h3><p>Configurable launcher slots, Chap Drop, screenshot access, Liquid Glass, Keep Awake status, native accessibility, and a menu fallback that never went away.</p></article>
           <article class="timeline-item"><span class="timeline-version">v1.3.0</span><h3>Keep the display awake on demand</h3><p>Timed display assertions, active icon feedback, and menu-section curation arrived.</p></article>
@@ -759,14 +758,14 @@
         const active = awakeEnd && remaining() > 0;
         awakeOff.hidden = !active;
         awakeOffSep.hidden = !active;
-        if (!active) { awakeTitle.textContent = "Keep Mac Awake"; return; }
+        if (!active) { awakeTitle.textContent = "Keep Awake"; return; }
         const minutes = Math.ceil(remaining() / 60);
         const hours = Math.floor(minutes / 60);
         const rest = minutes % 60;
         const label = hours === 0 ? `${rest}m` : rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
-        awakeTitle.textContent = `Keep Mac Awake — ${label} left`;
+        awakeTitle.textContent = `Keep Awake — ${label} left`;
       };
-      // Focus dial mirrors KeepAwakePolicy: one 0–12 h scale. Off, the arc is the picked length;
+      // Keep Awake dial mirrors KeepAwakePolicy: one 0–12 h scale. Off, the arc is the picked length;
       // on, the same arc winds down with the time left.
       const dialPoint = (fraction, radius) => {
         const angle = (-210 + 240 * fraction) * Math.PI / 180;
@@ -780,7 +779,7 @@
         focusKnob.setAttribute("cy", ky.toFixed(2));
         focusValue.textContent = awakeEnd ? awakeClock.textContent : `${focusHours}h`;
         focusState.textContent = awakeEnd ? "Off" : "On";
-        focusCenter.setAttribute("aria-label", awakeEnd ? `Focus on, ${awakeClock.textContent} left. Press to turn off.` : `Turn on for ${focusHours} hours`);
+        focusCenter.setAttribute("aria-label", awakeEnd ? `Keep Awake on, ${awakeClock.textContent} left. Press to turn off.` : `Turn on for ${focusHours} hours`);
         focusSlider.setAttribute("aria-valuenow", String(focusHours));
         focusSlider.setAttribute("aria-valuetext", `${focusHours} hours`);
         focusSlider.setAttribute("aria-disabled", String(Boolean(awakeEnd)));

@@ -1,10 +1,10 @@
 import SwiftUI
 
-// MARK: - Focus (Keep Mac Awake · Timer)
+// MARK: - Keep Awake 칸 (Keep Awake · Timer)
 
-/// 노치 한 칸의 Focus. 다이얼 하나로 Keep Mac Awake 세션(1~12시간)이나 타이머(5~60분)를 켠다.
+/// 노치 Keep Awake 칸(2.17까지 이름 Focus). 다이얼 하나로 Keep Awake 세션(1~12시간)이나 타이머(5~60분)를 켠다.
 /// 제목 줄의 번개·타이머 아이콘으로 모드를 바꾸고, 마지막 모드를 기억한다. 둘 다 상태바 메뉴의
-/// Keep Mac Awake·Timer와 같은 세션이다.
+/// Keep Awake·Timer와 같은 세션이다.
 struct NotchFocusView: View {
     let palette: NotchWidgetPalette
     /// 도커를 열 때의 세션 종료 시각. 이후 변화는 알림으로 받는다.
@@ -17,7 +17,7 @@ struct NotchFocusView: View {
 
     private static let modeIDs = FocusDialMode.allCases.map(\.rawValue)
 
-    /// Keep Mac Awake 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
+    /// Keep Awake 세션을 켜고 끄는 요청. 컨트롤러가 앱의 KeepAwakeController로 전달한다.
     static let activateRequest = Notification.Name("ChapFocusActivate")
     static let deactivateRequest = Notification.Name("ChapFocusDeactivate")
     /// 타이머 시작·중지 요청. AppDelegate가 `ChapTimerController`로 전달한다. 시작 object는 길이(초).
@@ -36,13 +36,13 @@ struct NotchFocusView: View {
             initialValue: Self.previewMode
                 ?? FocusDialMode.initial(
                     stored: UserDefaults.standard.string(forKey: FocusDialMode.storageKey),
-                    isFocusRunning: (sessionEnd ?? .distantPast) > now,
+                    isAwakeRunning: (sessionEnd ?? .distantPast) > now,
                     isTimerRunning: (timerEnd ?? .distantPast) > now))
     }
 
     private func isRunning(_ mode: FocusDialMode) -> Bool {
         switch mode {
-        case .focus: return (sessionEnd ?? .distantPast) > Date()
+        case .keepAwake: return (sessionEnd ?? .distantPast) > Date()
         case .timer: return (timerEnd ?? .distantPast) > Date()
         }
     }
@@ -52,14 +52,15 @@ struct NotchFocusView: View {
             header
             Group {
                 switch mode {
-                case .focus: NotchFocusAwakeBody(palette: palette, sessionEnd: sessionEnd)
+                case .keepAwake: NotchFocusAwakeBody(palette: palette, sessionEnd: sessionEnd)
                 case .timer: NotchFocusTimerBody(palette: palette, endDate: timerEnd)
                 }
             }
             .id(mode)
             .transition(motion.transition)
             .offset(x: motion.nudge)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            // 다이얼은 칸 가운데. 칸 폭을 제목 줄("Keep Awake")이 정해 다이얼보다 넓으므로 왼쪽에 두면 한쪽으로 쏠린다.
+            .frame(maxWidth: .infinity, alignment: .top)
             .frame(height: widgetBodyHeight, alignment: .top)
         }
         // 트랙패드 두 손가락 가로 스와이프로 Focus ↔ Timer. 다이얼의 호 끌기는 클릭 드래그라 섞이지 않는다.
@@ -136,9 +137,9 @@ struct NotchFocusView: View {
     }
 }
 
-// MARK: - Focus 모드 (Keep Mac Awake)
+// MARK: - Keep Awake 모드
 
-/// Focus 모드 본문. 다이얼로 1~12시간을 고르고 가운데를 눌러 Keep Mac Awake를 켠다.
+/// Keep Awake 모드 본문. 다이얼로 1~12시간을 고르고 가운데를 눌러 Keep Awake를 켠다.
 struct NotchFocusAwakeBody: View {
     let palette: NotchWidgetPalette
     let sessionEnd: Date?
@@ -194,7 +195,7 @@ struct NotchFocusAwakeBody: View {
             .accessibilityLabel("Turn on for \(dialHours) hours")
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Focus length")
+        .accessibilityLabel("Keep Awake length")
         .accessibilityValue("\(dialHours) hours")
         .accessibilityAdjustableAction { direction in
             switch direction {
@@ -233,11 +234,11 @@ struct NotchFocusAwakeBody: View {
                 }
                 .buttonStyle(FocusPressStyle())
                 .onHover { isCenterHovered = $0 }
-                .help("Turn off Keep Mac Awake")
+                .help("Turn off Keep Awake")
                 .accessibilityLabel(
-                    "Focus on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
+                    "Keep Awake on, \(KeepAwakePolicy.remainingLabel(until: end, now: context.date)) left"
                 )
-                .accessibilityHint("Turns Focus off")
+                .accessibilityHint("Turns Keep Awake off")
             }
         }
     }

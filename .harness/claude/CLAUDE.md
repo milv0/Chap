@@ -16,7 +16,7 @@ and six apps), then centers resizable windows on the selected display.
 
 Beyond the always-present status menu it also offers an optional Notch Launcher
 (a six-slot panel that expands from the MacBook notch, with Chap Drop and a
-Screenshot Shelf), Keep Mac Awake sessions, and Sparkle-based update checks.
+Screenshot Shelf), Keep Awake sessions, and Sparkle-based update checks.
 
 The project is XcodeGen-based:
 
@@ -58,7 +58,7 @@ Chap/
 │   │   ├── ChapDrop.swift            # Chap Drop store (~/Library/Application Support/Chap/Drop/)
 │   │   ├── ScreenshotShelf.swift     # Reads the system screenshot folder
 │   │   ├── ThumbnailLoader.swift     # Async thumbnails for Drop/Screenshot rows
-│   │   ├── KeepAwakeController.swift  # IOKit Keep Mac Awake session (wall-clock timer)
+│   │   ├── KeepAwakeController.swift  # IOKit Keep Awake session (wall-clock timer)
 │   │   ├── KeepAwakeHUD.swift        # Keep Awake start/stop HUD
 │   │   ├── UpdateController.swift    # Sparkle updater (fail-closed)
 │   │   ├── Launchers/                # URL/App/Finder launch behavior
@@ -109,7 +109,7 @@ search user tabs or fall back to the focused/frontmost Chrome window.
 
 Notch Launcher (optional, off by default): `NotchLauncherController` renders a
 `.nonactivatingPanel` under the hardware notch that expands on hover and holds
-six slots (Screenshots, Downloads, Launchers (Sites/Finder list tabs), Apps (app icons/Layouts tabs), Focus (Keep Awake or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge). On a screen without
+six slots (Screenshots, Downloads, Launchers (Sites/Finder list tabs), Apps (app icons/Layouts tabs), Keep Awake (display-awake session or Timer on one dial), or To-do; Mirror, Quick Note, and Cover Screens are icons in the black top strip beside the Drop badge). On a screen without
 a notch it draws no window at the top: a 150ms pointer poll over the top-center
 `hoverZone` opens the same dock and the Drop badge is suppressed, because a transparent
 window over the menu bar swallows the clicks that belong to it. It is an additive
@@ -119,7 +119,7 @@ and removing never deletes an original) and the
 Screenshot Shelf reads the system screenshot folder in place. Notch geometry is
 computed in `ChapCore/NotchGeometry.swift` (see `NOTCH.md`).
 
-Keep Mac Awake: `KeepAwakeController` holds an IOKit
+Keep Awake: `KeepAwakeController` holds an IOKit
 `PreventUserIdleDisplaySleep` assertion for a `KeepAwakePolicy` preset (30m to
 12h). Expiry is wall-clock based via a `DispatchSourceTimer` scheduled with
 `wallDeadline`, so sleep time counts; expiry is re-checked on system/screen wake

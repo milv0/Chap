@@ -32,7 +32,7 @@ extension AppDelegate {
         }
         chapTimer.onEvent = { [weak self] event in self?.handleTimerEvent(event) }
         buildMenu()
-        // 노치 Focus 위젯이 Keep Mac Awake 세션을 켜고 끈다 (메뉴와 같은 세션).
+        // 노치 Keep Awake 위젯이 Keep Awake 세션을 켜고 끈다 (메뉴와 같은 세션).
         focusObservers = [
             NotificationCenter.default.addObserver(
                 forName: NotchFocusView.activateRequest, object: nil, queue: .main

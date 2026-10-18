@@ -137,7 +137,7 @@ struct NotchRenderTool {
             // 빈 To-do: 항목 없이 추가 줄만 있는 모습.
             NotchTodoView.previewItems = name.hasSuffix("todo-empty") ? [] : previewTodos
             // Focus 칸은 이름에 "-timer"가 있으면 Timer 모드로 그린다.
-            NotchFocusView.previewMode = name.contains("-timer") ? .timer : .focus
+            NotchFocusView.previewMode = name.contains("-timer") ? .timer : .keepAwake
             // Launchers 칸: 라이트는 Sites 탭, 다크는 Finder 탭을 그린다.
             NotchLaunchersTabPreview.tab = name.hasSuffix("dark-launchers") ? .finder : .url
             NotchLaunchersTabPreview.appsTab = name.hasSuffix("-layouts") ? .layouts : .apps

@@ -293,7 +293,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
     case screenshots = "screenshots"
     /// 다운로드 선반: ~/Downloads의 최근 파일을 모아 보여준다.
     case downloads = "downloads"
-    /// Focus 모드: 다이얼 하나로 Keep Mac Awake 세션(1~12시간)이나 타이머(5~60분)를 켜고 끈다.
+    /// Keep Awake 칸: 다이얼 하나로 Keep Awake 세션(1~12시간)이나 타이머(5~60분)를 켜고 끈다.
     case awake = "awake"
     /// Chap Drop: 떨어뜨린 파일을 보관함에 모아 보여준다.
     case drop = "drop"

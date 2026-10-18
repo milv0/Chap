@@ -24,7 +24,7 @@ blue competing with content. Titles and labels stay neutral gray.
 | Section title icons on dark backgrounds | `#89A3FF` at 90% | `DS.notchIconColor(onDarkBackground: true)` |
 | Section title icons on light backgrounds | `#3664FF` at 75% | `DS.notchIconColor(onDarkBackground: false)` |
 | Black top strip widgets (Drop box, Mirror, Quick Note) | White at 85%, 100% on hover | `DS.notchStripIconColor` |
-| Active strip tool, Focus bolt when running | `#3664FF` | `DS.accent` |
+| Active strip tool, Keep Awake bolt when running | `#3664FF` | `DS.accent` |
 
 ## Mascot sprite
 
@@ -38,16 +38,16 @@ AppKit (`NSColor`) both derive from it, and a test pins the table below.
 | Outline, eyes, mouth | `#161A30` | `o`, `e` |
 | Body | `#FFFFFF` | `w` |
 | Shade | `#B0BED8` | `s` |
-| Focus water | `#2440AA` | (overlay) |
-| Focus wave crest | `#6E91FF` | (overlay) |
-| Focus splash | `#A0B9FF` | (overlay) |
+| Keep Awake water | `#2440AA` | (overlay) |
+| Keep Awake wave crest | `#6E91FF` | (overlay) |
+| Keep Awake splash | `#A0B9FF` | (overlay) |
 
-The seal lives on the black strip at 1.5pt per pixel. (The 2pt Focus-slot size and
+The seal lives on the black strip at 1.5pt per pixel. (The 2pt Keep Awake-slot size and
 sleep z from 2.5.0 remain in `ChapMascot` but are not drawn.)
 
 ## Keep Awake HUD
 
-The center HUD uses the same seal: awake with its tail up when Focus starts,
+The center HUD uses the same seal: awake with its tail up when Keep Awake starts,
 eyes closed with a z when it ends. The seal sits on an accent `#3664FF` tile
 (radius 16) because its white body would wash out on the light HUD material.
 

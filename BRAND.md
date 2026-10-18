@@ -30,14 +30,14 @@ motions are small: a tail flick when you open the notch and now and then (every
 still when the notch is closed or Reduce Motion is on. Keep it calm: a friend
 resting nearby, not a pet asking for attention.
 
-When Focus starts (you click the dial's center), the seal dives in: it crouches, hops, splashes into the
-water, and pops back up (about 1 s, once). Focus is immersion, and a seal is at
+When Keep Awake starts (you click the dial's center), the seal dives in: it crouches, hops, splashes into the
+water, and pops back up (about 1 s, once). A long session is immersion, and a seal is at
 home in the water, but the dive is the moment of starting, not a scene that
 stays: afterwards the water is gone and the seal rests in its place, wagging its
 tail (slower and drowsy in the last 30 minutes). That wag is the one steady
 motion Chap allows, because it means "I'm keeping your Mac awake". Floating,
 paddling, or staying under water were tried and cut: they read as a toy or hide
-the state. The Focus dial shows the time left.
+the state. The Keep Awake dial shows the time left.
 When you check off a to-do, the seal flicks its tail once: a friend noticing,
 not a pet asking for attention.
 
@@ -72,7 +72,7 @@ enough: a friend who snaps things into place.
 
 1. **Clarity first, wit second.** The control label says what it does. Wit
    lives in secondary text, empty states, and moments of success.
-   - Good: a small "Off" under the time left, tooltip "Turn off Keep Mac Awake".
+   - Good: a small "Off" under the time left, tooltip "Turn off Keep Awake".
    - Bad: a button whose meaning you can only guess.
 2. **Speak like a friend at your side, not a butler or a mascot.** Second person,
    plain words. No "Oops!", no exclamation stacks, no emoji in UI strings.
@@ -98,12 +98,12 @@ enough: a friend who snaps things into place.
 | Welcome subtitle | Your friend in the menu bar. Tell me what you open most, and I'll bring it to the center of your screen. |
 | About | Your chap in the menu bar — always close, never in the way. |
 | Mascot | Chap the Seal (the seal is Chap) |
-| Focus dial | the number, with a small On / Off under it (no "Chap": the number leads) |
+| Keep Awake dial | the number, with a small On / Off under it (no "Chap": the number leads) |
 | Cover Screens (menu) | Cover Screens / Uncover Screens |
 | Cover Screens (help) | Keeps your screens dark while you're on break. |
 | Cover Screens (cover) | Tap ⌥ Option to come back |
-| Focus (stop) | Off (tooltip "Turn off Keep Mac Awake") |
-| Focus (running) | (no caption; the dial and the time left say it) |
+| Keep Awake (stop) | Off (tooltip "Turn off Keep Awake") |
+| Keep Awake (running) | (no caption; the dial and the time left say it) |
 
 ## Do / Don't
 
@@ -112,7 +112,7 @@ enough: a friend who snaps things into place.
 | "Hi, I'm your chap." | "Welcome to the ultimate productivity suite!" |
 | "Nothing is recorded or saved." | "Your privacy is our top priority!!" |
 | "No downloads yet" | "Oops, nothing here yet 😢" |
-| "Off" under the time left (with tooltip "Turn off Keep Mac Awake") | "Wind down", "Terminate session" |
+| "Off" under the time left (with tooltip "Turn off Keep Awake") | "Wind down", "Terminate session" |
 | One friendly aside per screen | A pun in every label |
 | "Cover Screens" for the screen cover | "Lock", "Password", "Secure" — it locks nothing |
 
