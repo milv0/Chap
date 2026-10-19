@@ -501,6 +501,13 @@ extension AppDelegate {
         QuickNoteWindow.show()
     }
 
+    /// 가림막이 걷혔을 때(⌥ 탭이든 연타든) 화면 가운데에 "Welcome back"을 잠깐 띄운다. 켜질 때는 아무것도 하지 않는다.
+    func showWelcomeBackAfterCoverScreens() {
+        guard !coverScreensController.isOn else { return }
+        KeepAwakeHUD.show(
+            message: CoverScreensReturnPolicy.welcomeBack, focusOn: true, anyScreen: true)
+    }
+
     @objc func toggleCoverScreens() {
         coverScreensController.messageProvider = { [weak self] in
             self?.config.coverScreensMessage
