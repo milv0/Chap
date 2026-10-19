@@ -137,3 +137,8 @@ public enum CoverScreensPolicy {
     /// 설정·메뉴의 보조 한 줄.
     public static let subtitle = "Keeps your screens dark while you're on break."
 }
+
+/// 가림막을 걷고 돌아왔을 때 잠깐 띄우는 인사. 깨어 꼬리를 든 물범과 한 줄뿐이다.
+enum CoverScreensReturnPolicy {
+    static let welcomeBack = "Welcome back"
+}

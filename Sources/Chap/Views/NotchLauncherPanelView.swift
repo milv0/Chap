@@ -529,8 +529,12 @@ struct NotchLauncherPanelView: View {
         .onAppear {
             refreshDropFiles()
             checkScreenshots()
+            checkDownloads()
         }
-        .onReceive(screenshotCheckTimer) { _ in checkScreenshots() }
+        .onReceive(screenshotCheckTimer) { _ in
+            checkScreenshots()
+            checkDownloads()
+        }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
         ) { _ in
@@ -561,13 +565,49 @@ struct NotchLauncherPanelView: View {
     private let screenshotCheckTimer = Timer.publish(every: 2, on: .main, in: .common)
         .autoconnect()
 
-    /// 사용자가 접은 칸 + 비어서 저절로 접힌 칸.
+    /// 사용자가 접어 둔 Downloads 칸을 최근 다운로드(10분 이내) 때문에 이번에만 펼쳤는지. 저장하지 않는다.
+    /// 첫 프레임은 지난번에 읽은 값으로 정해 열자마자 폭이 바뀌지 않는다.
+    @State private var downloadsAutoExpanded = DownloadsShelf.initiallyRecent
+
+    /// 사용자가 접은 칸 + 비어서 저절로 접힌 칸 − 최근 다운로드로 저절로 펼친 칸.
     private var effectiveCollapsed: [NotchWidget] {
         var list = reveal.collapsedWidgets
         if screenshotsAutoCollapsed, !autoCollapseDismissed, !list.contains(.screenshots) {
             list.append(.screenshots)
         }
+        if downloadsAutoExpanded { list.removeAll { $0 == .downloads } }
         return list
+    }
+
+    /// 접어 둔 Downloads 칸이 배치돼 있으면 가장 새 다운로드를 보고, 10분 이내면 펼친다.
+    /// 열려 있는 동안에는 펼치기만 한다(시간이 지나도 마우스 아래에서 접히지 않는다. 다음에 열 때 접힌다).
+    private func checkDownloads() {
+        guard DownloadsShelf.previewOverride == nil, !downloadsAutoExpanded,
+            reveal.collapsedWidgets.contains(.downloads),
+            let slot = slots.first(where: { $0.collapsibleWidget == .downloads })
+        else { return }
+        DownloadsShelf.newestDownloadAsync { newest in
+            guard !downloadsAutoExpanded, reveal.collapsedWidgets.contains(.downloads),
+                ShelfAutoCollapsePolicy.expandsDownloads(
+                    newest: newest, dismissed: DownloadsShelf.dismissedNewest, now: Date())
+            else { return }
+            // 펼칠 때는 창을 먼저 넓히고 다음 틱에 펼친다.
+            onPrepareExpand(width(for: slot) + DS.notchColumnGap)
+            DispatchQueue.main.async {
+                withAnimation(.smooth(duration: 0.22)) { downloadsAutoExpanded = true }
+            }
+        }
+    }
+
+    /// Downloads 칸의 접기: 저절로 펼친 칸이면 이번 다운로드에 대해서만 접고(더 새 파일이 오면 다시 펼친다),
+    /// 아니면 평소처럼 접어 저장한다.
+    private func collapseDownloads() {
+        guard downloadsAutoExpanded else {
+            setCollapsed(.downloads, true)
+            return
+        }
+        DownloadsShelf.dismissedNewest = DownloadsShelf.lastKnownNewest
+        withAnimation(.smooth(duration: 0.22)) { downloadsAutoExpanded = false }
     }
 
     /// Screenshots 칸이 배치돼 있으면 스크린샷 유무를 확인한다(칸이 접혀 있어도).
@@ -701,7 +741,8 @@ struct NotchLauncherPanelView: View {
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
-                onCollapse: { setCollapsed(.downloads, true) },
+                onCollapse: collapseDownloads,
+                isAutoExpanded: downloadsAutoExpanded,
                 onEmptyChange: { setShelfEmpty(.downloads, $0) })
         case .awake:
             NotchFocusView(

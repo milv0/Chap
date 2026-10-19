@@ -22,11 +22,11 @@ Sources/
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── ChapTimerController.swift  ← 카운트다운 타이머(한 번에 하나, 메모리만, wallDeadline·wake 재확인)
 │   ├── AppDelegate+Timer.swift    ← 메뉴 Timer ▸(길이·Stop), 끝 알림(Glass 소리·HUD), 노치 배지 갱신
-│   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료 중앙 HUD 오버레이 (픽셀 물범 + 문구)
+│   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료·Time's up·Welcome back 중앙 HUD 오버레이 (픽셀 물범 + 문구)
 │   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (z 여백 고정, HUD 등 AppKit 자리)
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
-│   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스 (utility queue, 받은 시각 순)
+│   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스·가장 새 다운로드 시각 캐시 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
 │   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 borderless floating Quick Note 카드 (노치 아래 시작, 크기 기억, 헤더 드래그·Esc/× 닫기)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
@@ -112,7 +112,7 @@ Sources/
 │   ├── ResizeLogRetention.swift  ← Debug 리사이즈 로그 보존 기간 판정 (순수 로직)
 │   ├── MinimumSizeNoticePolicy.swift ← 앱 최소 크기 클램프 사용자 안내 정책 (순수 로직)
 │   ├── ChromeReuseRetryPolicy.swift ← 창 재사용 스크립트 일시 오류 재시도 정책 (순수 로직)
-│   ├── CoverScreensPolicy.swift      ← Cover Screens ⌥ 탭 판정(OptionTap)·연타 판정·문구 정리 (순수 로직)
+│   ├── CoverScreensPolicy.swift      ← Cover Screens ⌥ 탭 판정(OptionTap)·연타 판정·문구 정리·돌아왔을 때 인사(CoverScreensReturnPolicy) (순수 로직)
 │   ├── TimerPolicy.swift          ← 타이머 길이(5분 단위 5~60분)·공용 다이얼 변환·시계 표시·메뉴 문구 (순수 로직)
 │   ├── KeepAwakePolicy.swift      ← Keep Awake 프리셋·남은 시간 표시·벽시계 만료·공용 다이얼 각도↔시간 (순수 로직)
 │   ├── FocusDialMode.swift        ← Keep Awake 칸의 Keep Awake/Timer 모드 선택·저장값·실행 중 모드 우선 규칙 (순수 로직)
@@ -121,7 +121,7 @@ Sources/
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책·노치 없는 화면의 띠 높이·hover 구역
 │   ├── DropStore.swift        ← Chap Drop 원본 북마크 참조·임시 위치 사본·빼기(원본 미삭제) 규칙
-│   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접는 규칙
+│   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접고, 10분 안의 다운로드가 있으면 접어 둔 Downloads 칸을 이번에만 펼치는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
 │   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크 색(RGB 단일 출처)·동작 타이밍
@@ -135,7 +135,7 @@ Sources/
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책·Launchers·Apps 탭 선택(AppsSlotTab)·칸 폭·Apps 격자 열 수
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
-│   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·짧은 시각
+│   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·가장 새 시각·짧은 시각
 │   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트

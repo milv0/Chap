@@ -33,6 +33,14 @@ public enum DownloadsShelfPolicy {
     }
 
     /// 후보만 남겨 최근 순(받은 시각, 없으면 수정 시각)으로 정렬하고 최대 개수로 자른다.
+    /// 선반에 오를 파일 중 가장 새로 받은 시각(받는 중·숨김·폴더는 뺀다). 없으면 nil.
+    public static func newestDate(files: [(name: String, isDirectory: Bool, date: Date)]) -> Date? {
+        files.filter { isCandidate(fileName: $0.name, isDirectory: $0.isDirectory) }
+            .map(\.date)
+            .filter { $0 != .distantPast }
+            .max()
+    }
+
     public static func shelfSelection(
         files: [(name: String, isDirectory: Bool, date: Date)]
     ) -> [String] {

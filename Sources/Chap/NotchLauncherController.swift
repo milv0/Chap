@@ -176,6 +176,12 @@ final class NotchLauncherController {
         installHotzone(on: screen)
         // 첫 도커도 To-do 칸이 맞는 폭으로 열리도록 항목을 미리 읽어 둔다(파일 읽기는 직렬 큐).
         NotchTodoView.preloadTitles()
+        // 접어 둔 Downloads 칸이 있으면 가장 새 다운로드 시각을 미리 읽어, 첫 도커가 맞는 모양(펼침/접힘)으로 열린다.
+        if collapsedWidgetsProvider().contains(.downloads),
+            slotsProvider().contains(where: { $0.collapsibleWidget == .downloads })
+        {
+            DownloadsShelf.newestDownloadAsync { _ in }
+        }
         applyGlassAppearance(to: panel)
         installDropObserverIfNeeded()
         updateDropBadge()

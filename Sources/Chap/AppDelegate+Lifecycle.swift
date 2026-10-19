@@ -71,6 +71,7 @@ extension AppDelegate {
                 forName: CoverScreensController.didChangeNotification, object: nil, queue: .main
             ) { [weak self] _ in
                 self?.buildMenu()
+                self?.showWelcomeBackAfterCoverScreens()
             },
             // 선반 제목: Standard 크기로 커서 화면 가운데에 폴더를 연다.
             NotificationCenter.default.addObserver(

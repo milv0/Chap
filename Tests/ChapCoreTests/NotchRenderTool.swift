@@ -421,6 +421,7 @@ struct NotchRenderTool {
             ("hud-focus-on", true, "Keep Awake · 4 Hours"),
             ("hud-focus-off", false, "Keep Awake Off"),
             ("hud-timer-done", true, TimerPolicy.finishedMessage),
+            ("hud-welcome-back", true, CoverScreensReturnPolicy.welcomeBack),
         ] {
             let view = KeepAwakeHUD.makeContentView(message: message, focusOn: focusOn)
             let rep = try #require(view.bitmapImageRepForCachingDisplay(in: view.bounds))
