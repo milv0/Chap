@@ -98,6 +98,8 @@ struct NotchCollapseButton: View {
     let isVisible: Bool
     let foreground: Color
     let hoverBackground: Color
+    /// 툴팁. 저절로 펼친 Downloads 칸에서는 "다음 다운로드까지 접기"를 알린다.
+    var help = "Collapse"
     let action: () -> Void
     @State private var isHovered = false
 
@@ -116,8 +118,8 @@ struct NotchCollapseButton: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .opacity(isVisible ? 1 : 0)
-        .help("Collapse")
-        .accessibilityLabel("Collapse")
+        .help(help)
+        .accessibilityLabel(help)
     }
 }
 

@@ -88,3 +88,50 @@ struct DownloadsShelfPolicyTests {
         #expect(DownloadsShelfPolicy.fullNameRevealDelay < 0.6)
     }
 }
+
+@Suite("ShelfAutoCollapsePolicy – recent downloads open a folded shelf")
+struct RecentDownloadExpandTests {
+    private let now = Date(timeIntervalSince1970: 2_000_000)
+
+    @Test(
+        "a download from the last 10 minutes opens the folded shelf",
+        arguments: [(0.0, true), (60.0, true), (599.0, true), (600.0, false), (3600.0, false)])
+    func window(age: TimeInterval, expands: Bool) {
+        #expect(
+            ShelfAutoCollapsePolicy.expandsDownloads(
+                newest: now.addingTimeInterval(-age), dismissed: nil, now: now) == expands)
+    }
+
+    @Test("no downloads, or a far-future date, keep it folded")
+    func nothingRecent() {
+        #expect(!ShelfAutoCollapsePolicy.expandsDownloads(newest: nil, dismissed: nil, now: now))
+        #expect(
+            !ShelfAutoCollapsePolicy.expandsDownloads(
+                newest: now.addingTimeInterval(3600), dismissed: nil, now: now))
+    }
+
+    @Test("folding it again holds until a newer download arrives")
+    func dismissal() {
+        let first = now.addingTimeInterval(-120)
+        #expect(
+            !ShelfAutoCollapsePolicy.expandsDownloads(newest: first, dismissed: first, now: now))
+        #expect(
+            ShelfAutoCollapsePolicy.expandsDownloads(
+                newest: now.addingTimeInterval(-30), dismissed: first, now: now))
+    }
+
+    @Test("the newest date skips folders, hidden files, and downloads in progress")
+    func newestDate() {
+        let old = now.addingTimeInterval(-900)
+        let fresh = now.addingTimeInterval(-60)
+        let files: [(name: String, isDirectory: Bool, date: Date)] = [
+            ("report.pdf", false, old),
+            ("Photos", true, now),
+            (".DS_Store", false, now),
+            ("movie.mp4.crdownload", false, now),
+            ("deck.key", false, fresh),
+        ]
+        #expect(DownloadsShelfPolicy.newestDate(files: files) == fresh)
+        #expect(DownloadsShelfPolicy.newestDate(files: []) == nil)
+    }
+}
