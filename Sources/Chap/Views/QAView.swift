@@ -202,7 +202,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
-                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다."
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다. 접어 둔 Downloads 칸은 10분 안에 받은 파일이 있으면 노치를 열 때 저절로 펼쳐집니다(접은 설정은 그대로이고, 다시 접으면 다음 다운로드까지 기다립니다)."
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
@@ -271,7 +271,7 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다. 돌아오면 화면 가운데에 \"Welcome back\"이 잠깐 뜹니다."
                 ),
                 (
                     "Cover Screens가 화면을 잠그는 건가요?",
@@ -484,7 +484,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
-                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again."
+                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again. A folded Downloads slot opens by itself when you open the notch within 10 minutes of a download (your setting stays; fold it again and it waits for the next download)."
                 ),
                 (
                     "How does the To-do slot work?",
@@ -553,7 +553,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others. While the cover is up the display stays awake on its own, so you do not need Keep Awake, and the cover stays even after a Keep Awake session ends."
+                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others. While the cover is up the display stays awake on its own, so you do not need Keep Awake, and the cover stays even after a Keep Awake session ends. When you come back, \"Welcome back\" shows for a moment in the middle of the screen."
                 ),
                 (
                     "Does Cover Screens lock my Mac?",
