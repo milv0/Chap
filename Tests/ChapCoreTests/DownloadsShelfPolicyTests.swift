@@ -98,15 +98,15 @@ struct RecentDownloadExpandTests {
         arguments: [(0.0, true), (60.0, true), (599.0, true), (600.0, false), (3600.0, false)])
     func window(age: TimeInterval, expands: Bool) {
         #expect(
-            ShelfAutoCollapsePolicy.expandsDownloads(
+            ShelfAutoCollapsePolicy.expandsForRecent(
                 newest: now.addingTimeInterval(-age), dismissed: nil, now: now) == expands)
     }
 
     @Test("no downloads, or a far-future date, keep it folded")
     func nothingRecent() {
-        #expect(!ShelfAutoCollapsePolicy.expandsDownloads(newest: nil, dismissed: nil, now: now))
+        #expect(!ShelfAutoCollapsePolicy.expandsForRecent(newest: nil, dismissed: nil, now: now))
         #expect(
-            !ShelfAutoCollapsePolicy.expandsDownloads(
+            !ShelfAutoCollapsePolicy.expandsForRecent(
                 newest: now.addingTimeInterval(3600), dismissed: nil, now: now))
     }
 
@@ -114,9 +114,9 @@ struct RecentDownloadExpandTests {
     func dismissal() {
         let first = now.addingTimeInterval(-120)
         #expect(
-            !ShelfAutoCollapsePolicy.expandsDownloads(newest: first, dismissed: first, now: now))
+            !ShelfAutoCollapsePolicy.expandsForRecent(newest: first, dismissed: first, now: now))
         #expect(
-            ShelfAutoCollapsePolicy.expandsDownloads(
+            ShelfAutoCollapsePolicy.expandsForRecent(
                 newest: now.addingTimeInterval(-30), dismissed: first, now: now))
     }
 
@@ -133,5 +133,21 @@ struct RecentDownloadExpandTests {
         ]
         #expect(DownloadsShelfPolicy.newestDate(files: files) == fresh)
         #expect(DownloadsShelfPolicy.newestDate(files: []) == nil)
+    }
+}
+
+@Suite("ScreenshotShelfPolicy – newest screenshot")
+struct NewestScreenshotTests {
+    @Test("the newest date counts only images in the screenshot folder, nil without any")
+    func newestDate() {
+        let now = Date(timeIntervalSince1970: 2_000_000)
+        let fresh = now.addingTimeInterval(-120)
+        let files: [(name: String, modified: Date)] = [
+            ("Screenshot 2026-10-19 at 9.00.00.png", now.addingTimeInterval(-3600)),
+            ("Screenshot 2026-10-19 at 9.58.00.png", fresh),
+            ("notes.txt", now),
+        ]
+        #expect(ScreenshotShelfPolicy.newestDate(files: files) == fresh)
+        #expect(ScreenshotShelfPolicy.newestDate(files: [("notes.txt", now)]) == nil)
     }
 }

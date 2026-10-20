@@ -20,8 +20,9 @@ enum DownloadsShelf {
 
     /// 지금 알고 있는 값으로, 접어 둔 Downloads 칸을 이번에 펼칠지.
     static var initiallyRecent: Bool {
-        ShelfAutoCollapsePolicy.expandsDownloads(
-            newest: lastKnownNewest, dismissed: dismissedNewest, now: Date())
+        previewOverride == nil
+            && ShelfAutoCollapsePolicy.expandsForRecent(
+                newest: lastKnownNewest, dismissed: dismissedNewest, now: Date())
     }
 
     private static let ioQueue = DispatchQueue(

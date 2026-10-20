@@ -10,6 +10,15 @@ enum ScreenshotShelf {
     /// 도커가 줄어드는 움직임이 생기지 않게 한다. 렌더 도구는 `previewOverride`가 우선한다.
     static var lastKnownEmpty = false
     static var initiallyEmpty: Bool { previewOverride.map(\.isEmpty) ?? lastKnownEmpty }
+    /// 마지막으로 읽은 가장 새 스크린샷 시각과, 저절로 펼친 칸을 사용자가 다시 접었을 때의 시각(메모리에만).
+    /// 접어 둔 칸을 10분 안의 스크린샷 때문에 펼칠지 첫 프레임에서 정한다(`DownloadsShelf`와 같은 규칙).
+    static var lastKnownNewest: Date?
+    static var dismissedNewest: Date?
+    static var initiallyRecent: Bool {
+        previewOverride == nil
+            && ShelfAutoCollapsePolicy.expandsForRecent(
+                newest: lastKnownNewest, dismissed: dismissedNewest, now: Date())
+    }
 
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.screenshots", qos: .utility,
@@ -35,18 +44,21 @@ enum ScreenshotShelf {
     /// 폴더 스캔과 per-file stat을 utility queue에서 수행한다.
     static func recentScreenshotsAsync(completion: @escaping ([URL]) -> Void) {
         ioQueue.async {
-            let screenshots = recentScreenshotsSynchronously()
-            DispatchQueue.main.async { completion(screenshots) }
+            let scan = recentScreenshotsSynchronously()
+            DispatchQueue.main.async {
+                lastKnownNewest = scan.newest
+                completion(scan.files)
+            }
         }
     }
 
-    private static func recentScreenshotsSynchronously() -> [URL] {
+    private static func recentScreenshotsSynchronously() -> (files: [URL], newest: Date?) {
         let folder = directory()
         guard
             let entries = try? FileManager.default.contentsOfDirectory(
                 at: folder, includingPropertiesForKeys: [.contentModificationDateKey],
                 options: [.skipsHiddenFiles])
-        else { return [] }
+        else { return ([], nil) }
 
         let files = entries.map { url in
             (
@@ -56,6 +68,9 @@ enum ScreenshotShelf {
             )
         }
         let selected = ScreenshotShelfPolicy.shelfSelection(files: files)
-        return selected.map { folder.appendingPathComponent($0) }
+        return (
+            selected.map { folder.appendingPathComponent($0) },
+            ScreenshotShelfPolicy.newestDate(files: files)
+        )
     }
 }

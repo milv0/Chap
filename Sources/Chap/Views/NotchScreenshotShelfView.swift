@@ -12,6 +12,8 @@ struct NotchScreenshotShelfView: View {
     let usesSemanticForeground: Bool
     /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
     var onCollapse: (() -> Void)?
+    /// 최근 스크린샷 때문에 저절로 펼친 칸인지. 그러면 접기가 "다음 스크린샷까지"라 툴팁이 달라진다.
+    var isAutoExpanded = false
     /// 다 읽은 뒤 비었는지 알린다. 비면 칸이 제목 폭으로 좁아진다.
     var onEmptyChange: (Bool) -> Void = { _ in }
     @State private var isColumnHovered = false
@@ -74,7 +76,9 @@ struct NotchScreenshotShelfView: View {
                 if let onCollapse {
                     NotchCollapseButton(
                         isVisible: isColumnHovered, foreground: collapseForeground,
-                        hoverBackground: collapseHoverBackground, action: onCollapse)
+                        hoverBackground: collapseHoverBackground,
+                        help: isAutoExpanded ? "Fold until the next screenshot" : "Collapse",
+                        action: onCollapse)
                 }
             }
             .contextMenu {

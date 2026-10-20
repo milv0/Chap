@@ -29,6 +29,14 @@ public enum ScreenshotShelfPolicy {
             .map(\.name)
     }
 
+    /// 선반에 오를 스크린샷 중 가장 새로 찍은 시각. 없으면 nil.
+    public static func newestDate(files: [(name: String, modified: Date)]) -> Date? {
+        files.filter { isCandidate(fileName: $0.name) }
+            .map(\.modified)
+            .filter { $0 != .distantPast }
+            .max()
+    }
+
     /// 선반 행의 짧은 시각 문구. 잘린 파일명 대신 언제 찍었는지를 보여준다.
     public static func relativeLabel(for date: Date, now: Date = Date()) -> String {
         let elapsed = now.timeIntervalSince(date)
