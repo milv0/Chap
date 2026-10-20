@@ -205,8 +205,9 @@ Workspaces 칸(지금 이름 Layouts)은 Apps(이미 Apps가 있으면 빈 칸).
 되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Slots("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
 Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
-때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치는 Screenshots · 빈
-Downloads 칸 · Launchers · Apps · 빈 칸 · 빈 칸.
+때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치(처음 받은 사람)는 Screenshots · Downloads · Apps · To-do · Keep Awake · Launchers로 여섯 칸을 모두 채운다(`NotchWidget.defaultSlots`).
+Downloads 칸이 기본으로 놓이므로 노치 런처를 켜고 처음 열 때 macOS가 다운로드 폴더 접근을 한 번 묻는다.
+두 선반은 처음에 접힌 채 시작한다(`Config.defaultCollapsedWidgets`, 띠 왼쪽 아이콘). 최근 다운로드가 있으면 Downloads는 저절로 펼쳐진다.
 
 ## Apps 칸: 아이콘 격자 + Layouts 탭
 
@@ -321,14 +322,15 @@ Keep Awake와 같은 12칸이라 5분 × 12 = 1시간이 끝이다(`TimerPolicy.
   맞춰 내용이 창 밖으로 잘리지 않는다. 펼칠 때는 칸 폭 + 간격만큼 창을 먼저 넓히고(`preExpandSize`) 다음 틱에
   칸을 펼친다. 같은 틱에 바꾸면 넓어진 도커 양 끝이 좁은 창에 잘려 노치가 접혔다 펼쳐지는 것처럼 끊겨 보였다.
 - 새 파일 개수 같은 배지는 달지 않는다(BRAND: 관심을 조르지 않는다).
-- **최근 다운로드 → 저절로 펼침**: 사용자가 접어 둔 Downloads 칸은 가장 새 다운로드가 10분 안에 받은 것이면 이번에 열 때
-  펼친다(`ShelfAutoCollapsePolicy.expandsDownloads`, `recentDownloadWindow`). 저장하지 않아 접은 설정은 그대로다. 첫 프레임은
-  지난번에 읽은 시각(`DownloadsShelf.lastKnownNewest`, 노치 런처를 켤 때 미리 읽음)으로 정해 열자마자 폭이 바뀌지 않고,
+- **최근 파일 → 저절로 펼침**: 사용자가 접어 둔 선반은 가장 새 파일이 10분 안의 것이면 이번에 열 때 펼친다
+  (`ShelfAutoCollapsePolicy.expandsForRecent`, `recentShelfWindow`). Downloads는 받은 시각, Screenshots는 스크린샷 폴더
+  이미지의 수정(찍은) 시각을 본다(`DownloadsShelfPolicy.newestDate`, `ScreenshotShelfPolicy.newestDate`). 스크린샷 폴더가
+  기본값(데스크톱)이면 거기에 새로 저장한 다른 이미지도 센다. 저장하지 않아 접은 설정은 그대로다(패널 `@State autoExpanded`).
+  첫 프레임은 지난번에 읽은 시각(`lastKnownNewest`, 노치 런처를 켤 때 미리 읽음)으로 정해 열자마자 폭이 바뀌지 않고,
   열린 뒤 2초마다 다시 보며 새 파일이 들어오면 창을 먼저 넓히고 펼친다. 열린 동안에는 펼치기만 한다. 10분이 지나도 마우스
-  아래에서 접히지 않고 다음에 열 때 접힌다. 저절로 펼친 칸에서 접기를 누르면(툴팁 "Fold until the next download") 그 다운로드까지는 다시 펼치지 않고
-  (`DownloadsShelf.dismissedNewest`, 메모리에만), 더 새 파일이 오면 다시 펼친다. 띠 아이콘으로 펼치면 평소처럼 저장된다.
-  가장 새 시각은 받는 중·숨김·폴더를 뺀 선반 후보에서 고른다(`DownloadsShelfPolicy.newestDate`). 이 때문에 Downloads 칸이
-  접혀 있어도 노치에 놓여 있으면 다운로드 폴더를 읽는다.
+  아래에서 접히지 않고 다음에 열 때 접힌다. 저절로 펼친 칸에서 접기를 누르면(툴팁 "Fold until the next download" /
+  "Fold until the next screenshot") 그 파일까지는 다시 펼치지 않고(`dismissedNewest`, 메모리에만), 더 새 파일이 오면 다시
+  펼친다. 띠 아이콘으로 펼치면 평소처럼 저장된다. 이 때문에 선반이 접혀 있어도 노치에 놓여 있으면 그 폴더를 읽는다.
 - 접힌 목록은 `Config.notchCollapsedWidgets`에 저장한다. 노치에서만 바꾸는 이 Mac의 표시 선택이라
   설정창 저장이 덮어쓰지 않는다.
 - **어깨 영역**: 검정 띠가 plateau 바깥에서 곡선(`stripFalloff` 90pt)으로 얇아진 뒤 도커 양 끝까지 남는

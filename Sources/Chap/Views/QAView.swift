@@ -202,7 +202,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
-                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다. 접어 둔 Downloads 칸은 10분 안에 받은 파일이 있으면 노치를 열 때 저절로 펼쳐집니다(접은 설정은 그대로이고, 다시 접으면 다음 다운로드까지 기다립니다)."
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다. 접어 둔 칸은 10분 안에 찍은 스크린샷이나 받은 파일이 있으면 노치를 열 때 저절로 펼쳐집니다(접은 설정은 그대로이고, 다시 접으면 다음 파일까지 기다립니다)."
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
@@ -484,7 +484,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I collapse the Screenshots or Downloads slot?",
-                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again. A folded Downloads slot opens by itself when you open the notch within 10 minutes of a download (your setting stays; fold it again and it waits for the next download)."
+                    "Yes. Hover the slot and a collapse button appears at the end of its title (or right-click the title and choose Collapse). The slot folds into a small white icon on the left of the notch's black strip, across from Drop, Mirror, and Quick Note on the right. With no screenshots, the Screenshots slot stays folded on its own until you take one. The dock narrows to fit the remaining slots; click the icon to expand the slot again. A folded slot opens by itself when you open the notch within 10 minutes of a new screenshot or download (your setting stays; fold it again and it waits for the next file)."
                 ),
                 (
                     "How does the To-do slot work?",

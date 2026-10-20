@@ -121,7 +121,7 @@ Sources/
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책·노치 없는 화면의 띠 높이·hover 구역
 │   ├── DropStore.swift        ← Chap Drop 원본 북마크 참조·임시 위치 사본·빼기(원본 미삭제) 규칙
-│   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접고, 10분 안의 다운로드가 있으면 접어 둔 Downloads 칸을 이번에만 펼치는 규칙
+│   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접고, 10분 안의 파일(다운로드·스크린샷)이 있으면 접어 둔 선반을 이번에만 펼치는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
 │   ├── ChapMascot.swift       ← 마스코트(아기 물범) 24×12 픽셀 스프라이트 격자·잉크 색(RGB 단일 출처)·동작 타이밍
@@ -286,14 +286,13 @@ Config 모델 필드:
     lightsOutUnlockKey는 버린다(걷는 법이 ⌥ 탭으로 고정)
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (screenshots | downloads | launchers(Sites|Finder 탭) |
                                  apps(Apps|Layouts 탭) | awake(Keep Awake) | todo | none). 1·2번 칸은 Screenshots·Downloads
-                                 선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, none, launchers, apps,
-                                 none, none]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
+                                 선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, downloads, apps, todo, awake, launchers]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
                                  2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로 당겨 6칸에 옮긴다.
                                  2.16에서 없앤 sites·folders는 첫 칸만 launchers, 그다음은 none, workspaces는
                                  apps(이미 있으면 none)로 같은 자리에서 바꾼다(NotchWidget.migratedSlots).
                                  모르는 위젯 이름(구버전이 읽은 todo 등)은 빈 칸이 된다
   - notchCollapsedWidgets: [NotchWidget]  검정 띠 왼쪽 아이콘으로 접은 선반 (screenshots | downloads).
-                                 노치에서만 바꾸는 이 Mac의 표시 선택. 누락 시 []
+                                 노치에서만 바꾸는 이 Mac의 표시 선택. 누락 시 [screenshots, downloads](처음엔 둘 다 접힘). 빈 목록이 저장돼 있으면 그대로 펼침
   - sites: [Site]             사이트 목록
 
 ※ 윈도우 위치(x, y)는 저장하지 않음 — 항상 대상 화면 중앙에 자동 배치.

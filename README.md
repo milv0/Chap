@@ -20,7 +20,7 @@
 - **Keep Awake & Timer Dial** — One notch slot handles both: switch (click the icon in its title, or swipe with two fingers) between a 1–12-hour Keep Awake dial (the same session as Keep Awake in the menu bar) and a 5–60-minute Timer dial. Drag the arc to set the duration, click the center to start, and watch it wind down; while a timer runs, its time sits beside the closed notch and Chap plays a sound and shows "Time's up" when it ends
 - **Layouts (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or the Layouts tab of the notch Apps slot; app names and window titles stay in a local file on this Mac
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
-- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded Downloads shelf opens by itself when you open the notch within 10 minutes of a download, without changing your setting
+- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded shelf opens by itself when you open the notch within 10 minutes of a new screenshot or download, without changing your setting
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
@@ -120,12 +120,12 @@ Stored at `~/.chap.json`:
   "notchGlassMaterial": "regular",
   "notchPanelOpacity": 0.6,
   "notchPanelColorHex": "#000000",
-  "notchWidgets": ["screenshots", "none", "launchers", "apps", "none", "none"],
+  "notchWidgets": ["screenshots", "downloads", "apps", "todo", "awake", "launchers"],
   "notchMirrorEnabled": true,
   "notchQuickNoteEnabled": true,
   "notchQuickNoteShortcut": "N",
   "coverScreensShortcut": "L",
-  "notchCollapsedWidgets": [],
+  "notchCollapsedWidgets": ["screenshots", "downloads"],
   "sites": [
     {
       "name": "GitHub",
