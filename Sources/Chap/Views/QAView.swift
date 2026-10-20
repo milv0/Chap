@@ -238,7 +238,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
-                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다)."
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다). 저장 폴더는 Settings → Tools → Screenshots에 보이며, Change…를 누르면 macOS 스크린샷 앱이 열립니다. 옵션 → 기타 위치…(Other Location…)에서 폴더를 고르거나 새로 만들면 Chap이 그대로 따라갑니다. 데스크톱에 저장하면 그곳의 다른 이미지도 함께 보이므로 스크린샷 전용 폴더를 추천합니다."
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
@@ -271,7 +271,7 @@ struct QAView: View {
                 ),
                 (
                     "자리 비울 때 화면을 가릴 수 있나요?",
-                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱합니다. 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다. 돌아오면 화면 가운데에 \"Welcome back\"이 잠깐 뜹니다."
+                    "⌥L을 누르거나, 메뉴바 아이콘 → Cover Screens, 또는 노치 검정 띠 오른쪽 끝의 달 아이콘을 누르면 연결된 모든 화면이 검정으로 덮입니다. 돌아올 때는 ⌥(Option)만 한 번 눌렀다 떼세요. 잊었다면 아무 키나 빠르게 10번 누르면 걷힙니다. ⌥L 단축키와 시계 아래에 띄울 문구(예: \"10분 뒤에 돌아와요\")는 Settings → Tools → Cover Screens에서 정합니다. 화면이 여러 개면 시계는 MacBook 화면에 두고, 다른 화면에서는 물범이 가끔 꼬리를 까딱하며 화면보호기처럼 천천히 떠다닙니다(동작 줄이기가 켜져 있으면 가운데에 가만히 있습니다). 덮여 있는 동안에는 화면이 꺼지지 않으며, Keep Awake를 켜지 않아도 되고 Keep Awake 시간이 끝나도 가림막은 그대로입니다. 돌아오면 화면 가운데에 \"Welcome back\"이 잠깐 뜹니다."
                 ),
                 (
                     "Cover Screens가 화면을 잠그는 건가요?",
@@ -520,7 +520,7 @@ struct QAView: View {
                 ),
                 (
                     "Does the Screenshots widget move my files?",
-                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way)."
+                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way). The folder is shown in Settings → Tools → Screenshots; Change… opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder, and Chap follows along. If screenshots go to the Desktop, other images there show up too, so a folder of their own works best."
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",
@@ -553,7 +553,7 @@ struct QAView: View {
                 ),
                 (
                     "Can I cover my screens while I step away?",
-                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others. While the cover is up the display stays awake on its own, so you do not need Keep Awake, and the cover stays even after a Keep Awake session ends. When you come back, \"Welcome back\" shows for a moment in the middle of the screen."
+                    "Press ⌥L, click the menubar icon → Cover Screens, or click the moon icon at the right end of the notch strip, and every connected screen goes black. Tap ⌥ Option by itself to come back; forgot? Press any key 10 times quickly. Change or turn off ⌥L, and set a line to show under the clock (\"Back in 10 minutes\"), in Settings → Tools → Cover Screens. With more than one screen, the clock stays on the MacBook's display and Chap flicks its tail now and then on the others, drifting slowly around the screen like a screensaver (it stays put with Reduce Motion on). While the cover is up the display stays awake on its own, so you do not need Keep Awake, and the cover stays even after a Keep Awake session ends. When you come back, \"Welcome back\" shows for a moment in the middle of the screen."
                 ),
                 (
                     "Does Cover Screens lock my Mac?",

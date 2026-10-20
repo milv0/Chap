@@ -578,7 +578,8 @@ Settings → Notch Launcher on
 - URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 4개까지 2열·5~6개 3열 아이콘, 필요한 줄만).
 - To-do 칸 폭은 도커를 열 때 저장된 항목으로 정하고(140–240pt) 열려 있는 동안 고정한다. 바뀐 항목은 다음에 열 때 반영된다.
 - Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
-  원본을 이동하지 않는다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
+  원본을 이동하지 않는다. 스크린샷 위치는 읽기만 하며, 바꾸는 길은 Settings → Tools → Screenshots의 Change…가 여는
+  macOS 스크린샷 앱(옵션 → 기타 위치…)뿐이다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
 - To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.
 - Layouts는 `~/Library/Application Support/Chap/Layouts.json`에 앱 이름·경로·창 제목·디스플레이 UUID·상대 프레임을
   최대 4개(각 6창) 저장한다. config Export/Import·동기화 대상이 아니며, 읽을 수 없는 파일은
@@ -603,7 +604,8 @@ Settings → Notch Launcher on
       │   → Keep Awake 어써션과 별개. 둘 중 하나가 풀려도 다른 쪽은 유지된다
       ├ NSScreen.screens마다 검정 창 1개 (.screenSaver, canJoinAllSpaces, 불투명)
       │   → clockScreenIndex(내장 화면, 없으면 첫 화면)의 창만 key, 그 화면에 낮잠 물범·시간·문구·안내
-      │   → 나머지 화면은 CoverScreensCompanionView: 노치 띠와 같은 물범이 2~4초마다 꼬리를 까딱한다 (노치 띠는 7~12초)
+      │   → 나머지 화면은 CoverScreensCompanionView: 노치 띠와 같은 물범이 2~4초마다 꼬리를 까딱한다 (노치 띠는 7~12초).
+      │     화면보호기처럼 떠다니며 가장자리에서 튕긴다 (companionDriftOrigin, 30fps; 동작 줄이기면 가운데 고정)
       ├ 켜기 직전 frontmostApplication 기억 (Chap 자신이면 nil)
       ├ OptionTap(optionHeldAtStart: 켤 때 ⌥가 눌려 있었는지) — ⌥L을 떼는 순간 걷히지 않게
       ├ 로컬 keyDown·flagsChanged 모니터:

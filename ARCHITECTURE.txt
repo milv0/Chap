@@ -60,7 +60,7 @@ Sources/
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
 │       ├── SettingsGeneralView.swift ← General 탭 (App/Launching/Menu Bar: 앱 자체 설정만)
-│       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Cover Screens)
+│       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Cover Screens, 스크린샷 저장 폴더 안내)
 │       ├── SettingsConfigTransfer.swift ← Settings config import/export/apply 로직
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
 │       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
@@ -136,7 +136,7 @@ Sources/
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
 │   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·가장 새 시각·짧은 시각
-│   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책
+│   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책, 설정창 경로 표시(~ 축약)·데스크톱 판정
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ModelTests.swift
@@ -320,6 +320,9 @@ Config 모델 필드:
   같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
   Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),
   Tools는 노치 없이도 쓰는 기능의 설정(Quick Note ⌥키·백업 폴더, Cover Screens ⌥키·가림막 문구)을 모아 둔다.
+  Screenshots 섹션은 시스템 스크린샷 폴더(`com.apple.screencapture location`, 없으면 ~/Desktop)를 읽기만 하고,
+  Change…는 NSWorkspace로 스크린샷 앱(com.apple.screenshot.launcher)을 연다. 값은 Chap이 쓰지 않는다.
+  Chap이 다시 활성화될 때 경로를 새로 읽는다(CFPreferencesAppSynchronize). 데스크톱이면 다른 이미지도 섞인다고 알린다.
   노치에서만 쓰는 Mirror는 Notch → Notch Icons의 한 줄에 표시 스위치와 카메라 권한 버튼을 함께 둔다.
   Notch는 노치 런처 on/off, Layout(고정 선반 2칸 + 위젯 4칸), Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 여부만),
   Appearance(Custom/Glass 스타일, Glass 재질·appearance) 설정을
@@ -392,8 +395,9 @@ Config 모델 필드:
   켤 때 눌려 있던 ⌥의 뗌·⌥+다른 키·⌘⌥ 등은 세지 않음) 또는 아무 키나 3초 안에 10번 연타.
   그 외 키·클릭은 삼켜 가려진 앱에 눈먼 입력이 들어가지 않는다.
   내장 화면(없으면 첫 화면)에 자는 물범·시간·사용자 문구(설정 시)·안내(4초 후 사라짐)를 그리고, 그 창이 입력을 받는다.
-  나머지 화면에는 노치 띠처럼 깨어 있는 물범이 가운데에서 눈을 깜빡이고 2~4초마다 꼬리를 까딱한다
-  (CoverScreensCompanionView = NotchMascotView, 8pt 칸, 동작 줄이기면 가만히). 상태는 메모리에만 둔다.
+  나머지 화면에는 노치 띠처럼 깨어 있는 물범이 눈을 깜빡이고 2~4초마다 꼬리를 까딱하며, 화면보호기처럼
+  30pt/초로 떠다니다 가장자리(40pt 여백)에서 튕긴다(CoverScreensCompanionView = NotchMascotView, 8pt 칸,
+  TimelineView 30fps, 위치는 CoverScreensPolicy.companionDriftOrigin, 출발 위치는 화면마다 무작위, 동작 줄이기면 가운데에 가만히). 상태는 메모리에만 둔다.
   덮여 있는 동안 다른 앱이 활성화되면(⌘Tab) 포커스를 되찾고, 전역 모니터(접근성 권한 시)가 ⌥·연타를
   계속 본다. Chap 글로벌 단축키와 노치 도커는 열지 않는다(가림막 아래에서 보이지 않게 포커스만 가져가므로).
   걷으면 켜기 전 앞에 있던 앱으로 돌아간다.
