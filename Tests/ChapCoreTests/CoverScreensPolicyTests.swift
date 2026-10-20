@@ -246,6 +246,39 @@ struct CoverScreensPolicyTests {
         #expect(json.contains("coverScreensShortcut"))
         #expect(json.contains("lightsOut") == false)
     }
+    @Test("the companion seal drifts and bounces back from the edges like a screensaver")
+    func companionDriftBounces() {
+        let container = CGSize(width: 1000, height: 600)
+        let item = CGSize(width: 200, height: 100)
+        // CGPoint 좌표와 같은 타입으로 비교한다.
+        let margin = CGFloat(CoverScreensPolicy.companionDriftMargin)
+        func origin(_ t: Double, start: CGPoint = .zero) -> CGPoint {
+            CoverScreensPolicy.companionDriftOrigin(
+                elapsed: t, container: container, item: item, start: start, speed: 100)
+        }
+        // 가로 범위 1000-200-80 = 720, 세로 600-100-80 = 420.
+        #expect(origin(0) == CGPoint(x: margin, y: margin))
+        #expect(origin(1) == CGPoint(x: margin + 80, y: margin + 60))
+        // 오른쪽 끝(720)에 닿은 뒤(9초) 되돌아온다.
+        #expect(origin(10).x == margin + 720 - 80)
+        // 한 바퀴(가로 2×720 ÷ 80 = 18초)면 제자리.
+        #expect(origin(18).x == margin)
+        for t in stride(from: 0.0, through: 120, by: 0.7) {
+            let point = origin(t, start: CGPoint(x: 0.3, y: 0.9))
+            #expect(point.x >= margin && point.x <= container.width - item.width - margin)
+            #expect(point.y >= margin && point.y <= container.height - item.height - margin)
+            #expect(point.x == point.x.rounded() && point.y == point.y.rounded())
+        }
+    }
+
+    @Test("a screen too small to drift keeps the seal centered on that axis")
+    func companionDriftSmallScreen() {
+        let point = CoverScreensPolicy.companionDriftOrigin(
+            elapsed: 50, container: CGSize(width: 250, height: 600),
+            item: CGSize(width: 200, height: 100), start: CGPoint(x: 1, y: 0))
+        #expect(point.x == 25)
+        #expect(point.y > CGFloat(CoverScreensPolicy.companionDriftMargin))
+    }
 }
 
 /// 실제 가림막 창을 띄워 걷는 길을 확인한다. 화면이 잠깐 검게 덮이므로 렌더 도구와 같은

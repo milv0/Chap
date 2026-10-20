@@ -307,21 +307,59 @@ struct CoverScreensView: View {
     }
 }
 
-/// 보조 화면의 가림막: 검정 가운데에 노치 띠의 물범이 깨어 있다. 가끔 눈을 깜빡이고 꼬리를 까딱한다
-/// (노치와 같은 `NotchMascotView`). 볼 것이 물범뿐이라 노치 띠(7~12초)보다 자주, 2~4초마다 까딱한다.
-/// 동작 줄이기가 켜져 있으면 가만히 있다.
+/// 보조 화면의 가림막: 검정 위로 노치 띠의 물범이 깨어 있다. 가끔 눈을 깜빡이고 꼬리를 까딱하며
+/// (노치와 같은 `NotchMascotView`, 2~4초마다), 화면보호기처럼 천천히 떠다니다 가장자리에서 튕겨 돌아온다.
+/// 같은 자리에 오래 머물지 않아 외장 모니터에 자국이 남을 일도 줄어든다. 출발 위치는 화면마다 무작위다.
+/// 동작 줄이기가 켜져 있으면 가운데에 가만히 있다.
 struct CoverScreensCompanionView: View {
     /// 한 칸 크기(pt). 큰 외장 모니터에서도 보이도록 낮잠 화면(6pt)보다 조금 크게.
     var pixelSize: CGFloat = 8
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// 출발 위치(움직일 수 있는 범위 안의 비율). 렌더 도구는 고정 값을 넘긴다.
+    @State private var start: CGPoint
+    @State private var startDate = Date()
+
+    init(pixelSize: CGFloat = 8, start: CGPoint? = nil) {
+        self.pixelSize = pixelSize
+        _start = State(
+            initialValue: start
+                ?? CGPoint(x: Double.random(in: 0...1), y: Double.random(in: 0...1)))
+    }
+
+    private var sealSize: CGSize {
+        CGSize(
+            width: CGFloat(ChapMascot.width) * pixelSize,
+            height: CGFloat(ChapMascot.height) * pixelSize)
+    }
+
+    private var seal: some View {
+        NotchMascotView(
+            pixelSize: pixelSize, mood: .awake, isAnimating: true,
+            flickInterval: ChapMascot.companionFlickInterval
+        )
+        .opacity(CoverScreensPolicy.companionSealOpacity)
+    }
+
     var body: some View {
-        ZStack {
-            Color.black
-            NotchMascotView(
-                pixelSize: pixelSize, mood: .awake, isAnimating: true,
-                flickInterval: ChapMascot.companionFlickInterval
-            )
-            .opacity(CoverScreensPolicy.companionSealOpacity)
+        GeometryReader { proxy in
+            ZStack(alignment: .topLeading) {
+                Color.black
+                if reduceMotion {
+                    seal.position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                } else {
+                    TimelineView(
+                        .periodic(
+                            from: startDate, by: CoverScreensPolicy.companionDriftFrameInterval)
+                    ) { context in
+                        let origin = CoverScreensPolicy.companionDriftOrigin(
+                            elapsed: context.date.timeIntervalSince(startDate),
+                            container: proxy.size, item: sealSize, start: start)
+                        seal.position(
+                            x: origin.x + sealSize.width / 2, y: origin.y + sealSize.height / 2)
+                    }
+                }
+            }
         }
         .ignoresSafeArea()
         .accessibilityElement()

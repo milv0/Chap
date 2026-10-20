@@ -63,4 +63,25 @@ struct ScreenshotShelfPolicyTests {
         #expect(label(20 * 3600) == "Yesterday")
         #expect(label(5 * 86400) == "Sep 24")
     }
+
+    @Test(
+        "settings show the folder with the home folder shortened to ~",
+        arguments: [
+            ("/Users/me/ScreenShot", "~/ScreenShot"),
+            ("/Users/me/ScreenShot/", "~/ScreenShot"),
+            ("/Users/me", "~"),
+            ("/Users/meow/Pictures", "/Users/meow/Pictures"),
+            ("/Volumes/Shots", "/Volumes/Shots"),
+        ])
+    func displayPath(path: String, expected: String) {
+        #expect(ScreenshotShelfPolicy.displayPath(path, home: "/Users/me") == expected)
+    }
+
+    @Test("only the Desktop itself counts as the Desktop")
+    func desktopDetection() {
+        #expect(ScreenshotShelfPolicy.isDesktop("/Users/me/Desktop", home: "/Users/me"))
+        #expect(ScreenshotShelfPolicy.isDesktop("/Users/me/Desktop/", home: "/Users/me/"))
+        #expect(!ScreenshotShelfPolicy.isDesktop("/Users/me/Desktop/Shots", home: "/Users/me"))
+        #expect(!ScreenshotShelfPolicy.isDesktop("/Users/me/ScreenShot", home: "/Users/me"))
+    }
 }

@@ -37,6 +37,28 @@ public enum ScreenshotShelfPolicy {
             .max()
     }
 
+    /// 설정창에 보여줄 폴더 경로. 홈 아래면 `~`로 줄인다.
+    public static func displayPath(_ path: String, home: String) -> String {
+        let folder = standardized(path)
+        let homeFolder = standardized(home)
+        if folder == homeFolder { return "~" }
+        if folder.hasPrefix(homeFolder + "/") {
+            return "~" + folder.dropFirst(homeFolder.count)
+        }
+        return folder
+    }
+
+    /// 저장 폴더가 데스크톱인지. 데스크톱이면 다른 이미지도 선반에 섞이므로 설정창이 그렇게 알려준다.
+    public static func isDesktop(_ path: String, home: String) -> Bool {
+        standardized(path) == standardized(home) + "/Desktop"
+    }
+
+    private static func standardized(_ path: String) -> String {
+        var result = (path as NSString).standardizingPath
+        while result.count > 1, result.hasSuffix("/") { result.removeLast() }
+        return result
+    }
+
     /// 선반 행의 짧은 시각 문구. 잘린 파일명 대신 언제 찍었는지를 보여준다.
     public static func relativeLabel(for date: Date, now: Date = Date()) -> String {
         let elapsed = now.timeIntervalSince(date)

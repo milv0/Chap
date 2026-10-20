@@ -237,21 +237,16 @@ struct NotchSettingsView: View {
                     }
 
                     if vm.notchPanelStyle == .glass {
-                        Picker(
-                            "Glass Appearance",
-                            selection: $vm.notchGlassAppearance
-                        ) {
-                            Text("System").tag(NotchGlassAppearance.system)
-                            Text("Light").tag(NotchGlassAppearance.light)
-                            Text("Dark").tag(NotchGlassAppearance.dark)
+                        // 밝기는 글자 버튼 대신 아이콘 셋으로 고른다. 재질은 밝기와 독립이라 따로 고른다.
+                        // Picker 줄과 같은 행 레이아웃이라 높이가 맞는다.
+                        LabeledContent("Glass Appearance") {
+                            GlassAppearanceIconPicker(selection: $vm.notchGlassAppearance)
                         }
-                        .pickerStyle(.segmented)
                         .onChange(of: vm.notchGlassAppearance) { _, _ in
                             onSave()
                             notchController?.previewGlassAppearance()
                         }
 
-                        // 재질은 appearance와 독립적으로 사용자가 고른다.
                         Picker(
                             "Glass Material",
                             selection: $vm.notchGlassMaterial
@@ -264,7 +259,7 @@ struct NotchSettingsView: View {
                             onSave()
                             notchController?.previewGlassMaterial()
                         }
-                        .help("System follows macOS. Clear is see-through; Regular adds contrast.")
+                        .help("Clear is see-through; Regular adds contrast.")
 
                     } else {
                         HStack {
@@ -523,6 +518,44 @@ private struct WidgetPaletteChip: View {
                 : "Drag into a slot to place this widget."
         )
         .accessibilityLabel("\(NotchSettingsView.widgetName(widget)) widget")
+    }
+}
+
+/// Glass 밝기 고르기: System·Light·Dark를 아이콘 셋으로 보여준다. 고른 아이콘은 시스템 강조색 원 위에 흰색으로,
+/// 나머지는 옅게 둔다. 이름은 툴팁과 VoiceOver로 전한다.
+private struct GlassAppearanceIconPicker: View {
+    @Binding var selection: NotchGlassAppearance
+
+    private static let options: [(value: NotchGlassAppearance, name: String, icon: String)] = [
+        (.system, "System", "circle.lefthalf.filled"),
+        (.light, "Light", "sun.max.fill"),
+        (.dark, "Dark", "moon.fill"),
+    ]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(Self.options, id: \.name) { option in
+                let isSelected = selection == option.value
+                Button {
+                    selection = option.value
+                } label: {
+                    Image(systemName: option.icon)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(isSelected ? Color.white : DS.textSecondary)
+                        // 같은 섹션의 세그먼트 컨트롤과 높이·선택색을 맞춘다(시스템 강조색).
+                        .frame(width: 24, height: 24)
+                        .background(
+                            Circle().fill(
+                                isSelected ? Color.accentColor : Color.primary.opacity(0.06))
+                        )
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .help(option.value == .system ? "System: follows macOS" : option.name)
+                .accessibilityLabel("\(option.name) glass appearance")
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
     }
 }
 

@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.19.1-orange)
+![Version](https://img.shields.io/badge/version-2.19.2-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -20,7 +20,7 @@
 - **Keep Awake & Timer Dial** — One notch slot handles both: switch (click the icon in its title, or swipe with two fingers) between a 1–12-hour Keep Awake dial (the same session as Keep Awake in the menu bar) and a 5–60-minute Timer dial. Drag the arc to set the duration, click the center to start, and watch it wind down; while a timer runs, its time sits beside the closed notch and Chap plays a sound and shows "Time's up" when it ends
 - **Layouts (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or the Layouts tab of the notch Apps slot; app names and window titles stay in a local file on this Mac
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
-- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded shelf opens by itself when you open the notch within 10 minutes of a new screenshot or download, without changing your setting
+- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded shelf opens by itself when you open the notch within 10 minutes of a new screenshot or download, without changing your setting. Settings → Tools → Screenshots shows which folder the shelf reads; **Change…** opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder (Chap only reads that setting, never writes it). If screenshots land on the Desktop, other images there join the shelf too, so a folder of their own works best
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
@@ -37,7 +37,7 @@
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal drawn in outline) in Settings > General; it turns Chap blue while Keep Awake runs
 - **Keep Awake** — Menu bar sessions (30m to 12h) that keep the display awake; starting or ending one shows Chap in the middle of the screen (on the built-in display with the notch), and active sessions turn the status icon Chap blue and release on expiry or confirmed quit. Sessions use wall-clock timing, so they end on schedule even across sleep, and a session that expired while the Mac slept is released quietly (no sound or HUD) on wake or when the status menu opens
-- **Cover Screens** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, a tap of ⌥ Option brings you back, and pressing any key 10 times quickly lifts it if you forget. Set a line to show under the clock ("Back in 10 minutes") in Settings > Tools. With more than one screen, the clock stays on the built-in display and Chap keeps you company on the others, flicking its tail now and then. It holds the display awake on its own, so it works with or without a Keep Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
+- **Cover Screens** — Cover every screen in black while you're on break: ⌥L, the menu bar item, or the moon icon in the notch strip turns it on, a tap of ⌥ Option brings you back, and pressing any key 10 times quickly lifts it if you forget. Set a line to show under the clock ("Back in 10 minutes") in Settings > Tools. With more than one screen, the clock stays on the built-in display and Chap keeps you company on the others, flicking its tail now and then and drifting slowly around the screen like a screensaver (it stays put with Reduce Motion on). It holds the display awake on its own, so it works with or without a Keep Awake session and stays up when a session ends. It is a cover, not a lock: no password, and quitting Chap lifts it
 - **Safe Quit** — Every Quit request requires confirmation
 - **Curated Menu** — Hide launch-type sections from the menu while keeping their Option shortcuts active
 - **Focused Lists** — URL and Finder allow up to four launchables each and App up to six, keeping the menu and notch predictable
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.19.1
+Scripts/release.sh 2.19.2
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.19.1 --publish
+Scripts/release.sh 2.19.2 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.
