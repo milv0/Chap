@@ -24,10 +24,27 @@ enum ScreenshotShelf {
         label: "com.mingyupark.Chap.screenshots", qos: .utility,
         attributes: .concurrent)
 
+    private static let screencaptureDomain = "com.apple.screencapture"
+    private static let screenshotAppBundleID = "com.apple.screenshot.launcher"
+
+    /// macOS 스크린샷 앱(⌘⇧5와 같은 화면)을 연다. 저장 위치는 사용자가 앱의 Options → Other Location…에서
+    /// 직접 바꾼다. Chap은 시스템 설정 값을 쓰지 않는다.
+    @discardableResult
+    static func openScreenshotApp() -> Bool {
+        guard
+            let url = NSWorkspace.shared.urlForApplication(
+                withBundleIdentifier: screenshotAppBundleID)
+        else { return false }
+        NSWorkspace.shared.openApplication(at: url, configuration: .init())
+        return true
+    }
+
     /// 시스템 스크린샷 저장 폴더. 사용자가 바꾼 위치
     /// (`com.apple.screencapture location`)를 존중하고, 없으면 데스크톱.
     static func directory() -> URL {
-        let defaults = UserDefaults(suiteName: "com.apple.screencapture")
+        // 스크린샷 앱에서 위치를 바꾼 직후에도 새 값을 읽도록 캐시를 맞춘다. 읽기만 하고 쓰지 않는다.
+        CFPreferencesAppSynchronize(screencaptureDomain as CFString)
+        let defaults = UserDefaults(suiteName: screencaptureDomain)
         if let location = defaults?.string(forKey: "location"), !location.isEmpty {
             let expanded = (location as NSString).expandingTildeInPath
             var isDirectory: ObjCBool = false
