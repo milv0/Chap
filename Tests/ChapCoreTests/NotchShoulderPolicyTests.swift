@@ -82,6 +82,27 @@ struct NotchShoulderPolicyTests {
         #expect(tolerant.notchCollapsedWidgets == [.screenshots])
 
         let missing = try JSONDecoder().decode(Config.self, from: Data(#"{"sites":[]}"#.utf8))
-        #expect(missing.notchCollapsedWidgets == [])
+        // 키가 없으면 처음 받은 사람처럼 두 선반 모두 접힌 채 시작한다.
+        #expect(missing.notchCollapsedWidgets == Config.defaultCollapsedWidgets)
+    }
+}
+
+@Suite("Default folded shelves")
+struct DefaultCollapsedShelvesTests {
+    @Test("a new install starts with both shelves folded")
+    func newInstall() throws {
+        #expect(Config(sites: []).notchCollapsedWidgets == [.screenshots, .downloads])
+        let decoded = try JSONDecoder().decode(Config.self, from: Data(#"{"sites": []}"#.utf8))
+        #expect(decoded.notchCollapsedWidgets == [.screenshots, .downloads])
+    }
+
+    @Test("a saved choice, even an empty one, is kept")
+    func savedChoiceWins() throws {
+        let open = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"notchCollapsedWidgets": [], "sites": []}"#.utf8))
+        #expect(open.notchCollapsedWidgets.isEmpty)
+        let one = try JSONDecoder().decode(
+            Config.self, from: Data(#"{"notchCollapsedWidgets": ["downloads"], "sites": []}"#.utf8))
+        #expect(one.notchCollapsedWidgets == [.downloads])
     }
 }

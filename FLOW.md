@@ -49,7 +49,7 @@
 | I18 | Glass 상단 띠는 하드웨어 노치와 합쳐지는 순검정, 콘텐츠만 Liquid Glass. macOS 26 미만은 Custom 검정 폴백 | 노치 실루엣이 끊기거나 콘텐츠가 투명해진다 |
 | I19 | Cover Screens는 **걷을 길을 반드시 둔다**: ⌥ 탭 + 아무 키 10연타. 해제 경로를 지우거나 조건부로 만들지 않는다 | 화면이 덮인 채 빠져나올 수 없다 |
 | I20 | Cover Screens는 자체 전원 어써션을 들고 Keep Awake 상태를 보지 않는다 | Keep Awake가 끝나면 화면이 꺼져 가림막이 무의미해진다 |
-| I21 | 최근 다운로드로 저절로 펼친 Downloads 칸은 **저장하지 않는다**: `onCollapsedChange`/`saveCollapsedWidgets`를 부르지 않고 패널 `@State`(`downloadsAutoExpanded`)에만 둔다 | 사용자가 접어 둔 설정이 지워져 늘 펼쳐진다 |
+| I21 | 최근 파일(다운로드·스크린샷)로 저절로 펼친 선반은 **저장하지 않는다**: `onCollapsedChange`/`saveCollapsedWidgets`를 부르지 않고 패널 `@State`(`autoExpanded`)에만 둔다 | 사용자가 접어 둔 설정이 지워져 늘 펼쳐진다 |
 | I22 | 도커가 열려 있는 동안에는 저절로 **접지 않는다**(펼치기만). 10분이 지나도 다음에 열 때 접힌다 | 보고 있던 칸이 마우스 아래에서 사라지고 도커 폭이 흔들린다 |
 
 ---

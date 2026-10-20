@@ -111,7 +111,8 @@ struct SettingsViewModelTests {
 
     @Test func hasChangesDetectsNotchWidgetChange() {
         let vm = SettingsViewModel(sites: baseSites, notchWidgets: NotchWidget.defaultSlots)
-        vm.notchWidgets[1] = .downloads
+        // 기본 배치는 2번 칸에 Downloads가 이미 있다. 끄는 것도 바뀐 것이다.
+        vm.notchWidgets[1] = .none
         #expect(vm.hasChanges == true)
     }
 

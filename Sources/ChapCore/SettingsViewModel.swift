@@ -145,7 +145,7 @@ public final class SettingsViewModel: ObservableObject {
     }
 
     /// 지금 편집 중인 값 전체를 `Config`로. 저장·검증·Export가 모두 이것을 쓴다.
-    /// `notchCollapsedWidgets`는 설정창이 다루지 않는 이 Mac의 표시 선택이라 기본값(빈 목록)으로 두고,
+    /// `notchCollapsedWidgets`는 설정창이 다루지 않는 이 Mac의 표시 선택이라 기본값으로 두고,
     /// AppDelegate가 저장 직전에 현재 값을 다시 채운다.
     public var config: Config {
         Config(
