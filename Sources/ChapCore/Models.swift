@@ -347,9 +347,9 @@ public enum NotchWidget: String, Codable, CaseIterable {
         return index >= NotchWidget.shelfSlotCount
     }
 
-    /// 기본 배치: 선반 칸에 Screenshots, 나머지 칸에 Launchers(목록)·Apps(아이콘).
+    /// 처음 받은 사람의 배치: 선반 둘(Screenshots·Downloads) 다음 Apps · To-do · Keep Awake · Launchers.
     public static let defaultSlots: [NotchWidget] = normalizedSlots([
-        .screenshots, .none, .launchers, .apps,
+        .screenshots, .downloads, .apps, .todo, .awake, .launchers,
     ])
 
     /// 저장된 칸 이름을 지금 위젯으로 옮긴다. 합쳐진 칸은 처음 나온 하나만 새 칸이 되고, 나머지는
@@ -451,7 +451,11 @@ public struct Config: Codable {
     public var notchWidgets: [NotchWidget]
     /// 어깨 아이콘으로 접어 둔 위젯(Screenshots·Downloads). 노치에서 접고 펴며, 이 Mac의
     /// 표시 선택이라 설정창 저장·가져오기가 바꾸지 않는다. `NotchShoulderPolicy.normalized`로 정리한다.
-    public var notchCollapsedWidgets: [NotchWidget] = []
+    /// 처음에는 두 선반 모두 접힌 채 시작한다(`defaultCollapsedWidgets`).
+    public var notchCollapsedWidgets: [NotchWidget] = Config.defaultCollapsedWidgets
+    /// 처음 받은 사람의 접힌 선반: Screenshots·Downloads 둘 다. 노치를 열면 띠 왼쪽 아이콘으로 보이고,
+    /// 최근 다운로드(10분 이내)가 있으면 Downloads는 저절로 펼쳐진다.
+    public static let defaultCollapsedWidgets: [NotchWidget] = [.screenshots, .downloads]
     public var sites: [Site]
 
     /// 디코딩 중 걸러낸 Shell 항목 이름 (2.1 마이그레이션). 저장하지 않는다.
@@ -633,7 +637,9 @@ public struct Config: Codable {
         // 접힌 위젯: 알 수 없는 값·접을 수 없는 위젯·중복은 버린다 (관용 디코딩).
         notchCollapsedWidgets = NotchShoulderPolicy.normalized(
             ((try? container.decodeIfPresent([String].self, forKey: .notchCollapsedWidgets))
-                .flatMap { $0 } ?? [])
+                .flatMap { $0 }
+                // 키가 없으면(새 설정·아주 예전 설정) 기본으로 둘 다 접는다. 빈 목록이 저장돼 있으면 그대로 펼친다.
+                ?? Config.defaultCollapsedWidgets.map(\.rawValue))
                 .compactMap(NotchWidget.init(rawValue:)))
         // Shell 항목은 2.1에서 제거됐다. 설정 전체를 버리지 않도록 걸러내고
         // 이름을 기록해 호출자가 백업·안내를 할 수 있게 한다.

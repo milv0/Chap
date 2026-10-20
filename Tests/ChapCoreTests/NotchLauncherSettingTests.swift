@@ -240,13 +240,12 @@ struct NotchLauncherSettingTests {
         #expect(decoded.notchPanelColorHex == "#33445A")
     }
 
-    @Test("widgets default to Launchers, Apps, and Screenshots")
-    func widgetsDefaultToLauncherSections() throws {
+    @Test("a new install fills every slot in the shipped order")
+    func widgetsDefaultToFullLayout() throws {
         let config = try decodeConfig(#"{"sites": []}"#)
 
         #expect(
-            config.notchWidgets
-                == NotchWidget.normalizedSlots([.launchers, .apps, .screenshots]))
+            config.notchWidgets == [.screenshots, .downloads, .apps, .todo, .awake, .launchers])
         #expect(!config.didMigrateScriptsWidget)
     }
 
@@ -320,7 +319,10 @@ struct NotchLauncherSettingTests {
     @Test("the notch has six slots")
     func sixSlots() {
         #expect(NotchWidget.slotCount == 6)
-        #expect(NotchWidget.defaultSlots == [.screenshots, .none, .launchers, .apps, .none, .none])
+        #expect(
+            NotchWidget.defaultSlots == [
+                .screenshots, .downloads, .apps, .todo, .awake, .launchers,
+            ])
     }
 
     @Test("a 2.1 twelve-slot layout keeps every widget by moving late ones into gaps")
