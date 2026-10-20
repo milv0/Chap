@@ -505,7 +505,8 @@ struct NotchRenderTool {
     @MainActor
     func renderCompanion() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
-        let view = CoverScreensCompanionView().frame(width: 1600, height: 900)
+        let view = CoverScreensCompanionView(start: CGPoint(x: 0.5, y: 0.5))
+            .frame(width: 1600, height: 900)
         try Self.renderPNG(view).write(to: directory.appendingPathComponent("cover-companion.png"))
     }
 

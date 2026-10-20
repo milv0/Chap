@@ -99,6 +99,45 @@ public enum CoverScreensPolicy {
     /// 보조 화면 물범의 밝기. 낮잠 물범과 같은 결로 어둡게 둔다.
     public static let companionSealOpacity: Double = 0.6
 
+    // MARK: - 보조 화면 물범 떠다니기
+
+    /// 물범이 떠다니는 속도(pt/초). 화면보호기처럼 천천히, 눈에 띄게 움직이되 정신없지 않게.
+    public static let companionDriftSpeed: Double = 30
+    /// 떠다니는 방향(단위 벡터). 45°가 아니라 같은 길을 덜 되풀이한다.
+    public static let companionDriftDirection = (x: 0.8, y: 0.6)
+    /// 화면 가장자리에서 떨어뜨리는 여백(pt).
+    public static let companionDriftMargin: Double = 40
+    /// 위치를 다시 그리는 간격(초). 30fps × 30pt/초라 한 번에 1pt 남짓만 움직인다.
+    public static let companionDriftFrameInterval: Double = 1.0 / 30
+
+    /// 경과 시간에 따른 물범 왼쪽 위 좌표. 가장자리에 닿으면 튕겨 돌아온다(DVD 화면보호기처럼).
+    /// `start`는 움직일 수 있는 범위 안의 출발 위치 비율(0...1). 화면이 물범보다 작은 축은 가운데에 둔다.
+    /// 픽셀 그림이 번지지 않게 정수 pt로 맞춘다.
+    public static func companionDriftOrigin(
+        elapsed: Double, container: CGSize, item: CGSize, start: CGPoint,
+        speed: Double = companionDriftSpeed, margin: Double = companionDriftMargin
+    ) -> CGPoint {
+        func axis(length: Double, size: Double, fraction: Double, velocity: Double) -> Double {
+            let range = length - size - 2 * margin
+            guard range > 0 else { return ((length - size) / 2).rounded(.down) }
+            let clamped = min(max(fraction, 0), 1)
+            let travel = clamped * range + velocity * max(elapsed, 0)
+            let period = 2 * range
+            var phase = travel.truncatingRemainder(dividingBy: period)
+            if phase < 0 { phase += period }
+            let offset = phase <= range ? phase : period - phase
+            return (margin + offset).rounded()
+        }
+        let direction = companionDriftDirection
+        return CGPoint(
+            x: axis(
+                length: container.width, size: item.width, fraction: start.x,
+                velocity: speed * direction.x),
+            y: axis(
+                length: container.height, size: item.height, fraction: start.y,
+                velocity: speed * direction.y))
+    }
+
     // MARK: - 화면 문구
 
     /// 가림막 아래쪽에 잠깐 떴다 사라지는 안내.
