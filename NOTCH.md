@@ -123,8 +123,8 @@ Apple 공식 API는 연속 강도를 제공하지 않고 `Glass.clear`와
   어떤 appearance에서도 Clear·Regular를 자유롭게 조합할 수 있다
 
 `resolvedMaterial` 정책은 더 이상 없다. 렌더러(`glassMaterialProvider`)는
-`config.notchGlassMaterial`을 직접 전달하고, Settings의 Glass Material 피커는
-Glass 스타일일 때 항상 노출된다.
+`config.notchGlassMaterial`을 직접 전달하고, Settings의 Glass 줄은
+Glass 스타일일 때 밝기(System/Light/Dark 아이콘 셋)와 재질(Clear/Regular) 피커를 각각 한 줄로 보여준다.
 
 노치 UI는 Settings와 별도 `NSPanel`이므로 SwiftUI `colorScheme`만 바꾸지 않고
 패널 자체에 appearance를 적용한다. Settings에서 재질 또는 appearance를 바꾸면
