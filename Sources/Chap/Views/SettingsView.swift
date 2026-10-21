@@ -41,6 +41,10 @@ private struct SettingsTabButton: View {
 }
 
 struct SettingsView: View {
+    /// 창 최소 크기. 폭은 하단 막대가 겹치지 않는 값이다: 사이드바 200 + 구분선 1 + 탭 넷 426
+    /// + 오른쪽 아이콘·"Editing" 약 140 + 여백·간격. 높이는 항목 설정 화면이 스크롤 없이 대부분 보이는 값.
+    static let minimumSize = CGSize(width: 820, height: 700)
+
     /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
     static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
     /// 메뉴·노치의 Edit Layout이 그 Layout을 보여 달라는 요청. object는 UUID,
@@ -120,7 +124,7 @@ struct SettingsView: View {
             Divider()
             bottomBar
         }
-        .frame(minWidth: 770, minHeight: 700)
+        .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
         .background(DS.surfaceBg)
         .onChange(of: selectedTab) { _, _ in
             vm.flushPendingSave()
@@ -449,12 +453,15 @@ struct SettingsView: View {
             launchablesBottomBar
             Divider()
 
-            ZStack {
+            // 탭과 오른쪽 아이콘을 한 줄에 나란히 둔다. 예전처럼 탭을 아이콘 위에 겹쳐(ZStack) 가운데 두면
+            // 탭이 넷이 된 뒤 창을 줄였을 때 ?·⋯ 아이콘을 덮었다. 탭은 아이콘 왼쪽 남은 폭의 가운데에 온다.
+            HStack(spacing: DS.spacingSmall) {
+                Spacer(minLength: 0)
                 settingsTabPicker
+                    .fixedSize()
+                Spacer(minLength: DS.spacingSmall)
 
                 HStack(spacing: DS.spacingSmall) {
-                    Spacer()
-
                     ToolbarIconButton(
                         icon: "questionmark.circle", color: DS.textSecondary,
                         action: { showGuide = true }
@@ -488,8 +495,9 @@ struct SettingsView: View {
                             .padding(.vertical, 5)
                     }
                 }
-                .padding(.horizontal, DS.paddingSmall)
+                .fixedSize()
             }
+            .padding(.horizontal, DS.paddingSmall)
 
             // ToolbarIconButton은 탭 제스처 기반이라 키보드 단축키를 직접 못 받으므로
             // ⌘/ 는 숨김 버튼으로 연결 (아래 Return/⌘S와 같은 패턴)
