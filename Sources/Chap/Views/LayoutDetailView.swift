@@ -27,16 +27,19 @@ struct LayoutDetailView: View {
 
     var body: some View {
         if let layout {
+            // 항목 설정(SiteConfigView)과 같은 틀: 카드 하나에 입력칸, 그리고 섹션 제목 + 묶음 상자.
             ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: DS.spacing) {
-                    header(layout)
-                    previewCard(layout)
-                    windowsCard(layout)
-                    Text("App names, window titles, and positions stay on this Mac.")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textTertiary)
+                CardSection {
+                    VStack(alignment: .leading, spacing: DS.spacing) {
+                        header(layout)
+                        previewSection(layout)
+                        windowsSection(layout)
+                        Text("App names, window titles, and positions stay on this Mac.")
+                            .font(DS.captionFont)
+                            .foregroundColor(DS.textTertiary)
+                    }
+                    .frame(maxWidth: 460, alignment: .leading)
                 }
-                .frame(maxWidth: 520, alignment: .leading)
                 .padding(.leading, DS.paddingSmall)
                 .padding(.trailing, DS.padding)
                 .padding(.vertical, DS.paddingSmall)
@@ -50,99 +53,87 @@ struct LayoutDetailView: View {
     // MARK: - Header
 
     private func header(_ layout: ChapLayout) -> some View {
-        CardSection {
-            VStack(alignment: .leading, spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Name")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textSecondary)
-                    TextField("Layout name", text: $nameDraft)
-                        .textFieldStyle(.plain)
-                        .font(DS.bodyFont)
-                        .padding(DS.paddingSmall)
-                        .background(DS.surfaceBg)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .strokeBorder(nameFocused ? DS.accent : DS.border, lineWidth: 1)
-                        )
-                        .focused($nameFocused)
-                        .onSubmit(commitName)
-                        .accessibilityLabel("Layout name")
-                }
-                HStack(spacing: 8) {
-                    Button {
-                        actions.open(layout.id)
-                    } label: {
-                        Label("Open", systemImage: "play.fill")
-                    }
-                    .help("Open these apps and put their windows in place")
-                    Button {
-                        actions.updatePositions(layout.id)
-                    } label: {
-                        Label("Update Positions", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .help("Save where these apps' windows are right now")
-                    if isBusy {
-                        ProgressView()
-                            .controlSize(.small)
-                            .accessibilityLabel("Working")
-                    }
-                    Spacer()
-                    Button(role: .destructive) {
-                        actions.remove(layout.id)
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                    .help("Remove this layout. Apps and windows are not changed.")
-                }
-                .controlSize(.regular)
-                .disabled(library.busyID != nil)
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Name")
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textSecondary)
+                TextField("Layout name", text: $nameDraft)
+                    .textFieldStyle(.plain)
+                    .font(DS.bodyFont)
+                    .padding(.horizontal, DS.fieldPaddingH)
+                    .padding(.vertical, DS.fieldPaddingV)
+                    .background(DS.surfaceBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.fieldRadius)
+                            .strokeBorder(nameFocused ? DS.accent : DS.border, lineWidth: 1)
+                    )
+                    .focused($nameFocused)
+                    .onSubmit(commitName)
+                    .accessibilityLabel("Layout name")
             }
+            HStack(spacing: 8) {
+                Button {
+                    actions.open(layout.id)
+                } label: {
+                    Label("Open", systemImage: "play.fill")
+                }
+                .help("Open these apps and put their windows in place")
+                Button {
+                    actions.updatePositions(layout.id)
+                } label: {
+                    Label("Update Positions", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .help("Save where these apps' windows are right now")
+                if isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                        .accessibilityLabel("Working")
+                }
+                Spacer()
+                Button(role: .destructive) {
+                    actions.remove(layout.id)
+                } label: {
+                    Label("Remove", systemImage: "trash")
+                }
+                .help("Remove this layout. Apps and windows are not changed.")
+            }
+            .controlSize(.regular)
+            .disabled(library.busyID != nil)
         }
     }
 
     // MARK: - Preview
 
-    private func previewCard(_ layout: ChapLayout) -> some View {
-        CardSection {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Preview")
-                    .font(DS.captionFont.weight(.semibold))
-                    .foregroundColor(DS.textSecondary)
-                LayoutPreviewByDisplay(
-                    windows: layout.windows, displays: displays,
-                    highlightedID: hoveredWindowID)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+    private func previewSection(_ layout: ChapLayout) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SettingsSectionHeader(title: "Preview", systemImage: "rectangle.on.rectangle")
+            LayoutPreviewByDisplay(
+                windows: layout.windows, displays: displays,
+                highlightedID: hoveredWindowID)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Windows
 
-    private func windowsCard(_ layout: ChapLayout) -> some View {
-        CardSection {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Windows")
-                        .font(DS.captionFont.weight(.semibold))
-                        .foregroundColor(DS.textSecondary)
-                    Text("\(layout.windows.count)/\(LayoutStore.maxWindows)")
-                        .font(DS.captionFont)
-                        .foregroundColor(DS.textTertiary)
-                        .monospacedDigit()
-                    Spacer()
-                }
-                ForEach(layout.windows) { window in
+    private func windowsSection(_ layout: ChapLayout) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SettingsSectionHeader(
+                title: "Windows", systemImage: "macwindow.on.rectangle",
+                note:
+                    "\(layout.windows.count) of \(LayoutStore.maxWindows). Update Positions saves where they are now; to add an app, capture a new layout."
+            )
+            VStack(spacing: 0) {
+                ForEach(Array(layout.windows.enumerated()), id: \.element.id) { index, window in
+                    if index > 0 { Divider().padding(.leading, 12) }
                     windowRow(window, in: layout)
                 }
-                Text(
-                    "Update Positions saves where these apps' windows are now. To add an app, capture a new layout."
-                )
-                .font(DS.captionFont)
-                .foregroundColor(DS.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
             }
+            .background(DS.surfaceBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
         }
     }
 
@@ -195,12 +186,10 @@ struct LayoutDetailView: View {
             )
             .accessibilityLabel("Leave out \(window.applicationName)")
         }
-        .padding(.horizontal, 10)
-        .frame(height: 50)
-        .background(
-            RoundedRectangle(cornerRadius: DS.radiusSmall, style: .continuous)
-                .fill(hoveredWindowID == window.id ? DS.accentSoft : DS.surfaceBg)
-        )
+        .padding(.horizontal, 12)
+        .frame(height: 46)
+        // 묶음 상자 안의 한 줄. 올리면 옅게 칠해 Preview에서 진해지는 창과 짝을 맞춘다.
+        .background(hoveredWindowID == window.id ? DS.accentSoft : Color.clear)
         .onHover { inside in
             if inside {
                 hoveredWindowID = window.id
