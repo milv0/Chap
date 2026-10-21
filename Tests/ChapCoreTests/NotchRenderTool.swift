@@ -510,6 +510,42 @@ struct NotchRenderTool {
         try Self.renderPNG(view).write(to: directory.appendingPathComponent("cover-companion.png"))
     }
 
+    /// 항목 설정 화면 전체(크기 프리셋 격자 포함)를 그린다. 세로형 Tall을 고른 상태다.
+    @Test("render the size preset grid", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    func renderSizePresetGrid() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        for (name, scheme, preset) in [
+            ("settings-size-presets-light", ColorScheme.light, WindowSizePresets.tall.id),
+            ("settings-size-presets-dark", ColorScheme.dark, WindowSizePresets.tall.id),
+            ("settings-size-presets-custom", ColorScheme.light, nil),
+        ] as [(String, ColorScheme, String?)] {
+            // 최소 설정창(820) 기준 오른쪽 패널 폭: 820 - 사이드바 200 - 구분선 1.
+            let view = SizePresetPreview(presetID: preset)
+                .frame(width: 619, height: 760)
+                .background(DS.surfaceBg)
+                .environment(\.colorScheme, scheme)
+            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
+        }
+    }
+
+    private struct SizePresetPreview: View {
+        @State private var site: Site
+        @State private var isEditing = true
+
+        init(presetID: String?) {
+            _site = State(
+                initialValue: Site(
+                    name: "Notes", url: "https://notes.example.com", width: 600, height: 800,
+                    windowSizePreset: presetID))
+        }
+
+        var body: some View {
+            SiteConfigView(
+                site: $site, isEditing: $isEditing, quickNoteShortcut: nil,
+                coverScreensShortcut: nil)
+        }
+    }
+
     /// Settings → Tools 화면을 그린다.
     @Test("render the Tools settings", .enabled(if: NotchRenderTool.outputDirectory != nil))
     func renderToolsSettings() throws {

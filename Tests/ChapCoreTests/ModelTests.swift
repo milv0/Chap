@@ -262,15 +262,39 @@ struct WindowSizePresetTests {
     @Test func providesPresetLabelsInDisplayOrder() {
         #expect(
             WindowSizePresets.all.map(\.label) == [
-                "Compact",
-                "Focus",
-                "Standard",
-                "Comfortable",
-                "Wide",
-                "Tall",
-                "Workspace",
-                "Max",
+                "Compact", "Standard", "Comfortable", "Wide", "Workspace", "Max",
+                "Sidebar", "Tall", "Document", "Half",
             ])
+        #expect(
+            WindowSizePresets.presets(for: .landscape).map(\.id) == [
+                "compact", "standard", "comfortable", "wide", "workspace", "max",
+            ])
+        #expect(
+            WindowSizePresets.presets(for: .portrait).map(\.id) == [
+                "sidebar", "tall", "document", "half",
+            ])
+    }
+
+    @Test("each tab holds windows of that shape on a 16:10 or 16:9 screen")
+    func orientationMatchesShape() {
+        for screenAspect in [16.0 / 10, 16.0 / 9] {
+            for preset in WindowSizePresets.all {
+                let width =
+                    preset.aspectRatio.map { _ in 1.6 } ?? preset.widthRatio * screenAspect
+                let height = preset.aspectRatio.map { _ in 1.0 } ?? preset.heightRatio
+                #expect(
+                    (width > height) == (preset.orientation == .landscape),
+                    "\(preset.id) on \(screenAspect)")
+            }
+        }
+    }
+
+    @Test("Focus left the list but saved items keep opening at the same size")
+    func retiredFocusStillResolves() {
+        #expect(!WindowSizePresets.all.contains { $0.id == "focus" })
+        #expect(WindowSizePresets.preset(withID: "focus") == WindowSizePresets.focus)
+        #expect(WindowSizePresets.focus.widthRatio == 0.55)
+        #expect(WindowSizePresets.focus.heightRatio == 0.58)
     }
 
     @Test func initialRecommendationsMatchLaunchType() {

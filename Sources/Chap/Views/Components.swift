@@ -194,7 +194,6 @@ struct PillPickerItem: View {
 struct PillPicker: View {
     @Binding var selection: LaunchType
 
-    private let barWidth: CGFloat = 420
     private let items: [(LaunchType, String, String)] = [
         (.url, LauncherListPolicy.symbolName(for: .url), "URL"),
         (.app, "app.fill", "App"),
@@ -229,7 +228,8 @@ struct PillPicker: View {
             .accessibilityLabel("Coming soon")
         }
         .padding(4)
-        .frame(width: barWidth)
+        // 폭은 놓인 줄을 채운다(설정창이 넓어져 고정 420pt면 오른쪽 끝이 다른 칸과 맞지 않았다).
+        .frame(maxWidth: .infinity)
         .background(DS.border.opacity(0.2))
         .clipShape(Capsule())
     }
@@ -383,65 +383,33 @@ struct MinimapSwiftUI: View {
             }
         }
         .clipped()
-        .background(DS.surfaceBg)
+        // 배치도는 옅은 바탕만. 테두리는 바깥 미리보기 상자 하나로 충분하다.
+        .background(DS.border.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(DS.border, lineWidth: 1))
     }
 
     private func topologyPane(_ screens: [NSScreen]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 4) {
-                Text("All Displays")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
-                if isFollowingCursor {
-                    Image(systemName: "cursorarrow")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(DS.accent)
-                }
-            }
-            overview(screens)
-                .frame(
-                    minHeight: DisplayPreviewPolicy.topologyHeight,
-                    maxHeight: .infinity
-                )
-        }
-        .padding(6)
-        .frame(width: 156, alignment: .leading)
-        .frame(maxHeight: .infinity, alignment: .leading)
-        .background(DS.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
-        .accessibilityElement(children: .contain)
-        .accessibilityHint(
-            isFollowingCursor ? "Click a display to configure it" : "Click a display to select it"
-        )
+        overview(screens)
+            .frame(width: 156)
+            .frame(minHeight: DisplayPreviewPolicy.topologyHeight, maxHeight: .infinity)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("All displays")
+            .accessibilityHint(
+                isFollowingCursor
+                    ? "Click a display to configure it" : "Click a display to select it"
+            )
     }
 
     private func compactTopologyPane(_ screens: [NSScreen]) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 4) {
-                Text("All Displays")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
-                if isFollowingCursor {
-                    Image(systemName: "cursorarrow")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(DS.accent)
-                }
-            }
-            overview(screens)
-                .frame(height: DisplayPreviewPolicy.compactTopologyHeight)
-        }
-        .padding(6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
-        .accessibilityElement(children: .contain)
-        .accessibilityHint(
-            isFollowingCursor ? "Click a display to configure it" : "Click a display to select it"
-        )
+        overview(screens)
+            .frame(maxWidth: .infinity)
+            .frame(height: DisplayPreviewPolicy.compactTopologyHeight)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("All displays")
+            .accessibilityHint(
+                isFollowingCursor
+                    ? "Click a display to configure it" : "Click a display to select it"
+            )
     }
 
     private func detailCanvas(for screen: NSScreen) -> some View {
@@ -505,9 +473,6 @@ struct MinimapSwiftUI: View {
             )
         }
         .frame(maxWidth: .infinity)
-        .background(DS.surfaceBg)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(DS.border, lineWidth: 1))
     }
 
     @ViewBuilder
@@ -536,21 +501,13 @@ struct MinimapSwiftUI: View {
         }
     }
 
+    /// 소제목 없이 미리보기만. 화면 이름은 화면 사각형 안에 이미 적혀 있다.
     private func detailPreview(for screen: NSScreen, screens: [NSScreen]) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 6) {
-                Text(isFollowingCursor ? "Focused Display" : "Selected Display")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
-                Spacer()
-                Text(screen.localizedName)
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textTertiary)
-                    .lineLimit(1)
-            }
-
-            previewPanes(for: screen, screens: screens)
-        }
+        previewPanes(for: screen, screens: screens)
+            .padding(8)
+            .background(DS.surfaceBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
     }
 
     var body: some View {

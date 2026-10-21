@@ -10,7 +10,6 @@ struct SiteConfigView: View {
     var quickNoteShortcut: String?
     var coverScreensShortcut: String?
     @State private var hoveredSizeSelection: Int?
-    @State private var isSizePresetPopoverPresented = false
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
     /// 거부한 입력은 site에 쓰지 않고, 사용자가 왜 안 됐는지 바로 보게 한다.
@@ -29,8 +28,9 @@ struct SiteConfigView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             CardSection {
+                // 창이 넓어도 입력칸을 늘리지 않는다. 격자 여섯 칸이 겨우 들어가는 폭까지만.
                 formContent
-                    .frame(maxWidth: 420, alignment: .leading)
+                    .frame(maxWidth: 460, alignment: .leading)
             }
             .padding(.leading, DS.paddingSmall)
             .padding(.trailing, DS.padding)
@@ -44,7 +44,8 @@ struct SiteConfigView: View {
     // MARK: - Form Content
 
     private var formContent: some View {
-        VStack(alignment: .leading, spacing: DS.spacing) {
+        // 크기 프리셋 격자가 들어가 길어진 만큼 위쪽 입력 줄 사이는 조금 좁힌다.
+        VStack(alignment: .leading, spacing: 12) {
             launchTypeSection
             nameAndShortcutRow
             launchTargetFields
@@ -53,18 +54,19 @@ struct SiteConfigView: View {
     }
 
     private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Text("Name")
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
             TextField("Site name", text: $site.name)
                 .textFieldStyle(.plain)
                 .font(DS.bodyFont)
-                .padding(DS.paddingSmall)
+                .padding(.horizontal, DS.fieldPaddingH)
+                .padding(.vertical, DS.fieldPaddingV)
                 .background(DS.surfaceBg)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DS.fieldRadius)
                         .stroke(DS.border, lineWidth: 1)
                 )
                 .focused($nameFieldFocused)
@@ -78,10 +80,12 @@ struct SiteConfigView: View {
     }
 
     private var launchTypeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        // 레이블을 알약 왼쪽에 붙여 한 줄로 둔다.
+        HStack(spacing: DS.paddingSmall) {
             Text("Launch Type")
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
+                .fixedSize()
             PillPicker(selection: $site.launchType)
         }
     }
@@ -182,7 +186,6 @@ struct SiteConfigView: View {
             site: $site,
             isEditing: $isEditing,
             hoveredSizeSelection: $hoveredSizeSelection,
-            isSizePresetPopoverPresented: $isSizePresetPopoverPresented,
             sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
             sizeEditingDisplayName: $sizeEditingDisplayName,
             widthDraft: $widthDraft,
@@ -220,73 +223,6 @@ struct SiteConfigView: View {
         site.folderPath = url.path
         if site.name == Defaults.newSiteName || site.name.isEmpty {
             site.name = url.lastPathComponent
-        }
-    }
-}
-
-// MARK: - Size Preset Popover
-
-struct SizePresetPopover: View {
-    let presets: [WindowSizePreset]
-    let selectedSelection: Int
-    @Binding var hoveredSelection: Int?
-    let currentCustomSizeText: String
-    let onSelect: (Int) -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 2) {
-                row(selection: 0, title: "Custom", sizeText: currentCustomSizeText)
-                Divider()
-                ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
-                    row(
-                        selection: index + 1,
-                        title: preset.label,
-                        sizeText: preset.ratioText
-                    )
-                }
-            }
-            .padding(6)
-        }
-        .frame(maxHeight: 360)
-    }
-
-    private func row(selection: Int, title: String, sizeText: String) -> some View {
-        let isHovered = hoveredSelection == selection
-        let isSelected = selectedSelection == selection
-
-        return HStack(spacing: 6) {
-            Text(title)
-                .font(DS.bodyFont)
-                .foregroundColor(DS.textPrimary)
-                .lineLimit(1)
-            Spacer()
-            if !sizeText.isEmpty {
-                Text(sizeText)
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textTertiary)
-                    .lineLimit(1)
-            }
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(DS.accent)
-            }
-        }
-        .padding(.horizontal, 8)
-        .frame(height: 24)
-        .background(isHovered ? DS.accentSoft : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: 5))
-        .contentShape(Rectangle())
-        .onHover { hovering in
-            if hovering {
-                hoveredSelection = selection
-            } else if hoveredSelection == selection {
-                hoveredSelection = nil
-            }
-        }
-        .onTapGesture {
-            onSelect(selection)
         }
     }
 }

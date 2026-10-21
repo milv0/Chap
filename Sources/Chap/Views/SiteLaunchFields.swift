@@ -23,6 +23,7 @@ struct SiteLaunchFields: View {
     // MARK: - URL Fields
 
     private var urlFields: some View {
+        // Reuse 토글은 창 관련 설정이라 Window 묶음(SiteWindowConfigView)에 있다.
         VStack(alignment: .leading, spacing: 10) {
             InputField(
                 label: "URL",
@@ -41,37 +42,6 @@ struct SiteLaunchFields: View {
                 ),
                 placeholder: "https://"
             )
-
-            Divider()
-
-            HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "macwindow.on.rectangle")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(
-                        site.reuseExistingWindow ? DS.accent : DS.textSecondary
-                    )
-                    .frame(width: 28, height: 28)
-                    .background(
-                        site.reuseExistingWindow
-                            ? DS.accentSoft
-                            : DS.border.opacity(0.18)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
-
-                Text("Reuse Existing URL Window")
-                    .font(DS.bodyFont.weight(.medium))
-                    .foregroundColor(DS.textPrimary)
-
-                Spacer(minLength: 8)
-
-                Toggle("Reuse Existing URL Window", isOn: $site.reuseExistingWindow)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .help(
-                        "Reuse only the Chrome app window created by this launchable."
-                    )
-            }
-            .opacity(isEditing ? 1 : 0.45)
         }
     }
 
@@ -101,11 +71,12 @@ struct SiteLaunchFields: View {
                 )
                 .textFieldStyle(.plain)
                 .font(DS.bodyFont)
-                .padding(DS.paddingSmall)
+                .padding(.horizontal, DS.fieldPaddingH)
+                .padding(.vertical, DS.fieldPaddingV)
                 .background(DS.surfaceBg)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DS.fieldRadius)
                         .stroke(DS.border, lineWidth: 1)
                 )
                 Button(action: browseForApp) {
@@ -113,7 +84,7 @@ struct SiteLaunchFields: View {
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.bordered)
-                .frame(height: 30)
+                .frame(height: 28)
             }
         }
     }
