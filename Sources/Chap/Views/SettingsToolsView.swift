@@ -3,9 +3,8 @@ import SwiftUI
 
 // MARK: - Tools Tab
 
-/// Settings > Tools 탭. 노치 없이도 쓰는 기능(⌥ 단축키·메뉴바로 여는 것)의 설정: Quick Note, Cover Screens,
-/// 그리고 macOS 스크린샷 저장 폴더 안내(읽기만 하고, 바꾸는 곳은 스크린샷 앱).
-/// 노치에서만 쓰는 기능(Mirror 등)은 Notch 탭에 둔다. 빈 섹션은 만들지 않는다.
+/// Settings > Tools 탭. 노치 없이도 쓰는 기능(⌥ 단축키·메뉴바로 여는 것)의 설정: Quick Note, Cover Screens.
+/// 노치에서만 쓰는 기능(Mirror, Screenshots 선반 폴더 등)은 Notch 탭에 둔다. 빈 섹션은 만들지 않는다.
 struct ToolsSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     let onSave: () -> Void
@@ -27,8 +26,6 @@ struct ToolsSettingsView: View {
 
     /// 문구 저장은 마지막 입력 0.6초 뒤에 한 번. 키마다 config를 다시 쓰지 않는다.
     @State private var messageSave: DispatchWorkItem?
-    /// 스크린샷 앱에서 위치를 바꾸고 돌아오면 Chap이 다시 활성화되며 새 경로를 읽는다.
-    @State private var screenshotFolder = ScreenshotShelf.directory()
 
     private func scheduleMessageSave() {
         messageSave?.cancel()
@@ -148,51 +145,6 @@ struct ToolsSettingsView: View {
                         + "Use macOS Lock Screen (⌃⌘Q) to secure your Mac.")
             }
 
-            Section {
-                SettingsRow(
-                    title: "Folder",
-                    subtitle: screenshotFolderSubtitle,
-                    help: screenshotFolder.path
-                ) {
-                    HStack(spacing: 6) {
-                        Button("Show in Finder") { NSWorkspace.shared.open(screenshotFolder) }
-                            .controlSize(.small)
-                        Button("Change…") { ScreenshotShelf.openScreenshotApp() }
-                            .controlSize(.small)
-                            .help(
-                                "Opens the Screenshot app. Choose Options → Other Location… "
-                                    + "to pick or make a folder, and Chap follows along.")
-                    }
-                }
-            } header: {
-                SettingsSectionHeader(
-                    title: "Screenshots", systemImage: "camera.viewfinder",
-                    note: "Pick one in the Screenshot app (Options → Other Location…). "
-                        + "Chap only reads it.")
-            }
-            .onAppear(perform: refreshScreenshotFolder)
-            .onReceive(
-                NotificationCenter.default.publisher(
-                    for: NSApplication.didBecomeActiveNotification)
-            ) { _ in refreshScreenshotFolder() }
-
         }
-    }
-
-    // MARK: Screenshots
-
-    private func refreshScreenshotFolder() {
-        let folder = ScreenshotShelf.directory()
-        if folder != screenshotFolder { screenshotFolder = folder }
-    }
-
-    private var screenshotFolderSubtitle: String {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let path = ScreenshotShelfPolicy.displayPath(screenshotFolder.path, home: home)
-        guard ScreenshotShelfPolicy.isDesktop(screenshotFolder.path, home: home) else {
-            return path
-        }
-        // 데스크톱이면 다른 이미지도 선반에 올라온다. 전용 폴더를 권하되 강요하지 않는다.
-        return "\(path) · every image here joins the shelf"
     }
 }
