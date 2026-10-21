@@ -64,7 +64,7 @@ struct QAView: View {
                     "Chrome의 --app 모드로 실행되기 때문입니다. 웹앱처럼 깔끔하게 사용할 수 있습니다."
                 ),
                 (
-                    "\"Reuse Existing URL Window\"는 어떻게 동작하나요?",
+                    "\"Reuse Existing Window\"는 어떻게 동작하나요?",
                     "활성화 후 해당 항목을 처음 실행하면 Chap이 새 Chrome --app 창을 열고 그 창 ID를 항목별로 기억합니다. 다음 실행부터는 Chap이 직접 만든 그 창만 앞으로 가져와 설정한 크기와 위치를 다시 적용합니다."
                 ),
                 (
@@ -81,7 +81,7 @@ struct QAView: View {
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
-                    "설정의 Display 목록에서 원하는 모니터를 선택하거나 All Displays에서 화면을 클릭하세요. Follow Cursor는 마우스 커서가 있는 화면에 열립니다."
+                    "설정의 Display 목록에서 원하는 모니터를 선택하거나 Preview의 배치도에서 화면을 클릭하세요. Follow Cursor 토글은 마우스 커서가 있는 화면에 열립니다."
                 ),
                 (
                     "같은 URL/앱을 두 번 등록하면?",
@@ -148,11 +148,11 @@ struct QAView: View {
                 ),
                 (
                     "Size Preset은 어떻게 동작하나요?",
-                    "Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max 중 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Max는 메뉴 막대와 Dock을 뺀 높이를 꽉 채우므로 위아래 여백이 없습니다(너비는 94%). Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다."
+                    "Size Preset 아래 창 모양 썸네일을 누르면 됩니다(마우스를 올리면 미리보기에 먼저 보입니다). 윗줄 가로형은 Compact, Standard, Comfortable, Wide, Workspace, Max, 아랫줄 세로형은 Sidebar(채팅·메모), Tall, Document(PDF·문서), Half(화면 반쪽, 높이 꽉 채움)와 Custom입니다. 하나를 고르면 실행할 때 화면 크기에 맞춰 다시 계산됩니다. Max는 메뉴 막대와 Dock을 뺀 높이를 꽉 채우므로 위아래 여백이 없습니다(너비는 94%). Width나 Height를 직접 수정하면 Custom으로 바뀌고 그 값이 저장됩니다. Focus는 2.19.2에서 목록에서 빠졌지만 이미 고른 항목은 같은 크기로 열립니다."
                 ),
                 (
                     "Follow Cursor에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
-                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Follow Cursor 중 All Displays에서 모니터를 클릭하면 커서 추적은 유지한 채 그 화면의 Size Preset 또는 Custom 크기를 따로 편집·저장할 수 있습니다. 일반 모드에서 All Displays를 클릭하면 해당 화면이 사이트의 target display로 선택됩니다. 프리뷰 창 중앙에는 현재 preset 또는 Custom label이 표시됩니다."
+                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Follow Cursor 중 Preview의 배치도에서 모니터를 클릭하면 커서 추적은 유지한 채 그 화면의 Size Preset 또는 Custom 크기를 따로 편집·저장할 수 있습니다. 일반 모드에서 the Preview map를 클릭하면 해당 화면이 사이트의 target display로 선택됩니다. 프리뷰 창 중앙에는 현재 preset 또는 Custom label이 표시됩니다."
                 ),
                 (
                     "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
@@ -238,7 +238,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
-                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다). 저장 폴더는 Settings → Tools → Screenshots에 보이며, Change…를 누르면 macOS 스크린샷 앱이 열립니다. 옵션 → 기타 위치…(Other Location…)에서 폴더를 고르거나 새로 만들면 Chap이 그대로 따라갑니다. 데스크톱에 저장하면 그곳의 다른 이미지도 함께 보이므로 스크린샷 전용 폴더를 추천합니다."
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다). 저장 폴더는 Settings → Notch → Screenshots에 보이며, Change…를 누르면 macOS 스크린샷 앱이 열립니다. 옵션 → 기타 위치…(Other Location…)에서 폴더를 고르거나 새로 만들면 Chap이 그대로 따라갑니다. 데스크톱에 저장하면 그곳의 다른 이미지도 함께 보이므로 스크린샷 전용 폴더를 추천합니다."
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
@@ -346,7 +346,7 @@ struct QAView: View {
                     "It opens in Chrome's --app mode, which provides a clean web-app experience without browser UI."
                 ),
                 (
-                    "How does \"Reuse Existing URL Window\" work?",
+                    "How does \"Reuse Existing Window\" work?",
                     "On the first launch after enabling it, Chap opens a new Chrome --app window and remembers that window ID for this launchable. Later launches bring forward only that Chap-created window and reapply its configured size and position."
                 ),
                 (
@@ -363,7 +363,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I open on a specific monitor?",
-                    "Choose the desired monitor from the Display list or click it in All Displays. Follow Cursor opens on the screen where your cursor is."
+                    "Choose the desired monitor from the Display list or click it in the Preview map. The Follow Cursor toggle opens on the screen where your cursor is."
                 ),
                 (
                     "What if I register the same URL/app twice?",
@@ -430,11 +430,11 @@ struct QAView: View {
                 ),
                 (
                     "How do Size Presets work?",
-                    "Choose Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, or Max to recalculate the size for the screen at launch time. Max fills the full height left by the menu bar and Dock, so there is no gap above or below (width stays at 94%). Editing Width or Height switches the item to Custom and saves that exact size."
+                    "Click a window-shape thumbnail under Size Preset (hover to see it in the preview first). The top row is landscape: Compact, Standard, Comfortable, Wide, Workspace, and Max; the bottom row is portrait: Sidebar (chat, notes), Tall, Document (PDFs, docs), and Half (half the width, full height), plus Custom. Choose one to recalculate the size for the screen at launch time. Max fills the full height left by the menu bar and Dock, so there is no gap above or below (width stays at 94%). Editing Width or Height switches the item to Custom and saves that exact size. Focus left the list in 2.19.2; items already set to it keep the same size."
                 ),
                 (
                     "What size reference does Follow Cursor use on external monitors?",
-                    "Follow Cursor opens on the cursor screen, but default preset sizes are calculated from the built-in display first, then fitted to the target screen. While following the cursor, click a monitor in All Displays to edit and save that monitor's own Size Preset or Custom size without leaving Follow Cursor. In normal mode, clicking All Displays selects that screen as the site's target display. The preview window shows the current preset or Custom label in its center."
+                    "Follow Cursor opens on the cursor screen, but default preset sizes are calculated from the built-in display first, then fitted to the target screen. While following the cursor, click a monitor in the Preview map to edit and save that monitor's own Size Preset or Custom size without leaving Follow Cursor. In normal mode, clicking the Preview map selects that screen as the site's target display. The preview window shows the current preset or Custom label in its center."
                 ),
                 (
                     "Which preset is used for new items?",
@@ -520,7 +520,7 @@ struct QAView: View {
                 ),
                 (
                     "Does the Screenshots widget move my files?",
-                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way). The folder is shown in Settings → Tools → Screenshots; Change… opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder, and Chap follows along. If screenshots go to the Desktop, other images there show up too, so a folder of their own works best."
+                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way). The folder is shown in Settings → Notch → Screenshots; Change… opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder, and Chap follows along. If screenshots go to the Desktop, other images there show up too, so a folder of their own works best."
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",
