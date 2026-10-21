@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.19.2-orange)
+![Version](https://img.shields.io/badge/version-2.19.3-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -20,12 +20,12 @@
 - **Keep Awake & Timer Dial** — One notch slot handles both: switch (click the icon in its title, or swipe with two fingers) between a 1–12-hour Keep Awake dial (the same session as Keep Awake in the menu bar) and a 5–60-minute Timer dial. Drag the arc to set the duration, click the center to start, and watch it wind down; while a timer runs, its time sits beside the closed notch and Chap plays a sound and shows "Time's up" when it ends
 - **Layouts (demo)** — Arrange your standard app windows, capture their displays, sizes, and positions, then restore the whole layout from the menu bar or the Layouts tab of the notch Apps slot; app names and window titles stay in a local file on this Mac
 - **Downloads Shelf** — See your newest downloads in a notch slot (four at a glance, scroll for up to twelve) with their names and age (rest on a cut-off name to see it in full); click to open, drag out, or right-click to share or show in Finder
-- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded shelf opens by itself when you open the notch within 10 minutes of a new screenshot or download, without changing your setting. Settings → Tools → Screenshots shows which folder the shelf reads; **Change…** opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder (Chap only reads that setting, never writes it). If screenshots land on the Desktop, other images there join the shelf too, so a folder of their own works best
+- **Screenshot Shelf** — Place recent screenshots in a notch slot (four at a glance, scroll for up to twelve) without moving or duplicating the originals; click the Screenshots or Downloads title to open that folder in a centered Standard-size Finder window. Collapse either shelf to a small white icon on the left of the notch's black strip when you don't want to see the files; the dock narrows to fit. A folded shelf opens by itself when you open the notch within 10 minutes of a new screenshot or download, without changing your setting. Settings → Notch → Screenshots shows which folder the shelf reads; **Change…** opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder (Chap only reads that setting, never writes it). If screenshots land on the Desktop, other images there join the shelf too, so a folder of their own works best
 - **Menubar Resident** — Always accessible from the status bar, including notchless Macs and while the notch launcher is off
 - **3 Launch Types** — URL (Chrome --app), macOS App, Finder folder
 - **Multi-Monitor** — UUID-based display selection, with Auto using the cursor screen
 - **Auto-Center** — Windows always open centered on the target display
-- **Size Presets** — Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max (fills the full height left by the menu bar and Dock), or Custom
+- **Size Presets** — Pick a window-shape thumbnail: a landscape row (Compact, Standard, Comfortable, Wide, Workspace, Max — Max fills the full height left by the menu bar and Dock) and a portrait row (Sidebar, Tall, Document, Half), or Custom
 - **Display Minimap** — In normal mode, click a display to select the site target; in Follow Cursor, click a display to configure that monitor's size
 - **Global Hotkeys** — Only registered `⌥` combinations reach Chap; normal typing bypasses it
 - **Accessibility Aware** — Icon indicates URL/app window-resizing permission status
@@ -65,7 +65,7 @@
 
 ### Chrome Window Reuse
 
-`Reuse Existing URL Window` is scoped to each URL launchable. On its first launch
+`Reuse Existing Window` (URL launchables, under Window) is scoped to each URL launchable. On its first launch
 after reuse is enabled, Chap snapshots Chrome window IDs, opens a new `--app`
 window, and remembers it only when the before/after difference identifies exactly
 one new window. Later launches activate and resize that exact window ID.
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.19.2
+Scripts/release.sh 2.19.3
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.19.2 --publish
+Scripts/release.sh 2.19.3 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

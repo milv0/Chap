@@ -180,6 +180,9 @@ struct NotchSettingsView: View {
                             + "or right-click a slot.")
                 }
 
+                // 1번 칸 Screenshots 선반이 읽는 폴더. 선반은 노치에서만 쓰므로 여기에 둔다.
+                ScreenshotFolderSection()
+
                 // 검정 띠 오른쪽 도구 아이콘: 보일지 말지만 정한다. 단축키·동작은 Tools 탭에 있다.
                 Section {
                     // Mirror는 노치에서만 쓰므로 설정 전부(표시·카메라 권한)를 여기에 둔다.
@@ -581,5 +584,49 @@ private struct ColorPresetSwatch: View {
         .buttonStyle(.plain)
         .help(name)
         .accessibilityLabel("\(name) panel color preset")
+    }
+}
+
+/// Notch 탭의 Screenshots 섹션: 선반이 읽는 macOS 스크린샷 저장 폴더. 읽기만 하고, 바꾸는 곳은
+/// 스크린샷 앱(Options → Other Location…)이다. 앱이 다시 활성화될 때 새 경로를 읽는다.
+struct ScreenshotFolderSection: View {
+    @State private var folder = ScreenshotShelf.directory()
+
+    var body: some View {
+        Section {
+            SettingsRow(title: "Folder", subtitle: subtitle, help: folder.path) {
+                HStack(spacing: 6) {
+                    Button("Show in Finder") { NSWorkspace.shared.open(folder) }
+                        .controlSize(.small)
+                    Button("Change…") { ScreenshotShelf.openScreenshotApp() }
+                        .controlSize(.small)
+                        .help(
+                            "Opens the Screenshot app. Choose Options → Other Location… "
+                                + "to pick or make a folder, and Chap follows along.")
+                }
+            }
+        } header: {
+            SettingsSectionHeader(
+                title: "Screenshots", systemImage: "camera.viewfinder",
+                note: "Pick one in the Screenshot app (Options → Other Location…). "
+                    + "Chap only reads it.")
+        }
+        .onAppear(perform: refresh)
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+        ) { _ in refresh() }
+    }
+
+    private func refresh() {
+        let current = ScreenshotShelf.directory()
+        if current != folder { folder = current }
+    }
+
+    private var subtitle: String {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let path = ScreenshotShelfPolicy.displayPath(folder.path, home: home)
+        guard ScreenshotShelfPolicy.isDesktop(folder.path, home: home) else { return path }
+        // 데스크톱이면 다른 이미지도 선반에 올라온다. 전용 폴더를 권하되 강요하지 않는다.
+        return "\(path) · every image here joins the shelf"
     }
 }

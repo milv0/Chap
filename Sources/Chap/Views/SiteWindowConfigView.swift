@@ -7,7 +7,6 @@ struct SiteWindowConfigView: View {
     @Binding var site: Site
     @Binding var isEditing: Bool
     @Binding var hoveredSizeSelection: Int?
-    @Binding var isSizePresetPopoverPresented: Bool
     @Binding var sizeEditingDisplayIdentifier: String?
     @Binding var sizeEditingDisplayName: String?
     @Binding var widthDraft: String?
@@ -41,7 +40,8 @@ struct SiteWindowConfigView: View {
 
     private var selectedSizeSelection: Int {
         guard let activeSizePresetID else { return 0 }
-        return sizePresets.firstIndex { $0.id == activeSizePresetID }.map { $0 + 1 } ?? 0
+        // 목록에서 뺀 프리셋(예: Focus)은 어느 칸도 고르지 않는다. Custom도 아니다.
+        return sizePresets.firstIndex { $0.id == activeSizePresetID }.map { $0 + 1 } ?? -1
     }
 
     private var previewWidth: Int {
@@ -166,94 +166,112 @@ struct SiteWindowConfigView: View {
         return "'\(name)' is disconnected"
     }
 
-    private var sizePresetButtonText: String {
-        guard let preset = selectedSizePreset else { return "Custom" }
-        return preset.label
+    /// 프리셋을 고른 동안 보이는 실제 크기. 목록에서 뺀 프리셋(Focus)은 이름도 함께 보여준다.
+    private var sizeSummaryText: String {
+        guard let preset = selectedSizePreset, selectedSizeSelection < 0 else {
+            return previewSizeText
+        }
+        return "\(preset.label) · \(previewSizeText)"
     }
 
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading, spacing: DS.spacing) {
-            VStack(alignment: .leading, spacing: DS.paddingSmall) {
-                HStack(alignment: .top, spacing: DS.spacing) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Display")
-                            .font(DS.captionFont)
-                            .foregroundColor(DS.textSecondary)
-                        Picker(
-                            "",
-                            selection: Binding(
-                                get: { selectedDisplayTag },
-                                set: { newTag in
-                                    isEditing = true
-                                    applyDisplaySelection(tag: newTag)
-                                }
-                            )
-                        ) {
-                            ForEach(NSScreen.screens, id: \.self) { screen in
-                                Text(displayLabel(for: screen))
-                                    .tag(displayUUID(for: screen) ?? screen.localizedName)
+            VStack(alignment: .leading, spacing: 8) {
+                SettingsSectionHeader(title: "Window", systemImage: "macwindow")
+                windowGroup
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                SettingsSectionHeader(title: "Preview", systemImage: "rectangle.on.rectangle")
+                MinimapSwiftUI(
+                    selectedIdentifier: site.displayIdentifier,
+                    selectedName: site.displayName,
+                    focusedIdentifier: sizeEditingDisplayIdentifier,
+                    focusedName: sizeEditingDisplayName,
+                    previewSizeForScreen: { minimapPreviewSize(for: $0) },
+                    previewLabelForScreen: { minimapPreviewLabel(for: $0) },
+                    onPreviewSelect: { handleTopologySelection($0) }
+                )
+                .frame(maxWidth: .infinity, minHeight: 100)
+                .id(
+                    "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")"
+                )
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// Display·Follow Cursor·Reuse·Size를 다른 탭과 같은 묶음 줄로 둔다. 컨트롤은 모두 오른쪽 끝.
+    private var windowGroup: some View {
+        VStack(spacing: 0) {
+            groupRow {
+                SettingsRow(
+                    title: "Display",
+                    subtitle: displayWarningText ?? "Where the window opens.",
+                    help:
+                        "Pick a screen, or turn on Follow Cursor to use the one under your pointer."
+                ) {
+                    Picker(
+                        "",
+                        selection: Binding(
+                            get: { selectedDisplayTag },
+                            set: { newTag in
+                                isEditing = true
+                                applyDisplaySelection(tag: newTag)
                             }
-                        }
-                        .labelsHidden()
-                        .frame(width: dropdownControlWidth, alignment: .leading)
-                        Button {
-                            toggleFollowCursor()
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "cursorarrow")
-                                    .font(.system(size: 11, weight: .semibold))
-                                Text("Follow Cursor")
-                                    .font(DS.captionFont)
-                            }
-                            .foregroundColor(
-                                hasExplicitDisplaySelection(site) ? DS.textSecondary : DS.accent
-                            )
-                            .padding(.horizontal, 8)
-                            .frame(width: dropdownControlWidth, height: 24, alignment: .leading)
-                            .background(
-                                hasExplicitDisplaySelection(site) ? DS.surfaceBg : DS.accentSoft
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(
-                                        hasExplicitDisplaySelection(site) ? DS.border : DS.accent,
-                                        lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        if let warning = displayWarningText {
-                            HStack(spacing: 4) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.orange)
-                                Text(warning)
-                                    .font(DS.captionFont)
-                                    .foregroundColor(.orange)
-                            }
+                        )
+                    ) {
+                        ForEach(NSScreen.screens, id: \.self) { screen in
+                            Text(displayLabel(for: screen))
+                                .tag(displayUUID(for: screen) ?? screen.localizedName)
                         }
                     }
-
-                    Spacer(minLength: DS.spacing)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Size Preset")
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textSecondary)
-                            sizePresetDropdown
-                            if selectedSizePreset != nil {
-                                Text(previewSizeText)
-                                    .font(DS.captionFont)
-                                    .foregroundColor(DS.textTertiary)
-                                    .padding(.top, 6)
-                            }
+                    .labelsHidden()
+                    .frame(width: dropdownControlWidth)
+                }
+            }
+            groupDivider
+            groupRow {
+                SettingsToggleRow(
+                    title: "Follow Cursor",
+                    subtitle: "Opens on the screen under your pointer.",
+                    help: "Click a display in the preview to set its size while this is on.",
+                    isOn: Binding(
+                        get: { !hasExplicitDisplaySelection(site) },
+                        set: { _ in
+                            isEditing = true
+                            toggleFollowCursor()
                         }
-
-                        if selectedSizePreset == nil {
-                            HStack(spacing: 20) {
+                    )
+                )
+            }
+            if site.launchType == .url {
+                groupDivider
+                groupRow {
+                    SettingsToggleRow(
+                        title: "Reuse Existing Window",
+                        subtitle: "Brings back the window this launcher opened.",
+                        help: "Reuse only the Chrome app window created by this launchable.",
+                        isOn: $site.reuseExistingWindow
+                    )
+                }
+            }
+            groupDivider
+            groupRow {
+                VStack(alignment: .leading, spacing: 8) {
+                    // 제목 줄 오른쪽: 프리셋이면 실제 크기를 작게(올린 칸의 크기로 바뀐다), Custom이면 W·H 입력.
+                    SettingsRow(title: "Size", subtitle: "Recalculated for the screen at launch.") {
+                        if selectedSizePreset != nil
+                            || hoveredSizeSelection.map({ $0 > 0 }) == true
+                        {
+                            Text(sizeSummaryText)
+                                .font(DS.captionFont)
+                                .foregroundColor(DS.textTertiary)
+                                .monospacedDigit()
+                        } else {
+                            HStack(spacing: 12) {
                                 compactDimensionField(
                                     label: "W",
                                     text: Binding(
@@ -275,31 +293,29 @@ struct SiteWindowConfigView: View {
                             }
                         }
                     }
-                    .frame(width: dropdownControlWidth, alignment: .leading)
+                    .frame(minHeight: 24)
+                    SizePresetGrid(
+                        presets: sizePresets,
+                        selectedSelection: selectedSizeSelection,
+                        hoveredSelection: $hoveredSizeSelection,
+                        onSelect: selectSize
+                    )
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Display Preview")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.textSecondary)
-                MinimapSwiftUI(
-                    selectedIdentifier: site.displayIdentifier,
-                    selectedName: site.displayName,
-                    focusedIdentifier: sizeEditingDisplayIdentifier,
-                    focusedName: sizeEditingDisplayName,
-                    previewSizeForScreen: { minimapPreviewSize(for: $0) },
-                    previewLabelForScreen: { minimapPreviewLabel(for: $0) },
-                    onPreviewSelect: { handleTopologySelection($0) }
-                )
-                .frame(maxWidth: .infinity, minHeight: 100)
-                .id(
-                    "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")"
-                )
-            }
-            .frame(maxWidth: .infinity)
         }
+        .background(DS.surfaceBg)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
+    }
+
+    private func groupRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 9)
+    }
+
+    private var groupDivider: some View {
+        Divider().padding(.leading, 12)
     }
 
     private func compactDimensionField(
@@ -337,56 +353,17 @@ struct SiteWindowConfigView: View {
 
     // MARK: - Size Preset Dropdown
 
-    private var sizePresetDropdown: some View {
-        Button {
-            hoveredSizeSelection = nil
-            isSizePresetPopoverPresented.toggle()
-        } label: {
-            HStack(spacing: 6) {
-                Text(sizePresetButtonText)
-                    .font(DS.bodyFont)
-                    .foregroundColor(DS.textPrimary)
-                    .lineLimit(1)
-                Spacer(minLength: 6)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(DS.textTertiary)
-            }
-            .padding(.horizontal, 8)
-            .frame(width: dropdownControlWidth, height: 26, alignment: .leading)
-            .background(DS.surfaceBg)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(DS.border, lineWidth: 1)
-            )
+    /// 격자에서 고른 칸을 적용한다. 0은 Custom: 지금 크기를 그대로 숫자로 남긴다.
+    private func selectSize(_ selection: Int) {
+        isEditing = true
+        hoveredSizeSelection = nil
+        if selection == 0 {
+            let currentSize = displayedWindowSize
+            updateCurrentSize(
+                windowSizePreset: nil, width: currentSize.width, height: currentSize.height)
+            return
         }
-        .buttonStyle(.plain)
-        .popover(isPresented: $isSizePresetPopoverPresented, arrowEdge: .bottom) {
-            SizePresetPopover(
-                presets: sizePresets,
-                selectedSelection: selectedSizeSelection,
-                hoveredSelection: $hoveredSizeSelection,
-                currentCustomSizeText:
-                    "\(displayedWindowSize.width)x\(displayedWindowSize.height) pt",
-                onSelect: { selection in
-                    isEditing = true
-                    hoveredSizeSelection = nil
-                    isSizePresetPopoverPresented = false
-                    if selection == 0 {
-                        let currentSize = displayedWindowSize
-                        updateCurrentSize(
-                            windowSizePreset: nil,
-                            width: currentSize.width,
-                            height: currentSize.height)
-                        return
-                    }
-                    applySize(for: selection)
-                }
-            )
-            .frame(width: dropdownControlWidth)
-            .onDisappear { hoveredSizeSelection = nil }
-        }
+        applySize(for: selection)
     }
 
     // MARK: - Actions

@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.19.2"
+        ?? "2.19.3"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -28,11 +28,37 @@ public enum LaunchType: String, Codable, CaseIterable {
 }
 
 public struct WindowSizePreset: Equatable, Identifiable {
+    /// 설정창 프리셋 목록의 탭. 실제 창 모양(가로가 긴지, 세로가 긴지)으로 나눈다.
+    public enum Orientation: String, CaseIterable {
+        case landscape
+        case portrait
+
+        public var label: String {
+            switch self {
+            case .landscape: return "Landscape"
+            case .portrait: return "Portrait"
+            }
+        }
+    }
+
     public let id: String
     public let label: String
     public let widthRatio: Double
     public let heightRatio: Double
     public let aspectRatio: Double?
+    public var orientation: Orientation = .landscape
+
+    public init(
+        id: String, label: String, widthRatio: Double, heightRatio: Double,
+        aspectRatio: Double?, orientation: Orientation = .landscape
+    ) {
+        self.id = id
+        self.label = label
+        self.widthRatio = widthRatio
+        self.heightRatio = heightRatio
+        self.aspectRatio = aspectRatio
+        self.orientation = orientation
+    }
 
     public var ratioText: String {
         if aspectRatio != nil {
@@ -50,6 +76,7 @@ public struct WindowSizePreset: Equatable, Identifiable {
 public enum WindowSizePresets {
     public static let compact = WindowSizePreset(
         id: "compact", label: "Compact", widthRatio: 0.42, heightRatio: 0.46, aspectRatio: nil)
+    /// 2.19.2에서 목록에서 뺐다(Compact와 Standard 사이라 겹쳤다). 이미 저장된 "focus"는 계속 같은 크기로 연다.
     public static let focus = WindowSizePreset(
         id: "focus", label: "Focus", widthRatio: 0.55, heightRatio: 0.58, aspectRatio: nil)
     public static let standard = WindowSizePreset(
@@ -61,7 +88,20 @@ public enum WindowSizePresets {
     public static let wide = WindowSizePreset(
         id: "wide", label: "Wide", widthRatio: 0.69, heightRatio: 0.59, aspectRatio: nil)
     public static let tall = WindowSizePreset(
-        id: "tall", label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil)
+        id: "tall", label: "Tall", widthRatio: 0.38, heightRatio: 0.80, aspectRatio: nil,
+        orientation: .portrait)
+    /// 채팅·메모·음악처럼 좁고 긴 창.
+    public static let sidebar = WindowSizePreset(
+        id: "sidebar", label: "Sidebar", widthRatio: 0.28, heightRatio: 0.80, aspectRatio: nil,
+        orientation: .portrait)
+    /// PDF·문서·세로로 읽는 웹 페이지.
+    public static let document = WindowSizePreset(
+        id: "document", label: "Document", widthRatio: 0.46, heightRatio: 0.90, aspectRatio: nil,
+        orientation: .portrait)
+    /// 화면 반쪽 너비에 높이를 꽉 채운다.
+    public static let half = WindowSizePreset(
+        id: "half", label: "Half", widthRatio: 0.50, heightRatio: 1.0, aspectRatio: nil,
+        orientation: .portrait)
     public static let workspace = WindowSizePreset(
         id: "workspace", label: "Workspace", widthRatio: 0.86, heightRatio: 0.86,
         aspectRatio: nil)
@@ -69,11 +109,23 @@ public enum WindowSizePresets {
     public static let max = WindowSizePreset(
         id: "max", label: "Max", widthRatio: 0.94, heightRatio: 1.0, aspectRatio: nil)
 
-    public static let all = [compact, focus, standard, comfortable, wide, tall, workspace, max]
+    /// 설정창에서 고를 수 있는 프리셋. 가로형 다음 세로형 순서다.
+    public static let all = [
+        compact, standard, comfortable, wide, workspace, max,
+        sidebar, tall, document, half,
+    ]
+
+    /// 목록에서는 뺐지만 저장된 값으로는 계속 읽는 프리셋.
+    public static let retired = [focus]
+
+    public static func presets(for orientation: WindowSizePreset.Orientation) -> [WindowSizePreset]
+    {
+        all.filter { $0.orientation == orientation }
+    }
 
     public static func preset(withID id: String?) -> WindowSizePreset? {
         guard let id else { return nil }
-        return all.first { $0.id == id }
+        return (all + retired).first { $0.id == id }
     }
 }
 

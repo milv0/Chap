@@ -8,6 +8,10 @@ enum DS {
     static let paddingSmall: CGFloat = 12
     static let spacing: CGFloat = 16
     static let spacingSmall: CGFloat = 8
+    /// 항목 설정 입력칸(Name·URL·Shortcut 등) 안쪽 여백과 모서리. 한 줄 입력이라 낮게 둔다(약 28pt).
+    static let fieldPaddingH: CGFloat = 10
+    static let fieldPaddingV: CGFloat = 6
+    static let fieldRadius: CGFloat = 7
     static let radius: CGFloat = 12
     static let radiusSmall: CGFloat = 8
 
@@ -97,7 +101,7 @@ struct InputField: View {
     var hasError = false
 
     var body: some View {
-        VStack(alignment: alignment, spacing: 6) {
+        VStack(alignment: alignment, spacing: 4) {
             Text(label)
                 .font(DS.captionFont)
                 .foregroundColor(DS.textSecondary)
@@ -105,11 +109,12 @@ struct InputField: View {
                 .textFieldStyle(.plain)
                 .font(DS.bodyFont)
                 .multilineTextAlignment(textAlignment)
-                .padding(DS.paddingSmall)
+                .padding(.horizontal, DS.fieldPaddingH)
+                .padding(.vertical, DS.fieldPaddingV)
                 .background(fieldBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: DS.fieldRadius)
                         .stroke(hasError ? DS.danger : fieldBorder, lineWidth: hasError ? 2 : 1)
                 )
         }

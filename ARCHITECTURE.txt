@@ -60,11 +60,12 @@ Sources/
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, PillPicker, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
 │       ├── SettingsView.swift     ← 설정 메인 뷰
 │       ├── SettingsGeneralView.swift ← General 탭 (App/Launching/Menu Bar: 앱 자체 설정만)
-│       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Cover Screens, 스크린샷 저장 폴더 안내)
+│       ├── SizePresetGrid.swift ← 항목 설정의 크기 프리셋 썸네일 격자 (가로형 줄 / 세로형 줄 + Custom)
+│       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Cover Screens)
 │       ├── SettingsConfigTransfer.swift ← Settings config import/export/apply 로직
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
 │       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
-│       ├── NotchSettingsView.swift ← Notch 탭 (위젯·스타일·Glass appearance)
+│       ├── NotchSettingsView.swift ← Notch 탭 (위젯·Screenshots 폴더·띠 아이콘·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·Drop 줄·크기 보고)
 │       ├── NotchSlotModel.swift   ← NotchSlotContent(칸 내용)·NotchRevealModel(펼침 상태)·NotchContentSizeKey
 │       ├── NotchDockShapes.swift  ← 도커 실루엣 셰이프(NotchDockShape·PressedStripShape·GlassCornerBridgeShape)·채움 스타일·글자 측정
@@ -303,7 +304,7 @@ Config 모델 필드:
 - Settings > General의 Enable Chap Option-Key Triggers 토글로 글로벌 단축키
   (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
-- URL별 Reuse Existing URL Window 토글. 활성화 후 해당 launchable이 처음 만든 --app 창 ID만
+- URL별 Reuse Existing Window 토글(Window 묶음의 줄). 활성화 후 해당 launchable이 처음 만든 --app 창 ID만
   현재 Chap/Chrome 세션 동안 기억해 재사용하며, 사용자 Chrome 탭은 검색하지 않는다.
 - URL → HTTP(S) URL 검증 후 Chrome --app 모드 + 단일 request coordinator 직렬 실행 + AX readback 검증
 - App → 실행 전 baseline 대비 첫 새 창 하나, 없으면 focused window 하나 + AX readback 검증
@@ -320,7 +321,7 @@ Config 모델 필드:
   같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
   Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),
   Tools는 노치 없이도 쓰는 기능의 설정(Quick Note ⌥키·백업 폴더, Cover Screens ⌥키·가림막 문구)을 모아 둔다.
-  Screenshots 섹션은 시스템 스크린샷 폴더(`com.apple.screencapture location`, 없으면 ~/Desktop)를 읽기만 하고,
+  Notch 탭의 Screenshots 섹션(ScreenshotFolderSection, Slots 아래)은 시스템 스크린샷 폴더(`com.apple.screencapture location`, 없으면 ~/Desktop)를 읽기만 하고,
   Change…는 NSWorkspace로 스크린샷 앱(com.apple.screenshot.launcher)을 연다. 값은 Chap이 쓰지 않는다.
   Chap이 다시 활성화될 때 경로를 새로 읽는다(CFPreferencesAppSynchronize). 데스크톱이면 다른 이미지도 섞인다고 알린다.
   노치에서만 쓰는 Mirror는 Notch → Notch Icons의 한 줄에 표시 스위치와 카메라 권한 버튼을 함께 둔다.
@@ -352,10 +353,16 @@ Config 모델 필드:
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - 멀티 모니터 지원 + Display Picker로 고정 디스플레이 선택, Follow Cursor로 커서 화면 실행
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
-- 크기 프리셋: Compact, Focus, Standard, Comfortable, Wide, Tall, Workspace, Max, Custom
+- 항목 설정은 입력칸(Launch Type·Name·Shortcut·URL/App/Folder) 아래에 다른 탭과 같은 섹션 둘을 둔다:
+  Window(Display 피커, Follow Cursor 토글, Reuse 토글(URL만), Size 줄 + 프리셋 격자)와 Preview(소제목 없는 미니맵 한 상자).
+- 크기 프리셋: SizePresetGrid가 창 모양 썸네일 격자(6열, 칸 테두리 없음)로 보여준다. 윗줄 가로형, 아랫줄 세로형 + Custom
+  (WindowSizePreset.orientation). 올리면 미니맵 미리보기, 누르면 적용. 제목 줄 오른쪽에 실제 pt를 작게(올린 칸 기준),
+  Custom이면 그 자리에 W/H 입력칸.
+  가로형 Compact, Standard, Comfortable, Wide, Workspace, Max / 세로형 Sidebar(28×80%), Tall, Document(46×90%), Half(50×100%), Custom.
+  Focus(55×58%)는 2.19.2에서 목록에서 뺐고(WindowSizePresets.retired) 저장된 "focus"는 같은 크기로 계속 연다
   (Max는 높이 비율 1.0으로 보이는 영역을 꽉 채워 위아래 여백이 없다. 너비는 94%)
 - Follow Cursor 디스플레이 프리셋은 내장 화면 기준 크기로 계산 후 커서 화면에 맞춤
-- 화면별 size override: Follow Cursor에서만 적용한다. All Displays에서 편집 대상으로 고른 화면의 preset/custom size는 해당 화면 override로 저장되며, explicit display target 모드의 size edit는 site 전체 size를 갱신한다.
+- 화면별 size override: Follow Cursor에서만 적용한다. Preview 배치도에서 편집 대상으로 고른 화면의 preset/custom size는 해당 화면 override로 저장되며, explicit display target 모드의 size edit는 site 전체 size를 갱신한다.
 - 클릭 편집 + 자동 저장 (Enter/포커스 이동 시)
 - 사이트별 커스텀 단축키 (optional, 정확히 한 글자, 중복 체크, 예약키 ./, 차단)
   - 단축키 정규화(sanitizedShortcuts): UI 저장뿐 아니라 config 로드(loadConfig)·Import
@@ -376,7 +383,8 @@ Config 모델 필드:
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
 - Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 최소 770x700 크기로 커서 화면 중앙에 표시
+- 설정 창은 최소 820x700(SettingsView.minimumSize, 하단 탭과 ?·⋯ 아이콘이 겹치지 않는 폭) 크기로 커서 화면 중앙에 표시.
+  하단 막대는 탭과 아이콘을 HStack으로 나란히 둔다(겹쳐 두던 ZStack은 탭이 넷이 된 뒤 아이콘을 덮었다)
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
