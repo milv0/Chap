@@ -293,6 +293,12 @@ struct NotchCoverScreensStripButton: View {
 private struct MirrorPreview: NSViewRepresentable {
     let camera: MirrorCamera
 
+    final class Coordinator {
+        var captureToken: UInt?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         view.wantsLayer = true
@@ -300,20 +306,21 @@ private struct MirrorPreview: NSViewRepresentable {
         let layer = AVCaptureVideoPreviewLayer()
         layer.videoGravity = .resizeAspectFill
         view.layer = layer
-        camera.attach(layer) {
+        context.coordinator.captureToken = camera.attachAndStart(layer) {
             // 거울처럼 보이도록 좌우를 뒤집는다. connection은 세션 연결 뒤에 생긴다.
             if let connection = layer.connection, connection.isVideoMirroringSupported {
                 connection.automaticallyAdjustsVideoMirroring = false
                 connection.isVideoMirrored = true
             }
-            camera.start()
         }
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
 
-    static func dismantleNSView(_ nsView: NSView, coordinator: ()) {
-        MirrorCamera.shared.stop()
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        if let token = coordinator.captureToken {
+            MirrorCamera.shared.stop(token: token)
+        }
     }
 }

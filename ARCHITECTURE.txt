@@ -27,9 +27,9 @@ Sources/
 │   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스·가장 새 다운로드 시각 캐시 (utility queue, 받은 시각 순)
-│   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (최신 파일 스캔, utility queue)
+│   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (후보명 선필터 후 최신 파일 스캔, utility queue)
 │   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 borderless floating Quick Note 카드 (노치 아래 시작, 크기 기억, 헤더 드래그·Esc/× 닫기)
-│   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청)
+│   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청, 닫힘 token으로 지연 시작 취소)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
 │   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
@@ -86,7 +86,7 @@ Sources/
 │       ├── NotchFocusDial.swift   ← Keep Awake·Timer 공용 240° 다이얼·가운데 버튼 모양
 │       ├── NotchTimerBadgeView.swift ← 접힌 노치 왼쪽 타이머 배지
 │       ├── NotchStripToolsView.swift ← 띠 오른쪽 도구: Mirror(좌우 반전 미리보기)·Quick Note·Cover Screens 아이콘
-│       ├── NotchQuickNoteView.swift ← Quick Note 편집기(자동 저장·백업 버튼·읽기 실패 안내)
+│       ├── NotchQuickNoteView.swift ← Quick Note 편집기(자동 저장·백업 버튼·읽기 실패 안내, 로드 재저장 방지·최신 편집 세대 표시)
 │       ├── NotchMascotView.swift  ← 마스코트(물범) 뷰: 깜빡임·꼬리·다이빙·z, 잉크 색은 ChapMascot.rgb
 │       ├── SiteConfigView.swift   ← 사이트별 설정
 │       ├── SiteLaunchFields.swift ← launch type별 입력 필드
@@ -136,7 +136,7 @@ Sources/
 │   ├── LauncherListPolicy.swift  ← 메뉴/노치 공유 런처 그룹핑 정책·Launchers·Apps 탭 선택(AppsSlotTab)·칸 폭·Apps 격자 열 수
 │   ├── SiteCountLimitPolicy.swift ← launch type별 상한(URL·Finder 4, App 6) 추가·검증 정책
 │   ├── DropPolicy.swift          ← Chap Drop 표시 선택·상한 정책
-│   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 4개·가장 새 시각·짧은 시각
+│   ├── DownloadsShelfPolicy.swift ← 다운로드 후보(받는 중·숨김·폴더 제외)·최근 12개(4개 표시)·가장 새 시각·짧은 시각
 │   ├── ScreenshotShelfPolicy.swift ← 스크린샷 후보·최신순 정책, 설정창 경로 표시(~ 축약)·데스크톱 판정
 │   └── Log.swift                  ← os.Logger 통합 진입점
 Tests/ChapCoreTests/               ← 유닛 테스트
@@ -184,7 +184,10 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ChapMascotTests.swift
     ├── ShelfFolderLaunchTests.swift
     ├── NotchShoulderPolicyTests.swift
-    ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정 시만 실행
+    ├── FocusDialModeTests.swift
+    ├── LaunchersTabTests.swift
+    ├── TabSwipePolicyTests.swift
+    ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정(xcodebuild 전달 후 CHAP_NOTCH_RENDER_DIR로 읽음) 시만 실행
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift
     ├── StatusBarSymbolImageTests.swift
@@ -212,9 +215,7 @@ assets/                             ← 배포·디자인용 원본 아이콘 �
 └── icons/
     ├── make-app-icon.swift     ← 앱 아이콘(픽셀 물범) 생성기. ChapMascot 격자를 그대로 쓴다
     ├── app-icon-1024.png       ← 아이콘 마스터. 여기서 AppIcon.icns·웹 파비콘을 굽는다
-    ├── README.md               ← 다시 굽는 명령
-    ├── icon-orange.svg         ← 2.8 이전 번개 마크 (참고용)
-    └── icon-purple.svg
+    └── README.md               ← 다시 굽는 명령
 
 Config Files:
 ├── project.yml                    ← XcodeGen 프로젝트 정의

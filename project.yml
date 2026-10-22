@@ -23,7 +23,7 @@ targets:
         CFBundleIconFile: AppIcon
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        NSAppleEventsUsageDescription: "Chap controls Chrome to reuse matching URL windows and Finder to open and position folder windows."
+        NSAppleEventsUsageDescription: "Chap controls Chrome to reuse the window created by this launcher and Finder to open and position folder windows."
         NSCameraUsageDescription: "Chap shows your camera in the notch Mirror widget so you can check how you look before a call. Video is never recorded or saved."
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.utilities
@@ -38,8 +38,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.mingyupark.Chap
-        MARKETING_VERSION: "2.19.3"
-        CURRENT_PROJECT_VERSION: "104"
+        MARKETING_VERSION: "2.19.4"
+        CURRENT_PROJECT_VERSION: "105"
         GENERATE_INFOPLIST_FILE: true
         CODE_SIGN_IDENTITY: "-"
         INFOPLIST_KEY_LSUIElement: true

@@ -4,7 +4,7 @@
 
 > *chap* (n., British) — a friend, a good fellow · *chap* — the snap of a window landing in place. See [BRAND.md](BRAND.md) for Chap's identity and voice.
 
-![Version](https://img.shields.io/badge/version-2.19.3-orange)
+![Version](https://img.shields.io/badge/version-2.19.4-orange)
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9+-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -12,7 +12,7 @@
 ## Features
 
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; on a Mac without a notch it opens when you point at the middle of the menu bar, and the classic status menu always remains available
-- **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
+- **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals; only temporary items are copied) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Keep Awake starts, wags its tail while Keep Awake runs, and flicks it when you check off a to-do
 - **To-do** — A short checklist in a notch slot: click Add (or anywhere in an empty slot) and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance, and the slot widens to fit your longest item (it settles each time you open the notch); clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
@@ -59,7 +59,7 @@
 
 | Type | What it does | Window control |
 |------|-------------|---------------|
-| URL | Opens in Chrome `--app` mode (no address bar) | AX API (new window detection via CFEqual) |
+| URL | Opens in Chrome `--app` mode (no address bar) | AX baseline-difference detection, then tracked window ID |
 | App | Launches macOS app via NSWorkspace | AX API (AXObserver + polling fallback) |
 | Finder | Opens folder in Finder | AppleScript bounds |
 
@@ -210,11 +210,11 @@ Daily development stays on `dev`: commit and push only that branch. The local re
 
 ```bash
 # Read-only preflight: validates release prerequisites and prints the plan.
-Scripts/release.sh 2.19.3
+Scripts/release.sh 2.19.4
 
 # Production release: version bump, validation, dev → main promotion, tag,
 # signed/notarized PKG + DMG, GitHub Release upload, and Pages verification.
-Scripts/release.sh 2.19.3 --publish
+Scripts/release.sh 2.19.4 --publish
 ```
 
 `--publish` must start from a clean `dev` branch that matches `origin/dev`. It uses only local signing identities and the `ChapNotary` keychain profile; credentials are never stored in the repository. The release command is intentionally manual because it changes protected release surfaces.

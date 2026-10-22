@@ -20,8 +20,4 @@ iconutil -c icns /tmp/AppIcon.iconset -o Resources/AppIcon.icns
 
 # Website favicon and header icon use the same art.
 sips -z 256 256 assets/icons/app-icon-1024.png --out docs/assets/chap-icon-rounded.png
-sips -z 128 128 assets/icons/app-icon-1024.png --out docs/assets/chap-icon.png
 ```
-
-`icon-orange.svg` and `icon-purple.svg` are the pre-2.8 bolt marks, kept for
-reference only.

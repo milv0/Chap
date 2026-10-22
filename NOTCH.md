@@ -69,7 +69,7 @@
 2. **림 스트로크** — 림 하이라이트는 상단 변을 긋지 않는 `isRim` 경로를
    써야 노치 경계에 흰 줄이 생기지 않는다.
 
-배지도 같은 `NotchDockShape`을 쓴다: 상단 오목 플레어 + 하단 볼록
+배지는 별도 `NotchBadgeShape`을 쓴다: 노치 쪽 직선 변 + 바깥 상단 오목 플레어 + 하단 볼록
 (`badgeCornerRadius`). 노치 쪽 절반은 겹침(overlap)으로 하드웨어 밑에
 숨고 바깥 프로필만 보인다.
 
@@ -79,8 +79,9 @@
 |---|---|---|
 | `stripPlateauSideWidth` | 110 | 노치 좌우의 평평한 검정 상태 영역 폭 |
 | `badgeBodyWidth` | 34 | 배지 본체(보이는 검정) 폭. 높이는 노치 높이 |
-| `badgeNotchOverlap` | 12 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
-| `badgeCornerRadius` | 6 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접). 상단은 `dockFlareRadius` 오목 플레어 |
+| `badgeNotchOverlap` | 18 | 배지가 노치 밑으로 파고드는 겹침 (우측 배지 → 노치의 둥근 오른쪽 아래 모서리를 채움) |
+| `badgeFlareRadius` | 6 | 배지 바깥쪽 상단 오목 플레어 |
+| `badgeCornerRadius` | 13 | 배지 하단 볼록 모서리 (하드웨어 노치 곡률에 근접) |
 | `dockFlareRadius` | 10 | 도커 상단 오목 플레어. 상단바에서 흘러나오는 곡선. **폭 보정 계산과 공유** |
 | `dockBottomRadius` | 18 | 메인 도커 하단 라운드. 배지만 비례상 작은 `badgeCornerRadius` |
 | `glassEdgeBleed` | 10 | Glass 광학 edge를 플레어 밖으로 밀어 검정 꼭짓점까지 재질 연결 |
@@ -454,8 +455,7 @@ Apps 칸의 두 번째 탭으로 보는 로컬 창 배치 격자(`NotchLayoutsVi
   당김). 그다음엔 자유롭게 옮긴다. 크기는 `ChapQuickNoteWindow` frame autosave로 기억하고 자리는 기억하지 않는다.
   노치 화면이 없으면 커서 화면 가운데.
 - ⌥N도 같은 동작이다. 키는 Settings → Tools → Quick Note에서 바꾸거나 비워서 끈다. 노치 런처·띠 아이콘 상태와
-  무관하게 등록된다(노치 없는 Mac도 ⌥N으로 메모를 연다). 노치 런처와 Quick Note 아이콘이
-  켜져 있을 때만 등록하고, 같은 키를 사이트가 쓰면 사이트가 우선이며 설정창에 빨간 안내가 뜬다.
+  무관하게 등록되고, 같은 키를 사이트가 쓰면 사이트가 우선하며 설정창에 빨간 안내가 뜬다.
 - 창이 열려 있을 때 아이콘을 다시 누르면 그 창을 앞으로 가져온다(편집기는 하나).
 - 도구 줄: 제목·글자 수·복사·Show Backups(백업 폴더를 Finder로).
 - ⌘Z로 입력을 되돌리고 ⇧⌘Z로 다시 한다. 앱의 숨은 Edit 메뉴(`AppMainMenu`)가 단축키를 메모 상자로 보낸다.

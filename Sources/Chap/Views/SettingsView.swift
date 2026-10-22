@@ -464,6 +464,7 @@ struct SettingsView: View {
                 HStack(spacing: DS.spacingSmall) {
                     ToolbarIconButton(
                         icon: "questionmark.circle", color: DS.textSecondary,
+                        accessibilityLabel: "User Guide",
                         action: { showGuide = true }
                     )
                     .help("User Guide")
@@ -530,18 +531,19 @@ struct SettingsView: View {
     private var launchablesBottomBar: some View {
         HStack(spacing: 4) {
             ToolbarIconButton(
-                icon: "plus", color: DS.textSecondary, action: { addSite() }
+                icon: "plus", color: DS.textSecondary,
+                accessibilityLabel: isLayoutsFocused
+                    ? "Capture Layout" : "Add \(typeSectionTitle(focusedLaunchType)) item",
+                action: { addSite() }
             )
             .help(
                 isLayoutsFocused
                     ? "Capture Layout (⌘N)"
                     : "Add to \(typeSectionTitle(focusedLaunchType)) (⌘N)"
             )
-            .accessibilityLabel(
-                isLayoutsFocused
-                    ? "Capture Layout" : "Add \(typeSectionTitle(focusedLaunchType)) item")
             ToolbarIconButton(
                 icon: "minus", color: DS.danger,
+                accessibilityLabel: selectedLayoutID == nil ? "Remove launchable" : "Remove layout",
                 action: {
                     selectedTab = .launchables
                     if let id = selectedLayoutID {
@@ -556,6 +558,7 @@ struct SettingsView: View {
 
             ToolbarIconButton(
                 icon: "chevron.up", color: DS.textSecondary,
+                accessibilityLabel: "Move up",
                 action: {
                     selectedTab = .launchables
                     moveSiteUp()
@@ -563,6 +566,7 @@ struct SettingsView: View {
                 disabled: !canMoveUp)
             ToolbarIconButton(
                 icon: "chevron.down", color: DS.textSecondary,
+                accessibilityLabel: "Move down",
                 action: {
                     selectedTab = .launchables
                     moveSiteDown()

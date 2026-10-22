@@ -25,6 +25,23 @@ struct MirrorPolicyTests {
         }
     }
 
+    @Test("closing the mirror invalidates a delayed camera start")
+    func closingInvalidatesDelayedStart() {
+        let intent = MirrorCaptureIntent()
+        let first = intent.begin()
+        #expect(intent.permits(first))
+
+        intent.cancel()
+        #expect(!intent.permits(first))
+
+        let second = intent.begin()
+        #expect(!intent.cancel(token: first))
+        #expect(!intent.permits(first))
+        #expect(intent.permits(second))
+        #expect(intent.cancel(token: second))
+        #expect(!intent.permits(second))
+    }
+
     @Test("capture runs only for a turned-on live mirror in an open dock")
     func captureNeedsLiveOnVisibleOpen() {
         func capture(
