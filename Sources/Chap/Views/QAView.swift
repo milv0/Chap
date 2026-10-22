@@ -152,7 +152,7 @@ struct QAView: View {
                 ),
                 (
                     "Follow Cursor에서 외장 모니터를 쓰면 프리셋 크기 기준은 뭔가요?",
-                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Follow Cursor 중 Preview의 배치도에서 모니터를 클릭하면 커서 추적은 유지한 채 그 화면의 Size Preset 또는 Custom 크기를 따로 편집·저장할 수 있습니다. 일반 모드에서 the Preview map를 클릭하면 해당 화면이 사이트의 target display로 선택됩니다. 프리뷰 창 중앙에는 현재 preset 또는 Custom label이 표시됩니다."
+                    "Follow Cursor는 창을 커서가 있는 화면에 띄우지만, 기본 프리셋 크기는 내장 디스플레이 기준으로 계산한 뒤 대상 화면에 맞게 줄입니다. Follow Cursor 중 Preview의 배치도에서 모니터를 클릭하면 커서 추적은 유지한 채 그 화면의 Size Preset 또는 Custom 크기를 따로 편집·저장할 수 있습니다. 일반 모드에서 Preview 배치도를 클릭하면 그 화면이 항목의 대상 디스플레이로 선택됩니다. 프리뷰 창 중앙에는 현재 프리셋 또는 Custom 이름이 표시됩니다."
                 ),
                 (
                     "새 항목을 추가하면 어떤 프리셋이 기본인가요?",
@@ -194,7 +194,7 @@ struct QAView: View {
             [
                 (
                     "노치 런처는 어떻게 켜나요?",
-                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서만 활성화되며, 꺼져 있거나 노치가 없는 Mac에서도 기존 상태바 메뉴와 Option 단축키는 그대로 동작합니다."
+                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서는 노치에 마우스를 올리세요. 노치가 없는 Mac에서는 메뉴 막대 위쪽 가운데에 포인터를 두면 같은 도커가 열립니다(열기 전에는 그 자리에 아무 창도 없어 메뉴 막대 클릭을 가리지 않습니다). 기존 상태바 메뉴와 Option 단축키는 어느 쪽에서든 그대로 동작합니다."
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
@@ -210,7 +210,7 @@ struct QAView: View {
                 ),
                 (
                     "Quick Note는 언제 저장되나요?",
-                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열리고(단축키는 Settings → Tools에서 바꾸거나 끌 수 있습니다). Esc를 누르면 창이 닫히고, 그때까지 쓴 내용은 먼저 저장됩니다., 그다음엔 원하는 곳으로 옮길 수 있습니다."
+                    "입력하는 동안 자동으로 저장되고, 메모 밖 다른 곳을 누르거나 다른 앱으로 가면 커서가 풀리면서 바로 저장됩니다. 메모 오른쪽 아래에 \"Saved · 6:12 PM\"처럼 마지막 저장 시각(오늘이 아니면 날짜)이 작게 보입니다. 메모 아이콘을 누르거나 ⌥N을 누르면 노치 바로 아래에 메모 창이 붙어서 열립니다(단축키는 Settings → Tools에서 바꾸거나 끌 수 있습니다). 그다음 원하는 곳으로 옮길 수 있습니다. Esc를 누르면 창이 닫히고, 그때까지 쓴 내용은 먼저 저장됩니다."
                 ),
                 (
                     "Quick Note를 실수로 지웠어요.",
@@ -492,7 +492,7 @@ struct QAView: View {
                 ),
                 (
                     "When does Quick Note save?",
-                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Tools). Press Esc to close it; whatever you typed is saved first.; drag it anywhere after that."
+                    "It saves as you type, and right away when you click anywhere outside the note or switch apps. The bottom-right corner shows the last save, such as \"Saved · 6:12 PM\" (with the date if it was not today). Clicking the note icon or pressing ⌥N opens the note window attached just below the notch (change or turn off the shortcut in Settings → Tools). Drag it anywhere after that. Press Esc to close it; whatever you typed is saved first."
                 ),
                 (
                     "I deleted my Quick Note by accident.",

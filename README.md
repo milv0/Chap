@@ -12,7 +12,7 @@
 ## Features
 
 - **Notch Launcher** — An optional six-slot command surface that expands from the MacBook notch; on a Mac without a notch it opens when you point at the middle of the menu bar, and the classic status menu always remains available
-- **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals, no copies) and drag them back out from the dock's Finder-style file row
+- **Chap Drop** — Drag files to the notch to keep them at hand (Chap remembers the originals; only temporary items are copied) and drag them back out from the dock's Finder-style file row
 - **Liquid Glass or Custom** — Use Apple Clear/Regular Liquid Glass on macOS 26+, or a custom color and opacity on every supported macOS version
 - **Chap the Seal** — The app icon, and the same pixel seal rests on the left of the notch's black strip: it flicks its tail when you open the notch, splashes into the water and back when Keep Awake starts, wags its tail while Keep Awake runs, and flicks it when you check off a to-do
 - **To-do** — A short checklist in a notch slot: click Add (or anywhere in an empty slot) and type, Enter to add the next, click a circle to check it off (double-click to edit, hover and click × to delete); finished items stay in place, checked off, until you click Clear. When everything is done the slot says "All done." with Back and Clear. Up to four items, so the list fits at a glance, and the slot widens to fit your longest item (it settles each time you open the notch); clear finished ones to make room. Kept only on this Mac (no permissions, no sync)
@@ -59,7 +59,7 @@
 
 | Type | What it does | Window control |
 |------|-------------|---------------|
-| URL | Opens in Chrome `--app` mode (no address bar) | AX API (new window detection via CFEqual) |
+| URL | Opens in Chrome `--app` mode (no address bar) | AX baseline-difference detection, then tracked window ID |
 | App | Launches macOS app via NSWorkspace | AX API (AXObserver + polling fallback) |
 | Finder | Opens folder in Finder | AppleScript bounds |
 

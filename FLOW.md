@@ -410,12 +410,16 @@ osascript -e '
 
 `LauncherUtils › axApplyBounds` — 모든 런처의 공통 종점.
 
+`axApplyBounds(_:position:size:)`의 순서는 다음과 같다.
+
 ```
-set position → set size → usleep(50ms) → set size → set position → usleep(20ms) → readback
-                                          └ 최종 에러 코드는 2차 적용 결과를 쓴다
+AX minimum size 확인 → Enhanced UI 필요 시 잠시 끄기
+→ set size → set position → set size → 20ms → readback
+→ 실제 size가 4pt 넘게 다르면 실제 size 기준 중앙 position 재적용 → 20ms → readback
+→ Enhanced UI 원상복구
 ```
 
-2회 적용은 안정성 때문이다 (일부 앱이 첫 set을 무시하거나 자체 레이아웃으로 되돌린다).
+`size → position → size`는 현재 화면에서 첫 size가 clamp되더라도 대상 화면으로 옮긴 뒤 다시 적용하기 위한 순서다.
 
 **판정** — `AXBoundsResult.determineLevel` (순수 함수, tolerance 4px):
 
@@ -442,10 +446,11 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
-Settings는 하단의 `Launchers`·`General`·`Notch` 세 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
-사이드바는 모든 탭에서 유지되며, General/Notch에서 사이트를 선택하면 Launchers로 복귀한다.
+Settings는 하단의 `Launchers`·`General`·`Notch`·`Tools` 네 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
+사이드바는 모든 탭에서 유지되며, General/Notch/Tools에서 사이트를 선택하면 Launchers로 복귀한다.
 Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
-상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·6칸 위젯·Custom/Glass를 관리한다.
+상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·6칸 위젯·Screenshots 폴더·Custom/Glass를,
+Tools는 Quick Note와 Cover Screens를 관리한다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -534,7 +539,7 @@ Settings → Notch Launcher on
   → LauncherListPolicy 기반 위젯 6칸(빈 칸·접힌 선반 제외 한 줄) + 조건부 Drop 파일 행
      1·2번 칸은 Screenshots·Downloads 선반 고정, 접힌 선반은 검정 띠 왼쪽 아이콘(notchCollapsedWidgets)
   → 런처 칸 제목 뒤 › 클릭: hidePanel → showSettings(focusing: type) → 다음 틱에 SettingsView.focusLaunchType 알림
-    → Launchables 탭 + 그 타입 첫 항목 선택
+    → Launchers 탭 + 그 타입 첫 항목 선택
     Launchers(Sites|Finder)·Apps(Apps|Layouts) 칸은 제목 줄이 탭: 다른 탭 아이콘 클릭은 탭 전환
     (UserDefaults ChapLauncherTab·ChapAppsTab). 제목 줄 빈 자리 클릭은 옆 탭,
     칸 위 두 손가락 가로 스와이프는 NSEvent 로컬 모니터(.scrollWheel, 칸 hover 중에만) → TabSwipeTracker → 한 칸, 고른 탭 이름은 누를 수 없고 뒤의 ›만 그 설정 열기
@@ -548,8 +553,9 @@ Settings → Notch Launcher on
     locked(편집 금지, 원본 보존). 저장: saveQueue에서 이전 내용 백업(QuickNoteBackupPolicy) → atomic write.
     창 닫기(Esc 또는 닫기 버튼) 시 willClose → flushRequest, 종료 시 flushRequest + drainPendingSaves로
     마지막 입력을 파일에 쓴다. Esc는 QuickNoteWindow.handleKeyDown(local key monitor)이 TextEditor보다 먼저 받아 삼킨다
-  → Mirror 아이콘(상단 띠): 누르면 미리보기가 뜨고, 미리보기가 카메라 큐에서 세션에 연결된 뒤에만
-    MirrorCamera.start() (연결과 시작이 겹치면 AVFoundation이 앱을 종료한다). 끄기·닫힘 시 stop()
+  → Mirror 아이콘(상단 띠): 누르면 MirrorCamera.attachAndStart가 카메라 큐에서 미리보기를 연결하고,
+    좌우 반전을 준비한 뒤 token이 아직 유효할 때만 같은 큐에서 캡처를 시작한다. 끄기·닫힘은 token을 즉시
+    무효화하고 stop하므로 느린 초기 연결 뒤 카메라가 다시 켜지지 않는다
   → Keep Awake 칸(다이얼): 호를 끌어 1~12시간 → UserDefaults ChapFocusPresetDuration에 기억.
     안쪽 원 클릭 → NotchFocusView.activateRequest(duration) → AppDelegate가
     KeepAwakePolicy.focusPreset(forRequestedDuration:)으로 검증(프리셋 또는 1~12 정수 시간만) → keepAwake.activate.
