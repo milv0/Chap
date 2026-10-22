@@ -77,7 +77,9 @@ enum ScreenshotShelf {
                 options: [.skipsHiddenFiles])
         else { return ([], nil) }
 
-        let files = entries.map { url in
+        let files = entries.filter {
+            ScreenshotShelfPolicy.isCandidate(fileName: $0.lastPathComponent)
+        }.map { url in
             (
                 name: url.lastPathComponent,
                 modified: (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?

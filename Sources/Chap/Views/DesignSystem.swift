@@ -142,6 +142,7 @@ struct PrimaryButton: View {
 struct ToolbarIconButton: View {
     let icon: String
     let color: Color
+    let accessibilityLabel: String
     let action: () -> Void
     var disabled: Bool = false
     @State private var isHovered = false
@@ -166,6 +167,14 @@ struct ToolbarIconButton: View {
                 action()
             }
             .onHover { hovering in isHovered = hovering && !disabled }
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityRemoveTraits(.isImage)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityValue(disabled ? "Unavailable" : "")
+            .accessibilityAction {
+                guard !disabled else { return }
+                action()
+            }
     }
 }
 

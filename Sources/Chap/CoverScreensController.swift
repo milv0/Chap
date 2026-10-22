@@ -7,7 +7,7 @@ import SwiftUI
 /// **잠금이 아니다.** 비밀번호를 묻지 않고, Chap이 끝나면 걷힌다. 어깨너머 시선을 가리는
 /// 용도이며 진짜 보안은 macOS 화면 잠금(⌃⌘Q)이 맡는다.
 ///
-/// 걷기: ⌥(Option)만 한 번 눌렀다 떼면 된다(`CoverScreensPolicy.OptionTap`). 잊었으면 아무 키나 15번 빠르게.
+/// 걷기: ⌥(Option)만 한 번 눌렀다 떼면 된다(`CoverScreensPolicy.OptionTap`). 잊었으면 아무 키나 10번 빠르게.
 /// 덮여 있는 동안 Chap이 키 포커스를 갖고, 다른 앱이 활성화되면(⌘Tab 등) 곧바로 되찾는다.
 /// 그래도 키가 다른 앱으로 간 경우를 위해 전역 모니터(접근성 권한이 있을 때)로 ⌥와 연타를 계속 본다
 /// — 걷는 길이 포커스에 매이지 않게 하기 위해서다(FLOW I19).
@@ -189,7 +189,7 @@ final class CoverScreensController {
         }
         // ⌥를 누른 채 다른 키를 치면 그 ⌥는 탭이 아니다.
         optionTap.otherKeyPressed()
-        // ⌥를 잊었을 때: 아무 키나 빠르게 15번. 누르고 있는 자동 반복은 세지 않는다.
+        // ⌥를 잊었을 때: 아무 키나 빠르게 10번. 누르고 있는 자동 반복은 세지 않는다.
         guard CoverScreensPolicy.countsAsPress(isRepeat: event.isARepeat) else { return false }
         recentPresses = CoverScreensPolicy.recentPresses(recentPresses + [now], now: now)
         guard CoverScreensPolicy.isRapidEscape(presses: recentPresses, now: now) else {
