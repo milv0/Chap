@@ -33,6 +33,10 @@ struct NotchQuickNoteView: View {
     @State private var text = ""
     @State private var didLoad = false
     @State private var lastSaved: Date?
+    /// 디스크에서 읽었거나 마지막으로 저장을 마친 내용. 로드로 생긴 `text` 변경은 다시 저장하지 않는다.
+    @State private var persistedText = ""
+    /// 입력 세대. 늦게 끝난 옛 저장이 새 입력을 "Saved"로 표시하지 못하게 한다.
+    @State private var editGeneration = 0
     /// 입력 뒤 아직 파일에 쓰이지 않은 변경이 있는지. 있으면 저장 표시 대신 "Editing"을 보여 준다.
     @State private var hasPendingEdit = false
     /// 마지막 저장이 실패했는지. 실패하면 "Couldn't save"를 보여 준다(입력은 화면에 남아 있다).
@@ -131,9 +135,14 @@ struct NotchQuickNoteView: View {
                 text = clamped
                 return
             }
+            // 로드가 반영한 같은 값은 건너뛴다. 다만 이전 편집 저장이 대기 중이면 원래 값도 다시
+            // 예약해야 직렬 큐의 마지막 쓰기가 현재 화면과 같아진다(빠른 삭제·Undo 포함).
+            guard newValue != persistedText || hasPendingEdit else { return }
+            editGeneration += 1
+            let generation = editGeneration
             hasPendingEdit = true
             loadNotice = nil
-            debouncer.schedule { save(clamped) }
+            debouncer.schedule { save(clamped, generation: generation) }
         }
         // 커서가 풀리면(다른 곳 클릭, 다른 앱, Esc) 기다리지 않고 바로 저장한다.
         .onChange(of: isFocused) { _, focused in
@@ -248,6 +257,7 @@ struct NotchQuickNoteView: View {
             DispatchQueue.main.async {
                 switch result {
                 case .text(let saved):
+                    persistedText = saved
                     text = saved
                     lastSaved = saved.isEmpty ? nil : date
                     didLoad = true
@@ -266,13 +276,15 @@ struct NotchQuickNoteView: View {
         }
     }
 
-    private func save(_ value: String) {
+    private func save(_ value: String, generation: Int) {
         let store = store
         Self.saveQueue.async {
             do {
                 try store.save(value)
                 let date = value.isEmpty ? nil : Date()
                 DispatchQueue.main.async {
+                    guard generation == editGeneration else { return }
+                    persistedText = value
                     lastSaved = date
                     hasPendingEdit = false
                     saveFailed = false
@@ -280,7 +292,10 @@ struct NotchQuickNoteView: View {
             } catch {
                 Log.app.error(
                     "Quick Note save failed: \(error.localizedDescription, privacy: .public)")
-                DispatchQueue.main.async { saveFailed = true }
+                DispatchQueue.main.async {
+                    guard generation == editGeneration else { return }
+                    saveFailed = true
+                }
             }
         }
     }
