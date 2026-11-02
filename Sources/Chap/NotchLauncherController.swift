@@ -43,6 +43,7 @@ final class NotchLauncherController {
     /// opacity 드래그 pin의 self-healing 토큰.
     private var opacityPreviewToken = 0
     private var dropObserver: NSObjectProtocol?
+    private var volumeObservers: [NSObjectProtocol] = []
     private var visibilityTimer: Timer?
     private var lastInsideDate = Date()
     /// 현재 패널의 펼침/불투명도 모델. 패널이 없으면 nil.
@@ -210,6 +211,8 @@ final class NotchLauncherController {
             NotificationCenter.default.removeObserver(dropObserver)
             self.dropObserver = nil
         }
+        volumeObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        volumeObservers.removeAll()
     }
 
     // MARK: - Drop badge
@@ -221,6 +224,14 @@ final class NotchLauncherController {
         ) { [weak self] _ in
             self?.updateDropBadge()
         }
+        guard volumeObservers.isEmpty else { return }
+        let center = NSWorkspace.shared.notificationCenter
+        volumeObservers = [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification]
+            .map { name in
+                center.addObserver(forName: name, object: nil, queue: .main) { _ in
+                    ChapDrop.refreshAfterVolumeChange()
+                }
+            }
     }
 
     /// 보관함 파일 수에 따라 노치 오른쪽 Drop 배지 도커를 갱신한다.
@@ -261,7 +272,7 @@ final class NotchLauncherController {
         // hosting이 contentView여야 SwiftUI 좌표가 도커들과 동일하게 선다.
         // (tracker 안에 subview로 넣으면 셰이프가 상하 반전되어 렌더링됐다.)
         // tracker는 hosting 위의 투명 오버레이로 hover/드래그만 받는다.
-        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        let tracker = NotchHoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 배지 hover는 메인 도커를, 파일 드래그는 Drop here overlay를 연다.
         tracker.onEntered = { [weak self] in
             guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
@@ -291,13 +302,7 @@ final class NotchLauncherController {
             return
         }
 
-        let window = NSWindow(
-            contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-        window.level = Self.badgeLevel
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        let window = NotchAuxiliaryWindow.make(frame: frame, level: Self.badgeLevel)
         window.contentView = hosting
         if let panel {
             window.order(.above, relativeTo: panel.windowNumber)
@@ -331,7 +336,7 @@ final class NotchLauncherController {
                 .padding(.horizontal, margin)
                 .padding(.bottom, margin))
         // 배지에 마우스를 올리면 노치에 올린 것처럼 도커를 연다.
-        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        let tracker = NotchHoverView(frame: NSRect(origin: .zero, size: frame.size))
         tracker.onEntered = { [weak self] in
             guard let self, Date() >= self.hoverOpenSuppressedUntil else { return }
             self.showPanel()
@@ -342,16 +347,7 @@ final class NotchLauncherController {
 
         let window =
             timerBadgeWindow
-            ?? {
-                let window = NSWindow(
-                    contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
-                window.level = Self.badgeLevel
-                window.isOpaque = false
-                window.backgroundColor = .clear
-                window.hasShadow = false
-                window.collectionBehavior = [.canJoinAllSpaces, .stationary]
-                return window
-            }()
+            ?? NotchAuxiliaryWindow.make(frame: frame, level: Self.badgeLevel)
         window.setFrame(frame, display: true)
         window.contentView = hosting
         window.orderFrontRegardless()
@@ -401,7 +397,7 @@ final class NotchLauncherController {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         window.ignoresMouseEvents = false
 
-        let tracker = HoverView(frame: NSRect(origin: .zero, size: frame.size))
+        let tracker = NotchHoverView(frame: NSRect(origin: .zero, size: frame.size))
         // 열기만 tracking area가 담당하고, 닫기는 전부 폴링이 담당한다.
         // 마우스 hover는 메인 패널을, 파일 드래그는 Drop here overlay를 연다.
         tracker.onEntered = { [weak self] in
@@ -874,66 +870,4 @@ final class NotchLauncherController {
             self?.updateTimerBadge()
         }
     }
-}
-
-/// mouseEntered 콜백과 파일 드래그 진입 콜백을 제공하는 추적 뷰.
-/// 파일을 끌고 있는 동안에는 tracking area가 발화하지 않으므로,
-/// 드롭 존으로 쓰려면 드래그 진입도 패널 열기 신호로 받아야 한다.
-private final class HoverView: NSView {
-    var onEntered: () -> Void = {}
-    var onDragEntered: () -> Void = {}
-    var onDragExited: () -> Void = {}
-    /// 설정 시 이 뷰 자체가 드롭 타깃이 된다. 드롭존 도커가 아직 뜨기 전에
-    /// 배지·노치 위에 바로 놓아도 드롭이 성사되게 한다.
-    var onFilesDropped: (([URL]) -> Void)?
-
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        registerForDraggedTypes([.fileURL])
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        registerForDraggedTypes([.fileURL])
-    }
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        trackingAreas.forEach(removeTrackingArea)
-        addTrackingArea(
-            NSTrackingArea(
-                rect: bounds,
-                options: [.mouseEnteredAndExited, .activeAlways],
-                owner: self, userInfo: nil))
-    }
-
-    override func mouseEntered(with event: NSEvent) { onEntered() }
-
-    /// 파일 드래그가 노치 위로 들어오면 메인 패널의 Drop here overlay를 노출한다.
-    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        onDragEntered()
-        return onFilesDropped != nil ? .copy : []
-    }
-
-    override func draggingExited(_ sender: NSDraggingInfo?) {
-        onDragExited()
-    }
-
-    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        guard let onFilesDropped else { return false }
-        let urls =
-            sender.draggingPasteboard.readObjects(
-                forClasses: [NSURL.self],
-                options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
-        guard !urls.isEmpty else { return false }
-        onFilesDropped(urls)
-        return true
-    }
-}
-
-/// 메인 도커 패널. borderless 패널은 기본적으로 key가 될 수 없어 빠른 메모에
-/// 입력할 수 없으므로 key를 허용한다. `.nonactivatingPanel`이라 key가 되어도
-/// 앞의 앱을 비활성화하지 않고, `becomesKeyOnlyIfNeeded`로 입력 칸을 누를 때만 key가 된다.
-final class NotchKeyablePanel: NSPanel {
-    override var canBecomeKey: Bool { true }
 }

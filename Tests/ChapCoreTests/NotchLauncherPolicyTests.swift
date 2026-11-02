@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Testing
 
@@ -61,6 +62,22 @@ struct NotchLauncherPolicyTests {
         #expect(frame.midX == -756)
         #expect(frame.maxY == 1182)
         #expect(frame.height == 132)
+    }
+
+    @Test("badge windows share one transparent stationary shell")
+    @MainActor
+    func badgeWindowShell() {
+        let level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        let window = NotchAuxiliaryWindow.make(
+            frame: CGRect(x: 10, y: 20, width: 60, height: 40), level: level)
+
+        #expect(window.styleMask.contains(.borderless))
+        #expect(window.level == level)
+        #expect(!window.isOpaque)
+        #expect(window.backgroundColor == .clear)
+        #expect(!window.hasShadow)
+        #expect(window.collectionBehavior.contains(.canJoinAllSpaces))
+        #expect(window.collectionBehavior.contains(.stationary))
     }
 
     @Test("the drop badge is a 34pt body with the flare outside it")

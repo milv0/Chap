@@ -25,8 +25,14 @@ enum DownloadsShelf {
                 newest: lastKnownNewest, dismissed: dismissedNewest, now: Date())
     }
 
+    private struct Snapshot {
+        let files: [URL]
+        let newest: Date?
+    }
+
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.downloads", qos: .utility)
+    private static let scanner = ShelfScanCoordinator<Snapshot>(queue: ioQueue)
 
     static func directory() -> URL {
         FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
@@ -34,29 +40,24 @@ enum DownloadsShelf {
             .appendingPathComponent("Downloads", isDirectory: true)
     }
 
-    /// 폴더 스캔과 파일별 stat을 utility queue에서 수행한다.
+    /// 폴더 스캔과 파일별 stat을 utility queue에서 수행한다. 겹친 요청은 같은 snapshot을 받는다.
     static func recentFilesAsync(completion: @escaping ([URL]) -> Void) {
-        ioQueue.async {
-            let scan = scanSynchronously()
-            DispatchQueue.main.async {
-                lastKnownNewest = scan.newest
-                completion(scan.files)
-            }
-        }
+        scanAsync { completion($0.files) }
     }
 
     /// 가장 새 다운로드 시각만 읽는다(칸이 접혀 있을 때). `lastKnownNewest`도 갱신한다.
     static func newestDownloadAsync(completion: @escaping (Date?) -> Void) {
-        ioQueue.async {
-            let newest = scanSynchronously().newest
-            DispatchQueue.main.async {
-                lastKnownNewest = newest
-                completion(newest)
-            }
+        scanAsync { completion($0.newest) }
+    }
+
+    private static func scanAsync(completion: @escaping (Snapshot) -> Void) {
+        scanner.request(scan: scanSynchronously) { snapshot in
+            lastKnownNewest = snapshot.newest
+            completion(snapshot)
         }
     }
 
-    private static func scanSynchronously() -> (files: [URL], newest: Date?) {
+    private static func scanSynchronously() -> Snapshot {
         let folder = directory()
         let keys: [URLResourceKey] = [
             .isDirectoryKey, .addedToDirectoryDateKey, .contentModificationDateKey,
@@ -64,7 +65,7 @@ enum DownloadsShelf {
         guard
             let entries = try? FileManager.default.contentsOfDirectory(
                 at: folder, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])
-        else { return ([], nil) }
+        else { return Snapshot(files: [], newest: nil) }
 
         let files = entries.map { url -> (name: String, isDirectory: Bool, date: Date) in
             let values = try? url.resourceValues(forKeys: Set(keys))
@@ -75,7 +76,7 @@ enum DownloadsShelf {
         }
         let selection = DownloadsShelfPolicy.shelfSelection(files: files)
             .map { folder.appendingPathComponent($0) }
-        return (selection, DownloadsShelfPolicy.newestDate(files: files))
+        return Snapshot(files: selection, newest: DownloadsShelfPolicy.newestDate(files: files))
     }
 
     /// 파일이 폴더에 들어온 시각. 없으면 수정 시각.

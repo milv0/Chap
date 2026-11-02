@@ -20,9 +20,15 @@ enum ScreenshotShelf {
                 newest: lastKnownNewest, dismissed: dismissedNewest, now: Date())
     }
 
+    private struct Snapshot {
+        let files: [URL]
+        let newest: Date?
+    }
+
     private static let ioQueue = DispatchQueue(
         label: "com.mingyupark.Chap.screenshots", qos: .utility,
         attributes: .concurrent)
+    private static let scanner = ShelfScanCoordinator<Snapshot>(queue: ioQueue)
 
     private static let screencaptureDomain = "com.apple.screencapture"
     private static let screenshotAppBundleID = "com.apple.screenshot.launcher"
@@ -58,24 +64,21 @@ enum ScreenshotShelf {
             .appendingPathComponent("Desktop", isDirectory: true)
     }
 
-    /// 폴더 스캔과 per-file stat을 utility queue에서 수행한다.
+    /// 폴더 스캔과 per-file stat을 utility queue에서 수행한다. 겹친 요청은 같은 snapshot을 받는다.
     static func recentScreenshotsAsync(completion: @escaping ([URL]) -> Void) {
-        ioQueue.async {
-            let scan = recentScreenshotsSynchronously()
-            DispatchQueue.main.async {
-                lastKnownNewest = scan.newest
-                completion(scan.files)
-            }
+        scanner.request(scan: recentScreenshotsSynchronously) { snapshot in
+            lastKnownNewest = snapshot.newest
+            completion(snapshot.files)
         }
     }
 
-    private static func recentScreenshotsSynchronously() -> (files: [URL], newest: Date?) {
+    private static func recentScreenshotsSynchronously() -> Snapshot {
         let folder = directory()
         guard
             let entries = try? FileManager.default.contentsOfDirectory(
                 at: folder, includingPropertiesForKeys: [.contentModificationDateKey],
                 options: [.skipsHiddenFiles])
-        else { return ([], nil) }
+        else { return Snapshot(files: [], newest: nil) }
 
         let files = entries.filter {
             ScreenshotShelfPolicy.isCandidate(fileName: $0.lastPathComponent)
@@ -87,9 +90,9 @@ enum ScreenshotShelf {
             )
         }
         let selected = ScreenshotShelfPolicy.shelfSelection(files: files)
-        return (
-            selected.map { folder.appendingPathComponent($0) },
-            ScreenshotShelfPolicy.newestDate(files: files)
+        return Snapshot(
+            files: selected.map { folder.appendingPathComponent($0) },
+            newest: ScreenshotShelfPolicy.newestDate(files: files)
         )
     }
 }
