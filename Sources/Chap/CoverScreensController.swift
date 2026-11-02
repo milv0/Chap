@@ -17,6 +17,33 @@ import SwiftUI
 /// 상태는 메모리에만 있다(다음 실행은 늘 꺼진 상태로 시작한다). 메인 스레드 전제이며,
 /// AppDelegate(메인 스레드)에서만 호출한다.
 final class CoverScreensController {
+    struct Environment {
+        let enablesSystemEffects: Bool
+        let optionIsHeld: () -> Bool
+        let notificationCenter: NotificationCenter
+
+        static let live = Environment(
+            enablesSystemEffects: true,
+            optionIsHeld: { NSEvent.modifierFlags.contains(.option) },
+            notificationCenter: .default)
+
+        static func inert(
+            optionHeldAtStart: Bool = false,
+            notificationCenter: NotificationCenter = NotificationCenter()
+        ) -> Environment {
+            Environment(
+                enablesSystemEffects: false,
+                optionIsHeld: { optionHeldAtStart },
+                notificationCenter: notificationCenter)
+        }
+    }
+
+    private let environment: Environment
+
+    init(environment: Environment = .live) {
+        self.environment = environment
+    }
+
     /// 켜지거나 꺼질 때 메뉴를 다시 그리도록 알린다.
     static let didChangeNotification = Notification.Name("ChapCoverScreensDidChange")
 
@@ -47,27 +74,30 @@ final class CoverScreensController {
         isOn = true
         recentPresses = []
         optionTap = CoverScreensPolicy.OptionTap(
-            optionHeldAtStart: NSEvent.modifierFlags.contains(.option))
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        previousApp =
-            frontmost?.processIdentifier == ProcessInfo.processInfo.processIdentifier
-            ? nil : frontmost
-        holdDisplayAwake()
-        installWindows()
-        installKeyMonitor()
-        // ⌘Tab 등으로 다른 앱이 앞에 오면 포커스를 되찾는다. 가려진 앱에 입력이 들어가지 않게.
-        resignObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            self?.reclaimFocus()
+            optionHeldAtStart: environment.optionIsHeld())
+        if environment.enablesSystemEffects {
+            let frontmost = NSWorkspace.shared.frontmostApplication
+            previousApp =
+                frontmost?.processIdentifier == ProcessInfo.processInfo.processIdentifier
+                ? nil : frontmost
+            holdDisplayAwake()
+            installWindows()
+            installKeyMonitor()
+            // ⌘Tab 등으로 다른 앱이 앞에 오면 포커스를 되찾는다. 가려진 앱에 입력이 들어가지 않게.
+            resignObserver = environment.notificationCenter.addObserver(
+                forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.reclaimFocus()
+            }
+            // 화면 연결·해상도 변경 때 새 화면도 덮는다.
+            screenObserver = environment.notificationCenter.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification, object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.installWindows()
+            }
         }
-        // 화면 연결·해상도 변경 때 새 화면도 덮는다.
-        screenObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            self?.installWindows()
-        }
-        NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+        environment.notificationCenter.post(name: Self.didChangeNotification, object: nil)
     }
 
     func turnOff() {
@@ -78,9 +108,9 @@ final class CoverScreensController {
         keyMonitor = nil
         if let globalKeyMonitor { NSEvent.removeMonitor(globalKeyMonitor) }
         globalKeyMonitor = nil
-        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
+        if let screenObserver { environment.notificationCenter.removeObserver(screenObserver) }
         screenObserver = nil
-        if let resignObserver { NotificationCenter.default.removeObserver(resignObserver) }
+        if let resignObserver { environment.notificationCenter.removeObserver(resignObserver) }
         resignObserver = nil
         windows.forEach { $0.orderOut(nil) }
         windows = []
@@ -88,7 +118,7 @@ final class CoverScreensController {
         // 쓰던 앱으로 돌아간다.
         previousApp?.activate()
         previousApp = nil
-        NotificationCenter.default.post(name: Self.didChangeNotification, object: nil)
+        environment.notificationCenter.post(name: Self.didChangeNotification, object: nil)
     }
 
     /// 덮여 있는 화면 수 (테스트·진단용).

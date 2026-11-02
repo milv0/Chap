@@ -281,6 +281,78 @@ struct CoverScreensPolicyTests {
     }
 }
 
+@Suite("Cover Screens controller logic", .serialized)
+@MainActor
+struct CoverScreensControllerLogicTests {
+    private func key(_ code: UInt16, _ chars: String, isRepeat: Bool = false) throws -> NSEvent {
+        try #require(
+            NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0,
+                context: nil, characters: chars, charactersIgnoringModifiers: chars,
+                isARepeat: isRepeat, keyCode: code))
+    }
+
+    private func flags(_ modifiers: NSEvent.ModifierFlags) throws -> NSEvent {
+        let event = try #require(CGEvent(source: nil))
+        event.type = .flagsChanged
+        event.flags = CGEventFlags(rawValue: UInt64(modifiers.rawValue))
+        return try #require(NSEvent(cgEvent: event))
+    }
+
+    @Test("inert mode tests state and Option escape without covering screens")
+    func optionEscapeWithoutSystemEffects() throws {
+        let center = NotificationCenter()
+        let controller = CoverScreensController(
+            environment: .inert(notificationCenter: center))
+        var changes = 0
+        let observer = center.addObserver(
+            forName: CoverScreensController.didChangeNotification, object: nil, queue: nil
+        ) { _ in changes += 1 }
+        defer { center.removeObserver(observer) }
+
+        controller.turnOn()
+        controller.turnOn()
+        #expect(controller.isOn)
+        #expect(controller.coveredScreenCount == 0)
+        #expect(try !controller.handle(flags(.option)))
+        #expect(try controller.handle(flags([])))
+        controller.turnOff()
+        #expect(!controller.isOn)
+        #expect(changes == 2)
+    }
+
+    @Test("the Option release used to turn on is ignored in inert mode")
+    func initialOptionReleaseIsIgnored() throws {
+        let controller = CoverScreensController(
+            environment: .inert(optionHeldAtStart: true))
+        controller.turnOn()
+        #expect(try !controller.handle(flags([])))
+        #expect(controller.isOn)
+        #expect(try !controller.handle(flags(.option)))
+        #expect(try controller.handle(flags([])))
+    }
+
+    @Test("ten non-repeat keys lift while repeats do not")
+    func rapidEscapeWithoutSystemEffects() throws {
+        let controller = CoverScreensController(environment: .inert())
+        controller.turnOn()
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        for index in 0..<20 {
+            #expect(
+                try !controller.handle(
+                    key(0, "a", isRepeat: true),
+                    now: start.addingTimeInterval(Double(index) * 0.05)))
+        }
+        for index in 0..<9 {
+            #expect(
+                try !controller.handle(
+                    key(0, "a"), now: start.addingTimeInterval(Double(index) * 0.2)))
+        }
+        #expect(try controller.handle(key(0, "a"), now: start.addingTimeInterval(1.8)))
+        #expect(!controller.isOn)
+    }
+}
+
 /// 실제 가림막 창을 띄워 걷는 길을 확인한다. 화면이 잠깐 검게 덮이므로 렌더 도구와 같은
 /// 환경 변수를 줬을 때만 돈다: TEST_RUNNER_CHAP_NOTCH_RENDER_DIR=/tmp/x xcodebuild ... test
 @Suite(

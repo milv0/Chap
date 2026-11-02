@@ -15,14 +15,19 @@ enum QuickNoteWindow {
 
     static var isOpen: Bool { window?.isVisible ?? false }
 
-    static func show() {
+    /// `previewText`는 렌더·창 동작 테스트용이다. 값이 있으면 실제 Quick Note 저장소를 읽거나 쓰지 않는다.
+    /// 테스트는 `frameAutosaveName: nil`도 넘겨 실제 Chap 창 크기 설정을 건드리지 않는다.
+    static func show(
+        previewText: String? = nil, frameAutosaveName: String? = autosaveName
+    ) {
         if let window {
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
             return
         }
         let hosting = NSHostingController(
-            rootView: QuickNoteWindowContent(onClose: { Self.window?.close() })
+            rootView: QuickNoteWindowContent(
+                previewText: previewText, onClose: { Self.window?.close() })
         )
         // 창 크기는 사용자가 정한다. SwiftUI 내용이 창을 되돌려 키우지 않게 한다.
         hosting.sizingOptions = []
@@ -42,8 +47,10 @@ enum QuickNoteWindow {
         window.setContentSize(defaultSize)
         // 지난번 크기만 되살리고, 자리는 늘 노치 아래에서 시작한다. autosave 이름을 먼저 달아야
         // 이름을 다는 순간 저장된 프레임이 다시 적용돼 자리가 덮이는 일이 없다.
-        window.setFrameAutosaveName(autosaveName)
-        window.setFrameUsingName(autosaveName)
+        if let frameAutosaveName {
+            window.setFrameAutosaveName(frameAutosaveName)
+            window.setFrameUsingName(frameAutosaveName)
+        }
         placeUnderNotch(window)
 
         closeObserver = NotificationCenter.default.addObserver(
