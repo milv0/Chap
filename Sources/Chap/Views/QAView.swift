@@ -81,7 +81,7 @@ struct QAView: View {
                 ),
                 (
                     "특정 모니터에서 열리게 하려면?",
-                    "설정의 Display 목록에서 원하는 모니터를 선택하거나 Preview의 배치도에서 화면을 클릭하세요. Follow Cursor 토글은 마우스 커서가 있는 화면에 열립니다."
+                    "설정의 Display 목록에서 원하는 모니터를 선택하거나 Preview의 배치도에서 화면을 클릭하세요. Follow Cursor 토글은 마우스 커서가 있는 화면에 열립니다. Follow Cursor가 켜진 동안 Display 목록은 비활성화되며, Preview에서 화면을 눌러 화면별 크기는 계속 편집할 수 있습니다."
                 ),
                 (
                     "같은 URL/앱을 두 번 등록하면?",
@@ -194,7 +194,7 @@ struct QAView: View {
             [
                 (
                     "노치 런처는 어떻게 켜나요?",
-                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서는 노치에 마우스를 올리세요. 노치가 없는 Mac에서는 메뉴 막대 위쪽 가운데에 포인터를 두면 같은 도커가 열립니다(열기 전에는 그 자리에 아무 창도 없어 메뉴 막대 클릭을 가리지 않습니다). 기존 상태바 메뉴와 Option 단축키는 어느 쪽에서든 그대로 동작합니다."
+                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서는 노치에 마우스를 올리세요. 노치가 없는 Mac에서는 메뉴 막대 위쪽 가운데에 포인터를 두면 같은 도커가 열립니다(열기 전에는 그 자리에 아무 창도 없어 메뉴 막대 클릭을 가리지 않습니다). 꺼진 동안에도 Slots·아이콘·Appearance를 미리 정할 수 있습니다. 기존 상태바 메뉴와 Option 단축키는 어느 쪽에서든 그대로 동작합니다."
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
@@ -363,7 +363,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I open on a specific monitor?",
-                    "Choose the desired monitor from the Display list or click it in the Preview map. The Follow Cursor toggle opens on the screen where your cursor is."
+                    "Choose the desired monitor from the Display list or click it in the Preview map. The Follow Cursor toggle opens on the screen where your cursor is. While Follow Cursor is on, the Display list is disabled; you can still click Preview screens to edit their sizes."
                 ),
                 (
                     "What if I register the same URL/app twice?",
@@ -476,7 +476,7 @@ struct QAView: View {
             [
                 (
                     "How do I enable the Notch Launcher?",
-                    "Open Settings → Notch. On a MacBook with a notch, hover the notch to open it. It also works on a Mac without a notch: point at the top middle of the menu bar and the same dock opens (nothing is drawn there until you do, so the menu bar stays clear). The classic status menu and Option shortcuts keep working either way."
+                    "Open Settings → Notch. On a MacBook with a notch, hover the notch to open it. It also works on a Mac without a notch: point at the top middle of the menu bar and the same dock opens (nothing is drawn there until you do, so the menu bar stays clear). You can set up Slots, icons, and Appearance while the launcher is off. The classic status menu and Option shortcuts keep working either way."
                 ),
                 (
                     "Who is the seal on the left of the notch?",

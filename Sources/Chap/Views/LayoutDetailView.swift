@@ -72,6 +72,7 @@ struct LayoutDetailView: View {
                     .focused($nameFocused)
                     .onSubmit(commitName)
                     .accessibilityLabel("Layout name")
+                    .disabled(isBusy)
             }
             HStack(spacing: 8) {
                 Button {
@@ -134,6 +135,7 @@ struct LayoutDetailView: View {
             .background(DS.surfaceBg)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
+            .disabled(isBusy)
         }
     }
 

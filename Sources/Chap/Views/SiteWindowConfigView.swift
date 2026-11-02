@@ -230,6 +230,9 @@ struct SiteWindowConfigView: View {
                     }
                     .labelsHidden()
                     .frame(width: dropdownControlWidth)
+                    // Follow Cursor가 켜지면 고정 대상이 없으므로 피커를 비활성화한다.
+                    // 화면별 크기 편집은 아래 Preview 배치도에서 계속 할 수 있다.
+                    .disabled(!hasExplicitDisplaySelection(site))
                 }
             }
             groupDivider

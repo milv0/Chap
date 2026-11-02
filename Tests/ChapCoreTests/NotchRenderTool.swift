@@ -396,11 +396,14 @@ struct NotchRenderTool {
         let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
         NotchSettingsView.previewForcesNotch = true
         defer { NotchSettingsView.previewForcesNotch = false }
-        for (name, scheme) in [
-            ("settings-notch-light", ColorScheme.light), ("settings-notch-dark", .dark),
-        ] {
+        let cases = [
+            ("settings-notch-light", ColorScheme.light, true),
+            ("settings-notch-dark", ColorScheme.dark, true),
+            ("settings-notch-off", ColorScheme.light, false),
+        ]
+        for (name, scheme, enabled) in cases {
             var forced = config
-            forced.notchLauncherEnabled = true
+            forced.notchLauncherEnabled = enabled
             let vm = SettingsViewModel(config: forced)
             let view = NotchSettingsView(vm: vm, onSave: {})
                 .frame(width: 600, height: 720)

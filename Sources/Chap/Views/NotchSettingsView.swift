@@ -2,7 +2,7 @@ import Cocoa
 import SwiftUI
 
 /// Notch 탭. 노치 런처 전용 설정을 모아 두어 이후 노치 기능이 늘어나도
-/// General이 비대해지지 않는다. 세부 설정은 활성화 상태에서만 펼쳐진다.
+/// General이 비대해지지 않는다. 런처가 꺼져 있어도 다음에 쓸 Slots·아이콘·Appearance를 미리 정할 수 있다.
 struct NotchSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     let onSave: () -> Void
@@ -123,8 +123,8 @@ struct NotchSettingsView: View {
                 SettingsSectionHeader(title: "Notch Launcher", systemImage: "macbook")
             }
 
-            // 세부 설정은 활성화 상태에서만 펼쳐진다.
-            if vm.notchLauncherEnabled {
+            // Notch를 켜기 전에 Slots·아이콘·Appearance를 미리 정할 수 있게 항상 보여 준다.
+            Group {
                 // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
@@ -247,7 +247,9 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchGlassAppearance) { _, _ in
                             onSave()
-                            notchController?.previewGlassAppearance()
+                            if vm.notchLauncherEnabled {
+                                notchController?.previewGlassAppearance()
+                            }
                         }
 
                         Picker(
@@ -260,7 +262,9 @@ struct NotchSettingsView: View {
                         .pickerStyle(.segmented)
                         .onChange(of: vm.notchGlassMaterial) { _, _ in
                             onSave()
-                            notchController?.previewGlassMaterial()
+                            if vm.notchLauncherEnabled {
+                                notchController?.previewGlassMaterial()
+                            }
                         }
                         .help("Clear is see-through; Regular adds contrast.")
 
@@ -273,9 +277,9 @@ struct NotchSettingsView: View {
                             ) { editing in
                                 // 드래그 시작 시 패널을 띄워 고정하고,
                                 // 놓는 순간 고정을 풀고 저장한다.
-                                if editing {
+                                if editing, vm.notchLauncherEnabled {
                                     notchController?.beginOpacityPreview()
-                                } else {
+                                } else if !editing {
                                     notchController?.endOpacityPreview()
                                     onSave()
                                 }
@@ -288,7 +292,9 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchPanelOpacity) { _, newValue in
                             // 드래그 중 실시간 반영.
-                            notchController?.updateOpacityPreview(newValue)
+                            if vm.notchLauncherEnabled {
+                                notchController?.updateOpacityPreview(newValue)
+                            }
                         }
 
                         HStack {
@@ -321,14 +327,18 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchPanelColorHex) { _, newValue in
                             onSave()
-                            notchController?.previewCustomColor(newValue)
+                            if vm.notchLauncherEnabled {
+                                notchController?.previewCustomColor(newValue)
+                            }
                         }
 
                     }
                 } header: {
                     SettingsSectionHeader(
                         title: "Appearance", systemImage: "paintpalette",
-                        note: "Changes preview live under the notch.")
+                        note: vm.notchLauncherEnabled
+                            ? "Changes preview live under the notch."
+                            : "Ready for the next time you turn the launcher on.")
                 }
             }
         }
@@ -458,7 +468,6 @@ private struct WidgetSlotBox: View {
             }
         }
         .onHover { isHovered = $0 }
-        // Drag가 어려운 키보드·VoiceOver 사용자를 위한 동일 기능 메뉴.
         // Drag가 어려운 키보드·VoiceOver 사용자를 위한 동일 기능 메뉴. 이 칸에 놓을 수 있는 위젯만 보인다.
         .contextMenu {
             ForEach(choices, id: \.self) { choice in

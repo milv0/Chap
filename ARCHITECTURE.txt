@@ -82,7 +82,7 @@ Sources/
 │       ├── NotchLayoutsView.swift ← Apps 칸 Layouts 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
 │       ├── LayoutCaptureView.swift ← 캡처 후보 선택·창별 디스플레이 선택(모니터 2대 이상)·프레임 미니맵·이름 입력 창
 │       ├── LayoutViewComponents.swift ← 창 미니맵·디스플레이 캡슐 메뉴·디스플레이별 Preview (캡처 창·설정 공용)
-│       ├── LayoutDetailView.swift ← Launchers 탭 Layout 편집 화면 (이름·Open·Update Positions·Delete·Preview·창 목록)
+│       ├── LayoutDetailView.swift ← Launchers 탭 Layout 편집 화면 (busy 중 같은 Layout 이름·화면·창 목록 잠금)
 │       ├── SettingsLayoutsSection.swift ← 설정 사이드바 Layouts 섹션 (n/4, + 대상, 검색 필터)
 │       ├── NotchWidgetViews.swift ← 위젯 공용(팔레트·제목·칸 높이), 선반 스크롤 목록·접기 버튼·띠 선반 아이콘
 │       ├── NotchFocusView.swift   ← Keep Awake 칸·탭(Keep Awake/Timer 전환)·Keep Awake 모드 본문
@@ -360,6 +360,8 @@ Config 모델 필드:
 - Follow Cursor 미니맵은 각 연결 화면의 화면별 size/default size preview를 동시에 표시한다. Follow Cursor에서 화면을 클릭하면 커서 추적을 유지한 채 그 화면을 size/preset 편집 대상으로 삼고, 일반 모드에서 클릭하면 해당 화면을 사이트 target으로 선택한다. 각 preview 창 중앙에 preset 또는 Custom label을 표시한다.
 - Finder → 폴더 열기 + 리사이즈 (단일 AppleScript, 딜레이 없음)
 - 멀티 모니터 지원 + Display Picker로 고정 디스플레이 선택, Follow Cursor로 커서 화면 실행
+  (Follow Cursor 중 Display Picker는 비활성, Preview 화면 클릭은 화면별 크기 편집으로 유지)
+- Notch master가 꺼져 있어도 Slots·Screenshots·Notch Icons·Appearance는 사전 설정 가능하며 live preview만 생략
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
 - 항목 설정은 입력칸(Launch Type·Name·Shortcut·URL/App/Folder) 아래에 다른 탭과 같은 섹션 둘을 둔다:
   Window(Display 피커, Follow Cursor 토글, Reuse 토글(URL만), Size 줄 + 프리셋 격자)와 Preview(소제목 없는 미니맵 한 상자).

@@ -170,6 +170,14 @@ public final class SettingsViewModel: ObservableObject {
             sites: sites)
     }
 
+    /// General·Notch·Tools 즉시 저장용 config. 편집 중 Launchers 초안 대신 마지막 저장 sites를 써서
+    /// 잘못된 초안이 독립적인 전역 설정 저장을 막거나 함께 저장되지 않게 한다.
+    public var globalsConfig: Config {
+        var value = config
+        value.sites = originalSites
+        return value
+    }
+
     /// 저장된 `Config`로 뷰 모델을 만든다. 필드를 하나씩 옮겨 적는 긴 호출을 대신한다.
     public convenience init(config: Config, saveDebouncer: SaveDebouncer = SaveDebouncer()) {
         self.init(
