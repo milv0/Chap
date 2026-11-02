@@ -169,8 +169,9 @@ Glass는 custom 오목 플레어 경계에서 시스템 광학 edge가 안쪽으
 `DS.notchRowIconSize`), Apps는 앱 아이콘 격자. Sites·Finder는 모든 줄이 같은 기호가 되고 칸 제목 아이콘과 겹치므로
 아이콘 없이 이름만 둔다. 긴 이름은 가운데를 줄인다. 칸 폭은 `NotchTextMetrics.rowWidth`가 키캡("⌥키" 폭)까지 재서 잡는다.
 **스크린샷 없음 → 저절로 접힘**: 스크린샷이 하나도 없으면 Screenshots 칸은 검정 띠 왼쪽 아이콘으로 저절로 접힌다
-(`ShelfAutoCollapsePolicy.collapsesScreenshots`, 저장하지 않음). 열려 있는 동안 2초마다 확인해 스크린샷이 생기면
-펼쳐진다. 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다. 마지막 확인값(`ScreenshotShelf.lastKnownEmpty`)으로 시작해
+(`ShelfAutoCollapsePolicy.collapsesScreenshots`, 저장하지 않음). 패널 timer 하나가 열려 있는 동안 2초마다 두 선반을 갱신하고,
+자식 선반은 같은 snapshot만 그린다(`ShelfScanCoordinator`는 겹친 source 요청을 한 번으로 합친다). 스크린샷이 생기면
+펼쳐지지만, 첫 snapshot을 맞춘 뒤 파일이 사라져도 열린 도커는 저절로 접지 않는다(I22). 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다. 마지막 확인값(`ScreenshotShelf.lastKnownEmpty`)으로 시작해
 열자마자 도커가 줄어드는 움직임이 없다.
 **빈 선반**: 다 읽은 뒤 비어 있으면 "No screenshots yet" / "No downloads yet"를 10pt 한 줄로 쓰고, 칸은 제목 + 폴더
 화살표 + 접기 버튼 폭으로 좁아진다(`emptyShelfWidth`). 파일이 생기면 원래 폭으로 돌아간다. 모든 칸의 제목 줄은 16pt(`notchHeaderHeight`),
@@ -506,8 +507,8 @@ Import는 launchable·일반·hidden menu 설정을 적용하지만, 노치 설�
 - `Sources/ChapCore/MirrorPolicy.swift`, `QuickNoteStore.swift` — 거울 상태·메모 저장 (테스트로 고정)
 - `Sources/Chap/Views/NotchStripToolsView.swift`, `NotchQuickNoteView.swift`, `Sources/Chap/MirrorCamera.swift` — 띠 도구(거울·메모·Cover Screens)
 - `Sources/Chap/Views/NotchFocusView.swift`(칸·모드 탭·Keep Awake 모드), `NotchFocusTimerBody.swift`(Timer 모드), `NotchFocusDial.swift`(다이얼), `NotchMascotView.swift`, `NotchWidgetViews.swift` — Keep Awake 칸·물범·위젯 공용
-- `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄
+- `Sources/Chap/Views/NotchLauncherPanelView.swift`, `NotchDockShapes.swift`, `NotchSlotModel.swift`, `NotchLauncherRows.swift`, `NotchDropFileRow.swift` — 메인 패널·도커 실루엣 셰이프·칸 모델·런처 줄·하단 Drop 파일 행
 - `Sources/Chap/Views/NotchLayoutsView.swift`, `LayoutCaptureView.swift` — Layout 노치 탭 격자·캡처 확인 창
 - `Sources/Chap/Layouts/`, `Sources/ChapCore/Layout*.swift` — AX 캡처·복원, 정규화 좌표·로컬 저장
 - `Sources/Chap/Views/NotchDropViews.swift` — Drop 도커·드롭 존·배지
-- `Sources/Chap/NotchLauncherController.swift` — 창 배치·표시 로직
+- `Sources/Chap/NotchLauncherController.swift`, `NotchWindowTypes.swift`, `NotchAuxiliaryWindow.swift` — 창 배치·표시 orchestration, hover/drop 추적 뷰, 배지 창 shell
