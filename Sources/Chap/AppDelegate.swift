@@ -31,7 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let updateController = UpdateController()
     lazy var accessibilityController = AccessibilityStateController(
         suppressesInteractivePrompts: isRunningTests)
-    var isStatusMenuOpen = false
+    var menuRebuildGate = MenuRebuildGate()
     var isRunningTests: Bool {
         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
             || NSClassFromString("XCTestCase") != nil

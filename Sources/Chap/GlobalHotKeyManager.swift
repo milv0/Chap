@@ -82,15 +82,23 @@ final class GlobalHotKeyManager: NSObject {
             stop()
             return
         }
+        let nextRegistrations = globalHotKeyRegistrations(
+            for: sites, optionShortcutsEnabled: optionShortcutsEnabled,
+            quickNoteKey: quickNoteKey, coverScreensKey: coverScreensKey)
         self.actionHandler = actionHandler
-        registrations = globalHotKeyRegistrations(
-            for: sites, optionShortcutsEnabled: optionShortcutsEnabled, quickNoteKey: quickNoteKey,
-            coverScreensKey: coverScreensKey)
-        isConfigured = true
+        guard
+            !isConfigured || registeredKeyboardLayoutIdentifier == nil
+                || registrations != nextRegistrations
+        else { return }
+        registrations = nextRegistrations
         unregisterAllHotKeys()
         registeredKeyboardLayoutIdentifier = nil
 
-        guard installEventHandlerIfNeeded() else { return }
+        guard installEventHandlerIfNeeded() else {
+            isConfigured = false
+            return
+        }
+        isConfigured = true
         observeKeyboardInputSourceIfNeeded()
         registerCurrentHotKeys()
     }
