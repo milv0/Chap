@@ -6,6 +6,15 @@
         <description>Appcast feed for Chap macOS updates.</description>
         <language>en</language>
         <item>
+            <title>2.19.5</title>
+            <pubDate>Mon, 02 Nov 2026 17:18:38 +0900</pubDate>
+            <sparkle:version>106</sparkle:version>
+            <sparkle:shortVersionString>2.19.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-2.19.5-106.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/milv0/Chap/releases/download/v2.19.5/Chap-2.19.5-106.dmg" length="4040201" type="application/octet-stream" sparkle:edSignature="0FJBEXcWefLbCB7E9C9cLcAN2X58lEPRpeHAbMV41Ohn8r+kdiXSL/oUY5UsEUICXfrYXAXLZXNWvUCVWn1mCg=="/>
+        </item>
+        <item>
             <title>2.19.4</title>
             <pubDate>Thu, 22 Oct 2026 16:55:48 +0900</pubDate>
             <sparkle:version>105</sparkle:version>
@@ -22,15 +31,6 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-2.19.3-104.md</sparkle:releaseNotesLink>
             <enclosure url="https://github.com/milv0/Chap/releases/download/v2.19.3/Chap-2.19.3-104.dmg" length="4017409" type="application/octet-stream" sparkle:edSignature="DbTnspIQhW27XUf5HeGrVB2aqndwkF4qhSxJkXCUZioQiMWx4/qY+aTX9lm/w10SK6sgENgRR2dNl7oSEeM1Cw=="/>
-        </item>
-        <item>
-            <title>2.19.2</title>
-            <pubDate>Tue, 20 Oct 2026 17:55:23 +0900</pubDate>
-            <sparkle:version>103</sparkle:version>
-            <sparkle:shortVersionString>2.19.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <sparkle:releaseNotesLink>https://milv0.github.io/Chap/Chap-2.19.2-103.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/milv0/Chap/releases/download/v2.19.2/Chap-2.19.2-103.dmg" length="4024797" type="application/octet-stream" sparkle:edSignature="OH6Udu7Xt2MbMGFYGCvC9O+34QvgHX2pE0KQ8572ksdIEG90N0uUkOrlfLb7fPVnYu6/ORfT8XRUak0FlbRhDA=="/>
         </item>
     </channel>
 </rss>
