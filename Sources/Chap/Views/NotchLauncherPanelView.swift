@@ -93,6 +93,15 @@ struct NotchLauncherPanelView: View {
     @State private var todoWidth: CGFloat? = NotchTodoView.knownTitles.map(
         NotchTodoView.columnWidth(titles:))
 
+    /// 패널 하나가 두 선반의 목록·정책 갱신을 함께 소유한다. 자식 선반은 이 snapshot만 그린다.
+    @State private var screenshotURLs = ScreenshotShelf.previewOverride ?? []
+    @State private var screenshotsDidLoad = ScreenshotShelf.previewOverride != nil
+    @State private var downloadURLs = DownloadsShelf.previewOverride ?? []
+    @State private var downloadsDidLoad = DownloadsShelf.previewOverride != nil
+    @State private var didReconcileInitialScreenshots = false
+    private let shelfRefreshTimer = Timer.publish(every: 2, on: .main, in: .common)
+        .autoconnect()
+
     /// 읽어 보니 비어 있는 선반. 비면 칸이 제목 폭(+ 접기 버튼)으로 좁아진다.
     @State private var emptyShelves: Set<NotchWidget> = []
 
@@ -485,40 +494,13 @@ struct NotchLauncherPanelView: View {
             // 도커가 최소 폭보다 좁은 내용을 담으면 위젯 줄을 가운데에 둔다.
             .frame(maxWidth: .infinity, alignment: .center)
 
-            // Chap Drop 파일 행. 파일이 없으면 섹션 자체가 사라져
-            // 도커는 원래 크기로 돌아간다.
-            if !dropFiles.isEmpty {
-                Rectangle()
-                    .fill(subtleSurface)
-                    .frame(height: 1)
-                    .padding(.top, 2)
-                // 파일은 아이콘 + 한 줄 파일명으로 둔다. 전체 이름은 툴팁과 VoiceOver로 제공한다.
-                HStack(alignment: .center, spacing: 4) {
-                    Image(systemName: "tray.and.arrow.down")
-                        .font(DS.notchLabel)
-                        .foregroundColor(headingForeground)
-                        .padding(.horizontal, 6)
-                        .accessibilityHidden(true)
-                    ForEach(dropFiles, id: \.self) { url in
-                        NotchDropFileItem(
-                            url: url,
-                            primaryForeground: primaryForeground,
-                            textShadowOpacity: textShadowOpacity,
-                            hoverBackground: rowHoverBackground
-                        ) {
-                            ChapDrop.removeAsync(url) { removed in
-                                if !removed {
-                                    LauncherUtils.showAlert(
-                                        message: "File could not be removed",
-                                        info:
-                                            "Chap could not remove \(url.lastPathComponent) from Drop."
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            NotchDropFileRow(
+                files: dropFiles,
+                headingForeground: headingForeground,
+                primaryForeground: primaryForeground,
+                subtleSurface: subtleSurface,
+                textShadowOpacity: textShadowOpacity,
+                hoverBackground: rowHoverBackground)
         }
         .padding(.horizontal, DS.padding)
         .padding(.top, topInset + NotchGeometry.contentTopGap)
@@ -528,13 +510,9 @@ struct NotchLauncherPanelView: View {
         .frame(minWidth: minWidth)
         .onAppear {
             refreshDropFiles()
-            checkScreenshots()
-            checkDownloads()
+            refreshShelves()
         }
-        .onReceive(screenshotCheckTimer) { _ in
-            checkScreenshots()
-            checkDownloads()
-        }
+        .onReceive(shelfRefreshTimer) { _ in refreshShelves() }
         .onReceive(
             NotificationCenter.default.publisher(for: ChapDrop.didChangeNotification)
         ) { _ in
@@ -562,8 +540,6 @@ struct NotchLauncherPanelView: View {
     /// 띠 아이콘을 누르면 이번에 열린 동안만 펼쳐 둔다(`autoCollapseDismissed`).
     @State private var screenshotsAutoCollapsed = ScreenshotShelf.initiallyEmpty
     @State private var autoCollapseDismissed = false
-    private let screenshotCheckTimer = Timer.publish(every: 2, on: .main, in: .common)
-        .autoconnect()
 
     /// 사용자가 접어 둔 선반을 최근 파일(10분 이내) 때문에 이번에만 펼친 칸. 저장하지 않는다(FLOW I21).
     /// 첫 프레임은 지난번에 읽은 시각으로 정해 열자마자 폭이 바뀌지 않는다.
@@ -598,14 +574,62 @@ struct NotchLauncherPanelView: View {
         }
     }
 
-    /// 접어 둔 Downloads 칸이 배치돼 있으면 가장 새 다운로드를 본다.
-    private func checkDownloads() {
-        guard DownloadsShelf.previewOverride == nil, !autoExpanded.contains(.downloads),
-            reveal.collapsedWidgets.contains(.downloads),
-            slots.contains(where: { $0.collapsibleWidget == .downloads })
-        else { return }
-        DownloadsShelf.newestDownloadAsync { newest in
-            expandIfRecent(.downloads, newest: newest, dismissed: DownloadsShelf.dismissedNewest)
+    /// 패널의 한 timer tick에서 배치된 각 선반을 한 번씩 갱신한다. source coordinator가 prewarm 등과
+    /// 겹친 요청도 합친다. 자식은 파일 I/O 없이 전달된 배열만 그린다.
+    private func refreshShelves() {
+        let placed = Set(slots.compactMap(\.collapsibleWidget))
+        if placed.contains(.screenshots) {
+            if let preview = ScreenshotShelf.previewOverride {
+                screenshotURLs = preview
+                screenshotsDidLoad = true
+                applyScreenshotSnapshot(files: preview, newest: nil)
+            } else {
+                ScreenshotShelf.recentScreenshotsAsync { files in
+                    screenshotURLs = files
+                    screenshotsDidLoad = true
+                    applyScreenshotSnapshot(files: files, newest: ScreenshotShelf.lastKnownNewest)
+                }
+            }
+        }
+        if placed.contains(.downloads) {
+            if let preview = DownloadsShelf.previewOverride {
+                downloadURLs = preview
+                downloadsDidLoad = true
+            } else {
+                DownloadsShelf.recentFilesAsync { files in
+                    downloadURLs = files
+                    downloadsDidLoad = true
+                    expandIfRecent(
+                        .downloads, newest: DownloadsShelf.lastKnownNewest,
+                        dismissed: DownloadsShelf.dismissedNewest)
+                }
+            }
+        }
+    }
+
+    /// 첫 실제 snapshot은 앱 시작 캐시를 바로잡을 수 있다. 그 뒤에는 비어도 열린 도커를 접지 않고,
+    /// 새 파일이 생겼을 때 펼치기만 한다(I22).
+    private func applyScreenshotSnapshot(files: [URL], newest: Date?) {
+        expandIfRecent(
+            .screenshots, newest: newest, dismissed: ScreenshotShelf.dismissedNewest)
+        let empty = ShelfAutoCollapsePolicy.collapsesScreenshots(count: files.count)
+        ScreenshotShelf.lastKnownEmpty = empty
+        if !didReconcileInitialScreenshots {
+            didReconcileInitialScreenshots = true
+            if empty || !screenshotsAutoCollapsed {
+                screenshotsAutoCollapsed = empty
+                return
+            }
+            // 캐시는 비었다고 했지만 첫 snapshot에 파일이 있으면 아래의 widen-first 경로를 탄다.
+        }
+        guard !empty, screenshotsAutoCollapsed else { return }
+        if let slot = slots.first(where: { $0.collapsibleWidget == .screenshots }),
+            !reveal.collapsedWidgets.contains(.screenshots), !autoCollapseDismissed
+        {
+            onPrepareExpand(width(for: slot) + DS.notchColumnGap)
+        }
+        DispatchQueue.main.async {
+            withAnimation(.smooth(duration: 0.22)) { screenshotsAutoCollapsed = false }
         }
     }
 
@@ -622,37 +646,6 @@ struct NotchLauncherPanelView: View {
         default: break
         }
         withAnimation(.smooth(duration: 0.22)) { _ = autoExpanded.remove(widget) }
-    }
-
-    /// Screenshots 칸이 배치돼 있으면 스크린샷 유무를 확인한다(칸이 접혀 있어도).
-    private func checkScreenshots() {
-        guard slots.contains(where: { $0.collapsibleWidget == .screenshots }) else { return }
-        let apply: ([URL]) -> Void = { shots in
-            // 접어 둔 칸이면 10분 안에 찍은 스크린샷이 있을 때 펼친다(읽은 김에 함께 본다).
-            expandIfRecent(
-                .screenshots, newest: ScreenshotShelf.lastKnownNewest,
-                dismissed: ScreenshotShelf.dismissedNewest)
-            let empty = ShelfAutoCollapsePolicy.collapsesScreenshots(count: shots.count)
-            ScreenshotShelf.lastKnownEmpty = empty
-            guard empty != screenshotsAutoCollapsed else { return }
-            if !empty {
-                // 펼쳐질 때는 창을 먼저 넓힌다.
-                if let slot = slots.first(where: { $0.collapsibleWidget == .screenshots }),
-                    !reveal.collapsedWidgets.contains(.screenshots), !autoCollapseDismissed
-                {
-                    onPrepareExpand(width(for: slot) + DS.notchColumnGap)
-                }
-            }
-            DispatchQueue.main.async {
-                withAnimation(.smooth(duration: 0.22)) { screenshotsAutoCollapsed = empty }
-            }
-        }
-        if let preview = ScreenshotShelf.previewOverride {
-            screenshotsAutoCollapsed = ShelfAutoCollapsePolicy.collapsesScreenshots(
-                count: preview.count)
-            return
-        }
-        ScreenshotShelf.recentScreenshotsAsync(completion: apply)
     }
 
     /// 접힌 칸 아이콘을 눌렀을 때: 사용자가 접은 칸이면 펼쳐 저장하고, 비어서 접힌 칸이면 이번에만 펼친다.
@@ -753,6 +746,7 @@ struct NotchLauncherPanelView: View {
             NotchScreenshotShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
+                urls: screenshotURLs, didLoad: screenshotsDidLoad,
                 onCollapse: { collapseShelf(.screenshots) },
                 isAutoExpanded: autoExpanded.contains(.screenshots),
                 onEmptyChange: { setShelfEmpty(.screenshots, $0) })
@@ -760,6 +754,7 @@ struct NotchLauncherPanelView: View {
             NotchDownloadsShelfView(
                 backgroundHex: contrastBackgroundHex,
                 usesSemanticForeground: usesSemanticGlass,
+                urls: downloadURLs, didLoad: downloadsDidLoad,
                 onCollapse: { collapseShelf(.downloads) },
                 isAutoExpanded: autoExpanded.contains(.downloads),
                 onEmptyChange: { setShelfEmpty(.downloads, $0) })

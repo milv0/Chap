@@ -31,7 +31,10 @@ extension AppDelegate {
             DispatchQueue.main.async { self?.handleKeepAwakeEvent(event) }
         }
         chapTimer.onEvent = { [weak self] event in self?.handleTimerEvent(event) }
+        ChromeLauncher.configureWindowReuse(sites: config.sites)
         buildMenu()
+        configureGlobalHotKeys()
+        refreshNotchLauncher()
         // 노치 Keep Awake 위젯이 Keep Awake 세션을 켜고 끈다 (메뉴와 같은 세션).
         focusObservers = [
             NotificationCenter.default.addObserver(
@@ -215,8 +218,11 @@ extension AppDelegate {
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
             let previousNotchCoverScreensEnabled = self.config.notchCoverScreensEnabled
-            let previousQuickNoteKey = self.registeredQuickNoteKey
-            let previousCoverScreensKey = self.registeredCoverScreensKey
+            let previousHotKeys = globalHotKeyRegistrations(
+                for: self.config.sites,
+                optionShortcutsEnabled: self.config.optionShortcutsEnabled,
+                quickNoteKey: self.registeredQuickNoteKey,
+                coverScreensKey: self.registeredCoverScreensKey)
             do {
                 try self.configStore.save(newConfig)
             } catch {
@@ -241,16 +247,22 @@ extension AppDelegate {
                     keepAwakeActive: self.keepAwake.isActive)
             }
             let newMenu = MenuConfigurationSnapshot(sites: newConfig.sites)
-            // 메뉴를 다시 만들면 단축키도 다시 등록하지만, 그렇지 않을 때도 Quick Note 키가 바뀌면 다시 등록한다.
-            let quickNoteKeyChanged =
-                previousQuickNoteKey != self.registeredQuickNoteKey
-                || previousCoverScreensKey != self.registeredCoverScreensKey
-            if previousMenu != newMenu
+            let newHotKeys = globalHotKeyRegistrations(
+                for: newConfig.sites,
+                optionShortcutsEnabled: newConfig.optionShortcutsEnabled,
+                quickNoteKey: self.registeredQuickNoteKey,
+                coverScreensKey: self.registeredCoverScreensKey)
+            let hotKeysChanged = previousHotKeys != newHotKeys
+            let menuChanged =
+                previousMenu != newMenu
                 || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
                 || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
-            {
-                DispatchQueue.main.async { self.buildMenu() }
-            } else if previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
+                || hotKeysChanged
+            let notchChanged =
+                previousMenu != newMenu
+                || previousOptionShortcutsEnabled != newConfig.optionShortcutsEnabled
+                || previousHiddenMenuLaunchTypes != newConfig.hiddenMenuLaunchTypes
+                || previousNotchLauncherEnabled != newConfig.notchLauncherEnabled
                 || previousNotchPanelStyle != newConfig.notchPanelStyle
                 || previousNotchGlassAppearance != newConfig.notchGlassAppearance
                 || previousNotchGlassMaterial != newConfig.notchGlassMaterial
@@ -260,15 +272,10 @@ extension AppDelegate {
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
                 || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
                 || previousNotchCoverScreensEnabled != newConfig.notchCoverScreensEnabled
-            {
-                // 메뉴 재구성 없이 토글/스타일만 바뀌어도 노치 런처는 즉시 반영한다.
-                DispatchQueue.main.async { self.refreshNotchLauncher() }
-            }
-            if quickNoteKeyChanged, previousMenu == newMenu,
-                previousOptionShortcutsEnabled == newConfig.optionShortcutsEnabled,
-                previousHiddenMenuLaunchTypes == newConfig.hiddenMenuLaunchTypes
-            {
-                DispatchQueue.main.async { self.configureGlobalHotKeys() }
+            DispatchQueue.main.async {
+                if menuChanged { self.buildMenu() }
+                if hotKeysChanged { self.configureGlobalHotKeys() }
+                if notchChanged { self.refreshNotchLauncher() }
             }
             return true
         }

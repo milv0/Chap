@@ -37,6 +37,11 @@ enum AppLauncher {
     ///
     /// 단계: 경로 검증 → 대상 화면·bounds 결정 → 권한 확인 → baseline 캡처(I1/I3)
     /// → openApplication → 관찰·결과 보고. 각 단계는 아래 private 메서드로 분리돼 있다.
+    /// 실행 전 AX baseline은 느리거나 30ms 재시도를 할 수 있어 main을 막지 않는다. 직렬 큐라
+    /// 같은 앱을 연속 실행해도 baseline → main open 제출 순서가 요청 순서대로 유지된다(I1/I3).
+    private static let preparationQueue = DispatchQueue(
+        label: "com.mingyupark.Chap.app-launch-preparation", qos: .userInitiated)
+
     static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
         guard let path = validatedAppPath(for: site) else {
             onComplete?()
@@ -68,28 +73,33 @@ enum AppLauncher {
             return
         }
 
-        let baseline = captureBaseline(bundleId: bundleId)
-
         let appURL = URL(fileURLWithPath: path)
-        let openConfig = NSWorkspace.OpenConfiguration()
-        openConfig.activates = true
-        let startTime = CFAbsoluteTimeGetCurrent()
-
-        NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) { app, error in
-            if let error = error {
-                Log.launcher.error(
-                    "openApplication failed: \(error.localizedDescription, privacy: .public)")
-                onComplete?()
-                return
+        preparationQueue.async {
+            let baseline = captureBaseline(bundleId: bundleId)
+            // NSWorkspace 제출은 main에서 하고, 제출이 끝나야 다음 baseline으로 넘어간다.
+            DispatchQueue.main.sync {
+                let openConfig = NSWorkspace.OpenConfiguration()
+                openConfig.activates = true
+                let startTime = CFAbsoluteTimeGetCurrent()
+                NSWorkspace.shared.openApplication(at: appURL, configuration: openConfig) {
+                    app, error in
+                    if let error {
+                        Log.launcher.error(
+                            "openApplication failed: \(error.localizedDescription, privacy: .public)"
+                        )
+                        onComplete?()
+                        return
+                    }
+                    guard let app else {
+                        onComplete?()
+                        return
+                    }
+                    observeAndReport(
+                        app: app, site: site, fallbackBundleId: bundleId, screen: screen,
+                        bounds: bounds, baseline: baseline, startTime: startTime,
+                        onComplete: onComplete)
+                }
             }
-            guard let app = app else {
-                onComplete?()
-                return
-            }
-            observeAndReport(
-                app: app, site: site, fallbackBundleId: bundleId, screen: screen,
-                bounds: bounds, baseline: baseline, startTime: startTime,
-                onComplete: onComplete)
         }
     }
 

@@ -77,11 +77,10 @@ struct QuickNoteShortcutTests {
 @Suite("Quick Note window", .serialized)
 @MainActor
 struct QuickNoteWindowTests {
-    /// Esc가 메모 창을 닫는지 본다. 창은 사용자의 실제 메모 파일을 읽기만 하므로(입력하지 않는다)
-    /// 이 테스트는 메모를 바꾸지 않는다.
+    /// 고정 preview 내용과 비활성 autosave를 주입해 사용자의 Quick Note 파일·창 크기 설정을 읽거나 쓰지 않는다.
     @Test("Escape closes the note window")
     func escapeCloses() throws {
-        QuickNoteWindow.show()
+        QuickNoteWindow.show(previewText: "", frameAutosaveName: nil)
         let window = try #require(NSApp.windows.first { $0 is QuickNoteNSWindow })
         defer { if QuickNoteWindow.isOpen { window.close() } }
         #expect(QuickNoteWindow.isOpen)
@@ -106,7 +105,7 @@ struct QuickNoteWindowTests {
 
     @Test("the borderless note window can take keys, so typing and Esc reach it")
     func borderlessWindowTakesKeys() throws {
-        QuickNoteWindow.show()
+        QuickNoteWindow.show(previewText: "", frameAutosaveName: nil)
         let window = try #require(NSApp.windows.first { $0 is QuickNoteNSWindow })
         defer { if QuickNoteWindow.isOpen { window.close() } }
         #expect(window.styleMask.contains(.borderless))
@@ -116,7 +115,7 @@ struct QuickNoteWindowTests {
 
     @Test("other keys and other windows pass through")
     func otherKeysPassThrough() throws {
-        QuickNoteWindow.show()
+        QuickNoteWindow.show(previewText: "", frameAutosaveName: nil)
         let window = try #require(NSApp.windows.first { $0 is QuickNoteNSWindow })
         defer { if QuickNoteWindow.isOpen { window.close() } }
 

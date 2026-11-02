@@ -1,5 +1,4 @@
 import AppKit
-import Combine
 import SwiftUI
 
 /// 노치 한 칸의 다운로드 선반. ~/Downloads의 최근 파일 4개를 파일 아이콘·이름·받은 시각으로
@@ -10,6 +9,8 @@ struct NotchDownloadsShelfView: View {
     let backgroundHex: String
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
+    let urls: [URL]
+    let didLoad: Bool
     /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
     var onCollapse: (() -> Void)?
     /// 최근 다운로드 때문에 저절로 펼친 칸인지. 그러면 접기가 "다음 다운로드까지"라는 뜻이라 툴팁이 달라진다.
@@ -17,13 +18,8 @@ struct NotchDownloadsShelfView: View {
     /// 다 읽은 뒤 비었는지 알린다. 비면 칸이 제목 폭으로 좁아진다.
     var onEmptyChange: (Bool) -> Void = { _ in }
     @State private var isColumnHovered = false
-
-    @State private var urls: [URL] = DownloadsShelf.previewOverride ?? []
-    @State private var didLoad = DownloadsShelf.previewOverride != nil
-    @State private var isRefreshing = false
     @State private var isHeaderHovered = false
     @Environment(\.colorScheme) private var colorScheme
-    private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     private var usesDarkCustomForeground: Bool {
         !usesSemanticForeground
@@ -133,14 +129,11 @@ struct NotchDownloadsShelfView: View {
         }
         .onHover { isColumnHovered = $0 }
         .onAppear {
-            refresh()
             if didLoad { onEmptyChange(urls.isEmpty) }
         }
         .onChange(of: didLoad && urls.isEmpty) { _, empty in
             if didLoad { onEmptyChange(empty) }
         }
-        // 노치를 열어 둔 채 받은 파일도 몇 초 안에 나타난다.
-        .onReceive(refreshTimer) { _ in refresh() }
     }
 
     private var header: some View {
@@ -166,16 +159,6 @@ struct NotchDownloadsShelfView: View {
                 .fill(isHeaderHovered ? hoverBackground : Color.clear)
         )
         .contentShape(Rectangle())
-    }
-
-    private func refresh() {
-        guard DownloadsShelf.previewOverride == nil, !isRefreshing else { return }
-        isRefreshing = true
-        DownloadsShelf.recentFilesAsync { files in
-            urls = files
-            didLoad = true
-            isRefreshing = false
-        }
     }
 }
 

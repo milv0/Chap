@@ -1,5 +1,4 @@
 import AppKit
-import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -10,6 +9,8 @@ struct NotchScreenshotShelfView: View {
     let backgroundHex: String
     /// Glass 재질에서는 semantic foreground를 쓴다.
     let usesSemanticForeground: Bool
+    let urls: [URL]
+    let didLoad: Bool
     /// 칸을 어깨 아이콘으로 접는 요청. nil이면 접기 버튼을 그리지 않는다.
     var onCollapse: (() -> Void)?
     /// 최근 스크린샷 때문에 저절로 펼친 칸인지. 그러면 접기가 "다음 스크린샷까지"라 툴팁이 달라진다.
@@ -17,12 +18,7 @@ struct NotchScreenshotShelfView: View {
     /// 다 읽은 뒤 비었는지 알린다. 비면 칸이 제목 폭으로 좁아진다.
     var onEmptyChange: (Bool) -> Void = { _ in }
     @State private var isColumnHovered = false
-    @State private var didLoad = ScreenshotShelf.previewOverride != nil
-
-    @State private var urls: [URL] = ScreenshotShelf.previewOverride ?? []
-    @State private var isRefreshing = false
     @State private var isHeaderHovered = false
-    private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
 
     private var usesDarkCustomForeground: Bool {
         !usesSemanticForeground
@@ -107,15 +103,10 @@ struct NotchScreenshotShelfView: View {
         }
         .onHover { isColumnHovered = $0 }
         .onAppear {
-            refresh()
             if didLoad { onEmptyChange(urls.isEmpty) }
         }
         .onChange(of: didLoad && urls.isEmpty) { _, empty in
             if didLoad { onEmptyChange(empty) }
-        }
-        // 패널을 열어둔 채 새 스크린샷을 찍어도 몇 초 안에 나타난다.
-        .onReceive(refreshTimer) { _ in
-            refresh()
         }
     }
 
@@ -175,16 +166,6 @@ struct NotchScreenshotShelfView: View {
                 textShadowOpacity: usesSemanticForeground || usesDarkCustomForeground
                     ? 0 : 0.75,
                 hoverBackground: rowHoverBackground)
-        }
-    }
-
-    private func refresh() {
-        guard ScreenshotShelf.previewOverride == nil, !isRefreshing else { return }
-        isRefreshing = true
-        ScreenshotShelf.recentScreenshotsAsync { screenshots in
-            urls = screenshots
-            didLoad = true
-            isRefreshing = false
         }
     }
 }

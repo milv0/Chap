@@ -36,9 +36,31 @@ public struct DropStore {
     private struct Reference: Codable {
         var bookmark: Data
         var added: Date
+        /// 마지막으로 접근 가능했을 때의 볼륨 UUID. 기존 두 필드 JSON은 nil로 그대로 읽힌다.
+        var volumeUUID: String?
+        var lastKnownPath: String?
     }
 
     // MARK: - 규칙
+
+    /// 볼륨 목록 자체를 못 읽었으면 보수적으로 유지한다. UUID를 우선하고, UUID가 없는
+    /// `/Volumes/<이름>/...` 참조는 마지막 볼륨 root가 현재 없을 때 유지한다.
+    static func keepsMissingReference(
+        volumeUUID: String?, lastKnownPath: String?,
+        mountedVolumeUUIDs: Set<String>?, mountedVolumePaths: Set<String>?
+    ) -> Bool {
+        guard let mountedVolumeUUIDs, let mountedVolumePaths else { return true }
+        if let volumeUUID { return !mountedVolumeUUIDs.contains(volumeUUID) }
+        guard let volumePath = externalVolumePath(for: lastKnownPath) else { return false }
+        return !mountedVolumePaths.contains(volumePath)
+    }
+
+    static func externalVolumePath(for path: String?) -> String? {
+        guard let path else { return nil }
+        let components = URL(fileURLWithPath: path).standardizedFileURL.pathComponents
+        guard components.count >= 3, components[1] == "Volumes" else { return nil }
+        return "/Volumes/\(components[2])"
+    }
 
     /// 곧 지워질 수 있는 임시 위치에서 온 파일이면 참조 대신 사본을 둔다.
     public func shouldCopy(path: String) -> Bool {
@@ -65,14 +87,41 @@ public struct DropStore {
         var changed = false
         var result: [Entry] = []
         var seen = Set<String>()
+        let mountedVolumes = Self.mountedVolumes()
         references = references.compactMap { reference in
-            guard let resolved = Self.resolve(reference.bookmark) else {
+            guard let resolved = Self.resolveBookmark(reference.bookmark) else {
+                if Self.keepsMissingReference(
+                    volumeUUID: reference.volumeUUID, lastKnownPath: reference.lastKnownPath,
+                    mountedVolumeUUIDs: mountedVolumes?.uuids,
+                    mountedVolumePaths: mountedVolumes?.paths)
+                {
+                    return reference
+                }
                 changed = true
                 return nil
             }
             var reference = reference
+            guard FileManager.default.fileExists(atPath: resolved.url.path) else {
+                if Self.keepsMissingReference(
+                    volumeUUID: reference.volumeUUID, lastKnownPath: reference.lastKnownPath,
+                    mountedVolumeUUIDs: mountedVolumes?.uuids,
+                    mountedVolumePaths: mountedVolumes?.paths)
+                {
+                    return reference
+                }
+                changed = true
+                return nil
+            }
             if resolved.isStale, let fresh = try? resolved.url.bookmarkData() {
                 reference.bookmark = fresh
+                changed = true
+            }
+            let volumeUUID = Self.volumeUUID(for: resolved.url)
+            if reference.volumeUUID != volumeUUID
+                || reference.lastKnownPath != resolved.url.path
+            {
+                reference.volumeUUID = volumeUUID
+                reference.lastKnownPath = resolved.url.path
                 changed = true
             }
             let path = Self.canonicalPath(resolved.url)
@@ -126,13 +175,19 @@ public struct DropStore {
             }
             let path = Self.canonicalPath(source)
             references.removeAll { reference in
-                Self.resolve(reference.bookmark).map { Self.canonicalPath($0.url) } == path
+                Self.resolveBookmark(reference.bookmark).map {
+                    Self.canonicalPath($0.url)
+                } == path
             }
             guard let bookmark = try? source.bookmarkData() else {
                 failed += 1
                 continue
             }
-            references.append(Reference(bookmark: bookmark, added: added))
+            let volumeUUID = Self.volumeUUID(for: source)
+            references.append(
+                Reference(
+                    bookmark: bookmark, added: added, volumeUUID: volumeUUID,
+                    lastKnownPath: source.path))
             stored.append(source)
         }
         saveReferences(references)
@@ -150,7 +205,7 @@ public struct DropStore {
         let path = Self.canonicalPath(url)
         let before = references.count
         references.removeAll { reference in
-            Self.resolve(reference.bookmark).map { Self.canonicalPath($0.url) } == path
+            Self.resolveBookmark(reference.bookmark).map { Self.canonicalPath($0.url) } == path
         }
         guard references.count != before else { return false }
         saveReferences(references)
@@ -159,15 +214,37 @@ public struct DropStore {
 
     // MARK: - 내부
 
-    private static func resolve(_ bookmark: Data) -> (url: URL, isStale: Bool)? {
+    private static func resolveBookmark(_ bookmark: Data) -> (url: URL, isStale: Bool)? {
         var stale = false
         guard
             let url = try? URL(
                 resolvingBookmarkData: bookmark, options: [.withoutUI, .withoutMounting],
-                relativeTo: nil, bookmarkDataIsStale: &stale),
-            FileManager.default.fileExists(atPath: url.path)
+                relativeTo: nil, bookmarkDataIsStale: &stale)
         else { return nil }
         return (url, stale)
+    }
+
+    private static func volumeUUID(for url: URL) -> String? {
+        (try? url.resourceValues(forKeys: [.volumeUUIDStringKey]))?.volumeUUIDString
+    }
+
+    private struct MountedVolumes {
+        let uuids: Set<String>
+        let paths: Set<String>
+    }
+
+    /// nil은 mounted volume 목록을 읽지 못했다는 뜻이다. 이때 참조를 삭제하지 않는다.
+    private static func mountedVolumes() -> MountedVolumes? {
+        guard
+            let volumes = FileManager.default.mountedVolumeURLs(
+                includingResourceValuesForKeys: [.volumeUUIDStringKey], options: [])
+        else { return nil }
+        return MountedVolumes(
+            uuids: Set(
+                volumes.compactMap {
+                    (try? $0.resourceValues(forKeys: [.volumeUUIDStringKey]))?.volumeUUIDString
+                }),
+            paths: Set(volumes.map { $0.standardizedFileURL.path }))
     }
 
     private func loadReferences() -> [Reference] {

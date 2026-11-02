@@ -27,6 +27,34 @@ struct DropStoreTests {
         return url
     }
 
+    @Test("missing references stay while a known UUID or /Volumes path is unavailable")
+    func missingReferencePolicy() {
+        #expect(
+            DropStore.keepsMissingReference(
+                volumeUUID: "external", lastKnownPath: "/Volumes/Drive/Report.pdf",
+                mountedVolumeUUIDs: ["startup"], mountedVolumePaths: ["/"]))
+        #expect(
+            !DropStore.keepsMissingReference(
+                volumeUUID: "external", lastKnownPath: "/Volumes/Drive/Report.pdf",
+                mountedVolumeUUIDs: ["startup", "external"],
+                mountedVolumePaths: ["/", "/Volumes/Drive"]))
+        #expect(
+            DropStore.keepsMissingReference(
+                volumeUUID: nil, lastKnownPath: "/Volumes/Legacy/Report.pdf",
+                mountedVolumeUUIDs: ["startup"], mountedVolumePaths: ["/"]))
+        #expect(
+            !DropStore.keepsMissingReference(
+                volumeUUID: nil, lastKnownPath: "/Volumes/Legacy/Report.pdf",
+                mountedVolumeUUIDs: ["startup"], mountedVolumePaths: ["/", "/Volumes/Legacy"]))
+        #expect(DropStore.externalVolumePath(for: "/Volumes/Drive/A/B.txt") == "/Volumes/Drive")
+        #expect(DropStore.externalVolumePath(for: "/Users/me/File.txt") == nil)
+        // 볼륨 목록 자체를 못 읽은 순간에는 보수적으로 유지한다.
+        #expect(
+            DropStore.keepsMissingReference(
+                volumeUUID: nil, lastKnownPath: nil,
+                mountedVolumeUUIDs: nil, mountedVolumePaths: nil))
+    }
+
     @Test("a dropped file is kept by reference, not copied")
     func keepsReference() throws {
         let f = try makeFixture()

@@ -12,23 +12,26 @@ Sources/
 ├── Chap/                          ← 앱 타겟
 │   ├── AppDelegate.swift          ← AppDelegate 코어 클래스·상태·관리 창 생성
 │   ├── AppDelegate+Lifecycle.swift ← 라이프사이클·관리 창·종료·재실행·제거·Login Item
-│   ├── AppDelegate+Menu.swift     ← 메뉴·핫키·상태바 아이콘·Keep Awake 액션·노치 동기화
+│   ├── AppDelegate+Menu.swift     ← 메뉴 구성·추적 중 rebuild 지연, 핫키·상태바 아이콘·Keep Awake 액션·노치 동기화
 │   ├── AppDelegate+Layouts.swift ← Layout 메뉴·캡처 창·저장·복원 orchestration
 │   ├── AppDelegate+Config.swift   ← config 마이그레이션·로드·레거시 필드 정리
 │   ├── AccessibilityPermission.swift ← Accessibility 권한 확인·시스템 프롬프트 단일 진입점
 │   ├── AccessibilityStateController.swift ← 접근성 권한 상태머신 (프롬프트 1회·부여 대기 폴링·안내 알림·아이콘 콜백)
-│   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록
-│   ├── CoverScreensController.swift  ← Cover Screens 가림막: 모든 화면 검정 덮개·⌥ 탭 해제·연타 비상 해제·자체 어써션·사용자 문구
+│   ├── GlobalHotKeyManager.swift  ← Carbon 글로벌 단축키 등록·키보드 배열 변경 재등록 (같은 등록 목록은 no-op)
+│   ├── CoverScreensController.swift  ← Cover Screens 가림막: 모든 화면 검정 덮개·⌥ 탭 해제·연타 비상 해제·자체 어써션·사용자 문구 (inert 환경으로 창 없이 입력 테스트)
 │   ├── KeepAwakeController.swift  ← IOKit 전원 어써션 화면 잠자기 방지 세션 (wallDeadline 만료·wake/메뉴 재확인·조용한 만료)
 │   ├── ChapTimerController.swift  ← 카운트다운 타이머(한 번에 하나, 메모리만, wallDeadline·wake 재확인)
 │   ├── AppDelegate+Timer.swift    ← 메뉴 Timer ▸(길이·Stop), 끝 알림(Glass 소리·HUD), 노치 배지 갱신
 │   ├── KeepAwakeHUD.swift         ← Keep Awake 시작/종료·Time's up·Welcome back 중앙 HUD 오버레이 (픽셀 물범 + 문구)
 │   ├── ChapMascotImage.swift      ← 픽셀 물범 NSImage 렌더 (z 여백 고정, HUD 등 AppKit 자리)
-│   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·드롭 오버레이 NSWindow orchestration
+│   ├── NotchLauncherController.swift ← 노치 핫존·패널·배지·mount 알림 orchestration (창 shell·NSView 타입은 분리)
+│   ├── NotchAuxiliaryWindow.swift ← Drop·Timer 배지의 투명 NSWindow shell 공용 생성기
+│   ├── NotchWindowTypes.swift ← 노치 hover·파일 drop 추적 NSView와 keyable panel
+│   ├── ShelfScanCoordinator.swift ← 같은 순간 겹친 선반 스캔을 한 번으로 합쳐 main에서 결과 fan-out
 │   ├── ChapDrop.swift             ← Chap Drop 보관함(직렬 큐 래퍼, 원본 참조는 ChapCore/DropStore)
 │   ├── DownloadsShelf.swift       ← ~/Downloads 최근 파일 소스·가장 새 다운로드 시각 캐시 (utility queue, 받은 시각 순)
 │   ├── ScreenshotShelf.swift      ← 시스템 스크린샷 폴더 소스 (후보명 선필터 후 최신 파일 스캔, utility queue)
-│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 borderless floating Quick Note 카드 (노치 아래 시작, 크기 기억, 헤더 드래그·Esc/× 닫기)
+│   ├── QuickNoteWindow.swift      ← 띠 메모 아이콘·⌥N이 여는 borderless floating Quick Note 카드 (노치 아래 시작, 크기 기억, 헤더 드래그·Esc/× 닫기; 테스트는 previewText + autosave nil로 사용자 저장소 격리)
 │   ├── MirrorCamera.swift         ← 거울 위젯 카메라 세션 (전용 직렬 큐, 권한 요청, 닫힘 token으로 지연 시작 취소)
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
@@ -40,7 +43,7 @@ Sources/
 │   ├── Launchers/                 ← 런처별 실행 로직
 │   │   ├── ChromeLauncher.swift   ← URL (Chrome --app + AX API 리사이즈)
 │   │   ├── ChromeObservationPolicy.swift ← Chrome 프로세스 후보 중 현재 프로세스 선택 (relaunch overlap, 순수 로직)
-│   │   ├── AppLauncher.swift      ← App (AXObserver + AX API 직접 리사이즈)
+│   │   ├── AppLauncher.swift      ← App (serial preparation에서 AX baseline, main NSWorkspace open, background AXObserver 리사이즈)
 │   │   ├── AppLauncher+Observation.swift ← AX 관찰 루프, fallback, eligibility 판정
 │   │   ├── AppLauncherSupport.swift      ← 관찰 정책/결과/레지스트리/컨텍스트 타입
 │   │   ├── FinderLauncher.swift   ← Finder (단일 AppleScript)
@@ -66,13 +69,14 @@ Sources/
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
 │       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·Screenshots 폴더·띠 아이콘·스타일·Glass appearance)
-│       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·Drop 줄·크기 보고)
+│       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·단일 선반 timer·크기 보고)
+│       ├── NotchDropFileRow.swift ← 메인 도커 하단 Chap Drop 파일 행·제거 UI
 │       ├── NotchSlotModel.swift   ← NotchSlotContent(칸 내용)·NotchRevealModel(펼침 상태)·NotchContentSizeKey
 │       ├── NotchDockShapes.swift  ← 도커 실루엣 셰이프(NotchDockShape·PressedStripShape·GlassCornerBridgeShape)·채움 스타일·글자 측정
 │       ├── NotchLauncherRows.swift ← 런처 칸의 줄·키캡·앱 아이콘 타일·칸 제목 버튼
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지
-│       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (아이콘·파일명·짧은 시각, 우클릭 공유)
-│       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (제목 클릭 → 저장 폴더를 Finder로)
+│       ├── NotchDownloadsShelfView.swift ← 다운로드 위젯 (패널 snapshot 렌더, 아이콘·파일명·짧은 시각, 우클릭 공유)
+│       ├── NotchScreenshotShelfView.swift ← 스크린샷 위젯 (패널 snapshot 렌더, 제목 클릭 → 저장 폴더를 Finder로)
 │       ├── NotchTodoView.swift    ← 노치 To-do 칸 (남은 수, 추가·체크·수정·삭제, 칸 밖 클릭 시 확정, 열 때 정하는 가변 폭)
 │       ├── NotchLaunchersTabView.swift ← 탭 칸 공용 머리(NotchTabHeader)·Launchers 칸(Sites|Finder 목록)·Apps 칸(Apps 격자: 4개까지 2열·5~6개 3열|Layouts 탭), 마지막 탭 기억, 고른 탭은 이름 대신 ›만 설정을 연다(NotchTabTitle), 제목 줄 빈 자리 클릭·두 손가락 스와이프로 탭 전환(tabSwipe, NotchTabMotion)
 │       ├── NotchLayoutsView.swift ← Apps 칸 Layouts 탭 본문: 2열 타일 격자(앱 아이콘 묶음 + 이름)·점선 Capture 타일
@@ -99,6 +103,7 @@ Sources/
 │   ├── ConfigImportProcessor.swift ← JSON decode + 안전 import normalization 순수 처리기
 │   ├── ShellRemovalNotice.swift   ← Shell 제거 안내 문구 (마이그레이션·import 거부)
 │   ├── SettingsViewModel.swift    ← 설정 상태 관리
+│   ├── MenuRebuildGate.swift   ← NSMenu 추적 중 root menu 교체를 막고 닫힌 뒤 rebuild 1회로 합침
 │   ├── SaveDebouncer.swift        ← 자동 저장 요청 debounce·즉시 flush
 │   ├── Validation.swift           ← 도메인 검증, 단축키 정규화(sanitizedShortcuts)
 │   ├── WindowGeometry.swift       ← 크기 fitting·화면별 override·centeredBounds·좌표 변환 (순수 코어+NSScreen 래퍼)
@@ -121,7 +126,7 @@ Sources/
 │   ├── DisplayPreviewPolicy.swift ← 미니맵 디스플레이 프리뷰 레이아웃·라벨 정책 (순수 로직)
 │   ├── NotchGeometry.swift        ← 노치 도커 지오메트리 단일 출처
 │   ├── NotchLauncherPolicy.swift ← 노치 감지·패널/배지 배치 정책·노치 없는 화면의 띠 높이·hover 구역
-│   ├── DropStore.swift        ← Chap Drop 원본 북마크 참조·임시 위치 사본·빼기(원본 미삭제) 규칙
+│   ├── DropStore.swift        ← Chap Drop 원본 북마크·임시 사본·외장 볼륨 UUID 보존·빼기(원본 미삭제) 규칙
 │   ├── ShelfAutoCollapsePolicy.swift ← 스크린샷이 없으면 Screenshots 칸을 저절로 접고, 10분 안의 파일(다운로드·스크린샷)이 있으면 접어 둔 선반을 이번에만 펼치는 규칙
 │   ├── NotchShoulderPolicy.swift ← 접을 수 있는 선반 목록 정리 (접으면 도커가 줄어듦, 어깨 영역은 비워 둠)
 │   ├── ShelfFolderLaunch.swift ← 선반 제목 폴더 열기: Standard 프리셋·커서 화면 가운데 일회성 Finder 런처
@@ -167,7 +172,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ChromeReuseRetryPolicyTests.swift
     ├── TimerPolicyTests.swift
     ├── KeepAwakePolicyTests.swift
-    ├── CoverScreensPolicyTests.swift
+    ├── CoverScreensPolicyTests.swift ← 순수 정책 + inert controller 입력/알림(일반 테스트), 실제 전체 화면 smoke는 렌더 환경에서만
     ├── HiddenMenuLaunchTypesTests.swift
     ├── LauncherListPolicyTests.swift
     ├── SiteCountLimitPolicyTests.swift
@@ -187,6 +192,8 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── FocusDialModeTests.swift
     ├── LaunchersTabTests.swift
     ├── TabSwipePolicyTests.swift
+    ├── MenuRebuildGateTests.swift
+    ├── ShelfScanCoordinatorTests.swift
     ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정(xcodebuild 전달 후 CHAP_NOTCH_RENDER_DIR로 읽음) 시만 실행
     ├── NotchLauncherSettingTests.swift
     ├── NotchContrastPolicyTests.swift

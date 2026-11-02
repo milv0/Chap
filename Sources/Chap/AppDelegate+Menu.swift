@@ -36,12 +36,20 @@ extension AppDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
+        guard menu === statusItem.menu else { return }
+        menuRebuildGate.didOpen()
         accessibilityController.refresh(reason: "menu", showAlert: false)
         keepAwake.expireIfNeeded()
         keepAwakeMenuItem?.title = KeepAwakePolicy.menuTitle(
             sessionEnd: keepAwake.sessionEnd, now: Date())
         chapTimer.finishIfDue()
         timerMenuItem?.title = TimerPolicy.menuTitle(end: chapTimer.endDate, now: Date())
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        guard menu === statusItem.menu, menuRebuildGate.didClose() else { return }
+        // AppKit의 닫힘 callback 안에서 menu를 교체하지 않는다.
+        DispatchQueue.main.async { [weak self] in self?.buildMenu() }
     }
 
     /// 상태바 아이콘. 권한이 없으면 경고 배지 심볼, 있으면 사용자가 선택한 아이콘.
@@ -221,8 +229,15 @@ extension AppDelegate {
         }
     }
 
+    /// 메뉴 추적 중이면 교체하지 않고 닫힌 뒤 한 번만 다시 만든다.
     func buildMenu() {
-        ChromeLauncher.configureWindowReuse(sites: config.sites)
+        precondition(Thread.isMainThread)
+        guard menuRebuildGate.request() else { return }
+        buildMenuNow()
+    }
+
+    /// root 메뉴만 구성한다. 핫키·노치 창·Chrome 상태는 각 전용 갱신 경로가 맡는다.
+    private func buildMenuNow() {
         let menu = NSMenu()
         // 목록 구성은 ChapCore 정책이 단독 기준이다. 노치 패널도 같은 정책을 쓴다.
         let sections = LauncherListPolicy.sections(
@@ -338,8 +353,6 @@ extension AppDelegate {
         menu.addItem(quit)
         menu.delegate = self
         statusItem.menu = menu
-        configureGlobalHotKeys()
-        refreshNotchLauncher()
     }
 
     /// 노치 런처를 최신 config로 동기화한다. 메뉴와 같은 목록 정책을 쓰므로
@@ -518,10 +531,12 @@ extension AppDelegate {
     }
 
     private func openStatusMenu() {
-        guard !isStatusMenuOpen, let button = statusItem.button else { return }
-        isStatusMenuOpen = true
+        guard !menuRebuildGate.isTracking, let button = statusItem.button else { return }
         statusItem.menu?.popUp(positioning: nil, at: .zero, in: button)
-        isStatusMenuOpen = false
+        // AppKit은 보통 popUp 반환 전에 menuDidClose를 보낸다. 누락돼도 gate가 영구 잠기지 않게 복구한다.
+        guard menuRebuildGate.isTracking else { return }
+        let shouldBuild = menuRebuildGate.didClose()
+        if shouldBuild { DispatchQueue.main.async { [weak self] in self?.buildMenu() } }
     }
 
     @objc func openQA() {

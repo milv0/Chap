@@ -50,7 +50,10 @@
 | I19 | Cover Screens는 **걷을 길을 반드시 둔다**: ⌥ 탭 + 아무 키 10연타. 해제 경로를 지우거나 조건부로 만들지 않는다 | 화면이 덮인 채 빠져나올 수 없다 |
 | I20 | Cover Screens는 자체 전원 어써션을 들고 Keep Awake 상태를 보지 않는다 | Keep Awake가 끝나면 화면이 꺼져 가림막이 무의미해진다 |
 | I21 | 최근 파일(다운로드·스크린샷)로 저절로 펼친 선반은 **저장하지 않는다**: `onCollapsedChange`/`saveCollapsedWidgets`를 부르지 않고 패널 `@State`(`autoExpanded`)에만 둔다 | 사용자가 접어 둔 설정이 지워져 늘 펼쳐진다 |
-| I22 | 도커가 열려 있는 동안에는 저절로 **접지 않는다**(펼치기만). 10분이 지나도 다음에 열 때 접힌다 | 보고 있던 칸이 마우스 아래에서 사라지고 도커 폭이 흔들린다 |
+| I22 | 도커가 열려 있는 동안에는 저절로 **접지 않는다**(펼치기만). 10분이 지나거나 파일이 사라져도 다음에 열 때 접힌다 | 보고 있던 칸이 마우스 아래에서 사라지고 도커 폭이 흔들린다 |
+| I23 | root `statusItem.menu`는 `menuWillOpen`부터 `menuDidClose`까지 교체하지 않는다. rebuild 요청은 닫힌 다음 main tick에 1회만 수행 | 열린 메뉴와 새 메뉴 참조가 갈라져 상태·동작이 어긋난다 |
+| I24 | Drop 북마크의 볼륨 UUID가 현재 mount 목록에 없으면 참조를 숨기되 **삭제하지 않는다**. 다시 연결하면 재검사한다 | 외장 디스크를 뺐다는 이유만으로 Drop 항목을 영구 분실한다 |
+| I25 | App launch의 AX baseline 캡처는 serial preparation queue에서 하고, 각 baseline 뒤 main에서 open 요청을 제출한 다음 다음 요청으로 간다 | 메인 UI가 멈추거나 연속 실행 baseline 순서가 뒤섞인다 |
 
 ---
 
@@ -74,7 +77,7 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 6. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
 7. NSApp.setActivationPolicy(.accessory)
 8. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
-9. buildMenu()                  메뉴 구성 + RegisterEventHotKey 재등록 + 노치 hotzone/Drop 배지 동기화
+9. Chrome reuse 설정 → buildMenu() (메뉴만) → configureGlobalHotKeys() → refreshNotchLauncher()
 10. didChangeScreenParameters observer 150ms debounce 후 노치 화면·프레임 재계산
 11. accessibilityController.start()    권한 확인 + 옵저버 등록 + 최초 시스템 프롬프트 예약
 12. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
@@ -118,8 +121,11 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 
 ## 4. 글로벌 단축키 흐름
 
-`AppDelegate › buildMenu()`가 config 변경 때마다
+`AppDelegate › configureGlobalHotKeys()`는 시작 시와 effective 등록 목록이 바뀔 때만
 `GlobalHotKeyManager › configure(sites:optionShortcutsEnabled:actionHandler:)`를 호출한다.
+같은 목록이면 manager가 no-op하고, 입력 소스 변경만 현재 키코드로 다시 등록한다.
+`buildMenu()`는 NSMenu만 만들며 핫키·노치 창을 건드리지 않는다. `menuWillOpen` 뒤 들어온 rebuild 요청은
+`MenuRebuildGate`가 모아 `menuDidClose` 다음 main tick에 한 번만 실행한다(I23).
 
 ```
 globalHotKeyRegistrations()
@@ -349,7 +355,8 @@ Office 판정은 prefix가 아니라 **명시 allowlist**다: `com.microsoft.Pow
 (Teams·Outlook 같은 비문서형 앱이 걸리지 않게 하기 위함. PowerPoint의 ID 표기는 `Powerpoint`가 맞다.)
 
 ```
-[main]  baseline 캡처 → openApplication(activates: true)
+[serial userInitiated preparation] baseline 캡처 (5×30ms 재시도 포함)
+   → [main sync] openApplication(activates: true) 제출
 [NSWorkspace 콜백]
    policy 결정 → observationRegistry.begin(key: bundleId) → token 발급
 [global(userInitiated)]              ← 관찰이 30초까지 갈 수 있어 전용 백그라운드에서 실행
@@ -492,7 +499,8 @@ SettingsView.save(showAlerts:)
  └─ vm.onSave(payload)  → AppDelegate 클로저
       ├─ validateConfig 재검증 → invalid면 alert + false 반환
       ├─ configStore.save (기존 파일을 .bak로 복사 후 atomic write)
-      ├─ self.config 갱신 → applyLoginItem → buildMenu
+      ├─ self.config 갱신 → Chrome reuse / Login Item / Status icon 적용
+      ├─ menu·effective hotkey·notch snapshot을 독립 비교해 바뀐 대상만 갱신
       └─ true 반환 → vm.markSaved() (hasChanges = false)
 ```
 
@@ -584,14 +592,17 @@ Settings → Notch Launcher on
 - URL·Finder는 최대 4개, App은 최대 6개. 노치 한 칸은 해당 타입의 전부를 표시한다(Apps는 4개까지 2열·5~6개 3열 아이콘, 필요한 줄만).
 - To-do 칸 폭은 도커를 열 때 저장된 항목으로 정하고(140–240pt) 열려 있는 동안 고정한다. 바뀐 항목은 다음에 열 때 반영된다.
 - Screenshots 위젯은 시스템 스크린샷 위치를, Downloads 위젯은 `~/Downloads`를 2초마다 background scan하며
-  원본을 이동하지 않는다. 스크린샷 위치는 읽기만 하며, 바꾸는 길은 Settings → Notch → Screenshots의 Change…가 여는
+  원본을 이동하지 않는다. 패널과 보이는 선반에서 같은 순간 요청한 스캔은 `ShelfScanCoordinator`가 소스별로
+  한 번만 실행하고 같은 snapshot을 main queue에서 모든 요청자에게 돌려준다(I17). 스크린샷 위치는 읽기만 하며, 바꾸는 길은 Settings → Notch → Screenshots의 Change…가 여는
   macOS 스크린샷 앱(옵션 → 기타 위치…)뿐이다. Downloads는 받는 중·숨김·폴더를 빼고 받은 시각 순 최대 12개(`DownloadsShelfPolicy`).
 - To-do는 `~/Library/Application Support/Chap/Todos.json`에만 저장하며 config Export/Import에 섞이지 않는다.
 - Layouts는 `~/Library/Application Support/Chap/Layouts.json`에 앱 이름·경로·창 제목·디스플레이 UUID·상대 프레임을
   최대 4개(각 6창) 저장한다. config Export/Import·동기화 대상이 아니며, 읽을 수 없는 파일은
   `Layouts.unreadable-<시각>.json`으로 옮겨 원본을 보존한다.
 - Chap Drop은 원본을 북마크로 참조한다(`DropStore`, 목록은 `~/Library/Application Support/Chap/Drop/.references.json`).
-  원본을 옮기면 따라가고, 지우면 다음 읽기 때 목록에서 빠진다. 임시 위치(`/var/folders`, `/tmp`)에서 온 항목과 2.7 이전
+  원본을 옮기면 따라가고, 연결된 볼륨에서 지우면 다음 읽기 때 목록에서 빠진다. 외장 볼륨 UUID가 mount 목록에 없으면
+  항목은 잠시 숨기되 참조를 지우지 않고, mount/unmount 알림 뒤 직렬 큐에서 재검사해 다시 연결되면 되살린다(I24).
+  임시 위치(`/var/folders`, `/tmp`)에서 온 항목과 2.7 이전
   복사본만 Drop 폴더에 Chap 사본으로 둔다. **보관함에서 빼기는 참조만 지우고 원본 파일은 절대 삭제하지 않는다**(Chap 사본만 삭제).
 - Custom은 색·불투명도 페이드, Glass는 macOS 26+의 public `glassEffect` API.
   appearance(System/Light/Dark)와 재질(Clear/Regular)을 서로 독립적으로 고르며, System은
@@ -643,6 +654,7 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | Carbon hotkey 이벤트 | application event target | 등록된 Option 조합만 수신, 실제 동작은 main async |
 | `launchSite`, 메뉴, alert, 창 | main | |
 | Chrome 전체 파이프라인 | serial queue `ChromeRequestCoordinator` | Process 실행 포함 (I4) |
+| App 실행 준비 baseline | serial `com.mingyupark.Chap.app-launch-preparation` | AX 재시도는 off-main, 각 baseline 뒤 main에서 NSWorkspace open 제출을 완료하고 다음 요청 처리(I25) |
 | App 관찰 루프 | `global(qos: .userInitiated)` | 최대 30초 점유. AXObserver run loop source를 이 스레드 런루프에 붙인다 |
 | Finder `Process` | `global()` | `waitUntilExit` 전에 파이프를 읽는다 |
 | `ResizeLogger` 파일 쓰기 | 호출한 큐 그대로 | DEBUG 전용. `NSLock`으로 디렉터리/헤더/append 전체를 직렬화 |
@@ -652,13 +664,15 @@ Chap 종료 → 프로세스와 함께 창·어써션 사라짐 (최후 수단)
 | Keep Awake 만료 타이머 (`KeepAwakeController`) | main | 세션 활성 중에만 1개. `DispatchSourceTimer` `wallDeadline`이라 잠든 시간도 센다. wake 알림·메뉴 열기 때 벽시계로 재확인해 지난 세션을 즉시 정리하고, 잠든 사이 끝난 세션은 사운드·HUD 없이 끝낸다. 만료·해제 시 어써션 해제 후 메뉴 재구성 |
 | Notch window·visibility timer | main + common run-loop mode | NSPanel/배지/hotzone 소유, 열린 동안 80ms polling |
 | Chap Drop 참조 저장/빼기/list/count | serial utility queue | 완료·알림·UI 갱신만 main으로 복귀 |
-| Screenshot folder scan | concurrent utility queue | 패널 표시 중 2초 주기, 중복 scan 방지 |
-| Downloads folder scan (`DownloadsShelf`) | serial utility queue | 칸 표시 중 2초 주기, 결과만 main으로 복귀 |
+| Screenshot/Downloads folder scan | 소스별 utility queue + main fan-out | 패널의 timer 하나가 2초마다 요청. `ShelfScanCoordinator`가 겹친 요청을 합치고 controlled 자식 뷰에 같은 snapshot 전달 |
 | To-do 저장 (`NotchTodoView.saveQueue`) | serial utility queue | 칸이 처음 보일 때 같은 큐에서 1회 읽고, 변경마다 atomic write |
 | Layout 캡처 (`LayoutCaptureService`) | serial userInitiated queue | main에서 앱·화면 스냅샷을 만든 뒤 AX 창 읽기, 결과만 main 복귀 |
 | Layout 복원 (`LayoutRestoreService.Session`) | main + session별 serial userInitiated queue | main에서 앱을 순차 재열고, AX 창 대기·bounds 적용은 큐. activeSession으로 중복 실행 방지, 앱당 12초 상한 |
 | Keep Awake 다이얼 → Keep Awake | main (NotificationCenter, queue: .main) | 요청 길이를 `focusPreset(forRequestedDuration:)`로 검증 |
 | Thumbnail decode/cache | concurrent utility queue | URL+mtime+size key, 결과는 main actor로 복귀 |
+
+- Quick Note 창 테스트는 `previewText`와 `frameAutosaveName: nil`을 주입해 실제 메모 파일과
+  `ChapQuickNoteWindow` frame UserDefaults를 읽거나 쓰지 않는다.
 
 `AppDelegate › quitApp()`은 항상 Cancel을 기본 버튼으로 한 종료 확인창을 띄우고, 사용자가 Quit을
 명시적으로 선택한 경우에만 종료한다. Keep Awake가 활성 중이면 어써션을 명시적으로 해제한 뒤

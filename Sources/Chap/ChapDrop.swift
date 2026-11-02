@@ -95,6 +95,16 @@ enum ChapDrop {
         }
     }
 
+    /// 볼륨 연결 상태가 바뀌면 보관 참조를 직렬 큐에서 재검사하고 배지·파일 행을 갱신한다.
+    static func refreshAfterVolumeChange() {
+        ioQueue.async {
+            _ = store().entries()
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: didChangeNotification, object: nil)
+            }
+        }
+    }
+
     // MARK: - Synchronous helpers (ioQueue only)
 
     private static func store() -> DropStore { DropStore(folder: directory()) }
