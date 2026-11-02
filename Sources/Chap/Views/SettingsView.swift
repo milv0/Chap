@@ -904,7 +904,7 @@ struct SettingsView: View {
     /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
     private func saveGlobals() {
         let saved =
-            vm.onSave?(SettingsPayload(config: vm.config)) ?? true
+            vm.onSave?(SettingsPayload(config: vm.globalsConfig)) ?? true
         if saved {
             // 사이트 draft는 그대로 두고 General/Notch baseline만 저장 상태로 맞춘다.
             vm.markGlobalsSaved()

@@ -214,6 +214,22 @@ struct SettingsViewModelTests {
             config.notchWidgets
                 == NotchWidget.normalizedSlots([.screenshots, .launchers, .none, .none]))
     }
+    @Test func globalsConfigUsesSavedSitesAndCurrentGlobalValues() {
+        let vm = SettingsViewModel(sites: baseSites)
+        vm.sites[0].name = ""
+        vm.notchLauncherEnabled = true
+        vm.coverScreensMessage = "Back soon"
+
+        let config = vm.globalsConfig
+
+        #expect(config.sites == vm.originalSites)
+        #expect(config.sites[0].name == baseSites[0].name)
+        #expect(config.notchLauncherEnabled)
+        #expect(config.coverScreensMessage == "Back soon")
+        #expect(validateConfig(config).isValid)
+        #expect(vm.sites[0].name.isEmpty)
+    }
+
     @Test func markGlobalsSavedClearsNotchChangesButPreservesSiteDraft() {
         let vm = SettingsViewModel(sites: baseSites)
         vm.sites[0].name = "Unsaved Site Draft"

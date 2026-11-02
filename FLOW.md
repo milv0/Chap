@@ -505,10 +505,10 @@ SettingsView.save(showAlerts:)
 ```
 
 `onSave`가 `false`를 반환하면 `markSaved()`가 호출되지 않으므로, 저장 실패 시 변경 상태가 유지된다.
-전역 설정(Guide Window/Login/Option Shortcuts/Status Bar Icon)만 바꿀 때는 `saveGlobals()`가
-`originalSites`(마지막 저장 시점)를 써서, 편집 중 사이트의 검증 실패와 무관하게 저장된다.
-
-`hasChanges`는 창 닫기/종료 시 확인 alert의 근거다. `Site.==`는 `id`(세션 한정 UUID)를 제외한 값 비교다.
+전역 설정은 `saveGlobals()`가 `vm.globalsConfig`를 통해 현재 global 값과 마지막 저장
+`originalSites`만 보낸다. 따라서 편집 중인 invalid Launcher 초안은 General·Notch·Tools 저장을 막거나
+함께 저장되지 않는다. `hasChanges`는 창 닫기/종료 시 확인 alert의 근거다.
+`Site.==`는 `id`(세션 한정 UUID)를 제외한 값 비교다.
 
 ### 9.3 Import — `normalizeForImport`
 
