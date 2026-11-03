@@ -332,10 +332,6 @@ extension AppDelegate {
         setOptionKey(",", on: settings)
         settings.target = self
         menu.addItem(settings)
-        let qa = NSMenuItem(
-            title: "Q&A", action: #selector(openQA), keyEquivalent: "")
-        qa.target = self
-        menu.addItem(qa)
 
         // Check for Updates — disabled when Sparkle configuration is incomplete
         let updateItem = NSMenuItem(

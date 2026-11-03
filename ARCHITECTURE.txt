@@ -392,8 +392,8 @@ Config 모델 필드:
     "Add <Type>" 행으로 해당 타입 항목을 바로 추가 (검색 중에는 매칭 없는 섹션 숨김)
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - 방향키(↑↓) 목록 이동
-- Q&A 페이지 (메뉴바에서 접근)
-- 설정 창은 최소 820x700(SettingsView.minimumSize, 하단 탭과 ?·⋯ 아이콘이 겹치지 않는 폭) 크기로 커서 화면 중앙에 표시.
+- Q&A 페이지 (Settings 하단 `questionmark.bubble` 버튼, User Guide에서도 열기 가능)
+- 설정 창은 최소 860x700(SettingsView.minimumSize, 하단 탭과 User Guide·Q&A·⋯ 아이콘이 겹치지 않는 폭) 크기로 커서 화면 중앙에 표시.
   하단 막대는 탭과 아이콘을 HStack으로 나란히 둔다(겹쳐 두던 ZStack은 탭이 넷이 된 뒤 아이콘을 덮었다)
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
@@ -451,7 +451,6 @@ Config 모델 필드:
   Quick Note  (⌥N 등 등록된 키 표시. 노치를 꺼도 메뉴로 연다)
   ────────
   Settings…   (⌥,)
-  Q&A
   Check for Updates…  (설정 미완료 시 비활성화)
   ────────
   Quit Chap   (⌘Q)

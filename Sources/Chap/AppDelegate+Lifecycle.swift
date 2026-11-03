@@ -295,7 +295,7 @@ extension AppDelegate {
                 width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height),
             styleMask: [.titled, .closable, .resizable])
         window.contentViewController = NSHostingController(rootView: settingsView)
-        // 호스팅 컨트롤러를 붙인 뒤에 걸어야 덮이지 않는다. 하단 탭과 ?·⋯ 아이콘이 겹치기 전에 멈춘다.
+        // 호스팅 컨트롤러를 붙인 뒤에 걸어야 덮이지 않는다. 하단 탭과 User Guide·Q&A·⋯가 겹치기 전에 멈춘다.
         window.contentMinSize = NSSize(
             width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
         // 커서가 있는 화면 중앙에 표시

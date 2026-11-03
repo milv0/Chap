@@ -2,6 +2,15 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.19.7] — 2026-11-03
+
+### Changed
+
+- **Q&A moved into Settings** — The status menu stays focused on actions you use
+  often. Open Settings and click the new Q&A button beside User Guide instead.
+- **A little more room for Settings** — The minimum width is now 860 points so
+  the four tabs, User Guide, Q&A, app actions, and Editing label never overlap.
+
 ## [2.19.6] — 2026-11-02
 
 ### Fixed

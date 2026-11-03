@@ -42,8 +42,11 @@ private struct SettingsTabButton: View {
 
 struct SettingsView: View {
     /// 창 최소 크기. 폭은 하단 막대가 겹치지 않는 값이다: 사이드바 200 + 구분선 1 + 탭 넷 426
-    /// + 오른쪽 아이콘·"Editing" 약 140 + 여백·간격. 높이는 항목 설정 화면이 스크롤 없이 대부분 보이는 값.
-    static let minimumSize = CGSize(width: 820, height: 700)
+    /// + User Guide·Q&A·⋯ 아이콘·"Editing" 약 170 + 여백·간격. 높이는 항목 설정 화면 기준.
+    static let minimumSize = CGSize(width: 860, height: 700)
+
+    /// 렌더 도구에서 가장 넓은 하단 막대 상태(Editing 포함)를 확인한다.
+    static var previewStartsEditing = false
 
     /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
     static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
@@ -72,7 +75,7 @@ struct SettingsView: View {
     @State private var showPasteJSON = false
     @State private var pasteJSONText = ""
     @State private var dropTargeted = false
-    @State private var isEditing = false
+    @State private var isEditing = SettingsView.previewStartsEditing
     @State private var isAddingNew = false
     /// addSite로 갓 추가된, 아직 이름을 정하지 않은 사이트의 id.
     /// 선택이 벗어날 때 이 사이트가 여전히 placeholder면 폐기한다.
@@ -454,7 +457,7 @@ struct SettingsView: View {
             Divider()
 
             // 탭과 오른쪽 아이콘을 한 줄에 나란히 둔다. 예전처럼 탭을 아이콘 위에 겹쳐(ZStack) 가운데 두면
-            // 탭이 넷이 된 뒤 창을 줄였을 때 ?·⋯ 아이콘을 덮었다. 탭은 아이콘 왼쪽 남은 폭의 가운데에 온다.
+            // 탭이 넷이 된 뒤 창을 줄였을 때 오른쪽 도구를 덮었다. 탭은 아이콘 왼쪽 남은 폭의 가운데에 온다.
             HStack(spacing: DS.spacingSmall) {
                 Spacer(minLength: 0)
                 settingsTabPicker
@@ -468,6 +471,13 @@ struct SettingsView: View {
                         action: { showGuide = true }
                     )
                     .help("User Guide")
+
+                    ToolbarIconButton(
+                        icon: "questionmark.bubble", color: DS.textSecondary,
+                        accessibilityLabel: "Q&A",
+                        action: { openQA() }
+                    )
+                    .help("Q&A")
 
                     ToolbarIconMenu(icon: "ellipsis.circle") {
                         Button("Import from File...") {
@@ -695,6 +705,10 @@ struct SettingsView: View {
             }
         }
         return true
+    }
+
+    private func openQA() {
+        (NSApp.delegate as? AppDelegate)?.openQA()
     }
 
     private func openQAFromGuide() {
