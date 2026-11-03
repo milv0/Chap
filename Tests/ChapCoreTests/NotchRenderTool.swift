@@ -411,6 +411,17 @@ struct NotchRenderTool {
             let png = try Self.renderPNG(view)
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
+        // 최소 Settings 창 전체를 그려 하단 탭과 User Guide·Q&A·⋯ 아이콘이 겹치지 않는지 본다.
+        SettingsView.previewStartsEditing = true
+        defer { SettingsView.previewStartsEditing = false }
+        let full = SettingsView(
+            vm: SettingsViewModel(config: config), updateController: UpdateController(),
+            layoutLibrary: LayoutLibrary()
+        )
+        .frame(width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
+        .environment(\.colorScheme, ColorScheme.light)
+        try Self.renderPNG(full).write(
+            to: directory.appendingPathComponent("settings-full-bottom-bar.png"))
     }
 
     /// Keep Awake 중앙 HUD(켜짐·꺼짐) 모습을 PNG로 남긴다. 물범이 파란 타일 위에서 읽히는지 본다.
