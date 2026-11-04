@@ -12,10 +12,10 @@ struct SizePresetGrid: View {
     /// 한 줄에 놓는 칸 수. 가로형 여섯 개가 한 줄에 들어간다.
     static let columnCount = 6
     /// 썸네일 속 화면 크기(pt). 16:10.
-    static let screenSize = CGSize(width: 36, height: 22.5)
+    static let screenSize = CGSize(width: 32, height: 20)
 
     private var columns: [GridItem] {
-        Array(repeating: GridItem(.flexible(), spacing: 6), count: Self.columnCount)
+        Array(repeating: GridItem(.flexible(), spacing: 4), count: Self.columnCount)
     }
 
     private var orderedTiles: [Tile] {
@@ -26,7 +26,7 @@ struct SizePresetGrid: View {
     }
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 6) {
+        LazyVGrid(columns: columns, spacing: 4) {
             ForEach(orderedTiles) { tile in
                 tileView(tile)
             }
@@ -36,16 +36,16 @@ struct SizePresetGrid: View {
     private func tileView(_ tile: Tile) -> some View {
         let isSelected = selectedSelection == tile.selection
         let isHovered = hoveredSelection == tile.selection
-        return VStack(spacing: 3) {
+        return VStack(spacing: 2) {
             thumbnail(tile, isSelected: isSelected)
             // 가장 긴 "Comfortable"도 칸 안쪽에 여유가 남는 크기.
             Text(tile.label)
                 .font(.system(size: 10))
-                .foregroundColor(isSelected ? DS.accent : DS.textPrimary)
+                .foregroundColor(isSelected ? DS.accent : DS.textSecondary)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 5)
+        .padding(.vertical, 3)
         // 칸마다 테두리를 두르지 않는다. 고른 칸만 옅은 강조색, 올린 칸은 더 옅게.
         .background(
             RoundedRectangle(cornerRadius: 8)

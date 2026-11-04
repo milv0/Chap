@@ -6,6 +6,9 @@ import SwiftUI
 /// Settings > Tools 탭. 노치 없이도 쓰는 기능(⌥ 단축키·메뉴바로 여는 것)의 설정: Quick Note, Cover Screens.
 /// 노치에서만 쓰는 기능(Mirror, Screenshots 선반 폴더 등)은 Notch 탭에 둔다. 빈 섹션은 만들지 않는다.
 struct ToolsSettingsView: View {
+    static let flushPendingSave = Notification.Name("ChapToolsFlushPendingSave")
+    static let discardPendingSave = Notification.Name("ChapToolsDiscardPendingSave")
+
     @ObservedObject var vm: SettingsViewModel
     let onSave: () -> Void
 
@@ -35,7 +38,9 @@ struct ToolsSettingsView: View {
     }
 
     private func commitMessage() {
+        guard messageSave != nil else { return }
         messageSave?.cancel()
+        messageSave = nil
         let cleaned = CoverScreensPolicy.cleanedMessage(vm.coverScreensMessage)
         if cleaned != vm.coverScreensMessage { vm.coverScreensMessage = cleaned }
         onSave()
@@ -146,5 +151,13 @@ struct ToolsSettingsView: View {
             }
 
         }
+        .onReceive(NotificationCenter.default.publisher(for: Self.flushPendingSave)) { _ in
+            commitMessage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Self.discardPendingSave)) { _ in
+            messageSave?.cancel()
+            messageSave = nil
+        }
+        .onDisappear { commitMessage() }
     }
 }

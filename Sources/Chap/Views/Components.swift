@@ -42,7 +42,7 @@ struct SidebarItem: View {
             }
         }
         .padding(.horizontal, DS.paddingSmall)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
         .background(
             isSelected
                 ? DS.accentSoft
@@ -153,85 +153,6 @@ struct SidebarDropDelegate: DropDelegate {
 
     func validateDrop(info: DropInfo) -> Bool {
         true
-    }
-}
-
-// MARK: - Pill Picker
-
-struct PillPickerItem: View {
-    let icon: String
-    let label: String
-    let isActive: Bool
-    let action: () -> Void
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 5) {
-                Image(systemName: icon)
-                    .font(.system(size: 10))
-                Text(label)
-                    .font(.system(size: 12, weight: isActive ? .semibold : .regular))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .foregroundColor(isActive ? .white : DS.textSecondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                isActive
-                    ? DS.accent
-                    : (isHovered ? DS.border.opacity(0.4) : Color.clear)
-            )
-            .clipShape(Capsule())
-        }
-        .frame(maxWidth: .infinity)
-        .buttonStyle(.plain)
-        .onHover { hovering in isHovered = hovering }
-    }
-}
-
-struct PillPicker: View {
-    @Binding var selection: LaunchType
-
-    private let items: [(LaunchType, String, String)] = [
-        (.url, LauncherListPolicy.symbolName(for: .url), "URL"),
-        (.app, "app.fill", "App"),
-        (.finder, "folder.fill", "Finder"),
-    ]
-
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(items, id: \.0) { item in
-                PillPickerItem(
-                    icon: item.1,
-                    label: item.2,
-                    isActive: selection == item.0,
-                    action: { selection = item.0 }
-                )
-                .frame(maxWidth: .infinity)
-            }
-
-            HStack(spacing: 5) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 10))
-                Text("Soon")
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .foregroundColor(DS.textTertiary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .help("Coming soon")
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Coming soon")
-        }
-        .padding(4)
-        // 폭은 놓인 줄을 채운다(설정창이 넓어져 고정 420pt면 오른쪽 끝이 다른 칸과 맞지 않았다).
-        .frame(maxWidth: .infinity)
-        .background(DS.border.opacity(0.2))
-        .clipShape(Capsule())
     }
 }
 
@@ -376,14 +297,28 @@ struct MinimapSwiftUI: View {
                         .contentShape(RoundedRectangle(cornerRadius: 4))
                         .offset(x: offsetX + x, y: offsetY + y)
                         .accessibilityLabel("Display \(index + 1): \(screen.localizedName)")
-                        .onTapGesture {
+                        .accessibilityValue(
+                            focused ? "Editing size" : (selected ? "Selected" : "")
+                        )
+                        .accessibilityAddTraits(
+                            selected ? [.isButton, .isSelected] : .isButton
+                        )
+                        .accessibilityAction { onPreviewSelect(screen) }
+                        .focusable(interactions: .activate)
+                        .onKeyPress(.space) {
                             onPreviewSelect(screen)
+                            return .handled
                         }
+                        .onKeyPress(.return) {
+                            onPreviewSelect(screen)
+                            return .handled
+                        }
+                        .onTapGesture { onPreviewSelect(screen) }
                 }
             }
         }
         .clipped()
-        // 배치도는 옅은 바탕만. 테두리는 바깥 미리보기 상자 하나로 충분하다.
+        // 배치도는 옅은 바탕만. Form 섹션이 바깥 컨테이너를 그린다.
         .background(DS.border.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
@@ -478,8 +413,9 @@ struct MinimapSwiftUI: View {
     @ViewBuilder
     private func previewPanes(for screen: NSScreen, screens: [NSScreen]) -> some View {
         if screens.count <= 1 {
+            // 모니터가 하나면 배치도를 그릴 이유가 없다. 선택한 화면 하나만 낮게 보여 준다.
             detailCanvas(for: screen)
-                .frame(height: DisplayPreviewPolicy.detailHeight - 21)
+                .frame(height: DisplayPreviewPolicy.singleDisplayDetailHeight)
         } else {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top, spacing: DS.paddingSmall) {
@@ -504,10 +440,6 @@ struct MinimapSwiftUI: View {
     /// 소제목 없이 미리보기만. 화면 이름은 화면 사각형 안에 이미 적혀 있다.
     private func detailPreview(for screen: NSScreen, screens: [NSScreen]) -> some View {
         previewPanes(for: screen, screens: screens)
-            .padding(8)
-            .background(DS.surfaceBg)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
     }
 
     var body: some View {
@@ -527,6 +459,7 @@ struct MinimapSwiftUI: View {
 struct OptionKeyField: View {
     @Binding var key: String?
     var accessibilityLabel: String
+    var hasError = false
 
     var body: some View {
         HStack(spacing: 4) {
@@ -542,7 +475,7 @@ struct OptionKeyField: View {
                     }),
                 prompt: Text("Off")
             )
-            .keyCapField(width: 40)
+            .keyCapField(width: 40, borderColor: hasError ? DS.danger : nil)
             .accessibilityLabel(accessibilityLabel)
         }
     }
@@ -551,7 +484,7 @@ struct OptionKeyField: View {
 extension View {
     /// 한 글자 키 입력 칸. `.roundedBorder`는 Form 줄 안에서 아래로 밀려 줄을 두 배로 키우므로,
     /// 평범한 칸에 상자를 직접 그린다 (높이가 글자 줄과 같아 한 줄에 맞는다).
-    func keyCapField(width: CGFloat) -> some View {
+    func keyCapField(width: CGFloat, borderColor: Color? = nil) -> some View {
         textFieldStyle(.plain)
             // Form 안의 TextField는 빈 제목이라도 제목 자리를 잡아 글자를 아래로 민다. 제목을 숨긴다.
             .labelsHidden()
@@ -565,26 +498,30 @@ extension View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
-                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                    .strokeBorder(
+                        borderColor ?? Color(nsColor: .separatorColor),
+                        lineWidth: borderColor == nil ? 1 : 2)
             )
     }
 }
 
 // MARK: - Settings page building blocks
 
-/// General·Notch·Tools 탭이 함께 쓰는 페이지 틀: 가운데 정렬된 grouped Form(최대 560pt).
+/// General·Notch·Tools 탭이 함께 쓰는 페이지 틀.
+/// Form은 창 전체 폭을 차지해 스크롤바를 맨 오른쪽에 두고, 설정 내용만 560pt로 가운데 맞춘다.
 struct SettingsFormPage<Content: View>: View {
+    var minimumHorizontalMargin: CGFloat = 0
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        HStack {
-            Spacer(minLength: 0)
+        GeometryReader { proxy in
+            let contentMargin = max(minimumHorizontalMargin, (proxy.size.width - 560) / 2)
+
             Form { content() }
                 .formStyle(.grouped)
-                .frame(maxWidth: 560)
-            Spacer(minLength: 0)
+                .contentMargins(.horizontal, contentMargin, for: .scrollContent)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.surfaceBg)
     }
 }
@@ -632,7 +569,7 @@ struct SettingsRow<Control: View>: View {
                     Label(conflictMessage, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundColor(DS.danger)
-                        .lineLimit(1)
+                        .lineLimit(2)
                         .truncationMode(.tail)
                         .help(conflictMessage)
                 } else if let subtitle {

@@ -32,7 +32,7 @@
 - **Verified Window Placement** — AX position and size are read back before success is reported
 - **Serialized Chrome Launches** — Rapid requests remain paired one-to-one with new windows
 - **Owned URL Window Reuse** — Reopen only the Chrome `--app` window created by that launchable
-- **Validated Import/Export** — Imports are normalized, fully validated, and rejected atomically on blocking issues
+- **Validated Import/Export** — Imports restore Launchers, General, Notch, and Tools settings after normalization and full validation; unsaved changes require confirmation, and blocking issues leave the current setup untouched
 - **Drag & Drop** — Reorder sites in sidebar, drop `.json` to import
 - **Launch at Login** — Optional auto-start via macOS Login Items
 - **Menu Bar Icon** — Pick the default Chap icon, a lightning bolt, or Chap the Seal (a pixel seal drawn in outline) in Settings > General; it turns Chap blue while Keep Awake runs
@@ -84,12 +84,11 @@ causes the next launch to create and link a new window.
 | `⌥,` | Open Settings |
 | `⌥N` | Open Quick Note (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
 | `⌥L` | Cover Screens (change or turn off in Settings → Tools; launcher shortcuts cannot use this key) |
-| `⌘1`~`⌘9` | Select site in Settings sidebar |
-| `⌘N` | Add new site |
+| `⌘1`~`⌘9` | Select launcher in Settings sidebar |
+| `⌘N` | Add a launcher |
 | `⌘S` | Save changes |
+| `⌘F` | Focus Settings search |
 | `⌘/` | User guide |
-| `↑` `↓` | Navigate sidebar |
-| `Enter` | Save + exit edit mode |
 
 **Window resizing setup:** System Settings → Privacy & Security → Accessibility → enable Chap.
 Global hotkeys work without this permission; the menubar warning badge indicates that URL/app

@@ -65,6 +65,7 @@ enum SettingsConfigTransfer {
 
     /// Present an open-panel and import the chosen JSON file.
     static func importConfig(vm: SettingsViewModel, onSuccess: (() -> Void)? = nil) {
+        guard confirmReplacingUnsavedChanges(vm: vm) else { return }
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
@@ -81,6 +82,7 @@ enum SettingsConfigTransfer {
     static func importFromURL(
         _ url: URL, vm: SettingsViewModel, onSuccess: (() -> Void)? = nil
     ) {
+        guard confirmReplacingUnsavedChanges(vm: vm) else { return }
         guard let data = try? Data(contentsOf: url) else {
             showImportError("Could not read file.")
             return
@@ -96,6 +98,7 @@ enum SettingsConfigTransfer {
     static func applyJSONString(
         _ jsonString: String, vm: SettingsViewModel, onSuccess: (() -> Void)? = nil
     ) -> Bool {
+        guard confirmReplacingUnsavedChanges(vm: vm) else { return false }
         guard let data = jsonString.data(using: .utf8) else {
             showImportError("The pasted text could not be converted to UTF-8.")
             return false
@@ -152,25 +155,10 @@ enum SettingsConfigTransfer {
         case .success(let processed):
             vm.cancelPendingSave()
             let imported = processed.config
-            // 노치 설정 전체는 기기(노치 유무) 종속이라 import로 덮지 않는다: 현재 값 위에
-            // 가져온 파일의 사이트·일반 설정만 올린다.
-            var merged = vm.config
-            merged.sites = imported.sites
-            merged.showGuideWindow = imported.showGuideWindow
-            merged.launchAtLogin = imported.launchAtLogin
-            merged.optionShortcutsEnabled = imported.optionShortcutsEnabled
-            merged.statusBarIcon = imported.statusBarIcon
-            merged.hiddenMenuLaunchTypes = imported.hiddenMenuLaunchTypes
-            let saved = vm.onSave?(SettingsPayload(config: merged)) ?? false
+            let saved = vm.onSave?(SettingsPayload(config: imported)) ?? false
             guard saved else { return false }
 
-            vm.sites = imported.sites
-            vm.showGuideWindow = imported.showGuideWindow
-            vm.launchAtLogin = imported.launchAtLogin
-            vm.optionShortcutsEnabled = imported.optionShortcutsEnabled
-            vm.statusBarIcon = imported.statusBarIcon
-            vm.hiddenMenuLaunchTypes = imported.hiddenMenuLaunchTypes
-            vm.markSaved()
+            vm.applyImportedConfig(imported)
             onSuccess?()
             showImportSuccess(processed)
             return true
@@ -178,6 +166,19 @@ enum SettingsConfigTransfer {
     }
 
     // MARK: - Alerts
+
+    private static func confirmReplacingUnsavedChanges(vm: SettingsViewModel) -> Bool {
+        guard vm.hasChanges else { return true }
+        let alert = NSAlert()
+        alert.messageText = "Replace unsaved changes?"
+        alert.informativeText =
+            "Import replaces your launchers and settings. Changes you haven't saved will be lost."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Import")
+        alert.addButton(withTitle: "Cancel")
+        alert.buttons.first?.hasDestructiveAction = true
+        return alert.runModal() == .alertFirstButtonReturn
+    }
 
     static func showImportSuccess(_ processed: ProcessedConfigImport) {
         let sites = processed.config.sites
@@ -192,10 +193,10 @@ enum SettingsConfigTransfer {
         let alert = NSAlert()
         if adjustmentLines.isEmpty && warningLines.isEmpty {
             alert.messageText = "Import successful"
-            alert.informativeText = "\(sites.count) site(s) loaded."
+            alert.informativeText = "\(sites.count) launcher(s) and settings loaded."
         } else {
             alert.messageText = "Import successful with adjustments"
-            var sections = ["\(sites.count) site(s) loaded."]
+            var sections = ["\(sites.count) launcher(s) and settings loaded."]
             if !adjustmentLines.isEmpty {
                 sections.append("Automatic fixes:\n\(adjustmentLines.joined(separator: "\n"))")
             }

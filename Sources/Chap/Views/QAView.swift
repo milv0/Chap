@@ -119,7 +119,7 @@ struct QAView: View {
             [
                 (
                     "수정한 내용은 어떻게 저장하나요?",
-                    "필드 클릭 → 수정 → Enter 또는 다른 사이트로 이동하면 자동 저장됩니다. ⌘S로도 저장 가능합니다."
+                    "입력하는 동안 변경 내용이 자동 저장됩니다. 바로 저장하려면 ⌘S를 누르세요."
                 ),
                 (
                     "사이트를 빠르게 추가하려면?",
@@ -135,7 +135,7 @@ struct QAView: View {
                 ),
                 (
                     "다른 컴퓨터로 설정을 옮기려면?",
-                    "Settings → Export로 JSON 파일을 저장하고, 다른 컴퓨터에서 Import하면 됩니다. JSON 파일을 설정 창에 드래그앤드랍해도 됩니다."
+                    "Settings → Export로 Launchers·General·Notch·Tools 설정을 JSON 파일에 저장하고, 다른 컴퓨터에서 Import하면 됩니다. JSON 파일을 설정 창에 드래그앤드랍해도 됩니다. 저장하지 않은 변경이 있으면 덮어쓰기 전에 확인합니다."
                 ),
             ]
         ),
@@ -177,11 +177,11 @@ struct QAView: View {
                 ),
                 (
                     "앱을 완전히 삭제하려면?",
-                    "Settings 우측 하단의 ⋯ 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
+                    "Settings 우측 상단의 ⋯ 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
                 ),
                 (
                     "버그를 신고하려면?",
-                    "Settings 우측 하단의 ⋯ 메뉴 → Report Bug...를 선택하면 GitHub 이슈 페이지가 열립니다."
+                    "Settings 우측 상단의 ⋯ 메뉴 → Report Bug...를 선택하면 GitHub 이슈 페이지가 열립니다."
                 ),
                 (
                     "앱이 갑자기 단축키에 반응을 안 해요.",
@@ -194,7 +194,7 @@ struct QAView: View {
             [
                 (
                     "노치 런처는 어떻게 켜나요?",
-                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서는 노치에 마우스를 올리세요. 노치가 없는 Mac에서는 메뉴 막대 위쪽 가운데에 포인터를 두면 같은 도커가 열립니다(열기 전에는 그 자리에 아무 창도 없어 메뉴 막대 클릭을 가리지 않습니다). 꺼진 동안에도 Slots·아이콘·Appearance를 미리 정할 수 있습니다. 기존 상태바 메뉴와 Option 단축키는 어느 쪽에서든 그대로 동작합니다."
+                    "Settings → Notch에서 켤 수 있습니다. 하드웨어 노치가 있는 MacBook에서는 노치에 마우스를 올리세요. 노치가 없는 Mac에서는 메뉴 막대 위쪽 가운데에 포인터를 두면 같은 도커가 열립니다(열기 전에는 그 자리에 아무 창도 없어 메뉴 막대 클릭을 가리지 않습니다). 꺼진 동안에도 Slots·아이콘·Notch Style을 미리 정할 수 있습니다. 기존 상태바 메뉴와 Option 단축키는 어느 쪽에서든 그대로 동작합니다."
                 ),
                 (
                     "노치 왼쪽의 물범은 뭔가요?",
@@ -401,7 +401,7 @@ struct QAView: View {
             [
                 (
                     "How do I save changes?",
-                    "Click a field → edit → press Enter or navigate to another site to auto-save. You can also use ⌘S."
+                    "Changes save automatically as you type. Press ⌘S to save immediately."
                 ),
                 (
                     "How do I quickly add a site?",
@@ -417,7 +417,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I transfer settings to another computer?",
-                    "Use Settings → Export to save a JSON file, then Import it on the other computer. You can also drag & drop a .json file onto the settings window."
+                    "Use Settings → Export to save your Launchers, General, Notch, and Tools settings as JSON, then Import it on the other computer. You can also drag and drop a .json file onto Settings. Chap asks before replacing unsaved changes."
                 ),
             ]
         ),
@@ -459,11 +459,11 @@ struct QAView: View {
                 ),
                 (
                     "How do I completely uninstall?",
-                    "In Settings, click the ⋯ menu at the bottom right → Uninstall. This removes the app along with its config files."
+                    "In Settings, click the ⋯ menu at the top right → Uninstall. This removes the app along with its config files."
                 ),
                 (
                     "How do I report a bug?",
-                    "In Settings, click the ⋯ menu at the bottom right → Report Bug... to open the GitHub issues page."
+                    "In Settings, click the ⋯ menu at the top right → Report Bug... to open the GitHub issues page."
                 ),
                 (
                     "The app suddenly stopped responding to shortcuts.",
@@ -476,7 +476,7 @@ struct QAView: View {
             [
                 (
                     "How do I enable the Notch Launcher?",
-                    "Open Settings → Notch. On a MacBook with a notch, hover the notch to open it. It also works on a Mac without a notch: point at the top middle of the menu bar and the same dock opens (nothing is drawn there until you do, so the menu bar stays clear). You can set up Slots, icons, and Appearance while the launcher is off. The classic status menu and Option shortcuts keep working either way."
+                    "Open Settings → Notch. On a MacBook with a notch, hover the notch to open it. It also works on a Mac without a notch: point at the top middle of the menu bar and the same dock opens (nothing is drawn there until you do, so the menu bar stays clear). You can set up Slots, icons, and Notch Style while the launcher is off. The classic status menu and Option shortcuts keep working either way."
                 ),
                 (
                     "Who is the seal on the left of the notch?",

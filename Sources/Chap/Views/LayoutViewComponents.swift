@@ -193,7 +193,10 @@ struct LayoutPreviewByDisplay: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 190, maximum: 240), spacing: 12)],
+            alignment: .leading, spacing: 12
+        ) {
             ForEach(screens) { screen in
                 VStack(alignment: .leading, spacing: 5) {
                     Label(

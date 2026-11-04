@@ -33,10 +33,21 @@ struct SettingsLayoutsSection: View {
                 )
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect(layout.id) }
+                .focusable(interactions: .activate)
+                .onKeyPress(.space) {
+                    onSelect(layout.id)
+                    return .handled
+                }
+                .onKeyPress(.return) {
+                    onSelect(layout.id)
+                    return .handled
+                }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("\(layout.name), \(layout.windows.count) windows")
                 .accessibilityAddTraits(
-                    selectedID == layout.id ? [.isButton, .isSelected] : .isButton)
+                    selectedID == layout.id ? [.isButton, .isSelected] : .isButton
+                )
+                .accessibilityAction { onSelect(layout.id) }
             }
         }
     }

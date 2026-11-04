@@ -47,7 +47,9 @@ struct GeneralSettingsView: View {
 
                     SettingsToggleRow(
                         title: "Check for Updates Automatically",
-                        subtitle: "Once a day. You decide when to install.",
+                        subtitle: updateController.canCheckForUpdates
+                            ? "Once a day. You decide when to install."
+                            : "Unavailable because update settings are incomplete.",
                         help: "Checks once per day and notifies you when an update is available.",
                         isOn: Binding(
                             get: { updateController.automaticallyChecksForUpdates },
@@ -166,6 +168,7 @@ private struct MenuSectionChip: View {
         .buttonStyle(.plain)
         .help(isOn ? "Shown in the menu" : "Hidden from the menu")
         .accessibilityLabel("\(title) menu section")
+        .accessibilityValue(isOn ? "Shown" : "Hidden")
         .accessibilityAddTraits(isOn ? .isSelected : [])
         .onHover { isHovered = $0 }
     }

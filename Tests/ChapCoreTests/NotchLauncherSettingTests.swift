@@ -9,6 +9,16 @@ struct NotchLauncherSettingTests {
         try JSONDecoder().decode(Config.self, from: Data(json.utf8))
     }
 
+    @Test("unsupported Liquid Glass displays as Custom")
+    func unsupportedGlassFallsBackInSettings() {
+        #expect(
+            NotchSettingsView.displayedPanelStyle(
+                stored: .glass, supportsLiquidGlass: false) == .custom)
+        #expect(
+            NotchSettingsView.displayedPanelStyle(
+                stored: .glass, supportsLiquidGlass: true) == .glass)
+    }
+
     @Test("defaults to off when the key is missing")
     func defaultsToOffWhenMissing() throws {
         let config = try decodeConfig(#"{"sites": []}"#)

@@ -89,38 +89,6 @@ struct CardSection<Content: View>: View {
     }
 }
 
-struct InputField: View {
-    let label: String
-    @Binding var text: String
-    var placeholder: String = ""
-    var alignment: HorizontalAlignment = .leading
-    var textAlignment: TextAlignment = .leading
-    var fieldBackground: Color = DS.surfaceBg
-    var fieldBorder: Color = DS.border
-    /// 유효하지 않은 입력은 오류색 테두리로 보여 준다. 안내 문구는 호출자 문맥에 맞춰 칸 아래에 둔다.
-    var hasError = false
-
-    var body: some View {
-        VStack(alignment: alignment, spacing: 4) {
-            Text(label)
-                .font(DS.captionFont)
-                .foregroundColor(DS.textSecondary)
-            TextField(placeholder, text: $text)
-                .textFieldStyle(.plain)
-                .font(DS.bodyFont)
-                .multilineTextAlignment(textAlignment)
-                .padding(.horizontal, DS.fieldPaddingH)
-                .padding(.vertical, DS.fieldPaddingV)
-                .background(fieldBackground)
-                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DS.fieldRadius)
-                        .stroke(hasError ? DS.danger : fieldBorder, lineWidth: hasError ? 2 : 1)
-                )
-        }
-    }
-}
-
 struct PrimaryButton: View {
     let title: String
     let action: () -> Void
@@ -148,33 +116,23 @@ struct ToolbarIconButton: View {
     @State private var isHovered = false
 
     var body: some View {
-        // Button 대신 onTapGesture 사용 — 메뉴바(accessory) 앱에서 창이 비활성일 때
-        // Button은 첫 클릭이 창 활성화에만 쓰여(acceptsFirstMouse=false) 더블클릭이
-        // 필요해지는 반면, 탭 제스처는 첫 클릭에 바로 반응해 사이드바와 일관됨.
-        Image(systemName: icon)
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(disabled ? DS.textTertiary : color)
-            .frame(width: 26, height: 26)
-            .background(
-                isHovered && !disabled
-                    ? DS.border.opacity(0.4)
-                    : Color.clear
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard !disabled else { return }
-                action()
-            }
-            .onHover { hovering in isHovered = hovering && !disabled }
-            .accessibilityLabel(accessibilityLabel)
-            .accessibilityRemoveTraits(.isImage)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityValue(disabled ? "Unavailable" : "")
-            .accessibilityAction {
-                guard !disabled else { return }
-                action()
-            }
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(disabled ? DS.textTertiary : color)
+                .frame(width: 26, height: 26)
+                .background(
+                    isHovered && !disabled
+                        ? DS.border.opacity(0.4)
+                        : Color.clear
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .onHover { hovering in isHovered = hovering && !disabled }
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
@@ -183,6 +141,7 @@ struct ToolbarIconButton: View {
 /// 툴바 아이콘들과 나란히 놓아도 정렬·크기가 일치한다.
 struct ToolbarIconMenu<Content: View>: View {
     let icon: String
+    let accessibilityLabel: String
     @ViewBuilder let content: () -> Content
     @State private var isHovered = false
 
@@ -203,6 +162,7 @@ struct ToolbarIconMenu<Content: View>: View {
         .menuIndicator(.hidden)
         .fixedSize()
         .onHover { hovering in isHovered = hovering }
+        .accessibilityLabel(accessibilityLabel)
     }
 }
 
