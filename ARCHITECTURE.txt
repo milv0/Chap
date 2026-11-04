@@ -332,10 +332,10 @@ Config 모델 필드:
   네 탭이 같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
   Launchers는 실행 항목 편집, General은 App(로그인 실행·업데이트 확인)·Launching(Option 토글·가이드 창)·Menu Bar(상태바 아이콘·메뉴 섹션),
   Tools는 노치 없이도 쓰는 기능의 설정(Quick Note ⌥키·백업 폴더, Cover Screens ⌥키·가림막 문구)을 모아 둔다.
-  Notch 탭의 Screenshots 섹션(ScreenshotFolderSection, Notch Icons 아래)은 시스템 스크린샷 폴더(`com.apple.screencapture location`, 없으면 ~/Desktop)를 읽기만 하고,
+  Notch 탭의 Screenshot Folder 행(ScreenshotFolderRow, Notch Icons 행 아래 같은 묶음)은 시스템 스크린샷 폴더(`com.apple.screencapture location`, 없으면 ~/Desktop)를 읽기만 하고,
   Change…는 NSWorkspace로 스크린샷 앱(com.apple.screenshot.launcher)을 연다. 값은 Chap이 쓰지 않는다.
   Chap이 다시 활성화될 때 경로를 새로 읽는다(CFPreferencesAppSynchronize). 데스크톱이면 다른 이미지도 섞인다고 알린다.
-  노치에서만 쓰는 Mirror는 Notch → Notch Icons의 `Shown Icons` 행 오른쪽에 Status Bar Icon과 같은 64×34 선택 버튼으로 표시 여부를 정한다. 세 버튼은 서로 독립적으로 켜고 끄며, 바꿀 때 새 아이콘 상태의 노치를 2.5초 보여준다. 카메라 권한이 거부됐을 때만 아래 행에 권한 안내를 보인다.
+  노치에서만 쓰는 Mirror는 Notch → Notch Icons 행 오른쪽에 Status Bar Icon과 같은 64×34 선택 버튼으로 표시 여부를 정한다. 세 버튼은 서로 독립적으로 켜고 끄며, 바꿀 때 새 아이콘 상태의 노치를 2.5초 보여준다. 카메라 권한이 거부됐을 때만 아래 행에 권한 안내를 보인다.
   Notch는 노치 런처 on/off, Layout(잠금 표시한 고정 선반 2칸 + 위젯 4칸을 실제 순서의 단일 6칸 rail로 표시), Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 여부만),
   Notch Style(Custom/Glass 스타일, Glass 재질·appearance) 설정을
   제공한다. Glass appearance(System/Light/Dark)와 재질(Clear/Regular)은 서로 독립적으로
@@ -365,8 +365,8 @@ Config 모델 필드:
   (Follow Cursor 중 Display Picker는 비활성, Preview 화면 클릭은 화면별 크기 편집으로 유지)
 - Notch master가 꺼져 있어도 Slots·Notch Icons·Screenshots·Notch Style은 사전 설정 가능하며 live preview만 생략
 - 윈도우 항상 대상 화면 중앙 배치 (centeredBounds 함수)
-- 항목 설정은 다른 Settings 탭과 같은 grouped Form의 Launcher·Window 두 섹션이다.
-  Launcher는 Type 세그먼트와 Name 필드를 한 행에 두고, URL/App/Folder 대상 필드는 그 아래 전체 폭 한 행이다(인라인 레이블, 캡션 없음). Window는 Shortcut·Display+Follow Cursor·Reuse(URL만)·Size·Preview 행을 쓴다. 설명 문장은 툴팁(help)으로 보내 행에는 제목과 컨트롤만 둔다. Size는 이름을 유지한 6열×2줄 프리셋 격자이며 Preview 미니맵은 Size 바로 아래 행에서 디스플레이 선택·화면별 편집 동작을 유지한다. 모니터가 하나면 배치도 없이 110pt 상세 캔버스만 그린다.
+- 항목 설정은 다른 Settings 탭과 같은 grouped Form의 두 섹션이다.
+  첫 섹션 제목이 항목 종류(URL · App · Finder, 사이드바 섹션과 같은 이름)를 알린다. 아이콘은 URL `link`, Finder `folder.fill`이고, App은 경로가 실제 .app이면 그 앱 아이콘(노치와 같은 AppIconLoader, utility queue·캐시, 16pt)을, 읽지 못하면 `app.fill` 네모를 쓴다. 종류는 사이드바 섹션의 +로 만들 때 정해지며 편집 화면에서 바꾸지 않는다. 그 섹션에는 Name과 URL/App/Folder 대상 필드를 한 행에 둔다(인라인 레이블, 캡션 없음). Window는 Shortcut·Display+Follow Cursor·Reuse(URL만)·Size·Preview 행을 쓴다. 설명 문장은 툴팁(help)으로 보내 행에는 제목과 컨트롤만 둔다. Size는 이름을 유지한 6열×2줄 프리셋 격자이며 Preview 미니맵은 Size 바로 아래 행에서 디스플레이 선택·화면별 편집 동작을 유지한다. 모니터가 하나면 배치도 없이 110pt 상세 캔버스만 그린다.
 - 크기 프리셋: SizePresetGrid가 창 모양 썸네일 격자(6열, 칸 테두리 없음)로 보여준다. 윗줄 가로형, 아랫줄 세로형 + Custom
   (WindowSizePreset.orientation). 올리면 미니맵 미리보기, 누르면 적용. 제목 줄 오른쪽에 실제 pt를 작게(올린 칸 기준),
   Custom이면 그 자리에 W/H 입력칸.

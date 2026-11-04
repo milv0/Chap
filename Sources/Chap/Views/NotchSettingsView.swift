@@ -126,8 +126,6 @@ struct NotchSettingsView: View {
                     isOn: $vm.notchLauncherEnabled
                 )
                 .onChange(of: vm.notchLauncherEnabled) { _, _ in onSave() }
-            } header: {
-                SettingsSectionHeader(title: "Notch Launcher", systemImage: "macbook")
             }
 
             // Notch를 켜기 전에 Slots·아이콘·Notch Style을 미리 정할 수 있게 항상 보여 준다.
@@ -180,10 +178,10 @@ struct NotchSettingsView: View {
                             + "drag or right-click slots 3–6.")
                 }
 
-                // 검정 띠 오른쪽 도구 아이콘. Menu Bar 설정처럼 설명은 왼쪽, 선택 버튼은 오른쪽에 둔다.
+                // 검정 띠 오른쪽 도구 아이콘과 스크린샷 폴더. 둘 다 한 행짜리라 제목 없는 한 묶음에 둔다.
                 Section {
                     SettingsRow(
-                        title: "Shown Icons",
+                        title: "Notch Icons",
                         subtitle: "On the black strip, right of the Drop box."
                     ) {
                         HStack(spacing: 8) {
@@ -233,13 +231,10 @@ struct NotchSettingsView: View {
                             .controlSize(.small)
                         }
                     }
-                } header: {
-                    SettingsSectionHeader(
-                        title: "Notch Icons", systemImage: "rectangle.topthird.inset.filled")
-                }
 
-                // 1번 칸 Screenshots 선반이 읽는 폴더. 선반은 노치에서만 쓰므로 여기에 둔다.
-                ScreenshotFolderSection()
+                    // 1번 칸 Screenshots 선반이 읽는 폴더. 한 행짜리라 따로 섹션을 두지 않는다.
+                    ScreenshotFolderRow()
+                }
 
                 Section {
                     Picker("Style", selection: panelStyleBinding) {
@@ -656,29 +651,27 @@ private struct ColorPresetSwatch: View {
     }
 }
 
-/// Notch 탭의 Screenshots 섹션: 선반이 읽는 macOS 스크린샷 저장 폴더. 읽기만 하고, 바꾸는 곳은
+/// Notch 탭의 스크린샷 폴더 행: 선반이 읽는 macOS 스크린샷 저장 폴더. 읽기만 하고, 바꾸는 곳은
 /// 스크린샷 앱(Options → Other Location…)이다. 앱이 다시 활성화될 때 새 경로를 읽는다.
-struct ScreenshotFolderSection: View {
+/// 섹션 제목·메모 없이 Notch Icons와 같은 묶음에 한 행으로 들어가 세로 공간을 아낀다.
+struct ScreenshotFolderRow: View {
     @State private var folder = ScreenshotShelf.directory()
 
     var body: some View {
-        Section {
-            SettingsRow(title: "Folder", subtitle: subtitle, help: folder.path) {
-                HStack(spacing: 6) {
-                    Button("Show in Finder") { NSWorkspace.shared.open(folder) }
-                        .controlSize(.small)
-                    Button("Change…") { ScreenshotShelf.openScreenshotApp() }
-                        .controlSize(.small)
-                        .help(
-                            "Opens the Screenshot app. Choose Options → Other Location… "
-                                + "to pick or make a folder, and Chap follows along.")
-                }
+        SettingsRow(
+            title: "Screenshot Folder", subtitle: subtitle,
+            help: "\(folder.path)\nThe Screenshots shelf reads this folder. Chap only reads it; "
+                + "change it in the Screenshot app (Options → Other Location…)."
+        ) {
+            HStack(spacing: 6) {
+                Button("Show in Finder") { NSWorkspace.shared.open(folder) }
+                    .controlSize(.small)
+                Button("Change…") { ScreenshotShelf.openScreenshotApp() }
+                    .controlSize(.small)
+                    .help(
+                        "Opens the Screenshot app. Choose Options → Other Location… "
+                            + "to pick or make a folder, and Chap follows along.")
             }
-        } header: {
-            SettingsSectionHeader(
-                title: "Screenshots", systemImage: "camera.viewfinder",
-                note: "Pick one in the Screenshot app (Options → Other Location…). "
-                    + "Chap only reads it.")
         }
         .onAppear(perform: refresh)
         .onReceive(

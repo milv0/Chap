@@ -238,7 +238,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots 위젯은 파일을 옮기나요?",
-                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다). 저장 폴더는 Settings → Notch → Screenshots에 보이며, Change…를 누르면 macOS 스크린샷 앱이 열립니다. 옵션 → 기타 위치…(Other Location…)에서 폴더를 고르거나 새로 만들면 Chap이 그대로 따라갑니다. 데스크톱에 저장하면 그곳의 다른 이미지도 함께 보이므로 스크린샷 전용 폴더를 추천합니다."
+                    "아니요. macOS의 현재 스크린샷 저장 폴더에서 최신 이미지를 최대 12개(한 번에 네 개, 나머지는 스크롤) 읽어 보여줄 뿐이며 원본을 이동하거나 복제하지 않습니다. Screenshots 제목을 누르면 그 폴더가 Finder에서 Standard 크기로 화면 가운데에 열립니다(Downloads 제목도 같습니다). 저장 폴더는 Settings → Notch → Screenshot Folder에 보이며, Change…를 누르면 macOS 스크린샷 앱이 열립니다. 옵션 → 기타 위치…(Other Location…)에서 폴더를 고르거나 새로 만들면 Chap이 그대로 따라갑니다. 데스크톱에 저장하면 그곳의 다른 이미지도 함께 보이므로 스크린샷 전용 폴더를 추천합니다."
                 ),
                 (
                     "URL/App/Finder 항목은 몇 개까지 추가되나요?",
@@ -520,7 +520,7 @@ struct QAView: View {
                 ),
                 (
                     "Does the Screenshots widget move my files?",
-                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way). The folder is shown in Settings → Notch → Screenshots; Change… opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder, and Chap follows along. If screenshots go to the Desktop, other images there show up too, so a folder of their own works best."
+                    "No. It only reads up to twelve of the newest images (four at a time; scroll for the rest) from the current macOS screenshot folder. It does not move or duplicate the originals. Click the Screenshots title to open that folder in Finder at Standard size, centered on screen (the Downloads title works the same way). The folder is shown in Settings → Notch → Screenshot Folder; Change… opens the macOS Screenshot app, where Options → Other Location… lets you pick or create a folder, and Chap follows along. If screenshots go to the Desktop, other images there show up too, so a folder of their own works best."
                 ),
                 (
                     "How many URL, App, or Finder launchables can I add?",
