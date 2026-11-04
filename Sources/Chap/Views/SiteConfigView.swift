@@ -17,6 +17,8 @@ struct SiteConfigView: View {
     @State private var sizeEditingDisplayName: String?
     @FocusState private var nameFieldFocused: Bool
     @State private var didAutofocusName = false
+    /// App 항목 제목에 보여 줄 실제 앱 아이콘. 못 읽으면 nil이라 app.fill 네모로 돌아간다.
+    @State private var appIconImage: NSImage?
     /// Numeric draft state: width/height text while user is typing.
     /// nil means "not currently editing" → display computed value.
     @State private var widthDraft: String?
@@ -35,6 +37,7 @@ struct SiteConfigView: View {
         } message: {
             Text("⌥\(reservedKeyChar) is reserved for system use.")
         }
+        .task(id: appIconPath) { await loadAppIcon() }
         .onChange(of: quickNoteShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
         .onChange(of: coverScreensShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
     }
@@ -43,17 +46,8 @@ struct SiteConfigView: View {
 
     private var launcherSection: some View {
         Section {
-            // Type과 Name을 한 줄에. 둘 다 짧아 따로 두면 오른쪽이 비어 보인다.
+            // 타입은 사이드바 섹션에서 이미 정해진다. 편집 화면은 섹션 제목으로 알려 주기만 한다.
             HStack(spacing: 16) {
-                Picker("Launch Type", selection: $site.launchType) {
-                    Text("URL").tag(LaunchType.url)
-                    Text("App").tag(LaunchType.app)
-                    Text("Finder").tag(LaunchType.finder)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 190)
-
                 HStack(spacing: 8) {
                     Text("Name")
                         .foregroundColor(DS.textSecondary)
@@ -64,6 +58,13 @@ struct SiteConfigView: View {
                         .focused($nameFieldFocused)
                         .accessibilityLabel("Name")
                 }
+                .frame(width: 190)
+
+                SiteLaunchFields(
+                    site: $site,
+                    browseForApp: browseForApp,
+                    browseFolder: browseFolder
+                )
                 .frame(maxWidth: .infinity)
             }
             .onAppear {
@@ -73,14 +74,62 @@ struct SiteConfigView: View {
                     nameFieldFocused = true
                 }
             }
-
-            SiteLaunchFields(
-                site: $site,
-                browseForApp: browseForApp,
-                browseFolder: browseFolder
-            )
         } header: {
-            SettingsSectionHeader(title: "Launcher", systemImage: "square.grid.2x2")
+            // 사이드바 섹션 이름(URL · App · Finder)과 같은 말로 이 항목의 종류만 알린다.
+            // App은 경로가 맞으면 실제 앱 아이콘을, 못 읽으면 지금의 네모(app.fill)를 그대로 둔다.
+            if site.launchType == .app,
+                let icon = appIconImage ?? appIconPath.flatMap(AppIconLoader.cachedIcon)
+            {
+                Label {
+                    Text(typeTitle)
+                } icon: {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .interpolation(.high)
+                        .frame(width: 16, height: 16)
+                        .accessibilityHidden(true)
+                }
+            } else {
+                SettingsSectionHeader(title: typeTitle, systemImage: typeSymbol)
+            }
+        }
+    }
+
+    /// 아이콘을 읽을 App 경로. .app으로 끝나는 경로만 쓴다(폴더 경로면 폴더 아이콘이 나오므로).
+    /// 실제로 있는지 확인과 읽기는 AppIconLoader가 utility queue에서 한다.
+    private var appIconPath: String? {
+        guard site.launchType == .app,
+            let path = site.appPath?.trimmingCharacters(in: .whitespacesAndNewlines),
+            path.hasSuffix(".app")
+        else { return nil }
+        return path
+    }
+
+    private func loadAppIcon() async {
+        guard let path = appIconPath else {
+            appIconImage = nil
+            return
+        }
+        appIconImage = AppIconLoader.cachedIcon(forAppPath: path)
+        let icon = await AppIconLoader.icon(forAppPath: path)
+        guard !Task.isCancelled else { return }
+        appIconImage = icon
+    }
+
+    private var typeTitle: String {
+        switch site.launchType {
+        case .url: return "URL"
+        case .app: return "App"
+        case .finder: return "Finder"
+        }
+    }
+
+    private var typeSymbol: String {
+        switch site.launchType {
+        // 아래 Window 섹션이 macwindow를 쓰므로 URL 제목은 링크 모양으로 구분한다.
+        case .url: return "link"
+        case .app: return "app.fill"
+        case .finder: return "folder.fill"
         }
     }
 

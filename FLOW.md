@@ -454,11 +454,11 @@ posErr=0 sizeErr=0
 ## 9. 설정 흐름
 
 Settings는 상단 가운데의 system segmented `Launchers`·`General`·`Notch`·`Tools`로 본문을 전환한다.
-AppKit이 최초 720×735 크기, 720×560 최소 크기와 사용자의 가로·세로 리사이즈를 소유하고, SettingsHostingController는 SwiftUI fitting size가 창 높이를 되돌리지 않게 한다.
-Launchers에서만 왼쪽 sidebar를 만들고, 나머지 탭은 Form의 스크롤 영역을 창 전체 폭으로 두어 스크롤바를 맨 오른쪽에 붙인다. 실제 설정 내용은 560pt 폭으로 가운데 정렬한다. 각 탭은 switch로 하나만
+AppKit이 최초 720×660 크기, 720×560 최소 크기와 사용자의 가로·세로 리사이즈를 소유하고, SettingsHostingController는 SwiftUI fitting size가 창 높이를 되돌리지 않게 한다.
+Launchers에서만 왼쪽 sidebar를 만들고, 나머지 탭은 Form의 스크롤 영역을 창 전체 폭으로 두어 스크롤바를 맨 오른쪽에 붙인다. 실제 설정 내용은 560pt 폭으로 가운데 정렬한다. 세로는 위 정렬이다(탭을 바꿔도 첫 섹션 위치가 같고 행이 생기거나 사라져도 내용이 움직이지 않는다). 각 탭은 switch로 하나만
 생성해 숨은 탭의 observer·onChange가 계속 살아 있지 않게 한다. Launchers는 실행 항목·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
 상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·6칸 위젯·Screenshots 폴더·Custom/Glass를,
-Tools는 Quick Note와 Cover Screens를 관리한다. Launchers 상세도 같은 grouped Form의 Launcher·Window 두 섹션을 쓴다. 행에는 제목과 컨트롤만 두고 설명은 툴팁으로 보낸다. Type 세그먼트+Name과 Display+Follow Cursor는 각각 한 행으로 묶고, 대상 필드(URL/App/Folder)는 전체 폭 한 행이다. Size 프리셋과 그 아래 Preview만 공간형 전체 폭 행을 사용하며, 모니터가 하나면 Preview는 배치도 없이 낮게 그린다.
+Tools는 Quick Note와 Cover Screens를 관리한다. Launchers 상세도 같은 grouped Form 두 섹션을 쓴다. 첫 섹션 제목이 항목 종류(URL · App · Finder)를 알리고, 종류는 사이드바 섹션의 +로 만들 때 정해져 편집 화면에서 바꾸지 않는다. 행에는 제목과 컨트롤만 두고 설명은 툴팁으로 보낸다. Name+대상 필드와 Display+Follow Cursor는 각각 한 행으로 묶는다. Size 프리셋과 그 아래 Preview만 공간형 전체 폭 행을 사용하며, 모니터가 하나면 Preview는 배치도 없이 낮게 그린다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 

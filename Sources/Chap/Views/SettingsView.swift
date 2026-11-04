@@ -32,7 +32,7 @@ struct SettingsView: View {
     /// AppKit이 강제하는 최소 크기. 모든 본문은 이 안에서 스크롤한다.
     static let minimumSize = CGSize(width: 720, height: 560)
     /// 처음 열 때 충분한 세로 공간을 주되 이후에는 minimumSize까지 줄일 수 있다.
-    static let initialSize = CGSize(width: 720, height: 735)
+    static let initialSize = CGSize(width: 720, height: 660)
 
     /// 렌더 도구에서 최소 크기의 launcher 상세와 특정 탭을 바로 보여 준다.
     static var previewSelectedIndex: Int?

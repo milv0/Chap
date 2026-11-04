@@ -205,7 +205,7 @@ Workspaces 칸(지금 이름 Layouts)은 Apps(이미 Apps가 있으면 빈 칸).
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
 되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면 순서는 Slots(Screenshots·Downloads의 잠금 표시를 포함해 실제 순서대로 붙인 단일 6칸 rail, 아래에 아직 안 놓은 위젯만 한 줄),
-Notch Icons(`Shown Icons` 설명을 왼쪽, Mirror·Quick Note·Cover Screens 64×34 아이콘 선택 버튼을 오른쪽에 배치하며, 각 버튼은 서로 독립적으로 켜고 끄고 변경 직후 노치를 잠깐 미리보기), Screenshots 폴더, Notch Style(Custom/Glass·재질·밝기, 노치 도커 패널에만 적용되므로 General이 아닌 Notch에 둔다)이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
+Notch Icons 행(설명 왼쪽, Mirror·Quick Note·Cover Screens 64×34 아이콘 선택 버튼 오른쪽, 각각 독립적으로 켜고 끄고 변경 직후 노치를 잠깐 미리보기)과 Screenshot Folder 행을 제목 없는 한 묶음으로, Notch Style(Custom/Glass·재질·밝기, 노치 도커 패널에만 적용되므로 General이 아닌 Notch에 둔다)이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치(처음 받은 사람)는 Screenshots · Downloads · Apps · To-do · Keep Awake · Launchers로 여섯 칸을 모두 채운다(`NotchWidget.defaultSlots`).
 Downloads 칸이 기본으로 놓이므로 노치 런처를 켜고 처음 열 때 macOS가 다운로드 폴더 접근을 한 번 묻는다.
