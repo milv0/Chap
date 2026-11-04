@@ -3,50 +3,40 @@ import SwiftUI
 import UniformTypeIdentifiers
 import os
 
-private enum SettingsTab: Hashable {
+private enum SettingsTab: String, Hashable, CaseIterable {
     case launchables
     case general
     case notch
     case tools
-}
 
-private struct SettingsTabButton: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 7) {
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: .semibold))
-                Text(title)
-                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
-            }
-            .foregroundColor(isSelected ? .white : DS.textSecondary)
-            .frame(width: 104, height: 28)
-            .background(
-                isSelected
-                    ? DS.accent
-                    : (isHovered ? DS.border.opacity(0.25) : Color.clear)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-            .contentShape(Rectangle())
+    var title: String {
+        switch self {
+        case .launchables: return "Launchers"
+        case .general: return "General"
+        case .notch: return "Notch"
+        case .tools: return "Tools"
         }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
+    }
+
+    var symbol: String {
+        switch self {
+        case .launchables: return "square.grid.2x2"
+        case .general: return "gearshape"
+        case .notch: return "macbook"
+        case .tools: return "wand.and.stars"
+        }
     }
 }
 
 struct SettingsView: View {
-    /// 창 최소 크기. 폭은 하단 막대가 겹치지 않는 값이다: 사이드바 200 + 구분선 1 + 탭 넷 426
-    /// + User Guide·Q&A·⋯ 아이콘·"Editing" 약 170 + 여백·간격. 높이는 항목 설정 화면 기준.
-    static let minimumSize = CGSize(width: 860, height: 700)
+    /// AppKit이 강제하는 최소 크기. 모든 본문은 이 안에서 스크롤한다.
+    static let minimumSize = CGSize(width: 720, height: 560)
+    /// 처음 열 때 충분한 세로 공간을 주되 이후에는 minimumSize까지 줄일 수 있다.
+    static let initialSize = CGSize(width: 720, height: 735)
 
-    /// 렌더 도구에서 가장 넓은 하단 막대 상태(Editing 포함)를 확인한다.
-    static var previewStartsEditing = false
+    /// 렌더 도구에서 최소 크기의 launcher 상세와 특정 탭을 바로 보여 준다.
+    static var previewSelectedIndex: Int?
+    static var previewTab: String?
 
     /// 노치 제목 클릭 등에서 특정 launch type을 보여 달라는 요청. object는 rawValue.
     static let focusLaunchType = Notification.Name("ChapSettingsFocusLaunchType")
@@ -64,8 +54,9 @@ struct SettingsView: View {
     @State private var isLayoutsFocused = false
     /// 연결된 디스플레이. 모니터를 꽂거나 뽑으면 갱신한다.
     @State private var connectedDisplays = LayoutDisplay.connected()
-    @State private var selectedTab: SettingsTab = .launchables
-    @State private var selectedIndex: Int? = nil
+    @State private var selectedTab =
+        SettingsTab(rawValue: SettingsView.previewTab ?? "") ?? .launchables
+    @State private var selectedIndex: Int? = SettingsView.previewSelectedIndex
     /// 사이드바에서 마지막으로 고른 섹션(URL·App·Finder). "+"가 이 섹션에 항목을 만든다.
     /// 섹션 제목이나 그 섹션의 항목을 누르면 바뀐다.
     @State private var focusedLaunchType: LaunchType = .url
@@ -75,7 +66,6 @@ struct SettingsView: View {
     @State private var showPasteJSON = false
     @State private var pasteJSONText = ""
     @State private var dropTargeted = false
-    @State private var isEditing = SettingsView.previewStartsEditing
     @State private var isAddingNew = false
     /// addSite로 갓 추가된, 아직 이름을 정하지 않은 사이트의 id.
     /// 선택이 벗어날 때 이 사이트가 여전히 placeholder면 폐기한다.
@@ -86,51 +76,18 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                sidebar
-                Divider()
-
-                ZStack {
-                    mainPanel
-                        .opacity(selectedTab == .launchables ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .launchables)
-                        .disabled(selectedTab != .launchables)
-                        .accessibilityHidden(selectedTab != .launchables)
-
-                    generalTab
-                        .opacity(selectedTab == .general ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .general)
-                        .disabled(selectedTab != .general)
-                        .accessibilityHidden(selectedTab != .general)
-
-                    notchTab
-                        .opacity(selectedTab == .notch ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .notch)
-                        .disabled(selectedTab != .notch)
-                        .accessibilityHidden(selectedTab != .notch)
-
-                    toolsTab
-                        .opacity(selectedTab == .tools ? 1 : 0)
-                        .allowsHitTesting(selectedTab == .tools)
-                        .disabled(selectedTab != .tools)
-                        .accessibilityHidden(selectedTab != .tools)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background {
-                    if selectedTab == .launchables {
-                        siteSelectionShortcuts
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+            settingsToolbar
             Divider()
-            bottomBar
+            selectedContent
         }
-        .frame(minWidth: Self.minimumSize.width, minHeight: Self.minimumSize.height)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(DS.surfaceBg)
-        .onChange(of: selectedTab) { _, _ in
+        .onChange(of: selectedTab) { oldValue, _ in
             vm.flushPendingSave()
+            if oldValue == .tools {
+                NotificationCenter.default.post(
+                    name: ToolsSettingsView.flushPendingSave, object: nil)
+            }
             searchFocused = false
         }
         .onChange(of: selectedIndex) { oldValue, newValue in
@@ -170,12 +127,12 @@ struct SettingsView: View {
         ) { _ in
             connectedDisplays = LayoutDisplay.connected()
         }
-        .alert("Delete site?", isPresented: $showDeleteAlert) {
+        .alert("Delete launcher?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) { removeSite() }
             Button("Cancel", role: .cancel) {}
         } message: {
             if let idx = selectedIndex, idx < vm.sites.count {
-                Text("This will remove \"\(vm.sites[idx].name)\".")
+                Text("This will remove the launcher \"\(vm.sites[idx].name)\".")
             }
         }
         .sheet(isPresented: $showGuide) {
@@ -213,50 +170,82 @@ struct SettingsView: View {
         )
     }
 
-    // MARK: - Tabs
+    // MARK: - Navigation
 
-    private var settingsTabPicker: some View {
-        HStack(spacing: 2) {
-            SettingsTabButton(
-                title: "Launchers",
-                icon: "square.grid.2x2",
-                isSelected: selectedTab == .launchables,
-                action: { selectedTab = .launchables })
-            SettingsTabButton(
-                title: "General",
-                icon: "gearshape",
-                isSelected: selectedTab == .general,
-                action: { selectedTab = .general })
-            SettingsTabButton(
-                title: "Notch",
-                icon: "macbook",
-                isSelected: selectedTab == .notch,
-                action: { selectedTab = .notch })
-            SettingsTabButton(
-                title: "Tools",
-                icon: "wand.and.stars",
-                isSelected: selectedTab == .tools,
-                action: { selectedTab = .tools })
+    private var settingsToolbar: some View {
+        ZStack {
+            Picker("Settings Section", selection: $selectedTab) {
+                ForEach(SettingsTab.allCases, id: \.self) { tab in
+                    Label(tab.title, systemImage: tab.symbol).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 430)
+
+            HStack(spacing: DS.spacingSmall) {
+                Spacer(minLength: 0)
+
+                ToolbarIconButton(
+                    icon: "questionmark.circle", color: DS.textSecondary,
+                    accessibilityLabel: "User Guide",
+                    action: { showGuide = true }
+                )
+                .help("User Guide")
+                .keyboardShortcut("/", modifiers: .command)
+                ToolbarIconButton(
+                    icon: "questionmark.bubble", color: DS.textSecondary,
+                    accessibilityLabel: "Q&A",
+                    action: { openQA() }
+                )
+                .help("Q&A")
+                ToolbarIconMenu(icon: "ellipsis.circle", accessibilityLabel: "App Actions") {
+                    Button("Import from File…") {
+                        SettingsConfigTransfer.importConfig(
+                            vm: vm, onSuccess: handleSuccessfulImport)
+                    }
+                    Button("Paste JSON…") {
+                        pasteJSONText = ""
+                        showPasteJSON = true
+                    }
+                    Divider()
+                    Button("Export…") { SettingsConfigTransfer.exportConfig(vm: vm) }
+                    Divider()
+                    Button("Report Bug…") { reportBug() }
+                    Button("Restart App") { restartApp() }
+                    Divider()
+                    Button("Uninstall…", role: .destructive) { uninstallApp() }
+                }
+                .help("Import, export, and app actions")
+            }
         }
-        .padding(2)
-        .background(DS.border.opacity(0.18))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity)
+        .frame(height: 44)
+        .background(DS.cardBg)
     }
 
-    private var generalTab: some View {
-        GeneralSettingsView(
-            vm: vm,
-            updateController: updateController,
-            onSave: saveGlobals
-        )
-    }
-
-    private var notchTab: some View {
-        NotchSettingsView(vm: vm, onSave: saveGlobals)
-    }
-
-    private var toolsTab: some View {
-        ToolsSettingsView(vm: vm, onSave: saveGlobals)
+    private var selectedContent: some View {
+        Group {
+            switch selectedTab {
+            case .launchables:
+                HStack(spacing: 0) {
+                    sidebar
+                    Divider()
+                    mainPanel
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background { siteSelectionShortcuts }
+                }
+            case .general:
+                GeneralSettingsView(
+                    vm: vm, updateController: updateController, onSave: saveGlobals)
+            case .notch:
+                NotchSettingsView(vm: vm, onSave: saveGlobals)
+            case .tools:
+                ToolsSettingsView(vm: vm, onSave: saveGlobals)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Sidebar
@@ -319,20 +308,23 @@ struct SettingsView: View {
                             )
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                // 섹션을 고르면 항목 선택은 해제한다. 한 번에 하나만 강조되어
-                                // "+"가 어디에 추가될지 헷갈리지 않는다. 편집 중인 값은
-                                // handleSelectionChange가 저장하고 이름 없는 새 항목은 폐기한다.
-                                focusedLaunchType = type
-                                isLayoutsFocused = false
-                                selectedLayoutID = nil
-                                selectedTab = .launchables
-                                selectedIndex = nil
+                                focusSection(type)
+                            }
+                            .focusable(interactions: .activate)
+                            .onKeyPress(.space) {
+                                focusSection(type)
+                                return .handled
+                            }
+                            .onKeyPress(.return) {
+                                focusSection(type)
+                                return .handled
                             }
                             .padding(.top, 5)
                             .accessibilityElement(children: .combine)
                             .accessibilityAddTraits(
                                 isFocusedSection ? [.isButton, .isSelected] : .isButton
                             )
+                            .accessibilityAction { focusSection(type) }
                             .accessibilityHint("New items from + are added to this section")
                             if indices.isEmpty {
                                 SidebarAddRow(label: "Add \(typeSectionTitle(type))") {
@@ -347,10 +339,22 @@ struct SettingsView: View {
                                     isSelected: selectedIndex == i
                                 )
                                 .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedIndex = i
-                                    selectedTab = .launchables
+                                .onTapGesture { selectSite(i) }
+                                .focusable(interactions: .activate)
+                                .onKeyPress(.space) {
+                                    selectSite(i)
+                                    return .handled
                                 }
+                                .onKeyPress(.return) {
+                                    selectSite(i)
+                                    return .handled
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel(vm.sites[i].name)
+                                .accessibilityAddTraits(
+                                    selectedIndex == i ? [.isButton, .isSelected] : .isButton
+                                )
+                                .accessibilityAction { selectSite(i) }
                                 .draggable(String(i)) {
                                     Text(vm.sites[i].name)
                                         .padding(8)
@@ -384,12 +388,27 @@ struct SettingsView: View {
                 }
                 .padding(DS.spacingSmall)
             }
-
+            Divider()
+            sidebarControls
         }
-        .frame(width: 200)
+        .frame(width: 210)
     }
 
     // MARK: - Main Panel
+
+    /// Keeps editor writes attached to the selected launcher's stable identity.
+    /// If import or deletion removes it while AppKit is ending text editing, late writes are ignored.
+    private func siteBinding(id: UUID, fallback: Site) -> Binding<Site> {
+        Binding(
+            get: {
+                vm.sites.first(where: { $0.id == id }) ?? fallback
+            },
+            set: { updatedSite in
+                guard let index = vm.sites.firstIndex(where: { $0.id == id }) else { return }
+                vm.sites[index] = updatedSite
+            }
+        )
+    }
 
     private var mainPanel: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -403,28 +422,20 @@ struct SettingsView: View {
                 .id(layoutID)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let idx = selectedIndex, idx < vm.sites.count {
-                ZStack {
-                    SiteConfigView(
-                        site: $vm.sites[idx], isEditing: $isEditing, isNew: isAddingNew,
-                        quickNoteShortcut: vm.notchQuickNoteShortcut,
-                        coverScreensShortcut: vm.coverScreensShortcut,
-                        onSave: {
-                            vm.cancelPendingSave()
-                            return save(showAlerts: true)
-                        }
-                    )
-                    .id(vm.sites[idx].id)
-                    .onChange(of: vm.sites) { _, _ in
-                        if isEditing { vm.scheduleAutoSave() }
+                let selectedSite = vm.sites[idx]
+                SiteConfigView(
+                    site: siteBinding(id: selectedSite.id, fallback: selectedSite),
+                    isNew: isAddingNew,
+                    quickNoteShortcut: vm.notchQuickNoteShortcut,
+                    coverScreensShortcut: vm.coverScreensShortcut,
+                    onSave: {
+                        vm.cancelPendingSave()
+                        return save(showAlerts: true)
                     }
-
-                    if !isEditing {
-                        // 저장 상태에서는 패널 어디를 탭해도 편집을 켠다.
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture { isEditing = true }
-                            .accessibilityLabel("Enable editing")
-                    }
+                )
+                .id(selectedSite.id)
+                .onChange(of: vm.sites) { _, _ in
+                    if !vm.isApplyingImportedConfig { vm.scheduleAutoSave() }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -437,7 +448,7 @@ struct SettingsView: View {
                         isLayoutsFocused
                             ? (layoutLibrary.layouts.isEmpty
                                 ? "Press + to capture a layout" : "Select a layout")
-                            : "Select a site to configure"
+                            : "Select a launcher to configure"
                     )
                     .font(DS.bodyFont)
                     .foregroundColor(DS.textSecondary)
@@ -449,110 +460,28 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Bottom Bar
+    // MARK: - Sidebar controls
 
-    private var bottomBar: some View {
-        HStack(spacing: 0) {
-            launchablesBottomBar
-            Divider()
-
-            // 탭과 오른쪽 아이콘을 한 줄에 나란히 둔다. 예전처럼 탭을 아이콘 위에 겹쳐(ZStack) 가운데 두면
-            // 탭이 넷이 된 뒤 창을 줄였을 때 오른쪽 도구를 덮었다. 탭은 아이콘 왼쪽 남은 폭의 가운데에 온다.
-            HStack(spacing: DS.spacingSmall) {
-                Spacer(minLength: 0)
-                settingsTabPicker
-                    .fixedSize()
-                Spacer(minLength: DS.spacingSmall)
-
-                HStack(spacing: DS.spacingSmall) {
-                    ToolbarIconButton(
-                        icon: "questionmark.circle", color: DS.textSecondary,
-                        accessibilityLabel: "User Guide",
-                        action: { showGuide = true }
-                    )
-                    .help("User Guide")
-
-                    ToolbarIconButton(
-                        icon: "questionmark.bubble", color: DS.textSecondary,
-                        accessibilityLabel: "Q&A",
-                        action: { openQA() }
-                    )
-                    .help("Q&A")
-
-                    ToolbarIconMenu(icon: "ellipsis.circle") {
-                        Button("Import from File...") {
-                            SettingsConfigTransfer.importConfig(
-                                vm: vm, onSuccess: handleSuccessfulImport)
-                        }
-                        Button("Paste JSON...") {
-                            pasteJSONText = ""
-                            showPasteJSON = true
-                        }
-                        Divider()
-                        Button("Export...") { SettingsConfigTransfer.exportConfig(vm: vm) }
-                        Divider()
-                        Button("Report Bug...") { reportBug() }
-                        Divider()
-                        Button("Restart App") { restartApp() }
-                        Button("Uninstall...") { uninstallApp() }
-                    }
-                    .help("Import, export, and app actions")
-
-                    if selectedTab == .launchables && isEditing {
-                        Text("Editing")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(DS.accent)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 5)
-                    }
-                }
-                .fixedSize()
-            }
-            .padding(.horizontal, DS.paddingSmall)
-
-            // ToolbarIconButton은 탭 제스처 기반이라 키보드 단축키를 직접 못 받으므로
-            // ⌘/ 는 숨김 버튼으로 연결 (아래 Return/⌘S와 같은 패턴)
-            Button("") { showGuide = true }
-                .keyboardShortcut("/", modifiers: .command)
-                .frame(width: 0, height: 0)
-                .opacity(0)
-
-            if selectedTab == .launchables {
-                Button("") {
-                    if save(showAlerts: true) {
-                        isEditing = false
-                    }
-                }
-                .keyboardShortcut(.return, modifiers: [])
-                .frame(width: 0, height: 0)
-                .opacity(0)
-
-                Button("") {
-                    save(showAlerts: true)
-                }
-                .keyboardShortcut("s", modifiers: .command)
-                .frame(width: 0, height: 0)
-                .opacity(0)
-            }
-        }
-        .frame(height: 40)
-    }
-
-    private var launchablesBottomBar: some View {
+    private var sidebarControls: some View {
         HStack(spacing: 4) {
             ToolbarIconButton(
                 icon: "plus", color: DS.textSecondary,
                 accessibilityLabel: isLayoutsFocused
                     ? "Capture Layout" : "Add \(typeSectionTitle(focusedLaunchType)) item",
-                action: { addSite() }
+                action: { addSite() },
+                disabled: !canAddFocusedItem
             )
             .help(
                 isLayoutsFocused
-                    ? "Capture Layout (⌘N)"
-                    : "Add to \(typeSectionTitle(focusedLaunchType)) (⌘N)"
+                    ? (layoutLibrary.canAdd
+                        ? "Capture Layout (⌘N)" : "Layouts are full (4/4)")
+                    : (canAddFocusedItem
+                        ? "Add to \(typeSectionTitle(focusedLaunchType)) (⌘N)"
+                        : "\(typeSectionTitle(focusedLaunchType)) is full "
+                            + "(\(SiteCountLimitPolicy.limit(for: focusedLaunchType))/\(SiteCountLimitPolicy.limit(for: focusedLaunchType)))")
             )
             ToolbarIconButton(
-                icon: "minus", color: DS.danger,
+                icon: "minus", color: DS.textSecondary,
                 accessibilityLabel: selectedLayoutID == nil ? "Remove launchable" : "Remove layout",
                 action: {
                     selectedTab = .launchables
@@ -584,78 +513,54 @@ struct SettingsView: View {
                 disabled: !canMoveDown)
         }
         .padding(.horizontal, 8)
-        .frame(width: 200, height: 40)
+        .frame(width: 210, height: 40)
+    }
+
+    private var canAddFocusedItem: Bool {
+        if isLayoutsFocused { return layoutLibrary.canAdd }
+        return SiteCountLimitPolicy.canAdd(focusedLaunchType, to: vm.sites)
     }
 
     // MARK: - Keyboard Shortcuts
 
+    private var sidebarSiteIndices: [Int] {
+        LaunchType.allCases.flatMap { type in
+            vm.sites.indices.filter { vm.sites[$0].launchType == type }
+        }
+    }
+
     @ViewBuilder
     private var siteSelectionShortcuts: some View {
-        ForEach(0..<min(9, vm.sites.count), id: \.self) { i in
-            Button("") { selectedIndex = i }
-                .keyboardShortcut(KeyEquivalent(Character("\(i + 1)")), modifiers: .command)
+        ForEach(Array(sidebarSiteIndices.prefix(9).enumerated()), id: \.element) {
+            shortcutIndex, siteIndex in
+            Button("") { selectedIndex = siteIndex }
+                .keyboardShortcut(
+                    KeyEquivalent(Character("\(shortcutIndex + 1)")), modifiers: .command
+                )
                 .frame(width: 0, height: 0)
                 .opacity(0)
         }
-        Button("") { moveSelection(by: -1) }
-            .keyboardShortcut(.upArrow, modifiers: [])
+        Button("") { searchFocused = true }
+            .keyboardShortcut("f", modifiers: .command)
             .frame(width: 0, height: 0)
             .opacity(0)
-
-        Button("") { moveSelection(by: 1) }
-            .keyboardShortcut(.downArrow, modifiers: [])
-            .frame(width: 0, height: 0)
-            .opacity(0)
-
         Button("") { addSite() }
             .keyboardShortcut("n", modifiers: .command)
             .frame(width: 0, height: 0)
             .opacity(0)
+        Button("") { _ = save(showAlerts: true) }
+            .keyboardShortcut("s", modifiers: .command)
+            .frame(width: 0, height: 0)
+            .opacity(0)
     }
 
-    /// Launchables 탭으로 가서 그 타입의 첫 항목을 선택한다. 항목이 없으면 탭만 연다.
+    /// Launchers 탭으로 가서 그 타입의 첫 항목을 선택한다. 항목이 없으면 탭만 연다.
     private func focus(on type: LaunchType) {
         searchText = ""
         selectedTab = .launchables
         focusedLaunchType = type
         if let first = vm.sites.indices.first(where: { vm.sites[$0].launchType == type }) {
             selectedIndex = first
-        }
-    }
-
-    /// 사이드바에 표시되는 순서 (타입별 그룹) 기준으로 이동
-    /// ↑↓는 사이드바 순서(URL → App → Finder → Layouts)를 그대로 따라간다.
-    private enum SidebarEntry: Equatable {
-        case site(Int)
-        case layout(UUID)
-    }
-
-    private func moveSelection(by offset: Int) {
-        let displayOrder: [SidebarEntry] =
-            LaunchType.allCases.flatMap { type in
-                vm.sites.indices.filter { vm.sites[$0].launchType == type }.map(SidebarEntry.site)
-            } + layoutLibrary.layouts.map { SidebarEntry.layout($0.id) }
-        guard !displayOrder.isEmpty else { return }
-        let current: SidebarEntry? =
-            selectedLayoutID.map(SidebarEntry.layout) ?? selectedIndex.map(SidebarEntry.site)
-        guard let current, let pos = displayOrder.firstIndex(of: current) else {
-            select(displayOrder[0])
-            return
-        }
-        let newPos = pos + offset
-        if newPos >= 0 && newPos < displayOrder.count {
-            select(displayOrder[newPos])
-        }
-    }
-
-    private func select(_ entry: SidebarEntry) {
-        switch entry {
-        case .site(let index):
-            selectedLayoutID = nil
-            isLayoutsFocused = false
-            selectedIndex = index
-        case .layout(let id):
-            selectLayout(id)
         }
     }
 
@@ -677,7 +582,6 @@ struct SettingsView: View {
             return
         }
         isAddingNew = false
-        isEditing = false
         searchFocused = false
         // 이름을 정하지 않은 채 벗어난 새 사이트는 폐기한다.
         if oldValue != newValue, let pendingID = pendingNewSiteID,
@@ -718,7 +622,21 @@ struct SettingsView: View {
         }
     }
 
-    /// 새 사이트 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
+    private func focusSection(_ type: LaunchType) {
+        // 섹션을 고르면 항목 선택은 해제한다. 한 번에 하나만 강조되어 + 대상이 명확하다.
+        focusedLaunchType = type
+        isLayoutsFocused = false
+        selectedLayoutID = nil
+        selectedTab = .launchables
+        selectedIndex = nil
+    }
+
+    private func selectSite(_ index: Int) {
+        selectedIndex = index
+        selectedTab = .launchables
+    }
+
+    /// launcher 추가. type을 주면 그 섹션에, 없으면 현재 선택된 사이트의 타입을 물려받는다.
     private func addSite(type explicitType: LaunchType? = nil) {
         selectedTab = .launchables
         // Layouts 섹션이 대상이면 "+"·⌘N은 새 Layout을 캡처한다.
@@ -754,7 +672,6 @@ struct SettingsView: View {
         vm.sites.append(newSite)
         pendingNewSiteID = newSite.id
         isAddingNew = true
-        isEditing = true
         selectedIndex = vm.sites.count - 1
     }
 
@@ -772,7 +689,6 @@ struct SettingsView: View {
         pendingNewSiteID = nil
         vm.sites.remove(at: idx)
         selectedIndex = vm.sites.isEmpty ? nil : min(idx, vm.sites.count - 1)
-        isEditing = false
         save()
     }
 
@@ -842,7 +758,6 @@ struct SettingsView: View {
     private func handleSuccessfulImport() {
         pendingNewSiteID = nil
         isAddingNew = false
-        isEditing = false
 
         let validSelection: Int?
         if vm.sites.isEmpty {
@@ -917,6 +832,7 @@ struct SettingsView: View {
     /// 편집 중인 사이트의 검증 상태와 무관하게 항상 저장되도록
     /// 사이트 목록은 마지막 저장 시점(originalSites)을 사용한다.
     private func saveGlobals() {
+        guard !vm.isApplyingImportedConfig else { return }
         let saved =
             vm.onSave?(SettingsPayload(config: vm.globalsConfig)) ?? true
         if saved {

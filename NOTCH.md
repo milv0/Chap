@@ -204,8 +204,8 @@ Workspaces 칸(지금 이름 Layouts)은 Apps(이미 Apps가 있으면 빈 칸).
 
 **선반 칸 고정**: 앞 두 칸은 선반 자리로 주인이 정해져 있다. 1번 칸 Screenshots, 2번 칸 Downloads
 (`NotchWidget.shelfSlots`, `fits(slot:)`). 다른 위젯은 3~6번 칸에만 놓인다. 선반은 접으면 검정 띠 **왼쪽** 아이콘이
-되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면은 Slots("Default" 묶음의 Screenshots·Downloads 두 칸 · "Widgets" 네 칸을 떨어뜨린 보드, 아래에 아직 안 놓은 위젯만 한 줄),
-Notch Icons(Mirror·Quick Note·Cover Screens 아이콘 표시 스위치), Appearance 세 묶음이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
+되므로 펼쳐지는 자리도 늘 맨 왼쪽이어야 아이콘과 칸이 같은 쪽에 있다. 설정 화면 순서는 Slots(Screenshots·Downloads의 잠금 표시를 포함해 실제 순서대로 붙인 단일 6칸 rail, 아래에 아직 안 놓은 위젯만 한 줄),
+Notch Icons(`Shown Icons` 설명을 왼쪽, Mirror·Quick Note·Cover Screens 64×34 아이콘 선택 버튼을 오른쪽에 배치하며, 각 버튼은 서로 독립적으로 켜고 끄고 변경 직후 노치를 잠깐 미리보기), Screenshots 폴더, Notch Style(Custom/Glass·재질·밝기, 노치 도커 패널에만 적용되므로 General이 아닌 Notch에 둔다)이다. 기능의 단축키·동작은 Tools 탭에 있다. 선반 칸(`ShelfSlotToggle`)은 체크 표시가
 달린 켜기/끄기 버튼이라 끌어 옮기거나 서로 바꾸거나 다른 위젯을 놓을 수 없고, 팔레트에도 선반이 없다. 이전 배치는 읽을
 때 선반을 고정 칸으로 옮기고 나머지 순서(빈 칸 포함)는 그대로 둔다(`normalizedSlots`). 기본 배치(처음 받은 사람)는 Screenshots · Downloads · Apps · To-do · Keep Awake · Launchers로 여섯 칸을 모두 채운다(`NotchWidget.defaultSlots`).
 Downloads 칸이 기본으로 놓이므로 노치 런처를 켜고 처음 열 때 macOS가 다운로드 폴더 접근을 한 번 묻는다.
@@ -231,7 +231,7 @@ Drop 상자(또는 배지) 오른쪽으로 `stripToolPitch`(28pt) 간격, 순서
 - **Cover Screens**(`NotchCoverScreensStripButton`, `moon.fill`): 누르면 도커를 접고 가림막을 친다(메뉴바 항목과 같은 경로).
   가림막이 노치까지 덮으므로 끄는 것은 이 아이콘이 아니라 ⌥ 한 번(또는 아무 키 10연타)이다. 이미 켜져 있으면 무시한다.
   걷고 돌아오면 화면 가운데에 "Welcome back"을 잠깐 띄운다(깨어 꼬리를 든 물범, Keep Awake·Timer와 같은 HUD).
-  Notch Icons의 스위치(`notchCoverScreensEnabled`, 기본 켬)는 띠 아이콘만 숨긴다. ⌥ 키(`coverScreensShortcut`, 기본 L)와
+  Notch Icons의 선택 버튼(`notchCoverScreensEnabled`, 기본 켬)은 띠 아이콘만 숨긴다. ⌥ 키(`coverScreensShortcut`, 기본 L)와
   가림막 문구는 Settings → Tools에 있고, 아이콘을 꺼도 ⌥L과 메뉴바 항목은 그대로 쓴다.
 
 ## 상단 띠 왼쪽: 접힌 선반 · 마스코트
@@ -407,7 +407,7 @@ Apps 칸의 두 번째 탭으로 보는 로컬 창 배치 격자(`NotchLayoutsVi
 
 고른 Layouts 탭 이름 뒤 ›를 누르면 도커를 접고 설정창 Launchers의 Layouts 섹션을 연다. 저장된 Layout이 있으면 첫 번째를, 없으면 섹션만 고른다(`AppDelegate.showLayoutsInSettings`). 줄을 우클릭하면 Open / Edit… / Remove…가 있다. Edit…은 설정창 Launchers 탭의 Layouts 섹션에서 그 Layout을 연다(`SettingsView.focusLayout`). 그곳에서 이름·창별 디스플레이·창 빼기를 바로 저장하고(`LayoutStore.replacing`, 자리·id 유지), Update Positions로 지금 창 위치를 다시 읽는다(`ChapLayout.updatingPositions`, 같은 앱만 갱신). Remove…는 도커를 접은 뒤 확인 창을 띄운다(설정의 Remove와 같은 경로). VoiceOver는 줄의 Edit·Remove 동작을 쓴다.
 
-캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`LayoutDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`LayoutWindow.assigned(to:)`). 같은 이름의 모니터는 `LayoutDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다.
+캡처 창에서는 모니터가 둘 이상이면 줄마다 디스플레이 캡슐(`LayoutDisplayMenuButton`)이 보이고, 누르면 연결된 디스플레이와 Follow Cursor 중에서 고른다. 바꿔도 창의 상대 위치·크기는 그대로다(`LayoutWindow.assigned(to:)`). 같은 이름의 모니터는 `LayoutDisplay.menuLabels`가 번호를 붙여 구분한다. Follow Cursor는 디스플레이를 비워 저장하고 열 때 커서 화면에 맞춘다. 모니터가 하나면 캡슐 없이 둘째 줄에 디스플레이 이름만 보인다. 미니맵의 창 사각형은 틀 안쪽 3pt 여백 안에만 그려 화면 끝에 붙은 창도 테두리가 겹치지 않는다. 설정의 Layout Preview는 190–240pt adaptive grid(최대 2열)로 줄바꿈해 디스플레이가 세 개 이상이어도 압축하지 않는다.
 
 ## To-do 칸
 

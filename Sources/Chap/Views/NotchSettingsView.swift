@@ -2,7 +2,7 @@ import Cocoa
 import SwiftUI
 
 /// Notch 탭. 노치 런처 전용 설정을 모아 두어 이후 노치 기능이 늘어나도
-/// General이 비대해지지 않는다. 런처가 꺼져 있어도 다음에 쓸 Slots·아이콘·Appearance를 미리 정할 수 있다.
+/// General이 비대해지지 않는다. 런처가 꺼져 있어도 다음에 쓸 Slots·아이콘·Notch Style을 미리 정할 수 있다.
 struct NotchSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     let onSave: () -> Void
@@ -35,12 +35,36 @@ struct NotchSettingsView: View {
         return false
     }
 
+    /// 테스트·렌더는 OS와 무관하게 availability 상태를 고정할 수 있다.
+    static func displayedPanelStyle(
+        stored: NotchPanelStyle, supportsLiquidGlass: Bool
+    ) -> NotchPanelStyle {
+        supportsLiquidGlass ? stored : .custom
+    }
+
+    private var displayedPanelStyle: NotchPanelStyle {
+        Self.displayedPanelStyle(
+            stored: vm.notchPanelStyle, supportsLiquidGlass: Self.supportsLiquidGlass)
+    }
+
+    private var panelStyleBinding: Binding<NotchPanelStyle> {
+        Binding(
+            get: { displayedPanelStyle },
+            set: { vm.notchPanelStyle = $0 })
+    }
+
     /// 콘텐츠 박스 배경 기본 프리셋. Mist는 푸른 기가 도는 밝은 회색
     /// (#E8ECF8)으로, 밝은 배경용 텍스트/아이콘 대비가 자동 적용된다.
     private static let colorPresets: [(name: String, hex: String)] = [
         (name: "Black", hex: "#000000"),
         (name: "Mist", hex: "#E8ECF8"),
     ]
+
+    private func saveAndPreviewNotchIcons() {
+        onSave()
+        guard vm.notchLauncherEnabled, !vm.isApplyingImportedConfig else { return }
+        notchController?.previewStripIcons()
+    }
 
     private func slotWidget(_ index: Int) -> NotchWidget {
         vm.notchWidgets.indices.contains(index) ? vm.notchWidgets[index] : .none
@@ -60,23 +84,6 @@ struct NotchSettingsView: View {
         }
         vm.notchWidgets[index] = widget
         return true
-    }
-
-    /// 보드의 칸 묶음: 작은 제목 + 칸들. 선반과 위젯 칸을 떨어뜨려 노치 왼쪽부터의 순서를 그대로 보여 준다.
-    private func slotGroup<Content: View>(
-        title: String, systemImage: String?, @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(spacing: 3) {
-                if let systemImage {
-                    Image(systemName: systemImage).font(.system(size: 8))
-                }
-                Text(title)
-            }
-            .font(.caption2.weight(.medium))
-            .foregroundColor(DS.textTertiary)
-            HStack(spacing: 6) { content() }
-        }
     }
 
     static func widgetName(_ widget: NotchWidget) -> String {
@@ -123,15 +130,14 @@ struct NotchSettingsView: View {
                 SettingsSectionHeader(title: "Notch Launcher", systemImage: "macbook")
             }
 
-            // Notch를 켜기 전에 Slots·아이콘·Appearance를 미리 정할 수 있게 항상 보여 준다.
+            // Notch를 켜기 전에 Slots·아이콘·Notch Style을 미리 정할 수 있게 항상 보여 준다.
             Group {
-                // 레이아웃: 노치 칸을 왼쪽부터 그대로 본뜬 보드. 선반 두 칸과 위젯 네 칸을 떨어뜨려 묶는다.
+                // 실제 노치 순서와 같은 단일 6칸 rail. 첫 두 선반은 잠금 표시로 고정임을 드러낸다.
                 Section {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(alignment: .top, spacing: 14) {
-                            slotGroup(title: "Default", systemImage: "lock.fill") {
-                                ForEach(0..<NotchWidget.shelfSlotCount, id: \.self) {
-                                    index in
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 8) {
+                            ForEach(0..<NotchWidget.slotCount, id: \.self) { index in
+                                if index < NotchWidget.shelfSlotCount {
                                     let shelf = NotchWidget.shelfSlots[index]
                                     ShelfSlotToggle(
                                         index: index, shelf: shelf,
@@ -140,13 +146,7 @@ struct NotchSettingsView: View {
                                         vm.notchWidgets[index] =
                                             slotWidget(index) == shelf ? .none : shelf
                                     }
-                                }
-                            }
-                            slotGroup(title: "Widgets", systemImage: nil) {
-                                ForEach(
-                                    NotchWidget.shelfSlotCount..<NotchWidget.slotCount,
-                                    id: \.self
-                                ) { index in
+                                } else {
                                     WidgetSlotBox(
                                         index: index,
                                         widget: slotWidget(index),
@@ -156,7 +156,7 @@ struct NotchSettingsView: View {
                             }
                         }
 
-                        // 아직 놓지 않은 위젯만 한 줄로. 다 놓았으면 줄 자체가 없다.
+                        // 아직 놓지 않은 위젯만 rail 아래에 둔다. 다 놓았으면 줄 자체가 없다.
                         let unplaced = Self.paletteWidgets.filter {
                             !vm.notchWidgets.contains($0)
                         }
@@ -176,58 +176,73 @@ struct NotchSettingsView: View {
                 } header: {
                     SettingsSectionHeader(
                         title: "Slots", systemImage: "rectangle.split.3x1",
-                        note: "Click a shelf to turn it on or off. Drag widgets onto slots 3–6, "
-                            + "or right-click a slot.")
+                        note: "The first two shelves stay in place. Click them to turn them off; "
+                            + "drag or right-click slots 3–6.")
+                }
+
+                // 검정 띠 오른쪽 도구 아이콘. Menu Bar 설정처럼 설명은 왼쪽, 선택 버튼은 오른쪽에 둔다.
+                Section {
+                    SettingsRow(
+                        title: "Shown Icons",
+                        subtitle: "On the black strip, right of the Drop box."
+                    ) {
+                        HStack(spacing: 8) {
+                            NotchIconToggleButton(
+                                title: "Mirror", systemImage: "web.camera",
+                                help: "Camera check only while open; nothing is recorded.",
+                                isOn: $vm.notchMirrorEnabled
+                            )
+                            .onChange(of: vm.notchMirrorEnabled) { _, _ in
+                                saveAndPreviewNotchIcons()
+                            }
+
+                            NotchIconToggleButton(
+                                title: "Quick Note", systemImage: "note.text",
+                                help:
+                                    "Its Option shortcut lives in Tools and works with this icon off.",
+                                isOn: $vm.notchQuickNoteEnabled
+                            )
+                            .onChange(of: vm.notchQuickNoteEnabled) { _, _ in
+                                saveAndPreviewNotchIcons()
+                            }
+
+                            NotchIconToggleButton(
+                                title: "Cover Screens", systemImage: "moon.fill",
+                                help: "Its Option shortcut and message live in Tools.",
+                                isOn: $vm.notchCoverScreensEnabled
+                            )
+                            .onChange(of: vm.notchCoverScreensEnabled) { _, _ in
+                                saveAndPreviewNotchIcons()
+                            }
+                        }
+                    }
+
+                    if MirrorCamera.access == .denied {
+                        SettingsRow(
+                            title: "Mirror Camera Access",
+                            subtitle: "Required only when you open Mirror."
+                        ) {
+                            Button("Camera Access…") {
+                                if let url = URL(
+                                    string:
+                                        "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
+                                ) {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+                } header: {
+                    SettingsSectionHeader(
+                        title: "Notch Icons", systemImage: "rectangle.topthird.inset.filled")
                 }
 
                 // 1번 칸 Screenshots 선반이 읽는 폴더. 선반은 노치에서만 쓰므로 여기에 둔다.
                 ScreenshotFolderSection()
 
-                // 검정 띠 오른쪽 도구 아이콘: 보일지 말지만 정한다. 단축키·동작은 Tools 탭에 있다.
                 Section {
-                    // Mirror는 노치에서만 쓰므로 설정 전부(표시·카메라 권한)를 여기에 둔다.
-                    SettingsRow(
-                        title: "Mirror",
-                        subtitle: "Camera check. On only while open; nothing is recorded.",
-                        help: "macOS asks for camera access the first time you open the mirror."
-                    ) {
-                        Button("Camera Access…") {
-                            if let url = URL(
-                                string:
-                                    "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
-                            ) {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }
-                        .controlSize(.small)
-                        Toggle("Mirror", isOn: $vm.notchMirrorEnabled)
-                            .labelsHidden()
-                            .toggleStyle(.switch)
-                    }
-                    .onChange(of: vm.notchMirrorEnabled) { _, _ in onSave() }
-
-                    SettingsToggleRow(
-                        title: "Quick Note", subtitle: "Opens the note window.",
-                        help: "The ⌥ shortcut lives in Tools and works with the icon off.",
-                        isOn: $vm.notchQuickNoteEnabled
-                    )
-                    .onChange(of: vm.notchQuickNoteEnabled) { _, _ in onSave() }
-
-                    SettingsToggleRow(
-                        title: "Cover Screens", subtitle: "Covers your screens.",
-                        help: "The ⌥L shortcut and the cover message live in Tools; "
-                            + "the menu bar item stays either way.",
-                        isOn: $vm.notchCoverScreensEnabled
-                    )
-                    .onChange(of: vm.notchCoverScreensEnabled) { _, _ in onSave() }
-                } header: {
-                    SettingsSectionHeader(
-                        title: "Notch Icons", systemImage: "rectangle.topthird.inset.filled",
-                        note: "Icons on the black strip, right of the Drop box.")
-                }
-
-                Section {
-                    Picker("Style", selection: $vm.notchPanelStyle) {
+                    Picker("Style", selection: panelStyleBinding) {
                         Text("Custom").tag(NotchPanelStyle.custom)
                         if Self.supportsLiquidGlass {
                             Text("Glass").tag(NotchPanelStyle.glass)
@@ -239,7 +254,7 @@ struct NotchSettingsView: View {
                         onSave()
                     }
 
-                    if vm.notchPanelStyle == .glass {
+                    if displayedPanelStyle == .glass {
                         // 밝기는 글자 버튼 대신 아이콘 셋으로 고른다. 재질은 밝기와 독립이라 따로 고른다.
                         // Picker 줄과 같은 행 레이아웃이라 높이가 맞는다.
                         LabeledContent("Glass Appearance") {
@@ -247,7 +262,7 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchGlassAppearance) { _, _ in
                             onSave()
-                            if vm.notchLauncherEnabled {
+                            if vm.notchLauncherEnabled && !vm.isApplyingImportedConfig {
                                 notchController?.previewGlassAppearance()
                             }
                         }
@@ -262,15 +277,14 @@ struct NotchSettingsView: View {
                         .pickerStyle(.segmented)
                         .onChange(of: vm.notchGlassMaterial) { _, _ in
                             onSave()
-                            if vm.notchLauncherEnabled {
+                            if vm.notchLauncherEnabled && !vm.isApplyingImportedConfig {
                                 notchController?.previewGlassMaterial()
                             }
                         }
                         .help("Clear is see-through; Regular adds contrast.")
 
                     } else {
-                        HStack {
-                            Text("Panel Opacity")
+                        LabeledContent("Panel Opacity") {
                             Slider(
                                 value: $vm.notchPanelOpacity,
                                 in: Config.notchPanelOpacityRange
@@ -292,7 +306,7 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchPanelOpacity) { _, newValue in
                             // 드래그 중 실시간 반영.
-                            if vm.notchLauncherEnabled {
+                            if vm.notchLauncherEnabled && !vm.isApplyingImportedConfig {
                                 notchController?.updateOpacityPreview(newValue)
                             }
                         }
@@ -327,7 +341,7 @@ struct NotchSettingsView: View {
                         }
                         .onChange(of: vm.notchPanelColorHex) { _, newValue in
                             onSave()
-                            if vm.notchLauncherEnabled {
+                            if vm.notchLauncherEnabled && !vm.isApplyingImportedConfig {
                                 notchController?.previewCustomColor(newValue)
                             }
                         }
@@ -335,13 +349,52 @@ struct NotchSettingsView: View {
                     }
                 } header: {
                     SettingsSectionHeader(
-                        title: "Appearance", systemImage: "paintpalette",
+                        title: "Notch Style", systemImage: "paintpalette",
                         note: vm.notchLauncherEnabled
                             ? "Changes preview live under the notch."
                             : "Ready for the next time you turn the launcher on.")
                 }
             }
         }
+    }
+}
+
+/// Status Bar Icon과 같은 선택 문법을 쓰는 독립 표시 토글. 셋을 동시에 켤 수 있다.
+private struct NotchIconToggleButton: View {
+    let title: String
+    let systemImage: String
+    let help: String
+    @Binding var isOn: Bool
+    @State private var isHovered = false
+
+    private var backgroundColor: Color {
+        if isOn { return DS.accentSoft }
+        if isHovered { return DS.border.opacity(0.25) }
+        return .clear
+    }
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(isOn ? DS.accent : DS.textSecondary)
+                .frame(width: 64, height: 34)
+                .background(backgroundColor)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isOn ? DS.accent : DS.border, lineWidth: 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel("Show \(title) icon")
+        .accessibilityValue(isOn ? "Shown" : "Hidden")
+        .accessibilityAddTraits(isOn ? [.isToggle, .isSelected] : .isToggle)
+        .onHover { isHovered = $0 }
     }
 }
 
@@ -377,6 +430,13 @@ private struct ShelfSlotToggle: View {
                     .strokeBorder(
                         DS.border, style: StrokeStyle(lineWidth: 1, dash: isOn ? [] : [4, 3]))
             )
+            .overlay(alignment: .topLeading) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 8))
+                    .foregroundColor(DS.textTertiary)
+                    .padding(5)
+                    .accessibilityHidden(true)
+            }
             .overlay(alignment: .topTrailing) {
                 // 켜져 있으면 체크, 꺼져 있으면 빈 동그라미. 누르면 바뀐다.
                 Image(systemName: isOn ? "checkmark.circle.fill" : "circle")

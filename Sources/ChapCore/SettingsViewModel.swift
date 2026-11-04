@@ -68,6 +68,8 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalCoverScreensMessage: String?
     /// 저장 성공 시 true를 반환해야 함. 실패(false) 시 markSaved가 호출되지 않음.
     public var onSave: ((SettingsPayload) -> Bool)?
+    /// Import가 저장된 전체 Config를 UI에 반영하는 동안 개별 onChange 저장을 막는다.
+    public private(set) var isApplyingImportedConfig = false
     private let saveDebouncer: SaveDebouncer
 
     public var hasChanges: Bool {
@@ -89,6 +91,31 @@ public final class SettingsViewModel: ObservableObject {
             || notchQuickNoteShortcut != originalNotchQuickNoteShortcut
             || coverScreensShortcut != originalCoverScreensShortcut
             || coverScreensMessage != originalCoverScreensMessage
+    }
+
+    public func applyImportedConfig(_ config: Config) {
+        isApplyingImportedConfig = true
+        sites = config.sites
+        showGuideWindow = config.showGuideWindow
+        launchAtLogin = config.launchAtLogin
+        optionShortcutsEnabled = config.optionShortcutsEnabled
+        statusBarIcon = config.statusBarIcon
+        hiddenMenuLaunchTypes = config.hiddenMenuLaunchTypes
+        notchLauncherEnabled = config.notchLauncherEnabled
+        notchPanelStyle = config.notchPanelStyle
+        notchGlassAppearance = config.notchGlassAppearance
+        notchGlassMaterial = config.notchGlassMaterial
+        notchPanelOpacity = config.notchPanelOpacity
+        notchPanelColorHex = config.notchPanelColorHex
+        notchMirrorEnabled = config.notchMirrorEnabled
+        notchQuickNoteEnabled = config.notchQuickNoteEnabled
+        notchCoverScreensEnabled = config.notchCoverScreensEnabled
+        notchQuickNoteShortcut = config.notchQuickNoteShortcut
+        coverScreensShortcut = config.coverScreensShortcut
+        coverScreensMessage = config.coverScreensMessage
+        notchWidgets = config.notchWidgets
+        markSaved()
+        DispatchQueue.main.async { [weak self] in self?.isApplyingImportedConfig = false }
     }
 
     public func markSaved() {

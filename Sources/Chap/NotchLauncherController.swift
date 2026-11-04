@@ -650,6 +650,11 @@ final class NotchLauncherController {
         beginTimedPanelPreview(rebuildPanel: true)
     }
 
+    /// Notch Icons 선택 직후 새 표시 상태로 패널을 다시 만들어 잠깐 보여준다.
+    func previewStripIcons() {
+        beginTimedPanelPreview(rebuildPanel: true)
+    }
+
     /// Custom 색 변경을 열린 메인 도커에 즉시 반영하고 잠깐 고정한다.
     func previewCustomColor(_ colorHex: String) {
         beginTimedPanelPreview(rebuildPanel: false)

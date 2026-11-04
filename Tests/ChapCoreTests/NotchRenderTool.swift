@@ -344,12 +344,10 @@ struct NotchRenderTool {
         @State private var site = Site(
             name: "Docs", url: "https://docs.example.com", width: 900, height: 700,
             shortcut: "N")
-        @State private var isEditing = true
 
         var body: some View {
             SiteConfigView(
                 site: $site,
-                isEditing: $isEditing,
                 quickNoteShortcut: "N",
                 coverScreensShortcut: "L"
             )
@@ -411,17 +409,30 @@ struct NotchRenderTool {
             let png = try Self.renderPNG(view)
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
-        // 최소 Settings 창 전체를 그려 하단 탭과 User Guide·Q&A·⋯ 아이콘이 겹치지 않는지 본다.
-        SettingsView.previewStartsEditing = true
-        defer { SettingsView.previewStartsEditing = false }
-        let full = SettingsView(
-            vm: SettingsViewModel(config: config), updateController: UpdateController(),
-            layoutLibrary: LayoutLibrary()
-        )
-        .frame(width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
-        .environment(\.colorScheme, ColorScheme.light)
-        try Self.renderPNG(full).write(
-            to: directory.appendingPathComponent("settings-full-bottom-bar.png"))
+        // 최소 Settings 창 전체를 탭별로 그리고 Launchers는 Dark도 확인한다.
+        SettingsView.previewSelectedIndex = config.sites.isEmpty ? nil : 0
+        defer {
+            SettingsView.previewSelectedIndex = nil
+            SettingsView.previewTab = nil
+        }
+        let fullCases: [(String, String, ColorScheme)] = [
+            ("settings-full-launchers-light", "launchables", .light),
+            ("settings-full-launchers-dark", "launchables", .dark),
+            ("settings-full-general", "general", .light),
+            ("settings-full-notch", "notch", .light),
+            ("settings-full-tools", "tools", .light),
+        ]
+        for (name, tab, scheme) in fullCases {
+            SettingsView.previewTab = tab
+            let full = SettingsView(
+                vm: SettingsViewModel(config: config), updateController: UpdateController(),
+                layoutLibrary: LayoutLibrary()
+            )
+            .frame(width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
+            .environment(\.colorScheme, scheme)
+            try Self.renderPNG(full).write(
+                to: directory.appendingPathComponent("\(name).png"))
+        }
     }
 
     /// Keep Awake 중앙 HUD(켜짐·꺼짐) 모습을 PNG로 남긴다. 물범이 파란 타일 위에서 읽히는지 본다.
@@ -533,9 +544,9 @@ struct NotchRenderTool {
             ("settings-size-presets-dark", ColorScheme.dark, WindowSizePresets.tall.id),
             ("settings-size-presets-custom", ColorScheme.light, nil),
         ] as [(String, ColorScheme, String?)] {
-            // 최소 설정창(820) 기준 오른쪽 패널 폭: 820 - 사이드바 200 - 구분선 1.
+            // 최소 설정창(720) Launchers 패널 폭: 720 - sidebar 210 - divider 1.
             let view = SizePresetPreview(presetID: preset)
-                .frame(width: 619, height: 760)
+                .frame(width: 509, height: 560)
                 .background(DS.surfaceBg)
                 .environment(\.colorScheme, scheme)
             try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
@@ -544,7 +555,6 @@ struct NotchRenderTool {
 
     private struct SizePresetPreview: View {
         @State private var site: Site
-        @State private var isEditing = true
 
         init(presetID: String?) {
             _site = State(
@@ -555,7 +565,7 @@ struct NotchRenderTool {
 
         var body: some View {
             SiteConfigView(
-                site: $site, isEditing: $isEditing, quickNoteShortcut: nil,
+                site: $site, quickNoteShortcut: nil,
                 coverScreensShortcut: nil)
         }
     }

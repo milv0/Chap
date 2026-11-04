@@ -453,11 +453,12 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
-Settings는 하단의 `Launchers`·`General`·`Notch`·`Tools` 네 탭으로 오른쪽 패널을 전환한다. 왼쪽 사이트
-사이드바는 모든 탭에서 유지되며, General/Notch/Tools에서 사이트를 선택하면 Launchers로 복귀한다.
-Launchers는 사이트 실행·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
+Settings는 상단 가운데의 system segmented `Launchers`·`General`·`Notch`·`Tools`로 본문을 전환한다.
+AppKit이 최초 720×735 크기, 720×560 최소 크기와 사용자의 가로·세로 리사이즈를 소유하고, SettingsHostingController는 SwiftUI fitting size가 창 높이를 되돌리지 않게 한다.
+Launchers에서만 왼쪽 sidebar를 만들고, 나머지 탭은 Form의 스크롤 영역을 창 전체 폭으로 두어 스크롤바를 맨 오른쪽에 붙인다. 실제 설정 내용은 560pt 폭으로 가운데 정렬한다. 각 탭은 switch로 하나만
+생성해 숨은 탭의 observer·onChange가 계속 살아 있지 않게 한다. Launchers는 실행 항목·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
 상태바 아이콘과 메뉴 섹션 표시 여부를, Notch는 런처 on/off·6칸 위젯·Screenshots 폴더·Custom/Glass를,
-Tools는 Quick Note와 Cover Screens를 관리한다.
+Tools는 Quick Note와 Cover Screens를 관리한다. Launchers 상세도 같은 grouped Form의 Launcher·Window 두 섹션을 쓴다. 행에는 제목과 컨트롤만 두고 설명은 툴팁으로 보낸다. Type 세그먼트+Name과 Display+Follow Cursor는 각각 한 행으로 묶고, 대상 필드(URL/App/Folder)는 전체 폭 한 행이다. Size 프리셋과 그 아래 Preview만 공간형 전체 폭 행을 사용하며, 모니터가 하나면 Preview는 배치도 없이 낮게 그린다.
 
 ### 9.1 로드 — `ConfigStore.load(connectedDisplays:)`
 
@@ -506,11 +507,15 @@ SettingsView.save(showAlerts:)
 
 `onSave`가 `false`를 반환하면 `markSaved()`가 호출되지 않으므로, 저장 실패 시 변경 상태가 유지된다.
 전역 설정은 `saveGlobals()`가 `vm.globalsConfig`를 통해 현재 global 값과 마지막 저장
-`originalSites`만 보낸다. 따라서 편집 중인 invalid Launcher 초안은 General·Notch·Tools 저장을 막거나
+`originalSites`만 보낸다. Tools의 Cover Screens 문구 debounce는 탭을 떠나거나 창을 닫기 전에 flush해
+다른 global 설정과 같은 저장 계약을 지킨다. 따라서 편집 중인 invalid Launcher 초안은 General·Notch·Tools 저장을 막거나
 함께 저장되지 않는다. `hasChanges`는 창 닫기/종료 시 확인 alert의 근거다.
 `Site.==`는 `id`(세션 한정 UUID)를 제외한 값 비교다.
 
 ### 9.3 Import — `normalizeForImport`
+
+Import entry는 `vm.hasChanges`면 먼저 교체 확인을 받는다. 확인 뒤에는 Export와 같은 전체 Config를 복원하되,
+사이트·화면 값은 아래 정규화와 validation을 먼저 통과한다. `notchCollapsedWidgets`는 AppDelegate가 현재 Mac 값을 유지한다.
 
 ```
 decode → 안전 정규화 → 전체 validateConfig → blocking 이슈 있으면 파일·VM 무변경으로 중단

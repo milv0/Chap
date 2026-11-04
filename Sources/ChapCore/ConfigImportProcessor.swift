@@ -37,13 +37,8 @@ enum ConfigImportProcessor {
             return .blocked(config, normalized.blockingIssues)
         }
 
-        let resultConfig = Config(
-            showGuideWindow: config.showGuideWindow,
-            launchAtLogin: config.launchAtLogin,
-            optionShortcutsEnabled: config.optionShortcutsEnabled,
-            statusBarIcon: config.statusBarIcon,
-            hiddenMenuLaunchTypes: config.hiddenMenuLaunchTypes,
-            sites: normalized.sites)
+        var resultConfig = config
+        resultConfig.sites = normalized.sites
         return .success(
             ProcessedConfigImport(
                 config: resultConfig,

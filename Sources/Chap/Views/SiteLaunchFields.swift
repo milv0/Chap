@@ -1,11 +1,10 @@
 import Cocoa
 import SwiftUI
 
-/// Launch-type specific input fields extracted from SiteConfigView.
-/// Renders URL, App, or Finder fields based on the current launchType.
+/// Launch-type specific target field shown beside Name in the Launcher section.
+/// Inline label + field so it reads on one baseline with the Name field.
 struct SiteLaunchFields: View {
     @Binding var site: Site
-    @Binding var isEditing: Bool
     let browseForApp: () -> Void
     let browseFolder: () -> Void
 
@@ -20,13 +19,11 @@ struct SiteLaunchFields: View {
         }
     }
 
-    // MARK: - URL Fields
-
     private var urlFields: some View {
-        // Reuse 토글은 창 관련 설정이라 Window 묶음(SiteWindowConfigView)에 있다.
-        VStack(alignment: .leading, spacing: 10) {
-            InputField(
-                label: "URL",
+        HStack(spacing: 8) {
+            fieldLabel("URL")
+            TextField(
+                "https://",
                 text: Binding(
                     get: { site.url },
                     set: { newURL in
@@ -39,62 +36,51 @@ struct SiteLaunchFields: View {
                                 .components(separatedBy: ".").first?.capitalized ?? host
                         }
                     }
-                ),
-                placeholder: "https://"
+                )
             )
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .accessibilityLabel("URL")
         }
     }
-
-    // MARK: - App Fields
 
     private var appFields: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Application")
-                .font(DS.captionFont)
-                .foregroundColor(DS.textSecondary)
-            HStack(spacing: 8) {
-                TextField(
-                    "/Applications/...",
-                    text: Binding(
-                        get: { site.appPath ?? "" },
-                        set: { newPath in
-                            site.appPath = newPath
-                            if !newPath.isEmpty {
-                                let appName = URL(fileURLWithPath: newPath)
-                                    .deletingPathExtension().lastPathComponent
-                                if site.name == Defaults.newSiteName || site.name.isEmpty {
-                                    site.name = appName
-                                }
+        HStack(spacing: 8) {
+            fieldLabel("App")
+            TextField(
+                "/Applications/…",
+                text: Binding(
+                    get: { site.appPath ?? "" },
+                    set: { newPath in
+                        site.appPath = newPath
+                        if !newPath.isEmpty {
+                            let appName = URL(fileURLWithPath: newPath)
+                                .deletingPathExtension().lastPathComponent
+                            if site.name == Defaults.newSiteName || site.name.isEmpty {
+                                site.name = appName
                             }
                         }
-                    )
+                    }
                 )
-                .textFieldStyle(.plain)
-                .font(DS.bodyFont)
-                .padding(.horizontal, DS.fieldPaddingH)
-                .padding(.vertical, DS.fieldPaddingV)
-                .background(DS.surfaceBg)
-                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DS.fieldRadius)
-                        .stroke(DS.border, lineWidth: 1)
-                )
-                Button(action: browseForApp) {
-                    Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 14))
-                }
-                .buttonStyle(.bordered)
-                .frame(height: 28)
+            )
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .accessibilityLabel("Application")
+            Button(action: browseForApp) {
+                Image(systemName: "folder.badge.plus")
+                    .font(.system(size: 14))
             }
+            .buttonStyle(.bordered)
+            .help("Choose application")
+            .accessibilityLabel("Choose application")
         }
     }
 
-    // MARK: - Finder Fields
-
     private var finderFields: some View {
-        HStack(alignment: .bottom) {
-            InputField(
-                label: "Folder",
+        HStack(spacing: 8) {
+            fieldLabel("Folder")
+            TextField(
+                "~/Documents",
                 text: Binding(
                     get: { site.folderPath ?? "" },
                     set: { newPath in
@@ -105,15 +91,24 @@ struct SiteLaunchFields: View {
                             site.name = URL(fileURLWithPath: newPath).lastPathComponent
                         }
                     }
-                ),
-                placeholder: "~/Documents"
+                )
             )
+            .labelsHidden()
+            .textFieldStyle(.roundedBorder)
+            .accessibilityLabel("Folder")
             Button(action: browseFolder) {
                 Image(systemName: "folder.badge.plus")
                     .font(.system(size: 14))
             }
             .buttonStyle(.bordered)
-            .frame(height: 30)
+            .help("Choose folder")
+            .accessibilityLabel("Choose folder")
         }
+    }
+
+    private func fieldLabel(_ title: String) -> some View {
+        Text(title)
+            .foregroundColor(DS.textSecondary)
+            .fixedSize()
     }
 }

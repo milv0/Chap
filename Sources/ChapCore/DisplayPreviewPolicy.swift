@@ -2,9 +2,11 @@ import Foundation
 
 public enum DisplayPreviewPolicy {
     public static let topologyHeight: CGFloat = 58
-    public static let compactTopologyHeight: CGFloat = 96
+    public static let compactTopologyHeight: CGFloat = 64
     public static let splitPreviewMinimumWidth: CGFloat = 420
-    public static let detailHeight: CGFloat = 204
+    public static let detailHeight: CGFloat = 160
+    /// 모니터가 하나일 때 배치도 없이 보여 주는 상세 캔버스 높이.
+    public static let singleDisplayDetailHeight: CGFloat = 110
     public static let detailContentInset: CGFloat = 20
     public static let minimumNamedMonitorWidth: CGFloat = 86
     public static let minimumNamedMonitorHeight: CGFloat = 40

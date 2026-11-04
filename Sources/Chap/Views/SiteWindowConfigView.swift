@@ -5,7 +5,8 @@ import SwiftUI
 /// Includes display picker, Follow Cursor button, size preset, width/height fields, and minimap.
 struct SiteWindowConfigView: View {
     @Binding var site: Site
-    @Binding var isEditing: Bool
+    @Binding var shortcut: String?
+    var shortcutErrorMessage: String?
     @Binding var hoveredSizeSelection: Int?
     @Binding var sizeEditingDisplayIdentifier: String?
     @Binding var sizeEditingDisplayName: String?
@@ -14,7 +15,6 @@ struct SiteWindowConfigView: View {
     var widthFocused: FocusState<Bool>.Binding
     var heightFocused: FocusState<Bool>.Binding
 
-    private let dropdownControlWidth: CGFloat = 180
     private let sizePresets = WindowSizePresets.all
 
     // MARK: - Computed Properties
@@ -130,6 +130,8 @@ struct SiteWindowConfigView: View {
         return site.displaySizeOverrides[index]
     }
 
+    private static let unresolvedDisplayTag = "ChapSavedDisplayUnavailable"
+
     private var selectedDisplayTag: String {
         if let id = site.displayIdentifier, !id.isEmpty,
             NSScreen.screens.contains(where: { displayUUID(for: $0) == id })
@@ -142,14 +144,25 @@ struct SiteWindowConfigView: View {
                 return displayUUID(for: screen) ?? name
             }
         }
+        if hasExplicitDisplaySelection(site) {
+            return Self.unresolvedDisplayTag
+        }
         if let screen = targetScreen(for: site) {
             return displayUUID(for: screen) ?? screen.localizedName
         }
         return "Auto"
     }
 
+    private var unresolvedDisplayLabel: String {
+        let name = site.displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !name.isEmpty, NSScreen.screens.filter({ $0.localizedName == name }).count > 1 {
+            return "\(name) — Ambiguous"
+        }
+        return "\(name.isEmpty ? "Saved Display" : name) — Unavailable"
+    }
+
     private var displayWarningText: String? {
-        guard site.displayName != nil || site.displayIdentifier != nil else { return nil }
+        guard hasExplicitDisplaySelection(site) else { return nil }
         if let id = site.displayIdentifier, !id.isEmpty,
             NSScreen.screens.contains(where: { displayUUID(for: $0) == id })
         {
@@ -174,17 +187,100 @@ struct SiteWindowConfigView: View {
         return "\(preset.label) · \(previewSizeText)"
     }
 
-    // MARK: - Body
+    // MARK: - Form Sections
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DS.spacing) {
-            VStack(alignment: .leading, spacing: 8) {
-                SettingsSectionHeader(title: "Window", systemImage: "macwindow")
-                windowGroup
+        windowSection
+    }
+
+    private var windowSection: some View {
+        Section {
+            SettingsRow(
+                title: "Shortcut",
+                conflictMessage: shortcutErrorMessage,
+                help: "Press ⌥ and this key anywhere to launch. Clear it to turn the shortcut off."
+            ) {
+                OptionKeyField(
+                    key: $shortcut,
+                    accessibilityLabel: "Launcher shortcut key",
+                    hasError: shortcutErrorMessage != nil)
             }
 
+            VStack(alignment: .leading, spacing: 4) {
+                SettingsRow(
+                    title: "Display",
+                    help: "Pick a screen, or use Follow Cursor for the one under your pointer."
+                ) {
+                    HStack(spacing: 10) {
+                        Picker(
+                            "Display",
+                            selection: Binding(
+                                get: { selectedDisplayTag },
+                                set: { newTag in applyDisplaySelection(tag: newTag) }
+                            )
+                        ) {
+                            if selectedDisplayTag == Self.unresolvedDisplayTag {
+                                Text(unresolvedDisplayLabel)
+                                    .tag(Self.unresolvedDisplayTag)
+                            }
+                            ForEach(NSScreen.screens, id: \.self) { screen in
+                                Text(displayLabel(for: screen))
+                                    .tag(displayUUID(for: screen) ?? screen.localizedName)
+                            }
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        .frame(width: 150, alignment: .trailing)
+                        .accessibilityLabel("Display")
+                        .disabled(!hasExplicitDisplaySelection(site))
+
+                        Text("Follow Cursor")
+                        Toggle(
+                            "Follow Cursor",
+                            isOn: Binding(
+                                get: { !hasExplicitDisplaySelection(site) },
+                                set: { _ in toggleFollowCursor() }
+                            )
+                        )
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .help("Click a display in Preview to set its size while this is on.")
+                    }
+                }
+
+                if let displayWarningText {
+                    Label(displayWarningText, systemImage: "exclamationmark.triangle.fill")
+                        .font(DS.captionFont)
+                        .foregroundColor(DS.danger)
+                        .help(displayWarningText)
+                }
+            }
+
+            if site.launchType == .url {
+                SettingsToggleRow(
+                    title: "Reuse Existing Window",
+                    help: "Bring back only the Chrome app window created by this launcher.",
+                    isOn: $site.reuseExistingWindow
+                )
+            }
+
+            sizeRow
+
+            // Preview는 Size 바로 아래에 둔다. 섹션을 따로 두면 상자가 하나 더 생겨 화면이 번잡해진다.
             VStack(alignment: .leading, spacing: 8) {
-                SettingsSectionHeader(title: "Preview", systemImage: "rectangle.on.rectangle")
+                SettingsRow(
+                    title: "Preview",
+                    help: hasExplicitDisplaySelection(site)
+                        ? "Click a display to open the window there."
+                        : "Click a display to set its own size while following the cursor."
+                ) {
+                    Text(
+                        hasExplicitDisplaySelection(site)
+                            ? "Click a display to select it" : "Click a display to size it"
+                    )
+                    .font(DS.captionFont)
+                    .foregroundColor(DS.textTertiary)
+                }
                 MinimapSwiftUI(
                     selectedIdentifier: site.displayIdentifier,
                     selectedName: site.displayName,
@@ -194,131 +290,61 @@ struct SiteWindowConfigView: View {
                     previewLabelForScreen: { minimapPreviewLabel(for: $0) },
                     onPreviewSelect: { handleTopologySelection($0) }
                 )
-                .frame(maxWidth: .infinity, minHeight: 100)
                 .id(
                     "\(previewWidth)-\(previewHeight)-\(site.displayIdentifier ?? site.displayName ?? "auto")"
                 )
             }
-            .frame(maxWidth: .infinity)
+        } header: {
+            SettingsSectionHeader(title: "Window", systemImage: "macwindow")
         }
     }
 
-    /// Display·Follow Cursor·Reuse·Size를 다른 탭과 같은 묶음 줄로 둔다. 컨트롤은 모두 오른쪽 끝.
-    private var windowGroup: some View {
-        VStack(spacing: 0) {
-            groupRow {
-                SettingsRow(
-                    title: "Display",
-                    subtitle: displayWarningText ?? "Where the window opens.",
-                    help:
-                        "Pick a screen, or turn on Follow Cursor to use the one under your pointer."
-                ) {
-                    Picker(
-                        "",
-                        selection: Binding(
-                            get: { selectedDisplayTag },
-                            set: { newTag in
-                                isEditing = true
-                                applyDisplaySelection(tag: newTag)
-                            }
+    private var sizeRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            SettingsRow(title: "Size", help: "Recalculated for the screen at launch.") {
+                if selectedSizePreset != nil
+                    || hoveredSizeSelection.map({ $0 > 0 }) == true
+                {
+                    Text(sizeSummaryText)
+                        .font(DS.captionFont)
+                        .foregroundColor(DS.textTertiary)
+                        .monospacedDigit()
+                } else {
+                    HStack(spacing: 12) {
+                        compactDimensionField(
+                            label: "W",
+                            text: Binding(
+                                get: { widthDraft ?? "\(displayedWindowSize.width)" },
+                                set: { widthDraft = $0 }
+                            ),
+                            focused: widthFocused,
+                            commit: commitWidthDraft
                         )
-                    ) {
-                        ForEach(NSScreen.screens, id: \.self) { screen in
-                            Text(displayLabel(for: screen))
-                                .tag(displayUUID(for: screen) ?? screen.localizedName)
-                        }
+                        compactDimensionField(
+                            label: "H",
+                            text: Binding(
+                                get: { heightDraft ?? "\(displayedWindowSize.height)" },
+                                set: { heightDraft = $0 }
+                            ),
+                            focused: heightFocused,
+                            commit: commitHeightDraft
+                        )
                     }
-                    .labelsHidden()
-                    .frame(width: dropdownControlWidth)
-                    // Follow Cursor가 켜지면 고정 대상이 없으므로 피커를 비활성화한다.
-                    // 화면별 크기 편집은 아래 Preview 배치도에서 계속 할 수 있다.
-                    .disabled(!hasExplicitDisplaySelection(site))
                 }
             }
-            groupDivider
-            groupRow {
-                SettingsToggleRow(
-                    title: "Follow Cursor",
-                    subtitle: "Opens on the screen under your pointer.",
-                    help: "Click a display in the preview to set its size while this is on.",
-                    isOn: Binding(
-                        get: { !hasExplicitDisplaySelection(site) },
-                        set: { _ in
-                            isEditing = true
-                            toggleFollowCursor()
-                        }
-                    )
-                )
-            }
-            if site.launchType == .url {
-                groupDivider
-                groupRow {
-                    SettingsToggleRow(
-                        title: "Reuse Existing Window",
-                        subtitle: "Brings back the window this launcher opened.",
-                        help: "Reuse only the Chrome app window created by this launchable.",
-                        isOn: $site.reuseExistingWindow
-                    )
-                }
-            }
-            groupDivider
-            groupRow {
-                VStack(alignment: .leading, spacing: 8) {
-                    // 제목 줄 오른쪽: 프리셋이면 실제 크기를 작게(올린 칸의 크기로 바뀐다), Custom이면 W·H 입력.
-                    SettingsRow(title: "Size", subtitle: "Recalculated for the screen at launch.") {
-                        if selectedSizePreset != nil
-                            || hoveredSizeSelection.map({ $0 > 0 }) == true
-                        {
-                            Text(sizeSummaryText)
-                                .font(DS.captionFont)
-                                .foregroundColor(DS.textTertiary)
-                                .monospacedDigit()
-                        } else {
-                            HStack(spacing: 12) {
-                                compactDimensionField(
-                                    label: "W",
-                                    text: Binding(
-                                        get: { widthDraft ?? "\(displayedWindowSize.width)" },
-                                        set: { widthDraft = $0 }
-                                    ),
-                                    focused: widthFocused,
-                                    commit: commitWidthDraft
-                                )
-                                compactDimensionField(
-                                    label: "H",
-                                    text: Binding(
-                                        get: { heightDraft ?? "\(displayedWindowSize.height)" },
-                                        set: { heightDraft = $0 }
-                                    ),
-                                    focused: heightFocused,
-                                    commit: commitHeightDraft
-                                )
-                            }
-                        }
-                    }
-                    .frame(minHeight: 24)
-                    SizePresetGrid(
-                        presets: sizePresets,
-                        selectedSelection: selectedSizeSelection,
-                        hoveredSelection: $hoveredSizeSelection,
-                        onSelect: selectSize
-                    )
-                }
-            }
+            .frame(minHeight: 24)
+
+            SizePresetGrid(
+                presets: sizePresets,
+                selectedSelection: selectedSizeSelection,
+                hoveredSelection: $hoveredSizeSelection,
+                onSelect: selectSize
+            )
         }
-        .background(DS.surfaceBg)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(DS.border, lineWidth: 1))
-    }
-
-    private func groupRow<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        content()
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-    }
-
-    private var groupDivider: some View {
-        Divider().padding(.leading, 12)
+        .onDisappear {
+            hoveredSizeSelection = nil
+            commitDimensionDrafts()
+        }
     }
 
     private func compactDimensionField(
@@ -358,20 +384,22 @@ struct SiteWindowConfigView: View {
 
     /// 격자에서 고른 칸을 적용한다. 0은 Custom: 지금 크기를 그대로 숫자로 남긴다.
     private func selectSize(_ selection: Int) {
-        isEditing = true
         hoveredSizeSelection = nil
         if selection == 0 {
+            commitDimensionDrafts()
             let currentSize = displayedWindowSize
             updateCurrentSize(
                 windowSizePreset: nil, width: currentSize.width, height: currentSize.height)
             return
         }
+        discardDimensionDrafts()
         applySize(for: selection)
     }
 
     // MARK: - Actions
 
     private func applyDisplaySelection(tag: String) {
+        commitDimensionDrafts()
         sizeEditingDisplayIdentifier = nil
         sizeEditingDisplayName = nil
         if tag == "Auto" {
@@ -396,7 +424,7 @@ struct SiteWindowConfigView: View {
     }
 
     private func selectDisplay(_ screen: NSScreen?) {
-        isEditing = true
+        commitDimensionDrafts()
         sizeEditingDisplayIdentifier = nil
         sizeEditingDisplayName = nil
         if let screen {
@@ -417,7 +445,7 @@ struct SiteWindowConfigView: View {
     }
 
     private func focusSizeEditing(on screen: NSScreen) {
-        isEditing = true
+        commitDimensionDrafts()
         sizeEditingDisplayIdentifier = displayUUID(for: screen)
         sizeEditingDisplayName = screen.localizedName
     }
@@ -454,6 +482,16 @@ struct SiteWindowConfigView: View {
         return sizePresets[selection - 1]
     }
 
+    private func commitDimensionDrafts() {
+        commitWidthDraft()
+        commitHeightDraft()
+    }
+
+    private func discardDimensionDrafts() {
+        widthDraft = nil
+        heightDraft = nil
+    }
+
     private func commitWidthDraft() {
         guard let draft = widthDraft else { return }
         widthDraft = nil
@@ -461,7 +499,6 @@ struct SiteWindowConfigView: View {
         guard let parsed = Int(draft), parsed >= 100, parsed != currentSize.width else {
             return
         }
-        isEditing = true
         updateCurrentSize(windowSizePreset: nil, width: parsed, height: currentSize.height)
     }
 
@@ -472,7 +509,6 @@ struct SiteWindowConfigView: View {
         guard let parsed = Int(draft), parsed >= 100, parsed != currentSize.height else {
             return
         }
-        isEditing = true
         updateCurrentSize(windowSizePreset: nil, width: currentSize.width, height: parsed)
     }
 

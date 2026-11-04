@@ -159,7 +159,7 @@ extension AppDelegate {
         showSettings(focusing: nil)
     }
 
-    /// 설정창을 열고, 타입이 주어지면 Launchables 탭에서 그 타입의 첫 항목을 선택한다.
+    /// 설정창을 열고, 타입이 주어지면 Launchers 탭에서 그 타입의 첫 항목을 선택한다.
     func showSettings(focusing launchType: LaunchType?) {
         defer {
             if let launchType {
@@ -292,10 +292,10 @@ extension AppDelegate {
         let window = makeManagedWindow(
             title: "Chap Settings",
             contentSize: NSSize(
-                width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height),
+                width: SettingsView.initialSize.width, height: SettingsView.initialSize.height),
             styleMask: [.titled, .closable, .resizable])
-        window.contentViewController = NSHostingController(rootView: settingsView)
-        // 호스팅 컨트롤러를 붙인 뒤에 걸어야 덮이지 않는다. 하단 탭과 User Guide·Q&A·⋯가 겹치기 전에 멈춘다.
+        window.contentViewController = SettingsHostingController(rootView: settingsView)
+        // 초기 frame을 가진 host를 설치한 뒤 AppKit 최소 크기를 설정한다.
         window.contentMinSize = NSSize(
             width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
         // 커서가 있는 화면 중앙에 표시
@@ -320,8 +320,9 @@ extension AppDelegate {
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         guard sender == settingsWindow else { return true }
 
-        // Flush debounced edits before deciding whether anything remains unsaved.
+        // Flush both launcher and Tools debounces before deciding whether anything is unsaved.
         settingsVM?.flushPendingSave()
+        NotificationCenter.default.post(name: ToolsSettingsView.flushPendingSave, object: nil)
         guard let vm = settingsVM, vm.hasChanges else { return true }
 
         let alert = NSAlert()
@@ -329,12 +330,19 @@ extension AppDelegate {
         alert.informativeText = "Changes will be lost if you close."
         alert.addButton(withTitle: "Close")
         alert.addButton(withTitle: "Cancel")
-        return alert.runModal() == .alertFirstButtonReturn
+        let shouldClose = alert.runModal() == .alertFirstButtonReturn
+        if shouldClose {
+            NotificationCenter.default.post(
+                name: ToolsSettingsView.discardPendingSave, object: nil)
+        }
+        return shouldClose
     }
 
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow else { return }
         if window == settingsWindow {
+            NotificationCenter.default.post(
+                name: ToolsSettingsView.discardPendingSave, object: nil)
             settingsVM = nil
             settingsWindow = nil
         } else if window == qaWindow {
@@ -366,6 +374,7 @@ extension AppDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         settingsVM?.flushPendingSave()
+        NotificationCenter.default.post(name: ToolsSettingsView.flushPendingSave, object: nil)
         guard let vm = settingsVM, vm.hasChanges,
             let window = settingsWindow, window.isVisible
         else {
@@ -377,6 +386,8 @@ extension AppDelegate {
         alert.addButton(withTitle: "Quit")
         alert.addButton(withTitle: "Cancel")
         if alert.runModal() == .alertFirstButtonReturn {
+            NotificationCenter.default.post(
+                name: ToolsSettingsView.discardPendingSave, object: nil)
             return .terminateNow
         }
         return .terminateCancel

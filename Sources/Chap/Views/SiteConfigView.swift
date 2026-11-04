@@ -4,7 +4,6 @@ import UniformTypeIdentifiers
 
 struct SiteConfigView: View {
     @Binding var site: Site
-    @Binding var isEditing: Bool
     var isNew: Bool = false
     /// Tools에서 이미 배정한 키. 런처 입력에서는 이 키를 쓸 수 없다.
     var quickNoteShortcut: String?
@@ -17,6 +16,7 @@ struct SiteConfigView: View {
     @State private var sizeEditingDisplayIdentifier: String?
     @State private var sizeEditingDisplayName: String?
     @FocusState private var nameFieldFocused: Bool
+    @State private var didAutofocusName = false
     /// Numeric draft state: width/height text while user is typing.
     /// nil means "not currently editing" → display computed value.
     @State private var widthDraft: String?
@@ -26,95 +26,62 @@ struct SiteConfigView: View {
     var onSave: (() -> Bool)?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            CardSection {
-                // 창이 넓어도 입력칸을 늘리지 않는다. 격자 여섯 칸이 겨우 들어가는 폭까지만.
-                formContent
-                    .frame(maxWidth: 460, alignment: .leading)
-            }
-            .padding(.leading, DS.paddingSmall)
-            .padding(.trailing, DS.padding)
-            .padding(.vertical, DS.paddingSmall)
+        SettingsFormPage(minimumHorizontalMargin: 12) {
+            launcherSection
+            windowConfiguration
         }
-        .disabled(!isEditing)
+        .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("⌥\(reservedKeyChar) is reserved for system use.")
+        }
         .onChange(of: quickNoteShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
         .onChange(of: coverScreensShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
     }
 
-    // MARK: - Form Content
+    // MARK: - Launcher Section
 
-    private var formContent: some View {
-        // 크기 프리셋 격자가 들어가 길어진 만큼 위쪽 입력 줄 사이는 조금 좁힌다.
-        VStack(alignment: .leading, spacing: 12) {
-            launchTypeSection
-            nameAndShortcutRow
-            launchTargetFields
-            windowConfiguration
-        }
-    }
+    private var launcherSection: some View {
+        Section {
+            // Type과 Name을 한 줄에. 둘 다 짧아 따로 두면 오른쪽이 비어 보인다.
+            HStack(spacing: 16) {
+                Picker("Launch Type", selection: $site.launchType) {
+                    Text("URL").tag(LaunchType.url)
+                    Text("App").tag(LaunchType.app)
+                    Text("Finder").tag(LaunchType.finder)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 190)
 
-    private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Name")
-                .font(DS.captionFont)
-                .foregroundColor(DS.textSecondary)
-            TextField("Site name", text: $site.name)
-                .textFieldStyle(.plain)
-                .font(DS.bodyFont)
-                .padding(.horizontal, DS.fieldPaddingH)
-                .padding(.vertical, DS.fieldPaddingV)
-                .background(DS.surfaceBg)
-                .clipShape(RoundedRectangle(cornerRadius: DS.fieldRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: DS.fieldRadius)
-                        .stroke(DS.border, lineWidth: 1)
-                )
-                .focused($nameFieldFocused)
-        }
-        .onAppear {
-            guard isNew else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                nameFieldFocused = true
+                HStack(spacing: 8) {
+                    Text("Name")
+                        .foregroundColor(DS.textSecondary)
+                        .fixedSize()
+                    TextField("Site name", text: $site.name)
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .focused($nameFieldFocused)
+                        .accessibilityLabel("Name")
+                }
+                .frame(maxWidth: .infinity)
             }
-        }
-    }
-
-    private var launchTypeSection: some View {
-        // 레이블을 알약 왼쪽에 붙여 한 줄로 둔다.
-        HStack(spacing: DS.paddingSmall) {
-            Text("Launch Type")
-                .font(DS.captionFont)
-                .foregroundColor(DS.textSecondary)
-                .fixedSize()
-            PillPicker(selection: $site.launchType)
-        }
-    }
-
-    private var nameAndShortcutRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .bottom, spacing: DS.spacing) {
-                nameSection
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                shortcutSection(isCompact: true)
-                    .frame(width: 88, alignment: .center)
+            .onAppear {
+                guard isNew, !didAutofocusName else { return }
+                didAutofocusName = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    nameFieldFocused = true
+                }
             }
-            if let message = shortcutErrorMessage {
-                Label(message, systemImage: "exclamationmark.triangle.fill")
-                    .font(DS.captionFont)
-                    .foregroundColor(DS.danger)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel(message)
-            }
-        }
-    }
 
-    private var launchTargetFields: some View {
-        SiteLaunchFields(
-            site: $site,
-            isEditing: $isEditing,
-            browseForApp: browseForApp,
-            browseFolder: browseFolder
-        )
+            SiteLaunchFields(
+                site: $site,
+                browseForApp: browseForApp,
+                browseFolder: browseFolder
+            )
+        } header: {
+            SettingsSectionHeader(title: "Launcher", systemImage: "square.grid.2x2")
+        }
     }
 
     private var activeShortcutConflict: QuickNoteShortcutPolicy.Conflict? {
@@ -133,9 +100,9 @@ struct SiteConfigView: View {
         return rejectedShortcutMessage
     }
 
-    private var shortcutBinding: Binding<String> {
+    private var shortcutBinding: Binding<String?> {
         Binding(
-            get: { site.shortcut ?? "" },
+            get: { site.shortcut },
             set: { newValue in
                 let key = QuickNoteShortcutPolicy.normalized(newValue)
                 if let key, [".", ","].contains(key) {
@@ -163,28 +130,11 @@ struct SiteConfigView: View {
         if activeShortcutConflict == nil { rejectedShortcutMessage = nil }
     }
 
-    private func shortcutSection(isCompact: Bool = false) -> some View {
-        InputField(
-            label: isCompact ? "Shortcut (⌥)" : "Shortcut (⌥ +)",
-            text: shortcutBinding,
-            placeholder: isCompact ? "–" : "예: T → ⌥T",
-            alignment: isCompact ? .center : .leading,
-            textAlignment: isCompact ? .center : .leading,
-            fieldBackground: isCompact ? DS.accentSurface : DS.surfaceBg,
-            fieldBorder: isCompact ? DS.accent.opacity(0.7) : DS.border,
-            hasError: shortcutErrorMessage != nil
-        )
-        .alert("Reserved Shortcut", isPresented: $reservedKeyAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("⌥\(reservedKeyChar) is reserved for system use.")
-        }
-    }
-
     private var windowConfiguration: some View {
         SiteWindowConfigView(
             site: $site,
-            isEditing: $isEditing,
+            shortcut: shortcutBinding,
+            shortcutErrorMessage: shortcutErrorMessage,
             hoveredSizeSelection: $hoveredSizeSelection,
             sizeEditingDisplayIdentifier: $sizeEditingDisplayIdentifier,
             sizeEditingDisplayName: $sizeEditingDisplayName,

@@ -27,8 +27,8 @@ struct LayoutDetailView: View {
 
     var body: some View {
         if let layout {
-            // 항목 설정(SiteConfigView)과 같은 틀: 카드 하나에 입력칸, 그리고 섹션 제목 + 묶음 상자.
-            ScrollView(showsIndicators: false) {
+            // Layout 편집은 아직 자체 카드 문법을 쓰며 launcher 항목 Form과는 별도로 구성한다.
+            ScrollView {
                 CardSection {
                     VStack(alignment: .leading, spacing: DS.spacing) {
                         header(layout)
@@ -45,8 +45,14 @@ struct LayoutDetailView: View {
                 .padding(.vertical, DS.paddingSmall)
             }
             .onAppear { nameDraft = layout.name }
-            .onChange(of: nameFocused) { _, focused in if !focused { commitName() } }
-            .onDisappear(perform: commitName)
+            .onChange(of: nameFocused) { _, focused in
+                if !focused, !isBusy { commitName() }
+            }
+            .onChange(of: isBusy) { wasBusy, busy in
+                if !wasBusy, busy { commitName(allowWhileBusy: true) }
+                if wasBusy, !busy { commitName() }
+            }
+            .onDisappear { commitName(allowWhileBusy: true) }
         }
     }
 
@@ -70,7 +76,7 @@ struct LayoutDetailView: View {
                             .strokeBorder(nameFocused ? DS.accent : DS.border, lineWidth: 1)
                     )
                     .focused($nameFocused)
-                    .onSubmit(commitName)
+                    .onSubmit { commitName() }
                     .accessibilityLabel("Layout name")
                     .disabled(isBusy)
             }
@@ -189,7 +195,7 @@ struct LayoutDetailView: View {
             .accessibilityLabel("Leave out \(window.applicationName)")
         }
         .padding(.horizontal, 12)
-        .frame(height: 46)
+        .frame(minHeight: 46)
         // 묶음 상자 안의 한 줄. 올리면 옅게 칠해 Preview에서 진해지는 창과 짝을 맞춘다.
         .background(hoveredWindowID == window.id ? DS.accentSoft : Color.clear)
         .onHover { inside in
@@ -221,8 +227,8 @@ struct LayoutDetailView: View {
         library.replace(layout.id, name: layout.name, windows: windows)
     }
 
-    private func commitName() {
-        guard let layout else { return }
+    private func commitName(allowWhileBusy: Bool = false) {
+        guard allowWhileBusy || !isBusy, let layout else { return }
         guard let cleaned = LayoutStore.cleanedName(nameDraft) else {
             // 비운 이름은 저장하지 않고 원래 이름으로 돌린다.
             nameDraft = layout.name

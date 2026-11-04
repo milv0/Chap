@@ -214,6 +214,28 @@ struct SettingsViewModelTests {
             config.notchWidgets
                 == NotchWidget.normalizedSlots([.screenshots, .launchers, .none, .none]))
     }
+    @Test func applyingImportedConfigUpdatesEveryFieldAndBaseline() {
+        let vm = SettingsViewModel(sites: baseSites)
+        let imported = Config(
+            showGuideWindow: false, launchAtLogin: true, optionShortcutsEnabled: false,
+            statusBarIcon: .seal, hiddenMenuLaunchTypes: [.finder], notchLauncherEnabled: true,
+            notchPanelStyle: .glass, notchGlassAppearance: .dark, notchGlassMaterial: .clear,
+            notchPanelOpacity: 0.7, notchPanelColorHex: "#123456",
+            notchMirrorEnabled: false, notchQuickNoteEnabled: false,
+            notchCoverScreensEnabled: false, notchQuickNoteShortcut: "Q",
+            coverScreensShortcut: "C", coverScreensMessage: "Back soon",
+            notchWidgets: [.screenshots, .downloads, .apps, .todo, .awake, .launchers],
+            sites: [Site(name: "Imported", url: "https://example.com", width: 800, height: 600)])
+
+        vm.applyImportedConfig(imported)
+
+        #expect(vm.config.sites == imported.sites)
+        #expect(vm.config.notchPanelStyle == .glass)
+        #expect(vm.config.notchQuickNoteShortcut == "Q")
+        #expect(vm.config.coverScreensMessage == "Back soon")
+        #expect(!vm.hasChanges)
+    }
+
     @Test func globalsConfigUsesSavedSitesAndCurrentGlobalValues() {
         let vm = SettingsViewModel(sites: baseSites)
         vm.sites[0].name = ""
