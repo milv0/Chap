@@ -42,12 +42,17 @@ public enum QuickNoteShortcutPolicy {
         return nil
     }
 
-    /// 런처가 이 키를 쓸 수 없는 이유. Tools에 배정된 키는 런처가 가져가지 못한다.
-    /// Quick Note를 먼저 보이고, 그다음 Cover Screens를 보이게 해 안내가 일관되게 나온다.
+    /// 런처가 이 키를 쓸 수 없는 이유. 다른 런처가 먼저 쓰는 키와 Tools에 배정된 키는 가져가지 못한다.
+    /// 다른 런처를 먼저 보이고, 그다음 Quick Note, Cover Screens 순으로 안내한다.
+    /// - Parameter otherSites: 지금 고치는 런처를 뺀 나머지 런처.
     public static func launcherConflict(
-        for key: String?, quickNoteKey: String?, coverScreensKey: String?
+        for key: String?, otherSites: [Site] = [], quickNoteKey: String?,
+        coverScreensKey: String?
     ) -> Conflict? {
         guard let key = normalized(key) else { return nil }
+        if let site = otherSites.first(where: { normalized($0.shortcut) == key }) {
+            return .site(name: site.name.isEmpty ? "another launcher" : site.name)
+        }
         if normalized(quickNoteKey) == key { return .feature(name: "Quick Note") }
         if normalized(coverScreensKey) == key { return .feature(name: "Cover Screens") }
         return nil

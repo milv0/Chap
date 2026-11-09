@@ -428,6 +428,7 @@ struct SettingsView: View {
                     isNew: isAddingNew,
                     quickNoteShortcut: vm.notchQuickNoteShortcut,
                     coverScreensShortcut: vm.coverScreensShortcut,
+                    otherSites: vm.sites.filter { $0.id != selectedSite.id },
                     onSave: {
                         vm.cancelPendingSave()
                         return save(showAlerts: true)

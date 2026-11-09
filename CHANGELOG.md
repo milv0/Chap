@@ -2,6 +2,14 @@
 
 All notable changes to Chap are documented in this file.
 
+## [2.20.2] — 2026-11-09
+
+### Fixed
+
+- **No more shared launcher shortcuts** — When you give a launcher an ⌥ key
+  that another launcher already uses, Chap now says so right away and keeps the
+  old key, instead of failing when it saves.
+
 ## [2.20.1] — 2026-11-04
 
 ### Changed
