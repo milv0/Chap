@@ -8,6 +8,8 @@ struct SiteConfigView: View {
     /// Tools에서 이미 배정한 키. 런처 입력에서는 이 키를 쓸 수 없다.
     var quickNoteShortcut: String?
     var coverScreensShortcut: String?
+    /// 지금 고치는 런처를 뺀 나머지 런처. 같은 ⌥ 키를 두 런처가 쓰지 못하게 한다.
+    var otherSites: [Site] = []
     @State private var hoveredSizeSelection: Int?
     @State private var reservedKeyAlert = false
     @State private var reservedKeyChar = ""
@@ -40,6 +42,9 @@ struct SiteConfigView: View {
         .task(id: appIconPath) { await loadAppIcon() }
         .onChange(of: quickNoteShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
         .onChange(of: coverScreensShortcut) { _, _ in clearRejectedShortcutMessageIfResolved() }
+        .onChange(of: otherSites.map(\.shortcut)) { _, _ in
+            clearRejectedShortcutMessageIfResolved()
+        }
     }
 
     // MARK: - Launcher Section
@@ -133,11 +138,16 @@ struct SiteConfigView: View {
         }
     }
 
-    private var activeShortcutConflict: QuickNoteShortcutPolicy.Conflict? {
+    private func shortcutConflict(for key: String?) -> QuickNoteShortcutPolicy.Conflict? {
         QuickNoteShortcutPolicy.launcherConflict(
-            for: site.shortcut,
+            for: key,
+            otherSites: otherSites,
             quickNoteKey: quickNoteShortcut,
             coverScreensKey: coverScreensShortcut)
+    }
+
+    private var activeShortcutConflict: QuickNoteShortcutPolicy.Conflict? {
+        shortcutConflict(for: site.shortcut)
     }
 
     private var shortcutErrorMessage: String? {
@@ -159,12 +169,7 @@ struct SiteConfigView: View {
                     reservedKeyChar = key
                     return
                 }
-                if let key,
-                    let conflict = QuickNoteShortcutPolicy.launcherConflict(
-                        for: key,
-                        quickNoteKey: quickNoteShortcut,
-                        coverScreensKey: coverScreensShortcut)
-                {
+                if let key, let conflict = shortcutConflict(for: key) {
                     rejectedShortcutMessage = QuickNoteShortcutPolicy.conflictMessage(
                         conflict, key: key)
                     return

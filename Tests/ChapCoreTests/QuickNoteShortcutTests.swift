@@ -21,6 +21,23 @@ struct QuickNoteShortcutTests {
         #expect(QuickNoteShortcutPolicy.normalized(nil) == nil)
     }
 
+    @Test("a launcher can't take a key another launcher or a Tools feature already uses")
+    func launcherConflicts() {
+        let others = [site("Slack", "s"), site("Docs", "D")]
+        #expect(
+            QuickNoteShortcutPolicy.launcherConflict(
+                for: "S", otherSites: others, quickNoteKey: "N", coverScreensKey: "L")
+                == .site(name: "Slack"))
+        #expect(
+            QuickNoteShortcutPolicy.launcherConflict(
+                for: "n", otherSites: others, quickNoteKey: "N", coverScreensKey: "L")
+                == .feature(name: "Quick Note"))
+        #expect(
+            QuickNoteShortcutPolicy.launcherConflict(
+                for: "K", otherSites: others, quickNoteKey: "N", coverScreensKey: "L")
+                == nil)
+    }
+
     @Test("site shortcuts and reserved keys win over Quick Note")
     func conflicts() {
         let sites = [site("Notes", "n"), site("Docs", "D")]
