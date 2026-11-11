@@ -9,6 +9,8 @@ struct GeneralSettingsView: View {
     @ObservedObject var vm: SettingsViewModel
     @ObservedObject var updateController: UpdateController
     let onSave: () -> Void
+    /// 버전 옆 앱 도구(안내·Q&A·더보기). Settings 본문이 시트를 띄워 처리한다.
+    var onAppAction: (SettingsAppAction) -> Void = { _ in }
 
     /// 메뉴 섹션 표시 여부를 반전한다. 끄면 hiddenMenuLaunchTypes에 추가된다.
     private func toggleMenuSection(_ type: LaunchType) {
@@ -133,10 +135,37 @@ struct GeneralSettingsView: View {
                 Text("Chap \(Defaults.appVersion)")
                     .font(.callout)
                     .foregroundColor(DS.textSecondary)
+                appActions
             }
             .padding(.bottom, 12)
         }
         .background(DS.surfaceBg)
+    }
+
+    /// 앱 도구. Apple 설정 창처럼 툴바에는 탭만 두고, 안내·Q&A·가져오기 같은 도구는 버전 옆에 모은다.
+    private var appActions: some View {
+        HStack(spacing: 12) {
+            Text("·").foregroundColor(DS.textSecondary)
+            Button("User Guide") { onAppAction(.guide) }
+                .help("User Guide (⌘/)")
+            Button("Q&A") { onAppAction(.qa) }
+            Menu("More") {
+                Button("Import from File…") { onAppAction(.importFile) }
+                Button("Paste JSON…") { onAppAction(.pasteJSON) }
+                Divider()
+                Button("Export…") { onAppAction(.export) }
+                Divider()
+                Button("Report Bug…") { onAppAction(.reportBug) }
+                Button("Restart App") { onAppAction(.restart) }
+                Divider()
+                Button("Uninstall…", role: .destructive) { onAppAction(.uninstall) }
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("Import, export, and app actions")
+        }
+        .buttonStyle(.link)
+        .font(.callout)
     }
 }
 

@@ -3,31 +3,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 import os
 
-private enum SettingsTab: String, Hashable, CaseIterable {
-    case launchables
-    case general
-    case notch
-    case tools
-
-    var title: String {
-        switch self {
-        case .launchables: return "Launchers"
-        case .general: return "General"
-        case .notch: return "Notch"
-        case .tools: return "Tools"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .launchables: return "square.grid.2x2"
-        case .general: return "gearshape"
-        case .notch: return "macbook"
-        case .tools: return "wand.and.stars"
-        }
-    }
-}
-
 struct SettingsView: View {
     /// AppKit이 강제하는 최소 크기. 모든 본문은 이 안에서 스크롤한다.
     static let minimumSize = CGSize(width: 720, height: 560)
@@ -54,8 +29,9 @@ struct SettingsView: View {
     @State private var isLayoutsFocused = false
     /// 연결된 디스플레이. 모니터를 꽂거나 뽑으면 갱신한다.
     @State private var connectedDisplays = LayoutDisplay.connected()
-    @State private var selectedTab =
-        SettingsTab(rawValue: SettingsView.previewTab ?? "") ?? .launchables
+    /// 탭 선택. 창 툴바(AppKit)와 함께 본다. 렌더 도구는 `previewTab`으로 첫 탭을 고른다.
+    @ObservedObject var navigation = SettingsNavigation(
+        tab: SettingsTab(rawValue: SettingsView.previewTab ?? "") ?? .launchables)
     @State private var selectedIndex: Int? = SettingsView.previewSelectedIndex
     /// 사이드바에서 마지막으로 고른 섹션(URL·App·Finder). "+"가 이 섹션에 항목을 만든다.
     /// 섹션 제목이나 그 섹션의 항목을 누르면 바뀐다.
@@ -74,155 +50,130 @@ struct SettingsView: View {
     @State private var suppressNextSelectionSave = false
     @FocusState private var searchFocused: Bool
 
+    private var selectedTab: SettingsTab {
+        get { navigation.tab }
+        nonmutating set { navigation.tab = newValue }
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            settingsToolbar
-            Divider()
-            selectedContent
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(DS.surfaceBg)
-        .onChange(of: selectedTab) { oldValue, _ in
-            vm.flushPendingSave()
-            if oldValue == .tools {
-                NotificationCenter.default.post(
-                    name: ToolsSettingsView.flushPendingSave, object: nil)
-            }
-            searchFocused = false
-        }
-        .onChange(of: selectedIndex) { oldValue, newValue in
-            if let newValue, newValue < vm.sites.count {
-                focusedLaunchType = vm.sites[newValue].launchType
-                selectedLayoutID = nil
-                isLayoutsFocused = false
-            }
-            handleSelectionChange(from: oldValue, to: newValue)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Self.focusLaunchType)) { note in
-            guard let raw = note.object as? String, let type = LaunchType(rawValue: raw) else {
-                return
-            }
-            focus(on: type)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Self.focusLayout)) { note in
-            searchText = ""
-            if let id = note.object as? UUID {
-                selectLayout(id)
-            } else {
-                selectedTab = .launchables
-                selectedIndex = nil
-                selectedLayoutID = nil
-                isLayoutsFocused = true
-            }
-        }
-        .onChange(of: layoutLibrary.layouts.map(\.id)) { oldIDs, ids in
-            // 지운 Layout을 보고 있었으면 이웃 Layout으로 옮긴다 (사이트 삭제와 같은 동작).
-            guard let selected = selectedLayoutID, !ids.contains(selected) else { return }
-            let oldIndex = oldIDs.firstIndex(of: selected) ?? 0
-            selectedLayoutID = ids.isEmpty ? nil : ids[min(oldIndex, ids.count - 1)]
-        }
-        .onReceive(
-            NotificationCenter.default.publisher(
-                for: NSApplication.didChangeScreenParametersNotification)
-        ) { _ in
-            connectedDisplays = LayoutDisplay.connected()
-        }
-        .alert("Delete launcher?", isPresented: $showDeleteAlert) {
-            Button("Delete", role: .destructive) { removeSite() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            if let idx = selectedIndex, idx < vm.sites.count {
-                Text("This will remove the launcher \"\(vm.sites[idx].name)\".")
-            }
-        }
-        .sheet(isPresented: $showGuide) {
-            SettingsGuideSheet(
-                isGuideEnglish: $isGuideEnglish,
-                onClose: { showGuide = false },
-                onOpenQA: { openQAFromGuide() }
-            )
-        }
-        .alert("Validation Error", isPresented: $emptyFieldAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(emptyFieldMessage)
-        }
-        .sheet(isPresented: $showPasteJSON) {
-            SettingsPasteJSONSheet(
-                pasteJSONText: $pasteJSONText,
-                onCancel: { showPasteJSON = false },
-                onApply: { json in
-                    SettingsConfigTransfer.applyJSONString(
-                        json, vm: vm, onSuccess: handleSuccessfulImport)
+        selectedContent
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(DS.surfaceBg)
+            .background { guideShortcut }
+            .onChange(of: selectedTab) { oldValue, _ in
+                vm.flushPendingSave()
+                if oldValue == .tools {
+                    NotificationCenter.default.post(
+                        name: ToolsSettingsView.flushPendingSave, object: nil)
                 }
+                searchFocused = false
+            }
+            .onChange(of: selectedIndex) { oldValue, newValue in
+                if let newValue, newValue < vm.sites.count {
+                    focusedLaunchType = vm.sites[newValue].launchType
+                    selectedLayoutID = nil
+                    isLayoutsFocused = false
+                }
+                handleSelectionChange(from: oldValue, to: newValue)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Self.focusLaunchType)) { note in
+                guard let raw = note.object as? String, let type = LaunchType(rawValue: raw) else {
+                    return
+                }
+                focus(on: type)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Self.focusLayout)) { note in
+                searchText = ""
+                if let id = note.object as? UUID {
+                    selectLayout(id)
+                } else {
+                    selectedTab = .launchables
+                    selectedIndex = nil
+                    selectedLayoutID = nil
+                    isLayoutsFocused = true
+                }
+            }
+            .onChange(of: layoutLibrary.layouts.map(\.id)) { oldIDs, ids in
+                // 지운 Layout을 보고 있었으면 이웃 Layout으로 옮긴다 (사이트 삭제와 같은 동작).
+                guard let selected = selectedLayoutID, !ids.contains(selected) else { return }
+                let oldIndex = oldIDs.firstIndex(of: selected) ?? 0
+                selectedLayoutID = ids.isEmpty ? nil : ids[min(oldIndex, ids.count - 1)]
+            }
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: NSApplication.didChangeScreenParametersNotification)
+            ) { _ in
+                connectedDisplays = LayoutDisplay.connected()
+            }
+            .alert("Delete launcher?", isPresented: $showDeleteAlert) {
+                Button("Delete", role: .destructive) { removeSite() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                if let idx = selectedIndex, idx < vm.sites.count {
+                    Text("This will remove the launcher \"\(vm.sites[idx].name)\".")
+                }
+            }
+            .sheet(isPresented: $showGuide) {
+                SettingsGuideSheet(
+                    isGuideEnglish: $isGuideEnglish,
+                    onClose: { showGuide = false },
+                    onOpenQA: { openQAFromGuide() }
+                )
+            }
+            .alert("Validation Error", isPresented: $emptyFieldAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(emptyFieldMessage)
+            }
+            .sheet(isPresented: $showPasteJSON) {
+                SettingsPasteJSONSheet(
+                    pasteJSONText: $pasteJSONText,
+                    onCancel: { showPasteJSON = false },
+                    onApply: { json in
+                        SettingsConfigTransfer.applyJSONString(
+                            json, vm: vm, onSuccess: handleSuccessfulImport)
+                    }
+                )
+            }
+            .onDisappear { vm.flushPendingSave() }
+            .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
+                handleConfigDrop(providers)
+            }
+            .overlay(
+                dropTargeted
+                    ? RoundedRectangle(cornerRadius: DS.radius)
+                        .stroke(DS.accent, lineWidth: 3)
+                        .padding(4)
+                    : nil
             )
-        }
-        .onDisappear { vm.flushPendingSave() }
-        .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
-            handleConfigDrop(providers)
-        }
-        .overlay(
-            dropTargeted
-                ? RoundedRectangle(cornerRadius: DS.radius)
-                    .stroke(DS.accent, lineWidth: 3)
-                    .padding(4)
-                : nil
-        )
     }
 
     // MARK: - Navigation
 
-    private var settingsToolbar: some View {
-        ZStack {
-            Picker("Settings Section", selection: $selectedTab) {
-                ForEach(SettingsTab.allCases, id: \.self) { tab in
-                    Label(tab.title, systemImage: tab.symbol).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 430)
+    /// ⌘/는 어느 탭에서나 안내를 연다(툴바 아이콘과 같은 일).
+    private var guideShortcut: some View {
+        Button("") { showGuide = true }
+            .keyboardShortcut("/", modifiers: .command)
+            .frame(width: 0, height: 0)
+            .opacity(0)
+            .accessibilityHidden(true)
+    }
 
-            HStack(spacing: DS.spacingSmall) {
-                Spacer(minLength: 0)
-
-                ToolbarIconButton(
-                    icon: "questionmark.circle", color: DS.textSecondary,
-                    accessibilityLabel: "User Guide",
-                    action: { showGuide = true }
-                )
-                .help("User Guide")
-                .keyboardShortcut("/", modifiers: .command)
-                ToolbarIconButton(
-                    icon: "questionmark.bubble", color: DS.textSecondary,
-                    accessibilityLabel: "Q&A",
-                    action: { openQA() }
-                )
-                .help("Q&A")
-                ToolbarIconMenu(icon: "ellipsis.circle", accessibilityLabel: "App Actions") {
-                    Button("Import from File…") {
-                        SettingsConfigTransfer.importConfig(
-                            vm: vm, onSuccess: handleSuccessfulImport)
-                    }
-                    Button("Paste JSON…") {
-                        pasteJSONText = ""
-                        showPasteJSON = true
-                    }
-                    Divider()
-                    Button("Export…") { SettingsConfigTransfer.exportConfig(vm: vm) }
-                    Divider()
-                    Button("Report Bug…") { reportBug() }
-                    Button("Restart App") { restartApp() }
-                    Divider()
-                    Button("Uninstall…", role: .destructive) { uninstallApp() }
-                }
-                .help("Import, export, and app actions")
-            }
+    /// General 탭 아래 앱 도구. 시트·가져오기처럼 본문 상태가 필요한 일이라 여기서 처리한다.
+    private func handleAppAction(_ action: SettingsAppAction) {
+        switch action {
+        case .guide: showGuide = true
+        case .qa: openQA()
+        case .importFile:
+            SettingsConfigTransfer.importConfig(vm: vm, onSuccess: handleSuccessfulImport)
+        case .pasteJSON:
+            pasteJSONText = ""
+            showPasteJSON = true
+        case .export: SettingsConfigTransfer.exportConfig(vm: vm)
+        case .reportBug: reportBug()
+        case .restart: restartApp()
+        case .uninstall: uninstallApp()
         }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity)
-        .frame(height: 44)
-        .background(DS.cardBg)
     }
 
     private var selectedContent: some View {
@@ -238,7 +189,8 @@ struct SettingsView: View {
                 }
             case .general:
                 GeneralSettingsView(
-                    vm: vm, updateController: updateController, onSave: saveGlobals)
+                    vm: vm, updateController: updateController, onSave: saveGlobals,
+                    onAppAction: handleAppAction)
             case .notch:
                 NotchSettingsView(vm: vm, onSave: saveGlobals)
             case .tools:

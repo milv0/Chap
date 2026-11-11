@@ -177,11 +177,11 @@ struct QAView: View {
                 ),
                 (
                     "앱을 완전히 삭제하려면?",
-                    "Settings 우측 상단의 ⋯ 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
+                    "Settings → General 아래 More 메뉴 → Uninstall을 선택하면 설정 파일과 함께 삭제됩니다."
                 ),
                 (
                     "버그를 신고하려면?",
-                    "Settings 우측 상단의 ⋯ 메뉴 → Report Bug...를 선택하면 GitHub 이슈 페이지가 열립니다."
+                    "Settings → General 아래 More 메뉴 → Report Bug...를 선택하면 GitHub 이슈 페이지가 열립니다."
                 ),
                 (
                     "앱이 갑자기 단축키에 반응을 안 해요.",
@@ -459,11 +459,11 @@ struct QAView: View {
                 ),
                 (
                     "How do I completely uninstall?",
-                    "In Settings, click the ⋯ menu at the top right → Uninstall. This removes the app along with its config files."
+                    "In Settings, open General and choose More → Uninstall. This removes the app along with its config files."
                 ),
                 (
                     "How do I report a bug?",
-                    "In Settings, click the ⋯ menu at the top right → Report Bug... to open the GitHub issues page."
+                    "In Settings, open General and choose More → Report Bug... to open the GitHub issues page."
                 ),
                 (
                     "The app suddenly stopped responding to shortcuts.",

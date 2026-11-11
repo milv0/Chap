@@ -279,6 +279,7 @@ extension AppDelegate {
             }
             return true
         }
+        let navigation = SettingsNavigation()
         let settingsView = SettingsView(
             vm: vm,
             updateController: updateController,
@@ -287,7 +288,8 @@ extension AppDelegate {
                 open: { [weak self] id in self?.openLayout(id: id) },
                 capture: { [weak self] in self?.captureLayout() },
                 updatePositions: { [weak self] id in self?.updateLayoutPositions(id: id) },
-                remove: { [weak self] id in self?.confirmRemoveLayout(id: id) })
+                remove: { [weak self] id in self?.confirmRemoveLayout(id: id) }),
+            navigation: navigation
         )
         let window = makeManagedWindow(
             title: "Chap Settings",
@@ -295,6 +297,10 @@ extension AppDelegate {
                 width: SettingsView.initialSize.width, height: SettingsView.initialSize.height),
             styleMask: [.titled, .closable, .resizable])
         window.contentViewController = SettingsHostingController(rootView: settingsView)
+        // macOS 설정 창 표준 툴바: 탭 아이콘 위에 이름, 제목은 고른 탭 이름.
+        let toolbar = SettingsToolbarController(navigation: navigation)
+        toolbar.install(in: window)
+        settingsToolbar = toolbar
         // 초기 frame을 가진 host를 설치한 뒤 AppKit 최소 크기를 설정한다.
         window.contentMinSize = NSSize(
             width: SettingsView.minimumSize.width, height: SettingsView.minimumSize.height)
@@ -345,6 +351,7 @@ extension AppDelegate {
                 name: ToolsSettingsView.discardPendingSave, object: nil)
             settingsVM = nil
             settingsWindow = nil
+            settingsToolbar = nil
         } else if window == qaWindow {
             qaWindow = nil
         } else if window == welcomeWindow {

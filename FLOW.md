@@ -453,7 +453,7 @@ posErr=0 sizeErr=0
 
 ## 9. 설정 흐름
 
-Settings는 상단 가운데의 system segmented `Launchers`·`General`·`Notch`·`Tools`로 본문을 전환한다.
+Settings는 macOS 표준 설정 툴바(`SettingsToolbarController`, `.preference`)의 `Launchers`·`General`·`Notch`·`Tools`로 본문을 전환한다. 툴바와 SwiftUI 본문은 `SettingsNavigation.tab`을 함께 보고, 창 제목은 고른 탭 이름이다.
 AppKit이 최초 720×660 크기, 720×560 최소 크기와 사용자의 가로·세로 리사이즈를 소유하고, SettingsHostingController는 SwiftUI fitting size가 창 높이를 되돌리지 않게 한다.
 Launchers에서만 왼쪽 sidebar를 만들고, 나머지 탭은 Form의 스크롤 영역을 창 전체 폭으로 두어 스크롤바를 맨 오른쪽에 붙인다. 실제 설정 내용은 560pt 폭으로 가운데 정렬한다. 세로는 위 정렬이다(탭을 바꿔도 첫 섹션 위치가 같고 행이 생기거나 사라져도 내용이 움직이지 않는다). 각 탭은 switch로 하나만
 생성해 숨은 탭의 observer·onChange가 계속 살아 있지 않게 한다. Launchers는 실행 항목·창 설정을, General은 Option 단축키·Guide Window·로그인 실행·
