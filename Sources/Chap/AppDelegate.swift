@@ -17,6 +17,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let configPath = Defaults.configPath
     let configStore = ConfigStore()
     var settingsWindow: NSWindow?
+    /// Settings 창 툴바(탭·도구). 창이 닫히면 함께 놓는다.
+    var settingsToolbar: SettingsToolbarController?
     var qaWindow: NSWindow?
     var welcomeWindow: NSWindow?
     var layoutCaptureWindow: NSWindow?

@@ -36,6 +36,7 @@ Sources/
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
 │   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
+│   ├── SettingsToolbar.swift      ← Settings 표준 설정 툴바(.preference): 탭(SettingsTab)·탭 선택 공유(SettingsNavigation)·창 제목
 │   ├── SettingsHostingController.swift ← 비활성 Settings의 첫 클릭 전달 + AppKit이 사용자 리사이즈를 소유하도록 SwiftUI fitting-size 전파 차단
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
 │   ├── main.swift                 ← 엔트리포인트
@@ -62,13 +63,13 @@ Sources/
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
-│       ├── SettingsView.swift     ← 가운데 정렬 상단 segmented toolbar, Launchers 전용 sidebar, 탭별 단일 본문, import/가이드 시트
+│       ├── SettingsView.swift     ← 탭별 본문(탭은 창 툴바), Launchers 전용 sidebar, 탭별 단일 본문, import/가이드 시트
 │       ├── SettingsGeneralView.swift ← General 탭 (App/Launching/Menu Bar: 앱 자체 설정만)
 │       ├── SizePresetGrid.swift ← 항목 설정의 크기 프리셋 썸네일 격자 (가로형 줄 / 세로형 줄 + Custom)
 │       ├── SettingsToolsView.swift ← Tools 탭 (노치 없이도 쓰는 기능: Quick Note·Cover Screens)
 │       ├── SettingsConfigTransfer.swift ← Settings config import/export/apply 로직
 │       ├── SettingsGuideSheet.swift ← 사용자 가이드 시트 (한/영 전환)
-│       ├── SettingsPasteJSONSheet.swift ← ⋯ 메뉴 Paste JSON 시트
+│       ├── SettingsPasteJSONSheet.swift ← General More 메뉴 Paste JSON 시트
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·Screenshots 폴더·띠 아이콘·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·단일 선반 timer·크기 보고)
 │       ├── NotchDropFileRow.swift ← 메인 도커 하단 Chap Drop 파일 행·제거 UI
@@ -326,7 +327,8 @@ Config 모델 필드:
 - URL/App AX 리사이즈 실패 시 권한 상태를 재확인하고, 권한이 빠진 경우 상태바 경고 + 1회 알림
 - Settings 저장: 선택 항목이 아닌 전체 sites 배열의 필수값·HTTP(S) URL·크기·preset·중복 검증
   - URL·Finder는 최대 4개, App은 최대 6개(노치 아이콘 격자: 4개까지 2열, 5~6개 3열 × 2줄). 추가 UI·저장·Import에서 동일하게 차단
-- Settings 상단 toolbar: system segmented Picker로 Launchers·General·Notch·Tools를 전환하고 오른쪽에 User Guide·Q&A·⋯를 둔다.
+- Settings 툴바: macOS 설정 창 표준 툴바(NSToolbar, toolbarStyle .preference)에 Launchers·General·Notch·Tools 아이콘과 이름만 둔다.
+  창 제목은 고른 탭 이름이다. User Guide·Q&A·More(가져오기·내보내기·Report Bug·Restart·Uninstall)는 General 아래 버전 옆에 있다.
   Launchers만 210pt 사이드바(URL/App/Finder/Layouts 검색·추가·재정렬)를 보이고, 오른쪽 상세도 다른 탭과 같은 grouped Form을 쓴다. General·Notch·Tools는 560pt Form을
   전체 폭 가운데에 둔다. 모든 launcher 필드는 live edit + debounce 자동 저장이고 별도 read-only/Editing 상태는 없다.
   네 탭이 같은 줄 모양(SettingsRow: 제목·한 줄 설명 | 컨트롤)과 섹션 머리(SettingsSectionHeader: 아이콘·이름·한 줄 메모)를 쓴다.
@@ -394,7 +396,7 @@ Config 모델 필드:
     "Add <Type>" 행으로 해당 타입 항목을 바로 추가 (검색 중에는 매칭 없는 섹션 숨김)
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
 - Q&A 페이지 (Settings 상단 `questionmark.bubble` 버튼, User Guide에서도 열기 가능)
-- 설정 창은 최소 720x560(SettingsView.minimumSize). 상단 segmented toolbar가 탭·도움말·앱 메뉴를 맡아 하단 막대가 없다.
+- 설정 창은 최소 720x560(SettingsView.minimumSize). 탭은 창 툴바가, 도움말·앱 메뉴는 General 아래가 맡아 하단 막대가 없다.
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
@@ -436,7 +438,7 @@ Config 모델 필드:
 - 노치 Downloads 칸: ~/Downloads 최근 파일(4개 보임, 스크롤로 최대 12개)·짧은 시각, 클릭 열기·드래그·우클릭 공유
 - 노치 마스코트(Chap the Seal): 검정 띠 왼쪽 24×12 픽셀 물범. 노치 열 때 꼬리 까딱, Keep Awake 시작 시 다이빙,
   Keep Awake 중 꼬리 흔들기, To-do 체크 시 꼬리 한 번 (동작 줄이기면 정지)
-- Restart App·Report Bug·Uninstall (설정 창 상단 ⋯ 메뉴)
+- Restart App·Report Bug·Uninstall (설정 General 아래 More 메뉴)
 
 ## 메뉴바 메뉴 구성
 
@@ -456,7 +458,7 @@ Config 모델 필드:
   Quit Chap   (⌘Q)
   ※ ⌥ 키 표시는 Enable Chap Option-Key Triggers가 켜져 있고 실제로 등록되는 키일 때만
 
-## 설정 창 상단 ⋯ 메뉴
+## 설정 General More 메뉴
 
   Import from File…
   Paste JSON…

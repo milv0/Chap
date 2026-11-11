@@ -435,6 +435,43 @@ struct NotchRenderTool {
         }
     }
 
+    /// 실제 Settings 창(제목 막대 안의 표준 설정 툴바 포함)을 그린다. 툴바는 창 테두리가 그리므로
+    /// 본문만 그리는 렌더로는 보이지 않는다.
+    @Test(
+        "render the Settings window with its toolbar",
+        .enabled(if: NotchRenderTool.outputDirectory != nil))
+    @MainActor
+    func renderSettingsWindow() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let config = (try? ConfigStore().load(connectedDisplays: []).config) ?? .default
+        for (name, tab, appearance) in [
+            ("settings-window-launchers", SettingsTab.launchables, NSAppearance.Name.aqua),
+            ("settings-window-general-dark", .general, .darkAqua),
+        ] {
+            let navigation = SettingsNavigation(tab: tab)
+            let view = SettingsView(
+                vm: SettingsViewModel(config: config), updateController: UpdateController(),
+                layoutLibrary: LayoutLibrary(), navigation: navigation)
+            let window = NSWindow(
+                contentRect: NSRect(origin: .zero, size: SettingsView.initialSize),
+                styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+            window.appearance = NSAppearance(named: appearance)
+            window.isReleasedWhenClosed = false
+            window.contentViewController = SettingsHostingController(rootView: view)
+            let toolbar = SettingsToolbarController(navigation: navigation)
+            toolbar.install(in: window)
+            window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
+            window.orderFront(nil)
+            RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+            let frameView = try #require(window.contentView?.superview)
+            let rep = try #require(frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds))
+            frameView.cacheDisplay(in: frameView.bounds, to: rep)
+            let png = try #require(rep.representation(using: .png, properties: [:]))
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
+            window.orderOut(nil)
+        }
+    }
+
     /// Keep Awake 중앙 HUD(켜짐·꺼짐) 모습을 PNG로 남긴다. 물범이 파란 타일 위에서 읽히는지 본다.
     @Test(
         "render the Keep Awake HUD", .enabled(if: NotchRenderTool.outputDirectory != nil))
