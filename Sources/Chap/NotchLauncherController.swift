@@ -30,6 +30,8 @@ final class NotchLauncherController {
     /// 마우스가 그 자리에 있으면 다시 열리지 않는다 (노치 Mac의 tracking area와 같은 동작).
     private var pointerWasInZone = false
     private var panel: NSPanel?
+    /// 메인 도커가 열려 있는지.
+    var isPanelOpen: Bool { panel != nil }
     private var badgeWindow: NSWindow?
     /// 노치 왼쪽 타이머 배지. 타이머가 돌고 도커가 접혀 있을 때만 있다.
     private var timerBadgeWindow: NSWindow?
@@ -60,6 +62,8 @@ final class NotchLauncherController {
 
     /// 패널에 표시할 위젯 칸 공급자. 항상 최신 config 기준으로 재계산된다.
     var slotsProvider: () -> [NotchSlotContent] = { [] }
+    /// 노치 빛의 색. nil이면 노치 빛을 끈다(파일을 끌 때 도커 테두리 빛).
+    var glowPaletteProvider: () -> NotchGlowPalette? = { .colorful }
     /// 상단 띠 Mirror 아이콘 표시 여부.
     var mirrorEnabledProvider: () -> Bool = { false }
     /// 상단 띠 Quick Note 아이콘 표시 여부.
@@ -507,6 +511,7 @@ final class NotchLauncherController {
         reveal.bottomOpacity = opacityProvider()
         reveal.colorHex = colorProvider()
         reveal.collapsedWidgets = collapsedWidgetsProvider()
+        reveal.glowPalette = glowPaletteProvider()
         let content = NotchLauncherPanelView(
             minWidth: minWidth,
             topInset: inset,

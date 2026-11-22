@@ -328,6 +328,32 @@ public enum NotchGlassAppearance: String, Codable, CaseIterable {
     case dark = "dark"
 }
 
+/// 노치 빛(Keep Awake·Timer를 켤 때 노치 둘레, 파일을 노치로 끌 때 도커 테두리)의 색.
+public enum NotchGlowPalette: String, Codable, CaseIterable {
+    /// 파랑·보라·분홍·산호·주황이 흐르는 여러 색(Apple Intelligence 테두리 느낌).
+    case colorful = "colorful"
+    /// Chap 파랑을 중심으로 하늘색·남색·보라가 흐르는 색.
+    case chap = "chap"
+
+    /// 테두리를 따라 이어지는 색(0xRRGGBB). 비슷한 색끼리 이웃하게 둔다. 처음과 끝은 고리로 이어진다.
+    public var colors: [UInt32] {
+        switch self {
+        case .colorful:
+            return [0x8D9FFF, 0xAA6EEE, 0xBC82F3, 0xC686FF, 0xF5B9EA, 0xFF6778, 0xFFBA71]
+        case .chap:
+            return [0x9FD4FF, 0x6FA8FF, 0x3664FF, 0x4B4FE0, 0x7A6BF2, 0x89A3FF]
+        }
+    }
+
+    /// 설정창에 보이는 이름.
+    public var title: String {
+        switch self {
+        case .colorful: return "Colorful"
+        case .chap: return "Chap Blue"
+        }
+    }
+}
+
 /// Apple 공식 Liquid Glass 재질 변형. 연속 강도 값은 제공되지 않는다.
 public enum NotchGlassMaterial: String, Codable, CaseIterable {
     /// 더 투명해 뒤 콘텐츠를 많이 드러내는 Glass.clear.
@@ -491,6 +517,10 @@ public struct Config: Codable {
     /// 노치 띠 Cover Screens 아이콘 표시 여부. 누르면 가림막을 친다. 누락 시 true.
     /// 2.10.1까지는 `notchLightsOutEnabled`로 저장했다(읽을 때 옮긴다).
     public var notchCoverScreensEnabled: Bool
+    /// 노치 빛을 켤지. Keep Awake·Timer를 켤 때 노치 둘레, 파일을 노치로 끌 때 도커 테두리가 빛난다. 누락 시 true.
+    public var notchGlowEnabled: Bool
+    /// 노치 빛의 색. 누락·알 수 없는 값이면 여러 색.
+    public var notchGlowPalette: NotchGlowPalette
     /// Quick Note 창을 여는 ⌥ 키(한 글자, 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥N.
     /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
     public var notchQuickNoteShortcut: String?
@@ -540,6 +570,7 @@ public struct Config: Codable {
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
         case notchCoverScreensEnabled, coverScreensShortcut, coverScreensMessage
+        case notchGlowEnabled, notchGlowPalette
         case sites
     }
 
@@ -563,6 +594,8 @@ public struct Config: Codable {
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
         notchCoverScreensEnabled: Bool = true,
+        notchGlowEnabled: Bool = true,
+        notchGlowPalette: NotchGlowPalette = .colorful,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         coverScreensShortcut: String? = CoverScreensPolicy.defaultShortcut,
         coverScreensMessage: String? = nil,
@@ -585,6 +618,8 @@ public struct Config: Codable {
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
         self.notchCoverScreensEnabled = notchCoverScreensEnabled
+        self.notchGlowEnabled = notchGlowEnabled
+        self.notchGlowPalette = notchGlowPalette
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.coverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
         self.coverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
@@ -650,6 +685,11 @@ public struct Config: Codable {
         notchCoverScreensEnabled =
             (try? container.decodeIfPresent(Bool.self, forKey: .notchCoverScreensEnabled))
             ?? (try? legacy.decodeIfPresent(Bool.self, forKey: .notchLightsOutEnabled)) ?? true
+        notchGlowEnabled =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchGlowEnabled)) ?? true
+        notchGlowPalette =
+            (try? container.decodeIfPresent(String.self, forKey: .notchGlowPalette))
+            .flatMap { $0 }.flatMap(NotchGlowPalette.init(rawValue:)) ?? .colorful
         // 키가 없으면(이전 버전 설정) 기본 ⌥N, ""이면 끔.
         if let stored = try? container.decodeIfPresent(String.self, forKey: .notchQuickNoteShortcut)
         {
@@ -721,6 +761,8 @@ public struct Config: Codable {
         try container.encode(notchMirrorEnabled, forKey: .notchMirrorEnabled)
         try container.encode(notchQuickNoteEnabled, forKey: .notchQuickNoteEnabled)
         try container.encode(notchCoverScreensEnabled, forKey: .notchCoverScreensEnabled)
+        try container.encode(notchGlowEnabled, forKey: .notchGlowEnabled)
+        try container.encode(notchGlowPalette.rawValue, forKey: .notchGlowPalette)
         try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
         try container.encode(coverScreensShortcut ?? "", forKey: .coverScreensShortcut)
         try container.encodeIfPresent(coverScreensMessage, forKey: .coverScreensMessage)

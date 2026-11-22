@@ -21,6 +21,8 @@ public struct SettingsPayload {
     public var notchMirrorEnabled: Bool { config.notchMirrorEnabled }
     public var notchQuickNoteEnabled: Bool { config.notchQuickNoteEnabled }
     public var notchCoverScreensEnabled: Bool { config.notchCoverScreensEnabled }
+    public var notchGlowEnabled: Bool { config.notchGlowEnabled }
+    public var notchGlowPalette: NotchGlowPalette { config.notchGlowPalette }
     public var notchQuickNoteShortcut: String? { config.notchQuickNoteShortcut }
     public var coverScreensShortcut: String? { config.coverScreensShortcut }
     public var coverScreensMessage: String? { config.coverScreensMessage }
@@ -43,6 +45,8 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var notchMirrorEnabled: Bool
     @Published public var notchQuickNoteEnabled: Bool
     @Published public var notchCoverScreensEnabled: Bool
+    @Published public var notchGlowEnabled: Bool
+    @Published public var notchGlowPalette: NotchGlowPalette
     @Published public var notchQuickNoteShortcut: String?
     @Published public var coverScreensShortcut: String?
     @Published public var coverScreensMessage: String?
@@ -63,6 +67,8 @@ public final class SettingsViewModel: ObservableObject {
     @Published public var originalNotchMirrorEnabled: Bool
     @Published public var originalNotchQuickNoteEnabled: Bool
     @Published public var originalNotchCoverScreensEnabled: Bool
+    @Published public var originalNotchGlowEnabled: Bool
+    @Published public var originalNotchGlowPalette: NotchGlowPalette
     @Published public var originalNotchQuickNoteShortcut: String?
     @Published public var originalCoverScreensShortcut: String?
     @Published public var originalCoverScreensMessage: String?
@@ -88,6 +94,8 @@ public final class SettingsViewModel: ObservableObject {
             || notchMirrorEnabled != originalNotchMirrorEnabled
             || notchQuickNoteEnabled != originalNotchQuickNoteEnabled
             || notchCoverScreensEnabled != originalNotchCoverScreensEnabled
+            || notchGlowEnabled != originalNotchGlowEnabled
+            || notchGlowPalette != originalNotchGlowPalette
             || notchQuickNoteShortcut != originalNotchQuickNoteShortcut
             || coverScreensShortcut != originalCoverScreensShortcut
             || coverScreensMessage != originalCoverScreensMessage
@@ -110,6 +118,8 @@ public final class SettingsViewModel: ObservableObject {
         notchMirrorEnabled = config.notchMirrorEnabled
         notchQuickNoteEnabled = config.notchQuickNoteEnabled
         notchCoverScreensEnabled = config.notchCoverScreensEnabled
+        notchGlowEnabled = config.notchGlowEnabled
+        notchGlowPalette = config.notchGlowPalette
         notchQuickNoteShortcut = config.notchQuickNoteShortcut
         coverScreensShortcut = config.coverScreensShortcut
         coverScreensMessage = config.coverScreensMessage
@@ -141,6 +151,8 @@ public final class SettingsViewModel: ObservableObject {
         originalNotchMirrorEnabled = notchMirrorEnabled
         originalNotchQuickNoteEnabled = notchQuickNoteEnabled
         originalNotchCoverScreensEnabled = notchCoverScreensEnabled
+        originalNotchGlowEnabled = notchGlowEnabled
+        originalNotchGlowPalette = notchGlowPalette
         originalNotchQuickNoteShortcut = notchQuickNoteShortcut
         originalCoverScreensShortcut = coverScreensShortcut
         originalCoverScreensMessage = coverScreensMessage
@@ -190,6 +202,8 @@ public final class SettingsViewModel: ObservableObject {
             notchMirrorEnabled: notchMirrorEnabled,
             notchQuickNoteEnabled: notchQuickNoteEnabled,
             notchCoverScreensEnabled: notchCoverScreensEnabled,
+            notchGlowEnabled: notchGlowEnabled,
+            notchGlowPalette: notchGlowPalette,
             notchQuickNoteShortcut: notchQuickNoteShortcut,
             coverScreensShortcut: coverScreensShortcut,
             coverScreensMessage: coverScreensMessage,
@@ -223,6 +237,8 @@ public final class SettingsViewModel: ObservableObject {
             notchMirrorEnabled: config.notchMirrorEnabled,
             notchQuickNoteEnabled: config.notchQuickNoteEnabled,
             notchCoverScreensEnabled: config.notchCoverScreensEnabled,
+            notchGlowEnabled: config.notchGlowEnabled,
+            notchGlowPalette: config.notchGlowPalette,
             notchQuickNoteShortcut: config.notchQuickNoteShortcut,
             coverScreensShortcut: config.coverScreensShortcut,
             coverScreensMessage: config.coverScreensMessage,
@@ -245,6 +261,8 @@ public final class SettingsViewModel: ObservableObject {
         notchMirrorEnabled: Bool = true,
         notchQuickNoteEnabled: Bool = true,
         notchCoverScreensEnabled: Bool = true,
+        notchGlowEnabled: Bool = true,
+        notchGlowPalette: NotchGlowPalette = .colorful,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         coverScreensShortcut: String? = CoverScreensPolicy.defaultShortcut,
         coverScreensMessage: String? = nil,
@@ -266,6 +284,8 @@ public final class SettingsViewModel: ObservableObject {
         self.notchMirrorEnabled = notchMirrorEnabled
         self.notchQuickNoteEnabled = notchQuickNoteEnabled
         self.notchCoverScreensEnabled = notchCoverScreensEnabled
+        self.notchGlowEnabled = notchGlowEnabled
+        self.notchGlowPalette = notchGlowPalette
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.coverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
         self.coverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
@@ -285,6 +305,8 @@ public final class SettingsViewModel: ObservableObject {
         self.originalNotchMirrorEnabled = notchMirrorEnabled
         self.originalNotchQuickNoteEnabled = notchQuickNoteEnabled
         self.originalNotchCoverScreensEnabled = notchCoverScreensEnabled
+        self.originalNotchGlowEnabled = notchGlowEnabled
+        self.originalNotchGlowPalette = notchGlowPalette
         self.originalNotchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(
             notchQuickNoteShortcut)
         self.originalCoverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)

@@ -22,6 +22,7 @@ extension AppDelegate {
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
                 focusOn: true)
+            showNotchGlow()
         case .ended:
             NSSound(named: "Pop")?.play()
             KeepAwakeHUD.show(
@@ -33,6 +34,15 @@ extension AppDelegate {
         }
         buildMenu()
         updateStatusIcon(accessible: accessibilityController.isAccessible)
+    }
+
+    /// Keep Awake·Timer를 켤 때 노치 둘레를 잠깐 빛낸다. 노치 빛과 노치 런처가 켜져 있을 때만.
+    /// 도커가 열려 있으면 도커가 노치를 덮고 있어 보이지 않으므로, 가림막 아래에서도 띄우지 않는다.
+    func showNotchGlow() {
+        guard config.notchGlowEnabled, config.notchLauncherEnabled,
+            !notchLauncher.isPanelOpen, !coverScreensController.isOn
+        else { return }
+        NotchBeamFlash.show(palette: config.notchGlowPalette)
     }
 
     func menuWillOpen(_ menu: NSMenu) {
@@ -369,6 +379,10 @@ extension AppDelegate {
         }
         notchLauncher.coverScreensEnabledProvider = { [weak self] in
             self?.config.notchCoverScreensEnabled ?? false
+        }
+        notchLauncher.glowPaletteProvider = { [weak self] in
+            guard let self, self.config.notchGlowEnabled else { return nil }
+            return self.config.notchGlowPalette
         }
         notchLauncher.collapsedWidgetsProvider = { [weak self] in
             self?.config.notchCollapsedWidgets ?? []

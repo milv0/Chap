@@ -42,6 +42,7 @@ extension AppDelegate {
 
     /// 시작·중지는 조용히 메뉴와 노치 배지만 바꾼다. 끝나면 소리와 HUD로 알린다.
     func handleTimerEvent(_ event: ChapTimerController.Event) {
+        if event == .started { showNotchGlow() }
         if event == .finished {
             NSSound(named: "Glass")?.play()
             KeepAwakeHUD.show(

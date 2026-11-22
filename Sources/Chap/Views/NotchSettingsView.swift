@@ -342,6 +342,9 @@ struct NotchSettingsView: View {
                         }
 
                     }
+
+                    // 스타일(Custom·Glass)과 무관하게 보이는 빛이라 스타일 줄들 아래에 둔다.
+                    notchGlowRow
                 } header: {
                     SettingsSectionHeader(
                         title: "Notch Style", systemImage: "paintpalette",
@@ -351,6 +354,89 @@ struct NotchSettingsView: View {
                 }
             }
         }
+    }
+}
+
+extension NotchSettingsView {
+    /// 노치 빛: 왼쪽에 제목·설명, 오른쪽에 색 두 개와 켜기 스위치. 꺼져 있으면 색은 흐리게 막는다.
+    /// 바꾸면 노치 둘레에 한 번 빛내 보인다(노치 런처가 켜져 있을 때).
+    fileprivate var notchGlowRow: some View {
+        SettingsRow(
+            title: "Notch Glow",
+            subtitle: "Lights the notch when Keep Awake or a timer starts.",
+            help: "The notch glows for a moment when Keep Awake or a timer starts, and the "
+                + "dock glows while you drop files on it. Nothing else changes."
+        ) {
+            HStack(spacing: 8) {
+                ForEach(NotchGlowPalette.allCases, id: \.self) { palette in
+                    GlowPaletteButton(
+                        palette: palette, isSelected: vm.notchGlowPalette == palette
+                    ) {
+                        vm.notchGlowPalette = palette
+                    }
+                }
+                .disabled(!vm.notchGlowEnabled)
+                .opacity(vm.notchGlowEnabled ? 1 : 0.45)
+                Toggle("Notch Glow", isOn: $vm.notchGlowEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .padding(.leading, 4)
+            }
+        }
+        .onChange(of: vm.notchGlowEnabled) { _, isOn in
+            onSave()
+            if isOn { previewGlow() }
+        }
+        .onChange(of: vm.notchGlowPalette) { _, _ in
+            onSave()
+            previewGlow()
+        }
+    }
+
+    private func previewGlow() {
+        guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig
+        else { return }
+        NotchBeamFlash.show(palette: vm.notchGlowPalette)
+    }
+}
+
+/// 노치 빛 색 하나. Notch Icons 버튼과 같은 64×34 모양에, 그 색이 흐르는 그라데이션 띠를 그린다.
+private struct GlowPaletteButton: View {
+    let palette: NotchGlowPalette
+    let isSelected: Bool
+    let action: () -> Void
+    @State private var isHovered = false
+
+    private var swatch: LinearGradient {
+        LinearGradient(
+            colors: palette.colors.map { hex in
+                Color(
+                    red: Double((hex >> 16) & 0xFF) / 255,
+                    green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
+            }, startPoint: .leading, endPoint: .trailing)
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Capsule()
+                .fill(swatch)
+                .frame(width: 40, height: 8)
+                .frame(width: 64, height: 34)
+                .background(
+                    isSelected ? DS.accentSoft : isHovered ? DS.border.opacity(0.25) : .clear
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isSelected ? DS.accent : DS.border, lineWidth: 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(palette.title)
+        .accessibilityLabel("\(palette.title) glow")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .onHover { isHovered = $0 }
     }
 }
 

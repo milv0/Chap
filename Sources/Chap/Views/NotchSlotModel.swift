@@ -58,6 +58,8 @@ final class NotchRevealModel: ObservableObject {
     @Published var revealed = false
     @Published var bottomOpacity: Double = Config.notchPanelOpacityDefault
     @Published var colorHex: String = Config.notchPanelColorHexDefault
+    /// 파일을 끌어올 때 도커 테두리 빛의 색. nil이면 노치 빛이 꺼져 있다.
+    @Published var glowPalette: NotchGlowPalette?
     /// 파일 드래그가 노치에 닿아 "Drop here" 레이어를 덮어야 하는 상태.
     @Published var isDropTargetActive = false
     /// ⌥를 누르고 있는 동안. 키캡이 강조되고 "⌥1"처럼 수식키를 함께 보여준다.
