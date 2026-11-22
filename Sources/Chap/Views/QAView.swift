@@ -233,6 +233,10 @@ struct QAView: View {
                     "Custom은 macOS 14 이상에서 색상과 불투명도를 조절합니다. Glass는 macOS 26 이상에서 Apple Liquid Glass를 사용합니다. 모양(System/Light/Dark)과 재질(Clear/Regular)을 각각 고를 수 있고, System은 macOS 테마를 따릅니다. 새 설정의 기본 재질은 더 선명한 Regular입니다."
                 ),
                 (
+                    "노치가 빛나는 건 뭔가요?",
+                    "Notch Glow입니다. Keep Awake나 타이머를 켜는 순간 노치 둘레가 잠깐 빛나고, 파일을 노치로 끌어오는 동안 도커 테두리가 빛납니다. Settings → Notch → Notch Style의 Notch Glow 줄에서 끄거나, 색을 Colorful(여러 색)과 Chap Blue(Chap 파랑) 중에서 고를 수 있습니다. 노치 런처가 켜져 있을 때만 나오고, 손쉬운 사용의 동작 줄이기를 켜면 나오지 않습니다."
+                ),
+                (
                     "Chap Drop은 어떻게 쓰나요?",
                     "파일을 노치나 우측 Drop 배지로 끌면 메인 도커에 반투명 Drop here 레이어가 나타납니다. Chap은 파일을 복사하지 않고 원본을 기억합니다. 원본을 옮기거나 이름을 바꿔도 따라가고, 연결된 디스크에서 원본을 지우면 Drop에서도 사라집니다. 외장 디스크를 잠시 빼면 항목을 숨긴 채 기억하고, 다시 연결하면 돌아옵니다. 브라우저에서 끌어온 이미지처럼 임시 위치의 파일만 ~/Library/Application Support/Chap/Drop/에 복사해 둡니다. Drop에서 지워도 원본은 지워지지 않습니다. 하단 파일 행에서 열기, 다른 앱으로 드래그, 삭제가 가능합니다."
                 ),
@@ -513,6 +517,10 @@ struct QAView: View {
                 (
                     "What is the difference between Custom and Glass?",
                     "Custom provides color and opacity on macOS 14 or later. Glass uses Apple Liquid Glass on macOS 26 or later. Appearance (System, Light, or Dark) and material (Clear or Regular) are chosen independently, and System follows the macOS appearance. New setups default to the more legible Regular."
+                ),
+                (
+                    "Why does the notch glow?",
+                    "That's Notch Glow. The notch lights up for a moment when Keep Awake or a timer starts, and the dock glows while you drag files onto it. Turn it off or pick Colorful or Chap Blue in Settings → Notch → Notch Style. It shows only while the Notch Launcher is on, and not when Reduce Motion is on."
                 ),
                 (
                     "How does Chap Drop work?",

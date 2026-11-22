@@ -359,6 +359,26 @@ struct NotchLauncherPanelView: View {
 
     @State private var dropTargeted = false
 
+    /// 파일을 끌어오는 동안 도커 테두리의 빛(노치 빛 설정의 색). 노치 빛을 끄면 그리지 않는다.
+    /// 윗변은 화면 꼭대기(메뉴 막대)에 붙어 있어 빛이 그 위에 있으면 어색하므로, 검정 띠 높이만큼은 가리고
+    /// 그 아래로 부드럽게 드러낸다. 파일이 레이어 위에 오면(놓으면 담기는 순간) 더 밝아진다.
+    @ViewBuilder private var dropGlow: some View {
+        if let palette = reveal.glowPalette {
+            IntelligenceGlow(
+                shape: panelShape, palette: palette, duration: nil, lineWidth: 3,
+                strength: dropTargeted ? 1 : 0.7, clipsToShape: true
+            )
+            .mask {
+                VStack(spacing: 0) {
+                    Color.clear.frame(height: topInset)
+                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 16)
+                    Color.black
+                }
+            }
+        }
+    }
+
     /// 파일 드래그 중 도커를 덮는 반투명 드롭 레이어. 드래그가 노치에
     /// 닿으면(컨트롤러 플래그) 나타나고, 레이어 위에 드는 동안 유지되며,
     /// 드롭하면 보관함에 저장하고 사라진다.
@@ -366,6 +386,11 @@ struct NotchLauncherPanelView: View {
         let visible = reveal.isDropTargetActive || dropTargeted
         ZStack {
             panelShape.fill(Color.black.opacity(0.55))
+            // 테두리를 도는 빛 줄기. 레이어가 보일 때만 그려, 평소에는 아무 일도 하지 않는다.
+            // 파일이 레이어 위에 오면(놓으면 담기는 순간) 더 밝아진다.
+            if visible {
+                dropGlow.transition(.opacity)
+            }
             VStack(spacing: 8) {
                 Image(systemName: "tray.and.arrow.down.fill")
                     .font(.system(size: 24))

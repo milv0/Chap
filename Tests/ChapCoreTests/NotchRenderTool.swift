@@ -85,6 +85,8 @@ struct NotchRenderTool {
         let variants: [(String, NotchPanelStyle, ColorScheme, Color, Bool)] = [
             ("notch-glass-light", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-empty-drop", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-light-drop-target", .glass, .light, Color(white: 0.92), false),
+            ("notch-glass-dark-drop-target", .glass, .dark, Color(white: 0.16), false),
             ("notch-glass-light-focus-on", .glass, .light, Color(white: 0.92), false),
             ("notch-glass-light-option", .glass, .light, Color(white: 0.92), true),
             ("notch-glass-light-collapsed", .glass, .light, Color(white: 0.92), false),
@@ -131,6 +133,9 @@ struct NotchRenderTool {
             let reveal = NotchRevealModel()
             reveal.revealed = true
             reveal.isOptionHeld = optionHeld
+            // 파일을 끌어온 상태: Drop here 레이어와 테두리 빛 줄기.
+            reveal.isDropTargetActive = name.hasSuffix("-drop-target")
+            reveal.glowPalette = name.hasPrefix("notch-glass-dark") ? .chap : .colorful
             reveal.collapsedWidgets =
                 name.hasSuffix("-collapsed") ? [.screenshots, .downloads] : []
             NotchTodoView.previewHoveredIndex = name == "notch-glass-light-todo" ? 1 : nil
@@ -469,6 +474,34 @@ struct NotchRenderTool {
             let png = try #require(rep.representation(using: .png, properties: [:]))
             try png.write(to: directory.appendingPathComponent("\(name).png"))
             window.orderOut(nil)
+        }
+    }
+
+    /// Keep Awake를 켤 때 하드웨어 노치 둘레를 지나가는 빛(지나가는 도중). 검정 노치는 하드웨어 대신 그린다.
+    @Test(
+        "render the Keep Awake notch flash", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    @MainActor
+    func renderNotchBeamFlash() throws {
+        let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
+        let notch = CGSize(width: 185, height: 32)
+        for (name, progress, backdrop) in [
+            ("notch-flash-mid-light", 0.5, Color(white: 0.92)),
+            ("notch-flash-early-dark", 0.25, Color(white: 0.16)),
+        ] {
+            let view = ZStack(alignment: .top) {
+                backdrop
+                UnevenRoundedRectangle(
+                    bottomLeadingRadius: NotchGeometry.badgeCornerRadius,
+                    bottomTrailingRadius: NotchGeometry.badgeCornerRadius, style: .continuous
+                )
+                .fill(.black)
+                .frame(width: notch.width, height: notch.height)
+                NotchBeamFlash.makeContent(
+                    notchSize: notch,
+                    startedAt: Date().addingTimeInterval(-NotchBeamFlash.duration * progress))
+            }
+            .frame(width: notch.width + 56, height: notch.height + 28)
+            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
         }
     }
 
