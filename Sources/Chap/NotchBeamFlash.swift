@@ -1,154 +1,64 @@
 import Cocoa
 import SwiftUI
 
-/// Keep Awake나 Timer가 도는 동안, 하드웨어 노치 둘레가 Apple Intelligence처럼 빛난다(`IntelligenceGlow`).
+/// 하드웨어 노치 둘레가 Apple Intelligence처럼 한 번 빛난다(`IntelligenceGlow`).
 ///
-/// 노치가 접혀 있어도(메뉴·다이얼 어디서 켜든) 보이도록 노치 주변에 투명 창을 띄운다(`setSteady`).
-/// 켜면 서서히 나타나 색이 계속 흐르고, 둘 다 끝나면 서서히 사라진다. 설정에서 색을 바꿀 때는 1.8초만 빛낸다(`show`).
-/// 마우스를 가로채지 않고 키 포커스를 가져가지 않는다. 노치가 없는 화면, 동작 줄이기에서는 띄우지 않는다.
-/// 모든 호출은 메인 스레드에서 한다.
+/// Keep Awake·Timer가 시작하고 끝날 때, Timer가 다 될 때, 새 파일이 들어올 때, 창이 제자리에 맞춰질 때,
+/// 설정에서 색을 바꿀 때 잠깐 빛나고 사라진다. 계속 켜 두지 않는다.
+/// 노치가 접혀 있어도 보이도록 노치 주변에 투명 창을 띄운다. 마우스를 가로채지 않고 키 포커스를 가져가지 않는다.
+/// 노치가 없는 화면, 동작 줄이기에서는 띄우지 않는다. 모든 호출은 메인 스레드에서 한다.
 enum NotchBeamFlash {
-    /// 한 번 빛나는 창(설정에서 켜거나 색을 바꿀 때 미리 보기).
     private static var flashWindow: NSWindow?
     private static var flashToken = 0
-    /// Keep Awake·Timer가 도는 동안 계속 켜 두는 창과 그 안의 빛.
-    private static var steadyWindow: NSWindow?
-    private static var steadyGlow: GlowLayerView?
-    private static var steadyOutline: NSRect?
-    /// 데스크탑(Space)이 바뀌면 빛을 새 데스크탑으로 옮겨 다시 나타낸다.
-    private static var spaceObserver: NSObjectProtocol?
-    private static var spaceToken = 0
 
-    /// 한 번 빛날 때 보이는 시간(초).
-    static let duration: Double = 1.8
-    /// 켜고 끌 때 창이 나타나고 사라지는 시간(초).
-    private static let fadeDuration: TimeInterval = 0.4
-    /// 빛이 노치 테두리에서 떨어진 거리. 노치 안쪽은 픽셀이 없어 바깥에 그린다.
-    private static let gap: CGFloat = 2.5
-    /// 번짐이 창 경계에서 잘리지 않도록 두는 여백.
-    private static let margin: CGFloat = 28
+    /// 빛을 노치 테두리에서 띄우는 거리. 0이면 띠 한가운데가 노치 가장자리에 놓여, 바깥 절반이 노치에 붙어 보인다.
+    private static let gap: CGFloat = 0
+    /// 노치 빛의 가장 안쪽 띠 두께 기본값(pt). 띠 안쪽 절반은 노치 속에 가려지므로 도커 빛보다 굵게 둔다.
+    private static let lineWidth: CGFloat = 4
+    /// 번짐이 창 경계에서 잘리지 않도록 두는 여백. 가장 바깥 띠(두께 × 5의 절반)와 흐림(16pt)을 담는다.
+    private static let margin: CGFloat = 36
 
-    /// 계속 켜 둔 빛이 보이는 중인지. 그동안 설정의 미리 보기는 따로 띄우지 않는다.
-    static var isSteadyVisible: Bool { steadyWindow != nil }
-
-    /// 한 번 빛낸다(설정에서 켜거나 색을 바꿀 때 미리 보기): 서서히 나타나 머물다 사라진다.
-    static func show(palette: NotchGlowPalette) {
+    /// 한 번 빛낸다: 서서히 나타나 머물다 사라진다. 순간(`moment`)마다 길이와 굵기가 다르다.
+    /// `outline`은 둘레를 빛낼 검정 띠(노치와 옆 배지, 화면 좌표)이고, 없으면 노치만 두른다.
+    /// 이미 빛나는 중에 다시 부르면 새 순간으로 바꾼다.
+    static func show(
+        palette: NotchGlowPalette, moment: NotchGlowMoment = .preview, around outline: NSRect? = nil
+    ) {
         guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
             let screen = NotchLauncherController.notchScreen()
         else { return }
         flashToken += 1
         let current = flashToken
         flashWindow?.orderOut(nil)
-        let notch = NotchLauncherController.notchRect(on: screen)
-        let flash = makeWindow(around: notch)
-        flash.contentView = makeGlowView(outlineSize: notch.size, palette: palette)
+        flashWindow?.contentView = nil
+        let outline = outline ?? NotchLauncherController.notchRect(on: screen)
+        let flash = makeWindow(around: outline)
+        flash.contentView = makeGlowView(
+            outlineSize: outline.size, palette: palette, lineWidth: CGFloat(moment.lineWidth))
         flash.alphaValue = 0
         flash.orderFrontRegardless()
         flashWindow = flash
+        let fadeIn = min(0.25, moment.duration * 0.2)
+        let fadeOut = min(0.6, moment.duration * 0.4)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.25
+            context.duration = fadeIn
             flash.animator().alphaValue = 1
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration - 0.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + moment.duration - fadeOut) {
             guard current == flashToken else { return }
             NSAnimationContext.runAnimationGroup(
                 { context in
-                    context.duration = 0.6
+                    context.duration = fadeOut
                     flash.animator().alphaValue = 0
                 },
                 completionHandler: {
                     guard current == flashToken else { return }
                     flash.orderOut(nil)
+                    // 다 숨긴 창이 애니메이션을 계속 돌리지 않게 내용을 뗀다.
                     flash.contentView = nil
                     flashWindow = nil
                 })
         }
-    }
-
-    /// Keep Awake·Timer가 도는 동안 `outline`(노치와 옆 배지를 합친 검정 띠, 화면 좌표) 둘레를 계속 빛낸다.
-    /// `palette`가 nil이면 끈다(부드럽게 사라진다). 같은 색·같은 자리면 아무 일도 하지 않으니 상태가 바뀔 때마다
-    /// 불러도 된다.
-    static func setSteady(_ palette: NotchGlowPalette?, around outline: NSRect?) {
-        guard let palette, let outline,
-            !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        else {
-            hideSteady()
-            return
-        }
-        if let glow = steadyGlow, steadyOutline == outline {
-            // 색만 바뀌었다. 마스크는 그대로 두고 그라데이션만 바꾼다.
-            glow.style.palette = palette
-            return
-        }
-        let frame = windowFrame(around: outline)
-        let glow = makeGlowView(outlineSize: outline.size, palette: palette)
-        steadyOutline = outline
-        steadyGlow = glow
-        // 이미 떠 있으면(배지가 붙어 자리가 바뀜) 내용만 바꾸고, 처음이면 서서히 나타낸다.
-        if let existing = steadyWindow {
-            existing.setFrame(frame, display: false)
-            existing.contentView = glow
-            existing.alphaValue = 1
-            return
-        }
-        let window = makeWindow(around: outline)
-        // 모든 데스크탑에 고정해 두면 데스크탑을 넘기는 동안 새 화면보다 빛 상자가 먼저 떠 보인다.
-        // 그래서 지금 데스크탑에만 두고(넘기면 이전 화면과 함께 밀려난다), 도착하면 새 데스크탑으로 옮겨 다시 켠다.
-        window.collectionBehavior = [.moveToActiveSpace, .ignoresCycle]
-        window.contentView = glow
-        window.alphaValue = 0
-        window.orderFrontRegardless()
-        steadyWindow = window
-        observeSpaceChanges()
-        fadeIn(window)
-    }
-
-    private static func fadeIn(_ window: NSWindow) {
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = fadeDuration
-            window.animator().alphaValue = 1
-        }
-    }
-
-    private static func observeSpaceChanges() {
-        guard spaceObserver == nil else { return }
-        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
-        ) { _ in
-            moveToActiveSpace()
-        }
-    }
-
-    /// 새 데스크탑에 도착한 뒤: 이전 데스크탑의 빛을 거두고, 넘기는 움직임이 끝날 즈음 새 데스크탑에 서서히 켠다.
-    private static func moveToActiveSpace() {
-        guard let window = steadyWindow else { return }
-        spaceToken += 1
-        let current = spaceToken
-        window.alphaValue = 0
-        window.orderOut(nil)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            guard current == spaceToken, steadyWindow === window else { return }
-            window.orderFrontRegardless()
-            fadeIn(window)
-        }
-    }
-
-    /// 계속 켜 둔 빛을 서서히 끈다. 사라지는 사이 다시 켜지면 새 창을 따로 띄우고, 이 창만 닫는다.
-    private static func hideSteady() {
-        guard let window = steadyWindow else { return }
-        steadyWindow = nil
-        steadyGlow = nil
-        steadyOutline = nil
-        NSAnimationContext.runAnimationGroup(
-            { context in
-                context.duration = fadeDuration
-                window.animator().alphaValue = 0
-            },
-            completionHandler: {
-                window.orderOut(nil)
-                // 다 숨긴 창이 애니메이션을 계속 돌리지 않게 내용을 뗀다.
-                window.contentView = nil
-            })
     }
 
     private static func windowFrame(around outline: NSRect) -> NSRect {
@@ -168,11 +78,13 @@ enum NotchBeamFlash {
 
     /// 검정 띠(`outlineSize`) 둘레를 빛내는 뷰. 창 내용 크기에 맞춰 띠를 위쪽 가운데에 놓고, 나머지는 번짐 자리다.
     /// 렌더 도구도 이 뷰의 `snapshot`으로 모습을 그린다.
-    static func makeGlowView(outlineSize: CGSize, palette: NotchGlowPalette) -> GlowLayerView {
+    static func makeGlowView(
+        outlineSize: CGSize, palette: NotchGlowPalette, lineWidth: CGFloat = lineWidth
+    ) -> GlowLayerView {
         let outline = CGSize(width: outlineSize.width + gap * 2, height: outlineSize.height + gap)
         let shape = NotchOutlineShape(
             outline: outline, cornerRadius: NotchGeometry.badgeCornerRadius + gap)
-        let view = GlowLayerView(style: .init(palette: palette)) { rect in
+        let view = GlowLayerView(style: .init(palette: palette, lineWidth: lineWidth)) { rect in
             shape.path(in: rect).cgPath
         }
         view.frame = NSRect(
@@ -184,29 +96,23 @@ enum NotchBeamFlash {
     }
 }
 
-/// 하드웨어 노치의 바깥 테두리: 화면 꼭대기에서 내려와 둥근 아래 모서리를 돌아 다시 올라간다.
-/// 윗변은 메뉴 막대 끝이라 그리지 않는다.
+/// 하드웨어 노치의 테두리: 화면 꼭대기에서 내려와 아래 모서리를 돌아 다시 올라간다.
+/// 모서리는 하드웨어 노치·옆 배지와 같은 연속 곡률(.continuous)이라 빛이 모서리에서도 노치에 붙는다.
+/// 윗변은 화면 위쪽 바깥(창 밖)에 두어 그리지 않는다. 띠의 안쪽 절반은 픽셀이 없는 노치 속에 들어가 보이지 않는다.
 struct NotchOutlineShape: Shape {
     /// 테두리 크기. 그리는 영역의 위쪽 가운데에 놓는다(영역의 나머지는 번짐 자리).
     let outline: CGSize
     let cornerRadius: CGFloat
+    /// 윗변을 창 밖으로 올리는 거리. 가장 넓은 번짐(약 25pt)이 창 안으로 내려오지 않을 만큼.
+    private static let topOverhang: CGFloat = 40
 
     func path(in bounds: CGRect) -> Path {
         let rect = CGRect(
-            x: bounds.midX - outline.width / 2, y: bounds.minY, width: outline.width,
-            height: outline.height)
-        let radius = min(cornerRadius, rect.height, rect.width / 2)
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - radius))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX + radius, y: rect.maxY),
-            control: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.maxY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX, y: rect.maxY - radius),
-            control: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        return path
+            x: bounds.midX - outline.width / 2, y: bounds.minY - Self.topOverhang,
+            width: outline.width, height: outline.height + Self.topOverhang)
+        let radius = min(cornerRadius, outline.height, rect.width / 2)
+        return UnevenRoundedRectangle(
+            bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous
+        ).path(in: rect)
     }
 }

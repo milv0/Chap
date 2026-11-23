@@ -145,7 +145,11 @@ enum ChromeLauncher {
 
     /// 사이트를 Chrome --app 모드로 실행하고, AX API로 윈도우 리사이즈.
     ///
-    static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
+    /// - Parameter onPlaced: 창이 제자리에 맞춰졌을 때(읽어 확인한 결과, I2) 메인 스레드에서 한 번 불린다.
+    ///   실패·재사용 불가·창 없음에는 불리지 않는다. `onComplete`는 그대로 끝날 때마다 불린다.
+    static func launch(
+        _ site: Site, onComplete: (() -> Void)? = nil, onPlaced: (() -> Void)? = nil
+    ) {
         guard FileManager.default.fileExists(atPath: appPath) else {
             Log.launcher.error("Google Chrome is not installed at \(appPath, privacy: .public)")
             LauncherUtils.showAlert(message: "Google Chrome is not installed.")
@@ -205,6 +209,8 @@ enum ChromeLauncher {
                     screenName: screenName, sizeLabel: sizeLabel,
                     startTime: startTime)
             {
+                // Chrome이 window ID로 bounds를 맞췄다(§7.1.1).
+                if let onPlaced { DispatchQueue.main.async(execute: onPlaced) }
                 onComplete?()
                 return
             }
@@ -255,6 +261,9 @@ enum ChromeLauncher {
                 sizeLabel: sizeLabel,
                 queueWait: queueWait,
                 startTime: startTime)
+            if observation.result?.level == .fullyApplied, let onPlaced {
+                DispatchQueue.main.async(execute: onPlaced)
+            }
             onComplete?()
         }
     }

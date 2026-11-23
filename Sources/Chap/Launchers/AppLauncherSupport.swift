@@ -71,6 +71,8 @@ extension AppLauncher {
         var lastResizeTime: CFAbsoluteTime?
         var lastSnapshotTime: CFAbsoluteTime = 0
         var didAttemptEarlyFocusedFallback = false
+        /// 처음으로 창을 제자리에 맞췄을 때 한 번 부른다(메인 스레드로 넘긴다). 관찰이 끝나기를 기다리지 않는다.
+        var onFirstPlaced: (() -> Void)?
         var didResize: Bool { resizedWindow != nil }
         init(
             position: CGPoint,

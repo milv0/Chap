@@ -36,7 +36,9 @@ Sources/
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
 │   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
-│   ├── NotchBeamFlash.swift       ← Keep Awake·Timer가 도는 동안 하드웨어 노치 둘레(옆 배지 본체 포함)가 빛나는 창(setSteady, 지금 데스크탑에만 두고 Space 전환 뒤 옮김). 설정 미리 보기는 1.8초 한 번(show)
+│   ├── AppDelegate+Glow.swift     ← Notch Glow 한 번 빛나기(flashNotchGlow: Keep Awake·Timer 시작과 끝·Timer 다 됨·새 파일·창 맞춤, 도커가 열려 있으면 닫힐 때로 미룸), 새 파일 폴더 감시
+│   ├── FolderChangeWatcher.swift  ← 폴더 vnode 이벤트(DispatchSource) 감시, 1초 조용해지면 한 번 알림. 놓인 선반 폴더만
+│   ├── NotchBeamFlash.swift       ← 하드웨어 노치 둘레(옆 배지 본체 포함)가 한 번 빛나는 창(show(moment:around:)). 계속 켜 두지 않음
 │   ├── SettingsToolbar.swift      ← Settings 표준 설정 툴바(.preference): 탭(SettingsTab)·탭 선택 공유(SettingsNavigation)·창 제목
 │   ├── SettingsHostingController.swift ← 비활성 Settings의 첫 클릭 전달 + AppKit이 사용자 리사이즈를 소유하도록 SwiftUI fitting-size 전파 차단
 │   ├── UpdateController.swift     ← Sparkle 2 자동·수동 업데이트 컨트롤러 (fail-closed)
@@ -63,7 +65,7 @@ Sources/
 │   │   └── LayoutLibrary.swift ← 저장된 Layout 단일 출처(ObservableObject, busyID 진행 상태)·LayoutAlert(앞으로 가져와 띄우는 알림)·connected() 디스플레이
 │   └── Views/                     ← UI
 │       ├── DesignSystem.swift     ← 색상, 폰트, 컴포넌트 스타일
-│       ├── IntelligenceGlow.swift ← Apple Intelligence(Siri)식 테두리 빛(GlowLayerView, Core Animation): 띠 4겹 흐림은 한 번 그린 알파 마스크, 색은 가로 CAGradientLayer를 미는 반복 애니메이션(Chap CPU 약 1%). SwiftUI용 IntelligenceGlow는 그 래퍼, snapshot은 렌더 도구용(각도 그라데이션은 납작한 노치 아랫변 가운데에 색이 몰려 끊겨 보여 쓰지 않음, 타이머 없음). 한 번(노치 둘레)·계속(Drop 도커) 모드, 색은 NotchGlowPalette
+│       ├── IntelligenceGlow.swift ← Apple Intelligence(Siri)식 테두리 빛(GlowLayerView, Core Animation): 띠 4겹 흐림은 한 번 그린 알파 마스크, 색은 가로 CAGradientLayer를 미는 반복 애니메이션(Chap CPU 약 1%). SwiftUI용 IntelligenceGlow는 그 래퍼, snapshot은 렌더 도구용(각도 그라데이션은 납작한 노치 아랫변 가운데에 색이 몰려 끊겨 보여 쓰지 않음, 타이머 없음). 노치 둘레(한 번)·Drop 도커(파일을 끌어오는 동안 계속)에 쓰고, 색은 NotchGlowPalette
 │       ├── Components.swift       ← 공용 뷰 (SidebarItem, Minimap, SettingsFormPage/SectionHeader/Row/ToggleRow, OptionKeyField 등)
 │       ├── SettingsView.swift     ← 탭별 본문(탭은 창 툴바), Launchers 전용 sidebar, 탭별 단일 본문, import/가이드 시트
 │       ├── SettingsGeneralView.swift ← General 탭 (App/Launching/Menu Bar: 앱 자체 설정만)
@@ -103,6 +105,7 @@ Sources/
 │       └── WelcomeView.swift      ← 첫 실행 온보딩
 ├── ChapCore/                      ← 코어 로직 (테스트 대상)
 │   ├── Models.swift               ← Site, Config, LaunchType, Defaults
+│   ├── NotchGlowPolicy.swift     ← Notch Glow 한 번 빛나는 순간(시작·끝·Timer 다 됨·새 파일·창 맞춤)별 길이/굵기·새 파일 판정 (순수 로직)
 │   ├── ConfigStore.swift          ← config 파일 읽기/쓰기/백업/레거시 정리·파일 마이그레이션
 │   ├── ConfigImportProcessor.swift ← JSON decode + 안전 import normalization 순수 처리기
 │   ├── ShellRemovalNotice.swift   ← Shell 제거 안내 문구 (마이그레이션·import 거부)
@@ -292,8 +295,10 @@ Config 모델 필드:
   - notchMirrorEnabled: Bool     상단 띠 Mirror 아이콘 표시 여부. 누락 시 true
   - notchQuickNoteEnabled: Bool  상단 띠 Quick Note 아이콘 표시 여부. 누락 시 true
   - notchCoverScreensEnabled: Bool  상단 띠 Cover Screens(달) 아이콘 표시 여부. 누락 시 true
-  - notchGlowEnabled: Bool      Notch Glow(Keep Awake·Timer가 도는 동안 노치 둘레, Drop 중 도커 테두리 빛) 여부. 누락 시 true
+  - notchGlowEnabled: Bool      Notch Glow(Keep Awake·Timer 시작과 끝에 노치 둘레 한 번, Drop 중 도커 테두리 빛) 여부. 누락 시 true
   - notchGlowPalette: String    Notch Glow 색 "colorful"(여러 색) | "chap"(Chap 파랑). 누락·알 수 없으면 colorful
+  - notchGlowArrivals: Bool     새 스크린샷·다운로드·Drop 파일이 들어오면 노치를 한 번 빛낼지. 누락 시 true
+  - notchGlowSnaps: Bool        런처 창이 제자리에 맞춰지거나 Layout 복원이 끝나면 노치를 짧게 빛낼지. 누락 시 true
   - notchQuickNoteShortcut: String?  Quick Note ⌥ 키(한 글자 대문자). 누락 시 "N", ""는 끔
   - coverScreensShortcut: String?  Cover Screens를 켜는 ⌥ 키. 누락 시 "L", ""는 끔
   - coverScreensMessage: String?  가림막 시계 아래 문구. 한 줄·80자, 없으면 키를 쓰지 않는다

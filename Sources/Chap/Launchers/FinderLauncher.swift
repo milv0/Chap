@@ -7,7 +7,10 @@ enum FinderLauncher {
     private static let outputLimit = 32 * 1024
 
     /// Finder로 폴더를 열고 즉시 윈도우 bounds를 설정한다.
-    static func openAndResize(path: String, bounds: (Int, Int, Int, Int)) {
+    /// - Parameter onPlaced: 폴더 창을 열고 bounds까지 설정했을 때 메인 스레드에서 한 번 불린다.
+    static func openAndResize(
+        path: String, bounds: (Int, Int, Int, Int), onPlaced: (() -> Void)? = nil
+    ) {
         let script = finderScript(path: path, bounds: bounds)
 
         DispatchQueue.global(qos: .utility).async {
@@ -41,6 +44,7 @@ enum FinderLauncher {
                     )
                     return
                 }
+                if let onPlaced { DispatchQueue.main.async(execute: onPlaced) }
             } catch {
                 Log.launcher.error(
                     "Failed to run Finder script: \(error.localizedDescription, privacy: .public)")

@@ -17,6 +17,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let configPath = Defaults.configPath
     let configStore = ConfigStore()
     var settingsWindow: NSWindow?
+    /// Notch Glow: 도커가 열려 있어 미뤄 둔 순간, 새 파일을 지켜보는 폴더, Drop 추가 관찰.
+    var pendingNotchGlow: (moment: NotchGlowMoment, since: Date)?
+    var screenshotFolderWatcher: FolderChangeWatcher?
+    var downloadsFolderWatcher: FolderChangeWatcher?
+    var dropAddObserver: NSObjectProtocol?
     /// Settings 창 툴바(탭·도구). 창이 닫히면 함께 놓는다.
     var settingsToolbar: SettingsToolbarController?
     var qaWindow: NSWindow?
@@ -83,11 +88,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         switch site.launchType {
         case .url:
-            ChromeLauncher.launch(site) {
-                if let token = guideToken { GuideWindow.dismiss(token) }
-            }
+            ChromeLauncher.launch(
+                site,
+                onComplete: {
+                    if let token = guideToken { GuideWindow.dismiss(token) }
+                },
+                onPlaced: { [weak self] in self?.flashNotchGlow(.snap) })
         case .app:
-            AppLauncher.launch(site)
+            AppLauncher.launch(site, onPlaced: { [weak self] in self?.flashNotchGlow(.snap) })
         case .finder:
             guard let path = site.folderPath, !path.isEmpty else {
                 Log.launcher.error("No folder path configured for \(site.name, privacy: .private)")
@@ -107,7 +115,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             }
             let bounds = centeredBounds(for: site, on: screen)
             FinderLauncher.openAndResize(
-                path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom))
+                path: expandedPath, bounds: (bounds.left, bounds.top, bounds.right, bounds.bottom),
+                onPlaced: { [weak self] in self?.flashNotchGlow(.snap) })
         }
     }
 }
