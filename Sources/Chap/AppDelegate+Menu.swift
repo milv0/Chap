@@ -22,7 +22,6 @@ extension AppDelegate {
             KeepAwakeHUD.show(
                 message: KeepAwakePolicy.hudMessage(startedPresetTitle: presetTitle),
                 focusOn: true)
-            showNotchGlow()
         case .ended:
             NSSound(named: "Pop")?.play()
             KeepAwakeHUD.show(
@@ -34,15 +33,20 @@ extension AppDelegate {
         }
         buildMenu()
         updateStatusIcon(accessible: accessibilityController.isAccessible)
+        refreshNotchGlow()
     }
 
-    /// Keep Awake·Timer를 켤 때 노치 둘레를 잠깐 빛낸다. 노치 빛과 노치 런처가 켜져 있을 때만.
-    /// 도커가 열려 있으면 도커가 노치를 덮고 있어 보이지 않으므로, 가림막 아래에서도 띄우지 않는다.
-    func showNotchGlow() {
-        guard config.notchGlowEnabled, config.notchLauncherEnabled,
-            !notchLauncher.isPanelOpen, !coverScreensController.isOn
-        else { return }
-        NotchBeamFlash.show(palette: config.notchGlowPalette)
+    /// Keep Awake나 Timer가 도는 동안 노치 둘레를 계속 빛내고, 둘 다 끝나면 끈다.
+    /// Notch Glow와 노치 런처가 켜져 있을 때만. 도커가 열려 있으면 도커가 노치를 덮어 잠시 숨기고,
+    /// 가림막 아래에서도 띄우지 않는다. 상태가 바뀔 때마다 불러도 된다(같으면 아무 일도 하지 않는다).
+    func refreshNotchGlow() {
+        guard !isRunningTests else { return }
+        let isRunning = keepAwake.isActive || chapTimer.isRunning
+        let shows =
+            config.notchGlowEnabled && config.notchLauncherEnabled && isRunning
+            && !notchLauncher.isPanelOpen && !coverScreensController.isOn
+        NotchBeamFlash.setSteady(
+            shows ? config.notchGlowPalette : nil, around: notchLauncher.glowOutline())
     }
 
     func menuWillOpen(_ menu: NSMenu) {
@@ -444,7 +448,11 @@ extension AppDelegate {
         notchLauncher.onOpenSettings = { [weak self] type in
             self?.showSettings(focusing: type)
         }
+        notchLauncher.onPanelVisibilityChange = { [weak self] _ in self?.refreshNotchGlow() }
+        notchLauncher.onStripChange = { [weak self] in self?.refreshNotchGlow() }
         notchLauncher.update(enabled: config.notchLauncherEnabled)
+        // 설정 저장·화면 변경 뒤에도 노치 빛을 새 노치 자리와 설정에 맞춘다.
+        refreshNotchGlow()
     }
 
     /// Quick Note 단축키로 실제 등록할 키 (예약키·사이트와 겹치지 않을 때만. 노치 상태와 무관).

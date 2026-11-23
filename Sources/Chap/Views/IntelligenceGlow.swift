@@ -1,132 +1,318 @@
+import AppKit
+import CoreImage
+import CoreImage.CIFilterBuiltins
 import SwiftUI
+
+// MARK: - Core Animation glow
 
 /// Apple Intelligence(Siri) 테두리처럼 도형 둘레 전체가 여러 색으로 빛나고, 색이 천천히 흐르는 빛.
 ///
-/// 오픈소스 재현들(IntelligenceGlow, AppleIntelligenceGlowEffect, MIT)의 방식을 참고해 Chap 안에 다시 썼다:
-/// 색 띠를 두께·흐림을 달리해 여러 겹 겹치고, 색이 테두리를 따라 흐른다.
-/// 그 라이브러리들은 각도 그라데이션을 쓰지만, 노치처럼 납작한 도형에서는 아랫변 가운데에 색이 몰려 매듭처럼
-/// 끊겨 보인다. 그래서 테두리를 짧은 조각으로 나눠 길이를 따라 색을 고르게 칠한다. 시간만으로 모습이 정해져
-/// 타이머가 없고 어느 순간이든 같은 모습으로 다시 그릴 수 있다(렌더 도구).
-///
-/// - `duration`이 있으면 `startedAt`부터 그동안만 보인다: 짧게 차오르며 두꺼워지고, 머물다가, 옅어지며 사라진다
-///   (Keep Awake·Timer를 켤 때 노치 둘레).
-/// - `duration`이 nil이면 보이는 동안 계속 빛난다(파일을 노치로 끌 때 도커 테두리). 호출하는 쪽이 조건부로 둔다.
-/// 동작 줄이기가 켜져 있으면 색이 흐르지 않는다. 한 번 빛나는 모드는 그리지 않고, 계속 모드는 멈춘 색 테두리만 남긴다.
-struct IntelligenceGlow<S: Shape>: View {
-    let shape: S
-    var palette: NotchGlowPalette = .colorful
-    var startedAt = Date()
-    var duration: Double? = 1.8
-    /// 가장 안쪽 띠 두께(pt). 바깥 띠는 이 값의 배수다.
-    var lineWidth: CGFloat = 2.5
-    /// 0...1. 전체 밝기.
-    var strength: Double = 1
-    /// 빛을 도형 안쪽에만 둔다(도커). 하드웨어 노치처럼 안쪽에 픽셀이 없는 도형은 끄고 바깥으로 번지게 한다.
-    var clipsToShape = false
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+/// 오픈소스 재현들(IntelligenceGlow, AppleIntelligenceGlowEffect, MIT)의 겹치는 띠 구성(두께·흐림을 달리한
+/// 4겹)을 참고했다. 그 라이브러리들은 SwiftUI로 매 프레임 다시 그리지만, Keep Awake는 몇 시간씩 켜 두므로 여기서는
+/// 그리기를 모두 Core Animation에 맡긴다:
+/// - 테두리 모양과 번짐은 처음 한 번만 그린 알파 마스크 이미지다(`makeMask`, 크기·배율이 바뀔 때만 다시 그린다).
+/// - 색은 가로 그라데이션 층(`CAGradientLayer`)이고, 그 층을 옆으로 미는 반복 애니메이션 하나로 색이 흐른다.
+///   매 프레임 합성은 GPU에서 시스템이 하므로 Chap 프로세스는 거의 아무 일도 하지 않는다.
+/// 색은 가로 위치를 따라 고르게 칠한다. 각도 그라데이션은 납작한 노치 아랫변 가운데에 색이 몰려 끊겨 보였다.
+/// 동작 줄이기가 켜져 있으면 색이 흐르지 않고 멈춘 채 빛난다.
+final class GlowLayerView: NSView {
+    struct Style: Equatable {
+        var palette: NotchGlowPalette = .colorful
+        /// 가장 안쪽 띠 두께(pt). 바깥 띠는 이 값의 배수다.
+        var lineWidth: CGFloat = 2.5
+        /// 빛을 도형 안쪽에만 둔다(도커). 하드웨어 노치처럼 안쪽에 픽셀이 없는 도형은 끄고 바깥으로 번지게 한다.
+        var clipsToPath = false
+        /// 위에서 이 높이까지는 빛을 가리고(화면 꼭대기·메뉴 막대에 붙은 윗변), 그 아래 `topFadeLength`만큼 서서히 드러낸다.
+        var topFadeInset: CGFloat?
+        var topFadeLength: CGFloat = 16
+    }
 
     /// 겹치는 띠: (두께 배수, 흐림, 불투명도). 안쪽은 또렷하고 바깥은 넓게 번진다.
-    private static var layers: [(width: CGFloat, blur: CGFloat, opacity: Double)] {
-        [(1, 1, 0.9), (2, 4, 0.8), (3.2, 9, 0.6), (5, 16, 0.45)]
+    static let layers: [(width: CGFloat, blur: CGFloat, opacity: CGFloat)] = [
+        (1, 1, 0.9), (2, 4, 0.8), (3.2, 9, 0.6), (5, 16, 0.45),
+    ]
+    /// 뷰 폭에 색 고리가 이 비율만큼 보인다(0.85바퀴). 색 사이가 넓어 경계가 보이지 않는다.
+    static let cycleFraction: CGFloat = 0.85
+    /// 색 고리가 한 바퀴 흐르는 시간(초).
+    static let flowDuration: CFTimeInterval = 3.3
+
+    /// 도형 테두리(SwiftUI 좌표: 왼쪽 위 원점)를 돌려준다. 크기가 바뀔 때마다 다시 묻는다.
+    var pathProvider: (CGRect) -> CGPath {
+        didSet {
+            needsRebuild = true
+            needsLayout = true
+        }
+    }
+    var style: Style {
+        didSet {
+            guard style != oldValue else { return }
+            needsRebuild = true
+            needsLayout = true
+        }
+    }
+    /// 0...1. 전체 밝기.
+    var strength: CGFloat = 1 {
+        didSet { clipLayer.opacity = Float(strength) }
     }
 
-    /// 테두리를 나누는 조각 수. 흐림이 조각 사이 이음새를 덮는다.
-    private static var segments: Int { 120 }
+    private let clipLayer = CALayer()
+    private let gradientLayer = CAGradientLayer()
+    private let maskLayer = CALayer()
+    private var needsRebuild = true
+    private var builtSize: CGSize = .zero
+    private var builtScale: CGFloat = 0
+    private static let imageContext = CIContext(options: [.useSoftwareRenderer: false])
+    private static let flowKey = "ChapGlowFlow"
 
-    var body: some View {
-        Group {
-            if reduceMotion {
-                if duration == nil { glow(time: 0, level: 1) }
-            } else {
-                TimelineView(.animation) { context in
-                    let elapsed = context.date.timeIntervalSince(startedAt)
-                    if let duration {
-                        if elapsed >= 0, elapsed < duration {
-                            glow(time: elapsed, level: Self.envelope(elapsed / duration))
-                        }
-                    } else {
-                        // 계속 모드는 뷰가 다시 만들어져도 처음부터 다시 차오르지 않도록 시작 시각을 쓰지 않는다.
-                        // 나타나고 사라지는 것은 호출하는 쪽의 전환(transition)이 맡는다.
-                        glow(time: context.date.timeIntervalSinceReferenceDate, level: 1)
-                    }
-                }
+    init(style: Style, pathProvider: @escaping (CGRect) -> CGPath) {
+        self.style = style
+        self.pathProvider = pathProvider
+        super.init(frame: .zero)
+        wantsLayer = true
+        layer?.masksToBounds = false
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0.5)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 0.5)
+        clipLayer.mask = maskLayer
+        clipLayer.addSublayer(gradientLayer)
+        layer?.addSublayer(clipLayer)
+        setAccessibilityElement(false)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { nil }
+
+    /// 빛은 장식이라 마우스를 받지 않는다.
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func layout() {
+        super.layout()
+        rebuildIfNeeded()
+    }
+
+    override func viewDidChangeBackingProperties() {
+        super.viewDidChangeBackingProperties()
+        needsRebuild = true
+        rebuildIfNeeded()
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        // 창에서 떨어지면 애니메이션이 사라지므로 다시 붙을 때 다시 건다.
+        guard window != nil else { return }
+        needsRebuild = true
+        rebuildIfNeeded()
+    }
+
+    private var scale: CGFloat { window?.backingScaleFactor ?? 2 }
+
+    private func rebuildIfNeeded() {
+        let size = bounds.size
+        guard size.width > 0, size.height > 0 else { return }
+        guard needsRebuild || size != builtSize || scale != builtScale else { return }
+        needsRebuild = false
+        builtSize = size
+        builtScale = scale
+        rebuild(size: size)
+    }
+
+    /// 도형 좌표(왼쪽 위 원점)를 이 뷰(왼쪽 아래 원점)로 옮긴 테두리.
+    private func flippedPath(in size: CGSize) -> CGPath {
+        var flip = CGAffineTransform(translationX: 0, y: size.height).scaledBy(x: 1, y: -1)
+        return pathProvider(CGRect(origin: .zero, size: size)).copy(using: &flip)
+            ?? pathProvider(CGRect(origin: .zero, size: size))
+    }
+
+    private func rebuild(size: CGSize) {
+        let path = flippedPath(in: size)
+        let period = size.width / Self.cycleFraction
+        let colors = style.palette.colors.map(Self.cgColor)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        clipLayer.frame = bounds
+        clipLayer.opacity = Float(strength)
+        maskLayer.frame = bounds
+        maskLayer.contentsScale = scale
+        maskLayer.contents = Self.makeMask(path: path, size: size, scale: scale, style: style)
+        // 그라데이션은 왼쪽으로 한 고리 더 깔아 두고 오른쪽으로 한 고리만큼 밀어, 미는 동안에도 뷰 전체를 덮는다.
+        let periods = Int(((size.width + 2 * period) / period).rounded(.up))
+        let total = CGFloat(periods) * period
+        var stops: [CGColor] = []
+        var locations: [NSNumber] = []
+        for index in 0..<periods {
+            for (offset, color) in colors.enumerated() {
+                stops.append(color)
+                let along = (CGFloat(index) + CGFloat(offset) / CGFloat(colors.count)) * period
+                locations.append(NSNumber(value: Double(along / total)))
             }
         }
-        .modifier(GlowClip(shape: shape, isOn: clipsToShape))
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
+        stops.append(colors[0])
+        locations.append(1)
+        gradientLayer.colors = stops
+        gradientLayer.locations = locations
+        gradientLayer.anchorPoint = .zero
+        gradientLayer.bounds = CGRect(x: 0, y: 0, width: total, height: size.height)
+        gradientLayer.position = CGPoint(x: -period, y: 0)
+        CATransaction.commit()
+        restartFlow(period: period)
     }
 
-    private func glow(time: Double, level: Double) -> some View {
-        let count = Self.segments
-        let colors = (0..<count).map { index in
-            Self.color(
-                at: (Double(index) + 0.5) / Double(count), time: time, palette: palette)
+    private func restartFlow(period: CGFloat) {
+        gradientLayer.removeAnimation(forKey: Self.flowKey)
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        let flow = CABasicAnimation(keyPath: "position.x")
+        flow.fromValue = -period
+        flow.toValue = 0
+        flow.duration = Self.flowDuration
+        flow.timingFunction = CAMediaTimingFunction(name: .linear)
+        flow.repeatCount = .infinity
+        flow.isRemovedOnCompletion = false
+        gradientLayer.add(flow, forKey: Self.flowKey)
+    }
+
+    // MARK: Mask
+
+    /// 테두리 띠 4겹을 흰색으로 그리고 흐려서 합친 알파 마스크. 그라데이션은 이 모양 안에서만 보인다.
+    static func makeMask(path: CGPath, size: CGSize, scale: CGFloat, style: Style) -> CGImage? {
+        let width = Int(size.width * scale)
+        let height = Int(size.height * scale)
+        let space = Self.colorSpace
+        let info = CGImageAlphaInfo.premultipliedLast.rawValue
+        guard width > 0, height > 0,
+            let output = CGContext(
+                data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                space: space, bitmapInfo: info)
+        else { return nil }
+        var toPixels = CGAffineTransform(scaleX: scale, y: scale)
+        let pixelPath = path.copy(using: &toPixels) ?? path
+        let pixelRect = CGRect(x: 0, y: 0, width: width, height: height)
+        if style.clipsToPath {
+            output.addPath(pixelPath)
+            output.clip()
         }
-        return ZStack {
-            ForEach(Self.layers.indices, id: \.self) { layerIndex in
-                let layer = Self.layers[layerIndex]
-                ZStack {
-                    ForEach(0..<count, id: \.self) { index in
-                        // 조각을 조금씩 겹쳐 이음새에 틈이 생기지 않게 한다.
-                        shape.trim(
-                            from: max(0, Double(index) / Double(count) - 0.002),
-                            to: min(1, Double(index + 1) / Double(count) + 0.002)
-                        )
-                        .stroke(
-                            colors[index],
-                            style: StrokeStyle(
-                                lineWidth: lineWidth * layer.width * (0.4 + 0.6 * level),
-                                lineCap: index == 0 || index == count - 1 ? .round : .butt,
-                                lineJoin: .round))
-                    }
+        for layer in layers {
+            guard
+                let stroke = CGContext(
+                    data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                    space: space, bitmapInfo: info)
+            else { continue }
+            stroke.addPath(pixelPath)
+            stroke.setLineWidth(style.lineWidth * layer.width * scale)
+            stroke.setLineCap(.round)
+            stroke.setLineJoin(.round)
+            stroke.setStrokeColor(CGColor(gray: 1, alpha: 1))
+            stroke.strokePath()
+            guard var image = stroke.makeImage() else { continue }
+            if layer.blur > 0 {
+                let filter = CIFilter.gaussianBlur()
+                filter.inputImage = CIImage(cgImage: image).clampedToExtent()
+                filter.radius = Float(layer.blur * scale)
+                if let blurred = filter.outputImage?.cropped(to: pixelRect),
+                    let rendered = imageContext.createCGImage(blurred, from: pixelRect)
+                {
+                    image = rendered
                 }
-                .blur(radius: layer.blur)
-                .opacity(layer.opacity * level * strength)
+            }
+            output.setAlpha(layer.opacity)
+            output.draw(image, in: pixelRect)
+        }
+        if let inset = style.topFadeInset {
+            // 알파를 곱해(destinationIn) 위쪽을 가리고 그 아래로 서서히 드러낸다.
+            let top = (CGFloat(height) - inset * scale) / CGFloat(height)
+            let bottom = (CGFloat(height) - (inset + style.topFadeLength) * scale) / CGFloat(height)
+            let fade = CGGradient(
+                colorsSpace: space,
+                colors: [
+                    CGColor(colorSpace: space, components: [0, 0, 0, 1]),
+                    CGColor(colorSpace: space, components: [0, 0, 0, 1]),
+                    CGColor(colorSpace: space, components: [0, 0, 0, 0]),
+                    CGColor(colorSpace: space, components: [0, 0, 0, 0]),
+                ].compactMap { $0 } as CFArray,
+                locations: [0, max(bottom, 0), min(max(top, 0), 1), 1])
+            if let fade {
+                output.setAlpha(1)
+                output.setBlendMode(.destinationIn)
+                output.drawLinearGradient(
+                    fade, start: .zero, end: CGPoint(x: 0, y: height), options: [])
             }
         }
+        return output.makeImage()
     }
 
-    /// 밝기 곡선(0...1). 짧게 차오르고, 마지막 40% 동안 부드럽게 사라진다.
-    static func envelope(_ progress: Double) -> Double {
-        let rise = min(progress / 0.12, 1)
-        let fall = progress > 0.6 ? (1 - progress) / 0.4 : 1
-        let value = min(rise, fall)
-        // 끝을 부드럽게(ease in-out).
-        return value * value * (3 - 2 * value)
+    /// 마스크·그라데이션·색이 모두 같은 색 공간을 쓴다(CGGradient는 색 공간이 다르면 만들어지지 않는다).
+    static let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
+
+    static func cgColor(_ hex: UInt32) -> CGColor {
+        CGColor(
+            colorSpace: colorSpace,
+            components: [
+                CGFloat((hex >> 16) & 0xFF) / 255, CGFloat((hex >> 8) & 0xFF) / 255,
+                CGFloat(hex & 0xFF) / 255, 1,
+            ]) ?? CGColor(gray: 0.5, alpha: 1)
     }
 
-    /// 테두리 위치 `position`(0...1, 경로 길이 비율)의 색. 색은 처음과 끝이 이어지는 고리로 섞이고,
-    /// 시간이 지나면 테두리를 따라 같은 속도로 흐른다. 색마다 자리가 살짝 흔들려 단조롭지 않다.
-    static func color(at position: Double, time: Double, palette: NotchGlowPalette) -> Color {
-        let colors = palette.colors.map(Self.nsColor)
-        let count = Double(colors.count)
-        // 테두리 전체에 색 고리가 0.85바퀴만 보여 색 사이가 넓고, 초당 0.3바퀴 천천히 흐른다.
-        let wobble = 0.03 * sin(time * 1.6 + position * 5)
-        var cycle = (position * 0.85 - time * 0.3 + wobble) * count
-        cycle -= (cycle / count).rounded(.down) * count
-        let lower = Int(cycle.rounded(.down)) % colors.count
-        let upper = (lower + 1) % colors.count
-        // 직선으로 섞는다. 곡선(smoothstep)으로 섞으면 색마다 평평한 구간과 급한 구간이 생겨 오히려 경계가 보인다.
-        let fraction = cycle - cycle.rounded(.down)
-        return Color(
-            nsColor: colors[lower].blended(withFraction: fraction, of: colors[upper])
-                ?? colors[lower])
-    }
+    // MARK: Snapshot
 
-    private static func nsColor(_ hex: UInt32) -> NSColor {
-        NSColor(
-            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+    /// 지금 모습을 한 장으로 그린다(렌더 도구·문서용). 화면에는 Core Animation이 그리므로 실행 중에는 쓰지 않는다.
+    func snapshot(scale: CGFloat = 2) -> CGImage? {
+        let size = bounds.size
+        let width = Int(size.width * scale)
+        let height = Int(size.height * scale)
+        let space = Self.colorSpace
+        guard width > 0, height > 0,
+            let mask = Self.makeMask(
+                path: flippedPath(in: size), size: size, scale: scale, style: style),
+            let context = CGContext(
+                data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        let colors = style.palette.colors.map(Self.cgColor)
+        let period = size.width / Self.cycleFraction * scale
+        var stops = colors + [colors[0]]
+        stops.append(contentsOf: colors)
+        // 두 고리(period × 2)에 걸쳐 0...1로 고르게 둔다.
+        let locations = stops.indices.map { CGFloat($0) / CGFloat(stops.count - 1) }
+        guard
+            let gradient = CGGradient(
+                colorsSpace: space, colors: stops as CFArray, locations: locations)
+        else { return nil }
+        context.setAlpha(CGFloat(strength))
+        context.drawLinearGradient(
+            gradient, start: .zero, end: CGPoint(x: period * 2, y: 0),
+            options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+        context.setAlpha(1)
+        context.setBlendMode(.destinationIn)
+        context.draw(mask, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
     }
 }
 
-private struct GlowClip<S: Shape>: ViewModifier {
-    let shape: S
-    let isOn: Bool
+// MARK: - SwiftUI
 
-    func body(content: Content) -> some View {
-        if isOn { content.clipShape(shape) } else { content }
+/// SwiftUI 안에서 쓰는 `GlowLayerView`(노치 도커의 Drop here 레이어). 보일 때만 두므로 호출하는 쪽이 조건부로 둔다.
+struct IntelligenceGlow<S: Shape>: NSViewRepresentable {
+    let shape: S
+    var palette: NotchGlowPalette = .colorful
+    var lineWidth: CGFloat = 2.5
+    /// 0...1. 전체 밝기.
+    var strength: Double = 1
+    var clipsToShape = false
+    var topFadeInset: CGFloat?
+
+    private var style: GlowLayerView.Style {
+        GlowLayerView.Style(
+            palette: palette, lineWidth: lineWidth, clipsToPath: clipsToShape,
+            topFadeInset: topFadeInset)
+    }
+
+    func makeNSView(context: Context) -> GlowLayerView {
+        let shape = shape
+        let view = GlowLayerView(style: style) { rect in shape.path(in: rect).cgPath }
+        view.strength = CGFloat(strength)
+        return view
+    }
+
+    func updateNSView(_ view: GlowLayerView, context: Context) {
+        view.style = style
+        view.strength = CGFloat(strength)
     }
 }

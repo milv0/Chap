@@ -75,6 +75,7 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.buildMenu()
                 self?.showWelcomeBackAfterCoverScreens()
+                self?.refreshNotchGlow()
             },
             // 선반 제목: Standard 크기로 커서 화면 가운데에 폴더를 연다.
             NotificationCenter.default.addObserver(
@@ -218,6 +219,8 @@ extension AppDelegate {
             let previousNotchMirrorEnabled = self.config.notchMirrorEnabled
             let previousNotchQuickNoteEnabled = self.config.notchQuickNoteEnabled
             let previousNotchCoverScreensEnabled = self.config.notchCoverScreensEnabled
+            let previousNotchGlowEnabled = self.config.notchGlowEnabled
+            let previousNotchGlowPalette = self.config.notchGlowPalette
             let previousHotKeys = globalHotKeyRegistrations(
                 for: self.config.sites,
                 optionShortcutsEnabled: self.config.optionShortcutsEnabled,
@@ -272,6 +275,8 @@ extension AppDelegate {
                 || previousNotchMirrorEnabled != newConfig.notchMirrorEnabled
                 || previousNotchQuickNoteEnabled != newConfig.notchQuickNoteEnabled
                 || previousNotchCoverScreensEnabled != newConfig.notchCoverScreensEnabled
+                || previousNotchGlowEnabled != newConfig.notchGlowEnabled
+                || previousNotchGlowPalette != newConfig.notchGlowPalette
             DispatchQueue.main.async {
                 if menuChanged { self.buildMenu() }
                 if hotKeysChanged { self.configureGlobalHotKeys() }
