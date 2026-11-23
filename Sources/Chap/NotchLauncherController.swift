@@ -29,7 +29,30 @@ final class NotchLauncherController {
     /// 직전 검사에서 마우스가 hover 구역 안이었는지. 들어오는 순간에만 열어, 닫은 뒤에도
     /// 마우스가 그 자리에 있으면 다시 열리지 않는다 (노치 Mac의 tracking area와 같은 동작).
     private var pointerWasInZone = false
-    private var panel: NSPanel?
+    private var panel: NSPanel? {
+        didSet {
+            guard (oldValue == nil) != (panel == nil) else { return }
+            onPanelVisibilityChange?(panel != nil)
+        }
+    }
+    /// 메인 도커가 열리거나 닫힐 때. 도커가 노치를 덮는 동안 노치 빛을 숨기는 데 쓴다.
+    var onPanelVisibilityChange: ((Bool) -> Void)?
+    /// 노치 옆 배지(Drop·Timer)가 생기거나 사라질 때. 노치 빛이 배지까지 감싸도록 다시 맞추는 데 쓴다.
+    var onStripChange: (() -> Void)?
+
+    /// 노치 빛이 두를 검정 띠: 노치와, 지금 붙어 있는 Drop·Timer 배지의 보이는 본체를 합친 영역(화면 좌표).
+    /// 배지 창이 노치 빛보다 위에 있어, 노치만 두르면 배지가 빛을 덮어 그쪽 모서리가 잘려 보인다.
+    /// 배지 창은 본체 바깥에 메뉴 막대와 이어지는 플레어 자리(`badgeFlareRadius`)를 더 품고 있어, 창 프레임을 그대로
+    /// 쓰면 본체와 빛 사이가 그만큼 빈다. 그래서 본체 폭만 더한다.
+    func glowOutline() -> NSRect? {
+        guard let screen = Self.notchScreen() else { return nil }
+        let notch = Self.notchRect(on: screen)
+        var minX = notch.minX
+        var maxX = notch.maxX
+        if badgeWindow != nil { maxX += NotchGeometry.badgeBodyWidth }
+        if timerBadgeWindow != nil { minX -= NotchGeometry.timerBadgeBodyWidth }
+        return NSRect(x: minX, y: notch.minY, width: maxX - minX, height: notch.height)
+    }
     /// 메인 도커가 열려 있는지.
     var isPanelOpen: Bool { panel != nil }
     private var badgeWindow: NSWindow?
@@ -254,8 +277,10 @@ final class NotchLauncherController {
         guard NotchLauncherPolicy.shouldShowDropBadge(fileCount: count),
             hotzoneWindow != nil, let screen = Self.dockScreen()
         else {
+            let hadBadge = badgeWindow != nil
             badgeWindow?.orderOut(nil)
             badgeWindow = nil
+            if hadBadge { onStripChange?() }
             return
         }
 
@@ -314,6 +339,7 @@ final class NotchLauncherController {
             window.orderFrontRegardless()
         }
         badgeWindow = window
+        onStripChange?()
     }
 
     // MARK: - Timer badge
@@ -326,8 +352,10 @@ final class NotchLauncherController {
             hotzoneWindow != nil, let screen = Self.dockScreen(),
             NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
         else {
+            let hadBadge = timerBadgeWindow != nil
             timerBadgeWindow?.orderOut(nil)
             timerBadgeWindow = nil
+            if hadBadge { onStripChange?() }
             return
         }
         let margin = NotchGeometry.hoverMargin
@@ -349,6 +377,7 @@ final class NotchLauncherController {
         hosting.frame = NSRect(origin: .zero, size: frame.size)
         hosting.addSubview(tracker)
 
+        let isNew = timerBadgeWindow == nil
         let window =
             timerBadgeWindow
             ?? NotchAuxiliaryWindow.make(frame: frame, level: Self.badgeLevel)
@@ -356,6 +385,7 @@ final class NotchLauncherController {
         window.contentView = hosting
         window.orderFrontRegardless()
         timerBadgeWindow = window
+        if isNew { onStripChange?() }
     }
 
     /// 보관(원본 참조)은 utility queue에서 수행하고 실패 건수는 사용자에게 알린다.

@@ -365,17 +365,8 @@ struct NotchLauncherPanelView: View {
     @ViewBuilder private var dropGlow: some View {
         if let palette = reveal.glowPalette {
             IntelligenceGlow(
-                shape: panelShape, palette: palette, duration: nil, lineWidth: 3,
-                strength: dropTargeted ? 1 : 0.7, clipsToShape: true
-            )
-            .mask {
-                VStack(spacing: 0) {
-                    Color.clear.frame(height: topInset)
-                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
-                        .frame(height: 16)
-                    Color.black
-                }
-            }
+                shape: panelShape, palette: palette, lineWidth: 3,
+                strength: dropTargeted ? 1 : 0.7, clipsToShape: true, topFadeInset: topInset)
         }
     }
 

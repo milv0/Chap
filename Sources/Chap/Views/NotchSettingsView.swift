@@ -363,9 +363,9 @@ extension NotchSettingsView {
     fileprivate var notchGlowRow: some View {
         SettingsRow(
             title: "Notch Glow",
-            subtitle: "Lights the notch when Keep Awake or a timer starts.",
-            help: "The notch glows for a moment when Keep Awake or a timer starts, and the "
-                + "dock glows while you drop files on it. Nothing else changes."
+            subtitle: "Lights the notch while Keep Awake or a timer runs.",
+            help: "The notch glows while Keep Awake or a timer runs, and the dock glows "
+                + "while you drop files on it. Nothing else changes."
         ) {
             HStack(spacing: 8) {
                 ForEach(NotchGlowPalette.allCases, id: \.self) { palette in
@@ -394,7 +394,9 @@ extension NotchSettingsView {
     }
 
     private func previewGlow() {
-        guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig
+        // Keep Awake·Timer가 돌아 노치가 이미 빛나고 있으면, 저장 뒤 그 빛이 새 색으로 바뀌는 것으로 충분하다.
+        guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig,
+            !NotchBeamFlash.isSteadyVisible
         else { return }
         NotchBeamFlash.show(palette: vm.notchGlowPalette)
     }

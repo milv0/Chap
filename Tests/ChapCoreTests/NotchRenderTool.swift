@@ -477,31 +477,58 @@ struct NotchRenderTool {
         }
     }
 
-    /// Keep Awake를 켤 때 하드웨어 노치 둘레를 지나가는 빛(지나가는 도중). 검정 노치는 하드웨어 대신 그린다.
-    @Test(
-        "render the Keep Awake notch flash", .enabled(if: NotchRenderTool.outputDirectory != nil))
+    /// Keep Awake·Timer가 도는 동안 하드웨어 노치 둘레를 두르는 빛(Notch Glow), 색 두 가지. 검정 노치는 하드웨어 대신
+    /// 그린다. 화면에서는 Core Animation이 그리므로 `snapshot`으로 한 장을 뽑는다.
+    @Test("render the notch glow", .enabled(if: NotchRenderTool.outputDirectory != nil))
     @MainActor
-    func renderNotchBeamFlash() throws {
+    func renderNotchGlow() throws {
         let directory = URL(fileURLWithPath: try #require(Self.outputDirectory), isDirectory: true)
         let notch = CGSize(width: 185, height: 32)
-        for (name, progress, backdrop) in [
-            ("notch-flash-mid-light", 0.5, Color(white: 0.92)),
-            ("notch-flash-early-dark", 0.25, Color(white: 0.16)),
+        for (name, palette, backdrop) in [
+            (
+                "notch-glow-colorful-light", NotchGlowPalette.colorful,
+                NSColor(white: 0.92, alpha: 1)
+            ),
+            ("notch-glow-chap-dark", .chap, NSColor(white: 0.16, alpha: 1)),
         ] {
-            let view = ZStack(alignment: .top) {
-                backdrop
-                UnevenRoundedRectangle(
-                    bottomLeadingRadius: NotchGeometry.badgeCornerRadius,
-                    bottomTrailingRadius: NotchGeometry.badgeCornerRadius, style: .continuous
-                )
-                .fill(.black)
-                .frame(width: notch.width, height: notch.height)
-                NotchBeamFlash.makeContent(
-                    notchSize: notch,
-                    startedAt: Date().addingTimeInterval(-NotchBeamFlash.duration * progress))
-            }
-            .frame(width: notch.width + 56, height: notch.height + 28)
-            try Self.renderPNG(view).write(to: directory.appendingPathComponent("\(name).png"))
+            let glow = NotchBeamFlash.makeGlowView(outlineSize: notch, palette: palette)
+            let image = try #require(glow.snapshot())
+            let size = glow.frame.size
+            let scale: CGFloat = 2
+            let rep = try #require(
+                NSBitmapImageRep(
+                    bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale),
+                    pixelsHigh: Int(size.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
+                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                    bitsPerPixel: 0))
+            let context = try #require(NSGraphicsContext(bitmapImageRep: rep))
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = context
+            context.cgContext.scaleBy(x: scale, y: scale)
+            backdrop.setFill()
+            NSRect(origin: .zero, size: size).fill()
+            NSColor.black.setFill()
+            // 노치: 창 위쪽 가운데, 아래 모서리만 둥글게.
+            let notchRect = NSRect(
+                x: (size.width - notch.width) / 2, y: size.height - notch.height,
+                width: notch.width, height: notch.height)
+            let notchPath = NSBezierPath()
+            notchPath.move(to: NSPoint(x: notchRect.minX, y: notchRect.maxY))
+            notchPath.line(to: NSPoint(x: notchRect.minX, y: notchRect.minY + 13))
+            notchPath.appendArc(
+                withCenter: NSPoint(x: notchRect.minX + 13, y: notchRect.minY + 13), radius: 13,
+                startAngle: 180, endAngle: 270)
+            notchPath.line(to: NSPoint(x: notchRect.maxX - 13, y: notchRect.minY))
+            notchPath.appendArc(
+                withCenter: NSPoint(x: notchRect.maxX - 13, y: notchRect.minY + 13), radius: 13,
+                startAngle: 270, endAngle: 360)
+            notchPath.line(to: NSPoint(x: notchRect.maxX, y: notchRect.maxY))
+            notchPath.close()
+            notchPath.fill()
+            context.cgContext.draw(image, in: CGRect(origin: .zero, size: size))
+            NSGraphicsContext.restoreGraphicsState()
+            let png = try #require(rep.representation(using: .png, properties: [:]))
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
     }
 
