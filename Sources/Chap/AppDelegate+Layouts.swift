@@ -104,6 +104,8 @@ extension AppDelegate {
         layoutLibrary.busyID = layout.id
         let started = LayoutRestoreService.restore(layout) { [weak self] summary in
             self?.layoutLibrary.busyID = nil
+            // 창이 하나라도 제자리에 놓였으면 노치가 짧게 빛난다.
+            if summary.restored > 0 { self?.flashNotchGlow(.snap) }
             guard summary.skipped > 0 else { return }
             LayoutAlert.show(
                 message: "Couldn't place \(summary.skippedApps.joined(separator: ", "))",

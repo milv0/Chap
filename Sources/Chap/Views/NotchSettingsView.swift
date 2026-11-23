@@ -345,6 +345,7 @@ struct NotchSettingsView: View {
 
                     // 스타일(Custom·Glass)과 무관하게 보이는 빛이라 스타일 줄들 아래에 둔다.
                     notchGlowRow
+                    notchGlowMomentsRow
                 } header: {
                     SettingsSectionHeader(
                         title: "Notch Style", systemImage: "paintpalette",
@@ -363,9 +364,9 @@ extension NotchSettingsView {
     fileprivate var notchGlowRow: some View {
         SettingsRow(
             title: "Notch Glow",
-            subtitle: "Lights the notch while Keep Awake or a timer runs.",
-            help: "The notch glows while Keep Awake or a timer runs, and the dock glows "
-                + "while you drop files on it. Nothing else changes."
+            subtitle: "Lights the notch when Keep Awake or a timer starts or ends.",
+            help: "The notch glows for a moment when Keep Awake or a timer starts or ends, "
+                + "and the dock glows while you drop files on it. Nothing else changes."
         ) {
             HStack(spacing: 8) {
                 ForEach(NotchGlowPalette.allCases, id: \.self) { palette in
@@ -393,12 +394,60 @@ extension NotchSettingsView {
         }
     }
 
+    /// Keep Awake·Timer 시작과 끝 말고도 노치가 한 번 빛나는 순간들. Timer가 다 되면 늘 빛난다.
+    fileprivate var notchGlowMomentsRow: some View {
+        SettingsRow(
+            title: "Also Glow When",
+            subtitle: "Once, for a moment. A timer ending always glows.",
+            help: "New Files: a screenshot or download lands in a shelf on the notch, or you add "
+                + "files to Chap Drop. Windows: a launcher or layout puts a window in place."
+        ) {
+            HStack(spacing: 6) {
+                GlowMomentChip(title: "New Files", isOn: $vm.notchGlowArrivals)
+                GlowMomentChip(title: "Windows", isOn: $vm.notchGlowSnaps)
+            }
+            .disabled(!vm.notchGlowEnabled)
+            .opacity(vm.notchGlowEnabled ? 1 : 0.45)
+        }
+        .onChange(of: vm.notchGlowArrivals) { _, _ in onSave() }
+        .onChange(of: vm.notchGlowSnaps) { _, _ in onSave() }
+    }
+
     private func previewGlow() {
-        // Keep Awake·Timer가 돌아 노치가 이미 빛나고 있으면, 저장 뒤 그 빛이 새 색으로 바뀌는 것으로 충분하다.
-        guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig,
-            !NotchBeamFlash.isSteadyVisible
+        guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig
         else { return }
         NotchBeamFlash.show(palette: vm.notchGlowPalette)
+    }
+}
+
+/// 노치가 한 번 빛나는 순간 하나를 켜고 끄는 칩(General의 Menu Sections 칩과 같은 모양).
+private struct GlowMomentChip: View {
+    let title: String
+    @Binding var isOn: Bool
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isOn ? DS.accent : DS.textSecondary)
+                .padding(.horizontal, 10)
+                .frame(height: 26)
+                .background(isOn ? DS.accentSoft : isHovered ? DS.border.opacity(0.25) : .clear)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isOn ? DS.accent : DS.border, lineWidth: 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .accessibilityLabel("Glow for \(title)")
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityAddTraits(isOn ? [.isToggle, .isSelected] : .isToggle)
     }
 }
 

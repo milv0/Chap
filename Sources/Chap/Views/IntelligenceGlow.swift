@@ -8,8 +8,8 @@ import SwiftUI
 /// Apple Intelligence(Siri) 테두리처럼 도형 둘레 전체가 여러 색으로 빛나고, 색이 천천히 흐르는 빛.
 ///
 /// 오픈소스 재현들(IntelligenceGlow, AppleIntelligenceGlowEffect, MIT)의 겹치는 띠 구성(두께·흐림을 달리한
-/// 4겹)을 참고했다. 그 라이브러리들은 SwiftUI로 매 프레임 다시 그리지만, Keep Awake는 몇 시간씩 켜 두므로 여기서는
-/// 그리기를 모두 Core Animation에 맡긴다:
+/// 4겹)을 참고했다. 그 라이브러리들은 SwiftUI로 매 프레임 다시 그리지만, 여기서는 그리기를 모두 Core Animation에
+/// 맡긴다:
 /// - 테두리 모양과 번짐은 처음 한 번만 그린 알파 마스크 이미지다(`makeMask`, 크기·배율이 바뀔 때만 다시 그린다).
 /// - 색은 가로 그라데이션 층(`CAGradientLayer`)이고, 그 층을 옆으로 미는 반복 애니메이션 하나로 색이 흐른다.
 ///   매 프레임 합성은 GPU에서 시스템이 하므로 Chap 프로세스는 거의 아무 일도 하지 않는다.

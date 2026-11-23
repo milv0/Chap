@@ -40,7 +40,7 @@ extension AppDelegate {
         chapTimer.stop()
     }
 
-    /// 시작·중지는 조용히 메뉴와 노치 배지만 바꾼다. 끝나면 소리와 HUD로 알린다.
+    /// 시작·중지는 메뉴와 노치 배지를 바꾸고 노치를 한 번 빛낸다. 다 되면 소리와 HUD로도 알린다.
     func handleTimerEvent(_ event: ChapTimerController.Event) {
         if event == .finished {
             NSSound(named: "Glass")?.play()
@@ -49,6 +49,12 @@ extension AppDelegate {
         }
         buildMenu()
         notchLauncher.updateTimerBadge()
-        refreshNotchGlow()
+        // 배지를 붙이거나 뗀 뒤에 빛내야 빛이 지금 배지까지 감싼다.
+        switch event {
+        case .started: flashNotchGlow(.started)
+        case .stopped: flashNotchGlow(.ended)
+        // 소리를 꺼 두어도 눈에 들어오게 가장 밝고 길게 빛난다.
+        case .finished: flashNotchGlow(.timerFinished)
+        }
     }
 }

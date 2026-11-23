@@ -521,6 +521,10 @@ public struct Config: Codable {
     public var notchGlowEnabled: Bool
     /// 노치 빛의 색. 누락·알 수 없는 값이면 여러 색.
     public var notchGlowPalette: NotchGlowPalette
+    /// 새 스크린샷·다운로드·Drop 파일이 들어오면 노치를 한 번 빛낼지. 누락 시 true.
+    public var notchGlowArrivals: Bool
+    /// 런처 창이 제자리에 맞춰지거나 Layout 복원이 끝나면 노치를 짧게 빛낼지. 누락 시 true.
+    public var notchGlowSnaps: Bool
     /// Quick Note 창을 여는 ⌥ 키(한 글자, 대문자). nil이면 끔. 키가 없던 설정은 기본 ⌥N.
     /// 디스크에는 끔을 ""로 적어 '키 없음(기본값)'과 구분한다.
     public var notchQuickNoteShortcut: String?
@@ -570,7 +574,7 @@ public struct Config: Codable {
         case notchPanelOpacity, notchPanelColorHex, notchWidgets, notchMirrorEnabled
         case notchQuickNoteEnabled, notchQuickNoteShortcut, notchCollapsedWidgets
         case notchCoverScreensEnabled, coverScreensShortcut, coverScreensMessage
-        case notchGlowEnabled, notchGlowPalette
+        case notchGlowEnabled, notchGlowPalette, notchGlowArrivals, notchGlowSnaps
         case sites
     }
 
@@ -596,6 +600,8 @@ public struct Config: Codable {
         notchCoverScreensEnabled: Bool = true,
         notchGlowEnabled: Bool = true,
         notchGlowPalette: NotchGlowPalette = .colorful,
+        notchGlowArrivals: Bool = true,
+        notchGlowSnaps: Bool = true,
         notchQuickNoteShortcut: String? = QuickNoteShortcutPolicy.defaultKey,
         coverScreensShortcut: String? = CoverScreensPolicy.defaultShortcut,
         coverScreensMessage: String? = nil,
@@ -620,6 +626,8 @@ public struct Config: Codable {
         self.notchCoverScreensEnabled = notchCoverScreensEnabled
         self.notchGlowEnabled = notchGlowEnabled
         self.notchGlowPalette = notchGlowPalette
+        self.notchGlowArrivals = notchGlowArrivals
+        self.notchGlowSnaps = notchGlowSnaps
         self.notchQuickNoteShortcut = QuickNoteShortcutPolicy.normalized(notchQuickNoteShortcut)
         self.coverScreensShortcut = QuickNoteShortcutPolicy.normalized(coverScreensShortcut)
         self.coverScreensMessage = CoverScreensPolicy.cleanedMessage(coverScreensMessage)
@@ -690,6 +698,10 @@ public struct Config: Codable {
         notchGlowPalette =
             (try? container.decodeIfPresent(String.self, forKey: .notchGlowPalette))
             .flatMap { $0 }.flatMap(NotchGlowPalette.init(rawValue:)) ?? .colorful
+        notchGlowArrivals =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchGlowArrivals)) ?? true
+        notchGlowSnaps =
+            (try? container.decodeIfPresent(Bool.self, forKey: .notchGlowSnaps)) ?? true
         // 키가 없으면(이전 버전 설정) 기본 ⌥N, ""이면 끔.
         if let stored = try? container.decodeIfPresent(String.self, forKey: .notchQuickNoteShortcut)
         {
@@ -763,6 +775,8 @@ public struct Config: Codable {
         try container.encode(notchCoverScreensEnabled, forKey: .notchCoverScreensEnabled)
         try container.encode(notchGlowEnabled, forKey: .notchGlowEnabled)
         try container.encode(notchGlowPalette.rawValue, forKey: .notchGlowPalette)
+        try container.encode(notchGlowArrivals, forKey: .notchGlowArrivals)
+        try container.encode(notchGlowSnaps, forKey: .notchGlowSnaps)
         try container.encode(notchQuickNoteShortcut ?? "", forKey: .notchQuickNoteShortcut)
         try container.encode(coverScreensShortcut ?? "", forKey: .coverScreensShortcut)
         try container.encodeIfPresent(coverScreensMessage, forKey: .coverScreensMessage)

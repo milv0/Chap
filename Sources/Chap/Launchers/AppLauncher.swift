@@ -42,7 +42,11 @@ enum AppLauncher {
     private static let preparationQueue = DispatchQueue(
         label: "com.mingyupark.Chap.app-launch-preparation", qos: .userInitiated)
 
-    static func launch(_ site: Site, onComplete: (() -> Void)? = nil) {
+    /// - Parameter onPlaced: 새 창을 처음 제자리에 맞췄을 때 메인 스레드에서 한 번 불린다. 관찰(최대 수 초)이
+    ///   끝나기를 기다리지 않는다. 리사이즈하지 않는 경로·실패·밀려난 관찰(I10)에는 불리지 않는다.
+    static func launch(
+        _ site: Site, onComplete: (() -> Void)? = nil, onPlaced: (() -> Void)? = nil
+    ) {
         guard let path = validatedAppPath(for: site) else {
             onComplete?()
             return
@@ -97,7 +101,7 @@ enum AppLauncher {
                     observeAndReport(
                         app: app, site: site, fallbackBundleId: bundleId, screen: screen,
                         bounds: bounds, baseline: baseline, startTime: startTime,
-                        onComplete: onComplete)
+                        onComplete: onComplete, onPlaced: onPlaced)
                 }
             }
         }
@@ -160,7 +164,8 @@ enum AppLauncher {
         bounds: (left: Int, top: Int, right: Int, bottom: Int),
         baseline: LaunchBaseline,
         startTime: CFAbsoluteTime,
-        onComplete: (() -> Void)?
+        onComplete: (() -> Void)?,
+        onPlaced: (() -> Void)?
     ) {
         Log.launcher.info(
             "app opened pid=\(app.processIdentifier) localizedName=\(app.localizedName ?? "?", privacy: .private)"
@@ -193,7 +198,8 @@ enum AppLauncher {
                 debugLabel: site.name,
                 observationKey: observationKey,
                 observationToken: observationToken,
-                windowsBefore: baseline.windowsBefore
+                windowsBefore: baseline.windowsBefore,
+                onFirstPlaced: onPlaced
             )
             if result.wasSuperseded {
                 Log.launcher.info(
@@ -361,6 +367,12 @@ enum AppLauncher {
         ctx.resizedBoundsResult = boundsResult
         let now = CFAbsoluteTimeGetCurrent()
         if boundsResult.applied {
+            if ctx.resizedWindow == nil, boundsResult.level == .fullyApplied,
+                let onFirstPlaced = ctx.onFirstPlaced
+            {
+                ctx.onFirstPlaced = nil
+                DispatchQueue.main.async(execute: onFirstPlaced)
+            }
             if ctx.firstResizeLatency == nil { ctx.firstResizeLatency = now - ctx.startTime }
             ctx.resizedWindow = window
             ctx.lastResizeTime = now

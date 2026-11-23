@@ -234,7 +234,7 @@ struct QAView: View {
                 ),
                 (
                     "노치가 빛나는 건 뭔가요?",
-                    "Notch Glow입니다. Keep Awake나 타이머가 도는 동안 노치 둘레가 빛나고, 파일을 노치로 끌어오는 동안 도커 테두리가 빛납니다. Settings → Notch → Notch Style의 Notch Glow 줄에서 끄거나, 색을 Colorful(여러 색)과 Chap Blue(Chap 파랑) 중에서 고를 수 있습니다. 노치 런처가 켜져 있을 때만 나오고, 손쉬운 사용의 동작 줄이기를 켜면 나오지 않습니다."
+                    "Notch Glow입니다. Keep Awake나 타이머가 시작하고 끝날 때 노치 둘레가 한 번 빛나고, 타이머가 다 되면 더 밝고 길게 빛납니다. 계속 켜져 있지는 않습니다. Also Glow When에서 새 스크린샷·다운로드·Drop 파일이 들어올 때(New Files)와 런처가 창을 제자리에 맞출 때(Windows)도 한 번 빛나게 할 수 있습니다. 파일을 노치로 끌어오는 동안 도커 테두리가 빛납니다. Settings → Notch → Notch Style의 Notch Glow 줄에서 끄거나, 색을 Colorful(여러 색)과 Chap Blue(Chap 파랑) 중에서 고를 수 있습니다. 노치 런처가 켜져 있을 때만 나오고, 손쉬운 사용의 동작 줄이기를 켜면 나오지 않습니다."
                 ),
                 (
                     "Chap Drop은 어떻게 쓰나요?",
@@ -520,7 +520,7 @@ struct QAView: View {
                 ),
                 (
                     "Why does the notch glow?",
-                    "That's Notch Glow. The notch glows while Keep Awake or a timer runs, and the dock glows while you drag files onto it. Turn it off or pick Colorful or Chap Blue in Settings → Notch → Notch Style. It shows only while the Notch Launcher is on, and not when Reduce Motion is on."
+                    "That's Notch Glow. The notch glows once when Keep Awake or a timer starts or ends, a little brighter and longer when a timer finishes. It doesn't stay lit. Under Also Glow When, it can also light up once when a new screenshot, download, or Drop file arrives (New Files) or a launcher puts a window in place (Windows), and the dock glows while you drag files onto it. Turn it off or pick Colorful or Chap Blue in Settings → Notch → Notch Style. It shows only while the Notch Launcher is on, and not when Reduce Motion is on."
                 ),
                 (
                     "How does Chap Drop work?",

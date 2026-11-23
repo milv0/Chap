@@ -80,7 +80,8 @@ extension AppLauncher {
     static func observeAndResizeOneWindow(
         pid: pid_t, position: CGPoint, size: CGSize, startTime: CFAbsoluteTime,
         policy: ResizeObservationPolicy, debugLabel: String, observationKey: String,
-        observationToken: Int, windowsBefore: [AXUIElement]
+        observationToken: Int, windowsBefore: [AXUIElement],
+        onFirstPlaced: (() -> Void)? = nil
     ) -> ResizeObservationResult {
         let app = LauncherUtils.axApplication(pid: pid)
         let ctx = ResizeContext(
@@ -92,6 +93,7 @@ extension AppLauncher {
             observationKey: observationKey,
             observationToken: observationToken,
             windowsBefore: windowsBefore)
+        ctx.onFirstPlaced = onFirstPlaced
 
         defer {
             observationRegistry.finish(key: observationKey, token: observationToken)
