@@ -5,8 +5,7 @@ import Cocoa
 extension AppDelegate {
     /// 노치를 한 번 빛낸다(Keep Awake·Timer 시작과 끝, Timer가 다 됨, 새 파일, 창이 제자리에 맞춰짐).
     /// Notch Glow·노치 런처가 켜져 있고 가림막이 없을 때만. 새 파일·창 맞춤은 각각 따로 끌 수 있다.
-    /// 도커가 열려 있으면 도커가 노치를 덮는다. Keep Awake·Timer는 도커에서 켜고 끄는 일이 많아, 그 순간은 도커가
-    /// 닫힐 때 빛내고(`notchPanelVisibilityChanged`), 나머지는 건너뛴다.
+    /// 도커가 펼쳐져 있으면 도커가 노치를 덮으므로 도커 위쪽 검정 띠 테두리를 두르고, 접혀 있으면 노치와 옆 배지를 두른다.
     func flashNotchGlow(_ moment: NotchGlowMoment) {
         guard !isRunningTests, config.notchGlowEnabled, config.notchLauncherEnabled,
             !coverScreensController.isOn
@@ -16,27 +15,13 @@ extension AppDelegate {
         case .snap: guard config.notchGlowSnaps else { return }
         case .preview, .started, .ended, .timerFinished: break
         }
-        guard !notchLauncher.isPanelOpen else {
-            switch moment {
-            case .started, .ended, .timerFinished: pendingNotchGlow = (moment, Date())
-            case .preview, .arrival, .snap: break
-            }
+        // 노치 빛이라 노치가 있는 화면에서만(접힌 노치 빛과 같다).
+        guard NotchLauncherController.notchScreen() != nil else { return }
+        if notchLauncher.flashStripGlow(palette: config.notchGlowPalette, moment: moment) {
             return
         }
-        pendingNotchGlow = nil
         NotchBeamFlash.show(
             palette: config.notchGlowPalette, moment: moment, around: notchLauncher.glowOutline())
-    }
-
-    /// 도커가 닫히면, 열려 있는 동안 미뤄 둔 순간을 빛낸다. 오래 열어 둔 뒤라면(30초 넘게) 늦은 빛은 버린다.
-    func notchPanelVisibilityChanged(isOpen: Bool) {
-        guard !isOpen, let pending = pendingNotchGlow else { return }
-        pendingNotchGlow = nil
-        guard Date().timeIntervalSince(pending.since) < 30 else { return }
-        // 도커가 접히며 Drop·Timer 배지가 다시 붙은 뒤에 둘레를 잰다.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            self?.flashNotchGlow(pending.moment)
-        }
     }
 
     // MARK: Arrivals

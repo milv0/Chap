@@ -17,8 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let configPath = Defaults.configPath
     let configStore = ConfigStore()
     var settingsWindow: NSWindow?
-    /// Notch Glow: 도커가 열려 있어 미뤄 둔 순간, 새 파일을 지켜보는 폴더, Drop 추가 관찰.
-    var pendingNotchGlow: (moment: NotchGlowMoment, since: Date)?
+    /// Notch Glow: 새 파일을 지켜보는 폴더, Drop 추가 관찰.
     var screenshotFolderWatcher: FolderChangeWatcher?
     var downloadsFolderWatcher: FolderChangeWatcher?
     var dropAddObserver: NSObjectProtocol?

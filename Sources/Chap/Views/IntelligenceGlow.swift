@@ -22,6 +22,8 @@ final class GlowLayerView: NSView {
         var lineWidth: CGFloat = 2.5
         /// 빛을 도형 안쪽에만 둔다(도커). 하드웨어 노치처럼 안쪽에 픽셀이 없는 도형은 끄고 바깥으로 번지게 한다.
         var clipsToPath = false
+        /// 빛을 도형 바깥에만 둔다(펼친 도커 둘레: 안쪽에는 칸 내용이 있다).
+        var clipsOutsidePath = false
         /// 위에서 이 높이까지는 빛을 가리고(화면 꼭대기·메뉴 막대에 붙은 윗변), 그 아래 `topFadeLength`만큼 서서히 드러낸다.
         var topFadeInset: CGFloat?
         var topFadeLength: CGFloat = 16
@@ -46,6 +48,14 @@ final class GlowLayerView: NSView {
     var style: Style {
         didSet {
             guard style != oldValue else { return }
+            needsRebuild = true
+            needsLayout = true
+        }
+    }
+    /// 빛이 이 도형(SwiftUI 좌표) 밖으로 나가지 않게 한다. 도커 검정 띠의 빛이 도커 위쪽 좌우 꼭짓점에서 도커 밖으로
+    /// 번지지 않게 도커 모양을 준다. nil이면 뷰 경계만.
+    var containerProvider: ((CGRect) -> CGPath)? {
+        didSet {
             needsRebuild = true
             needsLayout = true
         }
@@ -117,9 +127,17 @@ final class GlowLayerView: NSView {
 
     /// 도형 좌표(왼쪽 위 원점)를 이 뷰(왼쪽 아래 원점)로 옮긴 테두리.
     private func flippedPath(in size: CGSize) -> CGPath {
+        flipped(pathProvider, in: size)
+    }
+
+    private func flippedContainer(in size: CGSize) -> CGPath? {
+        containerProvider.map { flipped($0, in: size) }
+    }
+
+    private func flipped(_ provider: (CGRect) -> CGPath, in size: CGSize) -> CGPath {
         var flip = CGAffineTransform(translationX: 0, y: size.height).scaledBy(x: 1, y: -1)
-        return pathProvider(CGRect(origin: .zero, size: size)).copy(using: &flip)
-            ?? pathProvider(CGRect(origin: .zero, size: size))
+        let path = provider(CGRect(origin: .zero, size: size))
+        return path.copy(using: &flip) ?? path
     }
 
     private func rebuild(size: CGSize) {
@@ -132,7 +150,9 @@ final class GlowLayerView: NSView {
         clipLayer.opacity = Float(strength)
         maskLayer.frame = bounds
         maskLayer.contentsScale = scale
-        maskLayer.contents = Self.makeMask(path: path, size: size, scale: scale, style: style)
+        maskLayer.contents = Self.makeMask(
+            path: path, container: flippedContainer(in: size), size: size, scale: scale,
+            style: style)
         // 그라데이션은 왼쪽으로 한 고리 더 깔아 두고 오른쪽으로 한 고리만큼 밀어, 미는 동안에도 뷰 전체를 덮는다.
         let periods = Int(((size.width + 2 * period) / period).rounded(.up))
         let total = CGFloat(periods) * period
@@ -172,7 +192,9 @@ final class GlowLayerView: NSView {
     // MARK: Mask
 
     /// 테두리 띠 4겹을 흰색으로 그리고 흐려서 합친 알파 마스크. 그라데이션은 이 모양 안에서만 보인다.
-    static func makeMask(path: CGPath, size: CGSize, scale: CGFloat, style: Style) -> CGImage? {
+    static func makeMask(
+        path: CGPath, container: CGPath? = nil, size: CGSize, scale: CGFloat, style: Style
+    ) -> CGImage? {
         let width = Int(size.width * scale)
         let height = Int(size.height * scale)
         let space = Self.colorSpace
@@ -185,9 +207,17 @@ final class GlowLayerView: NSView {
         var toPixels = CGAffineTransform(scaleX: scale, y: scale)
         let pixelPath = path.copy(using: &toPixels) ?? path
         let pixelRect = CGRect(x: 0, y: 0, width: width, height: height)
+        if let container, let pixelContainer = container.copy(using: &toPixels) {
+            output.addPath(pixelContainer)
+            output.clip()
+        }
         if style.clipsToPath {
             output.addPath(pixelPath)
             output.clip()
+        } else if style.clipsOutsidePath {
+            output.addRect(pixelRect)
+            output.addPath(pixelPath)
+            output.clip(using: .evenOdd)
         }
         for layer in layers {
             guard
@@ -260,7 +290,8 @@ final class GlowLayerView: NSView {
         let space = Self.colorSpace
         guard width > 0, height > 0,
             let mask = Self.makeMask(
-                path: flippedPath(in: size), size: size, scale: scale, style: style),
+                path: flippedPath(in: size), container: flippedContainer(in: size), size: size,
+                scale: scale, style: style),
             let context = CGContext(
                 data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                 space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
@@ -296,17 +327,24 @@ struct IntelligenceGlow<S: Shape>: NSViewRepresentable {
     /// 0...1. 전체 밝기.
     var strength: Double = 1
     var clipsToShape = false
+    /// 빛을 도형 바깥에만 둔다(도커 검정 띠: 띠 안에는 노치·아이콘이 있다).
+    var clipsOutsideShape = false
+    /// 빛이 이 도형 밖으로 나가지 않게 한다(검정 띠 빛을 도커 모양 안에 둔다).
+    var container: AnyShape?
     var topFadeInset: CGFloat?
 
     private var style: GlowLayerView.Style {
         GlowLayerView.Style(
             palette: palette, lineWidth: lineWidth, clipsToPath: clipsToShape,
-            topFadeInset: topFadeInset)
+            clipsOutsidePath: clipsOutsideShape, topFadeInset: topFadeInset)
     }
 
     func makeNSView(context: Context) -> GlowLayerView {
         let shape = shape
         let view = GlowLayerView(style: style) { rect in shape.path(in: rect).cgPath }
+        if let container {
+            view.containerProvider = { rect in container.path(in: rect).cgPath }
+        }
         view.strength = CGFloat(strength)
         return view
     }

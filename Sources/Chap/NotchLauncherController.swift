@@ -29,14 +29,7 @@ final class NotchLauncherController {
     /// 직전 검사에서 마우스가 hover 구역 안이었는지. 들어오는 순간에만 열어, 닫은 뒤에도
     /// 마우스가 그 자리에 있으면 다시 열리지 않는다 (노치 Mac의 tracking area와 같은 동작).
     private var pointerWasInZone = false
-    private var panel: NSPanel? {
-        didSet {
-            guard (oldValue == nil) != (panel == nil) else { return }
-            onPanelVisibilityChange?(panel != nil)
-        }
-    }
-    /// 메인 도커가 열리거나 닫힐 때. 도커가 노치를 덮는 동안 미룬 노치 빛을 닫힌 뒤에 켜는 데 쓴다.
-    var onPanelVisibilityChange: ((Bool) -> Void)?
+    private var panel: NSPanel?
 
     /// 노치 빛이 두를 검정 띠: 노치와, 지금 붙어 있는 Drop·Timer 배지의 보이는 본체를 합친 영역(화면 좌표).
     /// 배지 창이 노치 빛보다 위에 있어, 노치만 두르면 배지가 빛을 덮어 그쪽 모서리가 잘려 보인다.
@@ -53,6 +46,15 @@ final class NotchLauncherController {
     }
     /// 메인 도커가 열려 있는지.
     var isPanelOpen: Bool { panel != nil }
+
+    /// 도커가 펼쳐져 있으면 도커 위쪽 검정 띠(노치·물범·Drop·Mirror가 있는 곳) 테두리를 한 번 빛낸다.
+    /// 펼친 도커는 노치를 덮으므로 노치 대신 이 띠를 두른다. 펼쳐져 있지 않으면 false.
+    func flashStripGlow(palette: NotchGlowPalette, moment: NotchGlowMoment) -> Bool {
+        guard panel != nil, let reveal = revealModel else { return false }
+        guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return true }
+        reveal.flashStripGlow(palette: palette, moment: moment)
+        return true
+    }
     private var badgeWindow: NSWindow?
     /// 노치 왼쪽 타이머 배지. 타이머가 돌고 도커가 접혀 있을 때만 있다.
     private var timerBadgeWindow: NSWindow?

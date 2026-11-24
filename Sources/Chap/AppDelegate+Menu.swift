@@ -436,9 +436,6 @@ extension AppDelegate {
         notchLauncher.onOpenSettings = { [weak self] type in
             self?.showSettings(focusing: type)
         }
-        notchLauncher.onPanelVisibilityChange = { [weak self] isOpen in
-            self?.notchPanelVisibilityChanged(isOpen: isOpen)
-        }
         refreshArrivalWatchers()
         notchLauncher.update(enabled: config.notchLauncherEnabled)
     }
