@@ -50,7 +50,7 @@ enum ResizeLogger {
     /// 리사이즈 결과 기록 (DEBUG 빌드에서만 동작, 릴리스에서는 no-op)
     /// - Parameters:
     ///   - site: 사이트 이름
-    ///   - type: 런처 타입 (url, app, finder, shell)
+    ///   - type: 런처 타입 (url, app, finder)
     ///   - appState: 앱 상태 ("running" 또는 "cold")
     ///   - attempt: 성공한 시도 번호 (1-based)
     ///   - delay: 해당 시도의 대기 시간

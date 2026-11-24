@@ -40,7 +40,7 @@ struct QAView: View {
             [
                 (
                     "단축키는 어떻게 설정하나요?",
-                    "Settings에서 각 사이트의 \"Shortcut (⌥ +)\" 필드에 원하는 키 하나를 입력하면 됩니다. 예: T 입력 → ⌥T로 실행. Quick Note나 Cover Screens에 배정된 키는 런처에 쓸 수 없고, 충돌하면 빨간 안내가 나옵니다."
+                    "Settings → Launchers에서 각 사이트의 Shortcut 칸에 원하는 키 하나를 입력하면 됩니다. 예: T 입력 → ⌥T로 실행. Quick Note나 Cover Screens에 배정된 키는 런처에 쓸 수 없고, 충돌하면 빨간 안내가 나옵니다."
                 ),
                 (
                     "단축키를 안 넣어도 되나요?",
@@ -135,7 +135,7 @@ struct QAView: View {
                 ),
                 (
                     "다른 컴퓨터로 설정을 옮기려면?",
-                    "Settings → Export로 Launchers·General·Notch·Tools 설정을 JSON 파일에 저장하고, 다른 컴퓨터에서 Import하면 됩니다. JSON 파일을 설정 창에 드래그앤드랍해도 됩니다. 저장하지 않은 변경이 있으면 덮어쓰기 전에 확인합니다."
+                    "Settings → General 아래 More → Export…로 Launchers·General·Notch·Tools 설정을 JSON 파일에 저장하고, 다른 컴퓨터에서 Import하면 됩니다. JSON 파일을 설정 창에 드래그앤드랍해도 됩니다. 저장하지 않은 변경이 있으면 덮어쓰기 전에 확인합니다."
                 ),
             ]
         ),
@@ -202,7 +202,7 @@ struct QAView: View {
                 ),
                 (
                     "Screenshots·Downloads 칸을 접을 수 있나요?",
-                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다. 접어 둔 칸은 10분 안에 찍은 스크린샷이나 받은 파일이 있으면 노치를 열 때 저절로 펼쳐집니다(접은 설정은 그대로이고, 다시 접으면 다음 파일까지 기다립니다)."
+                    "네. 칸에 마우스를 올리면 제목 오른쪽 끝에 접기 버튼이 나타납니다(제목 우클릭 → Collapse도 됩니다). 접은 칸은 노치 왼쪽 검정 띠에 작은 흰 아이콘으로 올라갑니다(오른쪽의 Drop·Mirror·Quick Note·Cover Screens와 짝을 이룹니다). 스크린샷이 하나도 없으면 Screenshots 칸은 저절로 접혀 있다가 스크린샷을 찍으면 펼쳐집니다. 도커는 남은 칸에 맞춰 줄어들고, 아이콘을 누르면 다시 펼쳐집니다. 접어 둔 칸은 10분 안에 찍은 스크린샷이나 받은 파일이 있으면 노치를 열 때 저절로 펼쳐집니다(접은 설정은 그대로이고, 다시 접으면 다음 파일까지 기다립니다)."
                 ),
                 (
                     "To-do 칸은 어떻게 쓰나요?",
@@ -326,7 +326,7 @@ struct QAView: View {
             [
                 (
                     "How do I set up shortcuts?",
-                    "In Settings, enter a single key in the \"Shortcut (⌥ +)\" field for each site. For example: enter T → press ⌥T to launch. Keys assigned to Quick Note or Cover Screens cannot be used by a launcher; a conflict shows a red warning."
+                    "In Settings → Launchers, enter a single key in each site's Shortcut field. For example: enter T → press ⌥T to launch. Keys assigned to Quick Note or Cover Screens cannot be used by a launcher; a conflict shows a red warning."
                 ),
                 (
                     "Is a shortcut required?",
@@ -421,7 +421,7 @@ struct QAView: View {
                 ),
                 (
                     "How do I transfer settings to another computer?",
-                    "Use Settings → Export to save your Launchers, General, Notch, and Tools settings as JSON, then Import it on the other computer. You can also drag and drop a .json file onto Settings. Chap asks before replacing unsaved changes."
+                    "Use Settings → General → More → Export… to save your Launchers, General, Notch, and Tools settings as JSON, then Import it on the other computer. You can also drag and drop a .json file onto Settings. Chap asks before replacing unsaved changes."
                 ),
             ]
         ),

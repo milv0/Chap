@@ -117,8 +117,8 @@ public enum NotchLauncherPolicy {
         case mascot
     }
 
-    /// 띠 왼쪽에는 늘 물범이 있다. Focus 칸은 다이얼과 남은 시간을 맡고, 물범은 띠에서 Focus 상태를
-    /// 보여 준다(켜짐: 깨어 꼬리를 흔듦, 30분 미만: 졸림). 그래서 Focus 칸이 보여도 띠 좌우가 비지 않는다.
+    /// 띠 왼쪽에는 늘 물범이 있다. Keep Awake 칸은 다이얼과 남은 시간을 맡고, 물범은 띠에서 Keep Awake 상태를
+    /// 보여 준다(켜짐: 깨어 꼬리를 흔듦, 30분 미만: 졸림). 그래서 Keep Awake 칸이 보여도 띠 좌우가 비지 않는다.
     public static func stripLeading() -> StripLeading {
         .mascot
     }

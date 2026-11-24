@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Focus 칸의 Timer 모드
+// MARK: - Keep Awake 칸의 Timer 모드
 
 /// Timer 모드 본문. Focus와 같은 다이얼로 5~60분(5분 눈금)을 고르고 가운데를 눌러 시작한다.
 /// 돌고 있으면 남은 시간만큼 호가 줄어들고, 가운데를 누르면 멈춘다. 메뉴의 Timer와 같은 타이머다.

@@ -16,16 +16,12 @@ public enum NotchContrastPolicy {
 
     /// WCAG 상대 휘도. sRGB 채널을 선형화해 가중 합한다.
     public static func relativeLuminance(hex: String) -> Double {
-        guard let valid = Config.validNotchPanelColorHex(hex),
-            let value = UInt32(valid.dropFirst(), radix: 16)
-        else { return 0 }
-        func channel(_ raw: UInt32) -> Double {
-            let c = Double(raw) / 255
-            return c <= 0.040_45 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+        guard let rgb = Config.notchPanelColorComponents(hex) else { return 0 }
+        func channel(_ c: Double) -> Double {
+            c <= 0.040_45 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
         }
-        return 0.2126 * channel((value >> 16) & 0xFF)
-            + 0.7152 * channel((value >> 8) & 0xFF)
-            + 0.0722 * channel(value & 0xFF)
+        return 0.2126 * channel(rgb.red) + 0.7152 * channel(rgb.green)
+            + 0.0722 * channel(rgb.blue)
     }
 
     /// 두 휘도의 대비비 (1~21).

@@ -14,10 +14,9 @@ struct NotchLauncherPanelView: View {
     let topInset: CGFloat
     /// 눌린 검정 띠의 plateau 반폭 (노치 반폭 + 좌우 상태 영역).
     let stripPlateauHalfWidth: CGFloat
-    /// Keep Awake 세션 종료 시각. 활성 중이면 왼쪽 상단 영역에 h:mm:ss로 표시.
-    /// 도커를 열 때의 Keep Awake 종료 시각. 이후 변화는 `liveAwakeSessionEnd`가 따라간다.
+    /// 도커를 열 때의 Keep Awake 종료 시각. 띠 왼쪽 물범의 기분(깨어 있음·졸림)과 Keep Awake 칸이 쓴다. 이후 변화는 `liveAwakeSessionEnd`가 따라간다.
     let awakeSessionEnd: Date?
-    /// 도커가 열린 동안 Focus·메뉴에서 켜고 끈 결과를 바로 반영하는 종료 시각.
+    /// 도커가 열린 동안 Keep Awake 칸·메뉴에서 켜고 끈 결과를 바로 반영하는 종료 시각.
     /// nil은 "아직 알림 없음"(= 열 때 값 사용), .some(nil)은 "꺼짐"이다.
     @State private var liveAwakeSessionEnd: Date??
     @Environment(\.colorScheme) private var colorScheme
@@ -47,7 +46,7 @@ struct NotchLauncherPanelView: View {
     var onOpenLayoutSettings: () -> Void = {}
     /// 지금 열리는 중인 Layout을 알려 주는 공급자(열릴 때마다 읽는다).
     var busyLayoutIDProvider: () -> UUID? = { nil }
-    /// 도커를 열 때 돌고 있는 타이머가 끝나는 시각. 이후 변화는 Focus 칸이 알림으로 받는다.
+    /// 도커를 열 때 돌고 있는 타이머가 끝나는 시각. 이후 변화는 Keep Awake 칸이 알림으로 받는다.
     var timerEndProvider: () -> Date? = { nil }
     /// 실제 레이아웃이 끝난 도커 크기(그림자 여백 포함). 칸을 접는 등 내용이 바뀌면
     /// 컨트롤러가 이 값으로 창을 다시 맞춘다. 타이밍 추측 없이 SwiftUI가 잰 값을 쓴다.
@@ -73,7 +72,7 @@ struct NotchLauncherPanelView: View {
     static let closeAnimation: Animation = .smooth(duration: closeDuration)
 
     static let columnWidth: CGFloat = 160
-    /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Focus를 줄여 생긴 폭을 여기 쓴다).
+    /// 다운로드 칸 폭. 12pt 파일명이 20자 안팎까지 보인다 (Keep Awake 칸을 줄여 생긴 폭을 여기 쓴다).
     static let downloadsColumnWidth: CGFloat = 200
     /// Keep Awake 칸 폭. 104pt 다이얼과, 제목 줄("⚡ Keep Awake" + 타이머 탭 아이콘 25pt) 중 넓은 쪽.
     /// 제목이 잘리지 않게 글자 폭으로 잰다(2.17까지 "Focus"라 116pt 고정이었다).
@@ -259,7 +258,7 @@ struct NotchLauncherPanelView: View {
                 // 은은하게 띄우는 정도만. 강한 그림자는 상단바 주변에서 부자연스럽다.
                 .shadow(color: .black.opacity(0.22), radius: 9, y: 4)
             )
-            // 상단 띠 왼쪽: Focus 칸이 보이면 비움, 아니면 Focus 켜짐 → 남은 시간, 꺼짐 → 마스코트.
+            // 상단 띠 왼쪽: 접힌 선반 아이콘과 물범(Keep Awake가 켜져 있으면 깨어 꼬리를 흔든다).
             .overlay(alignment: .top) { leftStripContent }
             // 상단 띠 오른쪽: Drop 상자(파일이 없어도 펼친 동안은 빈 상자), 그 오른쪽 Mirror, Quick Note.
             // 파일이 있으면 상자는 별도 배지 창이 그리고, 없으면 여기서 숫자 없이 그린다.
@@ -294,7 +293,7 @@ struct NotchLauncherPanelView: View {
             .onPreferenceChange(NotchContentSizeKey.self) { size in
                 onContentSizeChange(size)
             }
-            // Keep Awake를 Focus 위젯·상태 메뉴에서 켜고 끄면 상단 띠 시계를 바로 바꾼다.
+            // Keep Awake를 노치 칸·상태 메뉴에서 켜고 끄면 물범의 기분을 바로 바꾼다.
             .onReceive(
                 NotificationCenter.default.publisher(for: KeepAwakeController.didChangeNotification)
             ) { note in
@@ -309,7 +308,7 @@ struct NotchLauncherPanelView: View {
     }
 
     /// 검정 띠 왼쪽: 접힌 선반 아이콘(노치 쪽부터)과 물범(그 바깥쪽). 물범은 늘 여기 있고,
-    /// Focus가 켜져 있으면 깨어 꼬리를 흔든다(Focus 칸은 다이얼과 남은 시간을 보여 준다).
+    /// Keep Awake가 켜져 있으면 깨어 꼬리를 흔든다(Keep Awake 칸은 다이얼과 남은 시간을 보여 준다).
     @ViewBuilder private var leftStripContent: some View {
         let collapsed = collapsedStripWidgets
         let leading = NotchLauncherPolicy.stripLeading()
@@ -330,7 +329,7 @@ struct NotchLauncherPanelView: View {
                         x: notchLeft - offsets[collapsed.count - 1 - index], y: topInset / 2)
                 }
                 if leading == .mascot {
-                    // Focus가 켜져 있으면 깨어 꼬리를 흔들고(30분 미만이면 졸림), 꺼져 있으면 쉰다.
+                    // Keep Awake가 켜져 있으면 깨어 꼬리를 흔들고(30분 미만이면 졸림), 꺼져 있으면 쉰다.
                     TimelineView(.periodic(from: .now, by: 30)) { context in
                         let remaining = currentAwakeSessionEnd.map {
                             $0.timeIntervalSince(context.date)

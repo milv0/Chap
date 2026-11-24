@@ -15,7 +15,7 @@ enum NotchSlotContent {
     /// 할 일 목록 위젯.
     case todo
 
-    /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Focus 칸은 nil.
+    /// 어깨로 접을 수 있는 칸이면 그 위젯. 런처·Keep Awake 칸은 nil.
     var collapsibleWidget: NotchWidget? {
         switch self {
         case .screenshots: return .screenshots

@@ -20,7 +20,7 @@ public enum Log {
 
     /// 앱 생명주기, 글로벌 단축키, 권한 등 전반
     public static let app = Logger(subsystem: subsystem, category: "app")
-    /// 사이트 실행 및 윈도우 리사이즈 (Chrome/App/Finder/Shell)
+    /// 사이트 실행 및 윈도우 리사이즈 (Chrome/App/Finder)
     public static let launcher = Logger(subsystem: subsystem, category: "launcher")
     /// 설정 로드/저장/마이그레이션/가져오기·내보내기
     public static let config = Logger(subsystem: subsystem, category: "config")

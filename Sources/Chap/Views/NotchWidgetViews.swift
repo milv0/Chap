@@ -13,7 +13,7 @@ struct NotchWidgetPalette {
     /// 제목 아이콘 색 (연한 대표 블루). nil이면 제목 색을 쓴다.
     var icon: Color? = nil
 
-    /// 제목 아이콘 색만 바꾼 사본 (Focus가 켜지면 진한 블루).
+    /// 제목 아이콘 색만 바꾼 사본 (Keep Awake가 켜지면 진한 블루).
     func withIcon(_ color: Color) -> NotchWidgetPalette {
         var copy = self
         copy.icon = color

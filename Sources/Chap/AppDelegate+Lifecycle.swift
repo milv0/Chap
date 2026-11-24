@@ -50,7 +50,7 @@ extension AppDelegate {
             ) { [weak self] _ in
                 self?.keepAwake.deactivate()
             },
-            // 노치 Focus 칸의 Timer 모드: 메뉴 Timer와 같은 타이머를 켜고 끈다.
+            // 노치 Keep Awake 칸의 Timer 모드: 메뉴 Timer와 같은 타이머를 켜고 끈다.
             NotificationCenter.default.addObserver(
                 forName: NotchFocusView.timerStartRequest, object: nil, queue: .main
             ) { [weak self] note in
@@ -119,6 +119,12 @@ extension AppDelegate {
         if let screenParametersObserver {
             NotificationCenter.default.removeObserver(screenParametersObserver)
             self.screenParametersObserver = nil
+        }
+        focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        focusObservers = []
+        if let dropAddObserver {
+            NotificationCenter.default.removeObserver(dropAddObserver)
+            self.dropAddObserver = nil
         }
         notchLauncher.tearDown()
     }

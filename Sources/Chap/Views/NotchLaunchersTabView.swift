@@ -315,7 +315,7 @@ enum NotchLaunchersTabPreview {
 }
 
 /// 탭 칸의 고른 탭 제목. 아이콘 + 이름은 누를 수 없는 머리글이고, 제목에 마우스를 올리면 뒤에 ›가
-/// 보인다. ›만 버튼이라 그 탭의 설정을 연다. 폭은 `NotchSectionTitleButton`과 같다
+/// 보인다. ›만 버튼이라 그 탭의 설정을 연다. 폭은 목록 칸 제목과 같다
 /// (오른쪽 여백 6 + `launcherTitleAccessoryWidth` 13 = › 버튼 18 + 간격 1).
 private struct NotchTabTitle: View {
     let symbol: String
@@ -369,7 +369,7 @@ private struct NotchTabTitle: View {
 }
 
 /// 탭 칸 제목 줄의 고르지 않은 탭(아이콘만). 흐린 제목색이고, 마우스를 올리면 진해지며
-/// 옅은 면이 생긴다. 고른 탭은 아이콘 + 이름 제목(`NotchSectionTitleButton`)이 맡는다.
+/// 옅은 면이 생긴다. 고른 탭은 아이콘 + 이름 제목(`NotchTabTitle`)이 맡는다.
 private struct NotchTabIconButton: View {
     let symbol: String
     let title: String
