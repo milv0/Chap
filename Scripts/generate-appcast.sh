@@ -193,7 +193,7 @@ if ! xmllint --noout "$generated_appcast" 2>&1; then
 fi
 
 # Validate required Sparkle fields using namespace-aware XML queries.
-# Sparkle 2.9.6 represents sparkle:version and sparkle:shortVersionString as XML
+# Sparkle 2.x represents sparkle:version and sparkle:shortVersionString as XML
 # elements (not enclosure attributes), while edSignature, url, and length are
 # enclosure attributes. This validator handles both representations robustly.
 validate_appcast() {

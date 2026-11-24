@@ -73,11 +73,12 @@ updater를 시작하며, 내장 스케줄러가 사용자의 자동 확인 설�
 2. copyDefaultConfigIfNeeded()  파일이 없으면 ConfigStore.seedConfig 로 생성
 3. loadConfig()                 읽기 → decode → shortcut 정규화 → display UUID 마이그레이션
 4. stripLegacyConfigFields()    원본 JSON에 레거시 키가 남아 있으면 1회 덮어써 정리
-5. layoutStore.load()        Layouts.json 로드(손상이면 unreadable 사본 보존)
+5. layoutLibrary.load()      Layouts.json 로드(손상이면 unreadable 사본 보존), onChange → buildMenu()
 6. applyLoginItem()             목표 상태와 다를 때만 SMAppService register/unregister
 7. NSApp.setActivationPolicy(.accessory)
-8. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template 또는 bolt.fill 심볼)
-9. Chrome reuse 설정 → buildMenu() (메뉴만) → configureGlobalHotKeys() → refreshNotchLauncher()
+8. statusItem 생성 (28pt, config.statusBarIcon에 따라 StatusBarIcon template, bolt.fill 심볼, 또는 물범)
+9. keepAwake/chapTimer onEvent 연결 → Chrome reuse 설정 → buildMenu() (메뉴만) → configureGlobalHotKeys() → refreshNotchLauncher()
+   → focusObservers 등록 (노치 Keep Awake·Timer 요청, Cover Screens 아이콘·변경, 선반 폴더 열기)
 10. didChangeScreenParameters observer 150ms debounce 후 노치 화면·프레임 재계산
 11. accessibilityController.start()    권한 확인 + 옵저버 등록 + 최초 시스템 프롬프트 예약
 12. 0.5s 후 showWelcomeWindow()        UserDefaults "guideDisabled" 가 false일 때만
@@ -142,7 +143,7 @@ configure()
 ```
 
 - macOS는 등록된 Option 조합만 Chap에 전달한다. 일반 keyDown은 Chap 프로세스를 통과하지 않는다.
-- Settings > General의 `Enable Chap Option-Key Triggers`를 끄면 `⌥.`, `⌥,`, 사이트 단축키 등록과
+- Settings > General의 `Option-Key Triggers`를 끄면 `⌥.`, `⌥,`, 사이트 단축키 등록과
   메뉴의 Option key equivalent가 모두 즉시 해제된다. 사이트별 shortcut 설정값 자체는 유지된다.
 - `.`/`,`를 사이트 단축키로 쓸 수는 없다 (I7 + `validateConfig`가 차단).
 - Tools의 Quick Note·Cover Screens에 배정된 키는 런처 입력에서 즉시 거부되고, 이미 들어온 값은 `validateConfig`가 저장·import에서 차단한다.

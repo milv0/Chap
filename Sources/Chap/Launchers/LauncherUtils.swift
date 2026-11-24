@@ -11,7 +11,6 @@ struct AXBoundsResult {
     struct SetOutcome {
         let attribute: String
         let error: AXError
-        var succeeded: Bool { error == .success }
     }
 
     /// 적용 결과 수준

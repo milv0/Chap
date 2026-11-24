@@ -852,44 +852,6 @@ struct NotchRenderTool {
             "initial \(initial) after \(after) direct \(direct.count) reported \(reported)")
     }
 
-    /// 도커가 열린 채 Keep Awake를 켜고 끄면 상단 띠 시계가 다시 열지 않아도 바뀌는지 확인한다.
-    /// Focus 시계는 띠에서 뺐다(주석으로 남긴 `awakeStripClock`). 시계를 되살리면 이 테스트도 다시 켠다.
-    @Test(
-        "the strip Focus clock follows Keep Awake changes while the dock is open",
-        .disabled("The Focus clock is no longer drawn on the strip"),
-        .enabled(if: NotchRenderTool.outputDirectory != nil))
-    func stripClockFollowsKeepAwake() async throws {
-        let reveal = NotchRevealModel()
-        reveal.revealed = true
-        let panel = NotchLauncherPanelView(
-            minWidth: NotchLauncherPolicy.dockMinWidth(notchWidth: 185), topInset: 32,
-            stripPlateauHalfWidth: 92.5 + 110, awakeSessionEnd: nil, style: .custom,
-            glassMaterial: .regular, slots: [], showsMirror: false, showsNote: false,
-            onLaunch: { _ in }, reveal: reveal)
-        let hosting = NSHostingView(rootView: panel)
-        hosting.safeAreaRegions = []
-        let size = hosting.fittingSize
-        let window = NSWindow(
-            contentRect: CGRect(x: -10_000, y: -10_000, width: size.width, height: size.height),
-            styleMask: [.borderless], backing: .buffered, defer: false)
-        window.contentView = hosting
-        window.orderFrontRegardless()
-        defer { window.orderOut(nil) }
-        let off = try Self.renderPNG(panel)
-        NotificationCenter.default.post(
-            name: KeepAwakeController.didChangeNotification,
-            object: Date().addingTimeInterval(3600))
-        try await Task.sleep(for: .milliseconds(300))
-        hosting.layoutSubtreeIfNeeded()
-        let on = try Self.bitmapPNG(of: hosting)
-        NotificationCenter.default.post(
-            name: KeepAwakeController.didChangeNotification, object: nil)
-        try await Task.sleep(for: .milliseconds(300))
-        let offAgain = try Self.bitmapPNG(of: hosting)
-        #expect(on != off, "the clock should appear without reopening")
-        #expect(offAgain != on, "the clock should disappear without reopening")
-    }
-
     /// 이미 창에 올라간 hosting 뷰를 그대로 비트맵으로 그린다.
     static func bitmapPNG(of hosting: NSView) throws -> Data {
         hosting.displayIfNeeded()

@@ -14,7 +14,7 @@ struct NotchSettingsView: View {
     private static var hasNotchScreen: Bool {
         previewForcesNotch
             || NSScreen.screens.contains { screen in
-                NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+                screen.hasNotch
             }
     }
 

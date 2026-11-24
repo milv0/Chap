@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.22.1"
+        ?? "2.22.2"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -395,7 +395,7 @@ public enum NotchWidget: String, Codable, CaseIterable {
     public static let formerMirrorRawValue = "mirror"
     /// 칸 위젯이었던 Quick Note의 저장 문자열. Quick Note는 이제 상단 띠의 아이콘이다.
     public static let formerNoteRawValue = "note"
-    /// 칸 위젯이었던 Timer의 저장 문자열(2.14). Timer는 이제 Focus 칸 다이얼의 모드다.
+    /// 칸 위젯이었던 Timer의 저장 문자열(2.14). Timer는 이제 Keep Awake 칸 다이얼의 모드다.
     public static let formerTimerRawValue = "timer"
     /// 따로 있던 Sites·Finder 칸의 저장 문자열(2.15). 이제 Launchers 칸의 탭이다.
     public static let formerListRawValues: Set<String> = ["sites", "folders"]
@@ -560,6 +560,19 @@ public struct Config: Codable {
     public static let notchPanelColorHexDefault = "#000000"
 
     /// "#RRGGBB" 형식 검증. 형식이 어긋나면 nil.
+    /// "#RRGGBB"를 0...1 범위의 sRGB 성분으로 푼다. 형식이 어긋나면 nil.
+    public static func notchPanelColorComponents(_ raw: String?) -> (
+        red: Double, green: Double, blue: Double
+    )? {
+        guard let valid = validNotchPanelColorHex(raw),
+            let value = UInt32(valid.dropFirst(), radix: 16)
+        else { return nil }
+        return (
+            Double((value >> 16) & 0xFF) / 255, Double((value >> 8) & 0xFF) / 255,
+            Double(value & 0xFF) / 255
+        )
+    }
+
     public static func validNotchPanelColorHex(_ raw: String?) -> String? {
         guard let raw, raw.count == 7, raw.hasPrefix("#"),
             raw.dropFirst().allSatisfy({ $0.isHexDigit })

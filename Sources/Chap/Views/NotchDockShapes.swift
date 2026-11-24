@@ -45,12 +45,8 @@ enum NotchDockStyle {
 
     /// "#RRGGBB" → Color. 형식이 어긋나면 검정.
     static func color(fromHex hex: String) -> Color {
-        guard let valid = Config.validNotchPanelColorHex(hex) else { return .black }
-        let value = UInt32(valid.dropFirst(), radix: 16) ?? 0
-        return Color(
-            red: Double((value >> 16) & 0xFF) / 255,
-            green: Double((value >> 8) & 0xFF) / 255,
-            blue: Double(value & 0xFF) / 255)
+        guard let rgb = Config.notchPanelColorComponents(hex) else { return .black }
+        return Color(red: rgb.red, green: rgb.green, blue: rgb.blue)
     }
 
     /// Color → "#RRGGBB". 설정 저장용.

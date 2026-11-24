@@ -38,11 +38,13 @@ with `Scripts/release.sh` (see "Release flow" below).
   settings view model, logging.
 - `Sources/Chap/AppDelegate.swift`: status item, site launching, managed windows.
   Split across `AppDelegate+Config.swift` (config migration/load/strip),
-  `AppDelegate+Lifecycle.swift` (launch/terminate, windows, login item), and
-  `AppDelegate+Menu.swift` (menu build, hotkeys, status icon, Keep Awake events).
+  `AppDelegate+Lifecycle.swift` (launch/terminate, windows, login item),
+  `AppDelegate+Menu.swift` (menu build, hotkeys, status icon, Keep Awake events),
+  `AppDelegate+Timer.swift` (Timer menu/events), `AppDelegate+Layouts.swift`
+  (Layout capture/restore), and `AppDelegate+Glow.swift` (Notch Glow moments, arrival watchers).
 - `Sources/Chap/NotchLauncherController.swift`: notch hotzone/panel/badge orchestration.
-- `Sources/Chap/ChapDrop.swift`, `ScreenshotShelf.swift`, `ThumbnailLoader.swift`:
-  Chap Drop store, Screenshot Shelf source, and async thumbnails.
+- `Sources/Chap/ChapDrop.swift`, `ScreenshotShelf.swift`, `DownloadsShelf.swift`,
+  `ThumbnailLoader.swift`: Chap Drop store, Screenshot/Downloads shelf sources, and async thumbnails.
 - `Sources/Chap/Layouts/`, `Sources/ChapCore/Layout*.swift`: local standard-window capture, normalized display frames, storage, and verified restore.
 - `Sources/Chap/KeepAwakeController.swift`, `KeepAwakeHUD.swift`: Keep Awake session and HUD.
 - `Sources/Chap/UpdateController.swift`: Sparkle updater (fail-closed).

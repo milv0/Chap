@@ -10,11 +10,11 @@ struct NotchMascotView: View {
     var pixelSize: CGFloat = ChapMascot.stripPixelSize
     var mood: ChapMascot.FocusMood = .awake
     var isAnimating = false
-    /// true면 깨어 있는 동안 꼬리를 쉬지 않고 흔든다(Focus 칸). false면 가끔 까딱(띠).
+    /// true면 깨어 있는 동안 꼬리를 쉬지 않고 흔든다(Keep Awake 칸). false면 가끔 까딱(띠).
     var wagsContinuously = false
     /// z 색. 배경 위 보조 텍스트와 같은 색을 받는다.
     var zColor: Color = .secondary
-    /// Focus가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
+    /// Keep Awake가 켜져 있는지. 켜지는 순간 첨벙 다이빙을 한 번 하고(몰입), 켜져 있는 동안 꼬리를 흔든다.
     var isFocusing = false
     /// 잠든 동안에도 가끔 꿈꾸듯 꼬리를 한 번 까딱한다 (Cover Screens 화면). 노치 띠에서는 쓰지 않는다.
     var dreams = false
@@ -25,7 +25,7 @@ struct NotchMascotView: View {
     @State private var pose: ChapMascot.Pose = .rest
     /// 다이빙 중인 프레임. nil이면 평소 모습.
     @State private var diveStep: ChapMascot.FocusDiveStep?
-    /// 처음 나타날 때는 이미 켜져 있던 Focus라 뛰어들지 않는다(켜는 순간에만 한다).
+    /// 처음 나타날 때는 이미 켜져 있던 Keep Awake라 뛰어들지 않는다(켜는 순간에만 한다).
     @State private var didAppear = false
     @State private var isBlinking = false
     @State private var zRisen = false
@@ -121,7 +121,7 @@ struct NotchMascotView: View {
             .offset(x: -CGFloat(pad) * pixelSize, y: -CGFloat(pad) * pixelSize)
             .allowsHitTesting(false)
         }
-        // Focus가 켜지는 순간(꺼짐 → 켜짐) 첨벙 다이빙을 한 번 한다. 이미 켜져 있던 Focus(처음 나타날 때)나
+        // Keep Awake가 켜지는 순간(꺼짐 → 켜짐) 첨벙 다이빙을 한 번 한다. 이미 켜져 있던 Keep Awake(처음 나타날 때)나
         // 동작 줄이기·닫힌 노치에서는 하지 않는다.
         .task(id: isFocusing) {
             guard didAppear else {
@@ -152,7 +152,7 @@ struct NotchMascotView: View {
             Task { await flick() }
         }
         // 꼬리: 깨어 있는 동안에만. 잠에서 깨면(mood 변경) 곧바로 한 번 까딱해 반긴다.
-        // Focus 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
+        // Keep Awake 칸에서는 그 뒤 쉬지 않고 흔들며, 졸리면 느려진다.
         .task(id: "\(moves)-\(mood)-\(wagsContinuously)-\(dreams)-\(flickInterval)") {
             pose = .rest
             // 잠든 채 꿈꾸기: 드물게 한 번만 까딱한다.

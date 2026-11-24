@@ -343,11 +343,11 @@ final class NotchLauncherController {
 
     /// 타이머가 돌고 도커가 접혀 있으면 노치 왼쪽에 남은 시간 배지를 둔다.
     /// 노치가 없는 화면에는 두지 않는다(메뉴 막대를 가리고 클릭을 삼킨다, I16).
-    /// 도커가 열려 있는 동안은 숨긴다. 그때는 Focus 칸의 Timer 모드가 남은 시간을 보여 준다.
+    /// 도커가 열려 있는 동안은 숨긴다. 그때는 Keep Awake 칸의 Timer 모드가 남은 시간을 보여 준다.
     func updateTimerBadge() {
         guard let end = timerEndProvider(), end > Date(), panel == nil,
             hotzoneWindow != nil, let screen = Self.dockScreen(),
-            NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+            screen.hasNotch
         else {
             timerBadgeWindow?.orderOut(nil)
             timerBadgeWindow = nil
@@ -404,7 +404,7 @@ final class NotchLauncherController {
 
         // 노치가 없으면 창을 띄우지 않는다. 메뉴 막대 위의 투명 창은 그 자리의 클릭을 삼켜
         // 앱 메뉴를 못 열게 만든다. 대신 마우스 위치만 지켜본다.
-        guard NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top) else {
+        guard screen.hasNotch else {
             startPointerWatch()
             return
         }
@@ -462,7 +462,7 @@ final class NotchLauncherController {
 
     private func checkPointerForHover() {
         guard let screen = Self.dockScreen(),
-            !NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top)
+            !screen.hasNotch
         else { return }
         let zone = NotchLauncherPolicy.hoverZone(
             screenFrame: screen.frame, stripInset: Self.stripInset(on: screen))
@@ -478,7 +478,7 @@ final class NotchLauncherController {
     static func notchRect(on screen: NSScreen) -> NSRect {
         let inset = stripInset(on: screen)
         let top = screen.frame.maxY - inset
-        if NotchLauncherPolicy.hasNotch(topSafeAreaInset: screen.safeAreaInsets.top),
+        if screen.hasNotch,
             let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea
         {
             return NSRect(
@@ -496,9 +496,7 @@ final class NotchLauncherController {
 
     /// 하드웨어 노치가 있는 화면. 노치 전용 연출(중앙 HUD)에만 쓴다.
     static func notchScreen() -> NSScreen? {
-        NSScreen.screens.first {
-            NotchLauncherPolicy.hasNotch(topSafeAreaInset: $0.safeAreaInsets.top)
-        }
+        NSScreen.screens.first(where: \.hasNotch)
     }
 
     /// 도커를 띄울 화면: 노치가 있으면 그 화면, 없으면 메뉴 막대가 있는 주 화면.
@@ -903,4 +901,9 @@ final class NotchLauncherController {
             self?.updateTimerBadge()
         }
     }
+}
+
+extension NSScreen {
+    /// 하드웨어 노치가 있는 화면인지(위쪽 safe area로 판정).
+    var hasNotch: Bool { NotchLauncherPolicy.hasNotch(topSafeAreaInset: safeAreaInsets.top) }
 }

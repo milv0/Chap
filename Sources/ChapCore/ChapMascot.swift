@@ -213,7 +213,7 @@ public enum ChapMascot {
         "oooo",
     ]
 
-    /// Focus 위젯에서 물범의 상태. Keep Awake가 Mac을 깨워 두는 동안 물범도 깨어 있다.
+    /// Keep Awake 칸에서 물범의 상태. Keep Awake가 Mac을 깨워 두는 동안 물범도 깨어 있다.
     public enum FocusMood: Equatable, Sendable {
         /// Focus 꺼짐: 눈 감고 z.
         case asleep
@@ -237,10 +237,10 @@ public enum ChapMascot {
         return remaining < 30 * 60 ? .drowsy : .awake
     }
 
-    /// Focus 위젯에서 한 픽셀의 크기(pt). Retina에서 4픽셀.
+    /// Keep Awake 칸에서 한 픽셀의 크기(pt). Retina에서 4픽셀.
     public static let widgetPixelSize: CGFloat = 2
 
-    /// Focus가 켜져 있는 동안 꼬리를 쉬지 않고 흔드는 한 프레임의 길이(초).
+    /// Keep Awake가 켜져 있는 동안 꼬리를 쉬지 않고 흔드는 한 프레임의 길이(초).
     /// 졸릴 때는 느려지고, 잠들면 흔들지 않는다(nil).
     public static func focusWagFrameDuration(for mood: FocusMood) -> Double? {
         switch mood {

@@ -203,6 +203,7 @@ Tests/ChapCoreTests/               ← 유닛 테스트
     ├── ShelfScanCoordinatorTests.swift
     ├── NotchRenderTool.swift     ← (개발용) 노치 도커 오프스크린 PNG 렌더, TEST_RUNNER_CHAP_NOTCH_RENDER_DIR 설정(xcodebuild 전달 후 CHAP_NOTCH_RENDER_DIR로 읽음) 시만 실행
     ├── NotchLauncherSettingTests.swift
+    ├── NotchGlowSettingTests.swift ← Notch Glow 설정 기본값·왕복, 한 번 빛나는 순간(시작·끝·다 됨·새 파일·창 맞춤)·새 파일 판정
     ├── NotchContrastPolicyTests.swift
     ├── StatusBarSymbolImageTests.swift
     └── ShellRemovalMigrationTests.swift
@@ -305,7 +306,7 @@ Config 모델 필드:
   ※ 2.10.1까지의 lightsOutShortcut·notchLightsOutEnabled는 읽을 때 cover… 이름으로 옮기고,
     lightsOutUnlockKey는 버린다(걷는 법이 ⌥ 탭으로 고정)
   - notchWidgets: [NotchWidget]  노치 패널 6칸 위젯 배치 (screenshots | downloads | launchers(Sites|Finder 탭) |
-                                 apps(Apps|Layouts 탭) | awake(Keep Awake) | todo | none). 1·2번 칸은 Screenshots·Downloads
+                                 apps(Apps|Layouts 탭) | awake(Keep Awake) | todo | none; drop은 읽히지만 빈 칸으로 그린다). 1·2번 칸은 Screenshots·Downloads
                                  선반 고정, 3~6번은 나머지 위젯. 누락 시 [screenshots, downloads, apps, todo, awake, launchers]. 2.7 이전 자유 배치는 선반만 앞으로 옮기고 나머지 순서를 지키며,
                                  2.1의 12칸 설정은 뒤 위젯을 앞 빈 칸으로 당겨 6칸에 옮긴다.
                                  2.16에서 없앤 sites·folders는 첫 칸만 launchers, 그다음은 none, workspaces는
@@ -320,7 +321,7 @@ Config 모델 필드:
 
 ## 핵심 기능
 
-- Settings > General의 Enable Chap Option-Key Triggers 토글로 글로벌 단축키
+- Settings > General의 Option-Key Triggers 토글로 글로벌 단축키
   (⌥., ⌥커스텀키, ⌥,) 전체 on/off. 활성화 시 RegisterEventHotKey로 정확한 조합만 시스템 등록
   (일반 키 입력은 Chap을 거치지 않으며 접근성 권한과 독립)
 - URL별 Reuse Existing Window 토글(Window 묶음의 줄). 활성화 후 해당 launchable이 처음 만든 --app 창 ID만
@@ -404,13 +405,13 @@ Config 모델 필드:
   - 검색 중이 아니면 url/app/finder 세 섹션을 항상 표시하고, 빈 섹션은
     "Add <Type>" 행으로 해당 타입 항목을 바로 추가 (검색 중에는 매칭 없는 섹션 숨김)
 - 드래그앤드랍 순서 변경 (같은 타입 내에서만)
-- Q&A 페이지 (Settings 상단 `questionmark.bubble` 버튼, User Guide에서도 열기 가능)
+- Q&A 페이지 (Settings → General 아래 버전 옆 Q&A 버튼, User Guide에서도 열기 가능)
 - 설정 창은 최소 720x560(SettingsView.minimumSize). 탭은 창 툴바가, 도움말·앱 메뉴는 General 아래가 맡아 하단 막대가 없다.
 - Guide Window (리사이즈 위치 미리보기)
   - 토큰 기반 소유권: show가 토큰을 반환하고 dismiss(token)은 그 토큰이 현재일 때만 자기 창을 닫음.
     빠른 연속 실행 시 stale한 dismiss 완료 핸들러가 새 창을 죽여 유령 창이 남던 레이스를 방지
 - 접근성 권한 안내 직후 자동 재시도 + 권한 제거 감지
-- Launch at Login (SMAppService)
+- Open at Login (SMAppService)
 - 상태바 아이콘 선택 (Default/Lightning/Seal) — Settings > General > Menu Bar에서 변경, config에 저장·재시작 유지
   - Keep Awake 활성 중이면 테마 블루(non-template)로 전환, 비활성이면 기본 template 색으로 복귀
   - Keep Awake 시작/종료는 중앙 HUD로 피드백하며 별도 왼쪽 노치 배지는 두지 않음.
@@ -603,7 +604,7 @@ App 윈도우 감지 방식 (AXObserver):
   디스플레이 매칭(resolvedDisplayIndex, 순수 함수): displayIdentifier(UUID) → unique displayName →
   커서 화면 순. 같은 이름이 여러 개면 임의 화면을 고르지 않고 재선택 상태로 유지한다.
 
-### Sparkle 2 (SPM, pinned 2.9.6)
+### Sparkle 2 (SPM, pinned 2.10.1)
   용도: 24시간 주기 자동 체크와 수동 업데이트 체크 (fail-closed)
   - SPUStandardUpdaterController   updater 라이프사이클 관리
   - checkForUpdates(_:)            사용자 요청에 의한 업데이트 확인
