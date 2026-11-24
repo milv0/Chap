@@ -36,7 +36,7 @@ Sources/
 │   ├── ThumbnailLoader.swift      ← 노치 파일 썸네일 다운샘플·캐시 공용 로더 + AppIconLoader(Apps 아이콘 캐시) (utility queue)
 │   ├── ProcessRunner.swift        ← 외부 프로세스 timeout·출력 상한·파이프 동시 drain 실행기
 │   ├── AppLifecycleSupport.swift  ← 재실행 인자·config 파일 제거 순수 헬퍼
-│   ├── AppDelegate+Glow.swift     ← Notch Glow 한 번 빛나기(flashNotchGlow: Keep Awake·Timer 시작과 끝·Timer 다 됨·새 파일·창 맞춤, 도커가 열려 있으면 닫힐 때로 미룸), 새 파일 폴더 감시
+│   ├── AppDelegate+Glow.swift     ← Notch Glow 한 번 빛나기(flashNotchGlow: Keep Awake·Timer 시작과 끝·Timer 다 됨·새 파일·창 맞춤, 도커가 펼쳐져 있으면 도커 검정 띠 테두리), 새 파일 폴더 감시
 │   ├── FolderChangeWatcher.swift  ← 폴더 vnode 이벤트(DispatchSource) 감시, 1초 조용해지면 한 번 알림. 놓인 선반 폴더만
 │   ├── NotchBeamFlash.swift       ← 하드웨어 노치 둘레(옆 배지 본체 포함)가 한 번 빛나는 창(show(moment:around:)). 계속 켜 두지 않음
 │   ├── SettingsToolbar.swift      ← Settings 표준 설정 툴바(.preference): 탭(SettingsTab)·탭 선택 공유(SettingsNavigation)·창 제목
@@ -77,7 +77,7 @@ Sources/
 │       ├── NotchSettingsView.swift ← Notch 탭 (위젯·Screenshots 폴더·띠 아이콘·스타일·Glass appearance)
 │       ├── NotchLauncherPanelView.swift ← 노치 메인 패널 뷰 (띠·칸 배치·단일 선반 timer·크기 보고)
 │       ├── NotchDropFileRow.swift ← 메인 도커 하단 Chap Drop 파일 행·제거 UI
-│       ├── NotchSlotModel.swift   ← NotchSlotContent(칸 내용)·NotchRevealModel(펼침 상태)·NotchContentSizeKey
+│       ├── NotchSlotModel.swift   ← NotchSlotContent(칸 내용)·NotchRevealModel(펼침 상태, 검정 띠 노치 빛 flashStripGlow)·NotchContentSizeKey
 │       ├── NotchDockShapes.swift  ← 도커 실루엣 셰이프(NotchDockShape·PressedStripShape·GlassCornerBridgeShape)·채움 스타일·글자 측정
 │       ├── NotchLauncherRows.swift ← 런처 칸의 줄·키캡·앱 아이콘 타일·칸 제목 버튼
 │       ├── NotchDropViews.swift   ← Chap Drop Finder식 파일 행·우측 count 배지

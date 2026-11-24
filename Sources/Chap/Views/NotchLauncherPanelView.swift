@@ -249,6 +249,9 @@ struct NotchLauncherPanelView: View {
                     )
                     .fill(Color.black)
                     .clipShape(panelShape)
+                    // 노치 빛: 도커가 펼쳐져 있으면 노치 대신 이 검정 띠 테두리가 한 번 빛난다.
+                    // 띠 바깥(도커 본체 쪽)으로만 번지고, 칸 내용 뒤에 깔린다.
+                    stripGlow
                 }
                 // 어두운 배경에서 형태가 묻히지 않도록 잡아주는 미세한 림 하이라이트.
                 // 상단 변이 열린 rim 형태라 노치 경계에는 줄이 없다.
@@ -358,6 +361,24 @@ struct NotchLauncherPanelView: View {
     }
 
     @State private var dropTargeted = false
+
+    /// 검정 띠 테두리를 두르는 노치 빛(한 번 빛나는 순간, `NotchRevealModel.flashStripGlow`).
+    @ViewBuilder private var stripGlow: some View {
+        if let glow = reveal.stripGlow {
+            IntelligenceGlow(
+                shape: PressedStripShape(
+                    plateauHalfWidth: stripPlateauHalfWidth, centerDepth: topInset, edgeDepth: 0),
+                palette: glow.palette, lineWidth: glow.lineWidth, clipsOutsideShape: true,
+                // 띠는 도커 위쪽 좌우 꼭짓점에서 깊이 0으로 끝나, 그대로 두면 빛이 플레어 밖(메뉴 막대)으로 번진다.
+                container: AnyShape(panelShape),
+                // 띠가 얇아지는 양끝에서는 빛이 화면 꼭대기 쪽으로 올라간다. 위 16pt에서 서서히 사라지게 해
+                // 꼭짓점에서 밝게 끝나지 않게 한다(띠 가운데 테두리는 노치 높이 아래라 그대로다).
+                topFadeInset: 0
+            )
+            .opacity(reveal.isStripGlowVisible ? 1 : 0)
+            .allowsHitTesting(false)
+        }
+    }
 
     /// 파일을 끌어오는 동안 도커 테두리의 빛(노치 빛 설정의 색). 노치 빛을 끄면 그리지 않는다.
     /// 윗변은 화면 꼭대기(메뉴 막대)에 붙어 있어 빛이 그 위에 있으면 어색하므로, 검정 띠 높이만큼은 가리고

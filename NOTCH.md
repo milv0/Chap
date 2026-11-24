@@ -287,8 +287,12 @@ Keep Awake 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로)
 - **Notch Glow**: 노치는 계속 켜 두지 않고 정해진 순간에만 한 번 빛난다(`NotchBeamFlash.show(moment:)`). 하드웨어 노치 둘레
   전체가 Apple Intelligence처럼 빛나며 색이 흐르다 사라진다. Keep Awake나 Timer가 시작할 때(1.8초)와 Keep Awake가 끝나거나
   Timer를 멈출 때(1.4초, 조금 가늘게), Timer가 다 될 때(2.6초, 가장 굵게)는 늘 빛난다. 잠든 사이 끝난 Keep Awake는 깨어난 뒤
-  조용히 정리하므로 빛나지 않는다. 메뉴·다이얼 어디서 켜든 같다. 도커가 열려 노치를 덮고 있으면 시작·끝·다 됨은 도커가 닫힐 때
-  빛낸다(30초 넘게 열어 두었으면 버린다). 그리기는 Core Animation에 맡긴다(`GlowLayerView`): 띠 4겹의 흐림은 처음 한 번 그린
+  조용히 정리하므로 빛나지 않는다. 메뉴·다이얼 어디서 켜든 같다. 도커가 펼쳐져 노치를 덮고 있으면 노치 대신 도커 위쪽 검정 띠(`PressedStripShape`,
+  노치·물범·Drop·Mirror가 있는 곳)의 테두리가 빛난다(`NotchRevealModel.flashStripGlow`, 같은 길이·굵기). 띠 안에는 노치와 아이콘이
+  있어 빛을 띠 바깥(도커 본체 쪽)에만 두고(`clipsOutsidePath`, even-odd 마스크), 칸 내용 뒤 배경에 깐다. 띠는 위쪽 좌우
+  꼭짓점에서 깊이 0으로 끝나 빛이 플레어 밖(메뉴 막대)으로 번졌으므로, 빛을 도커 모양 안에 가두고(`containerProvider`)
+  화면 꼭대기 16pt에서는 서서히 사라지게 한다(`topFadeInset: 0`). 도커 뷰 안에 있어
+  펼침 애니메이션·폭 변화를 그대로 따르고, 도커가 닫히면 함께 사라진다. 그리기는 Core Animation에 맡긴다(`GlowLayerView`): 띠 4겹의 흐림은 처음 한 번 그린
   알파 마스크 이미지, 색은 가로 그라데이션 층을 옆으로 미는 반복 애니메이션 하나다(Chap CPU 약 1%, 처음 SwiftUI 매 프레임 그리기는 41%).
   노치 옆에 Drop·Timer 배지가 붙어 있으면 배지까지 합친 검정 띠를 두른다(배지 창이 빛보다 위라 노치만 두르면 그쪽
   모서리가 잘려 보였다, `NotchLauncherController.glowOutline`). 띠 한가운데를 노치 가장자리에
@@ -296,7 +300,7 @@ Keep Awake 칸이 이미 있으면 빈 칸이라 다른 칸 자리는 그대로)
   Settings → Notch → Notch Style의 Notch Glow 줄에서 끄고, 색을 Colorful(파랑·보라·분홍·산호·주황)과 Chap Blue(하늘색·Chap
   파랑·남색·보라) 중에서 고른다. 바꾸면 노치에 1.8초 빛내 보인다.
   노치 런처가 꺼져 있거나 가림막이 있으면 띄우지 않는다. 동작 줄이기면 생략한다.
-- **그 밖에 한 번 빛나는 순간**(Also Glow When, 도커가 닫혀 있을 때만):
+- **그 밖에 한 번 빛나는 순간**(Also Glow When, 도커가 펼쳐져 있으면 검정 띠 테두리):
   새 스크린샷·다운로드·Drop 파일이 들어올 때(1.6초, New Files),
   런처 창이 제자리에 맞춰지거나 Layout 복원이 끝날 때(1.1초, Windows). 새 파일은 노치에 놓인 선반의 폴더만 커널 이벤트로
   지켜보고(놓이지 않은 폴더는 열지 않아 macOS 폴더 허락을 새로 묻지 않는다), 받는 중인 파일은 선반 규칙대로 빼고, 2분보다

@@ -530,6 +530,65 @@ struct NotchRenderTool {
             let png = try #require(rep.representation(using: .png, properties: [:]))
             try png.write(to: directory.appendingPathComponent("\(name).png"))
         }
+        try renderStripGlow(in: directory)
+    }
+
+    /// 펼친 도커(640×150, 14" 노치)의 검정 띠 테두리 빛. 도커 본체는 기본 Custom처럼 어두운 회색, 띠는 검정.
+    @MainActor
+    private func renderStripGlow(in directory: URL) throws {
+        let size = CGSize(width: 640, height: 150)
+        let strip = PressedStripShape(
+            plateauHalfWidth: 185 / 2 + NotchGeometry.stripPlateauSideWidth, centerDepth: 32,
+            edgeDepth: 0)
+        let dock = NotchDockShape(
+            topCornerRadius: NotchGeometry.dockFlareRadius,
+            bottomCornerRadius: NotchGeometry.dockBottomRadius)
+        for (name, palette, body) in [
+            (
+                "notch-glow-strip-colorful", NotchGlowPalette.colorful,
+                NSColor(white: 0.12, alpha: 1)
+            ),
+            ("notch-glow-strip-chap-light", .chap, NSColor(white: 0.9, alpha: 1)),
+        ] {
+            let glow = GlowLayerView(
+                style: .init(
+                    palette: palette, lineWidth: 4, clipsOutsidePath: true, topFadeInset: 0)
+            ) { rect in strip.path(in: rect).cgPath }
+            glow.containerProvider = { rect in dock.path(in: rect).cgPath }
+            glow.frame = NSRect(origin: .zero, size: size)
+            let image = try #require(glow.snapshot())
+            let scale: CGFloat = 2
+            let rep = try #require(
+                NSBitmapImageRep(
+                    bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale),
+                    pixelsHigh: Int(size.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
+                    hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0,
+                    bitsPerPixel: 0))
+            let context = try #require(NSGraphicsContext(bitmapImageRep: rep))
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = context
+            let cg = context.cgContext
+            cg.scaleBy(x: scale, y: scale)
+            NSColor(white: 0.5, alpha: 1).setFill()
+            NSRect(origin: .zero, size: size).fill()
+            // SwiftUI 좌표(위 원점)의 도형을 뒤집어 그린다.
+            var flip = CGAffineTransform(translationX: 0, y: size.height).scaledBy(x: 1, y: -1)
+            let bounds = CGRect(origin: .zero, size: size)
+            if let path = dock.path(in: bounds).cgPath.copy(using: &flip) {
+                cg.setFillColor(body.cgColor)
+                cg.addPath(path)
+                cg.fillPath()
+            }
+            if let path = strip.path(in: bounds).cgPath.copy(using: &flip) {
+                cg.setFillColor(NSColor.black.cgColor)
+                cg.addPath(path)
+                cg.fillPath()
+            }
+            cg.draw(image, in: bounds)
+            NSGraphicsContext.restoreGraphicsState()
+            let png = try #require(rep.representation(using: .png, properties: [:]))
+            try png.write(to: directory.appendingPathComponent("\(name).png"))
+        }
     }
 
     /// Keep Awake 중앙 HUD(켜짐·꺼짐) 모습을 PNG로 남긴다. 물범이 파란 타일 위에서 읽히는지 본다.

@@ -66,6 +66,42 @@ final class NotchRevealModel: ObservableObject {
     @Published var isOptionHeld = false
     /// 어깨 아이콘으로 접힌 위젯. 도커를 열 때 config에서 채우고, 접고 펼 때마다 저장한다.
     @Published var collapsedWidgets: [NotchWidget] = []
+    /// 지금 검정 띠 테두리를 두르는 노치 빛(한 번 빛나는 순간). nil이면 없다.
+    @Published private(set) var stripGlow: StripGlow?
+    /// 띠 빛이 보이는지. 나타나고 사라질 때 이 값을 애니메이션으로 바꾼다.
+    @Published private(set) var isStripGlowVisible = false
+
+    struct StripGlow: Equatable {
+        let id: Int
+        let palette: NotchGlowPalette
+        let lineWidth: CGFloat
+    }
+
+    private var stripGlowToken = 0
+
+    /// 검정 띠 테두리를 한 번 빛낸다: 접힌 노치의 빛(`NotchBeamFlash.show`)과 같은 길이·굵기·나타나고 사라지는 시간.
+    /// 빛나는 중에 다시 부르면 새 순간으로 바꾼다.
+    func flashStripGlow(palette: NotchGlowPalette, moment: NotchGlowMoment) {
+        stripGlowToken += 1
+        let current = stripGlowToken
+        stripGlow = StripGlow(id: current, palette: palette, lineWidth: CGFloat(moment.lineWidth))
+        isStripGlowVisible = false
+        let fadeIn = min(0.25, moment.duration * 0.2)
+        let fadeOut = min(0.6, moment.duration * 0.4)
+        DispatchQueue.main.async {
+            guard current == self.stripGlowToken else { return }
+            withAnimation(.easeOut(duration: fadeIn)) { self.isStripGlowVisible = true }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + moment.duration - fadeOut) {
+            guard current == self.stripGlowToken else { return }
+            withAnimation(.easeIn(duration: fadeOut)) { self.isStripGlowVisible = false }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + moment.duration + 0.05) {
+            guard current == self.stripGlowToken else { return }
+            // 다 사라진 빛은 떼어, 애니메이션을 계속 돌리지 않게 한다.
+            self.stripGlow = nil
+        }
+    }
 }
 
 /// 도커 콘텐츠 크기를 창 컨트롤러로 올려 보내는 preference.
