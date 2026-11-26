@@ -2,7 +2,7 @@ import Foundation
 
 /// 노치 빛이 한 번 빛나는 순간. 순간마다 길이와 굵기가 다르다. 노치는 계속 켜 두지 않고 이 순간에만 빛난다.
 public enum NotchGlowMoment: Equatable, Sendable {
-    /// 설정에서 켜거나 색을 바꿀 때 미리 보기.
+    /// 설정에서 켜거나 색을 바꿀 때 미리 보기. 실제로 가장 자주 보는 시작 빛과 같은 길이·굵기다.
     case preview
     /// Keep Awake나 Timer가 시작됐다.
     case started
@@ -10,19 +10,18 @@ public enum NotchGlowMoment: Equatable, Sendable {
     case ended
     /// Timer가 다 됐다. 가장 밝고 길다.
     case timerFinished
-    /// 새 스크린샷·다운로드·Drop 파일이 들어왔다.
+    /// 노치에 놓인 선반 폴더에 새 스크린샷·다운로드가 들어왔다.
     case arrival
     /// 런처 창이 제자리에 맞춰졌거나 Layout 복원이 끝났다. 가장 짧다.
     case snap
 
-    /// 보이는 시간(초).
+    /// 보이는 시간(초). Keep Awake 시작·끝은 소리와 중앙 HUD(약 2.7초)가 함께 나오므로 노치 빛은 짧은 보조 신호다.
     public var duration: Double {
         switch self {
-        case .preview, .started: return 1.8
-        case .ended: return 1.4
+        case .preview, .started: return 1.4
+        case .ended, .snap: return 1.1
         case .timerFinished: return 2.6
         case .arrival: return 1.6
-        case .snap: return 1.1
         }
     }
 

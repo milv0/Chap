@@ -17,10 +17,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     let configPath = Defaults.configPath
     let configStore = ConfigStore()
     var settingsWindow: NSWindow?
-    /// Notch Glow: 새 파일을 지켜보는 폴더, Drop 추가 관찰.
+    /// Notch Glow: 새 스크린샷·다운로드를 지켜보는 폴더.
     var screenshotFolderWatcher: FolderChangeWatcher?
     var downloadsFolderWatcher: FolderChangeWatcher?
-    var dropAddObserver: NSObjectProtocol?
     /// Settings 창 툴바(탭·도구). 창이 닫히면 함께 놓는다.
     var settingsToolbar: SettingsToolbarController?
     var qaWindow: NSWindow?
