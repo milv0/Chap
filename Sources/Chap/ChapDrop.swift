@@ -12,8 +12,6 @@ enum ChapDrop {
 
     /// 보관함 내용이 바뀔 때마다 메인 큐에서 게시된다. 배지·파일 행 갱신 트리거.
     static let didChangeNotification = Notification.Name("ChapDropDidChange")
-    /// 파일을 보관함에 넣었을 때만 메인 큐에서 게시된다(빼기·볼륨 변화에는 없다). object는 넣은 개수(Int).
-    static let didAddNotification = Notification.Name("ChapDropDidAdd")
 
     /// 직렬 queue라 동일 이름 파일을 동시에 드롭해도 destination 선택과 copy가
     /// 경쟁하지 않으며, 큰 파일/폴더 복사가 메인 런루프를 막지 않는다.
@@ -75,8 +73,6 @@ enum ChapDrop {
             DispatchQueue.main.async {
                 if !result.stored.isEmpty {
                     NotificationCenter.default.post(name: didChangeNotification, object: nil)
-                    NotificationCenter.default.post(
-                        name: didAddNotification, object: result.stored.count)
                 }
                 completion(result.stored, result.failed)
             }

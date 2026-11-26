@@ -122,10 +122,6 @@ extension AppDelegate {
         }
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
         focusObservers = []
-        if let dropAddObserver {
-            NotificationCenter.default.removeObserver(dropAddObserver)
-            self.dropAddObserver = nil
-        }
         notchLauncher.tearDown()
     }
 

@@ -5,7 +5,7 @@ public enum Defaults {
     /// Info.plist / MARKETING_VERSION과 단일 소스로 유지된다.
     public static let appVersion: String =
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String)
-        ?? "2.22.2"
+        ?? "2.22.3"
     public static let configPath = NSString(string: "~/.chap.json").expandingTildeInPath
     /// 새로 추가한 사이트의 기본 이름 겸 "아직 미완성" 판별용 센티넬.
     /// placeholder 폐기·필수필드 검증·자동 네이밍 로직이 이 값을 기준으로 동작한다.
@@ -521,7 +521,7 @@ public struct Config: Codable {
     public var notchGlowEnabled: Bool
     /// 노치 빛의 색. 누락·알 수 없는 값이면 여러 색.
     public var notchGlowPalette: NotchGlowPalette
-    /// 새 스크린샷·다운로드·Drop 파일이 들어오면 노치를 한 번 빛낼지. 누락 시 true.
+    /// 노치에 놓인 선반에 새 스크린샷·다운로드가 들어오면 노치를 한 번 빛낼지(Chap Drop 제외). 누락 시 true.
     public var notchGlowArrivals: Bool
     /// 런처 창이 제자리에 맞춰지거나 Layout 복원이 끝나면 노치를 짧게 빛낼지. 누락 시 true.
     public var notchGlowSnaps: Bool

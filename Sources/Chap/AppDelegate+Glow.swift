@@ -28,7 +28,7 @@ extension AppDelegate {
 
     /// 새 스크린샷·다운로드를 지켜볼 폴더를 설정에 맞춘다. 그 선반이 노치에 놓여 있을 때만 지켜본다
     /// (놓이지 않은 선반의 폴더는 열지 않아, 그 때문에 macOS 폴더 접근 허락을 새로 묻지 않는다).
-    /// Drop은 Chap이 직접 넣으므로 알림만 받는다.
+    /// Chap Drop은 빛나지 않는다: 파일을 끌어오는 동안 도커 테두리가 이미 빛나, 놓은 뒤 또 빛나면 겹친다.
     func refreshArrivalWatchers() {
         guard !isRunningTests else { return }
         let watches =
@@ -43,16 +43,6 @@ extension AppDelegate {
             downloadsFolderWatcher, enabled: watches && placed.contains(.downloads),
             url: DownloadsShelf.directory()
         ) { [weak self] in self?.checkDownloadArrival() }
-        if dropAddObserver == nil {
-            dropAddObserver = NotificationCenter.default.addObserver(
-                forName: ChapDrop.didAddNotification, object: nil, queue: .main
-            ) { [weak self] _ in
-                // 노치·배지에 놓으면 도커가 닫힌 뒤에 빛나게 잠깐 기다린다.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    self?.flashNotchGlow(.arrival)
-                }
-            }
-        }
     }
 
     /// 지켜보는 폴더를 바꾸거나 멈춘다. 처음 지켜볼 때는 지금 가장 새 파일을 기억해 둬, 그 파일로 빛나지 않게 한다.

@@ -399,8 +399,8 @@ extension NotchSettingsView {
         SettingsRow(
             title: "Also Glow When",
             subtitle: "Once, for a moment. A timer ending always glows.",
-            help: "New Files: a screenshot or download lands in a shelf on the notch, or you add "
-                + "files to Chap Drop. Windows: a launcher or layout puts a window in place."
+            help: "New Files: a screenshot or download lands in a shelf on the notch. "
+                + "Windows: a launcher or layout puts a window in place."
         ) {
             HStack(spacing: 6) {
                 GlowMomentChip(title: "New Files", isOn: $vm.notchGlowArrivals)
@@ -416,7 +416,11 @@ extension NotchSettingsView {
     private func previewGlow() {
         guard vm.notchLauncherEnabled, vm.notchGlowEnabled, !vm.isApplyingImportedConfig
         else { return }
-        NotchBeamFlash.show(palette: vm.notchGlowPalette)
+        // 실제 순간과 같은 자리에 빛낸다: 도커가 펼쳐져 있으면 검정 띠, 접혀 있으면 노치와 옆 배지.
+        if notchController?.flashStripGlow(palette: vm.notchGlowPalette, moment: .preview) == true {
+            return
+        }
+        NotchBeamFlash.show(palette: vm.notchGlowPalette, around: notchController?.glowOutline())
     }
 }
 

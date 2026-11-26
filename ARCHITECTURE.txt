@@ -298,7 +298,7 @@ Config 모델 필드:
   - notchCoverScreensEnabled: Bool  상단 띠 Cover Screens(달) 아이콘 표시 여부. 누락 시 true
   - notchGlowEnabled: Bool      Notch Glow(Keep Awake·Timer 시작과 끝에 노치 둘레 한 번, Drop 중 도커 테두리 빛) 여부. 누락 시 true
   - notchGlowPalette: String    Notch Glow 색 "colorful"(여러 색) | "chap"(Chap 파랑). 누락·알 수 없으면 colorful
-  - notchGlowArrivals: Bool     새 스크린샷·다운로드·Drop 파일이 들어오면 노치를 한 번 빛낼지. 누락 시 true
+  - notchGlowArrivals: Bool     노치에 놓인 선반에 새 스크린샷·다운로드가 들어오면 노치를 한 번 빛낼지(Chap Drop 제외). 누락 시 true
   - notchGlowSnaps: Bool        런처 창이 제자리에 맞춰지거나 Layout 복원이 끝나면 노치를 짧게 빛낼지. 누락 시 true
   - notchQuickNoteShortcut: String?  Quick Note ⌥ 키(한 글자 대문자). 누락 시 "N", ""는 끔
   - coverScreensShortcut: String?  Cover Screens를 켜는 ⌥ 키. 누락 시 "L", ""는 끔
